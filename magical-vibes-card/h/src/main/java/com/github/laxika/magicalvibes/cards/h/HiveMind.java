@@ -15,8 +15,8 @@ public class HiveMind extends Card {
 
     public HiveMind() {
         // Whenever a player casts an instant or sorcery spell, each other player copies that spell.
-        addTrigger(Triggers.playerCastsSpell(),
-                new CopySpellForEachOtherPlayerEffect(
-                        new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL))));
+        addTrigger(Triggers.playerCastsSpell().withStackEntryFilter(
+                        new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL))),
+                new CopySpellForEachOtherPlayerEffect());
     }
 }

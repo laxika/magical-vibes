@@ -53,16 +53,16 @@ public class CopySpellForAnotherOpponentPermanentEffectHandler implements Normal
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var copyEffect = (CopySpellForAnotherOpponentPermanentEffect) effect;
-        if (copyEffect.spellSnapshot() == null) return;
+        StackEntry spellSnapshot = CopySupport.triggeringSpell(gameData, entry);
+        if (spellSnapshot == null) return;
 
-        StackEntry spellSnapshot = copyEffect.spellSnapshot();
         Card spellCard = spellSnapshot.getCard();
         if (spellCard.isCantBeCopied()) {
             log.info("Game {} - {} can't be copied", gameData.id, spellCard.getName());
             return;
         }
 
-        List<Permanent> eligibleTargets = eligibleTargets(gameData, copyEffect, entry.getControllerId());
+        List<Permanent> eligibleTargets = eligibleTargets(gameData, entry, spellSnapshot);
         if (eligibleTargets.isEmpty()) return;
 
         if (eligibleTargets.size() == 1) {
@@ -82,34 +82,55 @@ public class CopySpellForAnotherOpponentPermanentEffectHandler implements Normal
     public void completeChoice(GameData gameData, UUID chosenPermanentId,
                                PermanentChoiceContext.CopySpellForAnotherOpponentPermanentChoice context) {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-        CopySpellForAnotherOpponentPermanentEffect effect = context.effect();
-        if (pendingEntry == null || effect.spellSnapshot() == null) return;
+        if (pendingEntry == null) return;
+        StackEntry spellSnapshot = CopySupport.triggeringSpell(gameData, pendingEntry);
+        if (spellSnapshot == null) return;
 
         Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
-        if (chosen == null || eligibleTargets(gameData, effect, pendingEntry.getControllerId()).stream()
+        if (chosen == null || eligibleTargets(gameData, pendingEntry, spellSnapshot).stream()
                 .noneMatch(permanent -> permanent.getId().equals(chosenPermanentId))) {
             return;
         }
 
-        createCopy(gameData, effect.spellSnapshot(), pendingEntry.getControllerId(), chosen);
+        createCopy(gameData, spellSnapshot, pendingEntry.getControllerId(), chosen);
     }
 
-    private List<Permanent> eligibleTargets(GameData gameData,
-                                             CopySpellForAnotherOpponentPermanentEffect effect,
-                                             UUID sourceControllerId) {
-        StackEntry spellSnapshot = effect.spellSnapshot();
+    /**
+     * The nonland permanents the spell could target that are controlled by an opponent of the ability's controller
+     * other than the one controlling the permanent the spell targeted as the ability triggered (as that permanent last
+     * existed, if it has left the battlefield).
+     */
+    private List<Permanent> eligibleTargets(GameData gameData, StackEntry entry, StackEntry spellSnapshot) {
+        UUID sourceControllerId = entry.getControllerId();
+        UUID originalTargetControllerId = originalTargetController(gameData,
+                CopySupport.soleTargetId(entry.getTriggeringSpellSnapshot()));
         Set<UUID> spellTargetableIds = Set.copyOf(validTargetService.computeValidTargetsForSpell(
-                gameData, spellSnapshot.getCard(), effect.castingPlayerId(), List.of(),
+                gameData, spellSnapshot.getCard(), spellSnapshot.getControllerId(), List.of(),
                 spellSnapshot.getXValue(), null).validPermanentIds());
         List<Permanent> eligibleTargets = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (controllerId.equals(sourceControllerId)
-                    || controllerId.equals(effect.originalTargetControllerId())) return;
+                    || controllerId.equals(originalTargetControllerId)) return;
             if (!gameData.playerIds.contains(controllerId) || gameQueryService.isLand(gameData, permanent)) return;
             if (!spellTargetableIds.contains(permanent.getId())) return;
             eligibleTargets.add(permanent);
         });
         return eligibleTargets;
+    }
+
+    private UUID originalTargetController(GameData gameData, UUID originalTargetId) {
+        if (originalTargetId == null) {
+            return null;
+        }
+        UUID controllerId = gameQueryService.findPermanentController(gameData, originalTargetId);
+        if (controllerId != null) {
+            return controllerId;
+        }
+        return gameData.departedPermanentSnapshots.values().stream()
+                .filter(departed -> departed.getId().equals(originalTargetId))
+                .findFirst()
+                .map(departed -> gameData.departedPermanentControllerIds.get(departed.getCard().getId()))
+                .orElse(null);
     }
 
     private void createCopy(GameData gameData, StackEntry spellSnapshot, UUID controllerId, Permanent target) {

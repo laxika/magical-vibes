@@ -3,8 +3,11 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.b.BatteringWurm;
 import com.github.laxika.magicalvibes.cards.e.Electrolyze;
 import com.github.laxika.magicalvibes.cards.g.GiantSolifuge;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.r.Repeal;
 import com.github.laxika.magicalvibes.cards.s.SeedsOfStrength;
+import com.github.laxika.magicalvibes.cards.s.Shunt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -15,11 +18,12 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({InkTreaderNephilim.class, BatteringWurm.class, Electrolyze.class, GiantSolifuge.class,
-        Repeal.class, SeedsOfStrength.class})
+        Repeal.class, SeedsOfStrength.class, GrizzlyBears.class, LightningBolt.class, Shunt.class})
 class InkTreaderNephilimTest extends BaseCardTest {
 
     @Test
@@ -162,5 +166,30 @@ class InkTreaderNephilimTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, source)).isEqualTo(6);
         assertThat(gqs.getEffectivePower(gd, other)).isEqualTo(7);
         assertThat(gqs.getEffectiveToughness(gd, other)).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("Makes no copies when the spell no longer targets only the Nephilim as the ability resolves")
+    void noCopiesWhenTheSpellNoLongerTargetsOnlyItAsTheAbilityResolves() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new InkTreaderNephilim());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new BatteringWurm());
+        harness.setHand(player1, List.of(new LightningBolt(), new Shunt()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castInstant(player1, 0, source.getId());
+        UUID boltId = gd.stack.getFirst().getTargetableId();
+        harness.ensurePriority(player1);
+        harness.castInstant(player1, 0, boltId);
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(bears.getId());
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).noneMatch(StackEntry::isCopy);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Lightning Bolt");
     }
 }

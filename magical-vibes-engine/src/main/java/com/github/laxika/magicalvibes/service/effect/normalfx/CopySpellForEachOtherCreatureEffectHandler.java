@@ -35,11 +35,15 @@ public class CopySpellForEachOtherCreatureEffectHandler implements NormalEffectH
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (CopySpellForEachOtherCreatureEffect) effect;
-        if (e.spellSnapshot() == null) return;
+        StackEntry spell = CopySupport.triggeringSpell(gameData, entry);
+        UUID sourceId = entry.getSourcePermanentId();
+        if (spell == null || sourceId == null) return;
+        // The intervening "if" is checked again as the ability resolves (CR 603.4): the spell must still target only
+        // this creature.
+        if (!sourceId.equals(CopySupport.soleTargetId(spell))) return;
 
-        StackEntry spellSnapshot = e.spellSnapshot();
-        Card spellCard = spellSnapshot.getCard();
+        Card spellCard = spell.getCard();
+        UUID castingPlayerId = spell.getControllerId();
         if (spellCard.isCantBeCopied()) {
             log.info("Game {} - {} can't be copied", gameData.id, spellCard.getName());
             return;
@@ -47,19 +51,19 @@ public class CopySpellForEachOtherCreatureEffectHandler implements NormalEffectH
 
         List<Permanent> eligibleTargets = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
-            if (permanent.getId().equals(e.originalTargetId())) return;
+            if (permanent.getId().equals(sourceId)) return;
             if (!gameQueryService.isCreature(gameData, permanent)) return;
             if (!validTargetService.canPermanentBeTargetedBySpell(
-                    gameData, permanent, spellCard, e.castingPlayerId(), spellSnapshot.getXValue())) return;
+                    gameData, permanent, spellCard, castingPlayerId, spell.getXValue())) return;
             eligibleTargets.add(permanent);
         });
 
         for (Permanent target : eligibleTargets) {
             Card copyCard = copySupport.createCopyCard(spellCard);
             StackEntry copyEntry = copySupport.createCopyStackEntry(
-                    spellSnapshot, copyCard, entry.getControllerId(), target.getId());
+                    spell, copyCard, entry.getControllerId(), target.getId());
             for (int i = 0; i < copyEntry.getDeclaredTargetIds().size(); i++) {
-                if (e.originalTargetId().equals(copyEntry.getDeclaredTargetIds().get(i))) {
+                if (sourceId.equals(copyEntry.getDeclaredTargetIds().get(i))) {
                     copyEntry.replaceTargetIdAt(i, target.getId());
                 }
             }

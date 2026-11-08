@@ -50,6 +50,38 @@ public class CopySupport {
         return abilityEntry.getEffectsToResolve().stream().anyMatch(CopyTargetAbilityEffect.class::isInstance);
     }
 
+    /**
+     * The spell a resolving spell-cast trigger is about ("that spell"): the spell while it is still on the stack, else
+     * the stack entry's triggering spell as it last existed there (CR 608.2h); {@code null} when the entry has none.
+     */
+    public static StackEntry triggeringSpell(GameData gameData, StackEntry entry) {
+        StackEntry snapshot = entry.getTriggeringSpellSnapshot();
+        UUID spellCardId = entry.getTriggeringCardId() != null ? entry.getTriggeringCardId()
+                : snapshot == null ? null : snapshot.getTargetableId();
+        if (spellCardId == null) {
+            return null;
+        }
+        return gameData.stack.stream()
+                .filter(candidate -> candidate != entry)
+                .filter(candidate -> spellCardId.equals(candidate.getTargetableId()))
+                .findFirst()
+                .orElse(snapshot);
+    }
+
+    /** The one object or player every target of {@code spell} names, or {@code null} when it names none or several. */
+    public static UUID soleTargetId(StackEntry spell) {
+        if (spell == null) {
+            return null;
+        }
+        Set<UUID> targets = new java.util.LinkedHashSet<>();
+        if (spell.getTargetId() != null) {
+            targets.add(spell.getTargetId());
+        }
+        targets.addAll(spell.getDeclaredTargetIds());
+        targets.addAll(spell.getTargetCardIds());
+        return targets.size() == 1 ? targets.iterator().next() : null;
+    }
+
     public CopySupport() {
         this.triggerCollectionService = null;
         this.gameQueryService = null;

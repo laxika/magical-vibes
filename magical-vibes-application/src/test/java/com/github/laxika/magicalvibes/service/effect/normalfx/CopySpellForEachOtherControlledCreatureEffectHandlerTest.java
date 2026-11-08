@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -72,10 +73,8 @@ class CopySpellForEachOtherControlledCreatureEffectHandlerTest {
         StackEntry snapshot = new StackEntry(StackEntryType.INSTANT_SPELL, shock, player1Id,
                 "Shock", List.of(damage), 0, dragon.getId(), null, null, null, null, null);
 
-        var effect = new CopySpellForEachOtherControlledCreatureEffect(
-                snapshot, player1Id, dragon.getId());
-        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, dragon.getCard(), player1Id,
-                "Mirrorwing Dragon's ability", List.of(effect));
+        var effect = new CopySpellForEachOtherControlledCreatureEffect();
+        StackEntry trigger = triggerOn(dragon, snapshot, effect);
 
         when(gameQueryService.isCreature(eq(gd), any())).thenReturn(true);
         when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shock), eq(player1Id)))
@@ -89,7 +88,7 @@ class CopySpellForEachOtherControlledCreatureEffectHandlerTest {
     }
 
     @Test
-    @DisplayName("No-op when spellSnapshot is null")
+    @DisplayName("No-op when the entry has no triggering spell")
     void noOpWhenSnapshotNull() {
         var effect = new CopySpellForEachOtherControlledCreatureEffect();
         StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCreature("Mirrorwing Dragon").getCard(),
@@ -113,14 +112,20 @@ class CopySpellForEachOtherControlledCreatureEffectHandlerTest {
                 "Shock", List.of(new DealDamageToAnyTargetEffect(2)), 0, dragon.getId(),
                 null, null, null, null, null);
 
-        var effect = new CopySpellForEachOtherControlledCreatureEffect(
-                snapshot, player1Id, dragon.getId());
-        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, dragon.getCard(), player1Id,
-                "trigger", List.of(effect));
+        var effect = new CopySpellForEachOtherControlledCreatureEffect();
+        StackEntry trigger = triggerOn(dragon, snapshot, effect);
 
         handler.resolve(gd, trigger, effect);
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    private StackEntry triggerOn(Permanent source, StackEntry spell, CardEffect effect) {
+        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), player1Id,
+                source.getCard().getName() + "'s ability", List.of(effect), (UUID) null, source.getId());
+        trigger.setTriggeringCardId(spell.getCard().getId());
+        trigger.setTriggeringSpell(spell);
+        return trigger;
     }
 
     private Card createInstant(String name) {

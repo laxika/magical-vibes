@@ -6,6 +6,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsOnlySinglePermanentOrPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +31,14 @@ public class PrecursorGolem extends Card {
         // Whenever a player casts an instant or sorcery spell that targets only a single Golem,
         // that player copies that spell for each other Golem that spell could target.
         // Each copy targets a different one of those Golems.
-        addTrigger(Triggers.playerCastsSpell(),
+        addTrigger(Triggers.playerCastsSpell()
+                        .withFilter(new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.INSTANT),
+                                new CardTypePredicate(CardType.SORCERY))))
+                        .withStackEntryFilter(new StackEntryAllOfPredicate(List.of(
+                                new StackEntryTargetsOnlySinglePermanentOrPlayerPredicate(),
+                                new StackEntryTargetsPermanentPredicate(
+                                        new PermanentHasSubtypePredicate(CardSubtype.GOLEM))))),
                 new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM));
     }
 }

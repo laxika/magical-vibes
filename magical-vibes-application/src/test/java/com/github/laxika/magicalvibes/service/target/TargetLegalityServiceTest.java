@@ -52,6 +52,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredica
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryHasOneTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
@@ -2339,6 +2340,32 @@ class TargetLegalityServiceTest {
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryIsSingleTargetPredicate(), player2Id))
                     .isTrue();
+        }
+
+        @Test
+        @DisplayName("StackEntryHasOneTargetPredicate matches one target chosen once")
+        void hasOneTargetPredicateMatchesOneTarget() {
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
+            Card card = createTargetingSpell("Bolt", CardColor.RED);
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, card, player1Id, "Bolt",
+                    card.getCastingCostsAndSpellEffects(), 0, target.getId(), Map.of());
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry, new StackEntryHasOneTargetPredicate(), player2Id))
+                    .isTrue();
+        }
+
+        @Test
+        @DisplayName("StackEntryHasOneTargetPredicate rejects a spell naming the same creature in two targets")
+        void hasOneTargetPredicateRejectsTheSameTargetTwice() {
+            Permanent target = addPermanent(player2Id, createCreature("Bear", CardColor.GREEN));
+            Card card = createTargetingSpell("Bolt", CardColor.RED);
+            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, card, player1Id, "Bolt",
+                    card.getCastingCostsAndSpellEffects(), 0, List.of(target.getId(), target.getId()));
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry, new StackEntryIsSingleTargetPredicate(), player2Id))
+                    .isTrue();
+            assertThat(sut.matchesStackEntryPredicate(gd, entry, new StackEntryHasOneTargetPredicate(), player2Id))
+                    .isFalse();
         }
 
         @Test

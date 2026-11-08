@@ -135,11 +135,13 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         List.of(damageEffect), originalTargetId);
 
                 CopySpellForEachOtherSubtypePermanentEffect effect =
-                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
+                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
+                triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
+                triggerEntry.setTriggeringSpell(spellSnapshot);
 
                 when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id), any()))
                         .thenReturn(true);
@@ -166,11 +168,13 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         List.of(damageEffect), originalTargetId);
 
                 CopySpellForEachOtherSubtypePermanentEffect effect =
-                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
+                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
+                triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
+                triggerEntry.setTriggeringSpell(spellSnapshot);
 
                 when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id), any()))
                         .thenReturn(true);
@@ -200,11 +204,13 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         List.of(damageEffect), originalTargetId);
 
                 CopySpellForEachOtherSubtypePermanentEffect effect =
-                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
+                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
+                triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
+                triggerEntry.setTriggeringSpell(spellSnapshot);
 
                 when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id), any()))
                         .thenReturn(true);
@@ -230,11 +236,13 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         List.of(damageEffect), originalTargetId);
 
                 CopySpellForEachOtherSubtypePermanentEffect effect =
-                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
+                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
+                triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
+                triggerEntry.setTriggeringSpell(spellSnapshot);
 
                 when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id), any()))
                         .thenReturn(true);
@@ -263,11 +271,13 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         List.of(damageEffect), originalTargetId);
 
                 CopySpellForEachOtherSubtypePermanentEffect effect =
-                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
+                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
+                triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
+                triggerEntry.setTriggeringSpell(spellSnapshot);
 
                 when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id), any()))
                         .thenReturn(true);
@@ -292,11 +302,13 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         List.of(damageEffect), originalTargetId);
 
                 CopySpellForEachOtherSubtypePermanentEffect effect =
-                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
+                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
+                triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
+                triggerEntry.setTriggeringSpell(spellSnapshot);
 
                 // golem2 is targetable, shroudedGolem is NOT
                 when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), eq(golem2), eq(shockCard), eq(player1Id), any()))
@@ -325,11 +337,13 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         List.of(damageEffect), originalTargetId);
 
                 CopySpellForEachOtherSubtypePermanentEffect effect =
-                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
+                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
+                triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
+                triggerEntry.setTriggeringSpell(spellSnapshot);
 
                 copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
 
@@ -338,10 +352,10 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
             }
 
             @Test
-            @DisplayName("Does nothing when spell snapshot is null")
+            @DisplayName("Does nothing when the entry has no triggering spell")
             void doesNothingWhenSpellSnapshotIsNull() {
                 CopySpellForEachOtherSubtypePermanentEffect effect =
-                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, null, player1Id, UUID.randomUUID());
+                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
@@ -367,11 +381,13 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         List.of(damageEffect), originalTargetId);
 
                 CopySpellForEachOtherSubtypePermanentEffect effect =
-                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
+                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
+                triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
+                triggerEntry.setTriggeringSpell(spellSnapshot);
 
                 when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shockCard), eq(player1Id), any()))
                         .thenReturn(true);
@@ -397,11 +413,13 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         List.of(damageEffect), originalTargetId);
 
                 CopySpellForEachOtherSubtypePermanentEffect effect =
-                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM, spellSnapshot, player1Id, originalTargetId);
+                        new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
+                triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
+                triggerEntry.setTriggeringSpell(spellSnapshot);
 
                 when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), eq(opponentGolem), eq(shockCard), eq(player1Id), any()))
                         .thenReturn(true);

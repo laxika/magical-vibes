@@ -1839,7 +1839,7 @@ which is exactly why colorless needed its own record.
 
 ### Step 25 — Copy-spell-for-each-other
 
-**Target**: `CopySpellForEachOtherMatchingPermanentEffect(PermanentPredicate filter, StackEntry spellSnapshot, UUID castingPlayerId, UUID originalTargetId)`.
+**Target**: `CopySpellForEachOtherMatchingPermanentEffect(PermanentPredicate filter)` (the effects read the triggering spell from the stack entry since effect-slot-refactor.md step 15, run 17w4).
 **Absorbs**: `CopySpellForEachOtherControlledCreatureEffect` (1),
 `CopySpellForEachOtherSubtypePermanentEffect` (1).
 

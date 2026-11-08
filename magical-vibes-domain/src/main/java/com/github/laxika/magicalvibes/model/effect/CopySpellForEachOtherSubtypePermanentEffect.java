@@ -1,31 +1,15 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.StackEntry;
-
-import java.util.UUID;
 
 /**
- * Trigger descriptor for {@code Triggers.playerCastsSpell()}: whenever a player casts an
- * instant or sorcery spell that targets only a single permanent with the given subtype,
- * that player copies the spell for each other permanent with that subtype the spell could
- * target. Each copy targets a different one of those permanents.
- * <p>
- * Card-definition form uses the single-arg constructor ({@code spellSnapshot == null}).
- * At trigger time, {@code checkSpellCastTriggers} populates the snapshot fields and
- * places the resolution form on the stack.
- * <p>
- * Used by Precursor Golem.
+ * "That player copies that spell for each other [subtype] that spell could target. Each copy targets a different one of
+ * those [subtype]s" (Precursor Golem): the effect of a filtered cast trigger whose stack-entry filter is "targets only a
+ * single [subtype]". As it resolves it reads the stack entry's triggering spell (the spell while it is still on the
+ * stack, else as it last existed there, CR 608.2h): the spell's controller controls the copies, and "other" is other
+ * than the permanent the spell targeted as the ability triggered.
+ *
+ * @param subtype the subtype of the permanents the copies target
  */
-public record CopySpellForEachOtherSubtypePermanentEffect(
-        CardSubtype subtype,
-        StackEntry spellSnapshot,
-        UUID castingPlayerId,
-        UUID originalTargetId
-) implements CardEffect {
-
-    /** Card definition constructor — trigger marker only. */
-    public CopySpellForEachOtherSubtypePermanentEffect(CardSubtype subtype) {
-        this(subtype, null, null, null);
-    }
+public record CopySpellForEachOtherSubtypePermanentEffect(CardSubtype subtype) implements CardEffect {
 }

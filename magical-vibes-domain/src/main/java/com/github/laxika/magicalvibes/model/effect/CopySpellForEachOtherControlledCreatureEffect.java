@@ -1,43 +1,23 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.StackEntry;
-
-import java.util.UUID;
-
 /**
- * Trigger descriptor for {@code Triggers.playerCastsSpell()}: whenever a player casts an
- * instant or sorcery spell that targets only the source creature, that player copies the
- * spell for each other creature they control that the spell could target. Each copy targets a
- * different one of those creatures. The {@code chooseOne} form instead lets the caster choose one
- * eligible creature and creates one copy targeting it.
+ * "That player copies that spell for each other creature they control that the spell could target. Each copy targets
+ * a different one of those creatures" (Mirrorwing Dragon, Zada): the effect of a filtered cast trigger
+ * ({@code Triggers.playerCastsSpell()} / {@code youCastSpell()} with an instant-or-sorcery filter and "targets only
+ * this creature" as its stack-entry filter). As it resolves it reads the stack entry's triggering spell (the spell
+ * while it is still on the stack, else as it last existed there, CR 608.2h): the spell's controller controls the
+ * copies, and "other" is other than the ability's source.
  * <p>
- * Card-definition form uses the no-arg constructor ({@code spellSnapshot == null}).
- * At trigger time, {@code checkSpellCastTriggers} populates the snapshot fields and
- * places the resolution form on the stack.
- * <p>
- * Used by Mirrorwing Dragon.
+ * With {@code chooseOne} (Beamsplitter Mage) the caster instead chooses one of those creatures and makes one copy
+ * targeting it; its intervening "if" ("if you control one or more other creatures that spell could target") is the
+ * trigger's {@code StackEntryCouldTargetAnotherPermanentPredicate} filter, and no copy is made when no such creature is
+ * left as the ability resolves.
+ *
+ * @param chooseOne whether one chosen creature gets one copy, rather than each creature a copy
  */
-public record CopySpellForEachOtherControlledCreatureEffect(
-        StackEntry spellSnapshot,
-        UUID castingPlayerId,
-        UUID originalTargetId,
-        boolean chooseOne
-) implements CardEffect {
+public record CopySpellForEachOtherControlledCreatureEffect(boolean chooseOne) implements CardEffect {
 
-    /** Card definition constructor — trigger marker only. */
     public CopySpellForEachOtherControlledCreatureEffect() {
-        this(null, null, null, false);
-    }
-
-    /** Card definition constructor for the single-copy choice form used by Beamsplitter Mage. */
-    public CopySpellForEachOtherControlledCreatureEffect(boolean chooseOne) {
-        this(null, null, null, chooseOne);
-    }
-
-    /** Mirrorwing Dragon's resolution form. */
-    public CopySpellForEachOtherControlledCreatureEffect(StackEntry spellSnapshot,
-                                                         UUID castingPlayerId,
-                                                         UUID originalTargetId) {
-        this(spellSnapshot, castingPlayerId, originalTargetId, false);
+        this(false);
     }
 }

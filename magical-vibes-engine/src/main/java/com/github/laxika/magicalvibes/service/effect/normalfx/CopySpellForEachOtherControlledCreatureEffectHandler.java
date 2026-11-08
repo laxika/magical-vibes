@@ -58,11 +58,12 @@ public class CopySpellForEachOtherControlledCreatureEffectHandler implements Nor
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CopySpellForEachOtherControlledCreatureEffect) effect;
-        if (e.spellSnapshot() == null) return;
+        StackEntry spellSnapshot = CopySupport.triggeringSpell(gameData, entry);
+        // "Each other creature": other than this creature, the ability's source.
+        UUID originalTargetId = entry.getSourcePermanentId();
+        if (spellSnapshot == null || originalTargetId == null) return;
 
-        StackEntry spellSnapshot = e.spellSnapshot();
-        UUID castingPlayerId = e.castingPlayerId();
-        UUID originalTargetId = e.originalTargetId();
+        UUID castingPlayerId = spellSnapshot.getControllerId();
         Card spellCard = spellSnapshot.getCard();
 
         // CR 707.10 — a spell that "can't be copied" is not copied.
@@ -101,17 +102,18 @@ public class CopySpellForEachOtherControlledCreatureEffectHandler implements Nor
     public void completeChoice(GameData gameData, UUID chosenPermanentId,
                                PermanentChoiceContext.CopySpellForOtherControlledCreatureChoice context) {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-        CopySpellForEachOtherControlledCreatureEffect effect = context.effect();
-        if (pendingEntry == null || effect.spellSnapshot() == null) return;
+        if (pendingEntry == null) return;
+        StackEntry spell = CopySupport.triggeringSpell(gameData, pendingEntry);
+        UUID originalTargetId = pendingEntry.getSourcePermanentId();
+        if (spell == null || originalTargetId == null) return;
 
         Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
-        if (chosen == null || eligibleTargets(gameData, effect.spellSnapshot().getCard(),
-                effect.castingPlayerId(), effect.originalTargetId()).stream()
-                .noneMatch(permanent -> permanent.getId().equals(chosenPermanentId))) {
+        if (chosen == null || eligibleTargets(gameData, spell.getCard(), spell.getControllerId(), originalTargetId)
+                .stream().noneMatch(permanent -> permanent.getId().equals(chosenPermanentId))) {
             return;
         }
 
-        createCopy(gameData, effect.spellSnapshot(), effect.castingPlayerId(), chosen);
+        createCopy(gameData, spell, spell.getControllerId(), chosen);
     }
 
     private List<Permanent> eligibleTargets(GameData gameData, Card spellCard,

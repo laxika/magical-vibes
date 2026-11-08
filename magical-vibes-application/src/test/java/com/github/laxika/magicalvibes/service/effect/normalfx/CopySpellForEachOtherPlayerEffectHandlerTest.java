@@ -124,11 +124,13 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
                         List.of(), null);
 
                 CopySpellForEachOtherPlayerEffect effect =
-                        new CopySpellForEachOtherPlayerEffect(spellSnapshot, player1Id);
+                        new CopySpellForEachOtherPlayerEffect();
 
                 Card triggerCard = createCard("Radiate");
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Radiate trigger", List.of(effect));
+                triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
+                triggerEntry.setTriggeringSpell(spellSnapshot);
 
                 copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
 
@@ -139,7 +141,7 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
             }
 
             @Test
-            @DisplayName("Copy preserves target from the spell snapshot")
+            @DisplayName("Copy preserves the triggering spell's target")
             void copyPreservesTarget() {
                 Card spellCard = createSpellCard("Lightning Bolt", List.of());
                 UUID targetPermId = UUID.randomUUID();
@@ -147,11 +149,13 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
                         List.of(new DealDamageToAnyTargetEffect(3)), targetPermId);
 
                 CopySpellForEachOtherPlayerEffect effect =
-                        new CopySpellForEachOtherPlayerEffect(spellSnapshot, player1Id);
+                        new CopySpellForEachOtherPlayerEffect();
 
                 Card triggerCard = createCard("Radiate");
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Radiate trigger", List.of(effect));
+                triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
+                triggerEntry.setTriggeringSpell(spellSnapshot);
 
                 copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
 
@@ -160,10 +164,10 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
             }
 
             @Test
-            @DisplayName("Does nothing when spell snapshot is null")
+            @DisplayName("Does nothing when the entry has no triggering spell")
             void doesNothingWhenSpellSnapshotIsNull() {
                 CopySpellForEachOtherPlayerEffect effect =
-                        new CopySpellForEachOtherPlayerEffect(null, player1Id);
+                        new CopySpellForEachOtherPlayerEffect();
 
                 Card triggerCard = createCard("Radiate");
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
@@ -183,11 +187,13 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
                         List.of(), null);
 
                 CopySpellForEachOtherPlayerEffect effect =
-                        new CopySpellForEachOtherPlayerEffect(spellSnapshot, player1Id);
+                        new CopySpellForEachOtherPlayerEffect();
 
                 Card triggerCard = createCard("Radiate");
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Radiate trigger", List.of(effect));
+                triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
+                triggerEntry.setTriggeringSpell(spellSnapshot);
 
                 copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
 
@@ -203,11 +209,13 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
                         List.of(new DealDamageToAnyTargetEffect(3)), targetPermId);
 
                 CopySpellForEachOtherPlayerEffect effect =
-                        new CopySpellForEachOtherPlayerEffect(spellSnapshot, player1Id);
+                        new CopySpellForEachOtherPlayerEffect();
 
                 Card triggerCard = createCard("Radiate");
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Radiate trigger", List.of(effect));
+                triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
+                triggerEntry.setTriggeringSpell(spellSnapshot);
 
                 copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
 
@@ -225,11 +233,13 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
                         List.of(), null);
 
                 CopySpellForEachOtherPlayerEffect effect =
-                        new CopySpellForEachOtherPlayerEffect(spellSnapshot, player1Id);
+                        new CopySpellForEachOtherPlayerEffect();
 
                 Card triggerCard = createCard("Radiate");
                 StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
                         "Radiate trigger", List.of(effect));
+                triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
+                triggerEntry.setTriggeringSpell(spellSnapshot);
 
                 copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
 

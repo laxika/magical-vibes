@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -67,12 +68,11 @@ class CopySpellForEachOtherCreatureEffectHandlerTest {
         StackEntry snapshot = new StackEntry(StackEntryType.INSTANT_SPELL, shock, player2Id,
                 "Shock", List.of(new DealDamageToAnyTargetEffect(2)), 0, source.getId(),
                 null, null, null, null, null);
-        var effect = new CopySpellForEachOtherCreatureEffect(snapshot, player2Id, source.getId());
-        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), player1Id,
-                "Ink-Treader Nephilim's ability", List.of(effect));
+        var effect = new CopySpellForEachOtherCreatureEffect();
+        StackEntry trigger = triggerOn(source, snapshot, effect);
 
         when(gameQueryService.isCreature(eq(gd), any())).thenReturn(true);
-        when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shock), eq(player2Id)))
+        when(validTargetService.canPermanentBeTargetedBySpell(eq(gd), any(), eq(shock), eq(player2Id), any()))
                 .thenReturn(true);
 
         handler.resolve(gd, trigger, effect);
@@ -94,13 +94,20 @@ class CopySpellForEachOtherCreatureEffectHandlerTest {
         StackEntry snapshot = new StackEntry(StackEntryType.INSTANT_SPELL, shock, player2Id,
                 "Shock", List.of(new DealDamageToAnyTargetEffect(2)), 0, source.getId(),
                 null, null, null, null, null);
-        var effect = new CopySpellForEachOtherCreatureEffect(snapshot, player2Id, source.getId());
-        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), player1Id,
-                "trigger", List.of(effect));
+        var effect = new CopySpellForEachOtherCreatureEffect();
+        StackEntry trigger = triggerOn(source, snapshot, effect);
 
         handler.resolve(gd, trigger, effect);
 
         assertThat(gd.stack).isEmpty();
+    }
+
+    private StackEntry triggerOn(Permanent source, StackEntry spell, CardEffect effect) {
+        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), player1Id,
+                source.getCard().getName() + "'s ability", List.of(effect), (UUID) null, source.getId());
+        trigger.setTriggeringCardId(spell.getCard().getId());
+        trigger.setTriggeringSpell(spell);
+        return trigger;
     }
 
     private Card createInstant(String name) {

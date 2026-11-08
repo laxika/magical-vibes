@@ -34,17 +34,12 @@ public class CopySpellForEachOtherPlayerEffectHandler implements NormalEffectHan
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CopySpellForEachOtherPlayerEffect) effect;
-        if (e.spellSnapshot() == null) return;
-
         // The copy is of the spell as it exists when this ability resolves, so targets changed in the
-        // meantime carry over; the cast-time snapshot only stands in once the spell has left the stack.
-        UUID snapshotCardId = e.spellSnapshot().getCard().getId();
-        StackEntry liveSpell = gameData.stack.stream()
-                .filter(candidate -> candidate.getTargetableId().equals(snapshotCardId))
-                .findFirst()
-                .orElse(null);
-        StackEntry spellSnapshot = liveSpell != null ? new StackEntry(liveSpell) : e.spellSnapshot();
-        UUID castingPlayerId = e.castingPlayerId();
+        // meantime carry over; the spell as it last existed stands in once it has left the stack.
+        StackEntry triggeringSpell = CopySupport.triggeringSpell(gameData, entry);
+        if (triggeringSpell == null) return;
+        StackEntry spellSnapshot = new StackEntry(triggeringSpell);
+        UUID castingPlayerId = spellSnapshot.getControllerId();
         Card spellCard = spellSnapshot.getCard();
 
         // CR 707.10 — a spell that "can't be copied" is not copied by these effects either.

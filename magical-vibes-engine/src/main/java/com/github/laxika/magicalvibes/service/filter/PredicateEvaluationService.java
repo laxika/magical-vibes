@@ -397,6 +397,8 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryIsMulticoloredPredi
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsFirstSpellOfKindThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsNthSpellCastThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryHasOneTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCouldTargetAnotherPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryKickedPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColoredManaSpentPredicate;
@@ -5316,6 +5318,8 @@ public class PredicateEvaluationService {
             case StackEntryTargetsOnlySinglePermanentOrPlayerPredicate ignored -> false;
             case StackEntryTargetsOnlySingleCreaturePredicate ignored -> false;
             case StackEntryTargetsPermanentPredicate ignored -> false;
+            case StackEntryHasOneTargetPredicate ignored -> false;
+            case StackEntryCouldTargetAnotherPermanentPredicate ignored -> false;
             case StackEntrySharesChosenNameWithSourcePredicate ignored -> false;
             case StackEntryIsCardExiledWithSourcePredicate ignored -> false;
             case StackEntrySharesNameWithCardExiledWithSourcePredicate ignored -> false;

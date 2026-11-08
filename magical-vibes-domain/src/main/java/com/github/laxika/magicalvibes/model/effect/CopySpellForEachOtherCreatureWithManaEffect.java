@@ -1,33 +1,14 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.StackEntry;
-
-import java.util.UUID;
-
 /**
- * Resolution form of an ability that lets its controller choose creatures and pay a cost for each
- * one before copying a spell onto those creatures.
+ * "You may choose any number of other creatures that spell could target and pay {@code manaCost} for each of those
+ * creatures. If you do, for each of those creatures, copy that spell. The copy targets that creature" (Feather, Radiant
+ * Arbiter): the effect of a filtered cast trigger ("a noncreature spell that targets only this creature"). As it
+ * resolves it reads the stack entry's triggering spell (the spell while it is still on the stack, else as it last
+ * existed there, CR 608.2h); "other" is other than the ability's source, and a copy of a permanent spell becomes a
+ * token.
+ *
+ * @param manaCost the cost paid for each chosen creature
  */
-public record CopySpellForEachOtherCreatureWithManaEffect(
-        StackEntry spellSnapshot,
-        UUID castingPlayerId,
-        UUID originalTargetId,
-        String manaCost
-) implements CardEffect {
-
-    /** Card-definition form; the cast snapshot is populated by the spell-cast trigger collector. */
-    public CopySpellForEachOtherCreatureWithManaEffect(String manaCost) {
-        this(null, null, null, manaCost);
-    }
-
-    /** Trigger-resolution form. */
-    public CopySpellForEachOtherCreatureWithManaEffect(StackEntry spellSnapshot,
-                                                       UUID castingPlayerId,
-                                                       UUID originalTargetId,
-                                                       String manaCost) {
-        this.spellSnapshot = spellSnapshot;
-        this.castingPlayerId = castingPlayerId;
-        this.originalTargetId = originalTargetId;
-        this.manaCost = manaCost;
-    }
+public record CopySpellForEachOtherCreatureWithManaEffect(String manaCost) implements CardEffect {
 }

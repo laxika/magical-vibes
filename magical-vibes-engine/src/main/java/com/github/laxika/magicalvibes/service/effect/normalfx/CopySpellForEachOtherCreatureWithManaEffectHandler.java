@@ -43,18 +43,17 @@ public class CopySpellForEachOtherCreatureWithManaEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var copyEffect = (CopySpellForEachOtherCreatureWithManaEffect) effect;
-        if (copyEffect.spellSnapshot() == null) {
+        StackEntry spellSnapshot = CopySupport.triggeringSpell(gameData, entry);
+        if (spellSnapshot == null || entry.getSourcePermanentId() == null) {
             return;
         }
 
-        StackEntry spellSnapshot = copyEffect.spellSnapshot();
         Card spellCard = spellSnapshot.getCard();
         if (spellCard.isCantBeCopied()) {
             return;
         }
 
-        List<Permanent> eligibleTargets = eligibleTargets(gameData, spellSnapshot,
-                copyEffect.castingPlayerId(), copyEffect.originalTargetId());
+        List<Permanent> eligibleTargets = eligibleTargets(gameData, spellSnapshot, entry.getSourcePermanentId());
         if (eligibleTargets.isEmpty()) {
             return;
         }
@@ -84,13 +83,14 @@ public class CopySpellForEachOtherCreatureWithManaEffectHandler implements Norma
         }
 
         CopySpellForEachOtherCreatureWithManaEffect copyEffect = context.effect();
-        StackEntry spellSnapshot = copyEffect.spellSnapshot();
-        if (spellSnapshot == null || spellSnapshot.getCard().isCantBeCopied()) {
+        StackEntry spellSnapshot = CopySupport.triggeringSpell(gameData, triggerEntry);
+        if (spellSnapshot == null || triggerEntry.getSourcePermanentId() == null
+                || spellSnapshot.getCard().isCantBeCopied()) {
             return;
         }
 
         List<Permanent> eligibleTargets = eligibleTargets(gameData, spellSnapshot,
-                copyEffect.castingPlayerId(), copyEffect.originalTargetId());
+                triggerEntry.getSourcePermanentId());
         List<Permanent> chosenTargets = selectedIds.stream()
                 .map(id -> eligibleTargets.stream()
                         .filter(permanent -> permanent.getId().equals(id))
@@ -130,9 +130,10 @@ public class CopySpellForEachOtherCreatureWithManaEffectHandler implements Norma
         }
     }
 
-    private List<Permanent> eligibleTargets(GameData gameData, StackEntry spellSnapshot,
-                                             UUID castingPlayerId, UUID originalTargetId) {
+    /** The creatures other than {@code originalTargetId}, the ability's source, that the spell could target. */
+    private List<Permanent> eligibleTargets(GameData gameData, StackEntry spellSnapshot, UUID originalTargetId) {
         Card spellCard = spellSnapshot.getCard();
+        UUID castingPlayerId = spellSnapshot.getControllerId();
         int xValue = spellSnapshot.getXValue();
         List<Permanent> eligibleTargets = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {

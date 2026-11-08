@@ -39,24 +39,27 @@ public class CopySpellForEachOtherPermanentOrPlayerEffectHandler implements Norm
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var copyEffect = (CopySpellForEachOtherPermanentOrPlayerEffect) effect;
-        UUID targetCardId = copyEffect.spellSnapshot() != null
-                ? copyEffect.spellSnapshot().getTargetableId() : entry.getTargetId();
+        UUID targetCardId = entry.getTargetId();
         if (targetCardId == null) return;
 
-        StackEntry targetEntry = copyEffect.spellSnapshot() != null
-                ? copyEffect.spellSnapshot()
+        // A cast trigger's entry is aimed at its triggering spell without targeting it: the spell while it is still
+        // on the stack, else as it last existed there (CR 608.2h), and its controller controls the copies.
+        boolean triggeringSpellCopy = entry.getTriggeringSpellSnapshot() != null
+                && targetCardId.equals(entry.getTriggeringSpellSnapshot().getTargetableId());
+        StackEntry targetEntry = triggeringSpellCopy
+                ? CopySupport.triggeringSpell(gameData, entry)
                 : gameData.stack.stream()
                         .filter(stackEntry -> stackEntry.getTargetableId().equals(targetCardId))
                         .findFirst()
                         .orElse(null);
         if (targetEntry == null) return;
 
-        UUID originalTargetId = copyEffect.originalTargetId() != null
-                ? copyEffect.originalTargetId()
-                : targetEntry.getTargetId() != null
+        UUID originalTargetId = targetEntry.getTargetId() != null
                 ? targetEntry.getTargetId()
                 : !targetEntry.getTargetIds().isEmpty()
                 ? targetEntry.getTargetIds().get(0)
+                : triggeringSpellCopy && targetEntry.getTargetCardIds().size() == 1
+                ? targetEntry.getTargetCardIds().getFirst()
                 : targetEntry.getDamageAssignments().keySet().stream().findFirst().orElse(null);
         if (originalTargetId == null || !isSingleTarget(targetEntry)) return;
 
@@ -69,8 +72,7 @@ public class CopySpellForEachOtherPermanentOrPlayerEffectHandler implements Norm
         List<TargetCopy> targets = legalTargets(gameData, targetEntry, copyEffect.permanentOrPlayerOnly());
         targets.removeIf(target -> originalTargetId.equals(target.id()));
 
-        UUID copyControllerId = copyEffect.castingPlayerId() != null
-                ? copyEffect.castingPlayerId() : entry.getControllerId();
+        UUID copyControllerId = triggeringSpellCopy ? targetEntry.getControllerId() : entry.getControllerId();
 
         for (TargetCopy target : targets) {
             Card copyCard = spellCard == null ? null : copySupport.createCopyCard(spellCard);

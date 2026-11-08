@@ -1,22 +1,13 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.StackEntry;
-
-import java.util.UUID;
-
 /**
- * Trigger descriptor for Exterminator Magmarch's single-copy spell trigger.
- * The empty form is the card-definition marker; the populated form is the
- * snapshot placed on the stack when the trigger is collected.
+ * "Choose one of those permanents. Copy that spell. The copy targets the chosen permanent" (Exterminator Magmarch): the
+ * effect of a filtered cast trigger ("an instant or sorcery spell that targets only a single nonland permanent an
+ * opponent controls"), whose intervening "if" ("if another opponent controls one or more nonland permanents that spell
+ * could target") is its {@code StackEntryCouldTargetAnotherPermanentPredicate} filter. As it resolves it reads the stack
+ * entry's triggering spell (the spell while it is still on the stack, else as it last existed there, CR 608.2h) and the
+ * controller of the permanent it targeted (as it last existed, if it left the battlefield); no copy is made when no
+ * such permanent is left.
  */
-public record CopySpellForAnotherOpponentPermanentEffect(
-        StackEntry spellSnapshot,
-        UUID castingPlayerId,
-        UUID originalTargetId,
-        UUID originalTargetControllerId
-) implements CardEffect {
-
-    public CopySpellForAnotherOpponentPermanentEffect() {
-        this(null, null, null, null);
-    }
+public record CopySpellForAnotherOpponentPermanentEffect() implements CardEffect {
 }

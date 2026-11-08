@@ -49,18 +49,11 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachPriorInstantO
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetedSpellPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPermanentOrPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopiedSpellReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequiredEffect;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForAnotherOpponentPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherCreatureWithManaEffect;
-import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherSubtypePermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfNameFoundElsewhereEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellingEffect;
@@ -150,6 +143,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsAnyPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCouldTargetAnotherPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationRevealAndCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SunbirdsInvocationTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.JodahTheUnifierTriggerEffect;
@@ -313,273 +308,6 @@ public class SpellCastTriggerCollectorService {
         return addColorCounterTrigger(match, trigger);
     }
 
-    @CollectsSpellAbilityTrigger(value = CopySpellForEachOtherPermanentOrPlayerEffect.class,
-            watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
-    private boolean handleCopySpellForEachOtherPermanentOrPlayer(TriggerMatchContext match,
-            CopySpellForEachOtherPermanentOrPlayerEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (trigger.spellSnapshot() != null) return false;
-
-        StackEntry spellEntry = findInstantOrSorceryOnStack(match, sc);
-        UUID originalTargetId = soleTargetId(spellEntry);
-        if (originalTargetId == null) return false;
-
-        Card sourceCard = match.sourceCard() != null
-                ? match.sourceCard()
-                : match.permanent() == null ? null : match.permanent().getCard();
-        if (sourceCard == null) return false;
-
-        StackEntry triggerEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(new CopySpellForEachOtherPermanentOrPlayerEffect(
-                        new StackEntry(spellEntry), sc.castingPlayerId(), originalTargetId))),
-                null,
-                match.permanent() == null ? null : match.permanent().getId());
-        if (match.sourcePlanarObject() != null) {
-            triggerEntry.setSourcePlanarObject(match.sourcePlanarObject().copy());
-        }
-        match.gameData().stack.add(triggerEntry);
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = CopySpellForEachOtherSubtypePermanentEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
-    private boolean handleCopySpellForSubtype(TriggerMatchContext match,
-            CopySpellForEachOtherSubtypePermanentEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (trigger.spellSnapshot() != null) return false;
-
-        StackEntry spellEntry = findInstantOrSorceryOnStack(match, sc);
-        UUID singleTargetId = soleNonPlayerTargetId(match.gameData(), spellEntry);
-        if (singleTargetId == null) return false;
-
-        Permanent targetPerm = gameQueryService.findPermanentById(match.gameData(), singleTargetId);
-        if (targetPerm == null) return false;
-        if (!targetPerm.getCard().getSubtypes().contains(trigger.subtype())) return false;
-
-        StackEntry snapshot = new StackEntry(spellEntry);
-        CopySpellForEachOtherSubtypePermanentEffect resolutionEffect =
-                new CopySpellForEachOtherSubtypePermanentEffect(
-                        trigger.subtype(), snapshot, sc.castingPlayerId(), singleTargetId);
-
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(resolutionEffect))
-        ));
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = CopySpellForAnotherOpponentPermanentEffect.class,
-            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
-    private boolean handleCopySpellForAnotherOpponentPermanent(TriggerMatchContext match,
-            CopySpellForAnotherOpponentPermanentEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (trigger.spellSnapshot() != null) return false;
-
-        StackEntry spellEntry = findInstantOrSorceryOnStack(match, sc);
-        UUID originalTargetId = soleNonPlayerTargetId(match.gameData(), spellEntry);
-        if (originalTargetId == null) return false;
-
-        Permanent originalTarget = gameQueryService.findPermanentById(match.gameData(), originalTargetId);
-        UUID originalTargetControllerId = gameQueryService.findPermanentController(
-                match.gameData(), originalTargetId);
-        if (originalTarget == null || originalTargetControllerId == null
-                || originalTargetControllerId.equals(match.controllerId())
-                || gameQueryService.isLand(match.gameData(), originalTarget)) {
-            return false;
-        }
-        if (!hasAnotherOpponentPermanentTarget(match.gameData(), spellEntry.getCard(),
-                sc.castingPlayerId(), match.controllerId(), originalTargetControllerId, spellEntry.getXValue())) {
-            return false;
-        }
-
-        StackEntry triggerEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new CopySpellForAnotherOpponentPermanentEffect(
-                        new StackEntry(spellEntry), sc.castingPlayerId(), originalTargetId,
-                        originalTargetControllerId))));
-        match.gameData().stack.add(triggerEntry);
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = CopySpellForEachOtherControlledCreatureEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
-    @CollectsSpellAbilityTrigger(value = CopySpellForEachOtherControlledCreatureEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
-    private boolean handleCopySpellForEachOtherControlledCreature(TriggerMatchContext match,
-            CopySpellForEachOtherControlledCreatureEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (trigger.spellSnapshot() != null) return false;
-
-        StackEntry spellEntry = findInstantOrSorceryOnStack(match, sc);
-        UUID singleTargetId = soleNonPlayerTargetId(match.gameData(), spellEntry);
-        if (singleTargetId == null) return false;
-        // Mirrorwing style: spell must target only this source permanent
-        if (!singleTargetId.equals(match.permanent().getId())) return false;
-        if (trigger.chooseOne() && !hasOtherLegalCreatureTarget(
-                match.gameData(), spellEntry.getCard(), sc.castingPlayerId(), singleTargetId)) return false;
-
-        StackEntry snapshot = new StackEntry(spellEntry);
-        CopySpellForEachOtherControlledCreatureEffect resolutionEffect =
-                new CopySpellForEachOtherControlledCreatureEffect(
-                        snapshot, sc.castingPlayerId(), singleTargetId, trigger.chooseOne());
-
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(resolutionEffect))
-        ));
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = CopySpellForEachOtherCreatureEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
-    private boolean handleCopySpellForEachOtherCreature(TriggerMatchContext match,
-            CopySpellForEachOtherCreatureEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (trigger.spellSnapshot() != null) return false;
-
-        StackEntry spellEntry = findInstantOrSorceryOnStack(match, sc);
-        UUID singleTargetId = soleNonPlayerTargetId(match.gameData(), spellEntry);
-        if (singleTargetId == null || !singleTargetId.equals(match.permanent().getId())) return false;
-
-        StackEntry snapshot = new StackEntry(spellEntry);
-        CopySpellForEachOtherCreatureEffect resolutionEffect =
-                new CopySpellForEachOtherCreatureEffect(snapshot, sc.castingPlayerId(), singleTargetId);
-
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(resolutionEffect))
-        ));
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = CopySpellForEachOtherCreatureWithManaEffect.class,
-            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
-    private boolean handleCopySpellForEachOtherCreatureWithMana(TriggerMatchContext match,
-            CopySpellForEachOtherCreatureWithManaEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (trigger.spellSnapshot() != null || sc.spellCard().hasType(CardType.CREATURE)) {
-            return false;
-        }
-
-        StackEntry spellEntry = findStackEntryForCard(match.gameData(), sc.spellCard().getId());
-        if (!spellTargetsOnlyPermanent(spellEntry, match.permanent().getId())) {
-            return false;
-        }
-
-        StackEntry snapshot = new StackEntry(spellEntry);
-        CopySpellForEachOtherCreatureWithManaEffect resolutionEffect =
-                new CopySpellForEachOtherCreatureWithManaEffect(
-                        snapshot, sc.castingPlayerId(), match.permanent().getId(), trigger.manaCost());
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(resolutionEffect)),
-                null,
-                match.permanent().getId()));
-        return true;
-    }
-
-    private boolean spellTargetsOnlyPermanent(StackEntry spellEntry, UUID permanentId) {
-        if (spellEntry == null || spellEntry.getTargetZone() != null
-                || !spellEntry.getTargetCardIds().isEmpty()) {
-            return false;
-        }
-
-        List<UUID> targetOccurrences = new ArrayList<>();
-        if (spellEntry.getTargetId() != null) {
-            targetOccurrences.add(spellEntry.getTargetId());
-        }
-        targetOccurrences.addAll(spellEntry.getDeclaredTargetIds());
-        return !targetOccurrences.isEmpty()
-                && targetOccurrences.stream().distinct().count() == 1
-                && permanentId.equals(targetOccurrences.getFirst());
-    }
-
-    private boolean hasOtherLegalCreatureTarget(GameData gameData, Card spellCard,
-                                                UUID castingPlayerId, UUID originalTargetId) {
-        return gameData.playerBattlefields.getOrDefault(castingPlayerId, List.of()).stream()
-                .anyMatch(permanent -> !permanent.getId().equals(originalTargetId)
-                        && gameQueryService.isCreature(gameData, permanent)
-                && validTargetService.canPermanentBeTargetedBySpell(
-                                gameData, permanent, spellCard, castingPlayerId));
-    }
-
-    private boolean hasAnotherOpponentPermanentTarget(GameData gameData, Card spellCard,
-                                                       UUID castingPlayerId,
-                                                       UUID sourceControllerId,
-                                                       UUID originalTargetControllerId,
-                                                       int xValue) {
-        Set<UUID> spellTargetableIds = Set.copyOf(validTargetService.computeValidTargetsForSpell(
-                gameData, spellCard, castingPlayerId, List.of(), xValue, null).validPermanentIds());
-        return gameData.playerBattlefields.entrySet().stream()
-                .filter(entry -> !entry.getKey().equals(sourceControllerId)
-                        && !entry.getKey().equals(originalTargetControllerId))
-                .flatMap(entry -> entry.getValue().stream())
-                .anyMatch(permanent -> !gameQueryService.isLand(gameData, permanent)
-                        && spellTargetableIds.contains(permanent.getId()));
-    }
-
-    private StackEntry findInstantOrSorceryOnStack(TriggerMatchContext match, TriggerContext.SpellCast sc) {
-        Card spellCard = sc.spellCard();
-        if (!spellCard.hasType(CardType.INSTANT) && !spellCard.hasType(CardType.SORCERY)) return null;
-        for (StackEntry se : match.gameData().stack) {
-            if (se.getTargetableId().equals(spellCard.getId())) {
-                return se;
-            }
-        }
-        return null;
-    }
-
-    private UUID soleTargetId(StackEntry spellEntry) {
-        if (spellEntry == null) return null;
-        if (spellEntry.getTargetId() != null && spellEntry.getTargetIds().isEmpty()
-                && spellEntry.getTargetCardIds().size() <= 1) {
-            return spellEntry.getTargetId();
-        }
-        if (spellEntry.getTargetId() == null && spellEntry.getTargetIds().size() == 1
-                && spellEntry.getTargetIds().stream().distinct().count() == 1) {
-            return spellEntry.getTargetIds().getFirst();
-        }
-        if (spellEntry.getTargetId() == null && spellEntry.getTargetIds().isEmpty()
-                && spellEntry.getTargetCardIds().size() == 1) {
-            return spellEntry.getTargetCardIds().getFirst();
-        }
-        return null;
-    }
-
-    /** Exactly one unique non-player target on the spell, else null. */
-    private UUID soleNonPlayerTargetId(GameData gameData, StackEntry spellEntry) {
-        if (spellEntry == null) return null;
-
-        UUID singleTargetId = null;
-        if (spellEntry.getTargetId() != null
-                && spellEntry.getTargetZone() == null
-                && spellEntry.getTargetIds().isEmpty()) {
-            singleTargetId = spellEntry.getTargetId();
-        } else if (spellEntry.getTargetId() == null
-                && !spellEntry.getTargetIds().isEmpty()
-                && spellEntry.getTargetIds().stream().distinct().count() == 1) {
-            singleTargetId = spellEntry.getTargetIds().getFirst();
-        }
-        if (singleTargetId == null) return null;
-        if (gameData.playerIds.contains(singleTargetId)) return null;
-        return singleTargetId;
-    }
-
     private UUID soleCreatureTargetId(GameData gameData, StackEntry spellEntry) {
         if (spellEntry == null) return null;
 
@@ -592,45 +320,6 @@ public class SpellCastTriggerCollectorService {
         UUID targetId = targetIds.getFirst();
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         return target != null && gameQueryService.isCreature(gameData, target) ? targetId : null;
-    }
-
-    @CollectsSpellAbilityTrigger(value = CopySpellForEachOtherPlayerEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
-    private boolean handleCopySpellForEachOtherPlayer(TriggerMatchContext match,
-            CopySpellForEachOtherPlayerEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (trigger.spellSnapshot() != null) return false;
-
-        // Find the spell on the stack
-        StackEntry spellEntry = null;
-        for (StackEntry se : match.gameData().stack) {
-            if (se.getTargetableId().equals(sc.spellCard().getId())) {
-                spellEntry = se;
-                break;
-            }
-        }
-        if (spellEntry == null) return false;
-
-        // The spell filter fully expresses what triggers the copy — instant/sorcery type, plus
-        // (for Curse of Echoes) controlled-by-the-enchanted-player. Evaluated against the cast
-        // spell's stack entry, with the source aura's attachedTo as the enchanted-player context.
-        if (trigger.spellFilter() != null
-                && !predicateEvaluationService.matchesStackEntryPredicate(spellEntry, trigger.spellFilter(),
-                        match.permanent().getAttachedTo())) {
-            return false;
-        }
-
-        StackEntry snapshot = new StackEntry(spellEntry);
-        CopySpellForEachOtherPlayerEffect resolutionEffect =
-                new CopySpellForEachOtherPlayerEffect(snapshot, sc.castingPlayerId(), trigger.optional());
-
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(resolutionEffect))
-        ));
-        return true;
     }
 
     @CollectsSpellAbilityTrigger(value = DuelistsConvocationInternationalTriggerEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
@@ -2155,12 +1844,55 @@ public class SpellCastTriggerCollectorService {
             return match.permanent() != null && exiledSourcePermanentId != null
                     && match.permanent().getId().equals(exiledSourcePermanentId);
         }
+        if (predicate instanceof StackEntryCouldTargetAnotherPermanentPredicate couldTarget) {
+            return couldTargetAnotherPermanent(match, spellEntry, couldTarget);
+        }
         if (predicate instanceof StackEntryAllOfPredicate allOf) {
             return allOf.predicates().stream().allMatch(nested ->
                     matchesCastSpellPredicate(match, spellEntry, nested, exiledSourcePermanentId));
         }
         return targetLegalityService.matchesStackEntryPredicate(match.gameData(), spellEntry,
                 predicate, match.controllerId(), match.permanent());
+    }
+
+    /**
+     * Whether {@code spellEntry} could target a permanent matching the predicate's filter, judged from the ability's
+     * controller, other than the permanents it targets (and, for "another opponent", controlled by a player other than
+     * its target's controller): an intervening "if" (CR 603.4) the copy effect checks again as it resolves.
+     */
+    private boolean couldTargetAnotherPermanent(TriggerMatchContext match, StackEntry spellEntry,
+                                                StackEntryCouldTargetAnotherPermanentPredicate predicate) {
+        GameData gameData = match.gameData();
+        Set<UUID> spellTargets = new java.util.HashSet<>(spellEntry.getDeclaredTargetIds());
+        if (spellEntry.getTargetId() != null) {
+            spellTargets.add(spellEntry.getTargetId());
+        }
+        Set<UUID> targetControllers = new java.util.HashSet<>();
+        for (UUID targetId : spellTargets) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, targetId);
+            if (controllerId != null) {
+                targetControllers.add(controllerId);
+            }
+        }
+        Set<UUID> spellTargetableIds = Set.copyOf(validTargetService.computeValidTargetsForSpell(gameData,
+                spellEntry.getCard(), spellEntry.getControllerId(), List.of(), spellEntry.getXValue(), null)
+                .validPermanentIds());
+        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(match.controllerId());
+        for (UUID permanentId : spellTargetableIds) {
+            if (spellTargets.contains(permanentId)) {
+                continue;
+            }
+            Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
+            UUID controllerId = gameQueryService.findPermanentController(gameData, permanentId);
+            if (permanent == null || controllerId == null
+                    || predicate.otherThanTargetController() && targetControllers.contains(controllerId)) {
+                continue;
+            }
+            if (predicateEvaluationService.matchesPermanentPredicate(permanent, predicate.filter(), filterContext)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean containsChosenPlayerMill(List<CardEffect> effects) {

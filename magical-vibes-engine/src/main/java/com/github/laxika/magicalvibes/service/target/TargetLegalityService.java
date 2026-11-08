@@ -112,6 +112,8 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryIsFirstSpellOfKindT
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsNthSpellCastThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryKickedPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryHasOneTargetPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryCouldTargetAnotherPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
@@ -5925,6 +5927,13 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryTargetsOnlySinglePermanentOrPlayerPredicate) {
             return targetsOnlySinglePermanentOrPlayer(gameData, stackEntry);
         }
+        if (predicate instanceof StackEntryHasOneTargetPredicate) {
+            return hasOneTarget(stackEntry);
+        }
+        if (predicate instanceof StackEntryCouldTargetAnotherPermanentPredicate) {
+            // Judged by the spell-cast trigger collector, which enumerates the spell's legal targets.
+            return false;
+        }
         if (predicate instanceof StackEntryAnyOfPredicate anyOfPredicate) {
             for (StackEntryPredicate nested : anyOfPredicate.predicates()) {
                 if (matchesStackEntryPredicate(gameData, stackEntry, nested, controllerId, source, xValue,
@@ -6027,6 +6036,22 @@ public class TargetLegalityService {
         }
         Permanent target = gameQueryService.findPermanentById(gameData, targetIds.getFirst());
         return target != null && gameQueryService.isCreature(gameData, target);
+    }
+
+    /**
+     * Whether {@code stackEntry} has a single target: one target, chosen once (a permanent, a player, a spell or a card
+     * outside the battlefield).
+     */
+    private boolean hasOneTarget(StackEntry stackEntry) {
+        if (stackEntry.isNonTargeting()) {
+            return false;
+        }
+        if (stackEntry.getTargetId() != null) {
+            return stackEntry.getDeclaredTargetIds().isEmpty() && stackEntry.getTargetCardIds().size() <= 1
+                    && (stackEntry.getTargetCardIds().isEmpty()
+                    || stackEntry.getTargetCardIds().getFirst().equals(stackEntry.getTargetId()));
+        }
+        return stackEntry.getDeclaredTargetIds().size() + stackEntry.getTargetCardIds().size() == 1;
     }
 
     private boolean targetsOnlySinglePermanentOrPlayer(GameData gameData, StackEntry stackEntry) {

@@ -36,11 +36,12 @@ public class CopySpellForEachOtherSubtypePermanentEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CopySpellForEachOtherSubtypePermanentEffect) effect;
-        if (e.spellSnapshot() == null) return;
+        StackEntry spellSnapshot = CopySupport.triggeringSpell(gameData, entry);
+        if (spellSnapshot == null) return;
 
-        StackEntry spellSnapshot = e.spellSnapshot();
-        UUID castingPlayerId = e.castingPlayerId();
-        UUID originalTargetId = e.originalTargetId();
+        UUID castingPlayerId = spellSnapshot.getControllerId();
+        // "Each other [subtype]": other than the one the spell targeted as the ability triggered.
+        UUID originalTargetId = CopySupport.soleTargetId(entry.getTriggeringSpellSnapshot());
         CardSubtype subtype = e.subtype();
         Card spellCard = spellSnapshot.getCard();
 

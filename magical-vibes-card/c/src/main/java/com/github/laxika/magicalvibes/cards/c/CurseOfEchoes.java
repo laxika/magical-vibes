@@ -18,12 +18,9 @@ public class CurseOfEchoes extends Card {
     public CurseOfEchoes() {
         // Whenever enchanted player casts an instant or sorcery spell, each other player
         // may copy that spell and may choose new targets for the copy they control.
-        // Reuses Hive Mind's Triggers.playerCastsSpell() copy machinery; the filter restricts
-        // firing to instant/sorcery spells cast by the enchanted player.
-        addTrigger(Triggers.playerCastsSpell(),
-                new CopySpellForEachOtherPlayerEffect(true,
-                        new StackEntryAllOfPredicate(List.of(
-                                new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
-                                new StackEntryControlledByEnchantedPlayerPredicate()))));
+        addTrigger(Triggers.playerCastsSpell().withStackEntryFilter(new StackEntryAllOfPredicate(List.of(
+                        new StackEntryTypeInPredicate(Set.of(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
+                        new StackEntryControlledByEnchantedPlayerPredicate()))),
+                new CopySpellForEachOtherPlayerEffect(true));
     }
 }
