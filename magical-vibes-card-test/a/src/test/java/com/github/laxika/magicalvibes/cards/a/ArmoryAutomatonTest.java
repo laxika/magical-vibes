@@ -47,10 +47,9 @@ class ArmoryAutomatonTest extends BaseCardTest {
 
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(automaton)));
 
-        assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
-        harness.handlePermanentChosen(player1, ownEquipment.getId());
-        harness.handlePermanentChosen(player1, opposingEquipment.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(ownEquipment.getId(), opposingEquipment.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownEquipment.getId(), opposingEquipment.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -80,7 +79,7 @@ class ArmoryAutomatonTest extends BaseCardTest {
         Permanent automaton = addCreatureReady(player1, new ArmoryAutomaton());
         Permanent equipment = harness.addToBattlefieldAndReturn(player2, new AccordersShield());
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(automaton)));
-        harness.handlePermanentChosen(player1, equipment.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(equipment.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
@@ -95,7 +94,7 @@ class ArmoryAutomatonTest extends BaseCardTest {
         Permanent automaton = addCreatureReady(player1, new ArmoryAutomaton());
         Permanent equipment = harness.addToBattlefieldAndReturn(player2, new AccordersShield());
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(automaton)));
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(equipment.getAttachedTo()).isNull();
@@ -110,7 +109,7 @@ class ArmoryAutomatonTest extends BaseCardTest {
         equipment.setAttachedTo(previousHost.getId());
         Permanent automaton = addCreatureReady(player1, new ArmoryAutomaton());
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(automaton)));
-        harness.handlePermanentChosen(player1, equipment.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(equipment.getId()));
         gd.playerBattlefields.get(player1.getId()).remove(automaton);
         harness.passBothPriorities();
         if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
@@ -143,8 +142,7 @@ class ArmoryAutomatonTest extends BaseCardTest {
         Permanent removedEquipment = harness.addToBattlefieldAndReturn(player2, new AccordersShield());
         Permanent automaton = addCreatureReady(player1, new ArmoryAutomaton());
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(automaton)));
-        harness.handlePermanentChosen(player1, survivingEquipment.getId());
-        harness.handlePermanentChosen(player1, removedEquipment.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(survivingEquipment.getId(), removedEquipment.getId()));
         gd.playerBattlefields.get(player2.getId()).remove(removedEquipment);
         harness.passBothPriorities();
         if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
@@ -162,13 +160,10 @@ class ArmoryAutomatonTest extends BaseCardTest {
                 .mapToObj(i -> harness.addToBattlefieldAndReturn(player2, new AccordersShield()))
                 .toList();
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(automaton)));
-        for (int i = 0; i < 99; i++) {
-            harness.handlePermanentChosen(player1, equipment.get(i).getId());
-        }
-
-        assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
-        harness.handlePermanentChosen(player1, equipment.get(99).getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.maxCount()).isEqualTo(100);
+        harness.handleMultiplePermanentsChosen(player1, equipment.stream().map(Permanent::getId).toList());
         harness.passBothPriorities();
         if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
             harness.withAutoStop(gd.currentStep, () -> {

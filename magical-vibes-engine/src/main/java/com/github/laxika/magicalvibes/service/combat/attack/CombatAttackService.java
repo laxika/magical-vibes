@@ -84,7 +84,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanOnlyAttackAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
-import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAnotherCreatureAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
@@ -1332,17 +1331,13 @@ public class CombatAttackService {
                                     continue;
                                 }
                                 // A static single "up to N" group uses the multi-permanent choice
-                                // flow. Equipment attachments need individual selections so each
-                                // chosen Equipment is attached when the trigger resolves.
+                                // flow, which announces all of the group's targets at once and
+                                // records them for that group (CR 601.2c, 603.3d).
                                 Card attackCard = attacker.getCard();
                                 boolean staticSingleMultiTargetGroup = attackCard.getTargetGroups().size() == 1
                                         && attackCard.getTargetGroups().getFirst().getMaxTargets() > 1
                                         && attackCard.getTargetGroups().getFirst().getDynamicMinTargets() == null
                                         && attackCard.getTargetGroups().getFirst().getDynamicMaxTargets() == null;
-                                boolean attachesEquipment = abilityEffects.stream()
-                                        .anyMatch(effect -> effect instanceof AttachTargetEquipmentToTriggeringPermanentEffect
-                                                || effect instanceof MayEffect may
-                                                && may.wrapped() instanceof AttachTargetEquipmentToTriggeringPermanentEffect);
                                 boolean declaredGroupsTargetOtherAbilities = !attackCard.getTargetGroups().isEmpty()
                                         && attackCard.getTargetGroups().stream().allMatch(group ->
                                         attackCard.bindsEffectToTargetGroup(group.getIndex())
@@ -1350,7 +1345,7 @@ public class CombatAttackService {
                                                 .noneMatch(CombatAbilityReader.effectsOf(printedAttack)::contains));
                                 if (!declaredGroupsTargetOtherAbilities
                                         && (attackCard.getTargetGroups().size() > 1
-                                        || ((!staticSingleMultiTargetGroup || attachesEquipment)
+                                        || (!staticSingleMultiTargetGroup
                                         && etbTokenTargetService.needsSlotBySlotTargetSelection(attackCard)))) {
                                     gameData.queueInteraction(
                                             new PermanentChoiceContext.ETBTokenMultiTargetTrigger(

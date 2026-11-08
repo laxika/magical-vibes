@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -31,6 +32,32 @@ class MayEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
         assertThat(gd.pendingMayAbilities.getFirst().controllerId()).isEqualTo(player2Id);
         assertThat(entry.getControllerId()).isEqualTo(player1Id);
+    }
+
+    @Test
+    @DisplayName("Asks nothing for an effect that acts only on its targets when none was chosen")
+    void skipsEffectActingOnlyOnItsTargetsWithoutTargets() {
+        MayEffect mayEffect = new MayEffect(new AttachTargetEquipmentToTriggeringPermanentEffect(), "Attach?");
+        StackEntry entry = createEntry(createCard("Armory Automaton"), player1Id, List.of(mayEffect));
+
+        resolveEffect(gd, entry, mayEffect);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.resolvingMayEffectFromStack).isFalse();
+    }
+
+    @Test
+    @DisplayName("Asks for an effect that acts only on its targets when one was chosen")
+    void asksForEffectActingOnlyOnItsTargetsWithATarget() {
+        AttachTargetEquipmentToTriggeringPermanentEffect attach = new AttachTargetEquipmentToTriggeringPermanentEffect();
+        MayEffect mayEffect = new MayEffect(attach, "Attach?");
+        StackEntry entry = createEntryWithTarget(createCard("Armory Automaton"), player1Id, List.of(mayEffect),
+                UUID.randomUUID());
+
+        resolveEffect(gd, entry, mayEffect);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingMayAbilities.getFirst().effects()).containsExactly(attach);
     }
 
     @Test

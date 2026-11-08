@@ -114,6 +114,14 @@ public interface CardEffect {
     default boolean hasOptionalTarget() { return false; }
 
     /**
+     * Returns {@code true} when everything this effect does is done to its declared targets, so it
+     * does nothing when its ability was put on the stack with none chosen ("any number of target
+     * Equipment" with zero chosen, CR 601.2c, 603.3d). A "you may" wrapping only such an effect then
+     * has no choice to offer and isn't asked.
+     */
+    default boolean actsOnlyOnItsTargets() { return false; }
+
+    /**
      * Returns {@code true} if this effect resolves against the permanent its source Aura/Equipment
      * is attached to rather than against a chosen target. The activation path captures that attached
      * permanent as the ability's target before any sacrifice cost severs the attachment, so the

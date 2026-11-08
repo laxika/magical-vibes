@@ -13,4 +13,9 @@ public record AttachTargetEquipmentToTriggeringPermanentEffect() implements Card
         return TargetSpec.benign(TargetPredicates.permanent(),
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT));
     }
+
+    @Override
+    public boolean actsOnlyOnItsTargets() {
+        return true;
+    }
 }
