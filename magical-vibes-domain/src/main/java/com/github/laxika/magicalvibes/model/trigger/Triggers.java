@@ -882,11 +882,36 @@ public final class Triggers {
     }
 
     /**
-     * "Whenever a creature you control deals damage to a creature"; the effect says whether it is this creature,
-     * equipped creature or any creature, as the slot's did.
+     * "Whenever a creature you control deals damage to a creature", the creature that deals it the trigger's filter
+     * ("an Archer you control"); {@link DamageTrigger#withDamagedFilter} narrows the damaged creature and
+     * {@link DamageTrigger#withCombatDamageOnly()} the damage.
      */
     public static DamageTrigger creatureYouControlDealsDamageToCreature() {
         return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_CREATURE, ObjectRelation.YOU_CONTROL);
+    }
+
+    /**
+     * "Whenever this creature deals damage to a creature"; {@link DamageTrigger#withDamagedFilter} narrows the
+     * damaged creature ("to a Vampire") and {@link DamageTrigger#withCombatDamageOnly()} the damage.
+     */
+    public static DamageTrigger dealsDamageToCreature() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_CREATURE, ObjectRelation.THIS);
+    }
+
+    /**
+     * "Whenever equipped creature deals damage to a creature", on an Equipment: the creature it is attached to, or was
+     * attached to as that creature left the battlefield with the same damage.
+     */
+    public static DamageTrigger equippedCreatureDealsDamageToCreature() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_CREATURE, ObjectRelation.EQUIPPED);
+    }
+
+    /**
+     * "Whenever a creature deals damage to a creature", whoever controls it, the creature that deals it the
+     * trigger's filter ("whenever a Sliver deals combat damage to a creature").
+     */
+    public static DamageTrigger creatureDealsDamageToCreature() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_CREATURE, ObjectRelation.ANY);
     }
 
     /**

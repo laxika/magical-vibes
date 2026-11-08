@@ -266,9 +266,18 @@ public final class DamageAbilityReader {
      * condition's {@link Trigger#watchKey()} drops, or {@code null}.
      */
     public static PermanentPredicate filter(TriggeredAbility ability, Trigger watched) {
+        DamageTrigger damage = trigger(ability, watched);
+        return damage == null ? null : damage.filter();
+    }
+
+    /**
+     * The condition of {@code ability} watched as {@code watched}, with its filters ({@link DamageTrigger#filter()},
+     * {@link DamageTrigger#damagedFilter()}, {@link DamageTrigger#combatOnly()}), or {@code null}.
+     */
+    public static DamageTrigger trigger(TriggeredAbility ability, Trigger watched) {
         for (TriggerCondition condition : ability.conditions()) {
             if (condition.trigger() instanceof DamageTrigger damage && damage.watchKey().equals(watched)) {
-                return damage.filter();
+                return damage;
             }
         }
         return null;

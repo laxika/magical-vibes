@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileDamagedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -20,7 +20,7 @@ public class PitSpawn extends Card {
                         new PayManaCost("{B}{B}"),
                         List.of(new SacrificeSelfEffect()),
                         true));
-        addTrigger(Triggers.creatureYouControlDealsDamageToCreature(),
-                new ExileDamagedCreatureEffect());
+        addTrigger(Triggers.dealsDamageToCreature(),
+                ExileTargetPermanentEffect.ofTriggeringPermanent());
     }
 }

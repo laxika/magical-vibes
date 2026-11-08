@@ -27,7 +27,7 @@ public class StraxSontaranNurse extends Card {
                 "{2}, {T}, Sacrifice an artifact: Choose a player at random. When you do, Strax fights another target creature that player controls."
         ));
 
-        addTrigger(Triggers.creatureYouControlDealsDamageToCreature(),
+        addTrigger(Triggers.dealsDamageToCreature(),
                 new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

@@ -17,7 +17,7 @@ public class MephidrossVampire extends Card {
     public MephidrossVampire() {
         addStaticEffect(new GrantSubtypeEffect(CardSubtype.VAMPIRE, GrantScope.ALL_OWN_CREATURES));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                new TriggeredAbility(Triggers.creatureYouControlDealsDamageToCreature(),
+                new TriggeredAbility(Triggers.dealsDamageToCreature(),
                 new PutCountersOnSourceEffect(1, 1, 1)),
                 GrantScope.ALL_OWN_CREATURES));
     }

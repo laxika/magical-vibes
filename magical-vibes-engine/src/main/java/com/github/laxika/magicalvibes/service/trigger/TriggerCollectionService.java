@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesObserver;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
+import com.github.laxika.magicalvibes.model.trigger.DamageTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.LibraryTrigger;
@@ -100,12 +101,6 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
-import com.github.laxika.magicalvibes.model.effect.DamageDamagedCreatureControllerAndSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DamagedCreatureTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyCreatureDamagedByMatchingCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyDamagedCreatureAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.EquipmentDamagesOtherDefendingCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.EquipmentTapsAndLocksDamagedCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -119,17 +114,11 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.ReflectAllyDamageToDamagedCreatureControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.TapAndSkipUntapDamagedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringSpellControllerEffect;
@@ -8540,14 +8529,11 @@ public class TriggerCollectionService {
         });
     }
 
-    // ── Ally-creature-deals-damage-to-creature reflection (Greatbow Doyen) ──
-
     /**
-     * Fires ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE triggers. When a creature the watcher's
-     * controller controls (matching the effect's source filter) deals damage to a creature, the
-     * damage-source creature deals that much damage to the damaged creature's controller. Called
-     * once per source/target/damage event; {@code combatDamage} tells the combat-only listeners
-     * (Sosuke, Son of Seshiro) whether this event was combat damage.
+     * Collects the "deals damage to a creature" abilities (the four {@link DamageWatch} {@code …DEALS_DAMAGE_TO_CREATURE}
+     * watches) for one creature dealing damage to one creature: the abilities other permanents watch, then the damage
+     * source's own. Called once per source/target/damage event; {@code combatDamage} says whether it was combat damage
+     * for the combat-only triggers ({@link DamageTrigger#combatOnly()}).
      */
     public void checkAllyDealtDamageToCreatureTriggers(GameData gameData, Permanent damageSource,
             UUID damageSourceControllerId, UUID damagedCreatureControllerId, UUID damagedCreatureId,
@@ -8559,58 +8545,54 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Fires the ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE triggers that other permanents watch (the
-     * source's controller's creatures, and equipment on the source). Self-scoped triggers are fired
-     * separately by {@link #checkSelfDealtDamageToCreatureTriggers}.
+     * Collects the "deals damage to a creature" abilities of the permanents other than the damage source: "a creature
+     * you control" on its controller's permanents, "equipped creature" on the Equipment attached to it (whoever
+     * controls that Equipment) and "a creature" on every permanent. The source's own abilities are collected by
+     * {@link #checkSelfDealtDamageToCreatureTriggers}.
      */
     public void checkWatchersDealtDamageToCreatureTriggers(GameData gameData, Permanent damageSource,
             UUID damageSourceControllerId, UUID damagedCreatureControllerId, UUID damagedCreatureId,
             Permanent damagedCreature, int damage, boolean combatDamage) {
-        if (damageSource == null || damageSourceControllerId == null || damagedCreatureControllerId == null || damage <= 0) {
+        if (damageSource == null || damageSourceControllerId == null || damagedCreatureControllerId == null
+                || damagedCreatureId == null || damage <= 0) {
             return;
         }
-
+        DealsDamageToCreatureEvent event = new DealsDamageToCreatureEvent(damageSource, damageSourceControllerId,
+                damagedCreatureId, damagedCreatureControllerId, damagedCreature, damage, combatDamage);
         gameData.forEachPermanent((watcherControllerId, watcher) -> {
             // The damage source watches itself below, whether or not it survived the damage.
             if (watcher.getId().equals(damageSource.getId())) return;
-            // "a creature you control" — the damage source must be controlled by the watcher's controller.
-            // Watchers of creatures under any player's control (Toxin Sliver) are handled separately.
-            if (!watcherControllerId.equals(damageSourceControllerId)) {
-                fireAnySourceDealtDamageToCreatureTriggers(gameData, watcher, watcherControllerId, damageSource,
-                        damagedCreatureId, damage, combatDamage);
-                return;
+            List<DamageWatch> watches = new ArrayList<>(3);
+            if (watcherControllerId.equals(damageSourceControllerId)) {
+                watches.add(DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE);
             }
-
-            fireAllyDealtDamageToCreatureTrigger(gameData, watcher, damageSource, damageSourceControllerId,
-                    damagedCreatureControllerId, damagedCreatureId, damagedCreature, damage, combatDamage, false);
-        });
-
-        // "Equipped creature" triggers (Giant's Skewer) are controlled by the equipment's controller,
-        // which may be the opponent of the creature that dealt the damage.
-        gameData.forEachPermanent((equipmentControllerId, equipment) -> {
-            if (equipmentControllerId.equals(damageSourceControllerId)) return;
-            if (!isEquippedBy(gameData, equipment, damageSource)) return;
-
-            fireAllyDealtDamageToCreatureTrigger(gameData, equipment, damageSource, equipmentControllerId,
-                    damagedCreatureControllerId, damagedCreatureId, damagedCreature, damage, combatDamage, true);
+            if (isEquippedBy(gameData, watcher, damageSource)) {
+                watches.add(DamageWatch.ON_EQUIPPED_CREATURE_DEALS_DAMAGE_TO_CREATURE);
+            }
+            watches.add(DamageWatch.ON_ANY_CREATURE_DEALS_DAMAGE_TO_CREATURE);
+            collectDealsDamageToCreatureAbilities(gameData, watcher, watcherControllerId, watches, false, event);
         });
     }
 
     /**
-     * Fires the self-scoped ("Whenever this creature deals damage to a creature, …") triggers of the
-     * damage source, including ones it has been granted. Combat damage calls this before
-     * state-based actions so the grant is still present when lethal damage back from the blocker or a
-     * granting permanent dying in the same step has already moved the source off the battlefield.
+     * Collects the damage source's own "deals damage to a creature" abilities ("this creature", and "a creature you
+     * control" and "a creature", which include it), the ones it has been granted among them. Combat damage calls this
+     * before state-based actions so the grant is still present when lethal damage back from the blocker or a granting
+     * permanent dying in the same step has already moved the source off the battlefield.
      */
     public void checkSelfDealtDamageToCreatureTriggers(GameData gameData, Permanent damageSource,
             UUID damageSourceControllerId, UUID damagedCreatureControllerId, UUID damagedCreatureId,
             Permanent damagedCreature, int damage, boolean combatDamage) {
-        if (damageSource == null || damageSourceControllerId == null || damagedCreatureControllerId == null || damage <= 0) {
+        if (damageSource == null || damageSourceControllerId == null || damagedCreatureControllerId == null
+                || damagedCreatureId == null || damage <= 0) {
             return;
         }
-
-        fireAllyDealtDamageToCreatureTrigger(gameData, damageSource, damageSource, damageSourceControllerId,
-                damagedCreatureControllerId, damagedCreatureId, damagedCreature, damage, combatDamage, false);
+        collectDealsDamageToCreatureAbilities(gameData, damageSource, damageSourceControllerId,
+                List.of(DamageWatch.ON_SELF_DEALS_DAMAGE_TO_CREATURE,
+                        DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
+                        DamageWatch.ON_ANY_CREATURE_DEALS_DAMAGE_TO_CREATURE), true,
+                new DealsDamageToCreatureEvent(damageSource, damageSourceControllerId, damagedCreatureId,
+                        damagedCreatureControllerId, damagedCreature, damage, combatDamage));
     }
 
     /** Fires triggers watching a creature controlled by a player's creatures fighting. */
@@ -8771,315 +8753,116 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Fires the {@link DestroyCreatureDamagedByMatchingCreatureEffect} triggers of a watcher that cares about
-     * damage dealt by creatures under any player's control. The ability is controlled by the watcher's
-     * controller, not by the damage source's.
+     * One creature dealing damage to one creature, as the "deals damage to a creature" collector reads it.
+     *
+     * @param damageSource                the creature that dealt the damage
+     * @param damageSourceControllerId    its controller as it dealt the damage
+     * @param damagedCreatureId           the creature dealt the damage
+     * @param damagedCreatureControllerId that creature's controller as it was dealt the damage
+     * @param damagedCreature             that creature, or its snapshot before state-based actions; may be {@code null}
+     * @param damage                      the damage dealt
+     * @param combatDamage                whether it was combat damage
      */
-    private void fireAnySourceDealtDamageToCreatureTriggers(GameData gameData, Permanent watcher,
-            UUID watcherControllerId, Permanent damageSource, UUID damagedCreatureId, int damage,
-            boolean combatDamage) {
-        if (watcher.isFaceDown() || watcher.isLosesAllAbilitiesUntilEndOfTurn()
-                || gameQueryService.hasLostPrintedAbilities(gameData, watcher)) {
-            return;
-        }
-        // Only the "a creature under any player's control" effects (Toxin Sliver) apply here; filtered abilities
-        // watch your own creatures.
-        for (CardEffect effect : DamageAbilityReader.effectsOf(DamageAbilityReader.read(DamageAbilityReader.printed(
-                watcher.getCard(), DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE),
-                DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE.trigger()))) {
-            if (effect instanceof DestroyCreatureDamagedByMatchingCreatureEffect destroy) {
-                queueAnySourceDestroyTrigger(gameData, watcher, watcherControllerId, destroy, damageSource,
-                        damagedCreatureId, combatDamage);
-            }
-        }
-    }
-
-    private void queueAnySourceDestroyTrigger(GameData gameData, Permanent watcher, UUID watcherControllerId,
-            DestroyCreatureDamagedByMatchingCreatureEffect destroy, Permanent damageSource,
-            UUID damagedCreatureId, boolean combatDamage) {
-        if (damagedCreatureId == null || (destroy.combatDamageOnly() && !combatDamage)) {
-            return;
-        }
-        if (destroy.sourceFilter() != null
-                && !predicateEvaluationService.matchesPermanentPredicate(damageSource, destroy.sourceFilter(),
-                FilterContext.of(gameData).withSourcePermanentSnapshot(watcher))) {
-            return;
-        }
-        StackEntry trigger = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                watcher.getCard(),
-                watcherControllerId,
-                watcher.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new DestroyTargetPermanentEffect(destroy.cannotBeRegenerated()))),
-                damagedCreatureId,
-                watcher.getId());
-        trigger.setNonTargeting(true);
-        gameData.stack.add(trigger);
-        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
-        log.info("Game {} - {} destroys the creature dealt damage by {}", gameData.id,
-                watcher.getCard().getName(), damageSource.getCard().getName());
-    }
-
-    private void fireAllyDealtDamageToCreatureTrigger(GameData gameData, Permanent watcher, Permanent damageSource,
-            UUID damageSourceControllerId, UUID damagedCreatureControllerId, UUID damagedCreatureId,
-            Permanent damagedCreature, int damage, boolean combatDamage, boolean equipmentScopedOnly) {
-        if (watcher.isLosesAllAbilitiesUntilEndOfTurn() || gameQueryService.hasLostPrintedAbilities(gameData, watcher)) {
-            return;
-        }
-        Trigger toCreature = DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE.trigger();
-        // A face-down permanent has no printed abilities (CR 708.2).
-        List<TriggeredAbility> abilities = watcher.isFaceDown()
-                ? new ArrayList<>()
-                : new ArrayList<>(DamageAbilityReader.printed(watcher.getCard(),
-                        DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE));
-        // Abilities granted until end of turn (Cruel Deceiver) live on the permanent, not the card.
-        abilities.addAll(WatchedAbilities.temporary(watcher, toCreature));
-        if (watcher.getId().equals(damageSource.getId())) {
-            abilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
-                    gameData, watcher, damageSourceControllerId, toCreature));
-        }
-        // "Whenever a [filtered] creature you control deals damage to a creature" (Ohabi Caleria): on the dealer.
-        List<CardEffect> effects = DamageAbilityReader.effects(abilities, toCreature, filter ->
-                damageFilterMatches(gameData, watcher, damageSourceControllerId, filter, damageSource));
-
-        TriggerContext context = new TriggerContext.CreatureDealsDamageToCreature(
-                damageSource, damagedCreatureId, damage, combatDamage,
-                damagedCreature, damagedCreatureControllerId);
-
-        for (CardEffect effect : effects) {
-            // An attached permanent controlled by the damaged creature's opponent only contributes its
-            // equipped-creature triggers; its ally-scoped listeners watch only their own controller's creatures.
-            if (equipmentScopedOnly && !(effect instanceof EquipmentDamagesOtherDefendingCreaturesEffect)
-                    && !(effect instanceof EquipmentTapsAndLocksDamagedCreatureEffect)
-                    && !(effect instanceof DamagedCreatureTriggerEffect equipped && equipped.equipmentScoped())) {
-                continue;
-            }
-            if (effect instanceof DestroyCreatureDamagedByMatchingCreatureEffect destroy) {
-                queueAnySourceDestroyTrigger(gameData, watcher, damageSourceControllerId, destroy, damageSource,
-                        damagedCreatureId, combatDamage);
-                continue;
-            }
-            TriggerMatchContext match = new TriggerMatchContext(gameData, watcher, damageSourceControllerId, effect);
-            if (dispatch(match, DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE, effect, context)) {
-                continue;
-            }
-            if (effect instanceof ReflectAllyDamageToDamagedCreatureControllerEffect reflect) {
-                if (reflect.combatOnly() && !combatDamage) continue;
-                if (reflect.sourceMustBeWatcher() && !watcher.getId().equals(damageSource.getId())) continue;
-                if (!reflect.sourceMustBeWatcher() && reflect.sourceFilter() != null
-                        && !predicateEvaluationService.matchesPermanentPredicate(gameData, damageSource, reflect.sourceFilter())) {
-                    continue;
-                }
-
-                // "That creature deals that much damage to that creature's controller": the creature that dealt the
-                // damage is the entry's source, "that much" its event value and "that creature's controller" the
-                // controller of its triggering permanent as the ability resolves (CR 608.2h).
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        damageSource.getCard(),
-                        damageSourceControllerId,
-                        damageSource.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(reflect.triggeredEffect())),
-                        (UUID) null,
-                        damageSource.getId()
-                );
-                trigger.setNonTargeting(true);
-                trigger.setEventValue(damage);
-                trigger.setTriggeringPermanentId(damagedCreatureId);
-                trigger.setTriggeringPermanentControllerId(damagedCreatureControllerId);
-                gameData.stack.add(trigger);
-
-                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
-                if (reflect.lifeLoss()) {
-                    log.info("Game {} - {} causes {} life loss to {}", gameData.id,
-                            watcher.getCard().getName(), damage,
-                            gameData.playerIdToName.get(damagedCreatureControllerId));
-                } else {
-                    log.info("Game {} - {} reflects {} damage to {}", gameData.id,
-                            watcher.getCard().getName(), damage,
-                            gameData.playerIdToName.get(damagedCreatureControllerId));
-                }
-            } else if (effect instanceof DamageDamagedCreatureControllerAndSelfEffect punisher) {
-                // "this creature" — fire only when the watcher itself dealt the damage.
-                if (!watcher.getId().equals(damageSource.getId())) continue;
-
-                // This creature deals N damage to that creature's controller and M damage to you.
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        damageSource.getCard(),
-                        damageSourceControllerId,
-                        damageSource.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(
-                                new com.github.laxika.magicalvibes.model.effect.DealDamageToCombatOpponentControllerEffect(
-                                        new com.github.laxika.magicalvibes.model.amount.Fixed(punisher.amountToDamagedCreatureController())),
-                                new DealDamageToPlayersEffect(punisher.amountToSelf(), DamageRecipient.CONTROLLER))),
-                        damagedCreatureId,
-                        damageSource.getId()
-                );
-                trigger.setNonTargeting(true);
-                trigger.setTriggeringPermanentControllerId(damagedCreatureControllerId);
-                trigger.setSourcePermanentSnapshot(new Permanent(damageSource));
-                gameData.stack.add(trigger);
-
-                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
-                log.info("Game {} - {} deals {} to {} and {} to its controller", gameData.id,
-                        watcher.getCard().getName(), punisher.amountToDamagedCreatureController(),
-                        gameData.playerIdToName.get(damagedCreatureControllerId), punisher.amountToSelf());
-            } else if (effect instanceof DamagedCreatureTriggerEffect damagedCreatureTrigger) {
-                if (damagedCreatureTrigger.combatDamageOnly() && !combatDamage) continue;
-                Permanent triggerSource = damageSource;
-                if (damagedCreatureTrigger.equipmentScoped()) {
-                    if (!isEquippedBy(gameData, watcher, damageSource)) continue;
-                    triggerSource = watcher;
-                } else if (!watcher.getId().equals(damageSource.getId())) {
-                    // "this creature" — fire only when the watcher itself dealt the damage.
-                    continue;
-                }
-                if (damagedCreatureId == null) continue;
-                if (damagedCreatureTrigger.requiresExcessDamage()
-                        && !gameData.permanentsDealtExcessDamageThisTurn.contains(damagedCreatureId)) {
-                    continue;
-                }
-                var damagedCreatureFilter = damagedCreatureTrigger.damagedCreatureFilter();
-                if (damagedCreatureFilter != null && (damagedCreature == null
-                        || !predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, damagedCreature, damagedCreatureFilter))) {
-                    continue;
-                }
-
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        triggerSource.getCard(),
-                        damageSourceControllerId,
-                        triggerSource.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(damagedCreatureTrigger.triggeredEffect())),
-                        damagedCreatureId,
-                        triggerSource.getId()
-                );
-                if (damagedCreatureTrigger.useDamagedCreatureAsTriggeringPermanent()) {
-                    trigger.setTriggeringPermanentId(damagedCreatureId);
-                    trigger.setTriggeringPermanentControllerId(damagedCreatureControllerId);
-                }
-                trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
-
-                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
-                log.info("Game {} - {} will resolve its damaged-creature trigger", gameData.id,
-                        watcher.getCard().getName());
-            } else if (effect instanceof TapAndSkipUntapDamagedCreatureEffect) {
-                // "this creature" — fire only when the watcher itself dealt the damage.
-                if (!watcher.getId().equals(damageSource.getId())) continue;
-                if (damagedCreatureId == null) continue;
-
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        damageSource.getCard(),
-                        damageSourceControllerId,
-                        damageSource.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(
-                                new TapPermanentsEffect(TapUntapScope.TARGET),
-                                new SkipNextUntapEffect(TapUntapScope.TARGET))),
-                        damagedCreatureId,
-                        damageSource.getId()
-                );
-                trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
-
-                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
-                log.info("Game {} - {} taps and locks the creature it damaged", gameData.id,
-                        watcher.getCard().getName());
-            } else if (effect instanceof EquipmentTapsAndLocksDamagedCreatureEffect) {
-                // "equipped creature" — the watcher is the Equipment, so it must be attached to
-                // the creature that dealt the damage. Last-known attachment is valid when that
-                // creature died to the same damage event.
-                if (!isEquippedBy(gameData, watcher, damageSource)) continue;
-                if (damagedCreatureId == null) continue;
-
-                UUID watcherControllerId = gameData.findControllerOf(watcher);
-                if (watcherControllerId == null) continue;
-
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        watcher.getCard(),
-                        watcherControllerId,
-                        watcher.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(
-                                new TapPermanentsEffect(TapUntapScope.TARGET),
-                                DoesntUntapEffect.targetWhileSourceOnBattlefield())),
-                        damagedCreatureId,
-                        watcher.getId()
-                );
-                trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
-
-                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
-                log.info("Game {} - {} taps and locks the creature damaged by its equipped creature",
-                        gameData.id, watcher.getCard().getName());
-            } else if (effect instanceof DestroyDamagedCreatureAtEndOfCombatEffect delayedDestroy) {
-                if (delayedDestroy.combatDamageOnly() && !combatDamage) continue;
-                if (delayedDestroy.selfOnly() && !watcher.getId().equals(damageSource.getId())) continue;
-                if (damagedCreatureId == null) continue;
-                if (delayedDestroy.sourceFilter() != null
-                        && !predicateEvaluationService.matchesPermanentPredicate(
-                        damageSource,
-                        delayedDestroy.sourceFilter(),
-                        FilterContext.of(gameData).withSourcePermanentSnapshot(watcher))) {
-                    continue;
-                }
-
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        watcher.getCard(),
-                        damageSourceControllerId,
-                        watcher.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(new DestroyTargetPermanentAtEndOfCombatEffect())),
-                        damagedCreatureId,
-                        watcher.getId()
-                );
-                trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
-
-                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
-                log.info("Game {} - {} schedules the damaged creature for destruction at end of combat",
-                        gameData.id, watcher.getCard().getName());
-            } else if (effect instanceof EquipmentDamagesOtherDefendingCreaturesEffect splash) {
-                // "equipped creature" — the watcher is the Equipment, so it must be attached to
-                // the creature that dealt the damage. The ability triggered when the damage was
-                // dealt, so a host that has already died to the same combat damage (which detaches
-                // the Equipment) still counts, read from last-known attachment.
-                if (!isEquippedBy(gameData, watcher, damageSource)) continue;
-                if (damagedCreatureId == null) continue;
-                if (!wasBlocking(gameData, damageSource, damagedCreatureId, combatDamage)) continue;
-
-                // The Equipment deals that much damage (the entry's event value) to each other creature (not its
-                // triggering permanent) defending player controls (the entry's non-targeting player).
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        watcher.getCard(),
-                        damageSourceControllerId,
-                        watcher.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(splash.triggeredEffect())),
-                        damagedCreatureControllerId,
-                        watcher.getId()
-                );
-                trigger.setNonTargeting(true);
-                trigger.setEventValue(damage);
-                trigger.setTriggeringPermanentId(damagedCreatureId);
-                gameData.stack.add(trigger);
-
-                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
-                log.info("Game {} - {} deals {} damage to each other creature {} controls", gameData.id,
-                        watcher.getCard().getName(), damage,
-                        gameData.playerIdToName.get(damagedCreatureControllerId));
-            }
-        }
+    private record DealsDamageToCreatureEvent(Permanent damageSource, UUID damageSourceControllerId,
+                                              UUID damagedCreatureId, UUID damagedCreatureControllerId,
+                                              Permanent damagedCreature, int damage, boolean combatDamage) {
     }
 
     /**
-     * Whether the creature that was just dealt damage was a blocking creature. Lethal damage may
-     * already have moved it off the battlefield, in which case the fallback reads the damage source:
-     * a creature only deals combat damage to creatures blocking it while it is attacking.
+     * Collects {@code watcher}'s abilities of {@code watches} for {@code event}: the printed ones (none while face down,
+     * CR 708.2), the ones granted until a time or until it leaves, and, when {@code readGrants} (the damage source's
+     * own), the ones a static ability grants it, unless it has lost its abilities. Each ability triggers when its trigger's filters match (the creature that dealt the
+     * damage, the creature dealt it, combat only) and its intervening "if" holds (CR 603.4), and goes on the stack as
+     * one object with the effects the card wrote (CR 603.3): the creature dealt the damage is its triggering
+     * permanent, the damage its event value. A one-effect ability whose effect has a class-keyed handler on the watch
+     * (Greatbow Doyen's, Maarika's) goes to that handler instead.
      */
+    private void collectDealsDamageToCreatureAbilities(GameData gameData, Permanent watcher, UUID controllerId,
+            List<DamageWatch> watches, boolean readGrants, DealsDamageToCreatureEvent event) {
+        if (watcher.isLosesAllAbilitiesUntilEndOfTurn() || gameQueryService.hasLostPrintedAbilities(gameData, watcher)) {
+            return;
+        }
+        TriggerJudge judge = conditionEvaluationService.judge(gameData,
+                ConditionContext.forPermanent(watcher, controllerId), event.damage());
+        TriggerContext context = new TriggerContext.CreatureDealsDamageToCreature(
+                event.damageSource(), event.damagedCreatureId(), event.damage(), event.combatDamage(),
+                event.damagedCreature(), event.damagedCreatureControllerId());
+        for (DamageWatch watch : watches) {
+            Trigger watched = watch.trigger();
+            List<TriggeredAbility> abilities = watcher.isFaceDown()
+                    ? new ArrayList<>()
+                    : new ArrayList<>(DamageAbilityReader.printed(watcher.getCard(), watch));
+            abilities.addAll(WatchedAbilities.temporary(watcher, watched));
+            abilities.addAll(WatchedAbilities.persistent(watcher, watched));
+            if (readGrants) {
+                abilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
+                        gameData, watcher, controllerId, watched));
+            }
+            for (TriggeredAbility ability : judge.filter(abilities)) {
+                DamageTrigger trigger = DamageAbilityReader.trigger(ability, watched);
+                if (trigger.combatOnly() && !event.combatDamage()) continue;
+                if (trigger.filter() != null && !damageFilterMatches(gameData, watcher, controllerId,
+                        trigger.filter(), event.damageSource())) {
+                    continue;
+                }
+                if (trigger.damagedFilter() != null && !damageFilterMatches(gameData, watcher, controllerId,
+                        trigger.damagedFilter(), damagedCreatureOf(gameData, event))) {
+                    continue;
+                }
+                List<DamageAbilityReader.DamageEffect> read = DamageAbilityReader.read(ability, watched);
+                for (DamageAbilityReader.DamageEffect effect : read) {
+                    DamageAbilityReader.requireNoLimitOrMultiplicity(effect, watched);
+                }
+                List<CardEffect> effects = DamageAbilityReader.effectsOf(read);
+                if (effects.isEmpty()) continue;
+                TriggerMatchContext match = new TriggerMatchContext(gameData, watcher, controllerId, effects.getFirst());
+                if (effects.size() == 1 && registry.handles(watch, effects.getFirst())) {
+                    dispatch(match, watch, effects.getFirst(), context);
+                    continue;
+                }
+                dispatch(match, watch, effects.getFirst(), context, () -> {
+                    queueDealsDamageToCreatureAbility(gameData, watcher, controllerId, effects, event);
+                    return true;
+                });
+            }
+        }
+    }
+
+    /** The creature {@code event} dealt damage to, as it was dealt the damage, or as it is now. */
+    private Permanent damagedCreatureOf(GameData gameData, DealsDamageToCreatureEvent event) {
+        return event.damagedCreature() != null
+                ? event.damagedCreature()
+                : gameQueryService.findPermanentById(gameData, event.damagedCreatureId());
+    }
+
+    /**
+     * Puts a "deals damage to a creature" ability of {@code watcher} on the stack: its source and controller the
+     * watcher's, the creature dealt the damage its triggering permanent (with that creature's controller as it was
+     * dealt the damage, for "that creature's controller" once it has left), the damage its event value. The effects
+     * read them as they resolve ("destroy that creature", "tap that creature", "that much").
+     */
+    private void queueDealsDamageToCreatureAbility(GameData gameData, Permanent watcher, UUID controllerId,
+            List<CardEffect> effects, DealsDamageToCreatureEvent event) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                controllerId,
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(effects),
+                (UUID) null,
+                watcher.getId());
+        entry.setNonTargeting(true);
+        entry.setEventValue(event.damage());
+        entry.setTriggeringPermanentId(event.damagedCreatureId());
+        entry.setTriggeringPermanentControllerId(event.damagedCreatureControllerId());
+        entry.setSourcePermanentSnapshot(new Permanent(watcher));
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+        log.info("Game {} - {} triggers after {} dealt {} damage to a creature", gameData.id,
+                watcher.getCard().getName(), event.damageSource().getCard().getName(), event.damage());
+    }
+
     private boolean isEquippedBy(GameData gameData, Permanent equipment, Permanent host) {
         return isEquippedBy(gameData, equipment, host.getId());
     }
@@ -9089,19 +8872,6 @@ public class TriggerCollectionService {
         // Only a host that already left the battlefield may be matched on last-known attachment.
         return hostId.equals(equipment.getLastAttachedTo())
                 && gameQueryService.findPermanentById(gameData, hostId) == null;
-    }
-
-    /**
-     * Whether the creature that was just dealt damage was a blocking creature. For combat damage the
-     * damage source answers it: a creature deals combat damage to creatures blocking it only while it
-     * is attacking (a blocking creature damages the attacker instead). The damaged creature's own
-     * blocking flag is unusable there — lethal damage may already have removed it from the
-     * battlefield, and combat state is torn down when the creature it blocked dies.
-     */
-    private boolean wasBlocking(GameData gameData, Permanent damageSource, UUID damagedCreatureId, boolean combatDamage) {
-        if (combatDamage) return damageSource.isAttacking();
-        Permanent damaged = gameQueryService.findPermanentById(gameData, damagedCreatureId);
-        return damaged != null && damaged.isBlocking();
     }
 
     // ── Any-creature-dealt-damage triggers ─────────────────────────────

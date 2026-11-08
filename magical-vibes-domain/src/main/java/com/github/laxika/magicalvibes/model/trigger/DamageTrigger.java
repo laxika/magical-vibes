@@ -24,17 +24,34 @@ import java.util.Objects;
  *                 that deals the damage (each of the creatures for "one or more creatures you control deal damage").
  *                 The damage collectors read it from the ability, through {@code DamageAbilityReader}, so
  *                 {@link #watchKey()} drops it
+ * @param damagedFilter what the creature dealt the damage must be, or {@code null} for any: "whenever this creature
+ *                 deals damage to a Vampire" is {@code Triggers.dealsDamageToCreature().withDamagedFilter(new
+ *                 PermanentHasSubtypePredicate(VAMPIRE))}. Only a {@link DamageEvent#DEALS_DAMAGE_TO_CREATURE}
+ *                 trigger has one, judged on the damaged creature as the damage was dealt; {@link #watchKey()} drops it
+ * @param combatOnly whether only combat damage counts: "whenever this creature deals combat damage to a creature".
+ *                 Only a {@link DamageEvent#DEALS_DAMAGE_TO_CREATURE} trigger has it; {@link #watchKey()} drops it
  */
-public record DamageTrigger(DamageEvent event, ObjectRelation relation, PermanentPredicate filter) implements Trigger {
+public record DamageTrigger(DamageEvent event, ObjectRelation relation, PermanentPredicate filter,
+                            PermanentPredicate damagedFilter, boolean combatOnly) implements Trigger {
 
     public DamageTrigger {
         Objects.requireNonNull(event, "event");
         Objects.requireNonNull(relation, "relation");
+        if ((damagedFilter != null || combatOnly) && event != DamageEvent.DEALS_DAMAGE_TO_CREATURE) {
+            throw new IllegalArgumentException(
+                    "Only a deals-damage-to-a-creature trigger has a damaged-creature filter or is combat only: "
+                            + event);
+        }
     }
 
     /** A trigger on any permanent that relates to the source as {@code relation} says. */
     public DamageTrigger(DamageEvent event, ObjectRelation relation) {
         this(event, relation, null);
+    }
+
+    /** A trigger on a permanent that relates to the source as {@code relation} says and matches {@code filter}. */
+    public DamageTrigger(DamageEvent event, ObjectRelation relation, PermanentPredicate filter) {
+        this(event, relation, filter, null, false);
     }
 
     /**
@@ -46,13 +63,36 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
         if (this.filter != null) {
             throw new IllegalStateException("This damage trigger already has a filter: " + this);
         }
-        return new DamageTrigger(event, relation, filter);
+        return new DamageTrigger(event, relation, filter, damagedFilter, combatOnly);
     }
 
-    /** The trigger without its filter, so the {@code DamageWatch} of the unfiltered trigger finds the ability. */
+    /**
+     * This {@link DamageEvent#DEALS_DAMAGE_TO_CREATURE} trigger narrowed to a damaged creature that matches
+     * {@code damagedFilter}: "whenever this creature deals damage to a Vampire".
+     */
+    public DamageTrigger withDamagedFilter(PermanentPredicate damagedFilter) {
+        Objects.requireNonNull(damagedFilter, "damagedFilter");
+        if (this.damagedFilter != null) {
+            throw new IllegalStateException("This damage trigger already has a damaged-creature filter: " + this);
+        }
+        return new DamageTrigger(event, relation, filter, damagedFilter, combatOnly);
+    }
+
+    /**
+     * This {@link DamageEvent#DEALS_DAMAGE_TO_CREATURE} trigger narrowed to combat damage: "whenever this creature
+     * deals combat damage to a creature".
+     */
+    public DamageTrigger withCombatDamageOnly() {
+        return new DamageTrigger(event, relation, filter, damagedFilter, true);
+    }
+
+    /**
+     * The trigger without its filters and combat-only narrowing, so the {@code DamageWatch} of the unfiltered trigger
+     * finds the ability.
+     */
     @Override
     public Trigger watchKey() {
-        return filter == null ? this : new DamageTrigger(event, relation);
+        return filter == null && damagedFilter == null && !combatOnly ? this : new DamageTrigger(event, relation);
     }
 
     /**
@@ -74,7 +114,12 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
         DEALS_DAMAGE_TO_OPPONENT,
         /** A permanent deals damage to you. */
         DEALS_DAMAGE_TO_YOU,
-        /** A source deals damage to a creature. */
+        /**
+         * A creature deals damage to a creature. The {@link ObjectRelation} is the creature that deals it
+         * ({@link ObjectRelation#THIS}, {@link ObjectRelation#EQUIPPED}, {@link ObjectRelation#YOU_CONTROL},
+         * {@link ObjectRelation#ANY}), the filter that creature, the damaged-creature filter the creature dealt the
+         * damage.
+         */
         DEALS_DAMAGE_TO_CREATURE,
         /** A creature deals damage to a planeswalker. */
         DEALS_DAMAGE_TO_PLANESWALKER,

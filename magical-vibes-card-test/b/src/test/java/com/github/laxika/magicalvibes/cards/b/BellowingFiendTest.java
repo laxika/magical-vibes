@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.cards.w.WindDrake;
 import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.cards.i.InvasionOfInnistrad;
 import com.github.laxika.magicalvibes.cards.p.PreyUpon;
+import com.github.laxika.magicalvibes.cards.r.RoamingThrone;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -48,6 +50,27 @@ class BellowingFiendTest extends BaseCardTest {
         // 3 damage to the blocker's controller (player2) and 3 damage to Bellowing Fiend's controller (player1).
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(27);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
+    }
+
+    @Test
+    @CardUsed({BellowingFiend.class, RoamingThrone.class, WindDrake.class})
+    @DisplayName("Roaming Throne naming Spirit makes its ability trigger an additional time")
+    void triggersAnAdditionalTimeWithRoamingThrone() {
+        Permanent fiend = addCreatureReady(player1, new BellowingFiend());
+        fiend.setAttacking(true);
+        Permanent throne = harness.addToBattlefieldAndReturn(player1, new RoamingThrone());
+        throne.setChosenSubtype(CardSubtype.SPIRIT);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 30);
+
+        blockAttacker(player2, new WindDrake(), 0);
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        // Each of the two instances deals 3 damage to the blocker's controller and 3 to Bellowing Fiend's controller.
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(24);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(14);
     }
 
     @Test

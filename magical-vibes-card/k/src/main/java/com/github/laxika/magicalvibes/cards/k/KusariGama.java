@@ -4,10 +4,18 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.EquipmentDamagesOtherDefendingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -29,8 +37,13 @@ public class KusariGama extends Card {
 
         // Whenever equipped creature deals damage to a blocking creature, this Equipment deals that
         // much damage to each other creature defending player controls.
-        addTrigger(Triggers.creatureYouControlDealsDamageToCreature(),
-                new EquipmentDamagesOtherDefendingCreaturesEffect());
+        addTrigger(Triggers.equippedCreatureDealsDamageToCreature().withDamagedFilter(new PermanentIsBlockingPredicate()),
+                new DealDamageToEachMatchingPermanentEffect(new EventValue(),
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentIsTriggeringPermanentPredicate()),
+                                new PermanentControlledByDefendingPlayerPredicate())),
+                        EachPermanentScope.ALL_PLAYERS));
 
         // Equip {3}
         addActivatedAbility(new EquipActivatedAbility("{3}"));

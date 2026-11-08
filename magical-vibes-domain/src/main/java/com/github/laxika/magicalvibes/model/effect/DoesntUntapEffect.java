@@ -17,6 +17,9 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@link #targetWhileSourceOnBattlefield()} — {@code TARGET}+{@code WHILE_SOURCE_ON_BATTLEFIELD}:
  *       the chosen target doesn't untap while the source stays on the battlefield (Dungeon Geists,
  *       Time of Ice). Resolved on the stack by {@code DoesntUntapEffectHandler}.</li>
+ *   <li>{@link #triggeringWhileSourceOnBattlefield()} — {@code TRIGGERING}+{@code WHILE_SOURCE_ON_BATTLEFIELD}:
+ *       the stack entry's triggering permanent doesn't untap while the source stays on the battlefield (Neko-Te's
+ *       "that creature doesn't untap … for as long as this Equipment remains on the battlefield").</li>
  *   <li>{@link #targetWhileSourceControlled()} — {@code TARGET}+{@code WHILE_SOURCE_CONTROLLED}:
  *       the chosen target doesn't untap while the ability's controller controls its source
  *       (Wall of Stolen Identity).</li>
@@ -53,7 +56,8 @@ public record DoesntUntapEffect(TapUntapScope scope, UntapLockCondition conditio
             if (!staticScope) {
                 throw new IllegalArgumentException("ALWAYS requires a SELF or ENCHANTED scope, got " + scope);
             }
-        } else if (scope != TapUntapScope.TARGET) {
+        } else if (scope != TapUntapScope.TARGET
+                && !(scope == TapUntapScope.TRIGGERING && condition == UntapLockCondition.WHILE_SOURCE_ON_BATTLEFIELD)) {
             throw new IllegalArgumentException(condition + " requires a TARGET scope, got " + scope);
         }
     }
@@ -74,6 +78,10 @@ public record DoesntUntapEffect(TapUntapScope scope, UntapLockCondition conditio
     }
 
     /** {@code TARGET}+{@code WHILE_SOURCE_TAPPED}: target doesn't untap while the source stays tapped. */
+    public static DoesntUntapEffect triggeringWhileSourceOnBattlefield() {
+        return new DoesntUntapEffect(TapUntapScope.TRIGGERING, UntapLockCondition.WHILE_SOURCE_ON_BATTLEFIELD);
+    }
+
     public static DoesntUntapEffect targetWhileSourceTapped() {
         return new DoesntUntapEffect(TapUntapScope.TARGET, UntapLockCondition.WHILE_SOURCE_TAPPED);
     }

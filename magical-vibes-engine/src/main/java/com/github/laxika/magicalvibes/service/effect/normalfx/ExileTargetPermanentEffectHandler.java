@@ -36,8 +36,13 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
         // Multi-target / optional group: exile each chosen target for this effect's group
         // (targetsForEffect). An empty group ("any number" / "up to N" with none chosen) exiles
         // nothing — do not fall back to List.of(null) when targetId is unset.
-        List<UUID> targetIds = entry.targetsForEffect(effect);
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
+        // "Exile that creature" (ofTriggeringPermanent): the triggering permanent, if it is still on the battlefield.
+        List<UUID> targetIds = exile.triggeringPermanent()
+                ? java.util.Collections.singletonList(entry.getTriggeringPermanentId())
+                : entry.targetsForEffect(effect);
+        if (exile.triggeringPermanent()) {
+            targetIds = targetIds.get(0) == null ? List.of() : targetIds;
+        } else if (targetIds.isEmpty() && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
         } else if (targetIds.isEmpty() && entry.getCard().getTargetGroups().size() == 1) {
             targetIds = entry.getTargetIds();

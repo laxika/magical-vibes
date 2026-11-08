@@ -62,6 +62,15 @@ public class TriggerCollectorRegistry {
         return false;
     }
 
+    /**
+     * Whether {@link #dispatch} finds a handler for {@code effect} on {@code slot}: one registered for its class, or the
+     * slot's default handler.
+     */
+    public boolean handles(Object slot, CardEffect effect) {
+        return handlers.containsKey(new TriggerKey(slot, effect.getClass()))
+                || handlers.containsKey(new TriggerKey(slot, CardEffect.class));
+    }
+
     /** Dispatches an effect stored on an emblem to its class-keyed handler. */
     public boolean dispatchEmblem(EmblemTriggerMatchContext match, CardEffect effect, TriggerContext context) {
         EmblemTriggerCollectorHandler handler = emblemHandlers.get(effect.getClass());

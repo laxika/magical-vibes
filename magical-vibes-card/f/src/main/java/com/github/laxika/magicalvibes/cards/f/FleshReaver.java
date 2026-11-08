@@ -17,7 +17,7 @@ public class FleshReaver extends Card {
         DealDamageToPlayersEffect damageBack =
                 new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.CONTROLLER);
         addTrigger(List.of(
-                        Triggers.creatureYouControlDealsDamageToCreature(),
+                        Triggers.dealsDamageToCreature(),
                         Triggers.sourceYouControlDealsDamageToOpponent()),
                 damageBack);
     }

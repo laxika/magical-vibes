@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 /**
  * Resolves {@link DestroyTargetPermanentAtEndOfCombatEffect}: schedule the targeted permanent for
  * destruction at end of combat via {@link DelayedPermanentAction} (regeneration/indestructible
@@ -33,7 +35,8 @@ public class DestroyTargetPermanentAtEndOfCombatEffectHandler implements NormalE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         DestroyTargetPermanentAtEndOfCombatEffect destroy = (DestroyTargetPermanentAtEndOfCombatEffect) effect;
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        UUID targetId = destroy.triggeringPermanent() ? entry.getTriggeringPermanentId() : entry.getTargetId();
+        Permanent target = targetId == null ? null : gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return;
         }

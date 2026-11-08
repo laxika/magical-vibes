@@ -18,7 +18,7 @@ import java.util.List;
 public class QuestForTheGemblades extends Card {
 
     public QuestForTheGemblades() {
-        addTrigger(Triggers.creatureYouControlDealsDamageToCreature(),
+        addTrigger(Triggers.creatureYouControlDealsDamageToCreature().withCombatDamageOnly(),
                 new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST),
                         "Put a quest counter on Quest for the Gemblades?"));
 

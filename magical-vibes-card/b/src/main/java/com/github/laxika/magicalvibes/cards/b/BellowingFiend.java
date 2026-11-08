@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DamageDamagedCreatureControllerAndSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "7ED", collectorNumber = "119")
@@ -12,7 +13,8 @@ public class BellowingFiend extends Card {
     public BellowingFiend() {
         // Whenever this creature deals damage to a creature, this creature deals 3 damage to that
         // creature's controller and 3 damage to you.
-        addTrigger(Triggers.creatureYouControlDealsDamageToCreature(),
-                new DamageDamagedCreatureControllerAndSelfEffect(3, 3));
+        addTrigger(Triggers.dealsDamageToCreature(),
+                new DealDamageToPlayersEffect(3, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER),
+                new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER));
     }
 }

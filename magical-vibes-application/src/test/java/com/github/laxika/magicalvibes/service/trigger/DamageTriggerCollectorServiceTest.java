@@ -14,7 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsCo
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDamageSourceCreatureOrSpellControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileDamagedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReflectAllyDamageToDamagedCreatureControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -41,6 +42,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -341,46 +343,6 @@ class DamageTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("queues a may ability for combat damage to a creature")
-    void queuesMayForAllyCombatDamageToCreature() {
-        Permanent quest = createPermanent("Quest for the Gemblades");
-        Permanent source = createPermanent("Grizzly Bears");
-        Permanent damaged = createPermanent("Serra Angel");
-        MayEffect effect = new MayEffect(
-                new PutCountersOnSelfEffect(CounterType.QUEST),
-                "Put a quest counter on Quest for the Gemblades?");
-        var ctx = new TriggerContext.CreatureDealsDamageToCreature(source, damaged.getId(), 2, true);
-
-        boolean result = registry.dispatch(
-                match(quest, player1Id, effect),
-                DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE, effect, ctx);
-
-        assertThat(result).isTrue();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
-        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(quest.getId());
-    }
-
-    @Test
-    @DisplayName("does not queue a may ability for noncombat damage to a creature")
-    void doesNotQueueMayForNoncombatDamageToCreature() {
-        Permanent quest = createPermanent("Quest for the Gemblades");
-        Permanent source = createPermanent("Grizzly Bears");
-        Permanent damaged = createPermanent("Serra Angel");
-        MayEffect effect = new MayEffect(
-                new PutCountersOnSelfEffect(CounterType.QUEST),
-                "Put a quest counter on Quest for the Gemblades?");
-        var ctx = new TriggerContext.CreatureDealsDamageToCreature(source, damaged.getId(), 2, false);
-
-        boolean result = registry.dispatch(
-                match(quest, player1Id, effect),
-                DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE, effect, ctx);
-
-        assertThat(result).isFalse();
-        assertThat(gd.stack).isEmpty();
-    }
-
-    @Test
     @DisplayName("routes self combat-damage graveyard targets through the graveyard choice")
     void queuesSelfCombatDamageGraveyardTarget() {
         Permanent source = createPermanent("Archpriest of Shadows");
@@ -540,44 +502,46 @@ class DamageTriggerCollectorServiceTest {
     // ===== ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU — ReturnDamageSourcePermanentToHandEffect =====
 
     @Nested
-    @DisplayName("ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE — ExileDamagedCreatureEffect")
-    class ExileDamagedCreature {
+    @DisplayName("ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE — the dealer's reflected damage")
+    class AllyDealtDamageToCreatureReflection {
 
         @Test
-        @DisplayName("queues a non-targeting exile trigger for the damaged creature")
-        void queuesExileTrigger() {
-            Permanent source = createPermanent("Pit Spawn");
-            Permanent damaged = createPermanent("Force of Nature");
-            var effect = new ExileDamagedCreatureEffect();
-            var ctx = new TriggerContext.CreatureDealsDamageToCreature(source, damaged.getId(), 2, false);
+        @DisplayName("the creature that dealt the damage is the entry's source, the damaged creature its triggering permanent")
+        void queuesTheReflectionFromTheDealer() {
+            Permanent doyen = createPermanent("Greatbow Doyen");
+            Permanent archer = createPermanent("Elvish Archer");
+            Permanent damaged = createPermanent("Serra Angel");
+            var effect = new ReflectAllyDamageToDamagedCreatureControllerEffect();
+            var ctx = new TriggerContext.CreatureDealsDamageToCreature(archer, damaged.getId(), 3, false,
+                    damaged, player2Id);
 
             boolean result = registry.dispatch(
-                    match(source, player1Id, effect),
+                    match(doyen, player1Id, effect),
                     DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE, effect, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(damaged.getId());
-            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
-            assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst())
-                    .isInstanceOf(com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect.class);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getSourcePermanentId()).isEqualTo(archer.getId());
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getTriggeringPermanentId()).isEqualTo(damaged.getId());
+            assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
+            assertThat(entry.getEventValue()).isEqualTo(3);
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect.triggeredEffect());
         }
 
         @Test
-        @DisplayName("does not fire for another creature's damage")
-        void doesNotFireForAnotherSource() {
-            Permanent watcher = createPermanent("Pit Spawn");
-            Permanent source = createPermanent("Grizzly Bears");
-            Permanent damaged = createPermanent("Force of Nature");
-            var effect = new ExileDamagedCreatureEffect();
-            var ctx = new TriggerContext.CreatureDealsDamageToCreature(source, damaged.getId(), 2, false);
-
-            boolean result = registry.dispatch(
-                    match(watcher, player1Id, effect),
-                    DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
+        @DisplayName("the abilities the cards write with trigger filters have no class-keyed handler on the watch")
+        void theCardsEffectsHaveNoClassKeyedHandler() {
+            assertThat(registry.handles(DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
+                    new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST), "Put a quest counter?")))
+                    .isFalse();
+            assertThat(registry.handles(DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
+                    new PutCountersOnSourceEffect(1, 1, 1))).isFalse();
+            assertThat(registry.handles(DamageWatch.ON_SELF_DEALS_DAMAGE_TO_CREATURE,
+                    com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect.ofTriggeringPermanent()))
+                    .isFalse();
         }
     }
 

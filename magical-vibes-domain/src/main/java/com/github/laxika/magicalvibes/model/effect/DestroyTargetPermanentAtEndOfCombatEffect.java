@@ -12,13 +12,27 @@ package com.github.laxika.magicalvibes.model.effect;
  * target; it is drained in {@code CombatService.processEndOfCombatDestructions()} so regeneration
  * and indestructible apply.
  *
+ * <p>{@link #ofTriggeringPermanent()} schedules the stack entry's triggering permanent instead: "whenever this
+ * creature deals combat damage to a creature, destroy that creature at end of combat" (the basilisks, Sosuke, Son of
+ * Seshiro); it then targets nothing.
+ *
  * @param cannotBeRegenerated whether the scheduled destruction ignores regeneration shields
+ * @param triggeringPermanent whether the scheduled permanent is the stack entry's triggering permanent
  */
-public record DestroyTargetPermanentAtEndOfCombatEffect(boolean cannotBeRegenerated)
+public record DestroyTargetPermanentAtEndOfCombatEffect(boolean cannotBeRegenerated, boolean triggeringPermanent)
         implements CardEffect, RemovalEffect {
 
     public DestroyTargetPermanentAtEndOfCombatEffect() {
         this(false);
+    }
+
+    public DestroyTargetPermanentAtEndOfCombatEffect(boolean cannotBeRegenerated) {
+        this(cannotBeRegenerated, false);
+    }
+
+    /** "Destroy that creature at end of combat": the stack entry's triggering permanent. */
+    public static DestroyTargetPermanentAtEndOfCombatEffect ofTriggeringPermanent() {
+        return new DestroyTargetPermanentAtEndOfCombatEffect(false, true);
     }
 
     @Override
@@ -28,6 +42,9 @@ public record DestroyTargetPermanentAtEndOfCombatEffect(boolean cannotBeRegenera
 
     @Override
     public TargetSpec targetSpec() {
+        if (triggeringPermanent) {
+            return TargetSpec.NONE;
+        }
         return TargetSpec.harmful(TargetPredicates.creature());
     }
 }

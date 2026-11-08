@@ -9,13 +9,28 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * @param tokenForController if non-null, creates this token for each exiled permanent's controller
  * @param targetFilter optional predicate narrowing the permanent target
+ * @param triggeringPermanent whether it exiles the stack entry's triggering permanent instead of a target ("exile that
+ *                           creature" of a damage trigger: {@link #ofTriggeringPermanent()}); it then targets nothing
  */
 public record ExileTargetPermanentEffect(CreateTokenEffect tokenForController,
-                                         PermanentPredicate targetFilter)
+                                         PermanentPredicate targetFilter,
+                                         boolean triggeringPermanent)
         implements RemovalEffect {
 
     public ExileTargetPermanentEffect() {
         this(null, null);
+    }
+
+    public ExileTargetPermanentEffect(CreateTokenEffect tokenForController, PermanentPredicate targetFilter) {
+        this(tokenForController, targetFilter, false);
+    }
+
+    /**
+     * "Exile that creature": the stack entry's triggering permanent (Pit Spawn, Sword of Kaldra), exiled only if it is
+     * still on the battlefield.
+     */
+    public static ExileTargetPermanentEffect ofTriggeringPermanent() {
+        return new ExileTargetPermanentEffect(null, null, true);
     }
 
     public ExileTargetPermanentEffect(CreateTokenEffect tokenForController) {
@@ -28,6 +43,9 @@ public record ExileTargetPermanentEffect(CreateTokenEffect tokenForController,
 
     @Override
     public TargetSpec targetSpec() {
+        if (triggeringPermanent) {
+            return TargetSpec.NONE;
+        }
         return targetFilter == null
                 ? TargetSpec.harmful(TargetPredicates.permanent())
                 : TargetSpec.harmful(TargetPredicates.permanent(), targetFilter);

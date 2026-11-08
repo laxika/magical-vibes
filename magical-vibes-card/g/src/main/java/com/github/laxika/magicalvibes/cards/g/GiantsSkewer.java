@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenWhenEquippedCreatureDealsCombatDamageToCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -20,8 +19,8 @@ public class GiantsSkewer extends Card {
 
     public GiantsSkewer() {
         addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
-        addTrigger(Triggers.creatureYouControlDealsDamageToCreature(),
-                new CreateTokenWhenEquippedCreatureDealsCombatDamageToCreatureEffect(foodToken()));
+        addTrigger(Triggers.equippedCreatureDealsDamageToCreature().withCombatDamageOnly(),
+                foodToken());
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 

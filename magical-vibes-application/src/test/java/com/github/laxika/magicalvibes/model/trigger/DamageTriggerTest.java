@@ -217,6 +217,40 @@ class DamageTriggerTest {
     }
 
     @Test
+    void aDealsDamageToACreatureTriggerNamesItsDealerTheDamagedCreatureAndCombatDamage() {
+        DamageTrigger vampireSlayer = Triggers.dealsDamageToCreature().withDamagedFilter(DRAGON);
+        DamageTrigger sosuke = Triggers.creatureYouControlDealsDamageToCreature().withFilter(DRAGON)
+                .withCombatDamageOnly();
+
+        assertThat(vampireSlayer.damagedFilter()).isEqualTo(DRAGON);
+        assertThat(vampireSlayer.filter()).isNull();
+        assertThat(vampireSlayer.combatOnly()).isFalse();
+        assertThat(sosuke.filter()).isEqualTo(DRAGON);
+        assertThat(sosuke.combatOnly()).isTrue();
+        assertThat(vampireSlayer.watchKey()).isEqualTo(Triggers.dealsDamageToCreature());
+        assertThat(sosuke.watchKey()).isEqualTo(Triggers.creatureYouControlDealsDamageToCreature());
+        assertThat(Triggers.dealsDamageToCreature())
+                .isNotEqualTo(Triggers.creatureYouControlDealsDamageToCreature())
+                .isNotEqualTo(Triggers.equippedCreatureDealsDamageToCreature())
+                .isNotEqualTo(Triggers.creatureDealsDamageToCreature());
+
+        Card card = new Card();
+        card.addTrigger(sosuke, DRAW);
+        assertThat(DamageAbilityReader.trigger(card.getTriggeredAbilities().getFirst(),
+                Triggers.creatureYouControlDealsDamageToCreature())).isEqualTo(sosuke);
+    }
+
+    @Test
+    void onlyADealsDamageToACreatureTriggerHasADamagedCreatureFilterOrIsCombatOnly() {
+        assertThatThrownBy(() -> Triggers.dealsDamage().withDamagedFilter(DRAGON))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Triggers.dealtDamage().withCombatDamageOnly())
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Triggers.dealsDamageToCreature().withDamagedFilter(DRAGON).withDamagedFilter(DRAGON))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void needsAnEventAndARelation() {
         assertThatThrownBy(() -> new DamageTrigger(null, ObjectRelation.THIS))
                 .isInstanceOf(NullPointerException.class);

@@ -19,8 +19,7 @@ public class GreatbowDoyen extends Card {
 
         // Whenever an Archer you control deals damage to a creature, that Archer deals that much
         // damage to that creature's controller.
-        addTrigger(Triggers.creatureYouControlDealsDamageToCreature(),
-                new ReflectAllyDamageToDamagedCreatureControllerEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.ARCHER)));
+        addTrigger(Triggers.creatureYouControlDealsDamageToCreature().withFilter(new PermanentHasSubtypePredicate(CardSubtype.ARCHER)),
+                new ReflectAllyDamageToDamagedCreatureControllerEffect());
     }
 }

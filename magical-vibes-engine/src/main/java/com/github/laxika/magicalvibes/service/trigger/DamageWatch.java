@@ -64,10 +64,16 @@ public enum DamageWatch implements TriggerWatch {
      */
     ON_ANY_PERMANENT_DEALT_DAMAGE(Triggers.permanentYouControlDealtDamage(), Zone.BATTLEFIELD),
     /**
-     * "Whenever a creature you control deals damage to a creature"; the effect says whether it is this creature,
-     * equipped creature or any creature, as the slot's did.
+     * "Whenever a [filtered] creature you control deals [combat] damage to a [filtered] creature"; the trigger's filters
+     * say which, judged by the collector.
      */
     ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE(Triggers.creatureYouControlDealsDamageToCreature(), Zone.BATTLEFIELD),
+    /** "Whenever this creature deals [combat] damage to a [filtered] creature". */
+    ON_SELF_DEALS_DAMAGE_TO_CREATURE(Triggers.dealsDamageToCreature(), Zone.BATTLEFIELD),
+    /** "Whenever equipped creature deals [combat] damage to a [filtered] creature". */
+    ON_EQUIPPED_CREATURE_DEALS_DAMAGE_TO_CREATURE(Triggers.equippedCreatureDealsDamageToCreature(), Zone.BATTLEFIELD),
+    /** "Whenever a [filtered] creature deals [combat] damage to a [filtered] creature", whoever controls it. */
+    ON_ANY_CREATURE_DEALS_DAMAGE_TO_CREATURE(Triggers.creatureDealsDamageToCreature(), Zone.BATTLEFIELD),
     /**
      * "Whenever an opponent is dealt noncombat damage by a red instant or sorcery spell you control or by a red
      * planeswalker you control", from the graveyard.

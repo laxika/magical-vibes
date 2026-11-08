@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -42,9 +43,15 @@ public class DoesntUntapEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         DoesntUntapEffect doesntUntap = (DoesntUntapEffect) effect;
 
-        List<UUID> targetIds = entry.targetsForEffect(effect);
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
+        List<UUID> targetIds;
+        if (doesntUntap.scope() == TapUntapScope.TRIGGERING) {
+            targetIds = entry.getTriggeringPermanentId() == null
+                    ? List.of() : List.of(entry.getTriggeringPermanentId());
+        } else {
+            targetIds = entry.targetsForEffect(effect);
+            if (targetIds.isEmpty() && entry.getTargetId() != null) {
+                targetIds = List.of(entry.getTargetId());
+            }
         }
         if (targetIds.isEmpty()) {
             return;

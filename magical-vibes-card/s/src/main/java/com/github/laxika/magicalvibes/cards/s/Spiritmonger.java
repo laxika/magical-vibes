@@ -17,7 +17,7 @@ import java.util.List;
 public class Spiritmonger extends Card {
 
     public Spiritmonger() {
-        addTrigger(Triggers.creatureYouControlDealsDamageToCreature(),
+        addTrigger(Triggers.dealsDamageToCreature(),
                 new PutCountersOnSourceEffect(1, 1, 1));
 
         addActivatedAbility(new ActivatedAbility(

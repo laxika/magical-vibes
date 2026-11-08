@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
-import com.github.laxika.magicalvibes.model.effect.DestroyDamagedCreatureAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToEnteri
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -42,9 +41,8 @@ public class SimicBasilisk extends Card {
                 false,
                 "{1}{G}",
                 List.of(new GrantEffectToTargetUntilEndOfTurnEffect(
-                        new TriggeredAbility(Triggers.creatureYouControlDealsDamageToCreature(),
-                        new DestroyDamagedCreatureAtEndOfCombatEffect(
-                                new PermanentIsSourcePermanentPredicate())))),
+                        new TriggeredAbility(Triggers.dealsDamageToCreature().withCombatDamageOnly(),
+                        DestroyTargetPermanentAtEndOfCombatEffect.ofTriggeringPermanent()))),
                 "{1}{G}: Until end of turn, target creature with a +1/+1 counter on it gains "
                         + "\"Whenever this creature deals combat damage to a creature, destroy that "
                         + "creature at end of combat.\"",
