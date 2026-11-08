@@ -135,7 +135,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringSpellControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
@@ -10340,9 +10339,9 @@ public class TriggerCollectionService {
             for (ActivationAbility activation : activationAbilities(perm.getCard(),
                     SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_ABILITY)) {
                 if (isPreCollectedActivationAbility(activation, preCollectedAbilities)) continue;
-                // Copy descriptors are collected after the activated ability has been put on the
-                // stack so their snapshot contains the activation's targets and X value.
-                if (activation.copiesTheAbility()) continue;
+                // The abilities that copy the activated ability are collected after it has been put on the
+                // stack, so the copy has the activation's targets and X value.
+                if (activation.copiesTheTriggeringObject()) continue;
                 List<CardEffect> resolved = activationEffects(gameData, perm, ownerId, activation, ability,
                         activatedPermanent);
                 if (resolved == null) continue;
@@ -10432,9 +10431,10 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Collects copy descriptors placed in {@link SpellAbilityWatch#ON_CONTROLLER_ACTIVATES_ABILITY}.
-     * This runs with the completed stack entry so the copied ability retains its chosen targets and
-     * X value. Mana abilities use a synthetic entry because they resolve without using the stack.
+     * Collects the {@link SpellAbilityWatch#ON_CONTROLLER_ACTIVATES_ABILITY} abilities that copy the activated ability
+     * ("copy that spell or ability", {@link CopyTriggeringSpellOrAbilityEffect}, behind a "you may" as the card writes
+     * it). This runs with the completed stack entry so the copied ability retains its chosen targets and X value. Mana
+     * abilities use a synthetic entry because they resolve without using the stack.
      */
     public void checkControllerActivatesAbilityCopyTriggers(GameData gameData, UUID activatingPlayerId,
                                                              StackEntry abilityEntry, ActivatedAbility ability,
@@ -10469,95 +10469,18 @@ public class TriggerCollectionService {
             for (ActivationAbility activation : activationAbilities(perm.getCard(),
                     SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_ABILITY)) {
                 if (isPreCollectedActivationAbility(activation, preCollectedAbilities)
-                        || !activation.copiesTheAbility()) {
+                        || !activation.copiesTheTriggeringObject()) {
                     continue;
+                }
+                if (activation.trigger().payment() != null) {
+                    throw new IllegalStateException(perm.getCard().getName() + "'s ability copies an activated "
+                            + "ability on a payment only the non-mana collector judges: " + activation.ability());
                 }
                 List<CardEffect> judged = activationEffects(gameData, perm, ownerId, activation, ability,
                         activatedPermanent);
                 if (judged == null) continue;
-                if (activation.copiesTheTriggeringObject()) {
-                    // "Copy that spell or ability" (Bill Potts): the ability's own effects, with the activated
-                    // ability on the stack as the entry's triggering object; its stack-entry filter is judged here.
-                    StackEntryPredicate stackEntryFilter = activation.trigger().stackEntry();
-                    if (stackEntryFilter != null && !targetLegalityService.matchesStackEntryPredicate(
-                            gameData, abilityEntry, stackEntryFilter, ownerId, perm)) {
-                        continue;
-                    }
-                    StackEntry triggerEntry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            ownerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(judged),
-                            null,
-                            perm.getId());
-                    triggerEntry.setTriggeringSpell(abilityEntry);
-                    triggerEntry.setTriggeringActivatedAbility(ability);
-                    triggerEntry.setMarkSourceOncePerTurnOnAcceptance(activation.marksOnAcceptance());
-                    gameData.enqueueTrigger(triggerEntry);
-                    markActivationLimit(gameData, perm, activation);
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} triggers on ability activation ({})",
-                            gameData.id, perm.getCard().getName(), abilityEntry.getCard().getName());
-                    continue;
-                }
-                if (!(activation.copyEffect() instanceof CopyControllerActivatedAbilityTriggerEffect trigger)) {
-                    continue;
-                }
-                if (trigger.sourceFilter() != null && !targetLegalityService.matchesStackEntryPredicate(
-                        gameData, abilityEntry, trigger.sourceFilter(), ownerId, perm)) {
-                    continue;
-                }
-                if (trigger.sourcePermanentFilter() != null
-                        && !predicateEvaluationService.matchesPermanentPredicate(
-                        activatedPermanent,
-                        trigger.sourcePermanentFilter(),
-                        FilterContext.of(gameData)
-                                .withSourceControllerId(ownerId)
-                                .withSourcePermanentSnapshot(perm))) {
-                    continue;
-                }
-                if (trigger.targetPredicate() != null && !targetLegalityService.matchesStackEntryPredicate(
-                        gameData, abilityEntry, trigger.targetPredicate(), ownerId, perm)) {
-                    continue;
-                }
-                if (trigger.activationCostContainsX()
-                        && (ability.getManaCost() == null || !new ManaCost(ability.getManaCost()).hasX())) {
-                    continue;
-                }
-                if (trigger.equippedCreatureOnly()
-                        && (perm.getAttachedTo() == null
-                        || !perm.getAttachedTo().equals(abilityEntry.getSourcePermanentId()))) {
-                    continue;
-                }
-
-                UUID copyControllerId = trigger.equippedCreatureOnly() ? ownerId : activatingPlayerId;
-                CardEffect copyEffect = new CopyControllerActivatedAbilityEffect(
-                        new StackEntry(abilityEntry), ability, copyControllerId);
-                if (trigger.manaCost() != null) {
-                    copyEffect = new MayPayManaEffect(
-                            trigger.manaCost(),
-                            copyEffect,
-                            "Pay " + trigger.manaCost() + " to copy " + abilityEntry.getCard().getName() + "'s ability?");
-                }
-
-                StackEntry triggerEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        ownerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(copyEffect)),
-                        null,
-                        perm.getId()
-                );
-                if (activation.marksOnAcceptance()) {
-                    triggerEntry.setMarkSourceOncePerTurnOnAcceptance(true);
-                }
-                gameData.enqueueTrigger(triggerEntry);
-                markActivationLimit(gameData, perm, activation);
-                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                log.info("Game {} - {} triggers on ability activation ({})",
-                        gameData.id, perm.getCard().getName(), abilityEntry.getCard().getName());
+                if (!activationStackEntryMatches(gameData, perm, ownerId, activation, abilityEntry)) continue;
+                enqueueActivationCopyAbility(gameData, perm, ownerId, activation, judged, abilityEntry, ability, 0);
             }
         });
     }
@@ -10919,26 +10842,12 @@ public class TriggerCollectionService {
         }
 
         /**
-         * Whether the ability copies the activated ability (Rings of Brighthearth), collected once the activated
-         * ability is on the stack so the copy has its targets and X.
+         * Whether the ability copies "that spell or ability" from the stack entry (Bill Potts, Rings of Brighthearth):
+         * {@link CopyTriggeringSpellOrAbilityEffect}, behind a "you may" as the card writes it. It is collected once the
+         * activated ability is on the stack, so the copy has its targets and X.
          */
-        boolean copiesTheAbility() {
-            return copiesTheTriggeringObject() || effects().stream()
-                    .anyMatch(CopyControllerActivatedAbilityTriggerEffect.class::isInstance);
-        }
-
-        /** Whether the ability copies "that spell or ability" from the stack entry (Bill Potts). */
         boolean copiesTheTriggeringObject() {
-            return effects().stream().anyMatch(CopyTriggeringSpellOrAbilityEffect.class::isInstance);
-        }
-
-        /** The copy descriptor of an ability that {@link #copiesTheAbility()}, its only effect. */
-        CardEffect copyEffect() {
-            if (ability.effects().size() != 1) {
-                throw new IllegalStateException("An ability that copies the activated ability has only that effect: "
-                        + ability);
-            }
-            return ability.effects().getFirst().effect();
+            return effects().stream().anyMatch(TriggerCollectionService::copiesTheTriggeringObject);
         }
 
         /** Whether taking the action uses up the ability's "do this only once each turn" (CR 603.2h). */
@@ -10980,10 +10889,10 @@ public class TriggerCollectionService {
                                                ActivationAbility activation, ActivatedAbility activated,
                                                Permanent activatedPermanent) {
         AbilityTrigger trigger = activation.trigger();
-        if (trigger.stackEntry() != null && !activation.copiesTheTriggeringObject()) {
+        if ((trigger.stackEntry() != null || trigger.payment() != null) && !activation.copiesTheTriggeringObject()) {
             throw new IllegalStateException(watcher.getCard().getName() + "'s activation ability has a stack-entry "
-                    + "filter, which only the collector of the abilities that copy the activated ability judges: "
-                    + activation.ability());
+                    + "or payment filter, which only the collectors of the abilities that copy the activated ability "
+                    + "judge: " + activation.ability());
         }
         if (trigger.kind() != null && (activated == null || !trigger.kind().matches(activated))) {
             return null;
@@ -11044,12 +10953,92 @@ public class TriggerCollectionService {
     }
 
     /**
-     * "Whenever you activate an ability, if it isn't a mana ability, you may pay {N} to copy it"
-     * triggers (Rings of Brighthearth). Called after the non-mana ability has been put on the stack
-     * so it can be snapshotted. Fires on every permanent the activating player controls that has an
-     * {@link SpellAbilityWatch#ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY} effect — except for
-     * {@code equippedCreatureOnly} triggers (Illusionist's Bracers), which instead fire on any
-     * permanent attached to the ability's source permanent, and copy the ability for free.
+     * Whether {@code effect} copies "that spell or ability" ({@link CopyTriggeringSpellOrAbilityEffect}) and does
+     * nothing else, behind a "you may", a "you may pay" or an "if".
+     */
+    private static boolean copiesTheTriggeringObject(CardEffect effect) {
+        return switch (effect) {
+            case CopyTriggeringSpellOrAbilityEffect ignored -> true;
+            case MayEffect may -> may.elseEffect() == null && copiesTheTriggeringObject(may.wrapped());
+            case MayPayManaEffect mayPay -> mayPay.wrapped() != null && copiesTheTriggeringObject(mayPay.wrapped());
+            case MayPayLifeEqualToAmountEffect mayPayLife -> copiesTheTriggeringObject(mayPayLife.wrapped());
+            case ConditionalEffect conditional -> copiesTheTriggeringObject(conditional.wrapped());
+            default -> false;
+        };
+    }
+
+    /**
+     * Whether {@code abilityEntry}, the activated ability on the stack, matches the stack-entry filter of
+     * {@code activation} ("that targets a creature or player", "of a Chandra planeswalker"), judged from {@code
+     * watcher}'s point of view; true without one.
+     */
+    private boolean activationStackEntryMatches(GameData gameData, Permanent watcher, UUID watcherControllerId,
+                                                ActivationAbility activation, StackEntry abilityEntry) {
+        StackEntryPredicate filter = activation.trigger().stackEntry();
+        return filter == null || targetLegalityService.matchesStackEntryPredicate(
+                gameData, abilityEntry, filter, watcherControllerId, watcher);
+    }
+
+    /**
+     * Whether the activation of {@code ability}, on the stack as {@code abilityEntry}, paid what the payment filter of
+     * {@code activation} requires: life ({@code lifePaid}, Verrak, Warped Sengir), or one or more permanents
+     * sacrificed for its costs, the source included (Ashnod the Uncaring); true without one.
+     */
+    private static boolean activationPaymentMatches(ActivationAbility activation, StackEntry abilityEntry,
+                                                    ActivatedAbility ability, int lifePaid) {
+        AbilityTrigger.ActivationPayment payment = activation.trigger().payment();
+        if (payment == null) {
+            return true;
+        }
+        return switch (payment) {
+            case LIFE -> lifePaid > 0;
+            case SACRIFICE -> !abilityEntry.getSacrificedCardIds().isEmpty()
+                    || ability.getEffects().stream()
+                    .filter(CostEffect.class::isInstance)
+                    .map(CostEffect.class::cast)
+                    .anyMatch(CostEffect::sacrificesSourcePermanent);
+        };
+    }
+
+    /**
+     * Puts {@code effects}, the effects of {@code activation} (an ability of {@code watcher} that copies the activated
+     * ability, as the card writes them), on the stack as one object (CR 603.3) controlled by {@code watcherControllerId}:
+     * its triggering spell is {@code abilityEntry}, the activated ability on the stack, and its triggering activated
+     * ability {@code ability}, which {@link CopyTriggeringSpellOrAbilityEffect} copies as it resolves for the ability's
+     * controller (CR 707.10); the life paid to activate it is the entry's event value ("pay that much life").
+     */
+    private void enqueueActivationCopyAbility(GameData gameData, Permanent watcher, UUID watcherControllerId,
+                                              ActivationAbility activation, List<CardEffect> effects,
+                                              StackEntry abilityEntry, ActivatedAbility ability, int lifePaid) {
+        StackEntry triggerEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                watcherControllerId,
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(effects),
+                null,
+                watcher.getId());
+        triggerEntry.setTriggeringSpell(abilityEntry);
+        triggerEntry.setTriggeringActivatedAbility(ability);
+        if (lifePaid > 0) {
+            triggerEntry.setEventValue(lifePaid);
+        }
+        triggerEntry.setMarkSourceOncePerTurnOnAcceptance(activation.marksOnAcceptance());
+        gameData.enqueueTrigger(triggerEntry);
+        markActivationLimit(gameData, watcher, activation);
+        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+        log.info("Game {} - {} triggers on ability activation ({})",
+                gameData.id, watcher.getCard().getName(), abilityEntry.getCard().getName());
+    }
+
+    /**
+     * "Whenever you activate an ability that isn't a mana ability" abilities, called after the non-mana ability has been
+     * put on the stack: the {@link SpellAbilityWatch#ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY} abilities of every
+     * permanent the activating player controls, and the {@link SpellAbilityWatch#ON_ANY_PLAYER_ACTIVATES_NONMANA_ABILITY}
+     * abilities of every permanent ("whenever an ability of equipped creature is activated", Illusionist's Bracers,
+     * whoever activates it), whose filters, limit and intervening "if" the activation meets. The abilities that copy the
+     * activated ability (Rings of Brighthearth) also judge their stack-entry and payment filters here, and go on the
+     * stack with the activated ability as their triggering object ({@link #enqueueActivationCopyAbility}).
      *
      * @param abilityEntry the activated ability's stack entry (already on the stack)
      * @param ability      the activated ability that was activated (retained for retargeting the copy)
@@ -11143,11 +11132,16 @@ public class TriggerCollectionService {
 
         gameData.forEachPermanent((ownerId, perm) -> {
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
-            for (ActivationAbility activation : activationAbilities(perm.getCard(),
-                    SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY)) {
+            List<ActivationAbility> activations = new ArrayList<>(activationAbilities(perm.getCard(),
+                    SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY));
+            if (!ownerId.equals(activatingPlayerId)) {
+                activations.clear();
+            }
+            activations.addAll(activationAbilities(perm.getCard(),
+                    SpellAbilityWatch.ON_ANY_PLAYER_ACTIVATES_NONMANA_ABILITY));
+            for (ActivationAbility activation : activations) {
                 if (isPreCollectedActivationAbility(activation, preCollectedAbilities)) continue;
-                if (!activation.copiesTheAbility()) {
-                    if (!ownerId.equals(activatingPlayerId)) continue;
+                if (!activation.copiesTheTriggeringObject()) {
                     List<CardEffect> resolved = activationEffects(gameData, perm, ownerId, activation, ability,
                             activatedPermanent);
                     if (resolved == null) continue;
@@ -11185,104 +11179,15 @@ public class TriggerCollectionService {
                     markActivationLimit(gameData, perm, activation);
                     continue;
                 }
-                if (activationEffects(gameData, perm, ownerId, activation, ability, activatedPermanent) == null) {
+                List<CardEffect> judged = activationEffects(gameData, perm, ownerId, activation, ability,
+                        activatedPermanent);
+                if (judged == null
+                        || !activationStackEntryMatches(gameData, perm, ownerId, activation, abilityEntry)
+                        || !activationPaymentMatches(activation, abilityEntry, ability, activationLifePaid)) {
                     continue;
                 }
-                if (!(activation.copyEffect() instanceof CopyControllerActivatedAbilityTriggerEffect trigger)) {
-                    throw new IllegalStateException(perm.getCard().getName() + "'s ability copies the activated "
-                            + "ability under a limit its collector doesn't read: " + activation.copyEffect());
-                }
-                if (trigger.equippedCreatureOnly()) {
-                    // "an ability of equipped creature" — the ability's source must be what this
-                    // permanent is attached to, whoever activated it.
-                    if (perm.getAttachedTo() == null
-                            || !perm.getAttachedTo().equals(abilityEntry.getSourcePermanentId())) {
-                        continue;
-                    }
-                } else if (!ownerId.equals(activatingPlayerId)) {
-                    continue;
-                }
-                if (trigger.sourceFilter() != null && !targetLegalityService.matchesStackEntryPredicate(
-                        gameData, abilityEntry, trigger.sourceFilter(), ownerId, perm)) {
-                    continue;
-                }
-                if (trigger.sourcePermanentFilter() != null
-                        && (activatedPermanent == null || !predicateEvaluationService.matchesPermanentPredicate(
-                        activatedPermanent,
-                        trigger.sourcePermanentFilter(),
-                        FilterContext.of(gameData)
-                                .withSourceControllerId(ownerId)
-                                .withSourcePermanentSnapshot(perm)))) {
-                    continue;
-                }
-                if (trigger.targetPredicate() != null && !targetLegalityService.matchesStackEntryPredicate(
-                        gameData, abilityEntry, trigger.targetPredicate(), ownerId)) {
-                    continue;
-                }
-                if (trigger.requiresXInActivationCost()
-                        && (ability.getManaCost() == null || !new ManaCost(ability.getManaCost()).hasX())) {
-                    continue;
-                }
-                if (trigger.loyaltyAbilityOnly() && ability.getLoyaltyCost() == null) {
-                    continue;
-                }
-                if (trigger.exhaustAbilityOnly() && !ability.isExhaustAbility()) {
-                    continue;
-                }
-                if (trigger.requiresSacrificedPermanent()
-                        && abilityEntry.getSacrificedCardIds().isEmpty()
-                        && ability.getEffects().stream()
-                        .filter(CostEffect.class::isInstance)
-                        .map(CostEffect.class::cast)
-                        .noneMatch(CostEffect::sacrificesSourcePermanent)) {
-                    continue;
-                }
-
-                int lifePaid = trigger.lifePaymentOnly() ? activationLifePaid : 0;
-                if (trigger.lifePaymentOnly() && lifePaid <= 0) {
-                    continue;
-                }
-
-                StackEntry snapshot = new StackEntry(abilityEntry);
-                // CR 707.10 — the copy is controlled by the controller of the effect that created it.
-                UUID copyControllerId = trigger.equippedCreatureOnly() ? ownerId : activatingPlayerId;
-                CardEffect copyEffect = new CopyControllerActivatedAbilityEffect(
-                        snapshot, ability, copyControllerId);
-                if (trigger.lifePaymentOnly()) {
-                    copyEffect = new MayPayLifeEqualToAmountEffect(
-                            new EventValue(), copyEffect,
-                            "Pay that much life to copy " + abilityEntry.getCard().getName() + "'s ability?");
-                } else if (trigger.manaCost() != null) {
-                    copyEffect = new MayPayManaEffect(
-                            trigger.manaCost(),
-                            copyEffect,
-                            "Pay " + trigger.manaCost() + " to copy " + abilityEntry.getCard().getName() + "'s ability?");
-                } else if (trigger.optionalCopy()) {
-                    copyEffect = new MayEffect(
-                            copyEffect,
-                            "Copy " + abilityEntry.getCard().getName() + "'s ability?");
-                }
-
-                StackEntry copyTrigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        ownerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(copyEffect)),
-                        null,
-                        perm.getId()
-                );
-                if (trigger.lifePaymentOnly()) {
-                    copyTrigger.setEventValue(lifePaid);
-                }
-                if (activation.marksOnAcceptance()) {
-                    copyTrigger.setMarkSourceOncePerTurnOnAcceptance(true);
-                }
-                gameData.enqueueTrigger(copyTrigger);
-                markActivationLimit(gameData, perm, activation);
-                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                log.info("Game {} - {} triggers on non-mana ability activation ({})",
-                        gameData.id, perm.getCard().getName(), abilityEntry.getCard().getName());
+                enqueueActivationCopyAbility(gameData, perm, ownerId, activation, judged, abilityEntry, ability,
+                        activationLifePaid);
             }
         });
     }

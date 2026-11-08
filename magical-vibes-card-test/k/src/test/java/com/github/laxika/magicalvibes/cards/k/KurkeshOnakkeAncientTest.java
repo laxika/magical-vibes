@@ -14,11 +14,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KurkeshOnakkeAncient.class, RodOfRuin.class, LlanowarElves.class,
-        ProdigalPyromancer.class, Meteorite.class})
+        ProdigalPyromancer.class, Meteorite.class, KetriaCrystal.class})
 class KurkeshOnakkeAncientTest extends BaseCardTest {
 
     @Test
@@ -166,5 +167,22 @@ class KurkeshOnakkeAncientTest extends BaseCardTest {
         Permanent perm = harness.addToBattlefieldAndReturn(player, card);
         perm.setSummoningSick(false);
         return perm;
+    }
+
+    @Test
+    @DisplayName("Cycling an artifact card from the hand does not trigger Kurkesh")
+    void cyclingAnArtifactCardDoesNotTrigger() {
+        harness.addToBattlefield(player1, new KurkeshOnakkeAncient());
+        harness.setHand(player1, List.of(new KetriaCrystal()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(KetriaCrystal.class);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
     }
 }

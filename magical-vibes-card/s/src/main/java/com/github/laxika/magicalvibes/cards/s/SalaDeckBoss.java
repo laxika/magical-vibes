@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasExhaustAbilityPredicate;
@@ -18,8 +19,7 @@ public class SalaDeckBoss extends Card {
                 GrantScope.ALL_OWN_CREATURES,
                 new PermanentHasExhaustAbilityPredicate()));
 
-        addTrigger(Triggers.youActivateNonManaAbility(),
-                new CopyControllerActivatedAbilityTriggerEffect(
-                        null, null, false, false, null, false, true));
+        addTrigger(Triggers.youActivateNonManaAbility().withKind(AbilityTrigger.AbilityKind.EXHAUST),
+                new CopyTriggeringSpellOrAbilityEffect());
     }
 }

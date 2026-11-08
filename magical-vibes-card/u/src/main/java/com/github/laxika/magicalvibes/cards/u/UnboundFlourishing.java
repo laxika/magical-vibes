@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleXValueOfTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -33,7 +34,7 @@ public class UnboundFlourishing extends Card {
                         new CardTypePredicate(CardType.SORCERY)))))),
                 new CopyTriggeringSpellEffect());
 
-        addTrigger(Triggers.youActivateAbility(),
-                new CopyControllerActivatedAbilityTriggerEffect(null, null, false, false, null, true));
+        addTrigger(Triggers.youActivateAbility().withKind(AbilityTrigger.AbilityKind.WITH_X_IN_COST),
+                new CopyTriggeringSpellOrAbilityEffect());
     }
 }

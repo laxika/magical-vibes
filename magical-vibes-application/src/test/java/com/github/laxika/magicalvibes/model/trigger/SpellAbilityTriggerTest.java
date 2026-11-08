@@ -188,6 +188,46 @@ class SpellAbilityTriggerTest {
     }
 
     @Test
+    void anExhaustAbilityAndAnXInTheActivationCostAreKindsOfTheActivatedAbility() {
+        ActivatedAbility exhaust = new ActivatedAbility(false, "{1}", List.of(DRAW), "Exhaust — {1}: Draw a card.")
+                .withExhaust();
+        ActivatedAbility xCost = new ActivatedAbility(false, "{X}{U}", List.of(DRAW), "{X}{U}: Draw a card.");
+        ActivatedAbility plain = new ActivatedAbility(false, "{1}", List.of(DRAW), "{1}: Draw a card.");
+        ActivatedAbility tap = new ActivatedAbility(true, null, List.of(DRAW), "{T}: Draw a card.");
+
+        assertThat(AbilityTrigger.AbilityKind.EXHAUST.matches(exhaust)).isTrue();
+        assertThat(AbilityTrigger.AbilityKind.EXHAUST.matches(plain)).isFalse();
+        assertThat(AbilityTrigger.AbilityKind.WITH_X_IN_COST.matches(xCost)).isTrue();
+        assertThat(AbilityTrigger.AbilityKind.WITH_X_IN_COST.matches(plain)).isFalse();
+        assertThat(AbilityTrigger.AbilityKind.WITH_X_IN_COST.matches(tap)).isFalse();
+    }
+
+    @Test
+    void aPaymentFilterNarrowsTheTriggerItsCollectorsReadItBy() {
+        AbilityTrigger lifePaid = Triggers.youActivateNonManaAbility()
+                .withPayment(AbilityTrigger.ActivationPayment.LIFE);
+        assertThat(lifePaid.payment()).isEqualTo(AbilityTrigger.ActivationPayment.LIFE);
+        assertThat(lifePaid).isNotEqualTo(Triggers.youActivateNonManaAbility())
+                .isNotEqualTo(Triggers.youActivateNonManaAbility()
+                        .withPayment(AbilityTrigger.ActivationPayment.SACRIFICE));
+        assertThat(lifePaid.unfiltered()).isEqualTo(Triggers.youActivateNonManaAbility());
+        assertThat(lifePaid.withKind(AbilityTrigger.AbilityKind.LOYALTY).payment())
+                .isEqualTo(AbilityTrigger.ActivationPayment.LIFE);
+        assertThatThrownBy(() -> Triggers.youActivateNonManaAbility().withPayment(null))
+                .isInstanceOf(NullPointerException.class);
+    }
+
+    @Test
+    void anAbilityOfAPermanentIsActivatedByAnyPlayer() {
+        AbilityTrigger anyPlayer = Triggers.playerActivatesNonManaAbility();
+        assertThat(anyPlayer.player()).isEqualTo(PlayerRelation.ANY);
+        assertThat(anyPlayer.event()).isEqualTo(AbilityTrigger.AbilityEvent.NONMANA_ACTIVATED);
+        assertThat(anyPlayer).isNotEqualTo(Triggers.youActivateNonManaAbility())
+                .isNotEqualTo(Triggers.opponentActivatesNonManaAbility());
+        assertThat(anyPlayer.withSource(new PermanentIsCreaturePredicate()).unfiltered()).isEqualTo(anyPlayer);
+    }
+
+    @Test
     void aCastTriggerWithASpellFilterIsItsOwnWatchKeyAndNarrowsItsUnfilteredTrigger() {
         var creature = new CardTypePredicate(CardType.CREATURE);
         SpellTrigger creatureSpell = Triggers.youCastSpell().withFilter(creature).duringYourTurn().nthThisTurn(2);

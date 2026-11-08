@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAnyOfPredicate;
@@ -26,15 +26,10 @@ public class ErthaJoFrontierMentor extends Card {
 
     public ErthaJoFrontierMentor() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), mercenaryToken());
-        addTrigger(Triggers.youActivateNonManaAbility(),
-                new CopyControllerActivatedAbilityTriggerEffect(
-                        null,
-                        null,
-                        false,
-                        false,
-                        new StackEntryAnyOfPredicate(List.of(
-                                new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate()),
-                                new StackEntryTargetsAnyPlayerPredicate()))));
+        addTrigger(Triggers.youActivateNonManaAbility().withStackEntryFilter(new StackEntryAnyOfPredicate(List.of(
+                        new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate()),
+                        new StackEntryTargetsAnyPlayerPredicate()))),
+                new CopyTriggeringSpellOrAbilityEffect());
     }
 
     private static CreateTokenEffect mercenaryToken() {

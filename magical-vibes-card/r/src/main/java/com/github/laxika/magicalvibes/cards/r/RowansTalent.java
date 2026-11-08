@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -49,17 +50,11 @@ public class RowansTalent extends Card {
                 GrantScope.ENCHANTED_PERMANENT,
                 new PermanentIsPlaneswalkerPredicate()));
 
-        addTrigger(Triggers.youActivateNonManaAbility(),
-                new CopyControllerActivatedAbilityTriggerEffect(
-                        null,
-                        null,
-                        false,
-                        true,
-                        null,
-                        false,
-                        false,
-                        new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.youActivateNonManaAbility()
+                        .withKind(AbilityTrigger.AbilityKind.LOYALTY)
+                        .withSource(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsPlaneswalkerPredicate(),
-                                new PermanentIsHostOfSourceAuraPredicate()))));
+                                new PermanentIsHostOfSourceAuraPredicate()))),
+                new CopyTriggeringSpellOrAbilityEffect());
     }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.model.trigger;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
@@ -17,9 +18,11 @@ import java.util.Objects;
  *               {@code null} for any
  * @param stackEntry what the activated ability on the stack must be, with its targets ("that targets only Bill
  *               Potts"), or {@code null} for any; see {@link #withStackEntryFilter}
+ * @param payment what must have been paid to activate the ability ("if life was paid to activate it"), or
+ *               {@code null} for anything; see {@link #withPayment}
  */
 public record AbilityTrigger(AbilityEvent event, PlayerRelation player, PermanentPredicate source, AbilityKind kind,
-                             StackEntryPredicate stackEntry)
+                             StackEntryPredicate stackEntry, ActivationPayment payment)
         implements Trigger {
 
     public AbilityTrigger {
@@ -28,17 +31,19 @@ public record AbilityTrigger(AbilityEvent event, PlayerRelation player, Permanen
     }
 
     public AbilityTrigger(AbilityEvent event, PlayerRelation player) {
-        this(event, player, null, null, null);
+        this(event, player, null, null, null, null);
     }
 
     /** This trigger for an ability of a permanent that matches {@code source} only. */
     public AbilityTrigger withSource(PermanentPredicate source) {
-        return new AbilityTrigger(event, player, Objects.requireNonNull(source, "source"), kind, stackEntry);
+        return new AbilityTrigger(event, player, Objects.requireNonNull(source, "source"), kind, stackEntry,
+                payment);
     }
 
     /** This trigger for an activated ability of {@code kind} only. */
     public AbilityTrigger withKind(AbilityKind kind) {
-        return new AbilityTrigger(event, player, source, Objects.requireNonNull(kind, "kind"), stackEntry);
+        return new AbilityTrigger(event, player, source, Objects.requireNonNull(kind, "kind"), stackEntry,
+                payment);
     }
 
     /**
@@ -48,15 +53,28 @@ public record AbilityTrigger(AbilityEvent event, PlayerRelation player, Permanen
      * them once the activated ability is on the stack.
      */
     public AbilityTrigger withStackEntryFilter(StackEntryPredicate stackEntry) {
-        return new AbilityTrigger(event, player, source, kind, Objects.requireNonNull(stackEntry, "stackEntry"));
+        return new AbilityTrigger(event, player, source, kind, Objects.requireNonNull(stackEntry, "stackEntry"),
+                payment);
     }
 
     /**
-     * This trigger without its filters: the trigger the source, kind and stack-entry filter narrow. The activation
-     * collectors read every ability of an event by this trigger, and judge the filters themselves.
+     * This trigger for an activation whose costs included {@code payment} only ("if life was paid to activate it",
+     * "if one or more permanents were sacrificed to activate it"): a fact of the activation, judged as the ability
+     * triggers. Only the collector of the abilities that copy a non-mana activated ability
+     * ({@code CopyTriggeringSpellOrAbilityEffect}) reads it, once the costs are paid and the ability is on the stack.
+     */
+    public AbilityTrigger withPayment(ActivationPayment payment) {
+        return new AbilityTrigger(event, player, source, kind, stackEntry,
+                Objects.requireNonNull(payment, "payment"));
+    }
+
+    /**
+     * This trigger without its filters: the trigger the source, kind, stack-entry and payment filters narrow. The
+     * activation collectors read every ability of an event by this trigger, and judge the filters themselves.
      */
     public AbilityTrigger unfiltered() {
-        return source == null && kind == null && stackEntry == null ? this : new AbilityTrigger(event, player);
+        return source == null && kind == null && stackEntry == null && payment == null
+                ? this : new AbilityTrigger(event, player);
     }
 
     /** The activations an {@link AbilityTrigger} triggers on. */
@@ -88,7 +106,11 @@ public record AbilityTrigger(AbilityEvent event, PlayerRelation player, Permanen
         /** An ability with {T} in its activation cost. */
         WITH_TAP_COST,
         /** An ability without {T} in its activation cost. */
-        WITHOUT_TAP_COST;
+        WITHOUT_TAP_COST,
+        /** An exhaust ability: "whenever you activate an exhaust ability that isn't a mana ability". */
+        EXHAUST,
+        /** An ability whose activation cost contains {X}: "if that ability's activation cost contains {X}". */
+        WITH_X_IN_COST;
 
         /** Whether {@code ability}, the activated ability, is of this kind. */
         public boolean matches(ActivatedAbility ability) {
@@ -100,7 +122,20 @@ public record AbilityTrigger(AbilityEvent event, PlayerRelation player, Permanen
                 case BOAST -> ability.isBoast();
                 case WITH_TAP_COST -> ability.isRequiresTap();
                 case WITHOUT_TAP_COST -> !ability.isRequiresTap();
+                case EXHAUST -> ability.isExhaustAbility();
+                case WITH_X_IN_COST -> ability.getManaCost() != null && new ManaCost(ability.getManaCost()).hasX();
             };
         }
+    }
+
+    /** A cost paid to activate an ability that an {@link AbilityTrigger} can require ({@link #withPayment}). */
+    public enum ActivationPayment {
+        /** Life was paid to activate it (Verrak, Warped Sengir); the life paid is the ability's event value. */
+        LIFE,
+        /**
+         * One or more permanents were sacrificed to activate it (Ashnod the Uncaring), the source included; a
+         * permanent sacrificed for mana spent on the cost doesn't count.
+         */
+        SACRIFICE
     }
 }

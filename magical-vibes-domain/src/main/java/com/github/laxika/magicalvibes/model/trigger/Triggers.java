@@ -480,6 +480,14 @@ public final class Triggers {
         return new AbilityTrigger(AbilityTrigger.AbilityEvent.NONMANA_ACTIVATED, PlayerRelation.YOU);
     }
 
+    /**
+     * "Whenever an ability of [a permanent] is activated, if it isn't a mana ability", whoever activates it: narrowed
+     * by {@link AbilityTrigger#withSource} ("an ability of equipped creature", Illusionist's Bracers).
+     */
+    public static AbilityTrigger playerActivatesNonManaAbility() {
+        return new AbilityTrigger(AbilityTrigger.AbilityEvent.NONMANA_ACTIVATED, PlayerRelation.ANY);
+    }
+
     /** "Whenever an opponent activates an ability that isn't a mana ability". */
     public static AbilityTrigger opponentActivatesNonManaAbility() {
         return new AbilityTrigger(AbilityTrigger.AbilityEvent.NONMANA_ACTIVATED, PlayerRelation.OPPONENT);

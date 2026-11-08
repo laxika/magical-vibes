@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LRW", collectorNumber = "259")
@@ -15,6 +16,7 @@ public class RingsOfBrighthearth extends Card {
         // Whenever you activate an ability, if it isn't a mana ability, you may pay {2}. If you do,
         // copy that ability. You may choose new targets for the copy.
         addTrigger(Triggers.youActivateNonManaAbility(),
-                new CopyControllerActivatedAbilityTriggerEffect("{2}"));
+                new MayPayManaEffect("{2}", new CopyTriggeringSpellOrAbilityEffect(),
+                        "Pay {2} to copy that ability?"));
     }
 }

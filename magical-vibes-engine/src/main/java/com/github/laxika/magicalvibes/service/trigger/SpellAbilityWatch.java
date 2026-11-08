@@ -74,7 +74,9 @@ public enum SpellAbilityWatch implements TriggerWatch {
     /** "Whenever you activate an embalm or eternalize ability". */
     ON_CONTROLLER_ACTIVATES_ETERNALIZE_OR_EMBALM(Triggers.youActivateEternalizeOrEmbalm(), Zone.BATTLEFIELD),
     /** "Whenever an opponent activates an ability that isn't a mana ability". */
-    ON_OPPONENT_ACTIVATES_NONMANA_ABILITY(Triggers.opponentActivatesNonManaAbility(), Zone.BATTLEFIELD);
+    ON_OPPONENT_ACTIVATES_NONMANA_ABILITY(Triggers.opponentActivatesNonManaAbility(), Zone.BATTLEFIELD),
+    /** "Whenever an ability of [a permanent] is activated, if it isn't a mana ability", whoever activates it. */
+    ON_ANY_PLAYER_ACTIVATES_NONMANA_ABILITY(Triggers.playerActivatesNonManaAbility(), Zone.BATTLEFIELD);
 
     private final Trigger trigger;
     private final Zone zone;

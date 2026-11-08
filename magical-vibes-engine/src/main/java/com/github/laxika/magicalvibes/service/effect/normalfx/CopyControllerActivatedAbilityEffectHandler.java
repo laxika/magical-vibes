@@ -19,7 +19,8 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link CopyControllerActivatedAbilityEffect} — creates a copy of the snapshotted
  * activated ability on the stack (CR 707.10) for its controller. If the ability had a single
- * target, the controller may choose a new target for the copy. Used by Rings of Brighthearth.
+ * target, the controller may choose a new target for the copy. Also resolves a card's "copy that ability"
+ * ({@link com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect}, through its handler).
  */
 @Slf4j
 @Component

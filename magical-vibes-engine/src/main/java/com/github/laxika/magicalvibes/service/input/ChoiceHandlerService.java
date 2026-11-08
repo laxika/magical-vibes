@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DrawReplacementKind;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LegacyWordSupport;
@@ -81,6 +81,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.MulliganService;
@@ -6220,8 +6221,7 @@ public class ChoiceHandlerService {
             source.setChosenSubtype(subtype);
             if (ctx.untilEndOfTurn()) {
                 gameData.temporaryChosenSubtypePermanentIds.add(source.getId());
-                if (source.getCard().getTriggerEffects(Triggers.youActivateAbility()).stream()
-                        .anyMatch(CopyControllerActivatedAbilityTriggerEffect.class::isInstance)) {
+                if (copiesActivatedAbilities(source.getCard())) {
                     gameData.chosenSubtypeActivationCopiesThisTurn.add(new GameData.ChosenSubtypeActivationCopy(
                             player.getId(), source.getCard(), source.getId(), subtype));
                 }
@@ -6236,6 +6236,18 @@ public class ChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Whether {@code card} has a "whenever you activate an ability [of a planeswalker of the chosen type], copy that
+     * ability" ability (Leori, Sparktouched Hunter): an activation trigger whose effect is
+     * {@link CopyTriggeringSpellOrAbilityEffect}. A chosen type until end of turn registers it as a delayed copy.
+     */
+    private static boolean copiesActivatedAbilities(Card card) {
+        return card.getTriggeredAbilities().stream().anyMatch(ability ->
+                ability.conditions().stream().anyMatch(condition -> condition.trigger() instanceof AbilityTrigger)
+                        && ability.effects().stream().anyMatch(registration ->
+                        registration.effect() instanceof CopyTriggeringSpellOrAbilityEffect));
     }
 
     private void handlePersistentManaColorChosen(GameData gameData, Player player, String colorName,
