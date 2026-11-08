@@ -7,6 +7,12 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermane
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -850,7 +856,6 @@ class EnterTriggerCollectorServiceTest {
         when(gameQueryService.findPermanentById(gd, enteringPermanent.getId())).thenReturn(enteringPermanent);
         when(gameQueryService.isArtifact(gd, enteringPermanent)).thenReturn(true);
         enter(player1Id, enteringArtifact);
-        service.checkAllyArtifactEntersTriggers(gd, player1Id, enteringArtifact);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)).isTrue();
@@ -892,7 +897,6 @@ class EnterTriggerCollectorServiceTest {
         when(gameQueryService.isArtifact(gd, enteringPermanent)).thenReturn(true);
 
         enter(player1Id, enteringArtifact);
-        service.checkAllyArtifactEntersTriggers(gd, player1Id, enteringArtifact);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst()).isInstanceOf(MayEffect.class);
@@ -1029,5 +1033,88 @@ class EnterTriggerCollectorServiceTest {
             assertThat(entry.isNonTargeting()).isTrue();
             assertThat(entry.getTriggeringPermanentId()).isEqualTo(entering.getId());
         });
+    }
+
+    @Test
+    @DisplayName("An emblem's enters ability goes on the stack as written with the entering permanent as \"it\"")
+    void emblemEntersAbilityGoesOnTheStackWithTheEnteringPermanent() {
+        MayEffect draw = new MayEffect(new DrawCardEffect(1), "Draw a card?");
+        Card source = emblemSource(new TriggeredAbility(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
+                draw));
+        Card landCard = new Card();
+        landCard.setName("Land");
+        landCard.setType(CardType.LAND);
+        Permanent land = new Permanent(landCard);
+        gd.playerBattlefields.get(player1Id).add(land);
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(land), eq(Triggers.LAND),
+                any(FilterContext.class))).thenReturn(true);
+
+        service.checkEmblemEntersTriggers(gd, player1Id, landCard);
+
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getCard()).isSameAs(source);
+            assertThat(entry.getDescription()).isEqualTo("Planeswalker's emblem");
+            assertThat(entry.getEffectsToResolve()).containsExactly(draw);
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getTriggeringPermanentId()).isEqualTo(land.getId());
+            assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player1Id);
+        });
+    }
+
+    @Test
+    @DisplayName("An emblem's \"you control\" enters ability ignores a permanent an opponent controls, and its filter")
+    void emblemEntersAbilityIgnoresAnOpponentsPermanentAndANonMatchingOne() {
+        emblemSource(new TriggeredAbility(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
+                new DrawCardEffect(1)));
+        UUID opponentId = UUID.randomUUID();
+        gd.orderedPlayerIds.add(opponentId);
+        Card opponentLandCard = new Card();
+        opponentLandCard.setName("Opponent's land");
+        opponentLandCard.setType(CardType.LAND);
+        Permanent opponentLand = new Permanent(opponentLandCard);
+        gd.playerBattlefields.put(opponentId, Collections.synchronizedList(new ArrayList<>(List.of(opponentLand))));
+        Card creatureCard = enteringCreature(2, 2);
+        gd.playerBattlefields.get(player1Id).add(new Permanent(creatureCard));
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(opponentLand), eq(Triggers.LAND),
+                any(FilterContext.class))).thenReturn(true);
+
+        service.checkEmblemEntersTriggers(gd, opponentId, opponentLandCard);
+        service.checkEmblemEntersTriggers(gd, player1Id, creatureCard);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A targeted emblem enters ability queues its target choice carrying the entering permanent")
+    void targetedEmblemEntersAbilityQueuesItsTargetChoice() {
+        DealDamageToAnyTargetEffect damage = new DealDamageToAnyTargetEffect(3);
+        Card source = emblemSource(new TriggeredAbility(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.YOU_CONTROL),
+                damage));
+        Card artifactCard = new Card();
+        artifactCard.setName("Artifact");
+        artifactCard.setType(CardType.ARTIFACT);
+        Permanent artifact = new Permanent(artifactCard);
+        gd.playerBattlefields.get(player1Id).add(artifact);
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(artifact), eq(Triggers.ARTIFACT),
+                any(FilterContext.class))).thenReturn(true);
+
+        service.checkEmblemEntersTriggers(gd, player1Id, artifactCard);
+
+        assertThat(gd.stack).isEmpty();
+        PermanentChoiceContext.SpellTargetTriggerAnyTarget choice =
+                gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+        assertThat(choice.sourceCard()).isSameAs(source);
+        assertThat(choice.controllerId()).isEqualTo(player1Id);
+        assertThat(choice.effects()).containsExactly(damage);
+        assertThat(choice.triggeringPermanentId()).isEqualTo(artifact.getId());
+    }
+
+    /** A planeswalker card whose emblem, controlled by player 1, has {@code ability}. */
+    private Card emblemSource(TriggeredAbility ability) {
+        Card source = new Card();
+        source.setName("Planeswalker");
+        gd.emblems.add(new Emblem(player1Id, List.of(), source, List.of(), 0L, List.of(ability)));
+        return source;
     }
 }

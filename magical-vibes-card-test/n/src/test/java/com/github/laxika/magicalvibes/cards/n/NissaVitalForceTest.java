@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.cards.a.AncientGreenwarden;
 import com.github.laxika.magicalvibes.cards.b.BlossomingDefense;
 import com.github.laxika.magicalvibes.cards.c.ConfiscationCoup;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -25,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({NissaVitalForce.class, Forest.class, BlossomingDefense.class, RiparianTiger.class,
-        ConfiscationCoup.class})
+        ConfiscationCoup.class, AncientGreenwarden.class})
 class NissaVitalForceTest extends BaseCardTest {
 
     @Test
@@ -231,5 +232,26 @@ class NissaVitalForceTest extends BaseCardTest {
 
     private Permanent addLand(Player player) {
         return harness.addToBattlefieldAndReturn(player, new Forest());
+    }
+
+    @Test
+    @DisplayName("Ancient Greenwarden doesn't make the emblem trigger an additional time")
+    void emblemTriggersOnceWithAncientGreenwarden() {
+        addReadyNissa(player1, 7);
+        harness.addToBattlefield(player1, new AncientGreenwarden());
+        harness.setLibrary(player1, List.of(new RiparianTiger(), new RiparianTiger()));
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        harness.setHand(player1, List.of(new Forest()));
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }

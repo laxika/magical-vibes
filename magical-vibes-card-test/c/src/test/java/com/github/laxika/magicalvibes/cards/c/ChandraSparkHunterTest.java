@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.c.ConfirmSuspicions;
 import com.github.laxika.magicalvibes.cards.a.AirResponseUnit;
 import com.github.laxika.magicalvibes.cards.d.DuskLegionDreadnought;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
@@ -22,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ChandraSparkHunter.class, AirResponseUnit.class, DuskLegionDreadnought.class,
-        FountainOfYouth.class, GrizzlyBears.class, Ornithopter.class, PaladinEnVec.class})
+        FountainOfYouth.class, GrizzlyBears.class, Ornithopter.class, PaladinEnVec.class, ConfirmSuspicions.class})
 class ChandraSparkHunterTest extends BaseCardTest {
 
     @Test
@@ -276,5 +277,32 @@ class ChandraSparkHunterTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    @Test
+    void emblemTriggersForEachOfThreeArtifactsEnteringInOneResolution() {
+        Permanent chandra = addChandra();
+        chandra.setCounterCount(CounterType.LOYALTY, 7);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.setLife(player2, 20);
+
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears, new ConfirmSuspicions()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.addMana(player1, ManaColor.BLUE, 5);
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        for (int i = 0; i < 3; i++) {
+            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+            harness.handlePermanentChosen(player1, player2.getId());
+        }
+        assertThat(gd.stack).hasSize(3);
+        for (int i = 0; i < 3; i++) {
+            harness.passBothPriorities();
+        }
+
+        harness.assertLife(player2, 11);
     }
 }

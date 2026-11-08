@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.a.AncientGreenwarden;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FurnaceStrider;
 import com.github.laxika.magicalvibes.cards.b.BloodMoon;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KothFireOfResistance.class, Mountain.class, Forest.class, HillGiant.class,
-        FurnaceStrider.class, KorFirewalker.class, BloodMoon.class, CopperlineGorge.class})
+        FurnaceStrider.class, KorFirewalker.class, BloodMoon.class, CopperlineGorge.class, AncientGreenwarden.class})
 class KothFireOfResistanceTest extends BaseCardTest {
 
     @Test
@@ -186,5 +187,24 @@ class KothFireOfResistanceTest extends BaseCardTest {
 
     private void addMountain(Player player) {
         harness.addToBattlefield(player, new Mountain());
+    }
+
+    @Test
+    @DisplayName("Ancient Greenwarden doesn't make the emblem trigger an additional time")
+    void emblemTriggersOnceWithAncientGreenwarden() {
+        addReadyKoth(player1, 7);
+        harness.addToBattlefield(player1, new AncientGreenwarden());
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Mountain()));
+        harness.playLand(player1, 0);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

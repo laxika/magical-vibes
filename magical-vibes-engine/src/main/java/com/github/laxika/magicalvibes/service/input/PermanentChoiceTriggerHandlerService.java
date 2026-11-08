@@ -234,6 +234,12 @@ public class PermanentChoiceTriggerHandlerService {
             log.info("Game {} - {} spell-target trigger targets {}", gameData.id, stt.sourceCard().getName(), targetName);
         }
 
+        // The becomes-the-target check above may already have begun the next waiting ability's target choice; beginning
+        // another one would replace it, and that ability would be lost.
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) {
             triggerCollectionService.processNextSpellTargetTrigger(gameData);
             return;

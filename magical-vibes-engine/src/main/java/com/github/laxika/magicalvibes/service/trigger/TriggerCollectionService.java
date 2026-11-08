@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.model.trigger.LibraryTrigger;
 import com.github.laxika.magicalvibes.model.trigger.LifeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.TapTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -85,7 +86,6 @@ import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.VisualCueType;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
-import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedCreatureBecomesCopyOfExiledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorForSourceEffect;
@@ -150,7 +150,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemLifeGainTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardOnAllyLandEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseTargetsAtRandomEffect;
@@ -178,11 +177,6 @@ import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyCreatureEntersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyLandEntersEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemArtifactEntersTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemArtifactTapTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EvolveEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -194,7 +188,6 @@ import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityS
 import com.github.laxika.magicalvibes.service.trigger.TargetAbilityReader.TargetEffect;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetRedirectionSupport;
-import com.github.laxika.magicalvibes.model.effect.MayFightTargetCreatureOnAllyCreatureEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEqualToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -9668,7 +9661,7 @@ public class TriggerCollectionService {
 
         var ctx = new TriggerContext.EnchantedPermanentTap(tappedPermanent, tappedPermanentControllerId);
 
-        collectEmblemArtifactTapTriggers(gameData, tappedPermanent, tappedPermanentControllerId, ctx);
+        collectEmblemTapTriggers(gameData, tappedPermanent, tappedPermanentControllerId);
 
         gameData.forEachPermanent((auraOwnerId, perm) -> {
             if (!perm.isAttached() || !perm.getAttachedTo().equals(tappedPermanent.getId())) {
@@ -9896,45 +9889,48 @@ public class TriggerCollectionService {
         markBatchedTapTrigger(gameData, source, read);
     }
 
-    private void collectEmblemArtifactTapTriggers(GameData gameData, Permanent tappedPermanent,
-                                                   UUID tappedPermanentControllerId,
-                                                   TriggerContext.EnchantedPermanentTap context) {
-        if (!gameQueryService.isArtifact(gameData, tappedPermanent)) {
-            return;
-        }
-        for (Emblem emblem : gameData.emblems) {
-            if (!emblem.controllerId().equals(tappedPermanentControllerId)) {
-                continue;
-            }
-            for (CardEffect effect : emblem.staticEffects()) {
-                if (!(effect instanceof EmblemArtifactTapTriggerEffect)) {
-                    continue;
+    /**
+     * The emblems' "whenever a [filter] permanent you control becomes tapped" abilities for {@code tappedPermanent},
+     * which {@code tappedPermanentControllerId} controls (Tezzeret, Betrayer of Flesh's emblem). Abilities of emblems
+     * function in the command zone (CR 114.4). Each ability whose trigger's filter the permanent matches goes on the
+     * stack once as one object of its effects (CR 603.3), the tapped permanent as its triggering permanent. The reader
+     * judges no options and puts no ability with a target on the stack; such an ability fails loudly instead.
+     */
+    private void collectEmblemTapTriggers(GameData gameData, Permanent tappedPermanent,
+                                          UUID tappedPermanentControllerId) {
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
+                if (emblemSeesTapped(gameData, emblem, ability, tappedPermanent, tappedPermanentControllerId)) {
+                    putEmblemAbilityOnStack(gameData, emblem, ability, tappedPermanent, tappedPermanentControllerId,
+                            "becoming tapped");
                 }
-                var match = new EmblemTriggerMatchContext(
-                        gameData, emblem, emblem.controllerId(), tappedPermanent.getCard(), effect);
-                registry.dispatchEmblem(match, effect, context);
             }
         }
     }
 
-    @CollectsEmblemTrigger(EmblemArtifactTapTriggerEffect.class)
-    boolean handleEmblemArtifactTap(EmblemTriggerMatchContext match,
-                                    EmblemArtifactTapTriggerEffect effect,
-                                    TriggerContext context) {
-        Card source = match.emblem().sourceCard();
-        if (source == null) {
-            return false;
+    /** Whether {@code ability} of {@code emblem} triggers on {@code tapped} becoming tapped. */
+    private boolean emblemSeesTapped(GameData gameData, Emblem emblem, TriggeredAbility ability, Permanent tapped,
+                                     UUID tappedControllerId) {
+        for (TriggerCondition condition : ability.conditions()) {
+            if (!(condition.trigger() instanceof TapTrigger trigger)
+                    || trigger.event() != TapTrigger.TapEvent.BECOMES_TAPPED) {
+                continue;
+            }
+            if (!ability.options().equals(TriggerOptions.DEFAULT) || ability.effects().stream()
+                    .anyMatch(registration -> registration.effect().targetSpec() != TargetSpec.NONE)) {
+                throw new IllegalStateException(emblemName(emblem) + " has a tap ability its reader doesn't judge: "
+                        + ability);
+            }
+            FilterContext context = emblemFilterContext(gameData, emblem);
+            if (controlledByRelatedPlayer(trigger.relation(), emblem, tappedControllerId)
+                    && (trigger.filter() == null
+                    || predicateEvaluationService.matchesPermanentPredicate(tapped, trigger.filter(), context))
+                    && (trigger.qualifier() == null
+                    || predicateEvaluationService.matchesPermanentPredicate(tapped, trigger.qualifier(), context))) {
+                return true;
+            }
         }
-        String description = source.getName() + "'s emblem";
-        match.gameData().enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                source,
-                match.controllerId(),
-                description,
-                new ArrayList<>(List.of(new DrawCardEffect(1)))
-        ));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(source));
-        return true;
+        return false;
     }
 
     /**
@@ -14356,8 +14352,9 @@ public class TriggerCollectionService {
 
     /**
      * What a creature entering under {@code controllerId}'s control triggers besides the card abilities the trigger
-     * pipeline matches: evolve (CR 702.100d), the watchers and boons a resolved spell left, the "whenever a creature
-     * you control enters" abilities a spell registered until end of turn, and emblems.
+     * pipeline matches and the emblems' abilities ({@link #checkEmblemEntersTriggers}): evolve (CR 702.100d), the
+     * watchers and boons a resolved spell left, and the "whenever a creature you control enters" abilities a spell
+     * registered until end of turn.
      */
     public void checkAllyCreatureEntersTriggers(GameData gameData, UUID controllerId, Card enteringCreature, int extraWizardTriggers) {
         if (!enteringPermanentHasType(gameData, enteringCreature, CardType.CREATURE)) return;
@@ -14414,35 +14411,6 @@ public class TriggerCollectionService {
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} temporary ally creature-enters trigger fires",
                     gameData.id, watcher.sourceCard().getName());
-        }
-
-        if (enteringPermanent != null) {
-            for (Emblem emblem : gameData.emblems) {
-                if (!emblem.controllerId().equals(controllerId)) continue;
-                for (CardEffect effect : emblem.staticEffects()) {
-                    Card sourceCard = emblem.sourceCard() != null ? emblem.sourceCard() : enteringCreature;
-                    if (effect instanceof MayFightTargetCreatureOnAllyCreatureEntersEffect) {
-                        gameData.queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                                sourceCard, controllerId,
-                                List.of(new MayEffect(
-                                        new EnteringCreatureFightsTargetCreatureEffect(),
-                                        "Have it fight target creature?")),
-                                null,
-                                enteringPermanent.getId()));
-                        gameLogService.append(gameData, GameLog.text(
-                                sourceCard.getName() + "'s emblem triggers for " + enteringCreature.getName()
-                                        + " entering."));
-                    } else if (effect instanceof DealDamageToAnyTargetOnAllyCreatureEntersEffect) {
-                        gameData.queueInteraction(new PermanentChoiceContext.EnteringPermanentAnyTargetTrigger(
-                                sourceCard, controllerId,
-                                List.of(new DealDamageToAnyTargetEffect(new SourcePower())),
-                                enteringPermanent.getId()));
-                        gameLogService.append(gameData, GameLog.text(
-                                sourceCard.getName() + "'s emblem triggers for " + enteringCreature.getName()
-                                        + " entering."));
-                    }
-                }
-            }
         }
     }
 
@@ -14846,13 +14814,6 @@ public class TriggerCollectionService {
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
     }
 
-    /** The emblems' abilities that see an artifact enter under {@code controllerId}'s control. */
-    public void checkAllyArtifactEntersTriggers(GameData gameData, UUID controllerId, Card enteringCard) {
-        Permanent enteringPermanent = findPermanentByCard(gameData, enteringCard);
-        if (enteringPermanent == null || !gameQueryService.isArtifact(gameData, enteringPermanent)) return;
-        collectEmblemArtifactEntersTriggers(gameData, controllerId, enteringCard);
-    }
-
     /** Fires Full Throttle's delayed untap trigger once for each registration at each combat. */
     public void checkUntapAttackedCreaturesEachCombatThisTurnTriggers(GameData gameData) {
         List<UUID> controllers = new ArrayList<>(gameData.orderedPlayerIds);
@@ -14882,31 +14843,107 @@ public class TriggerCollectionService {
         }
     }
 
-    private void collectEmblemArtifactEntersTriggers(GameData gameData, UUID controllerId,
-                                                     Card enteringCard) {
-        for (Emblem emblem : gameData.emblems) {
-            if (!emblem.controllerId().equals(controllerId)) continue;
-
-            for (CardEffect effect : emblem.staticEffects()) {
-                if (!(effect instanceof EmblemArtifactEntersTriggerEffect trigger)) {
-                    continue;
+    /**
+     * The emblems' "whenever [a filter permanent] you control enters" abilities for {@code enteringCard}, which entered
+     * under {@code enteringControllerId}'s control (Lukka, Wayward Bonder's, Chandra, Spark Hunter's, Koth, Fire of
+     * Resistance's, Kiora, Master of the Depths' and Nissa, Vital Force's emblems). Abilities of emblems function in
+     * the command zone (CR 114.4); an emblem isn't a permanent (CR 110.1), so an effect that makes a triggered ability
+     * of a permanent trigger an additional time (Ancient Greenwarden, Panharmonicon) doesn't apply to it. Each ability
+     * whose trigger's filter the permanent matches as it is now goes on the stack once as one object of its effects
+     * (CR 603.3), the emblem's source card as its source and the entering permanent as its triggering permanent
+     * ("it", read as the ability resolves); a targeted ability's target is chosen as it goes on the stack
+     * (CR 603.3d), and a "you may" is asked as it resolves (CR 603.5). The reader judges no options, causes, origins
+     * or turn; an ability with one fails loudly instead of triggering wrongly.
+     */
+    public void checkEmblemEntersTriggers(GameData gameData, UUID enteringControllerId, Card enteringCard) {
+        if (gameData.emblems.isEmpty()) return;
+        Permanent entering = findPermanentByCard(gameData, enteringCard);
+        if (entering == null) return;
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
+                if (emblemSeesEntering(gameData, emblem, ability, enteringControllerId, entering)) {
+                    putEmblemAbilityOnStack(gameData, emblem, ability, entering, enteringControllerId, "entering");
                 }
-
-                Card source = emblem.sourceCard();
-                Card sourceCard = source != null ? source : enteringCard;
-                String description = (source != null ? source.getName() : "Emblem") + "'s emblem";
-                gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        sourceCard,
-                        controllerId,
-                        List.of(new DealDamageToAnyTargetEffect(trigger.damage()))
-                ));
-                gameLogService.append(gameData, GameLog.text(
-                        description + " triggers for an artifact entering and deals "
-                                + trigger.damage() + " damage to any target."));
-                log.info("Game {} - {} triggers for {} entering (artifact-enter emblem)",
-                        gameData.id, description, enteringCard.getName());
             }
         }
+    }
+
+    /**
+     * Whether {@code ability} of {@code emblem} triggers on {@code entering} entering under
+     * {@code enteringControllerId}'s control.
+     */
+    private boolean emblemSeesEntering(GameData gameData, Emblem emblem, TriggeredAbility ability,
+                                       UUID enteringControllerId, Permanent entering) {
+        for (TriggerCondition condition : ability.conditions()) {
+            if (!(condition.trigger() instanceof ZoneChangeTrigger trigger) || !trigger.entersBattlefield()) {
+                continue;
+            }
+            if (!trigger.from().isEmpty() || !trigger.excludedTo().isEmpty() || !trigger.causes().isEmpty()
+                    || trigger.causedBy() != com.github.laxika.magicalvibes.model.trigger.PlayerRelation.ANY
+                    || trigger.duringYourTurn() || !ability.options().equals(TriggerOptions.DEFAULT)) {
+                throw new IllegalStateException(emblemName(emblem) + " has an enters ability its reader doesn't "
+                        + "judge: " + ability);
+            }
+            if (controlledByRelatedPlayer(trigger.relation(), emblem, enteringControllerId)
+                    && (trigger.filter() == null || predicateEvaluationService.matchesPermanentPredicate(entering,
+                    trigger.filter(), emblemFilterContext(gameData, emblem)))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Whether a permanent {@code controllerId} controls relates to {@code emblem} as {@code relation} says. */
+    private static boolean controlledByRelatedPlayer(ObjectRelation relation, Emblem emblem, UUID controllerId) {
+        return switch (relation) {
+            case YOU_CONTROL, ANOTHER_YOU_CONTROL -> emblem.controllerId().equals(controllerId);
+            case OPPONENT_CONTROLS -> !emblem.controllerId().equals(controllerId);
+            case ANY, ANOTHER -> true;
+            default -> throw new IllegalStateException(emblemName(emblem) + " has a trigger relation its reader "
+                    + "doesn't judge: " + relation);
+        };
+    }
+
+    private static FilterContext emblemFilterContext(GameData gameData, Emblem emblem) {
+        FilterContext context = FilterContext.of(gameData).withSourceControllerId(emblem.controllerId());
+        return emblem.sourceCard() == null ? context : context.withSourceCardId(emblem.sourceCard().getId());
+    }
+
+    private static String emblemName(Emblem emblem) {
+        return (emblem.sourceCard() != null ? emblem.sourceCard().getName() : "Emblem") + "'s emblem";
+    }
+
+    /**
+     * Puts {@code ability} of {@code emblem} on the stack for the event {@code triggering} was about, as its triggering
+     * permanent: a targeted ability through its target choice, which keeps the triggering permanent, any other one as
+     * a non-targeting entry. An emblem without a source card (one a test built) is described as "Emblem's emblem",
+     * with the triggering permanent's card as its source.
+     */
+    private void putEmblemAbilityOnStack(GameData gameData, Emblem emblem, TriggeredAbility ability,
+                                         Permanent triggering, UUID triggeringControllerId, String event) {
+        Card source = emblem.sourceCard() != null ? emblem.sourceCard() : triggering.getCard();
+        String description = emblemName(emblem);
+        List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect).toList();
+        if (effects.stream().anyMatch(effect -> effect.targetSpec() != TargetSpec.NONE)) {
+            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    source, emblem.controllerId(), new ArrayList<>(effects), false, null, 0, null, null, false,
+                    triggering.getId(), null, emblem.controllerId(), (PlanarObject) null));
+        } else {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source,
+                    emblem.controllerId(),
+                    description,
+                    new ArrayList<>(effects));
+            entry.setTriggeringPermanentId(triggering.getId());
+            entry.setTriggeringPermanentControllerId(triggeringControllerId);
+            entry.setTriggeringCardId(triggering.getCard().getId());
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+        }
+        gameLogService.append(gameData, GameLog.text(description + " triggers for " + triggering.getCard().getName()
+                + " " + event + "."));
+        log.info("Game {} - {} triggers for {} {}", gameData.id, description, triggering.getCard().getName(), event);
     }
 
     /**
@@ -15425,11 +15462,8 @@ public class TriggerCollectionService {
         }
     }
 
-    /** The emblems' landfall abilities and the exiled voyages that see a land enter under its controller's control. */
+    /** The exiled voyages that see a land enter under its controller's control. */
     public void checkAllyLandEntersTriggers(GameData gameData, UUID landControllerId, Card enteringLand) {
-        int triggerCount = 1 + gameQueryService.countETBExtraTriggers(
-                gameData, landControllerId, landControllerId, enteringLand);
-        collectEmblemAllyLandEntersTriggers(gameData, landControllerId, enteringLand, triggerCount);
         collectExiledVoyageTriggers(gameData, landControllerId);
     }
 
@@ -15799,41 +15833,6 @@ public class TriggerCollectionService {
         }
     }
 
-    private void collectEmblemAllyLandEntersTriggers(GameData gameData, UUID landControllerId,
-                                                      Card enteringLand, int triggerCount) {
-        for (Emblem emblem : gameData.emblems) {
-            if (!emblem.controllerId().equals(landControllerId)) continue;
-
-            for (CardEffect effect : emblem.staticEffects()) {
-                Card source = emblem.sourceCard();
-                Card sourceCard = source != null ? source : enteringLand;
-                String description = (source != null ? source.getName() : "Emblem") + "'s emblem";
-                if (effect instanceof DrawCardOnAllyLandEntersEffect) {
-                    for (int i = 0; i < triggerCount; i++) {
-                        gameData.queueMayAbility(sourceCard, emblem.controllerId(),
-                                new MayEffect(new DrawCardEffect(1), "Draw a card?"));
-                        gameLogService.append(gameData, GameLog.text(description + " triggers."));
-                        log.info("Game {} - {} landfall draw trigger queued", gameData.id, description);
-                    }
-                } else if (effect instanceof DealDamageToAnyTargetOnAllyLandEntersEffect damageTrigger
-                        && enteringLandHasEffectiveSubtype(gameData, enteringLand, damageTrigger.landSubtype())) {
-                    for (int i = 0; i < triggerCount; i++) {
-                        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                                sourceCard,
-                                emblem.controllerId(),
-                                new ArrayList<>(List.of(new DealDamageToAnyTargetEffect(damageTrigger.damage())))
-                        ));
-                        gameLogService.append(gameData,
-                                GameLog.text(description + " triggers — choose a target for "
-                                        + damageTrigger.damage() + " damage."));
-                        log.info("Game {} - {} landfall damage trigger queued ({})",
-                                gameData.id, description, damageTrigger.damage());
-                    }
-                }
-            }
-        }
-    }
-
     /**
      * Dispatches an effect of a "whenever [an object] enters" ability with the limit {@code limit} to its watch's
      * handler. An ability limited to once each turn is one trigger per event, so a doubler (Panharmonicon) gives it no
@@ -16067,12 +16066,6 @@ public class TriggerCollectionService {
         }
         characteristics.setKeywords(keywords);
         return characteristics;
-    }
-
-    private boolean enteringLandHasEffectiveSubtype(GameData gameData, Card land, CardSubtype subtype) {
-        Permanent permanent = findPermanentByCard(gameData, land);
-        if (permanent == null) return land.getSubtypes().contains(subtype);
-        return gameQueryService.getEffectiveSubtypes(gameData, permanent).contains(subtype);
     }
 
     private boolean enteringPermanentHasType(GameData gameData, Card card, CardType type) {

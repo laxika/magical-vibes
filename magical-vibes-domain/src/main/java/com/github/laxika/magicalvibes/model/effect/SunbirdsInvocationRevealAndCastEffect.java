@@ -7,7 +7,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * from among the revealed cards without paying its mana cost. The rest go to the
  * bottom of the library in a random order.
  *
- * @param manaValue the mana value of the spell that triggered this ability (determines X)
+ * <p>X is read as the ability resolves from the stack entry's triggering spell: the live spell while it is on the
+ * stack, else as it last existed there.
  */
-public record SunbirdsInvocationRevealAndCastEffect(int manaValue) implements CardEffect {
+public record SunbirdsInvocationRevealAndCastEffect() implements CardEffect {
 }

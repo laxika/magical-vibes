@@ -878,10 +878,8 @@ public class EtbTriggerService {
         }
         triggerCollectionService.checkAllyPermanentEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkAllyCreatureEntersTriggers(gameData, controllerId, card, extraEtbTriggers);
+        triggerCollectionService.checkEmblemEntersTriggers(gameData, controllerId, card);
         Permanent enteringPermanent = findEnteringPermanent(gameData, card);
-        if (!faceDown || enteringPermanent != null && gameQueryService.isArtifact(gameData, enteringPermanent)) {
-            triggerCollectionService.checkAllyArtifactEntersTriggers(gameData, controllerId, card);
-        }
         triggerCollectionService.checkOpponentCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkPlanarCreatureEntersTriggers(gameData, controllerId, card);
         triggerCollectionService.checkPlanarAllyPermanentEntersTriggers(gameData, controllerId, card);

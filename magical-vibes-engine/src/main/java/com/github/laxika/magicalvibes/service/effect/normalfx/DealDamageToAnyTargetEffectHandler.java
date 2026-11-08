@@ -70,6 +70,11 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
         Permanent source = sourcePermanentId != null
                 ? gameQueryService.findPermanentById(gameData, sourcePermanentId)
                 : null;
+        if (source == null && e.sourceIsTriggeringPermanent() && sourcePermanentId != null) {
+            // "It deals damage equal to its power": the triggering permanent that left the battlefield deals it as it
+            // last existed there (CR 608.2h, CR 113.7a), its departure snapshot.
+            source = departedPermanent(gameData, sourcePermanentId);
+        }
         if (source == null) {
             source = e.sourceIsTriggeringPermanent() && entry.getAttachedPermanentSnapshot() != null
                     ? entry.getAttachedPermanentSnapshot() : entry.getSourcePermanentSnapshot();
@@ -90,6 +95,9 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
                     : gameQueryService.findPermanentController(gameData, sourcePermanentId);
             if (sourceControllerId == null) {
                 sourceControllerId = entry.getTriggeringPermanentControllerId();
+            }
+            if (sourceControllerId == null && source != null) {
+                sourceControllerId = gameData.departedPermanentControllerIds.get(source.getCard().getId());
             }
             if (sourceControllerId != null) {
                 damageEntry.setControllerId(sourceControllerId);
@@ -175,5 +183,13 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
             return amountEvaluationService.referencesEventValue(look.count());
         }
         return false;
+    }
+
+    /** The departure snapshot of the permanent {@code permanentId} that left the battlefield this turn, or null. */
+    private static Permanent departedPermanent(GameData gameData, UUID permanentId) {
+        return gameData.departedPermanentSnapshots.values().stream()
+                .filter(departed -> departed.getId().equals(permanentId))
+                .findFirst()
+                .orElse(null);
     }
 }

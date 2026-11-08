@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.c.Conspiracy;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -17,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Pyrogoyf.class, Lhurgoyf.class, Forest.class, Shock.class, GrizzlyBears.class, Conspiracy.class})
+@CardUsed({Pyrogoyf.class, Lhurgoyf.class, Forest.class, Shock.class, GrizzlyBears.class, Conspiracy.class, DoomBlade.class})
 class PyrogoyfTest extends BaseCardTest {
 
     @Test
@@ -151,4 +153,19 @@ class PyrogoyfTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(new GrizzlyBears()));
     }
 
+    @Test
+    void entryDamageUsesLastKnownPowerWhenPyrogoyfLeavesFirst() {
+        setThreeCardTypesInGraveyards();
+        harness.castFromHand(player1, new Pyrogoyf(), "{3}{R}");
+        resolveAllTriggers();
+        harness.handlePermanentChosen(player1, player2.getId());
+
+        harness.setHand(player1, List.of(new DoomBlade()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player1, 0, findPermanent(player1, "Pyrogoyf").getId());
+        harness.assertInGraveyard(player1, "Pyrogoyf");
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+    }
 }

@@ -120,7 +120,7 @@ class MilaCraftyCompanionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(com.github.laxika.magicalvibes.model.PermanentChoiceContext.EnteringPermanentAnyTargetTrigger.class);
+                .isInstanceOf(com.github.laxika.magicalvibes.model.PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -342,5 +342,26 @@ class MilaCraftyCompanionTest extends BaseCardTest {
         int attackerIndex = gd.playerBattlefields.get(player2.getId()).indexOf(attacker);
         harness.inMutationScope(() -> harness.getCombatAttackService().declareAttackers(
                 gd, player2, List.of(attackerIndex), Map.of(attackerIndex, targetId)));
+    }
+
+    @Test
+    void lukkaEmblemCreatureThatLeftStillDealsDamageEqualToItsLastKnownPower() {
+        addReadyLukka(7);
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.castFromHand(player1, bears, "{1}{G}");
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, findPermanent(player1, "Grizzly Bears").getId());
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 }
