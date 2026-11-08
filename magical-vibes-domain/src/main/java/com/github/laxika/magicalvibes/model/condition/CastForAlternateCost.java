@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /** The resolving spell was cast by paying an alternate cost instead of its mana cost. */
-public record CastForAlternateCost() implements Condition {
+public record CastForAlternateCost() implements Condition, EntryFactCondition {
 
     @Override
     public String conditionName() {

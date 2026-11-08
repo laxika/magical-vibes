@@ -750,16 +750,17 @@ public class ConditionEvaluationService {
                             .sum() >= c.minimum();
             case Kicked ignored ->
                     ctx.kicked();
-            case GiftPromised ignored ->
-                    ctx.giftPromised();
+            // As an entering permanent's own enters ability judges it, the promise is the permanent's.
+            case GiftPromised ignored -> ctx.giftPromised()
+                    || ctx.sourcePermanent() != null && ctx.sourcePermanent().isGiftPromised();
             case NotKicked ignored ->
                     !ctx.kicked();
             case BuybackPaid ignored ->
                     ctx.buyback();
             case BeholdCostPaid ignored ->
                     ctx.beholdCostPaid();
-            case RevealCardFromHandCostPaid ignored ->
-                    ctx.revealCardFromHandCostPaid();
+            case RevealCardFromHandCostPaid ignored -> ctx.revealCardFromHandCostPaid()
+                    || ctx.sourcePermanent() != null && ctx.sourcePermanent().isRevealCardFromHandCostPaid();
             case WaterbendCostPaid ignored ->
                     ctx.waterbendCostPaid();
             case TeamworkCostPaid ignored ->
@@ -871,7 +872,8 @@ public class ConditionEvaluationService {
             case CommittedCrimeThisTurn ignored ->
                     ctx.controllerId() != null && gameData.hasCommittedCrimeThisTurn(ctx.controllerId());
             case ControlledMountAsCast ignored -> ctx.controlledMountAsCast();
-            case ControlledDragonAsCast ignored -> ctx.controlledDragonAsCast();
+            case ControlledDragonAsCast ignored -> ctx.controlledDragonAsCast()
+                    || ctx.sourcePermanent() != null && ctx.sourcePermanent().isControlledDragonAsCast();
             case ControlledCommanderAsCast ignored -> controlsCommander(gameData, ctx);
             case ControllerControlsCommander ignored -> controllerControlsCommander(gameData, ctx);
             case ControllerControlsOwnCommander ignored -> controllerControlsOwnCommander(gameData, ctx);

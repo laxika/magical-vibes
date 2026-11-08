@@ -39,7 +39,7 @@ public class MysticSanctuary extends Card {
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceUntapped()),
                 new MayEffect(
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY)

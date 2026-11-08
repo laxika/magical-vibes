@@ -32,7 +32,7 @@ public class IdyllicGrange extends Card {
 
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()),
+                        TriggerOptions.DEFAULT.withEventCondition(new SourceUntapped()),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /** The source permanent is a token. Wrap in {@link NotCondition} for "if this isn't a token". */
-public record SourceIsToken() implements Condition {
+public record SourceIsToken() implements Condition, EntryFactCondition {
 
     @Override
     public String conditionName() {

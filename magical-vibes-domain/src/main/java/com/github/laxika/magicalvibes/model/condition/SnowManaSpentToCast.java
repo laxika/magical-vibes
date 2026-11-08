@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.condition;
  * The amount is snapshotted at cast time and read back while the spell or its
  * enter-the-battlefield ability resolves.
  */
-public record SnowManaSpentToCast() implements Condition {
+public record SnowManaSpentToCast() implements Condition, EntryFactCondition {
 
     @Override
     public String conditionName() {

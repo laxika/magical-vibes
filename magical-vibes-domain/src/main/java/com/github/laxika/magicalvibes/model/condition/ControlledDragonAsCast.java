@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /** Whether the spell's controller controlled a Dragon when the spell was finished being cast. */
-public record ControlledDragonAsCast() implements Condition {
+public record ControlledDragonAsCast() implements Condition, EntryFactCondition {
 
     @Override
     public String conditionName() {

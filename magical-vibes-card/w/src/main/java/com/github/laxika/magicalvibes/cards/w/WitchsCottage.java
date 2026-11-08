@@ -31,7 +31,7 @@ public class WitchsCottage extends Card {
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLACK));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceUntapped()),
                 new MayEffect(
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY)

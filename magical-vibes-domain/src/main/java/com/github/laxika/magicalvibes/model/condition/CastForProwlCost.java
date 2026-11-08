@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /** The spell was cast for its prowl cost (CR 702.75), e.g. Latchkey Faerie's "if its prowl cost was paid". */
-public record CastForProwlCost() implements Condition {
+public record CastForProwlCost() implements Condition, EntryFactCondition {
 
     @Override
     public String conditionName() {

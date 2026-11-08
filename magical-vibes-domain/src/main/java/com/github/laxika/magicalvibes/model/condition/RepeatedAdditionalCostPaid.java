@@ -4,7 +4,7 @@ package com.github.laxika.magicalvibes.model.condition;
  * A particular payment declared by a repeatable additional mana cost was paid to cast the source
  * spell.
  */
-public record RepeatedAdditionalCostPaid(String manaCost, int minimumPayments) implements Condition {
+public record RepeatedAdditionalCostPaid(String manaCost, int minimumPayments) implements Condition, EntryFactCondition {
 
     public RepeatedAdditionalCostPaid(String manaCost) {
         this(manaCost, 1);

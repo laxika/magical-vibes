@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /** It is the source controller's precombat or postcombat main phase. */
-public record ControllerMainPhase() implements Condition {
+public record ControllerMainPhase() implements Condition, EntryFactCondition {
 
     @Override
     public String conditionName() {

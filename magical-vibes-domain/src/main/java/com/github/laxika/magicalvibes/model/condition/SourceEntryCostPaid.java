@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /** True when the source permanent paid its optional entry cost. */
-public record SourceEntryCostPaid() implements Condition {
+public record SourceEntryCostPaid() implements Condition, EntryFactCondition {
 
     @Override
     public String conditionName() {

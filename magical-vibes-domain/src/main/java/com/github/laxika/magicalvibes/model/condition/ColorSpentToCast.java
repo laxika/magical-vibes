@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
  * {@code GameData.spellCastManaSpentByColor} and read back when the spell resolves or its
  * enter-the-battlefield triggers are created.
  */
-public record ColorSpentToCast(ManaColor color, int minimumAmount) implements Condition {
+public record ColorSpentToCast(ManaColor color, int minimumAmount) implements Condition, EntryFactCondition {
 
     public ColorSpentToCast(ManaColor color) {
         this(color, 1);

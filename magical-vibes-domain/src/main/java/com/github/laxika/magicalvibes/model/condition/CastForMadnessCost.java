@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /** The resolving spell was cast for its madness cost. */
-public record CastForMadnessCost() implements Condition {
+public record CastForMadnessCost() implements Condition, EntryFactCondition {
 
     @Override
     public String conditionName() {

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Zone;
  * additionally requires that zone to be the controller's own (a card is only ever in its owner's graveyard
  * or library, so this checks the card's owner).
  */
-public record CastFromZone(Zone sourceZone, boolean fromControllersZone) implements Condition {
+public record CastFromZone(Zone sourceZone, boolean fromControllersZone) implements Condition, EntryFactCondition {
 
     public CastFromZone(Zone sourceZone) {
         this(sourceZone, false);

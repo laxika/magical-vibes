@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /** The spell's optional collect-evidence additional cost was paid. */
-public record CollectEvidenceCostPaid() implements Condition {
+public record CollectEvidenceCostPaid() implements Condition, EntryFactCondition {
 
     @Override
     public boolean isEtbTriggerGate() {

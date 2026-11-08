@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /** The spell or permanent was kicked (MTG Rule 702.32c). */
-public record Kicked() implements Condition {
+public record Kicked() implements Condition, EntryFactCondition {
 
     @Override
     public String conditionName() {

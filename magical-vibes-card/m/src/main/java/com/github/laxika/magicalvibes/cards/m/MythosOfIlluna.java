@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,11 +21,12 @@ import java.util.List;
 public class MythosOfIlluna extends Card {
 
     public MythosOfIlluna() {
-        ConditionalEffect fightEffect = new ConditionalEffect(
-                new SourceIsCreature(), new EnteringCreatureFightsTargetCreatureEffect());
+        EnteringCreatureFightsTargetCreatureEffect fightEffect = new EnteringCreatureFightsTargetCreatureEffect();
+        TriggerOptions ifCreature = TriggerOptions.DEFAULT.withInterveningIf(new SourceIsCreature());
         CreateTokenCopyOfTargetPermanentEffect enhancedCopy =
                 CreateTokenCopyOfTargetPermanentEffect.withAdditionalEffects(
-                        false, List.of(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), fightEffect)));
+                        false, List.of(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), ifCreature,
+                                fightEffect)));
 
         target(TargetFilters.permanent()).addSpellEffect(new ConditionalReplacementEffect(
                 new AllConditions(List.of(
@@ -33,6 +34,6 @@ public class MythosOfIlluna extends Card {
                         new ColorSpentToCast(ManaColor.GREEN))),
                 new CreateTokenCopyOfTargetPermanentEffect(), enhancedCopy));
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), fightEffect);
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), ifCreature, fightEffect);
     }
 }

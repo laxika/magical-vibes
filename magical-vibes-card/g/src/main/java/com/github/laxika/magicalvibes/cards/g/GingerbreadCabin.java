@@ -30,7 +30,7 @@ public class GingerbreadCabin extends Card {
                 new EntersTappedEffect()));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceUntapped()),
                 foodToken());
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));

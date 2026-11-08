@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /** Whether the spell's reveal-a-card-from-hand additional cost was paid. */
-public record RevealCardFromHandCostPaid() implements Condition {
+public record RevealCardFromHandCostPaid() implements Condition, EntryFactCondition {
 
     @Override
     public String conditionName() {

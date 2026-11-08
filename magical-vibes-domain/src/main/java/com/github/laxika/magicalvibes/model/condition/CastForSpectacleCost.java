@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /** The permanent or spell was cast for its spectacle cost. */
-public record CastForSpectacleCost() implements Condition {
+public record CastForSpectacleCost() implements Condition, EntryFactCondition {
 
     @Override
     public String conditionName() {

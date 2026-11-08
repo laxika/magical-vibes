@@ -31,7 +31,7 @@ public class DwarvenMine extends Card {
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.RED));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceUntapped()),
                 new CreateTokenEffect("Dwarf", 1, 1, CardColor.RED, List.of(CardSubtype.DWARF), Set.of(), Set.of()));
     }
 }

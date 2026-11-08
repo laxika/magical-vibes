@@ -3,35 +3,15 @@ package com.github.laxika.magicalvibes.service.battlefield.etb;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.condition.AnyOf;
-import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
-import com.github.laxika.magicalvibes.model.condition.ControlledDragonAsCast;
-import com.github.laxika.magicalvibes.model.condition.RevealCardFromHandCostPaid;
-import com.github.laxika.magicalvibes.model.condition.CastForMadnessCost;
-import com.github.laxika.magicalvibes.model.condition.CastForProwlCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
-import com.github.laxika.magicalvibes.model.condition.CastForSpectacleCost;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
-import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
-import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
-import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToCast;
-import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
-import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
-import com.github.laxika.magicalvibes.model.condition.SourceEntryCostPaid;
-import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
-import com.github.laxika.magicalvibes.model.condition.GiftPromised;
+import com.github.laxika.magicalvibes.model.condition.EntryFactCondition;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.condition.NotCondition;
-import com.github.laxika.magicalvibes.model.condition.NotKicked;
-import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
@@ -51,7 +31,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandIfDashCostPai
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
-import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import org.springframework.stereotype.Component;
@@ -151,165 +130,58 @@ public class EtbEffectResolver {
                 case DROP -> null;
                 case NOTHING -> new DrawCardEffect(0);
                 case UNWRAP -> conditional.wrapped();
-                case KEEP, UNJUDGED -> effect;
+                case UNJUDGED -> effect;
             };
         });
     }
 
     /**
-     * What becomes of a {@link ConditionalEffect} of a "when this enters" ability as the ability triggers: a fact
-     * fixed as the permanent entered drops it ({@link #DROP}), leaves an effect that does nothing in its place so the
-     * ability still triggers ({@link #NOTHING}: the mana spent to cast it, which the ability can't read later) or
-     * unwraps it ({@link #UNWRAP}), or is kept wrapped after it was judged ({@link #KEEP}); any other condition is
-     * kept wrapped unjudged ({@link #UNJUDGED}), and checked as the effect resolves.
+     * What becomes of a {@link ConditionalEffect} of a "when this enters" ability as the ability triggers: a fact fixed
+     * as the permanent entered ({@link EntryFactCondition}: a kicker, the zone it was cast from, a cost paid, the mana
+     * spent) is judged now, as the stack entry can't read how the permanent was cast, and unwraps when true
+     * ({@link #UNWRAP}) or leaves an effect that does nothing in its place so the ability still goes on the stack
+     * ({@link #NOTHING}, CR 603.4: an effect's "if" doesn't keep its ability from triggering); any other condition is
+     * kept wrapped ({@link #UNJUDGED}) and checked as the effect resolves. Blitz's reminder abilities drop
+     * ({@link #DROP}).
      */
     private enum Verdict {
-        DROP, NOTHING, UNWRAP, KEEP, UNJUDGED
+        DROP, NOTHING, UNWRAP, UNJUDGED
     }
 
     /** What becomes of {@code conditional} as the ability it is part of triggers ({@link Verdict}). */
     private Verdict verdict(EtbEffectContext ctx, ConditionalEffect conditional) {
-        ConditionContext conditionContext = conditionContext(ctx);
-        boolean collectEvidenceCostPaid = ctx.sourcePermanent() != null
-                && ctx.sourcePermanent().isCollectEvidenceCostPaid();
-        if (conditional.condition() instanceof ColorSpentToCast
-                || conditional.condition() instanceof NotCondition not
-                && not.inner() instanceof ColorSpentToCast) {
-            boolean applies = conditionEvaluationService.isMet(
-                    ctx.gameData(), conditional.condition(), conditionContext);
-            return applies ? Verdict.UNWRAP : Verdict.NOTHING;
+        if (conditional.condition() instanceof CastForAlternateCost && isBlitzReminder(conditional.wrapped())) {
+            return Verdict.DROP;
         }
-        return switch (conditional.condition()) {
-            // Kicked intervening-if (CR 603.4): unwrap when kicked, otherwise drop.
-            case Kicked ignored -> ctx.kicked() ? Verdict.UNWRAP : Verdict.DROP;
-            // Not-kicked ETB clauses use the same cast-time context.
-            case NotKicked ignored -> !ctx.kicked() ? Verdict.UNWRAP : Verdict.DROP;
-            case NotCondition notCondition when notCondition.inner() instanceof CastForAlternateCost ->
-                    ctx.alternateCost() ? Verdict.DROP : Verdict.UNWRAP;
-            // Independent additional-kicker clauses are intervening-if conditions whose
-            // payment list is snapshotted on the spell's stack entry.
-            case RepeatedAdditionalCostPaid paid ->
-                    ctx.repeatedAdditionalCosts().stream().filter(paid.manaCost()::equals).count()
-                            >= paid.minimumPayments() ? Verdict.UNWRAP : Verdict.DROP;
-            // Prowl intervening-if (CR 603.4): unwrap when the prowl cost was paid, otherwise drop.
-            case CastForProwlCost ignored -> ctx.prowl() ? Verdict.UNWRAP : Verdict.DROP;
-            // Gift intervening-if (CR 603.4): the promise is recorded on the entering permanent when
-            // the spell resolves, so an unpromised gift never puts the trigger on the stack.
-            case GiftPromised ignored ->
-                    ctx.sourcePermanent() != null && ctx.sourcePermanent().isGiftPromised()
-                            ? Verdict.KEEP : Verdict.DROP;
-            case CastForMadnessCost ignored -> ctx.madness() ? Verdict.UNWRAP : Verdict.DROP;
-            // CR 702.152a: blitz's end-step sacrifice is a delayed trigger queued by StackResolutionService.
-            case CastForAlternateCost ignored when conditional.wrapped() instanceof SacrificeSelfAtEndStepEffect -> Verdict.DROP;
-            // CR 702.152a: blitz's haste is a static ability granted by StackResolutionService as the spell resolves.
-            case CastForAlternateCost ignored when conditional.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect grant
-                    && grant.scope() == com.github.laxika.magicalvibes.model.effect.GrantScope.SELF
-                    && grant.keywords().equals(java.util.Set.of(com.github.laxika.magicalvibes.model.Keyword.HASTE)) -> Verdict.DROP;
-            case CastForAlternateCost ignored -> ctx.alternateCost() ? Verdict.UNWRAP : Verdict.DROP;
-            // Spectacle branch selection is fixed when the permanent enters.
-            case CastForSpectacleCost ignored ->
-                    ctx.sourcePermanent() != null && ctx.sourcePermanent().isSpectacle()
-                            ? Verdict.UNWRAP : Verdict.DROP;
-            // Cast-from-hand intervening-if (CR 603.4): unwrap only when cast from hand, otherwise drop.
-            case CastFromZone castFromZone ->
-                    conditionEvaluationService.isMet(ctx.gameData(), castFromZone, conditionContext)
-                            ? Verdict.UNWRAP : Verdict.DROP;
-            case EnteredFromZone enteredFromZone ->
-                    conditionEvaluationService.isMet(ctx.gameData(), enteredFromZone, conditionContext)
-                            ? Verdict.UNWRAP : Verdict.DROP;
-            // "if it entered from your graveyard or you cast it from your graveyard" (CR 603.4): where it came from
-            // and where it was cast from are fixed as it enters, so they are checked as it triggers only.
-            case AnyOf anyOf when anyOf.conditions().stream().allMatch(inner ->
-                    inner instanceof CastFromZone || inner instanceof EnteredFromZone) ->
-                    conditionEvaluationService.isMet(ctx.gameData(), anyOf, conditionContext)
-                            ? Verdict.UNWRAP : Verdict.DROP;
-            case ColorSpentToCast colorSpent ->
-                    conditionEvaluationService.isMet(ctx.gameData(), colorSpent, conditionContext)
-                            ? Verdict.KEEP : Verdict.DROP;
-            case SnowManaSpentToCast snowManaSpent ->
-                    conditionEvaluationService.isMet(ctx.gameData(), snowManaSpent, conditionContext)
-                            ? Verdict.KEEP : Verdict.DROP;
-            case TreasureManaSpentToCast treasureManaSpent ->
-                    conditionEvaluationService.isMet(ctx.gameData(), treasureManaSpent, conditionContext)
-                            ? Verdict.KEEP : Verdict.DROP;
-            case TargetPermanentMatches targetMatches when ctx.targetId() != null && ctx.card().isAura() ->
-                    conditionEvaluationService.isMet(ctx.gameData(), targetMatches, conditionContext)
-                            ? Verdict.KEEP : Verdict.DROP;
-            // "if it isn't a token" (CR 603.4): token-ness is fixed as the permanent enters.
-            case NotCondition notCondition when notCondition.inner() instanceof SourceIsToken ->
-                    conditionEvaluationService.isMet(ctx.gameData(), notCondition, conditionContext)
-                            ? Verdict.UNWRAP : Verdict.DROP;
-            case ControllerMainPhase controllerMainPhase ->
-                    conditionEvaluationService.isMet(ctx.gameData(), controllerMainPhase, conditionContext)
-                            ? Verdict.UNWRAP : Verdict.DROP;
-            // "When this enters, if you have fewer than four cards in hand" (Krang, Master Mind): the
-            // hand size is an intervening-if (CR 603.4), so the trigger is never put on the stack when false.
-            case CardsInHandAtMost cardsInHandAtMost ->
-                    conditionEvaluationService.isMet(ctx.gameData(), cardsInHandAtMost, conditionContext)
-                            ? Verdict.UNWRAP : Verdict.DROP;
-            // "When this enters, if it's a creature" (CR 603.4): a token copy that is not a creature
-            // never triggers, so no target is chosen for it.
-            case SourceIsCreature creatureGate -> (ctx.sourcePermanent() != null
-                    ? conditionEvaluationService.isMet(ctx.gameData(), creatureGate, conditionContext)
-                    : ctx.card().hasType(CardType.CREATURE)) ? Verdict.KEEP : Verdict.DROP;
-            // An enters trigger that only matches when the entering permanent itself has some characteristic
-            // (CR 603.6a, e.g. Weldfast Wingsmith entering as an artifact) never triggers otherwise.
-            case SourceMatchesPermanentPredicate sourceMatches when ctx.sourcePermanent() != null ->
-                    conditionEvaluationService.isMet(ctx.gameData(), sourceMatches, conditionContext)
-                            ? Verdict.KEEP : Verdict.DROP;
-            case SourceUntapped ignored ->
-                    conditionEvaluationService.isMet(ctx.gameData(), ignored, conditionContext)
-                            ? Verdict.UNWRAP : Verdict.DROP;
-            case com.github.laxika.magicalvibes.model.condition.CollectEvidenceCostPaid ignored ->
-                    collectEvidenceCostPaid ? Verdict.UNWRAP : Verdict.DROP;
-            case SourceEntryCostPaid ignored ->
-                    conditionEvaluationService.isMet(ctx.gameData(), ignored, conditionContext)
-                            ? Verdict.UNWRAP : Verdict.DROP;
-            // "if you cast it" is true for a spell cast from any zone, but not for a copy or
-            // a permanent put onto the battlefield by an effect.
-            case WasCast wasCastCondition ->
-                    ctx.sourcePermanent() != null
-                            ? (conditionEvaluationService.isMet(ctx.gameData(), wasCastCondition,
-                            conditionContext) ? Verdict.UNWRAP : Verdict.DROP)
-                            : (ctx.wasCastFromHand() && !wasCastCondition.byController()
-                            ? Verdict.UNWRAP : Verdict.DROP);
-            // "if you revealed a Dragon card or controlled a Dragon as you cast this spell" (CR 603.4):
-            // both halves are cast-time facts recorded on the entering permanent, so the trigger is
-            // never put on the stack when neither was true.
-            case AnyOf anyOf when ctx.sourcePermanent() != null
-                    && anyOf.conditions().stream().allMatch(inner ->
-                    inner instanceof RevealCardFromHandCostPaid || inner instanceof ControlledDragonAsCast) ->
-                    ctx.sourcePermanent().isRevealCardFromHandCostPaid()
-                            || ctx.sourcePermanent().isControlledDragonAsCast() ? Verdict.KEEP : Verdict.DROP;
-            // "if you cast it during your main phase" (Addendum, CR 603.4): both halves are facts fixed
-            // when the permanent enters, so the trigger is never put on the stack when either is false.
-            case AllOf allOf when allOf.conditions().stream().allMatch(inner ->
-                    inner instanceof WasCast || inner instanceof ControllerMainPhase) ->
-                    conditionEvaluationService.isMet(ctx.gameData(), allOf, conditionContext)
-                            ? Verdict.UNWRAP : Verdict.DROP;
-            // No target is chosen yet as the ability triggers (CR 603.3d), so a condition on it is
-            // checked only as the ability resolves.
-            case TargetPermanentMatches ignored -> Verdict.UNJUDGED;
-            // Any other condition — Metalcraft, Morbid, Raid, ravenous's "if X is 5 or more", "if there is no
-            // monarch", "if the sacrificed creature was …" — is checked as the effect resolves; as an intervening
-            // "if" (CR 603.4) it was checked as the ability triggered too (ownEntryConditionMet).
-            default -> Verdict.UNJUDGED;
-        };
+        if (!EntryFactCondition.isEntryFact(conditional.condition())) {
+            return Verdict.UNJUDGED;
+        }
+        return conditionEvaluationService.isMet(ctx.gameData(), conditional.condition(), conditionContext(ctx))
+                ? Verdict.UNWRAP : Verdict.NOTHING;
+    }
+
+    /**
+     * Blitz's "sacrifice it at the beginning of the next end step" and haste (CR 702.152a): a delayed trigger and a
+     * static ability the spell's resolution puts in place, not effects of an enters ability.
+     */
+    private static boolean isBlitzReminder(CardEffect wrapped) {
+        return wrapped instanceof SacrificeSelfAtEndStepEffect
+                || wrapped instanceof com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect grant
+                && grant.scope() == com.github.laxika.magicalvibes.model.effect.GrantScope.SELF
+                && grant.keywords().equals(java.util.Set.of(com.github.laxika.magicalvibes.model.Keyword.HASTE));
     }
 
     /**
      * Whether a "when this enters" ability whose intervening "if" (CR 603.4) or event condition (CR 603.2) is
-     * {@code condition} triggers as the permanent enters: a fact fixed as it entered is judged as the effects' own
-     * conditions are (a kicker, the zone it was cast from, a cost paid, the mana spent), any other condition on the
-     * game state now, but for one on the ability's target, which isn't chosen yet.
+     * {@code condition} triggers as the permanent enters, judged with the entering permanent's cast-time facts; a
+     * condition on the ability's target, which isn't chosen yet (CR 603.3d), is judged as it resolves, but an Aura's,
+     * whose enchanted object is known as it enters.
      */
     public boolean ownEntryConditionMet(EtbEffectContext ctx, Condition condition) {
-        return switch (verdict(ctx, new ConditionalEffect(condition, new DrawCardEffect(0)))) {
-            case DROP, NOTHING -> false;
-            case UNWRAP, KEEP -> true;
-            case UNJUDGED -> condition instanceof TargetPermanentMatches
-                    || conditionEvaluationService.isMet(ctx.gameData(), condition, conditionContext(ctx));
-        };
+        if (condition instanceof TargetPermanentMatches && !(ctx.targetId() != null && ctx.card().isAura())) {
+            return true;
+        }
+        return conditionEvaluationService.isMet(ctx.gameData(), condition, conditionContext(ctx));
     }
 
     /** The context the conditions of {@code ctx}'s entering permanent are read in, with its cast-time facts. */

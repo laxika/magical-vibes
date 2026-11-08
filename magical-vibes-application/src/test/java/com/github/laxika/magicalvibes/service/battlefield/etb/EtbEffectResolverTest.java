@@ -155,13 +155,13 @@ class EtbEffectResolverTest {
     }
 
     @Test
-    @DisplayName("KickedConditional: unwraps when kicked, dropped otherwise")
+    @DisplayName("KickedConditional: unwraps when kicked, does nothing otherwise")
     void kickedConditional() {
         DrawCardEffect wrapped = new DrawCardEffect(1);
         ConditionalEffect kicked = new ConditionalEffect(new Kicked(), wrapped);
 
         assertThat(resolver.resolve(ctx(true, 0, true), kicked)).isSameAs(wrapped);
-        assertThat(resolver.resolve(ctx(true, 0, false), kicked)).isNull();
+        assertThat(resolver.resolve(ctx(true, 0, false), kicked)).isEqualTo(new DrawCardEffect(0));
     }
 
     @Test
@@ -175,7 +175,7 @@ class EtbEffectResolverTest {
         EtbEffectContext normalContext = new EtbEffectContext(gameData, card, controllerId,
                 true, 0, false, false, false, false, false, null, List.of());
         assertThat(resolver.resolve(madnessContext, madness)).isSameAs(wrapped);
-        assertThat(resolver.resolve(normalContext, madness)).isNull();
+        assertThat(resolver.resolve(normalContext, madness)).isEqualTo(new DrawCardEffect(0));
     }
 
     @Test
@@ -185,7 +185,7 @@ class EtbEffectResolverTest {
         ConditionalEffect fromHand = new ConditionalEffect(new CastFromZone(Zone.HAND), wrapped);
 
         assertThat(resolver.resolve(ctx(true, 0, false), fromHand)).isSameAs(wrapped);
-        assertThat(resolver.resolve(ctx(false, 0, false), fromHand)).isNull();
+        assertThat(resolver.resolve(ctx(false, 0, false), fromHand)).isEqualTo(new DrawCardEffect(0));
     }
 
     @Test
@@ -213,14 +213,14 @@ class EtbEffectResolverTest {
         ConditionalEffect snowMana = new ConditionalEffect(new SnowManaSpentToCast(), wrapped);
 
         gameData.setSpellCastSnowManaSpent(card.getId(), 1);
-        assertThat(resolver.resolve(ctx(true, 0, false), snowMana)).isSameAs(snowMana);
+        assertThat(resolver.resolve(ctx(true, 0, false), snowMana)).isSameAs(wrapped);
 
         gameData.setSpellCastSnowManaSpent(card.getId(), 0);
-        assertThat(resolver.resolve(ctx(true, 0, false), snowMana)).isNull();
+        assertThat(resolver.resolve(ctx(true, 0, false), snowMana)).isEqualTo(new DrawCardEffect(0));
     }
 
     @Test
-    @DisplayName("WasCastConditional: unwraps for a cast permanent but drops for a battlefield entry")
+    @DisplayName("WasCastConditional: unwraps for a cast permanent but does nothing for a battlefield entry")
     void wasCastConditional() {
         DrawCardEffect wrapped = new DrawCardEffect(1);
         ConditionalEffect wasCast = new ConditionalEffect(new WasCast(), wrapped);
@@ -232,7 +232,7 @@ class EtbEffectResolverTest {
 
         source.setCast(false);
         assertThat(resolver.resolve(new EtbEffectContext(gameData, card, controllerId,
-                false, 0, false, false, false, source), wasCast)).isNull();
+                false, 0, false, false, false, source), wasCast)).isEqualTo(new DrawCardEffect(0));
     }
 
     @Test
