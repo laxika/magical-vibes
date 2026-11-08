@@ -19,10 +19,14 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.cards.g.GreaterGargadon;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.model.Permanent;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HarshMentor.class, BloodlustInciter.class, EvolvingWilds.class, Censor.class, SacredCat.class})
+@CardUsed({HarshMentor.class, BloodlustInciter.class, EvolvingWilds.class, Censor.class, SacredCat.class,
+        GreaterGargadon.class, Forest.class})
 class HarshMentorTest extends BaseCardTest {
 
     @Test
@@ -189,5 +193,29 @@ class HarshMentorTest extends BaseCardTest {
         card.setType(type);
         card.addActivatedAbility(new ActivatedAbility(true, null, List.of(effect), "{T}: ability."));
         harness.addToBattlefieldAndReturn(player, card).setSummoningSick(false);
+    }
+
+    @Test
+    @DisplayName("An opponent's ability of a suspended creature card does not trigger Harsh Mentor")
+    void suspendedCreatureCardAbilityDoesNotTrigger() {
+        harness.addToBattlefield(player2, new HarshMentor());
+        harness.setLife(player1, 20);
+        GreaterGargadon gargadon = new GreaterGargadon();
+        harness.setHand(player1, List.of(gargadon));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateHandAbility(player1, 0, null);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.activateExiledAbility(player1, gargadon.getId());
+        harness.handlePermanentChosen(player1, forest.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forest);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(GreaterGargadon.class);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.exiledCardTimeCounters).containsEntry(gargadon.getId(), 9);
     }
 }

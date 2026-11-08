@@ -132,7 +132,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyThisSpellIfCasualtyPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.DemonstrateEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCastTriggerToSpellsEffect;
@@ -10892,23 +10891,20 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Whether the activation of {@code ability}, on the stack as {@code abilityEntry}, paid what the payment filter of
-     * {@code activation} requires: life ({@code lifePaid}, Verrak, Warped Sengir), or one or more permanents
-     * sacrificed for its costs, the source included (Ashnod the Uncaring); true without one.
+     * Whether the activation on the stack as {@code abilityEntry} paid what the payment filter of {@code activation}
+     * requires: life ({@code lifePaid}, Verrak, Warped Sengir), or one or more permanents sacrificed for its costs
+     * (Ashnod the Uncaring): the entry records every one, the source, the chosen ones and the granting Equipment
+     * alike; true without one.
      */
     private static boolean activationPaymentMatches(ActivationAbility activation, StackEntry abilityEntry,
-                                                    ActivatedAbility ability, int lifePaid) {
+                                                    int lifePaid) {
         AbilityTrigger.ActivationPayment payment = activation.trigger().payment();
         if (payment == null) {
             return true;
         }
         return switch (payment) {
             case LIFE -> lifePaid > 0;
-            case SACRIFICE -> !abilityEntry.getSacrificedCardIds().isEmpty()
-                    || ability.getEffects().stream()
-                    .filter(CostEffect.class::isInstance)
-                    .map(CostEffect.class::cast)
-                    .anyMatch(CostEffect::sacrificesSourcePermanent);
+            case SACRIFICE -> !abilityEntry.getSacrificedCardIds().isEmpty();
         };
     }
 
@@ -11095,7 +11091,7 @@ public class TriggerCollectionService {
                         activatedPermanent);
                 if (judged == null
                         || !activationStackEntryMatches(gameData, perm, ownerId, activation, abilityEntry)
-                        || !activationPaymentMatches(activation, abilityEntry, ability, activationLifePaid)) {
+                        || !activationPaymentMatches(activation, abilityEntry, activationLifePaid)) {
                     continue;
                 }
                 enqueueActivationCopyAbility(gameData, perm, ownerId, activation, judged, abilityEntry, ability,

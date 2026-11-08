@@ -247,15 +247,18 @@ public class ActivatedAbilityExecutionService {
      * Sacrifices the source (when the ability has a sacrifice-self cost) and every permanent chosen
      * for the ability's other sacrifice costs as one simultaneous event, so each one's dies triggers
      * see the others leave too (CR 603.10a).
+     *
+     * @return the card ids of the permanents sacrificed, in sacrifice order
      */
-    private void sacrificeCostPermanents(GameData gameData, Player player, Permanent source,
-                                         boolean sacrificeSource) {
+    private List<UUID> sacrificeCostPermanents(GameData gameData, Player player, Permanent source,
+                                               boolean sacrificeSource) {
         List<Permanent> sacrificed = costSacrificePermanents(gameData, player, source, sacrificeSource);
         gameData.pendingActivationCostSacrificeIds.clear();
         if (sacrificed.isEmpty()) {
-            return;
+            return List.of();
         }
         UUID sourceId = source.getId();
+        List<UUID> sacrificedCardIds = new ArrayList<>();
         departureService.departNow(gameData,
                 DepartureBatch.of(sacrificed.stream().map(p -> DepartureIntent.sacrifice(p.getId())).toList()),
                 com.github.laxika.magicalvibes.service.battlefield.DepartureService.Hooks.afterEach(
@@ -263,12 +266,14 @@ public class ActivatedAbilityExecutionService {
                             if (!removed) {
                                 return;
                             }
+                            sacrificedCardIds.add(snapshot.permanent().getCard().getId());
                             triggerCollectionService.recordSacrifice(gameData, player.getId(), snapshot.permanent().getCard());
                             if (!sacrificeSource || !sacrificedPermanent.getId().equals(sourceId)) {
                                 gameLogService.append(gameData, GameLog.textCardText(
                                         player.getUsername() + " sacrifices ", sacrificedPermanent.getCard(), "."));
                             }
                         }));
+        return sacrificedCardIds;
     }
 
     /**
@@ -881,7 +886,15 @@ public class ActivatedAbilityExecutionService {
                 effectiveXValue = sacrificeSelfCost.get().signedPower() ? snapshotPower : Math.max(0, snapshotPower);
             }
         }
-        sacrificeCostPermanents(gameData, player, permanent, sacrificeSelfCost.isPresent());
+        // CR 602.2b, CR 601.2h: every permanent sacrificed to pay the costs (the source, the chosen ones, the granting
+        // Equipment) is recorded on the ability, whose "if one or more permanents were sacrificed to activate it"
+        // triggers (Ashnod the Uncaring) and "the cards sacrificed this way" effects read it.
+        List<UUID> costSacrificedCardIds = new ArrayList<>(sacrificedCardIds == null ? List.of() : sacrificedCardIds);
+        for (UUID sacrificedId : sacrificeCostPermanents(gameData, player, permanent, sacrificeSelfCost.isPresent())) {
+            if (!costSacrificedCardIds.contains(sacrificedId)) {
+                costSacrificedCardIds.add(sacrificedId);
+            }
+        }
 
         // Sacrifice the source equipment (e.g. Blazing Torch's "{T}, Sacrifice Blazing Torch: ...")
         // Snapshot the equipment's card before sacrifice so it can be used as the damage source
@@ -899,7 +912,10 @@ public class ActivatedAbilityExecutionService {
                     }
                 }
                 sacrificedEquipmentCard.setKeywords(equipmentKeywords);
-                sacrificeAlone(gameData, equipment);
+                if (sacrificeAlone(gameData, equipment)
+                        && !costSacrificedCardIds.contains(equipment.getCard().getId())) {
+                    costSacrificedCardIds.add(equipment.getCard().getId());
+                }
             }
         }
 
@@ -1148,7 +1164,7 @@ public class ActivatedAbilityExecutionService {
         pushAbilityOnStack(gameData, playerId, permanent, ability, snapshotEffects, effectiveXValue, effectiveTargetId,
                 targetZone, targetIds, damageAssignments, chosenCostPermanentIds, tracksSacrificedCard,
                 recordsSacrificedPermanentSnapshot, sacrificedSourceSnapshot, sacrificedAttachedEquipmentIds,
-                sacrificedCardIds, discardedCardSnapshot, exiledCostCardSnapshot, activatedAbilityExiledCardIds,
+                costSacrificedCardIds, discardedCardSnapshot, exiledCostCardSnapshot, activatedAbilityExiledCardIds,
                 activatedPermanentControllerId);
         if (markAsNonTargetingForSacCreatureCost && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setNonTargeting(true);
@@ -1168,14 +1184,18 @@ public class ActivatedAbilityExecutionService {
                 gameData, playerId, abilityEntry, ability, permanent,
                 preCostActivationTriggers.abilities());
         triggerCollectionService.checkCrimeTriggers(gameData, abilityEntry);
+        // CR 109.2: "an ability of an artifact or creature" is an ability of a permanent, so an ability of a card
+        // off the battlefield (a suspended card in exile, a card in the command zone, an emblem) has no activated
+        // permanent for these triggers' source filters to match, as an ability of a card in a hand has none.
+        Permanent activatedBattlefieldPermanent = activatedPermanentControllerId != null ? permanent : null;
         triggerCollectionService.checkControllerActivatesNonManaAbilityTriggers(
-                gameData, playerId, abilityEntry, ability, permanent, activatedPermanentControllerId,
-                preCostActivationTriggers.abilities());
+                gameData, playerId, abilityEntry, ability, activatedBattlefieldPermanent,
+                activatedPermanentControllerId, preCostActivationTriggers.abilities());
         // "Whenever an opponent activates a non-mana ability" triggers (Harsh Mentor). Reached only on
         // the non-mana path, so the "if it isn't a mana ability" clause is satisfied automatically.
         triggerCollectionService.checkOpponentActivatesNonManaAbilityTriggers(
-                gameData, playerId, abilityEntry, ability, permanent, activatedPermanentControllerId,
-                preCostActivationTriggers.abilities());
+                gameData, playerId, abilityEntry, ability, activatedBattlefieldPermanent,
+                activatedPermanentControllerId, preCostActivationTriggers.abilities());
         gameData.stack.addAll(preCostActivationTriggers.entries());
         // Add "whenever you activate an ability" triggers ON TOP so they resolve first (per CR rules)
         gameData.stack.addAll(deferredActivationTriggers);

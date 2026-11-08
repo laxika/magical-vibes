@@ -4,6 +4,9 @@
 - KurkeshOnakkeAncientTest: a new case, the rules fix: "an ability of an artifact" is an ability of an artifact
   permanent (CR 109.2), so cycling an artifact card from the hand (Ketria Crystal) doesn't trigger Kurkesh. The old
   record judged the cycling ability's stack entry by its card's type and offered the {R} copy.
+- AshnodTheUncaringTest: a new case, the same rules fix: "an ability of an artifact or creature" is a permanent's, so
+  a suspended Greater Gargadon's ability (a creature card in exile) doesn't trigger Ashnod although a land was
+  sacrificed to activate it (added after the run, with the user).
 
 Each edit is (old, new): the old text is replaced; a file that already has the new text is left alone. A new test is
 added before the class's closing brace, with its imports. Idempotent. Per letter module.
@@ -36,6 +39,30 @@ KURKESH_TEST = '''
     }
 '''
 
+ASHNOD_TEST = '''
+    @Test
+    @DisplayName("An ability of a suspended creature card does not trigger Ashnod")
+    void suspendedCreatureCardAbilityDoesNotTrigger() {
+        harness.addToBattlefield(player1, new AshnodTheUncaring());
+        GreaterGargadon gargadon = new GreaterGargadon();
+        harness.setHand(player1, List.of(gargadon));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateHandAbility(player1, 0, null);
+        Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
+
+        harness.activateExiledAbility(player1, gargadon.getId());
+        harness.handlePermanentChosen(player1, forest.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(forest);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard()).isInstanceOf(GreaterGargadon.class);
+        harness.passBothPriorities();
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.exiledCardTimeCounters).containsEntry(gargadon.getId(), 9);
+    }
+'''
+
 TESTS = {
     "KurkeshOnakkeAncientTest": (
         [("@CardUsed({KurkeshOnakkeAncient.class, RodOfRuin.class, LlanowarElves.class,\n"
@@ -44,6 +71,12 @@ TESTS = {
           "        ProdigalPyromancer.class, Meteorite.class, KetriaCrystal.class})")],
         [("void cyclingAnArtifactCardDoesNotTrigger()", KURKESH_TEST)],
         ["java:java.util.List"]),
+    "AshnodTheUncaringTest": (
+        [("@CardUsed({AshnodTheUncaring.class, AetherSpellbomb.class, GrizzlyBears.class, ProdigalPyromancer.class})",
+          "@CardUsed({AshnodTheUncaring.class, AetherSpellbomb.class, GrizzlyBears.class, ProdigalPyromancer.class,\n"
+          "        GreaterGargadon.class, Forest.class})")],
+        [("void suspendedCreatureCardAbilityDoesNotTrigger()", ASHNOD_TEST)],
+        ["cards.g.GreaterGargadon", "cards.f.Forest", "java:org.junit.jupiter.api.DisplayName"]),
 }
 
 

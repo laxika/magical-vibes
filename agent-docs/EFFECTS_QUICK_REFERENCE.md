@@ -2151,7 +2151,8 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
   “an exhaust ability” `EXHAUST` (Sala, Deck Boss), “if that ability's activation cost contains {X}”
   `WITH_X_IN_COST` (Unbound Flourishing), “if life was paid / one or more permanents were sacrificed to activate
   it” `.withPayment(AbilityTrigger.ActivationPayment.LIFE)` / `SACRIFICE` (Verrak, Ashnod; judged by the
-  collector of the abilities that copy the activated ability only), “whenever an ability of equipped creature is
+  collector of the abilities that copy the activated ability only; `SACRIFICE` reads every permanent the ability's
+  stack entry records as sacrificed for its costs, chosen or the source), “whenever an ability of equipped creature is
   activated” (whoever activates it) `Triggers.playerActivatesNonManaAbility().withSource(new
   PermanentIsHostOfSourceAuraPredicate())` (Illusionist's Bracers)
   and “an ability of [a permanent]” `.withSource(permanentPredicate)` (Ceaseless Searblades, “of a Chandra
