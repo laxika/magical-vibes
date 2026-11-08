@@ -37,6 +37,9 @@ import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntap
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -659,7 +662,7 @@ class LandTapTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("resolves a tapped-source conditional mana-and-damage ability immediately")
+        @DisplayName("a triggered mana ability's judged intervening \"if\" comes off, and its sequence resolves immediately")
         void resolvesTappedSourceConditionalSequenceImmediately() {
             Permanent triggerPerm = createPermanent("Barbflare Gremlin");
             triggerPerm.tap();
@@ -667,7 +670,11 @@ class LandTapTriggerCollectorServiceTest {
             var sequence = SequenceEffect.of(
                     new AddOneOfEachManaTypeProducedByLandEffect(false),
                     new DealDamageOnLandTapEffect(1));
-            var effect = new ConditionalEffect(new SourceIsTapped(), sequence);
+            var ability = new TriggeredAbility(Triggers.playerTapsLandForMana(),
+                    TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()), sequence);
+            CardEffect effect = TapAbilityReader.read(ability, TapWatch.ON_ANY_PLAYER_TAPS_LAND.trigger())
+                    .getFirst().effectAsJudged();
+            assertThat(effect).isEqualTo(sequence);
             var ctx = new TriggerContext.LandTap(player2Id, forest.getId());
 
             when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
@@ -682,6 +689,20 @@ class LandTapTriggerCollectorServiceTest {
             verify(dealDamageHandler).resolve(
                     eq(gd), any(StackEntry.class), eq(new DealDamageToPlayersEffect(
                             1, DamageRecipient.TARGET_PLAYER)));
+        }
+
+        @Test
+        @DisplayName("an ability that uses the stack keeps its intervening \"if\" for the check as it resolves")
+        void nonManaAbilityKeepsItsInterveningIf() {
+            var damage = new DealDamageOnLandTapEffect(1);
+            var ability = new TriggeredAbility(Triggers.playerTapsLandForMana(),
+                    TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()), damage);
+
+            CardEffect effect = TapAbilityReader.read(ability, TapWatch.ON_ANY_PLAYER_TAPS_LAND.trigger())
+                    .getFirst().effectAsJudged();
+
+            assertThat(TapAbilityReader.isTriggeredManaAbility(ability)).isFalse();
+            assertThat(effect).isEqualTo(new ConditionalEffect(new SourceIsTapped(), damage));
         }
 
         @Test

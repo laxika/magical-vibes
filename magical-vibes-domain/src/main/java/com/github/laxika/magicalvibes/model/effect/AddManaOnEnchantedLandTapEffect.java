@@ -5,5 +5,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code mana} (e.g. {@link AwardManaEffect}, {@link AwardAnyColorManaEffect},
  * {@link AwardChosenColorManaEffect}).
  */
-public record AddManaOnEnchantedLandTapEffect(ManaProducingEffect mana) implements CardEffect {
+public record AddManaOnEnchantedLandTapEffect(ManaProducingEffect mana) implements TriggeredManaAbilityEffect {
 }

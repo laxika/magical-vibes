@@ -178,4 +178,22 @@ class HellishRebukeTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 19);
     }
+
+    @Test
+    @DisplayName("Damage to a player other than the caster doesn't trigger the granted ability")
+    void damageToAnotherPlayerDoesNotTrigger() {
+        harness.setHand(player1, List.of(new HellishRebuke()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        addCreatureReady(player2, new ProdigalSorcerer());
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        harness.activateAbility(player2, 0, null, player2.getId());
+        resolveAllTriggers();
+
+        harness.assertOnBattlefield(player2, "Prodigal Sorcerer");
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 19);
+    }
 }

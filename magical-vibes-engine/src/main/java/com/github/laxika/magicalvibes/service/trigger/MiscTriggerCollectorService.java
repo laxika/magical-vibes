@@ -1943,65 +1943,37 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = ConditionalEffect.class,
-            watch = ZoneChangeWatch.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
-    private boolean handleConditionalCardPutIntoOpponentGraveyard(TriggerMatchContext match,
-            ConditionalEffect conditional, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut)) {
-            return false;
-        }
-
-        Card sourceCard = match.permanent() != null ? match.permanent().getCard() : match.sourceCard();
-        if (sourceCard == null) return false;
-        ConditionContext conditionContext = match.permanent() != null
-                ? ConditionContext.forPermanent(match.permanent(), match.controllerId())
-                : ConditionContext.forCard(sourceCard, match.controllerId());
-        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(), conditionContext)) {
-            return false;
-        }
-
-        var gameData = match.gameData();
-        String cardName = sourceCard.getName();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                cardName + "'s ability",
-                new ArrayList<>(List.of(conditional)),
-                match.permanent() == null ? null : cardPut.graveyardOwnerId(),
-                match.permanent() == null ? null : match.permanent().getId()
-        );
-        entry.setNonTargeting(conditional.targetSpec().declaredTarget() == null);
-        entry.setTriggeringPermanentControllerId(cardPut.graveyardOwnerId());
-        gameData.enqueueTrigger(entry);
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers (card put into opponent's graveyard from anywhere)", gameData.id, cardName);
-        return true;
-    }
-
+    /**
+     * "Whenever a card is put into an opponent's graveyard from anywhere", from a permanent or, while suspended, from
+     * exile (Nihilith): the pipeline judged the ability's options as it triggered and wrapped its intervening "if"
+     * around the effect, which checks it again as it resolves (CR 603.4). On the battlefield the graveyard's owner is
+     * "that player" (the entry's target), and "that card" is the graveyard object the card became (CR 400.7).
+     */
     @CollectsWatchTrigger(value = CardEffect.class,
             watch = ZoneChangeWatch.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
     private boolean handleCardPutIntoOpponentGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         TriggerContext.CardPutIntoGraveyard cardPut = (TriggerContext.CardPutIntoGraveyard) ctx;
         var gameData = match.gameData();
-        String cardName = match.permanent().getCard().getName();
+        Card sourceCard = match.permanent() != null ? match.permanent().getCard() : match.sourceCard();
+        if (sourceCard == null) return false;
+        String cardName = sourceCard.getName();
 
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
+                sourceCard,
                 match.controllerId(),
                 cardName + "'s ability",
                 new ArrayList<>(List.of(effect)),
-                cardPut.graveyardOwnerId(),
-                match.permanent().getId()
+                match.permanent() == null ? null : cardPut.graveyardOwnerId(),
+                match.permanent() == null ? null : match.permanent().getId()
         );
-        // "That card" is the graveyard object the card became (CR 400.7).
+        entry.setNonTargeting(effect.targetSpec().declaredTarget() == null);
+        entry.setTriggeringPermanentControllerId(cardPut.graveyardOwnerId());
         entry.setTriggeringCard(cardPut.card().getId(), gameData.graveyardEntryVersion(cardPut.card().getId()));
         gameData.enqueueTrigger(entry);
 
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers (card put into opponent's graveyard from anywhere)", gameData.id, cardName);
         return true;
     }

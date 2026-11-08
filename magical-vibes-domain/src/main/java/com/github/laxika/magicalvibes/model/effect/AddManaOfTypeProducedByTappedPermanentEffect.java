@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
  * and adds one mana of that color.
  */
 public record AddManaOfTypeProducedByTappedPermanentEffect(ManaColor requiredColor)
-        implements ManaProducingEffect {
+        implements ManaProducingEffect, TriggeredManaAbilityEffect {
 
     public AddManaOfTypeProducedByTappedPermanentEffect() {
         this(null);

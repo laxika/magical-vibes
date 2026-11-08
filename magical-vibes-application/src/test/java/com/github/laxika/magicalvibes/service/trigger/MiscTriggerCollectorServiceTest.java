@@ -1733,7 +1733,7 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("queues a suspended card's conditional opponent-graveyard trigger")
+    @DisplayName("queues a suspended card's opponent-graveyard trigger with its intervening \"if\" as the pipeline judged and wrapped it")
     void queuesSuspendedCardOpponentGraveyardTrigger() {
         Card sourceCard = createCard("Nihilith");
         var effect = new ConditionalEffect(
@@ -1741,7 +1741,6 @@ class MiscTriggerCollectorServiceTest {
                 new MayEffect(new RemoveTimeCounterFromExiledCardEffect(sourceCard.getId()),
                         "Remove a time counter from Nihilith?"));
         var ctx = new TriggerContext.CardPutIntoGraveyard(createCard("Shock"), player2Id);
-        when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
 
         boolean result = registry.dispatch(
                 new TriggerMatchContext(gd, null, player1Id, effect, sourceCard),

@@ -14,7 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.PutTimeCountersOnSuspendedCar
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -52,7 +54,8 @@ public class CurseOfTheCabal extends Card {
                         SequenceEffect.of(
                                 new SacrificePermanentsEffect(1, allPermanents, SacrificeRecipient.ACTIVE_PLAYER)
                                         .withRecordedSacrificeCount(),
-                                new PutTimeCountersOnSuspendedCardEffect(2)),
+                                new ConditionalEffect(new EventValueAtLeast(1),
+                                        new PutTimeCountersOnSuspendedCardEffect(2))),
                         "Sacrifice a permanent?",
                         null,
                         MayChoicePlayer.ACTIVE_PLAYER));

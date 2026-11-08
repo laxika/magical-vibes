@@ -14,5 +14,5 @@ public record AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect(
         ManaColor color,
         int amount,
         int snowAmount,
-        ManaRestriction restriction) implements CardEffect {
+        ManaRestriction restriction) implements TriggeredManaAbilityEffect {
 }

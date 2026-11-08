@@ -8,7 +8,7 @@ public record AddManaWhenLandTappedForManaEffect(
         boolean controllerOnly,
         boolean sourceOnly
 )
-        implements CardEffect {
+        implements TriggeredManaAbilityEffect {
 
     /** Watches only lands tapped by the source controller. */
     public AddManaWhenLandTappedForManaEffect(ManaColor color) {

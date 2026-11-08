@@ -38,7 +38,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedChooseOpponentGainsControlOfSource;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -163,18 +162,6 @@ public class LandTapTriggerCollectorService {
                 match.gameData(), entry, new DealDamageToPlayersEffect(
                         damage.damage(), DamageRecipient.TARGET_PLAYER));
         return true;
-    }
-
-    @CollectsTapTrigger(value = ConditionalEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
-    private boolean handleConditionalManaAbilitySequence(TriggerMatchContext match,
-            ConditionalEffect conditional, TriggerContext ctx) {
-        if (match.permanent() == null) {
-            return false;
-        }
-        if (!(conditional.wrapped() instanceof SequenceEffect sequence)) {
-            return false;
-        }
-        return handleManaAbilitySequence(match, sequence, ctx);
     }
 
     @CollectsTapTrigger(value = RemoveCounterFromSourceEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)

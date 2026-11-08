@@ -29,7 +29,7 @@ public record AddOneOfEachManaTypeProducedByLandEffect(
         PermanentPredicate landFilter,
         boolean monarchOnly,
         boolean anyColor
-) implements CardEffect {
+) implements TriggeredManaAbilityEffect {
 
     public AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly, boolean matchesImprintedCardName,
                                                      PermanentPredicate landFilter, boolean monarchOnly) {

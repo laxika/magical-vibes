@@ -130,9 +130,15 @@ public final class TargetAbilityReader {
      * one).
      */
     public static List<CardEffect> grantedToPermanentEffects(Permanent permanent, TargetWatch watch) {
+        return grantedToPermanentEffects(permanent, watch, TriggerJudge.NONE);
+    }
+
+    /** {@link #grantedToPermanentEffects(Permanent, TargetWatch)} of the abilities {@code judge} lets trigger. */
+    public static List<CardEffect> grantedToPermanentEffects(Permanent permanent, TargetWatch watch,
+                                                             TriggerJudge judge) {
         List<TriggeredAbility> abilities = new ArrayList<>(WatchedAbilities.temporary(permanent, watch.trigger()));
         abilities.addAll(WatchedAbilities.persistent(permanent, watch.trigger()));
-        return effects(abilities, watch.trigger());
+        return effects(judge.filter(abilities), watch.trigger());
     }
 
     /** Every effect of {@code abilities}, as their collector reads them for the condition watched as {@code watched}. */

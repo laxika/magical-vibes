@@ -174,6 +174,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPlayerAttackedContro
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsAfraidOfController;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsActivePlayer;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsController;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerIs;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeTotalEquals;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerLostLifeThisTurn;
@@ -1157,6 +1158,7 @@ public class ConditionEvaluationService {
                     ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
             case TargetPlayerIsController ignored ->
                     ctx.targetId() != null && ctx.targetId().equals(ctx.controllerId());
+            case TargetPlayerIs c -> c.playerId() != null && c.playerId().equals(ctx.targetId());
             case TargetPlayerIsActive ignored ->
                     ctx.targetId() != null && ctx.targetId().equals(gameData.activePlayerId);
             case TargetPlayerLifeTotalEquals c ->

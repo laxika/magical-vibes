@@ -26,10 +26,6 @@ public class PutTimeCountersOnSuspendedCardEffectHandler implements NormalEffect
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getEventValue() <= 0) {
-            return;
-        }
-
         UUID cardId = entry.getCard().getId();
         ExiledCardEntry exiledEntry = gameData.findExiledCard(cardId);
         if (exiledEntry == null || !gameData.exiledCardTimeCounters.containsKey(cardId)) {

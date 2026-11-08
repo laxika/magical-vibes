@@ -2200,10 +2200,7 @@ public class CombatDamageService {
                                 ? 1 : creatureTriggerCopies);
                 if (candidateEffect instanceof com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCombatDamageSourceIntoHandEffect
                         && creature.getCard().isToken()) continue;
-                if (candidateEffect instanceof com.github.laxika.magicalvibes.model.effect.DamagedPlayerOnlyEffect onlyDamagedPlayer
-                        && !defenderId.equals(onlyDamagedPlayer.playerId())) continue;
-                CardEffect rawEffect = candidateEffect instanceof com.github.laxika.magicalvibes.model.effect.DamagedPlayerOnlyEffect onlyDamagedPlayer
-                        ? onlyDamagedPlayer.wrapped() : candidateEffect;
+                CardEffect rawEffect = candidateEffect;
                 if (rawEffect instanceof com.github.laxika.magicalvibes.model.effect.RenownEffect
                         && creature.isRenowned()) continue;
                 CardEffect effect = rawEffect;

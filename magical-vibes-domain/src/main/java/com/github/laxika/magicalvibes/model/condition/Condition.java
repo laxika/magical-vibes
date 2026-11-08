@@ -449,6 +449,7 @@ public sealed interface Condition permits
         TargetPlayerIsAfraidOfController,
         TargetPlayerTurn,
         TargetPlayerIsController,
+        TargetPlayerIs,
         TargetPlayerIsActivePlayer,
         TargetSpellCanBeCountered,
         TargetSpellManaSpentLessThanManaValue,

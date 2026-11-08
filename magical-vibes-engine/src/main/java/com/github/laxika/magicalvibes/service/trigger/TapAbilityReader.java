@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeredManaAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -25,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * Reads the tap and untap abilities (a {@link TapTrigger}: a permanent is tapped, CR 701.26a, or untapped,
@@ -90,6 +93,21 @@ public final class TapAbilityReader {
             TriggeredAbilityStackService.markLimit(gameData, limit(), sourceId, ability.limitKey());
         }
 
+        /**
+         * The effect as a collector that judged the ability's options hands it on: wrapped in the intervening "if" for
+         * the check as the ability resolves (CR 603.4), but for a triggered mana ability
+         * ({@link TapAbilityReader#isTriggeredManaAbility}), which doesn't go on the stack and resolves as soon as it
+         * triggers (CR 605.4a), so the check as it triggered is that check and its wrapper comes off.
+         */
+        public CardEffect effectAsJudged() {
+            Condition interveningIf = ability.options().interveningIf();
+            if (interveningIf != null && effect instanceof ConditionalEffect conditional
+                    && conditional.condition() == interveningIf && isTriggeredManaAbility(ability)) {
+                return conditional.wrapped();
+            }
+            return effect;
+        }
+
         /** This read with {@code effect} in place of its effect. */
         public TapEffect withEffect(CardEffect effect) {
             return new TapEffect(effect, ability, filter, firstTime, simultaneousWithPrevious);
@@ -118,6 +136,33 @@ public final class TapAbilityReader {
     /** {@link #printedEffects(Card, TapWatch)} of the abilities {@code judge} lets trigger. */
     public static List<CardEffect> printedEffects(Card card, TapWatch watch, TriggerJudge judge) {
         return effects(judge.filter(printed(card, watch)), watch.trigger());
+    }
+
+    /**
+     * {@link #printedEffects(Card, TapWatch, TriggerJudge)} as {@link TapEffect#effectAsJudged()} hands them on: a
+     * triggered mana ability's intervening "if", judged by {@code judge}, no longer wraps its effects.
+     */
+    public static List<CardEffect> printedEffectsAsJudged(Card card, TapWatch watch, TriggerJudge judge) {
+        List<TapEffect> effects = read(judge.filter(printed(card, watch)), watch.trigger());
+        effects.forEach(effect -> requireNothingToJudge(effect, watch.trigger()));
+        return effects.stream().map(TapEffect::effectAsJudged).toList();
+    }
+
+    /**
+     * Whether {@code ability} is a triggered mana ability (CR 605.1b): it triggers only from a permanent being tapped
+     * for mana (a mana ability's activation), requires no target, and could add mana as it resolves (a
+     * {@link TriggeredManaAbilityEffect}, alone or as a step of a {@link SequenceEffect}).
+     */
+    public static boolean isTriggeredManaAbility(TriggeredAbility ability) {
+        boolean fromManaAbility = ability.conditions().stream().allMatch(condition
+                -> condition.trigger() instanceof TapTrigger tap && tap.event() == TapEvent.TAPPED_FOR_MANA);
+        List<CardEffect> effects = ability.effects().stream()
+                .flatMap(registration -> registration.effect() instanceof SequenceEffect sequence
+                        ? sequence.steps().stream() : Stream.of(registration.effect()))
+                .toList();
+        return fromManaAbility
+                && effects.stream().noneMatch(effect -> effect.targetSpec().declaredTarget() != null)
+                && effects.stream().anyMatch(TriggeredManaAbilityEffect.class::isInstance);
     }
 
     /**

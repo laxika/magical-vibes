@@ -195,7 +195,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureExactStatsConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DamagedPlayerOnlyEffect;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToActivate;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerGainsControlOfThisPermanentEffect;
@@ -2427,10 +2426,39 @@ public class TriggerCollectionService {
                 if (ability.hasWatchedTrigger(SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL.trigger(),
                         SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL.zone())) {
                     requireNoLimit(ability, card);
-                    collectUnfilteredAbility(gameData, null, card, ownerId, SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL,
-                            context, ability, UnaryOperator.identity(), null, false);
+                    collectSuspendedCastAbility(gameData, card, ownerId, context, ability);
                 }
             }
+        }
+    }
+
+    /**
+     * Collects {@code ability}, a "whenever an opponent casts a spell" ability of the suspended card {@code card}, for
+     * the cast {@code context}: its options are judged as it triggers, and its intervening "if" ("if this card is
+     * suspended") stays around each effect and is checked again as it resolves (CR 603.4). An effect with a handler of
+     * its own goes to it; any other goes on the stack as it is, the spell's caster as "that player" (the entry's
+     * non-targeting target, who decides Pardic Dragon's "that player may put a time counter on it") and the spell as its
+     * triggering card.
+     */
+    private void collectSuspendedCastAbility(GameData gameData, Card card, UUID ownerId,
+                                             TriggerContext.SpellCast context, TriggeredAbility ability) {
+        List<CardEffect> effects = triggeredEffects(gameData, ability, ConditionContext.forCard(card, ownerId),
+                UnaryOperator.identity());
+        if (effects == null) {
+            return;
+        }
+        for (CardEffect effect : effects) {
+            if (registry.dispatch(new TriggerMatchContext(gameData, null, ownerId, effect, card, null),
+                    SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, effect, context)) {
+                continue;
+            }
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, ownerId,
+                    card.getName() + "'s ability", new ArrayList<>(List.of(effect)));
+            entry.setTargetId(context.castingPlayerId());
+            entry.setTriggeringCardId(context.spellCard().getId());
+            entry.setNonTargeting(true);
+            gameData.stack.add(entry);
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s ability triggers."));
         }
     }
 
@@ -3683,10 +3711,11 @@ public class TriggerCollectionService {
             return;
         }
 
-        // The ability's event condition ("deals 6 or more damage", CR 603.2) and intervening "if" as it triggers, with
-        // the damage dealt as the event's value.
+        // The ability's event condition ("deals 6 or more damage", "deals damage to the player who cast Hellish Rebuke",
+        // CR 603.2) and intervening "if" as it triggers, with the damage dealt as the event's value and the player dealt
+        // damage as "that player".
         TriggerJudge damageJudge = conditionEvaluationService.judge(gameData,
-                ConditionContext.forPermanent(source, controllerId), damageDealt);
+                ConditionContext.forPermanent(source, controllerId).withTargetId(damagedPlayerId), damageDealt);
         List<CardEffect> effects = new ArrayList<>(DamageAbilityReader.printedEffects(source.getCard(),
                 DamageWatch.ON_DAMAGE_TO_PLAYER, damageJudge));
         effects.addAll(DamageAbilityReader.effects(damageJudge.filter(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
@@ -3714,36 +3743,35 @@ public class TriggerCollectionService {
                     || !perm.getAttachedTo().equals(source.getId())) {
                 return;
             }
-            List<CardEffect> attachedEffects = new ArrayList<>(DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_DAMAGE_TO_PLAYER));
+            // Attached triggers are controlled by the Aura/Equipment's controller.
+            UUID attachedControllerId = gameData.findControllerOf(perm);
+            if (attachedControllerId == null) return;
+            TriggerJudge attachedJudge = conditionEvaluationService.judge(gameData,
+                    ConditionContext.forPermanent(perm, attachedControllerId).withTargetId(damagedPlayerId),
+                    damageDealt);
+            List<CardEffect> attachedEffects = new ArrayList<>(DamageAbilityReader.printedEffects(perm.getCard(),
+                    DamageWatch.ON_DAMAGE_TO_PLAYER, attachedJudge));
             if (!ownerId.equals(damagedPlayerId)) {
-                attachedEffects.addAll(DamageAbilityReader.printedEffects(perm.getCard(), DamageWatch.ON_DAMAGE_TO_OPPONENT));
+                attachedEffects.addAll(DamageAbilityReader.printedEffects(perm.getCard(),
+                        DamageWatch.ON_DAMAGE_TO_OPPONENT, attachedJudge));
             }
             for (CardEffect effect : attachedEffects) {
-                // Attached triggers are controlled by the Aura/Equipment's controller.
-                UUID attachedControllerId = gameData.findControllerOf(perm);
-                if (attachedControllerId == null) continue;
                 queueNoncombatDamageToPlayerEffect(gameData, perm, attachedControllerId, damagedPlayerId,
                         damageDealt, effect);
             }
         });
     }
 
+    /**
+     * Puts the effect of a damage-to-a-player ability on the stack, its options judged by the caller as it triggered.
+     * An intervening "if" (the {@link ConditionalEffect} the reader wraps around the effect) stays around it and is
+     * checked again as the ability resolves (CR 603.4), against the damage dealt as the entry's event value; the effect
+     * under it decides how the ability goes on the stack.
+     */
     private void queueNoncombatDamageToPlayerEffect(GameData gameData, Permanent source, UUID controllerId,
                                                     UUID damagedPlayerId, int damageDealt, CardEffect effect) {
-        CardEffect toQueue = effect;
-        if (toQueue instanceof DamagedPlayerOnlyEffect onlyDamagedPlayer) {
-            if (!damagedPlayerId.equals(onlyDamagedPlayer.playerId())) {
-                return;
-            }
-            toQueue = onlyDamagedPlayer.wrapped();
-        }
-        if (toQueue instanceof ConditionalEffect conditional) {
-            if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    ConditionContext.forPermanent(source, controllerId))) {
-                return;
-            }
-            toQueue = conditional.wrapped();
-        }
+        ConditionalEffect interveningIf = effect instanceof ConditionalEffect wrapper ? wrapper : null;
+        CardEffect toQueue = interveningIf != null ? interveningIf.wrapped() : effect;
 
         if (toQueue instanceof LoseGameIfSourceDealtDamageToPlayerThisTurnEffect threshold
                 && gameData.damageDealtBySourceToPlayerThisTurn(
@@ -3754,7 +3782,7 @@ public class TriggerCollectionService {
         // it resolves (CR 603.5); "that player" is the player dealt damage and "that much" the damage dealt.
         if (toQueue.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                    source.getCard(), controllerId, List.of(toQueue),
+                    source.getCard(), controllerId, List.of(effect),
                     source.getId(), controllerId, damagedPlayerId)
                     .withEventValue(damageDealt).withTriggeringPlayer(damagedPlayerId));
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
@@ -3765,19 +3793,23 @@ public class TriggerCollectionService {
         if (toQueue instanceof com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect bounce
                 && bounce.fixedCount() == 0) {
             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                    source.getCard(), controllerId, List.of(bounce.withTriggerTimeTargets()),
+                    source.getCard(), controllerId, List.of(interveningIf != null
+                            ? new ConditionalEffect(interveningIf.condition(), bounce.withTriggerTimeTargets())
+                            : bounce.withTriggerTimeTargets()),
                     source.getId(), controllerId, damagedPlayerId, null, damageDealt));
             return;
         }
 
         if (toQueue.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    source.getCard(), controllerId, List.of(toQueue)));
+                    source.getCard(), controllerId, List.of(effect)));
             gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
             return;
         }
 
-        if (toQueue instanceof MayEffect may) {
+        // A "you may" under an intervening "if" goes on the stack as the "if", its question asked as it resolves once
+        // the "if" still holds (CR 603.4, 603.5).
+        if (interveningIf == null && toQueue instanceof MayEffect may) {
             int mayEventValue = may.wrapped() instanceof DrawCardEffect draw
                     && draw.amount() instanceof com.github.laxika.magicalvibes.model.amount.EventValue
                     ? damageDealt : 0;
@@ -3790,7 +3822,7 @@ public class TriggerCollectionService {
 
         if (toQueue.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                    source.getCard(), controllerId, List.of(toQueue),
+                    source.getCard(), controllerId, List.of(effect),
                     source.getId(), controllerId, damagedPlayerId));
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                     "'s damage trigger goes on the stack — choose a target."));
@@ -3805,18 +3837,19 @@ public class TriggerCollectionService {
                         : null;
         if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER_WITH_DAMAGE_AMOUNT) {
             se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
-                    desc, List.of(toQueue), damageDealt, damagedPlayerId, null);
+                    desc, List.of(effect), damageDealt, damagedPlayerId, null);
         } else if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.SOURCE_SELF) {
             se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
-                    desc, List.of(toQueue), null, source.getId());
+                    desc, List.of(effect), null, source.getId());
         } else if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER) {
             se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
-                    desc, List.of(toQueue), damagedPlayerId, source.getId());
+                    desc, List.of(effect), damagedPlayerId, source.getId());
         } else {
             se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
-                    desc, List.of(toQueue));
+                    desc, List.of(effect));
         }
-        if (toQueue instanceof DiscardEffect
+        if (interveningIf != null
+                || toQueue instanceof DiscardEffect
                 || (toQueue instanceof DrawCardEffect draw
                         && draw.amount() instanceof com.github.laxika.magicalvibes.model.amount.EventValue)
                 || (toQueue instanceof MillEffect mill
@@ -4776,7 +4809,7 @@ public class TriggerCollectionService {
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent perm : List.copyOf(battlefield)) {
                 if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                for (CardEffect effect : TapAbilityReader.printedEffects(perm.getCard(),
+                for (CardEffect effect : TapAbilityReader.printedEffectsAsJudged(perm.getCard(),
                         TapWatch.ON_ANY_PLAYER_TAPS_LAND, conditionEvaluationService.judge(gameData,
                                 ConditionContext.forPermanent(perm, playerId)))) {
                     var match = new TriggerMatchContext(gameData, perm, playerId, effect);
@@ -4790,7 +4823,7 @@ public class TriggerCollectionService {
         if (gameData.planechase != null && gameData.planechase.controllerId != null) {
             UUID planarControllerId = gameData.planechase.controllerId;
             for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-                for (CardEffect effect : TapAbilityReader.printedEffects(object.getCard(),
+                for (CardEffect effect : TapAbilityReader.printedEffectsAsJudged(object.getCard(),
                         TapWatch.ON_ANY_PLAYER_TAPS_LAND, conditionEvaluationService.judge(gameData,
                                 ConditionContext.forCard(object.getCard(), planarControllerId)))) {
                     var match = new TriggerMatchContext(gameData, null, planarControllerId, effect,
@@ -7589,6 +7622,10 @@ public class TriggerCollectionService {
             enqueueCloakedWardTrigger(gameData, source, controllerId, triggeringEntry);
         }
 
+        // Each ability's event condition (a chosen mode, Catch of the Day; "while saddled") and intervening "if"
+        // (CR 603.4), judged from the source as it triggers; the intervening "if" stays wrapped around the effect and is
+        // checked again as the ability resolves.
+        TriggerJudge judge = conditionEvaluationService.judge(gameData, ConditionContext.forPermanent(source, controllerId));
         List<CardEffect> effects = new ArrayList<>();
         boolean sourceIsTarget = source.getId().equals(triggeringEntry.getTargetId())
                 || source.getCard().getId().equals(triggeringEntry.getTargetId())
@@ -7597,17 +7634,15 @@ public class TriggerCollectionService {
                 || triggeringEntry.getMixedZoneTargetPermanentIds().containsValue(source.getId());
         if (!source.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, source)
                 && (sourceIsTarget || !source.getCard().getKeywords().contains(Keyword.WARD))) {
-            // Each ability's event condition (a chosen mode, Catch of the Day; "while saddled") and intervening
-            // "if" (CR 603.4), judged from the source as it triggers.
             effects.addAll(TargetAbilityReader.printedEffects(source.getCard(),
-                    TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL,
-                    conditionEvaluationService.judge(gameData, ConditionContext.forPermanent(source, controllerId))));
+                    TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, judge));
         }
-        effects.addAll(TargetAbilityReader.grantedToPermanentEffects(source, TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL));
+        effects.addAll(TargetAbilityReader.grantedToPermanentEffects(source,
+                TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, judge));
         // Granted ward ("each legendary permanent you control has ward {2}") is a "this permanent becomes
         // the target" trigger, so an attached permanent only gets it when it is itself the target.
         List<CardEffect> grantedEffects = grantedTargetEffects(
-                gameData, source, TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL).stream()
+                gameData, source, TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL, judge).stream()
                 .filter(effect -> sourceIsTarget || !isCounterUnlessTrigger(effect))
                 .toList();
         effects.addAll(grantedEffects);
@@ -7636,16 +7671,8 @@ public class TriggerCollectionService {
         if (effects.isEmpty()) return;
 
         for (CardEffect effect : effects) {
-            CardEffect resolvedEffect = effect;
-            if (effect instanceof ConditionalEffect conditional) {
-                // The collector puts the counter-unless effect on the stack itself, so a condition around it, the
-                // ability's intervening "if" among them, is checked as the ability triggers.
-                if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                        ConditionContext.forPermanent(source, controllerId))) {
-                    continue;
-                }
-                resolvedEffect = conditional.wrapped();
-            }
+            CardEffect resolvedEffect = effect instanceof ConditionalEffect interveningIf
+                    ? interveningIf.wrapped() : effect;
             if (resolvedEffect instanceof CounterUnlessEffect counterEffect) {
                 // Put the counter-unless effect directly on the stack targeting the spell. The pay
                 // and discard variants queue an identical trigger entry; only the log wording differs
@@ -7655,7 +7682,7 @@ public class TriggerCollectionService {
                         source.getCard(),
                         controllerId,
                         source.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(counterEffect)),
+                        new ArrayList<>(List.of(effect)),
                         triggeringEntry.getTargetableId(),
                         Zone.STACK,
                         source.getId()
@@ -11051,7 +11078,14 @@ public class TriggerCollectionService {
      * for a collector that judges no filter, narrower event or limit ({@link TargetAbilityReader#effects}).
      */
     private List<CardEffect> grantedTargetEffects(GameData gameData, Permanent source, TargetWatch watch) {
-        return TargetAbilityReader.effects(grantedTargetAbilities(gameData, source, watch), watch.trigger());
+        return grantedTargetEffects(gameData, source, watch, TriggerJudge.NONE);
+    }
+
+    /** {@link #grantedTargetEffects(GameData, Permanent, TargetWatch)} of the abilities {@code judge} lets trigger. */
+    private List<CardEffect> grantedTargetEffects(GameData gameData, Permanent source, TargetWatch watch,
+                                                  TriggerJudge judge) {
+        return TargetAbilityReader.effects(judge.filter(grantedTargetAbilities(gameData, source, watch)),
+                watch.trigger());
     }
 
     /** The filter context of a predicate {@code watcher}, a permanent with a triggered ability, judges. */

@@ -8,5 +8,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>Like {@link AddOneOfEachManaTypeProducedByLandEffect}, when the land produces multiple
  * types this adds one mana of the first type it produces.</p>
  */
-public record AddProducedManaWhenSnowLandTappedEffect() implements CardEffect {
+public record AddProducedManaWhenSnowLandTappedEffect() implements TriggeredManaAbilityEffect {
 }

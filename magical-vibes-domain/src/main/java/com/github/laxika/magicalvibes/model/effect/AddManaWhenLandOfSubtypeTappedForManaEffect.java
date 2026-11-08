@@ -12,7 +12,7 @@ public record AddManaWhenLandOfSubtypeTappedForManaEffect(
         CardSubtype subtype,
         ManaColor color,
         boolean controllerOnly
-) implements CardEffect {
+) implements TriggeredManaAbilityEffect {
 
     public AddManaWhenLandOfSubtypeTappedForManaEffect(CardSubtype subtype, ManaColor color) {
         this(subtype, color, false);

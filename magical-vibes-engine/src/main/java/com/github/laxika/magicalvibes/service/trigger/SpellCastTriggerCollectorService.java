@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -123,7 +122,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTimeCountersOnSuspendedCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentByCastSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -165,7 +163,6 @@ import com.github.laxika.magicalvibes.model.condition.SpellCreatureManaSpentAtLe
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
-import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -1957,34 +1954,6 @@ public class SpellCastTriggerCollectorService {
         triggerEntry.setNonTargeting(true);
         match.gameData().stack.add(triggerEntry);
         gameLogService.append(match.gameData(), GameLog.cardThen(sourceCard, "'s ability triggers."));
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = ConditionalEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
-    private boolean handleSuspendedCardMayPutTimeCounterTrigger(TriggerMatchContext match,
-            ConditionalEffect conditional, TriggerContext ctx) {
-        if (match.permanent() != null
-                || match.sourceCard() == null
-                || !(conditional.condition() instanceof SourceCardSuspended)
-                || !(conditional.wrapped() instanceof MayEffect may)
-                || may.choicePlayer() != MayChoicePlayer.TRIGGERING_SPELL_CONTROLLER
-                || !(may.wrapped() instanceof PutTimeCountersOnSuspendedCardEffect)) {
-            return false;
-        }
-
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        StackEntry triggerEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.sourceCard(),
-                match.controllerId(),
-                match.sourceCard().getName() + "'s ability",
-                new ArrayList<>(List.of(conditional)));
-        triggerEntry.setTargetId(sc.castingPlayerId());
-        triggerEntry.setEventValue(1);
-        triggerEntry.setTriggeringCardId(sc.spellCard().getId());
-        triggerEntry.setNonTargeting(true);
-        match.gameData().stack.add(triggerEntry);
-        gameLogService.append(match.gameData(), GameLog.cardThen(match.sourceCard(), "'s ability triggers."));
         return true;
     }
 

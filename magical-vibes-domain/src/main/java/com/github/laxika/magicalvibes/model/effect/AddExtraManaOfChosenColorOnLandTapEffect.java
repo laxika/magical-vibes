@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public record AddExtraManaOfChosenColorOnLandTapEffect(
         boolean controllerOnly,
         PermanentPredicate landFilter
-) implements CardEffect {
+) implements TriggeredManaAbilityEffect {
 
     public AddExtraManaOfChosenColorOnLandTapEffect() {
         this(true, null);

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 
 /** Adds one mana whenever a land is tapped for the specified fixed mana color. */
 public record AddManaWhenLandOfColorTappedForManaEffect(ManaColor color, boolean controllerOnly)
-        implements CardEffect {
+        implements TriggeredManaAbilityEffect {
 
     /** Watches only lands tapped by the source controller. */
     public AddManaWhenLandOfColorTappedForManaEffect(ManaColor color) {

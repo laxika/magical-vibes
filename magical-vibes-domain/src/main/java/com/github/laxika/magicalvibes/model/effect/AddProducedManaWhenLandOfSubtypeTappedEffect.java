@@ -15,5 +15,5 @@ import java.util.List;
  * types this adds one mana of the first type it produces.</p>
  */
 public record AddProducedManaWhenLandOfSubtypeTappedEffect(List<CardSubtype> subtypes)
-        implements CardEffect {
+        implements TriggeredManaAbilityEffect {
 }
