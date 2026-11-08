@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.t.TajuruPreserver;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +17,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FuneralMarch.class, FountainOfYouth.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({FuneralMarch.class, FountainOfYouth.class, GrizzlyBears.class, HillGiant.class,
+        TajuruPreserver.class})
 class FuneralMarchTest extends BaseCardTest {
     @Test
     void canEnchantCreature() {
@@ -172,6 +174,22 @@ class FuneralMarchTest extends BaseCardTest {
         // Player2 (the enchanted creature's controller) sacrifices; player1's board is untouched.
         harness.assertInGraveyard(player2, "Hill Giant");
         harness.assertOnBattlefield(player1, "Hill Giant");
+    }
+
+    @Test
+    @DisplayName("An opponent's Funeral March can't make a player with Tajuru Preserver sacrifice")
+    void opponentsAbilityCantCauseSacrificeUnderTajuruPreserver() {
+        // Aura controlled by player1 enchants player2's creature; player2's Tajuru Preserver stops the sacrifice.
+        Permanent enchanted = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent preserver = harness.addToBattlefieldAndReturn(player2, new TajuruPreserver());
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        attachFuneralMarch(player1, enchanted);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, enchanted));
+        resolveAllTriggers();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(preserver, giant);
     }
 
     @Test

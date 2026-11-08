@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentToughness;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,10 +19,10 @@ public class CreatureBond extends Card {
 
     public CreatureBond() {
         // Enchant creature. When enchanted creature dies, this Aura deals damage equal to that
-        // creature's toughness to the creature's controller. The creature is gone by resolution, so
-        // the death collector bakes its last-known toughness as the amount; ENCHANTED_PERMANENT_CONTROLLER
-        // routes the damage to that creature's controller (baked as the stack targetId).
+        // creature's toughness to the creature's controller (the creature as it last existed on the
+        // battlefield).
         target(TargetFilters.creature()).addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
-                new DealDamageToPlayersEffect(0, DamageRecipient.ENCHANTED_PERMANENT_CONTROLLER));
+                new DealDamageToPlayersEffect(new TriggeringPermanentToughness(),
+                        DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER));
     }
 }

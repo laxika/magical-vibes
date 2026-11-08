@@ -40,9 +40,9 @@ public class ReturnSourceAuraToChosenCreatureOnLeaveEffectHandler implements Nor
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var returnEffect = (ReturnSourceAuraToChosenCreatureOnLeaveEffect) effect;
         UUID auraCardId = entry.getCard().getId();
-        UUID chooserId = returnEffect.leavingPermanentControllerId();
+        // "That creature's controller": the triggering permanent's, as it last existed on the battlefield.
+        UUID chooserId = gameQueryService.findTriggeringPermanentController(gameData, entry);
 
         if (chooserId == null) {
             log.info("Game {} - {} leave trigger fizzles (no former enchanted creature controller)",

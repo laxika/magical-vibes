@@ -5186,7 +5186,7 @@ public class TriggerCollectionService {
                         movedCard.getId(), death.power(), death.toughness(), movedCard.getManaValue(),
                         movedCard.hasType(CardType.CREATURE),
                         enchanted.cardsLeavingBattlefield().stream().map(Card::getId).toList(), event.ownerId(),
-                        movedCard);
+                        movedCard, new Permanent(enchanted));
                 for (CardEffect effect : effects) {
                     triggered |= dispatch(new TriggerMatchContext(gameData, perm, controllerId, effect), watch,
                             effect, ctx);

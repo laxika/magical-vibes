@@ -1,19 +1,13 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 /**
- * Death-trigger marker for an Aura that exiles cards from the owner's library and grants its
- * controller permission to cast the exiled nonland cards while they remain exiled.
- *
- * <p>The no-argument form is used by the card definition. The death trigger collector binds the
- * dying creature's last-known power and the library owner's ID before putting the effect on the
- * stack.
+ * Dead Man's Chest's "exile cards equal to its power from the top of its owner's library. You may cast spells from
+ * among those cards for as long as they remain exiled, and mana of any type can be spent to cast them": exiles
+ * {@code count} cards from the top of the library of the stack entry's triggering permanent's owner and lets the
+ * ability's controller cast the nonland ones while they stay exiled. "Its power" is {@code count}, the card's
+ * {@code TriggeringPermanentPower} (the creature as it last existed on the battlefield, CR 603.10a).
  */
-public record ExileTopCardsFromEnchantedCreatureOwnerAndAllowCastEffect(int count, UUID libraryOwnerId)
-        implements CardEffect {
-
-    public ExileTopCardsFromEnchantedCreatureOwnerAndAllowCastEffect() {
-        this(0, null);
-    }
+public record ExileTopCardsFromEnchantedCreatureOwnerAndAllowCastEffect(DynamicAmount count) implements CardEffect {
 }

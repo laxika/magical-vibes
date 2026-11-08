@@ -58,7 +58,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithConditionalEffectsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
@@ -1387,7 +1388,7 @@ class StepTriggerServiceTest {
             // Create the aura with the trigger (owned by player2)
             Card auraCard = createCardWithName("Numbing Dose");
             auraCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
-                    new EnchantedCreatureControllerLosesLifeEffect(1, null));
+                    new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PLAYER));
             Permanent auraPerm = new Permanent(auraCard);
             auraPerm.setAttachedTo(targetPerm.getId());
             gd.playerBattlefields.get(player2Id).add(auraPerm);
@@ -1434,7 +1435,7 @@ class StepTriggerServiceTest {
 
             Card auraCard = createCardWithName("Numbing Dose");
             auraCard.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
-                    new EnchantedCreatureControllerLosesLifeEffect(1, null));
+                    new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PLAYER));
             Permanent auraPerm = new Permanent(auraCard);
             auraPerm.setAttachedTo(targetPerm.getId());
             gd.playerBattlefields.get(player1Id).add(auraPerm);

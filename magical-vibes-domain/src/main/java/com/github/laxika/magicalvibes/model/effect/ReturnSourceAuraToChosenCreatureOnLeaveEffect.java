@@ -1,15 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
- * Returns this Aura from its owner's graveyard when the enchanted permanent leaves the
- * battlefield, with that permanent's former controller choosing a legal creature to enchant.
+ * Traveling Plague's "when enchanted creature leaves the battlefield, that creature's controller returns this Aura
+ * from its owner's graveyard to the battlefield": that player chooses a legal creature for it to enchant and the Aura
+ * enters under their control. "That creature's controller" is the controller of the stack entry's triggering
+ * permanent, as it last existed on the battlefield (CR 603.10a), read as the ability resolves.
  */
-public record ReturnSourceAuraToChosenCreatureOnLeaveEffect(UUID leavingPermanentControllerId)
-        implements CardEffect {
-
-    public ReturnSourceAuraToChosenCreatureOnLeaveEffect() {
-        this(null);
-    }
+public record ReturnSourceAuraToChosenCreatureOnLeaveEffect() implements CardEffect {
 }

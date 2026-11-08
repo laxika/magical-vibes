@@ -576,16 +576,25 @@ public sealed interface TriggerContext {
 
     /**
      * Context for ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD triggers.
-     * {@code dyingCreaturePower} / {@code dyingCreatureToughness} are last-known effective P/T
-     * (Death Watch uses power for life loss and toughness for life gain; Banewasp Affliction /
-     * Creature Bond use toughness).
+     * {@code dyingCreaturePower} / {@code dyingCreatureToughness} are last-known effective P/T, and
+     * {@code dyingPermanent} the permanent as it last existed on the battlefield (CR 603.10a), or {@code null} when
+     * not known. The collector records them on the stack entry as its triggering permanent, which the effects read.
      */
     record EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
                                    UUID dyingCreatureCardId, int dyingCreaturePower,
                                    int dyingCreatureToughness, int dyingCreatureManaValue,
                                    boolean wasCreature,
                                    List<UUID> dyingPermanentCardIds, UUID dyingPermanentOwnerId,
-                                   Card dyingCard) implements TriggerContext {
+                                   Card dyingCard, Permanent dyingPermanent) implements TriggerContext {
+        public EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
+                                       UUID dyingCreatureCardId, int dyingCreaturePower,
+                                       int dyingCreatureToughness, int dyingCreatureManaValue,
+                                       boolean wasCreature, List<UUID> dyingPermanentCardIds,
+                                       UUID dyingPermanentOwnerId, Card dyingCard) {
+            this(dyingPermanentId, dyingPermanentControllerId, dyingCreatureCardId, dyingCreaturePower,
+                    dyingCreatureToughness, dyingCreatureManaValue, wasCreature, dyingPermanentCardIds,
+                    dyingPermanentOwnerId, dyingCard, null);
+        }
         public EnchantedPermanentDeath(UUID dyingPermanentId, UUID dyingPermanentControllerId,
                                        UUID dyingCreatureCardId, int dyingCreaturePower,
                                        int dyingCreatureToughness, int dyingCreatureManaValue,

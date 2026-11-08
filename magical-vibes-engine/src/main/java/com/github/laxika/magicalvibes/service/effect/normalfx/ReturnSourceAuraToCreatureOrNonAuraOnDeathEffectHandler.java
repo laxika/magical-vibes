@@ -45,8 +45,8 @@ public class ReturnSourceAuraToCreatureOrNonAuraOnDeathEffectHandler implements 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect returnEffect =
-                (ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect) effect;
+        // "That creature's controller": the triggering permanent's, as it last existed on the battlefield.
+        UUID enchantedCreatureControllerId = gameQueryService.findTriggeringPermanentController(gameData, entry);
         UUID auraCardId = entry.getCard().getId();
         UUID auraControllerId = entry.getControllerId();
         Card auraCard = gameQueryService.findCardInGraveyardById(gameData, auraCardId);
@@ -59,14 +59,14 @@ public class ReturnSourceAuraToCreatureOrNonAuraOnDeathEffectHandler implements 
         permanentRemovalService.removeCardFromGraveyardById(gameData, auraCardId);
 
         if (validTargetIds.isEmpty()) {
-            returnAsNonAura(gameData, auraCard, auraControllerId, returnEffect.enchantedCreatureControllerId());
+            returnAsNonAura(gameData, auraCard, auraControllerId, enchantedCreatureControllerId);
         } else if (validTargetIds.size() == 1) {
             attachAura(gameData, auraCard, auraControllerId, validTargetIds.getFirst());
         } else {
             gameData.interaction.setPendingAuraCard(auraCard);
             gameData.interaction.setPendingAuraOwnerId(auraControllerId);
             playerInputService.beginPermanentChoice(gameData,
-                    returnEffect.enchantedCreatureControllerId(), validTargetIds,
+                    enchantedCreatureControllerId, validTargetIds,
                     "Choose a creature to attach " + auraCard.getName() + " to.");
         }
     }
