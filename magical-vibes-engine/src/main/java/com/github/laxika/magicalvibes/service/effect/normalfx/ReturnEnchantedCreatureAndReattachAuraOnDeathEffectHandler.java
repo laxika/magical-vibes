@@ -34,8 +34,9 @@ public class ReturnEnchantedCreatureAndReattachAuraOnDeathEffectHandler implemen
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (ReturnEnchantedCreatureAndReattachAuraOnDeathEffect) effect;
-        UUID dyingCreatureCardId = e.dyingCreatureCardId();
+        // "That card": the card the enchanted permanent put into the graveyard.
+        UUID dyingCreatureCardId = entry.getTriggeringCards().isEmpty()
+                ? null : entry.getTriggeringCards().getFirst().getId();
         if (dyingCreatureCardId == null) {
             log.info("Game {} - {} death trigger fizzles (no dying creature card)",
                     gameData.id, entry.getCard().getName());

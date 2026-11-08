@@ -44,6 +44,7 @@ public sealed interface PermanentPredicate permits
         PermanentControlledBySourceControllerPredicate,
         PermanentControlledByTriggeringPermanentControllerPredicate,
         PermanentControlledByTriggeringPlayerPredicate,
+        PermanentSharesCreatureTypeWithTriggeringPermanentPredicate,
         PermanentControlledBySourceChosenPlayerPredicate,
         ControllerActivatedArtifactAbilityThisTurnPredicate,
         PermanentControlledContinuouslySinceBeginningOfTurnPredicate,

@@ -13,7 +13,7 @@ public class PuppetMaster extends Card {
 
     public PuppetMaster() {
         target(TargetFilters.creature())
-                .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
+                .addTrigger(Triggers.creatureDies(ObjectRelation.ENCHANTED),
                         new ReturnEnchantedCreatureToOwnerHandOnDeathEffect(
                                 "{U}{U}{U}",
                                 "Pay {U}{U}{U} to return Puppet Master to your hand?"));

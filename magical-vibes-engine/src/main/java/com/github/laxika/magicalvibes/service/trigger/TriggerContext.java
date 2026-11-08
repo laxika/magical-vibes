@@ -516,11 +516,26 @@ public sealed interface TriggerContext {
      * dying creature's last-known effective power on the battlefield (Kresh the Bloodbraided) and
      * {@code dyingCreatureToughness} its last-known effective toughness (Grim Feast).
      * {@code dyingPermanent} preserves the dying permanent's counter state for trigger collectors
-     * that need last-known counters.
+     * that need last-known counters, and {@code attachments} the Auras and Equipment attached to it just before it
+     * died (CR 603.10a), for "for each Aura you controlled that was attached to it".
      */
     record CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId, int dyingCreaturePower,
                          int dyingCreatureToughness, UUID dyingPermanentId,
-                         Permanent dyingPermanent, boolean wasCreature) implements TriggerContext {
+                         Permanent dyingPermanent, boolean wasCreature,
+                         com.github.laxika.magicalvibes.model.rules.DepartedAttachments attachments)
+            implements TriggerContext {
+
+        public CreatureDeath {
+            attachments = attachments == null
+                    ? com.github.laxika.magicalvibes.model.rules.DepartedAttachments.NONE : attachments;
+        }
+
+        public CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId, int dyingCreaturePower,
+                             int dyingCreatureToughness, UUID dyingPermanentId,
+                             Permanent dyingPermanent, boolean wasCreature) {
+            this(dyingCard, dyingCreatureControllerId, dyingCreaturePower, dyingCreatureToughness,
+                    dyingPermanentId, dyingPermanent, wasCreature, null);
+        }
 
         public CreatureDeath(Card dyingCard, UUID dyingCreatureControllerId, int dyingCreaturePower,
                              int dyingCreatureToughness) {

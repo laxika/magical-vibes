@@ -50,14 +50,13 @@ public class ReturnSourceAuraToSharedTypeCreatureOnDeathEffectHandler implements
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (ReturnSourceAuraToSharedTypeCreatureOnDeathEffect) effect;
-
         UUID auraCardId = entry.getCard().getId();
         UUID auraOwnerId = entry.getControllerId();
-        UUID dyingCreatureCardId = e.dyingCreatureCardId();
-
-        if (dyingCreatureCardId == null) {
-            log.info("Game {} - {} death trigger fizzles (no dying creature card ID)",
+        // "The creature that died": the card it put into the graveyard, as the trigger recorded it, so a token
+        // that has ceased to exist still has its creature types.
+        Card dyingCreatureCard = entry.getTriggeringCards().isEmpty() ? null : entry.getTriggeringCards().getFirst();
+        if (dyingCreatureCard == null) {
+            log.info("Game {} - {} death trigger fizzles (no dying creature card)",
                     gameData.id, entry.getCard().getName());
             return;
         }
@@ -79,22 +78,9 @@ public class ReturnSourceAuraToSharedTypeCreatureOnDeathEffectHandler implements
             return;
         }
 
-        // Read the dying creature's creature types from the graveyard (last-known information).
-        Card dyingCreatureCard = gameQueryService.findCardInGraveyardById(gameData, dyingCreatureCardId);
-        if (dyingCreatureCard == null) {
-            // The dying creature may have been exiled again before this trigger resolves.
-            dyingCreatureCard = gameQueryService.findCardInExileById(gameData, dyingCreatureCardId);
-        }
-        if (dyingCreatureCard == null) {
-            // A token that died has ceased to exist; use what the trigger remembered of it.
-            dyingCreatureCard = entry.lastKnownPermanentCard(dyingCreatureCardId);
-        }
         List<CardSubtype> dyingTypes = new ArrayList<>();
-        boolean dyingIsChangeling = false;
-        if (dyingCreatureCard != null) {
-            dyingTypes.addAll(dyingCreatureCard.getSubtypes());
-            dyingIsChangeling = dyingCreatureCard.hasKeyword(Keyword.CHANGELING);
-        }
+        dyingTypes.addAll(dyingCreatureCard.getSubtypes());
+        boolean dyingIsChangeling = dyingCreatureCard.hasKeyword(Keyword.CHANGELING);
 
         if (dyingTypes.isEmpty() && !dyingIsChangeling) {
             gameLogService.append(gameData, GameLog.cardThen(auraCard, "'s ability fizzles (dying creature had no creature type)."));

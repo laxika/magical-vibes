@@ -274,7 +274,9 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
-                .withDefendingPlayerId(defendingPlayerId(gameData, entry));
+                .withDefendingPlayerId(defendingPlayerId(gameData, entry))
+                .withTriggeringPermanentId(entry.getTriggeringPermanentId())
+                .withTriggeringPermanentSnapshot(entry.getTriggeringPermanentSnapshot());
 
         final int[] count = {0};
         gameData.forEachPermanent((playerId, p) -> {

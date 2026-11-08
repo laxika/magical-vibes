@@ -12864,7 +12864,8 @@ public class TriggerCollectionService {
         Permanent dyingPermanent = death.permanent();
         Card dyingCard = dyingPermanent.getCard();
         var ctx = new TriggerContext.CreatureDeath(dyingCard, death.controllerId(),
-                death.power(), death.toughness(), dyingPermanent.getId(), dyingPermanent);
+                death.power(), death.toughness(), dyingPermanent.getId(), dyingPermanent, true,
+                death.attachments());
         boolean triggered = false;
         for (CardEffect effect : effects) {
             var match = new TriggerMatchContext(gameData, perm, playerId, effect);

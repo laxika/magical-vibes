@@ -19,6 +19,6 @@ public class DemonicVigor extends Card {
         .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
 
         // When enchanted creature dies, return that card to its owner's hand.
-        addTrigger(Triggers.dies(ObjectRelation.ENCHANTED), new ReturnEnchantedCreatureToOwnerHandOnDeathEffect());
+        addTrigger(Triggers.creatureDies(ObjectRelation.ENCHANTED), new ReturnEnchantedCreatureToOwnerHandOnDeathEffect());
     }
 }

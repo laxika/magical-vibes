@@ -19,7 +19,7 @@ public class TezzeretsTouch extends Card {
         target(TargetFilters.artifact())
                 .addStaticEffect(new EnchantedPermanentBecomesCreatureEffect(5, 5, null, List.of()))
                 // When enchanted artifact is put into a graveyard, return that card to its owner's hand.
-                .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
+                .addTrigger(Triggers.creatureDies(ObjectRelation.ENCHANTED),
                         new ReturnEnchantedCreatureToOwnerHandOnDeathEffect());
     }
 }

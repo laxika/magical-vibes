@@ -286,7 +286,9 @@ public class UntapPermanentsEffectHandler implements NormalEffectHandlerBean {
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard() != null ? entry.getCard().getId() : null)
                 .withSourceControllerId(entry.getControllerId())
-                .withDefendingPlayerId(defendingPlayerId);
+                .withDefendingPlayerId(defendingPlayerId)
+                .withTriggeringPermanentId(entry.getTriggeringPermanentId())
+                .withTriggeringPermanentSnapshot(entry.getTriggeringPermanentSnapshot());
 
         final int[] count = {0};
         gameData.forEachPermanent((playerId, p) -> {

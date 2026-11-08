@@ -25,7 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureFromGr
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayLifeAndDrawEqualToDyingPowerEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayLifeEqualToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -246,20 +246,19 @@ class DeathTriggerCollectorServiceTest {
     class EquippedCreatureDeathDefault {
 
         @Test
-        @DisplayName("Snapshots dying power for the optional life payment and draw")
-        void snapshotsDyingPowerForPaymentAndDraw() {
+        @DisplayName("Puts the effect on the stack as written with the dying power recorded")
+        void recordsDyingPowerForPaymentAndDraw() {
             Card equipment = createEquipment("Mask");
-            var effect = new MayPayLifeAndDrawEqualToDyingPowerEffect();
+            var effect = new MayPayLifeEqualToAmountEffect(new TriggeringPermanentPower(),
+                    new DrawCardEffect(new TriggeringPermanentPower()), "Pay?");
             Permanent perm = new Permanent(equipment);
             var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, null, 4);
 
-            svc.handleEquippedCreatureDeathMayPayLifeAndDrawEqualToPower(
-                    match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack).hasSize(1);
-            var resolved = (MayPayLifeEffect) gd.stack.get(0).getEffectsToResolve().get(0);
-            assertThat(resolved.lifeCost()).isEqualTo(4);
-            assertThat(resolved.wrapped()).isEqualTo(new DrawCardEffect(4));
+            assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(effect);
+            assertThat(gd.stack.get(0).getTriggeringPermanentPowerAtTrigger()).isEqualTo(4);
         }
 
         @Test
@@ -381,69 +380,44 @@ class DeathTriggerCollectorServiceTest {
     // ── ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD handlers ─────────────
 
     @Nested
-    @DisplayName("handleReturnSourceAura")
-    class ReturnSourceAura {
+    @DisplayName("enchanted-death returns")
+    class EnchantedDeathReturns {
 
         @Test
-        @DisplayName("Bakes dying creature's controller ID")
-        void bakesControllerId() {
+        @DisplayName("Necrotic Plague's target choice carries the dying creature's controller")
+        void targetChoiceCarriesDyingController() {
             Card aura = createEnchantment("Necrotic Plague");
             var effect = new ReturnSourceAuraToOpponentCreatureOnDeathEffect();
             Permanent perm = new Permanent(aura);
-            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), PLAYER1_ID, null, 0, 0);
+            Card creature = createCreature("Grizzly Bears", 2, 2);
+            Permanent dying = new Permanent(creature);
+            var ctx = new TriggerContext.EnchantedPermanentDeath(dying.getId(), PLAYER1_ID, creature.getId(), 2, 2,
+                    0, true, List.of(creature.getId()), PLAYER1_ID, creature, dying);
 
-            svc.handleReturnSourceAura(match(perm, PLAYER2_ID, effect), effect, ctx);
+            svc.handleEnchantedPermanentDeathDefault(match(perm, PLAYER2_ID, effect), effect, ctx);
 
-            var resolved = (ReturnSourceAuraToOpponentCreatureOnDeathEffect) gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class).effects().get(0);
-            assertThat(resolved.enchantedCreatureControllerId()).isEqualTo(PLAYER1_ID);
+            var choice = gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+            assertThat(choice.effects()).containsExactly(effect);
+            assertThat(choice.triggeringPermanentControllerId()).isEqualTo(PLAYER1_ID);
         }
 
         @Test
-        @DisplayName("Does not bake controller when null")
-        void doesNotBakeWhenNull() {
-            Card aura = createEnchantment("Necrotic Plague");
-            var effect = new ReturnSourceAuraToOpponentCreatureOnDeathEffect();
-            Permanent perm = new Permanent(aura);
-            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), null, null, 0, 0);
-
-            svc.handleReturnSourceAura(match(perm, PLAYER2_ID, effect), effect, ctx);
-
-            var resolved = (ReturnSourceAuraToOpponentCreatureOnDeathEffect) gd.stack.get(0).getEffectsToResolve().get(0);
-            assertThat(resolved.enchantedCreatureControllerId()).isNull();
-        }
-    }
-
-    @Nested
-    @DisplayName("handleReturnEnchantedCreature")
-    class ReturnEnchantedCreature {
-
-        @Test
-        @DisplayName("Bakes dying creature's card ID")
-        void bakesCardId() {
+        @DisplayName("A return goes on the stack as written with the dying card as its triggering card")
+        void returnRecordsDyingCard() {
             Card aura = createEnchantment("Demonic Vigor");
             var effect = new ReturnEnchantedCreatureToOwnerHandOnDeathEffect();
             Permanent perm = new Permanent(aura);
-            UUID creatureCardId = UUID.randomUUID();
-            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), PLAYER1_ID, creatureCardId, 0, 0);
+            Card creature = createCreature("Grizzly Bears", 2, 2);
+            Permanent dying = new Permanent(creature);
+            var ctx = new TriggerContext.EnchantedPermanentDeath(dying.getId(), PLAYER1_ID, creature.getId(), 2, 2,
+                    0, true, List.of(creature.getId()), PLAYER1_ID, creature, dying);
 
-            svc.handleReturnEnchantedCreature(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleEnchantedPermanentDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
-            var resolved = (ReturnEnchantedCreatureToOwnerHandOnDeathEffect) gd.stack.get(0).getEffectsToResolve().get(0);
-            assertThat(resolved.dyingCreatureCardId()).isEqualTo(creatureCardId);
-        }
-
-        @Test
-        @DisplayName("Does not bake card ID when null")
-        void doesNotBakeWhenNull() {
-            Card aura = createEnchantment("Demonic Vigor");
-            var effect = new ReturnEnchantedCreatureToOwnerHandOnDeathEffect();
-            Permanent perm = new Permanent(aura);
-            var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), PLAYER1_ID, null, 0, 0);
-
-            svc.handleReturnEnchantedCreature(match(perm, PLAYER1_ID, effect), effect, ctx);
-
-            var resolved = (ReturnEnchantedCreatureToOwnerHandOnDeathEffect) gd.stack.get(0).getEffectsToResolve().get(0);
-            assertThat(resolved.dyingCreatureCardId()).isNull();
+            StackEntry entry = gd.stack.get(0);
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.triggeringCardIds()).containsExactly(creature.getId());
+            assertThat(entry.getEventCardGraveyardEntryVersions()).containsKey(creature.getId());
         }
     }
 

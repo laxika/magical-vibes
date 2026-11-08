@@ -22,7 +22,7 @@ public class VastwoodZendikon extends Card {
                 6, 4, CardColor.GREEN, List.of(CardSubtype.ELEMENTAL)));
 
         // When enchanted land dies, return that card to its owner's hand.
-        addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
+        addTrigger(Triggers.creatureDies(ObjectRelation.ENCHANTED),
                 new ReturnEnchantedCreatureToOwnerHandOnDeathEffect());
     }
 }

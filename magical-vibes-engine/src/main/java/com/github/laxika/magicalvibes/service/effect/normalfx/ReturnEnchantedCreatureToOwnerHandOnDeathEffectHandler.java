@@ -36,17 +36,18 @@ public class ReturnEnchantedCreatureToOwnerHandOnDeathEffectHandler implements N
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ReturnEnchantedCreatureToOwnerHandOnDeathEffect) effect;
 
-        UUID dyingCreatureCardId = e.dyingCreatureCardId();
+        // "That card": the card the enchanted permanent put into the graveyard, in the graveyard stay the
+        // collector recorded (CR 400.7).
+        UUID dyingCreatureCardId = entry.getTriggeringCards().isEmpty()
+                ? null : entry.getTriggeringCards().getFirst().getId();
         if (dyingCreatureCardId == null) {
-            log.info("Game {} - {} death trigger fizzles (no dying creature card ID)",
+            log.info("Game {} - {} death trigger fizzles (no dying creature card)",
                     gameData.id, entry.getCard().getName());
             return;
         }
 
         Long recordedVersion = entry.getEventCardGraveyardEntryVersions().get(dyingCreatureCardId);
-        long expectedVersion = recordedVersion != null
-                ? recordedVersion : entry.getTriggeringCardGraveyardEntryVersion();
-        if (expectedVersion >= 0 && gameData.graveyardEntryVersion(dyingCreatureCardId) != expectedVersion) {
+        if (recordedVersion != null && gameData.graveyardEntryVersion(dyingCreatureCardId) != recordedVersion) {
             log.info("Game {} - {} death trigger fizzles (creature card {} has entered a graveyard again)",
                     gameData.id, entry.getCard().getName(), dyingCreatureCardId);
             return;

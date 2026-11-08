@@ -126,9 +126,10 @@ public enum ZoneChangeWatch {
     /** "Whenever an Aura or Equipment you control is put into a graveyard from the battlefield". */
     ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD(
             battlefield(Triggers.dies(Triggers.AURA_OR_EQUIPMENT, ObjectRelation.YOU_CONTROL))),
-    /** "When enchanted permanent leaves the battlefield". */
+    /** "When enchanted permanent leaves the battlefield", "dies or is put into exile". */
     ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD(
-            battlefield(Triggers.leavesBattlefield(null, ObjectRelation.ENCHANTED))),
+            battlefield(Triggers.leavesBattlefield(null, ObjectRelation.ENCHANTED)),
+            battlefield(Triggers.putIntoGraveyardOrExileFromBattlefield(null, ObjectRelation.ENCHANTED))),
     /** "Whenever another permanent leaves the battlefield". */
     ON_ANOTHER_PERMANENT_LEAVES_BATTLEFIELD(battlefield(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER))),
     /** "Whenever another creature leaves the battlefield". */

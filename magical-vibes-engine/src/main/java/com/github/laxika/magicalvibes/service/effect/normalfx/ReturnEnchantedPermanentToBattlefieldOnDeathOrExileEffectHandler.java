@@ -16,8 +16,9 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * Resolves Kaya's Ghostform's return trigger from the zone recorded when the enchanted permanent
- * left the battlefield.
+ * Resolves Kaya's Ghostform's return trigger: the stack entry's triggering card, from the zone the enchanted permanent
+ * went to as it left the battlefield. The collector records an exile incarnation when it was exiled, else its graveyard
+ * incarnation (CR 400.7), so a card that left the graveyard and came back stays where it is.
  */
 @Component
 @RequiredArgsConstructor
@@ -34,23 +35,18 @@ public class ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffectHandler im
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var returnEffect = (ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect) effect;
-        UUID cardId = returnEffect.cardId();
-        Zone fromZone = returnEffect.fromZone();
-        if (cardId == null || fromZone == null) {
-            return;
-        }
-
-        if (fromZone == Zone.GRAVEYARD && entry.getTriggeringCardGraveyardEntryVersion() >= 0
-                && gameData.graveyardEntryVersion(cardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
+        UUID cardId = entry.getTriggeringCardId();
+        if (cardId == null) {
             return;
         }
 
         UUID controllerId = entry.getControllerId();
-        if (fromZone == Zone.GRAVEYARD) {
-            returnFromGraveyard(gameData, controllerId, cardId);
-        } else if (fromZone == Zone.EXILE) {
+        if (entry.getTriggeringCardExileEntryVersion() >= 0) {
             returnFromExile(gameData, controllerId, cardId);
+            return;
+        }
+        if (entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(cardId))) {
+            returnFromGraveyard(gameData, controllerId, cardId);
         }
     }
 

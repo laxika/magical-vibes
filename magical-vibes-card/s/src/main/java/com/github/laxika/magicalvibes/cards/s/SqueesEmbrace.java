@@ -16,7 +16,7 @@ public class SqueesEmbrace extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
 
-        addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
+        addTrigger(Triggers.creatureDies(ObjectRelation.ENCHANTED),
                 new ReturnEnchantedCreatureToOwnerHandOnDeathEffect());
     }
 }

@@ -272,6 +272,7 @@ import com.github.laxika.magicalvibes.model.amount.TriggeringSpellTargetCount;
 import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentToughness;
 import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
+import com.github.laxika.magicalvibes.model.amount.AurasAttachedToTriggeringPermanent;
 import com.github.laxika.magicalvibes.model.amount.LifeLostWhenTriggeringPermanentEntered;
 import com.github.laxika.magicalvibes.model.amount.UnlockedRoomDoorsCount;
 import com.github.laxika.magicalvibes.model.amount.UntappedLandsAtTurnStart;
@@ -647,6 +648,11 @@ public class AmountEvaluationService {
                     ctx.stackEntry() == null ? 0 : ctx.stackEntry().triggeringPermanentCounterCount(c.counterType());
             case CardTypesAmongTriggeringCards ignored ->
                     ctx.stackEntry() == null ? 0 : countCardTypesAmongCards(ctx.stackEntry().getTriggeringCards());
+            case AurasAttachedToTriggeringPermanent auras -> {
+                var attachments = ctx.stackEntry() == null ? null : ctx.stackEntry().getTriggeringAttachments();
+                yield attachments == null ? 0 : auras.controlledByYou()
+                        ? attachments.auraCountControlledBy(ctx.controllerId()) : attachments.auraCardIds().size();
+            }
             case LifeLostWhenTriggeringPermanentEntered ignored -> {
                 Permanent entered = ctx.stackEntry() == null ? null : ctx.stackEntry().getTriggeringPermanentSnapshot();
                 yield entered != null && ctx.controllerId() != null

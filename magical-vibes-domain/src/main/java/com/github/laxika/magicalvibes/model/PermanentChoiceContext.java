@@ -1170,6 +1170,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *                                    the collector as the ability triggered, against the object that died as it
      *                                    last existed and the others that died with it (CR 603.10a); the stack entry
      *                                    keeps it. {@code null} for none
+     * @param triggeringPermanentControllerId the controller of {@code triggeringPermanent} as it last existed on the
+     *                                        battlefield, which "its controller" and the stack entry read
+     *                                        (Necrotic Plague's target, chosen by that player); {@code null} for none
      */
     record DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
                               Integer eventValue, Permanent sourcePermanentSnapshot,
@@ -1180,10 +1183,24 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                               long triggeringCardGraveyardEntryVersion,
                               Permanent triggeringPermanent,
                               DepartedAttachments triggeringAttachments,
-                              Integer graveyardTargetMaxManaValue) implements PermanentChoiceContext {
+                              Integer graveyardTargetMaxManaValue,
+                              UUID triggeringPermanentControllerId) implements PermanentChoiceContext {
 
         public DeathTriggerTarget {
             triggeringAttachments = triggeringAttachments == null ? DepartedAttachments.NONE : triggeringAttachments;
+        }
+
+        public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
+                                  Integer eventValue, Permanent sourcePermanentSnapshot,
+                                  TargetFilter targetFilter, UUID excludedGraveyardCardId,
+                                  boolean creaturesOnly, boolean markSourceOncePerTurnOnAcceptance,
+                                  UUID triggeringCardId, long triggeringCardGraveyardEntryVersion,
+                                  Permanent triggeringPermanent, DepartedAttachments triggeringAttachments,
+                                  Integer graveyardTargetMaxManaValue) {
+            this(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot, targetFilter,
+                    excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance, triggeringCardId,
+                    triggeringCardGraveyardEntryVersion, triggeringPermanent, triggeringAttachments,
+                    graveyardTargetMaxManaValue, null);
         }
 
         public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
@@ -1202,7 +1219,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             return new DeathTriggerTarget(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot,
                     targetFilter, excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance,
                     triggeringCardId, triggeringCardGraveyardEntryVersion, triggeringPermanent, triggeringAttachments,
-                    maxManaValue);
+                    maxManaValue, triggeringPermanentControllerId);
         }
 
         public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
@@ -1218,7 +1235,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public DeathTriggerTarget withTriggeringCard(UUID cardId, long version) {
             return new DeathTriggerTarget(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot,
                     targetFilter, excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance, cardId,
-                    version, triggeringPermanent, triggeringAttachments, graveyardTargetMaxManaValue);
+                    version, triggeringPermanent, triggeringAttachments, graveyardTargetMaxManaValue,
+                    triggeringPermanentControllerId);
         }
 
         /**
@@ -1229,7 +1247,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             return new DeathTriggerTarget(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot,
                     targetFilter, excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance,
                     triggeringCardId, triggeringCardGraveyardEntryVersion,
-                    lastKnown == null ? null : new Permanent(lastKnown), attachments, graveyardTargetMaxManaValue);
+                    lastKnown == null ? null : new Permanent(lastKnown), attachments, graveyardTargetMaxManaValue,
+                    triggeringPermanentControllerId);
+        }
+
+        /** This choice with {@code playerId} as the triggering permanent's last-known controller. */
+        public DeathTriggerTarget withTriggeringPermanentController(UUID playerId) {
+            return new DeathTriggerTarget(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot,
+                    targetFilter, excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance,
+                    triggeringCardId, triggeringCardGraveyardEntryVersion, triggeringPermanent, triggeringAttachments,
+                    graveyardTargetMaxManaValue, playerId);
         }
 
         /** This choice with a copy of {@code lastKnown} as the triggering permanent and nothing attached to it. */
@@ -1238,8 +1265,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
 
         /**
-         * Gives {@code entry}, the stack entry this choice puts on the stack, the triggering card and permanent, if
-         * any.
+         * Gives {@code entry}, the stack entry this choice puts on the stack, the triggering card and permanent and that
+         * permanent's last-known controller, if any.
          */
         public void carryTriggeringObjectTo(StackEntry entry) {
             if (triggeringCardId != null) {
@@ -1247,6 +1274,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             }
             if (triggeringPermanent != null) {
                 entry.setTriggeringPermanent(triggeringPermanent, triggeringAttachments);
+            }
+            if (triggeringPermanentControllerId != null) {
+                entry.setTriggeringPermanentControllerId(triggeringPermanentControllerId);
             }
         }
 

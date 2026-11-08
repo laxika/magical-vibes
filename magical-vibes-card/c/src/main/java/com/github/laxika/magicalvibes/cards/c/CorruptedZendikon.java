@@ -20,7 +20,7 @@ public class CorruptedZendikon extends Card {
                 .addStaticEffect(new EnchantedPermanentBecomesCreatureEffect(
                         3, 3, CardColor.BLACK, List.of(CardSubtype.OOZE)));
 
-        addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
+        addTrigger(Triggers.creatureDies(ObjectRelation.ENCHANTED),
                 new ReturnEnchantedCreatureToOwnerHandOnDeathEffect());
     }
 }

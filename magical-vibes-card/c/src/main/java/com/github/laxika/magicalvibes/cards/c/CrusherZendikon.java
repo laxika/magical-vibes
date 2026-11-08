@@ -25,7 +25,7 @@ public class CrusherZendikon extends Card {
                 .addStaticEffect(new GrantKeywordEffect(
                         Keyword.TRAMPLE, GrantScope.ENCHANTED_PERMANENT));
 
-        addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
+        addTrigger(Triggers.creatureDies(ObjectRelation.ENCHANTED),
                 new ReturnEnchantedCreatureToOwnerHandOnDeathEffect());
     }
 }

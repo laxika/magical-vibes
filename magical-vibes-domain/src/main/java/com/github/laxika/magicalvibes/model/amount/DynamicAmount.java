@@ -13,6 +13,7 @@ package com.github.laxika.magicalvibes.model.amount;
  */
 public sealed interface DynamicAmount permits
         CountersOnTriggeringPermanent,
+        AurasAttachedToTriggeringPermanent,
         CardTypesAmongTriggeringCards,
         LifeLostWhenTriggeringPermanentEntered,
         ArtifactsPutIntoGraveyardFromBattlefieldThisTurn,

@@ -36,11 +36,10 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (ReturnSourceAuraToOpponentCreatureOnDeathEffect) effect;
-
         UUID auraCardId = entry.getCard().getId();
         UUID auraControllerId = entry.getControllerId();
-        UUID enchantedCreatureControllerId = e.enchantedCreatureControllerId();
+        // "Its controller": the dying creature's controller as it last existed on the battlefield (CR 603.10a).
+        UUID enchantedCreatureControllerId = gameQueryService.findTriggeringPermanentController(gameData, entry);
 
         if (enchantedCreatureControllerId == null) {
             log.info("Game {} - {} death trigger fizzles (no enchanted creature controller)",

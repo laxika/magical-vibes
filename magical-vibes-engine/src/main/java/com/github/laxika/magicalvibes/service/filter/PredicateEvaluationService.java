@@ -347,6 +347,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentReceivedPlusOnePlusO
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPermanentControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesCreatureTypeWithTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesCardTypeWithTargetCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesColorWithEquippedCreaturePredicate;
@@ -1721,9 +1722,17 @@ public class PredicateEvaluationService {
                     sharesCardTypeWithTriggeringPermanent(permanent, filterContext);
             case PermanentControlledByTriggeringPermanentControllerPredicate ignored -> {
                 Permanent triggering = liveTriggeringPermanent(filterContext);
-                UUID triggeringControllerId = triggering == null ? null : gameData.findControllerOf(triggering);
+                UUID triggeringControllerId = triggering != null ? gameData.findControllerOf(triggering)
+                        : filterContext == null ? null : filterContext.triggeringPermanentControllerId();
                 yield triggeringControllerId != null
                         && triggeringControllerId.equals(gameData.findControllerOf(permanent));
+            }
+            case PermanentSharesCreatureTypeWithTriggeringPermanentPredicate ignored -> {
+                Permanent triggering = liveTriggeringPermanent(filterContext);
+                if (triggering == null && filterContext != null) {
+                    triggering = filterContext.triggeringPermanentSnapshot();
+                }
+                yield triggering != null && gameQueryService.shareCreatureType(gameData, permanent, triggering);
             }
             case PermanentControlledByTriggeringPlayerPredicate ignored -> {
                 UUID triggeringPlayerId = filterContext == null ? null : filterContext.triggeringPlayerId();

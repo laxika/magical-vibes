@@ -240,6 +240,19 @@ public class TriggerTargetCollector {
                           UUID controllerId, Card sourceCard, Options options,
                           Permanent sourcePermanentSnapshot, UUID defendingPlayerId, Integer xValue,
                           UUID triggeringPermanentId, UUID triggeringPlayerId) {
+        return collect(gameData, effects, targetFilter, controllerId, sourceCard, options, sourcePermanentSnapshot,
+                defendingPlayerId, xValue, triggeringPermanentId, triggeringPlayerId, null);
+    }
+
+    /**
+     * Collects targets with {@code triggeringPermanentControllerId}, the controller the trigger event's permanent had
+     * as it last existed on the battlefield, for a filter that reads "its controller" once that permanent has left
+     * ({@code PermanentControlledByTriggeringPermanentControllerPredicate}: Necrotic Plague).
+     */
+    public Result collect(GameData gameData, List<CardEffect> effects, TargetFilter targetFilter,
+                          UUID controllerId, Card sourceCard, Options options,
+                          Permanent sourcePermanentSnapshot, UUID defendingPlayerId, Integer xValue,
+                          UUID triggeringPermanentId, UUID triggeringPlayerId, UUID triggeringPermanentControllerId) {
 
         List<CardEffect> unwrappedEffects = effects.stream()
                 .map(e -> unwrap(e, options))
@@ -314,6 +327,7 @@ public class TriggerTargetCollector {
                             ? null : sourcePermanentSnapshot.getId())
                     .withDefendingPlayerId(defendingPlayerId)
                     .withTriggeringPermanentId(triggeringPermanentId)
+                    .withTriggeringPermanentControllerId(triggeringPermanentControllerId)
                     .withTriggeringPlayerId(triggeringPlayerId)
                     : null;
 
@@ -342,6 +356,7 @@ public class TriggerTargetCollector {
                                     ? null : sourcePermanentSnapshot.getId())
                             .withDefendingPlayerId(defendingPlayerId)
                             .withTriggeringPermanentId(triggeringPermanentId)
+                            .withTriggeringPermanentControllerId(triggeringPermanentControllerId)
                             .withTriggeringPlayerId(triggeringPlayerId);
                 }
             }

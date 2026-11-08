@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToBatt
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import java.util.List;
 import java.util.UUID;
 
 import lombok.extern.slf4j.Slf4j;
@@ -44,14 +45,17 @@ public class ReturnEnchantedCreatureToBattlefieldOnDeathEffectHandler implements
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ReturnEnchantedCreatureToBattlefieldOnDeathEffect) effect;
 
-        if (e.dyingCreatureCardIds().isEmpty()) {
-            log.info("Game {} - {} death trigger fizzles (no dying creature card ID)",
+        // "That card": the cards the enchanted permanent put into the graveyard (every card of a merged
+        // permanent), each in the graveyard stay the collector recorded (CR 400.7).
+        List<UUID> dyingCreatureCardIds = entry.triggeringCardIds();
+        if (dyingCreatureCardIds.isEmpty()) {
+            log.info("Game {} - {} death trigger fizzles (no dying creature card)",
                     gameData.id, entry.getCard().getName());
             return;
         }
 
         boolean returnedAny = false;
-        for (UUID dyingCreatureCardId : e.dyingCreatureCardIds()) {
+        for (UUID dyingCreatureCardId : dyingCreatureCardIds) {
             returnedAny |= returnCard(gameData, entry, e, dyingCreatureCardId);
         }
         if (!returnedAny) {

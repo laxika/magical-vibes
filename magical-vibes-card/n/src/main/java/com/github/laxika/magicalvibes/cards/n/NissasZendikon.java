@@ -25,7 +25,7 @@ public class NissasZendikon extends Card {
                 .addStaticEffect(new GrantKeywordEffect(
                         Set.of(Keyword.REACH, Keyword.HASTE), GrantScope.ENCHANTED_PERMANENT));
 
-        addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
+        addTrigger(Triggers.creatureDies(ObjectRelation.ENCHANTED),
                 new ReturnEnchantedCreatureToOwnerHandOnDeathEffect());
     }
 }

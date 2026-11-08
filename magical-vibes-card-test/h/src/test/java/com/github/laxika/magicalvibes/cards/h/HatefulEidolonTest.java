@@ -103,6 +103,25 @@ class HatefulEidolonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature enchanted only by an opponent's Aura triggers the ability, which draws nothing")
+    void onlyOpponentsAuraTriggersAndDrawsNothing() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player2, new NyxbornColossus());
+        harness.addToBattlefield(player1, new HatefulEidolon());
+        attachAura(player2, creature);
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new NyxbornColossus()));
+
+        creature.setMarkedDamage(8);
+        harness.runStateBasedActions();
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Hateful Eidolon"));
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Hateful Eidolon"));
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
     void doesNotDrawForUnenchantedEnchantmentCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new NyxbornColossus());
         harness.addToBattlefield(player1, new HatefulEidolon());

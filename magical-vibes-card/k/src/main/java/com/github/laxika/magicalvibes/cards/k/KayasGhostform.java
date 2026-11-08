@@ -23,7 +23,7 @@ public class KayasGhostform extends Card {
                 )),
                 "Target must be a creature or planeswalker you control"
         ));
-        addTrigger(Triggers.leavesBattlefield(null, ObjectRelation.ENCHANTED),
+        addTrigger(Triggers.putIntoGraveyardOrExileFromBattlefield(null, ObjectRelation.ENCHANTED),
                 new ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect());
     }
 }

@@ -38,7 +38,6 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -241,7 +240,12 @@ public class TriggeredAbilityQueueService {
                     dyingCard,
                     pending.creaturesOnly()
                             ? TriggerTargetCollector.Options.DEATH
-                            : TriggerTargetCollector.Options.DELAYED_DEATH);
+                            : TriggerTargetCollector.Options.DELAYED_DEATH,
+                    null, null, null,
+                    pending.triggeringPermanentControllerId() == null || pending.triggeringPermanent() == null
+                            ? null : pending.triggeringPermanent().getId(),
+                    null,
+                    pending.triggeringPermanentControllerId());
 
             boolean optionalTarget = hasOptionalSingleTarget(dyingCard, pending.effects());
             if (result.validTargets().isEmpty()) {
@@ -276,12 +280,8 @@ public class TriggeredAbilityQueueService {
             // The dying creature's controller (not the trigger's controller) chooses the target of the
             // Aura it carried (Necrotic Plague); a single legal creature is chosen without a prompt.
             UUID targetChooserId = pending.effects().stream()
-                    .filter(ReturnSourceAuraToOpponentCreatureOnDeathEffect.class::isInstance)
-                    .map(effect -> ((ReturnSourceAuraToOpponentCreatureOnDeathEffect) effect)
-                            .enchantedCreatureControllerId())
-                    .filter(java.util.Objects::nonNull)
-                    .findFirst()
-                    .orElse(null);
+                    .anyMatch(CardEffect::targetChosenByTriggeringPermanentController)
+                    ? pending.triggeringPermanentControllerId() : null;
             if (targetChooserId != null && result.validTargets().size() == 1) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
                 StackEntry entry = new StackEntry(

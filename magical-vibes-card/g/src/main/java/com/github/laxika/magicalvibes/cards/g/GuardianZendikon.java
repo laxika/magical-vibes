@@ -27,7 +27,7 @@ public class GuardianZendikon extends Card {
                         Keyword.DEFENDER, GrantScope.ENCHANTED_PERMANENT));
 
         // When enchanted land dies, return that card to its owner's hand.
-        addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
+        addTrigger(Triggers.creatureDies(ObjectRelation.ENCHANTED),
                 new ReturnEnchantedCreatureToOwnerHandOnDeathEffect());
     }
 }

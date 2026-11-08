@@ -1,19 +1,10 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.Zone;
-
-import java.util.UUID;
-
 /**
- * Returns the permanent card that left an Aura's battlefield attachment to the battlefield from
- * the exact zone recorded when the trigger was collected.
+ * Kaya's Ghostform's "return it to the battlefield under your control": returns the stack entry's triggering card,
+ * the card of the enchanted permanent that was put into a graveyard or exiled, from the zone it went to. The
+ * enchanted-leaves collector records it, with its graveyard incarnation when it went to a graveyard (CR 400.7): a
+ * card that left that zone before the ability resolves stays where it is.
  */
-public record ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect(
-        UUID cardId,
-        Zone fromZone
-) implements CardEffect {
-
-    public ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect() {
-        this(null, null);
-    }
+public record ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect() implements CardEffect {
 }

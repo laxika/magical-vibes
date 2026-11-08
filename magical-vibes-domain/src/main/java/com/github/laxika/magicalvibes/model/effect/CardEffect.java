@@ -47,6 +47,13 @@ public interface CardEffect {
     default boolean targetChosenByActivePlayer() { return false; }
 
     /**
+     * Returns whether a death trigger using this effect has its target chosen, as it is put on the stack, by the
+     * controller of its triggering permanent as that permanent last existed on the battlefield (Necrotic Plague's
+     * "its controller chooses target creature"), rather than by the ability's controller.
+     */
+    default boolean targetChosenByTriggeringPermanentController() { return false; }
+
+    /**
      * Returns whether a target is selected randomly as this triggered ability is put onto the
      * stack, rather than chosen by a player.
      */

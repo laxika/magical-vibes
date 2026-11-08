@@ -283,7 +283,8 @@ class GameDataDeepCopyTest {
         UUID auraCardId = UUID.randomUUID();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY, new SerraAngel(), player1.getId(), "Death trigger", List.of());
-        entry.setTriggeringPermanent(dying, new DepartedAttachments(List.of(auraCardId), List.of()));
+        entry.setTriggeringPermanent(dying, new DepartedAttachments(List.of(auraCardId), List.of(),
+                java.util.Map.of(auraCardId, player2.getId())));
         gd.stack.add(entry);
 
         GameData copy = gd.simulationCopy();
@@ -292,6 +293,7 @@ class GameDataDeepCopyTest {
 
         assertThat(copied.getTriggeringPermanentSnapshot()).isNotSameAs(entry.getTriggeringPermanentSnapshot());
         assertThat(copied.getTriggeringAttachments().auraCardIds()).containsExactly(auraCardId);
+        assertThat(copied.getTriggeringAttachments().auraCountControlledBy(player2.getId())).isEqualTo(1);
         assertThat(entry.triggeringPermanentCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 

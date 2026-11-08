@@ -25,7 +25,7 @@ public class WindZendikon extends Card {
                 .addStaticEffect(new GrantKeywordEffect(
                         Keyword.FLYING, GrantScope.ENCHANTED_PERMANENT));
 
-        addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
+        addTrigger(Triggers.creatureDies(ObjectRelation.ENCHANTED),
                 new ReturnEnchantedCreatureToOwnerHandOnDeathEffect());
     }
 }
