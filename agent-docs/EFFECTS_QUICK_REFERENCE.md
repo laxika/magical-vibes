@@ -2394,7 +2394,7 @@ intervening-if condition used to gate a targeted ETB. Whether the ability trigge
 - `ConditionalEffect(new PlusOnePlusOneCounterPutOnControlledPermanentThisTurn(), CardEffect)` — a +1/+1 counter was put on a permanent controlled by the controller this turn; use for end-step text such as Fairgrounds Trumpeter
 - `ConditionalEffect(new DescendedThisTurn(), CardEffect)` — the controller put a permanent card into their graveyard from anywhere this turn; use for descend conditions such as Ruin-Lurker Bat
 - `DescentsThisTurn()` — the number of permanent cards the controller put into their graveyard from anywhere this turn; use for “the number of times you descended this turn” token counts such as The Mycotyrant
-- `ConditionalEffect(new ControllerTurn(), CardEffect)` — during your turn
+- `ConditionalEffect(new ControllerTurn(), CardEffect)` — during your turn; a trigger's "whenever you gain life during your turn" is the ability's event condition instead, `TriggerOptions.DEFAULT.withEventCondition(new ControllerTurn())` (Vampire Scrivener)
 - `ControllerWasNotStartingPlayer()` — condition met when the source controller was not designated as the game's starting player; use for riders such as Cindercone Smite (YBLB 15)
 - `ConditionalEffect(new IsNight(), CardEffect)` — the game has the night designation; also usable in `FixedIfCondition` for a day/night numeric rider
 - `ConditionalEffect(new NotControllerTurn(), CardEffect)` — during turns other than yours; also an `Triggers.endStep(ActivePlayer.ANY)` intervening-if gate ("if it's an opponent's turn" — Discordant Spirit)

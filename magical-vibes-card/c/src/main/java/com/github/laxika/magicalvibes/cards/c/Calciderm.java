@@ -25,7 +25,7 @@ public class Calciderm extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.TIME)),
                 new RemoveCounterFromSourceEffect(CounterType.TIME, 1));
         addTrigger(Triggers.timeCountersRemovedFromThis(),
-                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME))),
+                TriggerOptions.DEFAULT.withEventCondition(new NotCondition(new SourceCounterThreshold(1, CounterType.TIME))),
                 new SacrificeSelfEffect());
     }
 }

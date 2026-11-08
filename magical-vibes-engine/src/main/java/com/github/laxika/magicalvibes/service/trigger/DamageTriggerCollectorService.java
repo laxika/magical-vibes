@@ -1605,12 +1605,6 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsDamageTrigger(value = ConditionalEffect.class, watch = DamageWatch.ON_OPPONENT_DEALT_DAMAGE)
-    private boolean handleOpponentDealtDamageConditional(TriggerMatchContext match,
-            ConditionalEffect conditional, TriggerContext ctx) {
-        return handleOpponentDealtDamageDefault(match, conditional, ctx);
-    }
-
     @CollectsDamageTrigger(value = CardEffect.class, watch = DamageWatch.ON_OPPONENT_DEALT_DAMAGE)
     private boolean handleOpponentDealtDamageDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
@@ -1692,12 +1686,6 @@ public class DamageTriggerCollectorService {
                 match.gameData().id, watcher.getCard().getName(),
                 match.gameData().playerIdToName.get(sourceControllerId));
         return true;
-    }
-
-    @CollectsDamageTrigger(value = ConditionalEffect.class, watch = DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
-    private boolean handleControllerDealtDamageByOpponentConditional(TriggerMatchContext match,
-            ConditionalEffect conditional, TriggerContext ctx) {
-        return queueControllerDealtDamageByOpponentTrigger(match, conditional, ctx);
     }
 
     @CollectsDamageTrigger(value = MayEffect.class, watch = DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT)
@@ -2417,13 +2405,6 @@ public class DamageTriggerCollectorService {
         log.info("Game {} - {} ON_DEALT_DAMAGE targeted-may trigger fires",
                 gameData.id, damagedCreature.getCard().getName());
         return true;
-    }
-
-    @CollectsDamageTrigger(value = ConditionalEffect.class, watch = DamageWatch.ON_DEALT_DAMAGE)
-    private boolean handleDealtDamageConditional(TriggerMatchContext match,
-                                                  ConditionalEffect conditional,
-                                                  TriggerContext ctx) {
-        return handleDealtDamageDefault(match, conditional, ctx);
     }
 
     @CollectsDamageTrigger(value = CardEffect.class, watch = DamageWatch.ON_DEALT_DAMAGE)

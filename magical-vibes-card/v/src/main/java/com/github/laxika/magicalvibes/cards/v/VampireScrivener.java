@@ -12,10 +12,10 @@ public class VampireScrivener extends Card {
 
     public VampireScrivener() {
         addTrigger(Triggers.youGainLife(),
-                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()),
+                TriggerOptions.DEFAULT.withEventCondition(new ControllerTurn()),
                 new PutCountersOnSourceEffect(1, 1, 1));
         addTrigger(Triggers.youLoseLife(),
-                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()),
+                TriggerOptions.DEFAULT.withEventCondition(new ControllerTurn()),
                 new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

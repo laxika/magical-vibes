@@ -26,7 +26,7 @@ public class MoonstoneHarbinger extends Card {
                 new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES, bats));
 
         addTrigger(List.of(Triggers.youGainLife(), Triggers.youLoseLife()),
-                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn())
+                TriggerOptions.DEFAULT.withEventCondition(new ControllerTurn())
                         .withLimit(TriggerLimit.ONCE_EACH_TURN),
                 lifeChangeEffect);
     }

@@ -513,12 +513,10 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("controller life-gain conditional trigger queues its wrapped effect")
-    void controllerLifeGainConditionalTriggerQueuesWrappedEffect() {
+    @DisplayName("controller life-gain intervening-if trigger queues the conditional, checked again as it resolves")
+    void controllerLifeGainConditionalTriggerQueuesTheConditional() {
         Permanent perm = createPermanent("Vampire Scrivener");
-        var wrapped = new PutCountersOnSourceEffect(1, 1, 1);
-        var effect = new ConditionalEffect(new ControllerTurn(), wrapped);
-        when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
+        var effect = new ConditionalEffect(new ControllerTurn(), new PutCountersOnSourceEffect(1, 1, 1));
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect,
@@ -526,17 +524,15 @@ class MiscTriggerCollectorServiceTest {
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(wrapped);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
     }
 
     @Test
-    @DisplayName("controller life-loss conditional trigger queues its wrapped effect")
-    void controllerLifeLossConditionalTriggerQueuesWrappedEffect() {
+    @DisplayName("controller life-loss intervening-if trigger queues the conditional, checked again as it resolves")
+    void controllerLifeLossConditionalTriggerQueuesTheConditional() {
         Permanent perm = createPermanent("Vampire Scrivener");
-        var wrapped = new PutCountersOnSourceEffect(1, 1, 1);
-        var effect = new ConditionalEffect(new ControllerTurn(), wrapped);
-        when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(true);
+        var effect = new ConditionalEffect(new ControllerTurn(), new PutCountersOnSourceEffect(1, 1, 1));
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_LOSES_LIFE, effect,
@@ -544,8 +540,26 @@ class MiscTriggerCollectorServiceTest {
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(wrapped);
+        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         assertThat(gd.stack.getLast().getEventValue()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("opponent life-loss default trigger queues the effect with the life lost as its event value")
+    void opponentLifeLossDefaultTriggerQueuesTheEffect() {
+        Permanent perm = createPermanent("Kefka, Ruler of Ruin");
+        var effect = new DrawCardEffect(new EventValue());
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), LifeWatch.ON_OPPONENT_LOSES_LIFE, effect,
+                new TriggerContext.LifeLoss(player2Id, 4));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getEventValue()).isEqualTo(4);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
+        });
     }
 
     @Test

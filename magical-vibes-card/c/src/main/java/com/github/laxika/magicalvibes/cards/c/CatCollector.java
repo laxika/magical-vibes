@@ -24,7 +24,7 @@ public class CatCollector extends Card {
         // "for the first time during each of your turns": the first life gain of the turn counts
         // even if it happened before this creature entered, and only on your own turn
         addTrigger(Triggers.youGainLife().firstTimeEachTurn(),
-                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()),
+                TriggerOptions.DEFAULT.withEventCondition(new ControllerTurn()),
                 new CreateTokenEffect(
                         "Cat", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.CAT), Set.of(), Set.of()));

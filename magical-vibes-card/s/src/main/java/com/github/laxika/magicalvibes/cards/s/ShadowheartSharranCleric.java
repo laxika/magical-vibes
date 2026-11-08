@@ -71,7 +71,7 @@ public class ShadowheartSharranCleric extends Card {
 
     /**
      * The specialized card's "whenever you lose life during your turn" ability for {@code color}, or {@code null} for
-     * black, which has none. "During your turn" is the ability's intervening "if".
+     * black, which has none. "During your turn" is the ability's event condition.
      */
     public static TriggeredAbility specializedLifeLossAbility(CardColor color) {
         CardEffect effect = switch (color) {
@@ -83,7 +83,7 @@ public class ShadowheartSharranCleric extends Card {
             case GREEN -> new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE);
         };
         return effect == null ? null : new TriggeredAbility(Triggers.youLoseLife(),
-                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()), effect);
+                TriggerOptions.DEFAULT.withEventCondition(new ControllerTurn()), effect);
     }
 
     public static void setSpecializedBaseCharacteristics(Card card) {

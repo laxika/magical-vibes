@@ -11,7 +11,7 @@ public class KefkaRulerOfRuin extends Card {
 
     public KefkaRulerOfRuin() {
         addTrigger(Triggers.opponentLosesLife(),
-                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()),
+                TriggerOptions.DEFAULT.withEventCondition(new ControllerTurn()),
                 new DrawCardEffect(new EventValue()));
     }
 }

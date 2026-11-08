@@ -937,14 +937,14 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsLifeTrigger(value = ConditionalEffect.class, watch = LifeWatch.ON_OPPONENT_LOSES_LIFE)
-    private boolean handleConditionalOnOpponentLifeLoss(TriggerMatchContext match,
-            ConditionalEffect conditional, TriggerContext ctx) {
-        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
-            return false;
-        }
-
+    /**
+     * "Whenever an opponent loses life": the ability goes on the stack with the life lost as the event's value (Kefka,
+     * Ruler of Ruin's "you draw that many cards"). Its event condition ("during your turn") and intervening "if" were
+     * judged as the collector read the ability; an intervening "if" stays around the effect, checked again as it
+     * resolves (CR 603.4).
+     */
+    @CollectsLifeTrigger(value = CardEffect.class, watch = LifeWatch.ON_OPPONENT_LOSES_LIFE)
+    private boolean handleOnOpponentLifeLoss(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.LifeLoss lifeLoss = (TriggerContext.LifeLoss) ctx;
         Card sourceCard = match.permanent().getCard();
         StackEntry entry = new StackEntry(
@@ -952,7 +952,7 @@ public class MiscTriggerCollectorService {
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(conditional.wrapped())),
+                new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId());
         entry.setEventValue(lifeLoss.lifeLostAmount());
@@ -963,22 +963,11 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsLifeTrigger(value = ConditionalEffect.class, watch = LifeWatch.ON_OPPONENT_GAINS_LIFE)
-    private boolean handleConditionalOnOpponentLifeGain(TriggerMatchContext match,
-            ConditionalEffect conditional, TriggerContext ctx) {
-        TriggerContext.LifeGain lifeGain = (TriggerContext.LifeGain) ctx;
-        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId())
-                        .withTargetId(lifeGain.gainingPlayerId()))) {
-            return false;
-        }
-        return handleOnOpponentLifeGain(match, conditional.wrapped(), ctx);
-    }
-
     /**
      * "Whenever an opponent gains life": the ability goes on the stack with the opponent as "that player" and the life
-     * gained as the event's value. Its event condition ("during their turn", Wedding Ring) was judged as the collector
-     * read the ability.
+     * gained as the event's value. Its event condition ("during their turn", Wedding Ring) and intervening "if" were
+     * judged as the collector read the ability; an intervening "if" stays around the effect, checked again as it
+     * resolves (CR 603.4).
      */
     @CollectsLifeTrigger(value = CardEffect.class, watch = LifeWatch.ON_OPPONENT_GAINS_LIFE)
     private boolean handleOnOpponentLifeGain(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
@@ -1196,30 +1185,35 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    /**
+     * A "whenever you gain life" / "whenever you lose life" ability with an intervening "if" (CR 603.4), which the
+     * collector judged from the ability as it triggered and the reader wrapped around the effect: the ability goes on
+     * the stack with the conditional as it is, checked again as it resolves, and the life gained or lost as the
+     * event's value.
+     */
     @CollectsLifeTrigger(value = ConditionalEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
-    private boolean handleConditionalOnControllerLifeGain(TriggerMatchContext match,
+    @CollectsLifeTrigger(value = ConditionalEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
+    private boolean handleConditionalOnControllerLifeChange(TriggerMatchContext match,
             ConditionalEffect conditional, TriggerContext ctx) {
-        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
-            return false;
-        }
-
-        TriggerContext.LifeGain lifeGain = (TriggerContext.LifeGain) ctx;
+        int amount = switch (ctx) {
+            case TriggerContext.LifeGain lifeGain -> lifeGain.lifeGainedAmount();
+            case TriggerContext.LifeLoss lifeLoss -> lifeLoss.lifeLostAmount();
+            default -> throw new IllegalArgumentException("Not a life gain or loss: " + ctx);
+        };
         Card sourceCard = match.permanent().getCard();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(conditional.wrapped())),
+                new ArrayList<>(List.of(conditional)),
                 null,
                 match.permanent().getId());
-        entry.setEventValue(lifeGain.lifeGainedAmount());
+        entry.setEventValue(amount);
         match.gameData().enqueueTrigger(entry);
 
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on controller life gain during controller's turn",
-                match.gameData().id, sourceCard.getName());
+        log.info("Game {} - {} triggers on controller life change", match.gameData().id, sourceCard.getName());
         return true;
     }
 
@@ -1471,12 +1465,6 @@ public class MiscTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on proliferate", gameData.id, sourceCard.getName());
         return true;
-    }
-
-    @CollectsCounterTrigger(value = ConditionalEffect.class, watch = CounterWatch.ON_CONTROLLER_PROLIFERATES)
-    private boolean handleConditionalProliferate(TriggerMatchContext match,
-            ConditionalEffect effect, TriggerContext ctx) {
-        return handleProliferateDefault(match, effect, ctx);
     }
 
     @CollectsTapTrigger(value = SequenceEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
@@ -2768,15 +2756,6 @@ public class MiscTriggerCollectorService {
     }
 
     @CollectsActionTriggers({
-        @CollectsActionTrigger(value = ConditionalEffect.class, watch = ActionWatch.ON_CONTROLLER_COMMITS_CRIME),
-        @CollectsActionTrigger(value = ConditionalEffect.class, watch = ActionWatch.ON_OPPONENT_COMMITS_CRIME)
-    })
-    private boolean handleCrimeConditional(TriggerMatchContext match, ConditionalEffect conditional,
-                                           TriggerContext ctx) {
-        return handleCrimeDefault(match, conditional, ctx);
-    }
-
-    @CollectsActionTriggers({
         @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_COMMITS_CRIME),
         @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_OPPONENT_COMMITS_CRIME)
     })
@@ -3073,33 +3052,6 @@ public class MiscTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on controller life loss ({} life)",
                 match.gameData().id, sourceCard.getName(), lifeLoss.lifeLostAmount());
-        return true;
-    }
-
-    @CollectsLifeTrigger(value = ConditionalEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
-    private boolean handleConditionalOnControllerLifeLoss(TriggerMatchContext match,
-            ConditionalEffect conditional, TriggerContext ctx) {
-        if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                ConditionContext.forPermanent(match.permanent(), match.controllerId()))) {
-            return false;
-        }
-
-        TriggerContext.LifeLoss lifeLoss = (TriggerContext.LifeLoss) ctx;
-        Card sourceCard = match.permanent().getCard();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(conditional.wrapped())),
-                null,
-                match.permanent().getId());
-        entry.setEventValue(lifeLoss.lifeLostAmount());
-        match.gameData().enqueueTrigger(entry);
-
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on controller life loss during controller's turn",
-                match.gameData().id, sourceCard.getName());
         return true;
     }
 

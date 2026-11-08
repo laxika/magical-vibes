@@ -6,10 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekEffect;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
-import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +17,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PermanentCounterRemovalTriggerCollectorService {
-    private final ConditionEvaluationService conditionEvaluationService;
 
     @CollectsCounterTrigger(value = SeekEffect.class, watch = CounterWatch.ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT)
     private boolean handleCountersRemoved(TriggerMatchContext match, SeekEffect effect, TriggerContext ctx) {
@@ -74,15 +70,6 @@ public class PermanentCounterRemovalTriggerCollectorService {
                 || match.permanent() == null
                 || !match.permanent().getId().equals(removed.permanent().getId())) {
             return false;
-        }
-
-        if (effect instanceof ConditionalEffect conditional) {
-            if (!conditionEvaluationService.isMet(match.gameData(), conditional.condition(),
-                    ConditionContext.forPermanent(
-                            match.permanent(), match.controllerId()))) {
-                return false;
-            }
-            effect = conditional.wrapped();
         }
 
         GameData gameData = match.gameData();

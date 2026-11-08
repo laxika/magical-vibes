@@ -11570,8 +11570,9 @@ public class TriggerCollectionService {
 
     /**
      * Collects one "whenever an opponent loses life" ability of {@code perm}: "for the first time during each of their
-     * turns" is judged from the ability ({@link #collectFirstOpponentLifeLossEachTurn}), any other its limit, around its
-     * effects' dispatch to the watch's handlers; "do this only once each turn" is marked as the action is taken.
+     * turns" is judged from the ability ({@link #collectFirstOpponentLifeLossEachTurn}), any other its event condition
+     * and intervening "if" (CR 603.4) as it triggers and its limit, around its effects' dispatch to the watch's
+     * handlers; "do this only once each turn" is marked as the action is taken.
      */
     private boolean collectOpponentLifeLossAbility(GameData gameData, Permanent perm, UUID controllerId,
                                                    TriggeredAbility ability, TriggerContext.LifeLoss ctx) {
@@ -11584,7 +11585,8 @@ public class TriggerCollectionService {
             return dispatch(match, watch, effects.getFirst(), ctx,
                     () -> collectFirstOpponentLifeLossEachTurn(match, effects, ctx));
         }
-        if (first.limitReached(gameData, perm.getId())) {
+        if (!watchJudge(gameData, perm, controllerId, ctx).triggers(ability)
+                || first.limitReached(gameData, perm.getId())) {
             return false;
         }
         boolean triggered = false;
@@ -11639,8 +11641,9 @@ public class TriggerCollectionService {
 
     /**
      * Collects one "whenever you lose life" ability of {@code perm}: "for the first time each turn" (the player's
-     * first loss of life this turn, counting those before the source was on the battlefield) and the limit are judged
-     * from the ability, and the intervening "if" as it triggers, around its effects' dispatch to the watch's handlers.
+     * first loss of life this turn, counting those before the source was on the battlefield), the event condition, the
+     * intervening "if" (CR 603.4) and the limit are judged from the ability as it triggers, around its effects' dispatch
+     * to the watch's handlers; an intervening "if" stays around each effect, checked again as the ability resolves.
      * Nothing makes these abilities trigger additional times, as before.
      */
     private boolean collectControllerLifeLossAbility(GameData gameData, Permanent perm, UUID controllerId,
@@ -11654,17 +11657,14 @@ public class TriggerCollectionService {
                 && gameData.lifeLostThisTurn.getOrDefault(controllerId, 0) != lifeLostAmount) {
             return false;
         }
-        if (first.limitReached(gameData, perm.getId())) {
+        if (!watchJudge(gameData, perm, controllerId, ctx).triggers(ability)
+                || first.limitReached(gameData, perm.getId())) {
             return false;
         }
         boolean triggered = false;
         for (LifeAbilityReader.LifeEffect read : reads) {
-            CardEffect toDispatch = unwrapLifeChangeConditional(gameData, perm, controllerId, read.effect());
-            if (toDispatch == null) {
-                continue;
-            }
             var match = new TriggerMatchContext(gameData, perm, controllerId, read.effect());
-            triggered |= registry.dispatch(match, watch, toDispatch, ctx);
+            triggered |= registry.dispatch(match, watch, read.effect(), ctx);
         }
         if (triggered) {
             first.markLimit(gameData, perm.getId());
@@ -11693,7 +11693,8 @@ public class TriggerCollectionService {
                 List<LifeAbilityReader.LifeEffect> reads = LifeAbilityReader.read(ability, watch.trigger());
                 LifeAbilityReader.LifeEffect first = reads.getFirst();
                 LifeAbilityReader.requireNoLimitOnAcceptance(first, watch.trigger());
-                if (first.limitReached(gameData, perm.getId())) {
+                if (!watchJudge(gameData, perm, payingPlayerId, ctx).triggers(ability)
+                        || first.limitReached(gameData, perm.getId())) {
                     continue;
                 }
                 boolean triggered = false;
@@ -11782,18 +11783,17 @@ public class TriggerCollectionService {
                             && gameData.getLifeGainedThisTurn(gainingPlayerId) != lifeGainedAmount) {
                         continue;
                     }
-                    if (first.limitReached(gameData, perm.getId())) {
+                    // The event condition ("during your turn", a Class's level) and intervening "if" (CR 603.4), as
+                    // the ability triggers; an intervening "if" stays around each effect, checked again as it resolves.
+                    if (!watchJudge(gameData, perm, playerId, ctx).triggers(ability)
+                            || first.limitReached(gameData, perm.getId())) {
                         continue;
                     }
                     boolean triggered = false;
                     for (LifeAbilityReader.LifeEffect read : reads) {
-                        CardEffect toDispatch = unwrapLifeChangeConditional(gameData, perm, playerId, read.effect());
-                        if (toDispatch == null) {
-                            continue;
-                        }
                         var match = new TriggerMatchContext(gameData, perm, playerId, read.effect(), perm.getCard(),
                                 null, read.marksLimitOnAcceptance(), read.triggersOnlyOnceEachTurn());
-                        triggered |= dispatch(match, watch, toDispatch, ctx);
+                        triggered |= dispatch(match, watch, read.effect(), ctx);
                     }
                     if (triggered) {
                         first.markLimit(gameData, perm.getId());
@@ -16241,18 +16241,6 @@ public class TriggerCollectionService {
         log.info("Game {} - {} triggers for {} entering ({})", gameData.id, source.getCard().getName(),
                 enteringCreature.getName(), exactStats.triggerDescription(enteringCreature));
         return exactStats.wrapped();
-    }
-
-    private CardEffect unwrapLifeChangeConditional(GameData gameData, Permanent source,
-                                                    UUID controllerId, CardEffect effect) {
-        if (!(effect instanceof ConditionalEffect conditional)) {
-            return effect;
-        }
-        if (!conditionEvaluationService.isMet(gameData, conditional.condition(),
-                ConditionContext.forPermanent(source, controllerId))) {
-            return null;
-        }
-        return conditional.wrapped();
     }
 
     // ── Internal dispatch ──────────────────────────────────────────────

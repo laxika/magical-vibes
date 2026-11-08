@@ -14,7 +14,7 @@ public class WaxWaneWitness extends Card {
 
     public WaxWaneWitness() {
         addTrigger(List.of(Triggers.youGainLife(), Triggers.youLoseLife()),
-                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()),
+                TriggerOptions.DEFAULT.withEventCondition(new ControllerTurn()),
                 new BoostSelfEffect(1, 0));
     }
 }

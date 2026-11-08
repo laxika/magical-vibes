@@ -60,7 +60,7 @@ public class GourmandsTalent extends Card {
                 "this Class is level 1"));
 
         addTrigger(Triggers.youGainLife().firstTimeEachTurn(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(2)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceClassLevelAtLeast(2)),
                 new CreateTokenEffect(
                         1,
                         "Raccoon",
@@ -84,7 +84,7 @@ public class GourmandsTalent extends Card {
                 "this Class is level 2"));
 
         addTrigger(Triggers.youGainLife().firstTimeEachTurn(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceClassLevelAtLeast(3)),
                 new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         1,

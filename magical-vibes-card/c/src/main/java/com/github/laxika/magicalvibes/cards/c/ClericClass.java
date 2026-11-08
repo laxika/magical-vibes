@@ -30,7 +30,7 @@ public class ClericClass extends Card {
     public ClericClass() {
         addStaticEffect(new AdditionalLifeGainEffect(1));
         addTrigger(Triggers.youGainLife(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceClassLevelAtLeast(2)),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceClassLevelAtLeast(2)),
                 PutCounterOnTargetPermanentEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         1,
