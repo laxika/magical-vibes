@@ -132,8 +132,6 @@ import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSou
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.RashmiRevealTopCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RashmiTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterWhenOpponentCastsSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesByColorsSpentOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -270,7 +268,7 @@ public class SpellCastTriggerCollectorService {
                 new PlayerOtherThanPredicate(sc.castingPlayerId()),
                 "Target must be another player");
         return handleGenericSpellCastTrigger(match, new CastAbility(SpellFilter.ANY, trigger.resolvedEffects(), null,
-                null, null, targetFilter), sc);
+                targetFilter), sc);
     }
 
 
@@ -1214,11 +1212,6 @@ public class SpellCastTriggerCollectorService {
         return collected;
     }
 
-    /** An authored {@link SpellCastTriggerEffect} (Leshrac's Sigil's) as the generic collector judges it. */
-    private CastAbility authored(TriggerMatchContext match, SpellCastTriggerEffect trigger) {
-        return CastAbility.of(trigger, null);
-    }
-
     @CollectsSpellAbilityTrigger(value = GainControlOfTargetCreatureWhenSingleTargetSpellCastEffect.class,
             watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
     private boolean handleGainControlOfSingleTargetCreatureSpell(TriggerMatchContext match,
@@ -1929,34 +1922,6 @@ public class SpellCastTriggerCollectorService {
 
     // ── ON_OPPONENT_CASTS_SPELL ────────────────────────────────────────
 
-    @CollectsSpellAbilityTrigger(value = SpellCastTriggerEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
-    private boolean handleOpponentSpellCastTrigger(TriggerMatchContext match, SpellCastTriggerEffect trigger, TriggerContext ctx) {
-        return handleGenericSpellCastTrigger(match, authored(match, trigger), (TriggerContext.SpellCast) ctx);
-    }
-
-    @CollectsSpellAbilityTrigger(value = RemoveTimeCounterWhenOpponentCastsSpellEffect.class,
-            watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
-    private boolean handleSuspendedCardOpponentSpellCastTrigger(TriggerMatchContext match,
-            RemoveTimeCounterWhenOpponentCastsSpellEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        Card sourceCard = match.sourceCard();
-        if (sourceCard == null || match.permanent() != null) {
-            return false;
-        }
-
-        StackEntry triggerEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(new RemoveTimeCounterFromExiledCardEffect(sourceCard.getId()))));
-        triggerEntry.setTriggeringCardId(sc.spellCard().getId());
-        triggerEntry.setNonTargeting(true);
-        match.gameData().stack.add(triggerEntry);
-        gameLogService.append(match.gameData(), GameLog.cardThen(sourceCard, "'s ability triggers."));
-        return true;
-    }
-
     @CollectsSpellAbilityTrigger(value = PutCountersOnSourceEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleOpponentSpellCastPutCountersOnSource(TriggerMatchContext match,
             PutCountersOnSourceEffect trigger, TriggerContext ctx) {
@@ -2523,7 +2488,14 @@ public class SpellCastTriggerCollectorService {
                     exiledSourcePermanentId)) return false;
         }
 
-        List<CardEffect> resolved = new ArrayList<>(trigger.effects());
+        // A lone plain "you may [pay {N}]" goes on the stack as the card wrote it and is asked as the ability resolves
+        // (CR 603.5); the targets of what it offers are chosen now (CR 603.3d), so the effects are judged without it.
+        List<CardEffect> resolved = new ArrayList<>(trigger.effectsTargetsAreChosenFor());
+        List<CardEffect> optionalAbility = resolved.equals(trigger.effects()) ? null
+                : trigger.effects().stream()
+                        .map(effect -> trigger.interveningIf() == null ? effect
+                                : (CardEffect) new ConditionalEffect(trigger.interveningIf(), effect))
+                        .toList();
         // Snapshot CountersOnSource damage at trigger time (Imminent Doom ruling: damage equals
         // the counter count as the ability triggered, not as it resolves).
         resolved = snapshotCountersOnSourceDamage(resolved, match.permanent());
@@ -2564,54 +2536,8 @@ public class SpellCastTriggerCollectorService {
         int triggeringSpellManaValue = (trigger.filter().kicker() != SpellFilter.Kicker.ANY) ? kickCount
                 : carriesTriggeringSpellManaValue ? spellManaValue(match.gameData(), spellCard) : 0;
 
-        String optionalPrompt = trigger.optionalPrompt();
-        // CR 603.5: a plain "you may" or "you may pay {N}" spell-cast trigger goes on the stack and the
-        // choice (and payment) is made when it resolves, so it is wrapped in a MayEffect or
-        // MayPayManaEffect for the stack path instead of a cast-time prompt.
-        boolean plainOptionalTrigger = optionalPrompt != null
-                && !needsSpellManaSpentX
-                && !needsTargeting
-                && !needsGraveyardTarget
-                && !needsSpellTarget
-                && resolved.stream().noneMatch(effect -> effect instanceof ChooseOneEffect
-                        || effect instanceof ChooseModeNotYetChosenEffect);
-        if (plainOptionalTrigger) {
-            CardEffect wrapped = resolved.size() == 1 ? resolved.getFirst()
-                    : SequenceEffect.of(resolved.toArray(CardEffect[]::new));
-            resolved = List.of(trigger.manaCost() == null
-                    ? new MayEffect(wrapped, optionalPrompt)
-                    : new MayPayManaEffect(trigger.manaCost(), wrapped, optionalPrompt));
-            optionalPrompt = null;
-        }
-        // "You may pay {N}. If you do, [targeted effect]": the payment is the optional part, so the
-        // targeted path below wraps each effect in a MayPayManaEffect asked on resolution (CR 603.5).
-        boolean optionalPaymentOnResolution = optionalPrompt != null && trigger.manaCost() != null
-                && needsTargeting && !needsSpellManaSpentX && !needsGraveyardTarget && !needsSpellTarget;
-        String mayPayPrompt = optionalPaymentOnResolution ? optionalPrompt : "Pay " + trigger.manaCost() + "?";
-        if (optionalPaymentOnResolution) {
-            optionalPrompt = null;
-        }
-        // CR 603.3d / 603.5: a plain "you may" spell-cast trigger that targets chooses its target as it goes on
-        // the stack, and the "may" choice is made when it resolves, so the targeted effects are wrapped in a
-        // MayEffect after the targeting decision is made.
-        String mayChoicePromptOnResolution = null;
-        if (optionalPrompt != null && trigger.manaCost() == null && needsTargeting && !needsSpellManaSpentX
-                && !needsGraveyardTarget && !needsSpellTarget) {
-            mayChoicePromptOnResolution = optionalPrompt;
-            optionalPrompt = null;
-        }
-        // CR 603.5: every other optional spell-cast trigger (one whose effects read the mana spent, or that targets
-        // a card in a graveyard or a spell) also goes on the stack, its targets chosen as it does (CR 603.3d), and
-        // the choice (and payment) is made as it resolves.
-        boolean paymentWrapped = false;
-        if (optionalPrompt != null) {
-            CardEffect wrapped = resolved.size() == 1 ? resolved.getFirst()
-                    : SequenceEffect.of(resolved.toArray(CardEffect[]::new));
-            resolved = List.of(trigger.manaCost() == null
-                    ? new MayEffect(wrapped, optionalPrompt)
-                    : new MayPayManaEffect(trigger.manaCost(), wrapped, optionalPrompt));
-            paymentWrapped = trigger.manaCost() != null;
-            optionalPrompt = null;
+        if (optionalAbility != null) {
+            resolved = optionalAbility;
         }
         if (resolved.size() == 1 && resolved.getFirst() instanceof ChooseModeNotYetChosenEffect modeEffect) {
             match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
@@ -2657,18 +2583,8 @@ public class SpellCastTriggerCollectorService {
         } else if (needsTargeting) {
             // "You may pay {C}. If you do, [targeted effect]" (Malachite Talisman): the target is chosen
             // as the trigger goes on the stack (CR 603.3d), while the payment choice waits for resolution
-            // (CR 603.5) —
-            // so wrap after the targeting decision has been made from the unwrapped effects.
-            List<CardEffect> queued = trigger.manaCost() == null || paymentWrapped
-                    ? resolved
-                    : resolved.stream().map(e -> (CardEffect) new MayPayManaEffect(
-                            trigger.manaCost(), e, mayPayPrompt)).toList();
-            if (mayChoicePromptOnResolution != null) {
-                String prompt = mayChoicePromptOnResolution;
-                CardEffect optionalEffect = queued.size() == 1 ? queued.getFirst()
-                        : SequenceEffect.of(queued.toArray(CardEffect[]::new));
-                queued = List.of(new MayEffect(optionalEffect, prompt));
-            }
+            // (CR 603.5).
+            List<CardEffect> queued = resolved;
             // The ability's own target groups when its effects are bound to them, else every group of the card.
             List<Integer> boundGroups = boundTargetGroups(sourceCard, trigger.effects());
             List<com.github.laxika.magicalvibes.model.TargetGroup> abilityGroups = boundGroups.isEmpty()
@@ -2925,12 +2841,10 @@ public class SpellCastTriggerCollectorService {
     }
 
     /**
-     * The targeting a spell-cast trigger must resolve before it goes on the stack.
-     * {@link MayPayManaEffect} delegates its spec to the effect it wraps, which is right for
-     * "you may pay {X}. If you do, [targeted effect]" abilities whose cost lives on the trigger
-     * ({@code trigger.manaCost()}). A card that instead writes the payment into its own resolved
-     * effects settles everything at resolution, and its player is the caster bound below as a
-     * non-target (Leshrac's Sigil's "that player's hand"), so it must not open a target choice.
+     * The targeting a spell-cast trigger must resolve before it goes on the stack. A lone plain "you may pay {X}. If
+     * you do, [targeted effect]" is judged by what it offers ({@link CastAbility#effectsTargetsAreChosenFor()}); any
+     * other {@link MayPayManaEffect} (another player's payment, a dynamic cost) settles everything at resolution, so it
+     * opens no target choice.
      */
     private static TargetSpec triggerTargetSpec(CardEffect effect) {
         return effect instanceof MayPayManaEffect ? TargetSpec.NONE : effect.targetSpec();

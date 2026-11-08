@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.SourceIsEnchantment;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -11,9 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.StackEntryKickedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
@@ -30,9 +27,8 @@ class CastAbilityTest {
     private static final CardEffect DRAW = new DrawCardEffect(1);
     private static final CardEffect GAIN = new GainLifeEffect(1);
 
-    private static CastAbility castAbility(SpellTrigger trigger, TriggerOptions options, boolean onStackPath,
-                                           CardEffect... effects) {
-        return CastAbility.of(new TriggeredAbility(trigger, options, effects), trigger.filter(), onStackPath);
+    private static CastAbility castAbility(SpellTrigger trigger, TriggerOptions options, CardEffect... effects) {
+        return CastAbility.of(new TriggeredAbility(trigger, options, effects), trigger.filter());
     }
 
     @Test
@@ -41,10 +37,10 @@ class CastAbilityTest {
                 .duringOpponentsTurn();
 
         CastAbility cast = castAbility(creatureSpell,
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()), true, DRAW, GAIN);
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceIsEnchantment()), DRAW, GAIN);
 
         assertThat(cast).isEqualTo(new CastAbility(creatureSpell.filter(), List.of(DRAW, GAIN),
-                new SourceIsEnchantment(), null, null, null));
+                new SourceIsEnchantment(), null));
     }
 
     @Test
@@ -52,10 +48,10 @@ class CastAbilityTest {
         SpellTrigger anySpell = Triggers.youCastSpell().anySpell();
         TriggeredAbility emblem = new TriggeredAbility(anySpell, DRAW).withTargetFilter(TargetFilters.creature());
 
-        CastAbility cast = CastAbility.of(emblem, anySpell.filter(), true);
+        CastAbility cast = CastAbility.of(emblem, anySpell.filter());
 
         assertThat(cast.targetFilter()).isEqualTo(TargetFilters.creature());
-        assertThat(castAbility(anySpell, TriggerOptions.DEFAULT, true, DRAW).targetFilter()).isNull();
+        assertThat(castAbility(anySpell, TriggerOptions.DEFAULT, DRAW).targetFilter()).isNull();
     }
 
     @Test
@@ -63,55 +59,39 @@ class CastAbilityTest {
         SpellTrigger anySpell = Triggers.youCastSpell().anySpell();
 
         CastAbility cast = castAbility(anySpell,
-                TriggerOptions.DEFAULT.withEventCondition(new SourceIsEnchantment()), true, DRAW);
+                TriggerOptions.DEFAULT.withEventCondition(new SourceIsEnchantment()), DRAW);
 
-        assertThat(cast).isEqualTo(new CastAbility(SpellFilter.ANY, List.of(DRAW), null, null, null, null,
+        assertThat(cast).isEqualTo(new CastAbility(SpellFilter.ANY, List.of(DRAW), null, null,
                 new SourceIsEnchantment()));
         assertThat(cast.interveningIf()).isNull();
     }
 
     @Test
-    void aLonePlainYouMayIsTheOptionalPartOnTheStackPathOnly() {
+    void aLonePlainYouMayStaysAnEffectAndItsTargetsAreWhatItOffers() {
         SpellTrigger anySpell = Triggers.youCastSpell().anySpell();
         CardEffect drawAndGain = SequenceEffect.of(DRAW, GAIN);
         MayEffect may = new MayEffect(drawAndGain, "Draw?");
 
-        assertThat(castAbility(anySpell, TriggerOptions.DEFAULT, true, may))
-                .isEqualTo(new CastAbility(SpellFilter.ANY, List.of(drawAndGain), null, null, "Draw?", null));
-        // The graveyard, hand and command-zone readers take the "you may" as an effect.
-        assertThat(castAbility(anySpell, TriggerOptions.DEFAULT, false, may))
-                .isEqualTo(new CastAbility(SpellFilter.ANY, List.of(may), null, null, null, null));
-        // Another player's choice isn't the ability's optional part.
+        CastAbility cast = castAbility(anySpell, TriggerOptions.DEFAULT, may);
+
+        assertThat(cast.effects()).containsExactly(may);
+        assertThat(cast.effectsTargetsAreChosenFor()).containsExactly(drawAndGain);
+        // Another player's choice is judged as it is.
         MayEffect theirChoice = new MayEffect(DRAW, "Draw?", null, MayChoicePlayer.TRIGGERING_SPELL_CONTROLLER);
-        assertThat(castAbility(anySpell, TriggerOptions.DEFAULT, true, theirChoice).effects())
+        assertThat(castAbility(anySpell, TriggerOptions.DEFAULT, theirChoice).effectsTargetsAreChosenFor())
                 .containsExactly(theirChoice);
     }
 
     @Test
-    void aLonePlainYouMayPayIsTheCostAndOnTheStackPathThePrompt() {
+    void aLonePlainYouMayPayStaysAnEffectAndItsTargetsAreWhatItOffers() {
         SpellTrigger anySpell = Triggers.opponentCastsSpell().anySpell();
         MayPayManaEffect pay = new MayPayManaEffect("{1}", DRAW, "Pay {1}?");
 
-        assertThat(castAbility(anySpell, TriggerOptions.DEFAULT, true, pay))
-                .isEqualTo(new CastAbility(SpellFilter.ANY, List.of(DRAW), null, "{1}", "Pay {1}?", null));
-        assertThat(castAbility(anySpell, TriggerOptions.DEFAULT, false, pay))
-                .isEqualTo(new CastAbility(SpellFilter.ANY, List.of(DRAW), null, "{1}", null, null));
-    }
+        CastAbility cast = castAbility(anySpell, TriggerOptions.DEFAULT, pay);
 
-    @Test
-    void anAuthoredRecordIsJudgedAsTheFilterItsFieldsSay() {
-        var creature = new CardTypePredicate(CardType.CREATURE);
-        var anyPermanent = TargetFilters.permanent();
-        SpellCastTriggerEffect authored = new SpellCastTriggerEffect(creature, List.of(DRAW), "{2}", anyPermanent, new StackEntryKickedPredicate(), false, true, new SourceIsEnchantment(), 2,
-                0, false, true, 0, false, false, false, true, Zone.GRAVEYARD, null, true, true, true);
-
-        CastAbility cast = CastAbility.of(authored, new MayEffect(authored, "Pay {2}?"));
-
-        assertThat(cast).isEqualTo(new CastAbility(SpellFilter.ANY.withSpell(creature)
-                .withStackEntry(new StackEntryKickedPredicate()).withTurn(SpellFilter.Turn.YOURS).withDuringCombat()
-                .withNthThisTurn(2).withPaidWithManaFromThis().withCastFrom(Zone.GRAVEYARD)
-                .withKicker(SpellFilter.Kicker.EACH_KICK).withEveryPlayersSpells(),
-                List.of(DRAW), new SourceIsEnchantment(), "{2}", "Pay {2}?", anyPermanent));
-        assertThat(CastAbility.of(authored, null).optionalPrompt()).isNull();
+        assertThat(cast.effects()).containsExactly(pay);
+        assertThat(cast.effectsTargetsAreChosenFor()).containsExactly(DRAW);
+        assertThat(castAbility(anySpell, TriggerOptions.DEFAULT, pay, GAIN).effectsTargetsAreChosenFor())
+                .containsExactly(pay, GAIN);
     }
 }

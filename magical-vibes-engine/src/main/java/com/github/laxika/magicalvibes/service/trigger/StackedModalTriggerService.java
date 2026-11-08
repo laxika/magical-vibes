@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.HullbreakerHorrorTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.RandomChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Announces the mode of modal triggered abilities that trigger sources put straight onto the stack
@@ -44,6 +46,9 @@ import java.util.UUID;
  *
  * <p>Only plain "choose one" modals whose modes take at most one player or permanent target are
  * announced here. Other modal shapes keep choosing their modes on resolution.</p>
+ *
+ * <p>A "choose one at random" ({@link RandomChoiceEffect}, Cult of Skaro) is a modal ability too: its mode is chosen,
+ * at random, as it goes on the stack, so its stack entry (and any copy of it) carries the chosen mode's effects.</p>
  */
 @Slf4j
 @Service
@@ -81,6 +86,10 @@ public class StackedModalTriggerService {
      */
     public boolean announceNextMode(GameData gameData) {
         for (StackEntry entry : List.copyOf(gameData.stack)) {
+            if (awaitingRandomModeAnnouncement(entry)) {
+                announceRandomMode(gameData, entry);
+                continue;
+            }
             if (awaitingHullbreakerHorrorAnnouncement(entry)) {
                 announceHullbreakerHorrorMode(gameData, entry);
                 return true;
@@ -283,6 +292,38 @@ public class StackedModalTriggerService {
             }
         }
         return ids;
+    }
+
+    /** Whether {@code entry} is a triggered ability whose one effect is a "choose one at random", maybe under an "if". */
+    private static boolean awaitingRandomModeAnnouncement(StackEntry entry) {
+        if (entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY || entry.getEffectsToResolve().size() != 1) {
+            return false;
+        }
+        CardEffect effect = entry.getEffectsToResolve().getFirst();
+        return effect instanceof RandomChoiceEffect
+                || effect instanceof ConditionalEffect conditional && conditional.wrapped() instanceof RandomChoiceEffect;
+    }
+
+    /**
+     * Chooses the mode of a "choose one at random" as its ability goes on the stack (CR 603.3c, 700.2b): the entry
+     * keeps the chosen mode's effects, under the intervening "if" it had, which is checked again as it resolves
+     * (CR 603.4).
+     */
+    private void announceRandomMode(GameData gameData, StackEntry entry) {
+        CardEffect effect = entry.getEffectsToResolve().getFirst();
+        ConditionalEffect conditional = effect instanceof ConditionalEffect c ? c : null;
+        RandomChoiceEffect random = (RandomChoiceEffect) (conditional == null ? effect : conditional.wrapped());
+        List<CardEffect> modeEffects = random.options().get(
+                ThreadLocalRandom.current().nextInt(random.options().size()));
+        if (conditional != null) {
+            modeEffects = modeEffects.stream()
+                    .<CardEffect>map(modeEffect -> new ConditionalEffect(conditional.condition(), modeEffect))
+                    .toList();
+        }
+        entry.replaceEffectsToResolve(modeEffects);
+        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                "'s triggered ability's mode is chosen at random."));
+        log.info("Game {} - {} random mode chosen as it goes on the stack", gameData.id, entry.getCard().getName());
     }
 
     private static boolean awaitingModeAnnouncement(GameData gameData, StackEntry entry) {

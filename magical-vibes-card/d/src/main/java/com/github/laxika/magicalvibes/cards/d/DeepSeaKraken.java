@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.SourceCardSuspended;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterWhenOpponentCastsSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -18,7 +20,10 @@ public class DeepSeaKraken extends Card {
 
     public DeepSeaKraken() {
         addStaticEffect(new CantBeBlockedEffect());
-        addTrigger(Triggers.opponentCastsSpell(), new RemoveTimeCounterWhenOpponentCastsSpellEffect());
+        // "Whenever an opponent casts a spell, if this card is suspended, remove a time counter from it."
+        addTrigger(Triggers.opponentCastsSpell(),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCardSuspended()),
+                new RemoveTimeCounterFromExiledCardEffect(getId()));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{2}{U}",

@@ -74,7 +74,6 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.RandomChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotChosenDuringLastCombatEffect;
@@ -91,7 +90,6 @@ import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTrigge
 import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAnotherCreatureAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreaturesAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesMustAttackIfSourceAttacksEffect;
@@ -1160,25 +1158,11 @@ public class CombatAttackService {
                     || !grantedAttackEffects.isEmpty()) {
                 List<CardEffect> allEffects = new ArrayList<>(nativeAttackEffects);
                 allEffects.addAll(grantedAttackEffects);
-                // Temporarily granted ON_ATTACK abilities (e.g. Tower Above's "target creature blocks
-                // it this turn if able"). MustBlockSourceEffect's source is snapshotted to the attacker.
-                // The snapshotted copies replace the granted effects in temporaryAttackEffects so each
-                // grant still matches its own entry when separate granted abilities are split out below
-                // (two Tower Aboves are two triggers, each with its own target).
-                temporaryAttackEffects.replaceAll(temp -> temp instanceof MustBlockSourceEffect mustBlock
-                        ? new MustBlockSourceEffect(attacker.getId(),
-                                mustBlock.targetRestriction(), mustBlock.untilEndOfCombat())
-                        : temp);
+                // Temporarily granted attack abilities (Tower Above's "target creature blocks it this turn if able":
+                // the attacker is the ability's source, which MustBlockSourceEffect reads from the stack entry). Each
+                // grant is its own ability, split out below (two Tower Aboves are two triggers, each with its own
+                // target).
                 allEffects.addAll(temporaryAttackEffects);
-
-                allEffects.replaceAll(effect -> {
-                    if (!(effect instanceof RandomChoiceEffect random)) return effect;
-                    List<CardEffect> chosen = random.options().get(java.util.concurrent.ThreadLocalRandom.current()
-                            .nextInt(random.options().size()));
-                    return chosen.size() == 1 ? chosen.getFirst()
-                            : new com.github.laxika.magicalvibes.model.effect.SequenceEffect(chosen);
-                });
-
 
                 // Each ability's event condition and intervening "if" were judged above from the ability; the
                 // intervening "if" stays wrapped around each effect for the check as it resolves (CR 603.4), but for

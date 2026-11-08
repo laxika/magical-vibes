@@ -89,8 +89,6 @@ import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnSou
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterWhenOpponentCastsSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSameNameCardsFromGraveyardsToBattlefieldOnCreatureSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -206,7 +204,23 @@ class SpellCastTriggerCollectorServiceTest {
 
     /** The ability of {@code trigger}, a filtered cast trigger, and {@code effects}, as the spell-cast collector judges it. */
     private static CastAbility castAbility(SpellTrigger trigger, CardEffect... effects) {
-        return CastAbility.of(new TriggeredAbility(trigger, effects), trigger.filter(), true);
+        return CastAbility.of(new TriggeredAbility(trigger, effects), trigger.filter());
+    }
+
+    /** The cast ability a {@link SpellCastTriggerEffect}'s fields describe, as the spell-cast collector judges it. */
+    private static CastAbility authored(SpellCastTriggerEffect trigger) {
+        SpellFilter.Turn turn = trigger.onlyDuringOpponentTurn() ? SpellFilter.Turn.OPPONENTS
+                : trigger.onlyDuringControllerTurn() ? SpellFilter.Turn.YOURS
+                : trigger.onlyWhenCasterNotActiveTurn() ? SpellFilter.Turn.NOT_CASTERS
+                : SpellFilter.Turn.ANY;
+        SpellFilter.Kicker kicker = !trigger.kicked() ? SpellFilter.Kicker.ANY
+                : trigger.triggerPerKick() ? SpellFilter.Kicker.EACH_KICK : SpellFilter.Kicker.KICKED;
+        SpellFilter filter = new SpellFilter(trigger.spellFilter(), trigger.castSpellTargetCondition(), turn,
+                trigger.onlyDuringCombat(), trigger.nthSpellNumber(), trigger.minimumSpellNumber(),
+                trigger.requiresManaProducedBySource(), trigger.requiresTreasureMana(),
+                trigger.requiresTwoOrMoreCardTypes(), trigger.expendThreshold(), trigger.castFrom(),
+                trigger.notCastFrom(), kicker, trigger.countEveryPlayersSpells());
+        return new CastAbility(filter, trigger.resolvedEffects(), trigger.intervening(), trigger.targetFilter());
     }
 
     /** Every spell matches every spell filter the collector checks, as cast and in the turn's spell history. */
@@ -368,7 +382,7 @@ class SpellCastTriggerCollectorServiceTest {
         when(predicateEvaluationService.matchesCardPredicate(eq(spell), eq(null),
                 eq(source.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
-        sut.collectCastAbility(match(source, player1Id, effect), CastAbility.of(effect, null), context, true);
+        sut.collectCastAbility(match(source, player1Id, effect), authored(effect), context, true);
 
         assertThat(gd.stack).hasSize(1);
         StackEntry triggeredAbility = gd.stack.getLast();
@@ -387,7 +401,7 @@ class SpellCastTriggerCollectorServiceTest {
         when(predicateEvaluationService.matchesCardPredicate(spell, null,
                 source.getOriginalCard().getId(), gd, player1Id, null, null, 3)).thenReturn(true);
 
-        sut.collectCastAbility(match(source, player1Id, effect), CastAbility.of(effect, null),
+        sut.collectCastAbility(match(source, player1Id, effect), authored(effect),
                 new TriggerContext.SpellCast(spell, player1Id, true), true);
 
         assertThat(gd.stack).hasSize(2);
@@ -419,7 +433,7 @@ class SpellCastTriggerCollectorServiceTest {
         private CastAbility whileAttacking() {
             return CastAbility.of(new TriggeredAbility(Triggers.youCastSpell().anySpell(),
                     TriggerOptions.DEFAULT.withEventCondition(new SourceIsAttacking()),
-                    new CopyTriggeringSpellEffect()), SpellFilter.ANY, true);
+                    new CopyTriggeringSpellEffect()), SpellFilter.ANY);
         }
 
         @Test
@@ -480,7 +494,7 @@ class SpellCastTriggerCollectorServiceTest {
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
-            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), authored(effect),
                     ctx, false);
 
             assertThat(result).isTrue();
@@ -503,13 +517,13 @@ class SpellCastTriggerCollectorServiceTest {
                     .thenReturn(true);
 
             gd.activePlayerId = player1Id;
-            boolean activeCasterResult = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+            boolean activeCasterResult = sut.collectCastAbility(match(perm, player1Id, effect), authored(effect),
                     new TriggerContext.SpellCast(spellCard, player1Id, true), false);
 
             assertThat(activeCasterResult).isFalse();
             assertThat(gd.stack).isEmpty();
 
-            boolean nonActiveCasterResult = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+            boolean nonActiveCasterResult = sut.collectCastAbility(match(perm, player1Id, effect), authored(effect),
                     new TriggerContext.SpellCast(spellCard, player2Id, true), false);
 
             assertThat(nonActiveCasterResult).isTrue();
@@ -529,7 +543,7 @@ class SpellCastTriggerCollectorServiceTest {
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(false);
 
-            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), authored(effect),
                     ctx, false);
 
             assertThat(result).isFalse();
@@ -550,7 +564,7 @@ class SpellCastTriggerCollectorServiceTest {
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any()))
                     .thenReturn(true);
 
-            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), authored(effect),
                     ctx, false);
 
             assertThat(result).isTrue();
@@ -572,7 +586,7 @@ class SpellCastTriggerCollectorServiceTest {
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
-            sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null), ctx, false);
+            sut.collectCastAbility(match(perm, player1Id, effect), authored(effect), ctx, false);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
@@ -594,7 +608,7 @@ class SpellCastTriggerCollectorServiceTest {
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(aura.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
-            sut.collectCastAbility(match(aura, player1Id, effect), CastAbility.of(effect, null), ctx, false);
+            sut.collectCastAbility(match(aura, player1Id, effect), authored(effect), ctx, false);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getTargetId()).isEqualTo(host.getId());
@@ -615,7 +629,7 @@ class SpellCastTriggerCollectorServiceTest {
             when(amountEvaluationService.referencesXValue(new XValue())).thenReturn(true);
             gd.addSpellCastManaSpent(spellCard.getId(), 3);
 
-            sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null), ctx, false);
+            sut.collectCastAbility(match(perm, player1Id, effect), authored(effect), ctx, false);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getXValue()).isEqualTo(3);
@@ -639,7 +653,7 @@ class SpellCastTriggerCollectorServiceTest {
             when(amountEvaluationService.referencesXValue(new XValue())).thenReturn(true);
             gd.addSpellCastManaSpent(spellCard.getId(), 3);
 
-            sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null), ctx, false);
+            sut.collectCastAbility(match(perm, player1Id, effect), authored(effect), ctx, false);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getXValue()).isEqualTo(3);
@@ -658,7 +672,7 @@ class SpellCastTriggerCollectorServiceTest {
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
-            sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null), ctx, true);
+            sut.collectCastAbility(match(perm, player1Id, effect), authored(effect), ctx, true);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
@@ -716,7 +730,7 @@ class SpellCastTriggerCollectorServiceTest {
                     .addTrigger(Triggers.youCastSpell().anySpell(), new BoostTargetCreatureEffect(1, 1));
             Permanent perm = new Permanent(source);
             TriggeredAbility ability = source.getTriggeredAbilities().get(1);
-            CastAbility effect = CastAbility.of(ability, SpellFilter.ANY, true);
+            CastAbility effect = CastAbility.of(ability, SpellFilter.ANY);
             Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
@@ -734,27 +748,26 @@ class SpellCastTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("targeting trigger with a manaCost queues the target choice with the effect wrapped in MayPayManaEffect")
-        void targetingTriggerWithManaCostWrapsInMayPayMana() {
+        @DisplayName("a \"you may pay\" targeting trigger queues the target choice with the payment as written")
+        void targetingTriggerWithManaCostKeepsItsMayPayMana() {
             Permanent perm = createPermanent("Malachite Talisman");
             var innerEffect = new UntapPermanentsEffect(TapUntapScope.TARGET);
-            var effect = new SpellCastTriggerEffect(null, List.of(innerEffect), "{3}", TargetFilters.permanent());
+            var pay = new MayPayManaEffect("{3}", innerEffect, "Pay {3}?");
+            var ability = new CastAbility(SpellFilter.ANY, List.of(pay), null, TargetFilters.permanent());
             Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
-            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
-                    ctx, false);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, pay), ability, ctx, false);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance).hasSize(1);
             var queued = (PermanentChoiceContext.SpellTargetTriggerAnyTarget) gd.pendingInteractions.getFirst();
             assertThat(queued.controllerId()).isEqualTo(player1Id);
-            assertThat(queued.effects()).singleElement()
-                    .isEqualTo(new MayPayManaEffect("{3}", innerEffect, "Pay {3}?"));
+            assertThat(queued.effects()).containsExactly(pay);
         }
     }
 
@@ -1095,28 +1108,6 @@ class SpellCastTriggerCollectorServiceTest {
                     SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
 
             assertThat(result).isFalse();
-        }
-
-        @Test
-        @DisplayName("does not trigger when the source intervening condition is false")
-        void doesNotTriggerWhenInterveningConditionFails() {
-            Permanent perm = createPermanent("Opal Acrolith");
-            var effect = SpellCastTriggerEffect.withIntervening(null,
-                    List.of(new PutCountersOnSourceEffect(1, 1, 1)), new SourceIsEnchantment());
-            Card spellCard = createCard("Grizzly Bears");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any()))
-                    .thenReturn(true);
-            when(conditionEvaluationService.isMet(eq(gd), any(), any())).thenReturn(false);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
         }
     }
 
@@ -1589,7 +1580,7 @@ class SpellCastTriggerCollectorServiceTest {
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
-            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), authored(effect),
                     ctx, true);
 
             assertThat(result).isTrue();
@@ -1621,7 +1612,7 @@ class SpellCastTriggerCollectorServiceTest {
                     any(Card.class), eq(filter), isNull(), eq(gd), eq(player1Id)))
                     .thenAnswer(invocation -> invocation.getArgument(0, Card.class).hasType(CardType.CREATURE));
 
-            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), authored(effect),
                     ctx, true);
 
             assertThat(result).isTrue();
@@ -1646,15 +1637,15 @@ class SpellCastTriggerCollectorServiceTest {
                     eq(gd), eq(player1Id))).thenReturn(true);
 
             gd.recordSpellCast(player1Id, firstSpell);
-            assertThat(sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+            assertThat(sut.collectCastAbility(match(perm, player1Id, effect), authored(effect),
                     new TriggerContext.SpellCast(firstSpell, player1Id, true), true)).isFalse();
 
             gd.recordSpellCast(player1Id, secondSpell);
-            assertThat(sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+            assertThat(sut.collectCastAbility(match(perm, player1Id, effect), authored(effect),
                     new TriggerContext.SpellCast(secondSpell, player1Id, true), true)).isTrue();
 
             gd.recordSpellCast(player1Id, thirdSpell);
-            assertThat(sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+            assertThat(sut.collectCastAbility(match(perm, player1Id, effect), authored(effect),
                     new TriggerContext.SpellCast(thirdSpell, player1Id, true), true)).isTrue();
             assertThat(gd.stack).hasSize(2);
         }
@@ -1671,7 +1662,7 @@ class SpellCastTriggerCollectorServiceTest {
             gd.recordSpellCast(player1Id, firstSpell);
             gd.recordSpellCast(player1Id, secondSpell);
 
-            assertThat(sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+            assertThat(sut.collectCastAbility(match(perm, player1Id, effect), authored(effect),
                     new TriggerContext.SpellCast(secondSpell, player1Id, true), true)).isFalse();
             assertThat(gd.stack).isEmpty();
         }
@@ -1688,7 +1679,7 @@ class SpellCastTriggerCollectorServiceTest {
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
-            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), authored(effect),
                     ctx, true);
 
             assertThat(result).isTrue();
@@ -1713,7 +1704,7 @@ class SpellCastTriggerCollectorServiceTest {
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any()))
                     .thenReturn(true);
 
-            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), authored(effect),
                     ctx, true);
 
             assertThat(result).isTrue();
@@ -1772,7 +1763,7 @@ class SpellCastTriggerCollectorServiceTest {
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(false);
 
-            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), CastAbility.of(effect, null),
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), authored(effect),
                     ctx, true);
 
             assertThat(result).isFalse();
@@ -2184,7 +2175,7 @@ class SpellCastTriggerCollectorServiceTest {
                     new PermanentIsCreaturePredicate(), new PermanentManaValueEqualsXPredicate())),
                     "Target must be a creature with that spell's mana value");
             var gainControl = new GainControlOfTargetEffect(ControlDuration.END_OF_TURN);
-            var ability = new CastAbility(SpellFilter.ANY, List.of(gainControl), null, null, "Gain control?",
+            var ability = new CastAbility(SpellFilter.ANY, List.of(new MayEffect(gainControl, "Gain control?")), null,
                     targetFilter);
 
             boolean result = sut.collectCastAbility(match(perm, player1Id, gainControl), ability,
@@ -2511,32 +2502,6 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
-        }
-    }
-
-    @Nested
-    @DisplayName("ON_OPPONENT_CASTS_SPELL — suspended exiled card")
-    class SuspendedExiledCardSpellCast {
-
-        @Test
-        @DisplayName("queues removal of a time counter for the suspended source card")
-        void queuesTimeCounterRemoval() {
-            Card sourceCard = createCard("Deep-Sea Kraken");
-            var effect = new RemoveTimeCounterWhenOpponentCastsSpellEffect();
-            Card spellCard = createCard("Opponent Spell");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-            var match = new TriggerMatchContext(gd, null, player1Id, effect, sourceCard);
-
-            boolean result = registry.dispatch(match, SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            StackEntry triggerEntry = gd.stack.getLast();
-            assertThat(triggerEntry.getCard()).isSameAs(sourceCard);
-            assertThat(triggerEntry.getControllerId()).isEqualTo(player1Id);
-            assertThat(triggerEntry.getTriggeringCardId()).isEqualTo(spellCard.getId());
-            assertThat(triggerEntry.getEffectsToResolve()).containsExactly(
-                    new RemoveTimeCounterFromExiledCardEffect(sourceCard.getId()));
         }
     }
 

@@ -22,13 +22,8 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedCreatureDealsDamageToDefendingPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -158,7 +153,6 @@ public class CombatTriggerService {
                         continue;
                     }
                     List<CardEffect> nonPerBlockerEffects = CombatAbilityReader.effectsOf(ability);
-                    // Bake the creature's controller into effects that need it
                     List<CardEffect> effectsForStack = new ArrayList<>();
                     boolean autoTargetOpponent = false;
                     for (CardEffect effect : nonPerBlockerEffects) {
@@ -172,22 +166,9 @@ public class CombatTriggerService {
                                 effectsForStack.add(effect);
                                 autoTargetOpponent = true;
                             }
-                        } else if (effect instanceof EnchantedCreatureControllerLosesLifeEffect e) {
-                            effectsForStack.add(new EnchantedCreatureControllerLosesLifeEffect(e.amount(), finalCreatureControllerId));
                         } else {
                             effectsForStack.add(effect);
                         }
-                    }
-                    // An Equipment's or Aura's own "have target creature block it" (Grappling Hook) refers to
-                    // the attacking creature, not to the attached permanent that is the trigger's source.
-                    if (slot == CombatWatch.ON_ATTACK) {
-                        effectsForStack.replaceAll(e -> e instanceof MayEffect may
-                                && may.wrapped() instanceof MustBlockSourceEffect mustBlock
-                                && mustBlock.sourcePermanentId() == null
-                                ? new MayEffect(new MustBlockSourceEffect(creature.getId(),
-                                        mustBlock.targetRestriction(), mustBlock.untilEndOfCombat()),
-                                        may.prompt(), may.elseEffect(), may.choicePlayer(), may.choicePlayerId())
-                                : e);
                     }
                     if (effectsForStack.isEmpty()) continue;
 
@@ -300,17 +281,11 @@ public class CombatTriggerService {
                                         triggeringPlayerId,
                                         grantedToCreature ? creature.getId() : perm.getId()
                                 );
-                                if (triggeringPlayerId != null) {
-                                    trigger.setNonTargeting(true);
-                                }
-                                // "Its controller loses life" reads the enchanted creature's controller as the ability
-                                // resolves, also as a step or behind an "if" (Scriv's Contract's "otherwise").
-                                if (effectsForStack.stream().anyMatch(
-                                        CombatTriggerService::losesLifeAsEnchantedCreatureController)) {
-                                    trigger.setTargetId(creature.getId());
-                                    trigger.setNonTargeting(true);
-                                    trigger.setTriggeringPermanentControllerId(finalCreatureControllerId);
-                                }
+                                // No effect of the ability targets, so nothing on its entry is checked as a target.
+                                trigger.setNonTargeting(true);
+                                // "Its controller" of the enchanted or equipped creature is the triggering permanent's,
+                                // read as the ability resolves.
+                                trigger.setTriggeringPermanentControllerId(finalCreatureControllerId);
                                 // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
                                 // (e.g. equipment-granted Afflict) can resolve.
                                 trigger.setAttackedTargetId(creature.getAttackTarget());
@@ -319,10 +294,6 @@ public class CombatTriggerService {
                                                 ? creature.getAttackTarget()
                                                 : gameQueryService.findPermanentController(gameData, creature.getAttackTarget()));
                                 trigger.setTriggeringPermanentId(creature.getId());
-                                if (effectsForStack.stream().anyMatch(
-                                        EquippedCreatureDealsDamageToDefendingPlayerEffect.class::isInstance)) {
-                                    trigger.setTriggeringPermanentControllerId(finalCreatureControllerId);
-                                }
                                 trigger.setSourcePermanentSnapshot(new Permanent(grantedToCreature ? creature : perm));
                                 trigger.setAttachedPermanentSnapshot(new Permanent(creature));
                                 trigger.rememberLastKnownPermanentCard(creature.getId(), creature.getCard());
@@ -498,19 +469,5 @@ public class CombatTriggerService {
             }
         });
         return matches[0];
-    }
-
-    /**
-     * Whether {@code effect} has the enchanted creature's controller lose life, alone, as a step of a sequence or
-     * behind an effect's "if".
-     */
-    private static boolean losesLifeAsEnchantedCreatureController(CardEffect effect) {
-        return switch (effect) {
-            case EnchantedCreatureControllerLosesLifeEffect ignored -> true;
-            case ConditionalEffect conditional -> losesLifeAsEnchantedCreatureController(conditional.wrapped());
-            case SequenceEffect sequence -> sequence.steps().stream()
-                    .anyMatch(CombatTriggerService::losesLifeAsEnchantedCreatureController);
-            default -> false;
-        };
     }
 }

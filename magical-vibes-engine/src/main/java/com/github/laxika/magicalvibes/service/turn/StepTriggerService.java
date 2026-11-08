@@ -222,7 +222,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardSpecificCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentDrawStepOnlyEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
@@ -1588,14 +1587,11 @@ public class StepTriggerService {
                     continue;
                 }
 
-                // Bake the enchanted permanent's controller into effects that need it
+                // "That player" (DealDamageToPlayersEffect's ENCHANTED_PERMANENT_CONTROLLER, LoseLifeEffect's
+                // TRIGGERING_PLAYER) reads the enchanted permanent's controller from the stack entry's targetId (set
+                // below); the sacrifice effects find their host via the source aura, so the controller as targetId is
+                // safe for them.
                 CardEffect effectForStack = effect;
-                if (effect instanceof EnchantedCreatureControllerLosesLifeEffect e) {
-                    effectForStack = new EnchantedCreatureControllerLosesLifeEffect(e.amount(), enchantedPermanentControllerId);
-                }
-                // DealDamageToPlayersEffect(ENCHANTED_PERMANENT_CONTROLLER) reads that player from the
-                // stack entry's targetId (set below); the sacrifice/life-loss effects find their host
-                // via the source aura, so baking the controller as targetId is safe for them.
 
                 // An ability the Aura grants to the creature is the creature's own: it is the source and its
                 // controller controls the trigger (CR 113.8, 603.3a).

@@ -29,7 +29,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.effect.ReflectDamageToChosenColorCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsPowerDamageToAnyTargetEffect;
@@ -1168,37 +1167,6 @@ public class DamageTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(aura.getCard()));
         log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE trigger fires ({} damage)",
                 match.gameData().id, aura.getCard().getName(), dc.damageDealt());
-        return true;
-    }
-
-    @CollectsDamageTrigger(value = EnchantedCreatureControllerLosesLifeEffect.class,
-            watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
-    private boolean handleEnchantedCreatureDealtDamageControllerLosesLife(TriggerMatchContext match,
-            EnchantedCreatureControllerLosesLifeEffect effect, TriggerContext ctx) {
-        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
-        if (dc.damageDealt() <= 0) return false;
-
-        GameData gameData = match.gameData();
-        Permanent aura = match.permanent();
-
-        UUID controllerId = gameQueryService.findPermanentController(gameData, dc.damagedCreature().getId());
-        if (controllerId == null) return false;
-
-        // Ragged Veins: the card-def amount is a placeholder; bake in the damage just dealt.
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                aura.getCard(),
-                match.controllerId(),
-                aura.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new EnchantedCreatureControllerLosesLifeEffect(dc.damageDealt(), controllerId))),
-                dc.damagedCreature().getId(),
-                aura.getId()
-        );
-        entry.setNonTargeting(true);
-        gameData.enqueueTrigger(entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(aura.getCard()));
-        log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE life-loss trigger fires",
-                gameData.id, aura.getCard().getName());
         return true;
     }
 

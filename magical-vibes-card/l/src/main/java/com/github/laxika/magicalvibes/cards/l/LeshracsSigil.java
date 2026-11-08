@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffe
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,13 +21,12 @@ public class LeshracsSigil extends Card {
     public LeshracsSigil() {
         // Whenever an opponent casts a green spell, you may pay {B}{B}. If you do, look at that
         // player's hand and choose a card from it. The player discards that card.
-        // (Collector stamps the casting opponent as non-targeting targetId = "that player".)
-        addTrigger(Triggers.opponentCastsSpell(),
-                new SpellCastTriggerEffect(new CardColorPredicate(CardColor.GREEN),
-                        List.of(new MayPayManaEffect("{B}{B}",
-                                ChooseCardsFromTargetHandEffect.lookAtTargetHand(
-                                        new Fixed(1), HandChoiceDestination.DISCARD),
-                                "Pay {B}{B} to look at that player's hand and discard a card?"))));
+        // "That player" is the caster, the stack entry's non-targeting target.
+        addTrigger(Triggers.opponentCastsSpell().withFilter(new CardColorPredicate(CardColor.GREEN)),
+                new MayPayManaEffect("{B}{B}",
+                        ChooseCardsFromTargetHandEffect.lookAtTargetHand(
+                                new Fixed(1), HandChoiceDestination.DISCARD).ofTriggeringPlayer(),
+                        "Pay {B}{B} to look at that player's hand and discard a card?"));
 
         // {B}{B}: Return this enchantment to its owner's hand.
         addActivatedAbility(new ActivatedAbility(false, "{B}{B}", List.of(ReturnToHandEffect.self()),

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -31,9 +32,11 @@ public class MustBlockSourceEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (MustBlockSourceEffect) effect;
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        // Activated abilities and combat triggers snapshot the source onto the effect; targeted-ETB
-        // "may" triggers (Giant Ambush Beetle) leave it null and carry the source on the stack entry.
-        UUID sourceId = e.sourcePermanentId() != null ? e.sourcePermanentId() : entry.getSourcePermanentId();
+        // Activated abilities snapshot their source onto the effect; a triggered ability names it on the stack entry:
+        // its source, or the permanent the trigger event was about (an Equipment's "block it", Grappling Hook).
+        UUID sourceId = e.sourcePermanentId() != null ? e.sourcePermanentId()
+                : e.blocked() == PermanentReference.TRIGGERING ? entry.getTriggeringPermanentId()
+                : entry.getSourcePermanentId();
         if (target == null || sourceId == null) {
             return;
         }

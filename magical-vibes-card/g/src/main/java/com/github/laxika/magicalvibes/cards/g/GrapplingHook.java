@@ -17,7 +17,7 @@ public class GrapplingHook extends Card {
     public GrapplingHook() {
         addStaticEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.EQUIPPED_CREATURE));
         addTrigger(Triggers.attacks(),
-                new MayEffect(new MustBlockSourceEffect(null),
+                new MayEffect(MustBlockSourceEffect.ofTriggeringPermanent(),
                         "Have target creature block it this turn if able?"));
         addActivatedAbility(new EquipActivatedAbility("{4}"));
     }

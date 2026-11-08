@@ -2062,7 +2062,7 @@ public class TriggeredAbilityQueueService {
                 && entry.getEffectsToResolve().getFirst() instanceof MayEffect may
                 ? List.of(may.wrapped()) : entry.getEffectsToResolve();
         // A "whenever you cast a [color] spell" ability, told apart by its color: the effects its collector put on the
-        // stack, its "you may" taken off (CastAbility).
+        // stack.
         for (TriggeredAbility ability : entry.getCard().getTriggeredAbilities()) {
             for (TriggerCondition condition : ability.conditions()) {
                 if (!(condition.trigger() instanceof SpellTrigger spell) || spell.filter() == null
@@ -2071,7 +2071,7 @@ public class TriggeredAbilityQueueService {
                         || !(spell.filter().spell() instanceof com.github.laxika.magicalvibes.model.filter.CardColorPredicate color)) {
                     continue;
                 }
-                List<CardEffect> effects = CastAbility.of(ability, spell.filter(), true).effects();
+                List<CardEffect> effects = CastAbility.of(ability, spell.filter()).effects();
                 if (effects.equals(entry.getEffectsToResolve()) || effects.equals(resolving)) {
                     return entry.getDescription() + " — cast a "
                             + color.color().name().toLowerCase(java.util.Locale.ROOT) + " spell";

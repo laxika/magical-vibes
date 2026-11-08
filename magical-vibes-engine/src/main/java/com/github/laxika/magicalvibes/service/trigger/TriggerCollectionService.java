@@ -1246,7 +1246,7 @@ public class TriggerCollectionService {
                             SpellAbilityWatch.GRAVEYARD_ON_CONTROLLER_CASTS_SPELL, false);
                     if (filter == null) continue;
                     requireOnlyInterveningIf(ability, card);
-                    CastAbility trigger = CastAbility.of(ability, filter, false);
+                    CastAbility trigger = CastAbility.of(ability, filter);
                     if (!predicateEvaluationService.matchesCardPredicate(spellCard, filter.spell(), null)) continue;
                     if (filter.stackEntry() != null) {
                         StackEntry spellEntry = gameData.stack.stream()
@@ -1276,41 +1276,19 @@ public class TriggerCollectionService {
                     // "If this card is in your graveyard" reads this graveyard incarnation from the entry (CR 400.7),
                     // so the ability does nothing if the card has left and returned to the graveyard.
                     long sourceEntryVersion = gameData.graveyardEntryVersion(card.getId());
-                    if (trigger.manaCost() != null) {
-                        // "you may pay {X}" pattern — queue MayPayManaEffect on the stack
-                        CardEffect resolvedEffect = boundEffects.getFirst();
-                        MayPayManaEffect mayPay = new MayPayManaEffect(
-                                trigger.manaCost(),
-                                resolvedEffect,
-                                "Pay " + trigger.manaCost() + " to return " + card.getName()
-                                        + " from your graveyard to your hand?"
-                        );
-                        StackEntry mayPayEntry = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                card,
-                                castingPlayerId,
-                                card.getName() + "'s ability",
-                                new ArrayList<>(List.of(mayPay)),
-                                (UUID) null,
-                                (UUID) null);
-                        mayPayEntry.setTriggeringCardId(card.getId());
-                        mayPayEntry.setTriggeringCardGraveyardEntryVersion(sourceEntryVersion);
-                        mayPayEntry.setSourceGraveyardEntryVersion(sourceEntryVersion);
-                        gameData.stack.add(mayPayEntry);
-                    } else {
-                        StackEntry entry = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                card,
-                                castingPlayerId,
-                                card.getName() + "'s ability",
-                                new ArrayList<>(boundEffects)
-                        );
-                        entry.setTriggeringCardId(spellCard.getId());
-                        entry.setTriggeringCardGraveyardEntryVersion(sourceEntryVersion);
-                        entry.setSourceGraveyardEntryVersion(sourceEntryVersion);
-                        entry.setXValue(spellManaSpent);
-                        gameData.stack.add(entry);
-                    }
+                    // A "you may pay {N}" goes on the stack as it is, asked as the ability resolves (CR 603.5).
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            castingPlayerId,
+                            card.getName() + "'s ability",
+                            new ArrayList<>(boundEffects)
+                    );
+                    entry.setTriggeringCardId(spellCard.getId());
+                    entry.setTriggeringCardGraveyardEntryVersion(sourceEntryVersion);
+                    entry.setSourceGraveyardEntryVersion(sourceEntryVersion);
+                    entry.setXValue(spellManaSpent);
+                    gameData.stack.add(entry);
 
                     log.info("Game {} - {} graveyard spell-cast trigger queued",
                             gameData.id, card.getName());
@@ -2496,7 +2474,7 @@ public class TriggerCollectionService {
                 spellCastTriggerCollectorService.collectCastAbility(
                         new TriggerMatchContext(gameData, null, emblem.controllerId(), null, emblem.sourceCard(),
                                 (PlanarObject) null),
-                        CastAbility.of(ability, spell.filter() == null ? SpellFilter.ANY : spell.filter(), true),
+                        CastAbility.of(ability, spell.filter() == null ? SpellFilter.ANY : spell.filter()),
                         spellCast, false);
                 break;
             }
@@ -15200,7 +15178,7 @@ public class TriggerCollectionService {
                 spellCastTriggerCollectorService.collectCastAbility(
                         new TriggerMatchContext(gameData, null, watcher.controllerId(), watcher.effect(),
                                 watcher.sourceCard(), null),
-                        CastAbility.of(watcher.ability(), filter, true),
+                        CastAbility.of(watcher.ability(), filter),
                         new TriggerContext.SpellCast(spellCard, castingPlayerId, castZone, exiledSourcePermanentId),
                         false);
                 continue;
@@ -17146,7 +17124,7 @@ public class TriggerCollectionService {
                                         SpellAbilityWatch watch, TriggerContext ctx, TriggeredAbility ability,
                                         SpellFilter filter, PlanarObject planarObject, boolean throughDispatch) {
         if (ctx instanceof TriggerContext.SpellCast spellCast) {
-            CastAbility cast = CastAbility.of(ability, filter, true);
+            CastAbility cast = CastAbility.of(ability, filter);
             // A granted cascade is one ability nothing makes trigger additional times.
             boolean singleCopy = !cast.effects().isEmpty()
                     && cast.effects().stream().allMatch(CascadeEffect.class::isInstance);
