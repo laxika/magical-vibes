@@ -9,7 +9,7 @@ public record TransformSelfEffect() implements CardEffect, SourcePermanentSnapsh
     @Override
     public TargetSpec targetSpec() {
         // Marks the ability as self-affecting so trigger collectors stamp sourcePermanentId
-        // (needed when TransformSelf is nested under SpellCastTriggerEffect / SequenceEffect).
+        // (needed when TransformSelf is nested in a cast trigger's effects or a SequenceEffect).
         return new TargetSpec(null, false, null, true, 1);
     }
 }

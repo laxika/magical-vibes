@@ -60,7 +60,8 @@ class MayPayManaEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
         MayPayManaEffect mayPayEffect = new MayPayManaEffect("{1}", wrapped, "Pay {1}?",
                 MayPayPayer.ANY_OTHER_PLAYER);
         StackEntry entry = createEntry(card, player1Id, List.of(mayPayEffect));
-        entry.setActivePlayerId(player2Id);
+        // The cast trigger's entry: player2 cast the spell that triggered it.
+        entry.setTriggeringSpell(new StackEntry(createCard("Triggering spell"), player2Id));
         gd.activePlayerId = player2Id;
 
         resolveEffect(gd, entry, mayPayEffect);

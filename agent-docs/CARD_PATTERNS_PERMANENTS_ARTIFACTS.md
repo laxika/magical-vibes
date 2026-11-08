@@ -4,7 +4,7 @@
 > (or a factory such as `.nth(n, …)` / `.withIntervening(…)`) is shorthand: author it as the cast trigger's filter and the
 > ability's effects, `addTrigger(Triggers.youCastSpell().withFilter(filter)[.nthThisTurn(n)…][, TriggerOptions…], effects…)`
 > (`.anySpell()` for a null filter), with "you may" a `MayEffect`, a mana cost a `MayPayManaEffect` and a target filter a
-> target group. See `SpellCastTriggerEffect` in `EFFECTS_INDEX.md`; the record itself is built by the engine.
+> target group. The record is gone (effect-slot-refactor.md step 15, run 17w3).
 
 > `STATIC` in this file means a static ability (CR 113.3d), written `addStaticEffect(e)`, or
 > `target(f).addStaticEffect(e)` for an Aura's enchant ability. It functions from the zones its effect's
@@ -37,7 +37,7 @@ All paths relative to `cards/`.
 | Target opponent's library until instant/sorcery + free cast | `c/ChaosWand.java` | `{4}`+tap `ActivatedAbility` with `PlayerPredicateTargetFilter(OPPONENT)` + `RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffect()` — the target opponent's library is revealed from the top until an instant or sorcery is found, the controller may cast it for free, and the remaining cards are bottomed randomly |
 | Opponent's first spell each turn — exile top card and offer a free cast | `m/MindsDilation.java` | Triggers.opponentCastsSpell().nthThisTurn(1) `ExileTopCardOfTriggeringPlayerLibraryAndMayCastFreeEffect()` — the generic cast collector judges "their first spell each turn" and carries the caster as non-target context, then exiles that player's top card and offers a nonland card to the enchantment's controller through `MayPlayExiledCardWithoutPayingManaCostEffect` |
 | First noncreature spell each turn — counter it | `n/NullstoneGargoyle.java` | Triggers.playerCastsSpell() `.withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))).nthThisTurn(1).countingEveryPlayersSpells()` on the trigger with `new CounterSpellEffect()` — collector counts matching spells globally across all players, including spells cast before the source entered the battlefield, and reuses the generic triggering-spell counter path |
-| No colored mana spell-cast counter | `v/VoidMirror.java` | Triggers.playerCastsSpell() `CounterSpellIfNoColoredManaSpentEffect()` — collector checks the triggering spell's snapshotted colored-mana payment and queues a counter trigger when none was spent |
+| No colored mana spell-cast counter | `v/VoidMirror.java` | `Triggers.playerCastsSpell().withStackEntryFilter(new StackEntryNotPredicate(new StackEntryColoredManaSpentPredicate()))` + `CounterSpellEffect()` — the generic cast collector aims the counter at the triggering spell without targeting it |
 | Charge counter + exact-mana-value hand cast / variable scry | `b/BrainInAJar.java` | `{1}`+tap `PutCountersOnSelfEffect(CHARGE)` + `MayCastInstantOrSorceryFromHandWithManaValueEqualToSourceCountersEffect(CHARGE)`; `{3}`+tap+`RemoveXCountersFromSourceCost(CHARGE)` + `ScryEffect(new XValue())` |
 | Two-counter tap ability + source-counter-bounded artifact hand entry | `j/JhoiraAgelessInnovator.java` | `{T}` `PutCountersOnSelfEffect(INGENUITY, 2)` followed by `PutArtifactFromHandWithManaValueAtMostSourceCountersEffect(INGENUITY)`; the dynamic mana-value limit is evaluated after the counters are placed and artifact lands are eligible |
 

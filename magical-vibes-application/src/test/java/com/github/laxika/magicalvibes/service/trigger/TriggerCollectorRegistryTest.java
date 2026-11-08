@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -60,12 +60,12 @@ class TriggerCollectorRegistryTest {
         void doesNotUnwrapMayEffect() {
             boolean[] innerCalled = {false};
             CardEffect[] defaultHandled = {null};
-            registry.register(SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, SpellCastTriggerEffect.class,
+            registry.register(SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, DrawCardEffect.class,
                     (match, inner, context) -> { innerCalled[0] = true; return true; });
             registry.register(SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, CardEffect.class,
                     (match, effect, context) -> { defaultHandled[0] = effect; return true; });
 
-            var innerEffect = new SpellCastTriggerEffect(null, java.util.List.of());
+            var innerEffect = new DrawCardEffect(1);
             var mayEffect = new MayEffect(innerEffect, "Do you want to?");
             var match = new TriggerMatchContext(null, null, UUID.randomUUID(), mayEffect);
             var ctx = new TriggerContext.SpellCast(null, UUID.randomUUID(), true);
@@ -84,10 +84,10 @@ class TriggerCollectorRegistryTest {
             boolean[] innerCalled = {false};
             registry.register(LibraryWatch.ON_OPPONENT_DISCARDS, MayEffect.class,
                     (match, inner, context) -> { exactCalled[0] = true; return true; });
-            registry.register(LibraryWatch.ON_OPPONENT_DISCARDS, SpellCastTriggerEffect.class,
+            registry.register(LibraryWatch.ON_OPPONENT_DISCARDS, DrawCardEffect.class,
                     (match, inner, context) -> { innerCalled[0] = true; return true; });
 
-            var innerEffect = new SpellCastTriggerEffect(null, java.util.List.of());
+            var innerEffect = new DrawCardEffect(1);
             var mayEffect = new MayEffect(innerEffect, "prompt");
             var match = new TriggerMatchContext(null, null, UUID.randomUUID(), mayEffect);
             var ctx = new TriggerContext.Discard(UUID.randomUUID(), null);

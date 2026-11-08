@@ -1,28 +1,16 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.Card;
-
-import java.util.UUID;
-
 /**
- * Resolution effect for Possibility Storm's triggered ability: the casting player exiles the
- * triggering spell, then exiles cards from the top of their library until one shares a card type
- * with it, may cast that card without paying its mana cost, and finally puts every card exiled with
- * the enchantment on the bottom of their library in a random order.
- *
- * <p>The trigger is controlled by Possibility Storm's controller, but every choice belongs to the
- * player who cast the spell, so {@code castingPlayerId} tracks them separately. The ability still
- * works if the enchantment has left the battlefield by the time it resolves — the exile tracking is
- * keyed by {@code sourcePermanentId} alone.</p>
- *
- * <p>{@code originalSpellCard} is the spell as it was cast. If the spell has already left the stack when
- * the ability resolves (another Possibility Storm exiled it first), its card types are still used for
- * the library search.</p>
+ * Possibility Storm's ability, on a {@code Triggers.playerCastsSpell().castFrom(Zone.HAND)} ability: the caster exiles
+ * the triggering spell, then exiles cards from the top of their library until one shares a card type with it, may cast
+ * that card without paying its mana cost, and finally puts every card exiled with the enchantment on the bottom of their
+ * library in a random order.
+ * <p>
+ * It reads the trigger event from the stack entry as it resolves: "it" is the triggering spell, exiled only while it is
+ * still on the stack; once it has left (another Possibility Storm exiled it first), its card types are those of the
+ * entry's triggering spell snapshot, the spell as it last existed on the stack (CR 608.2h). "That player" is the caster
+ * (the entry's non-targeting {@code targetId}), and the cards exiled with the enchantment are those of the entry's
+ * source permanent, so the ability still works once the enchantment has left the battlefield.
  */
-public record PossibilityStormExileAndCastEffect(
-        UUID originalSpellCardId,
-        Card originalSpellCard,
-        UUID sourcePermanentId,
-        UUID castingPlayerId
-) implements CardEffect {
+public record PossibilityStormExileAndCastEffect() implements CardEffect {
 }

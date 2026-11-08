@@ -46,8 +46,8 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
             if (e.payer() == MayPayPayer.ANY_OPPONENT) {
                 order.removeIf(entry.getControllerId()::equals);
             }
-            if (e.payer() == MayPayPayer.ANY_OTHER_PLAYER && entry.getActivePlayerId() != null) {
-                order.removeIf(entry.getActivePlayerId()::equals);
+            if (e.payer() == MayPayPayer.ANY_OTHER_PLAYER && entry.getTriggeringSpellSnapshot() != null) {
+                order.removeIf(entry.getTriggeringSpellSnapshot().getControllerId()::equals);
             }
             if (order.isEmpty()) {
                 return;

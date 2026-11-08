@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.target;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -55,6 +56,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueAtMostControllerGraveyardCountPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryColoredManaSpentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePowerOrToughnessEqualsSourceChosenNumberPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
@@ -2401,6 +2403,23 @@ class TargetLegalityServiceTest {
             assertThat(sut.matchesStackEntryPredicate(gd, entry,
                     new StackEntryManaSpentLessThanManaValuePredicate(), player2Id))
                     .isFalse();
+        }
+
+        @Test
+        @DisplayName("matches StackEntryColoredManaSpentPredicate only when colored mana was spent to cast the spell")
+        void matchesColoredManaSpentPredicate() {
+            Card card = createCreature("Golem", CardColor.GREEN);
+            card.setManaCost("{2}");
+            StackEntry entry = new StackEntry(card, player1Id);
+
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryColoredManaSpentPredicate(), player2Id))
+                    .isFalse();
+
+            gd.setSpellCastColorsSpent(card.getId(), java.util.EnumSet.of(ManaColor.RED));
+            assertThat(sut.matchesStackEntryPredicate(gd, entry,
+                    new StackEntryColoredManaSpentPredicate(), player2Id))
+                    .isTrue();
         }
 
         @Test

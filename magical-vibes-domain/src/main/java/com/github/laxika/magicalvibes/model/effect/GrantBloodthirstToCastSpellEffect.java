@@ -10,7 +10,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * counters by the as-enters replacement, not by putting counters on afterwards. Multiple grants
  * accumulate because each instance of bloodthirst applies separately (CR 702.54c).
  * <p>
- * Place in {@code Triggers.youCastSpell()} inside a {@code SpellCastTriggerEffect}.
+ * The effect of a filtered {@code Triggers.youCastSpell()} ability.
  */
 public record GrantBloodthirstToCastSpellEffect(int amount) implements CardEffect {
 }

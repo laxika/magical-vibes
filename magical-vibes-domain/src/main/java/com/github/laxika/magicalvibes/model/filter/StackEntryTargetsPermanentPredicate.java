@@ -6,7 +6,7 @@ package com.github.laxika.magicalvibes.model.filter;
  * evaluating source's controller as the {@code sourceControllerId}, so controller-relative
  * permanent predicates (e.g. {@link PermanentControlledBySourceControllerPredicate}) work.
  *
- * <p>Used as {@code SpellCastTriggerEffect.castSpellTargetCondition} for triggers gated on the
+ * <p>Used as a cast trigger's stack-entry filter ({@code SpellTrigger.withStackEntryFilter}) for triggers gated on the
  * cast spell's chosen targets — e.g. the "Repartee" mechanic ("cast an instant or sorcery spell
  * that targets a creature") with a {@link PermanentIsCreaturePredicate} filter.
  *

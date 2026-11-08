@@ -115,6 +115,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredi
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryColoredManaSpentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceChosenNumberPredicate;
@@ -5719,6 +5720,9 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryMaxManaValuePredicate maxManaValuePredicate) {
             int manaValue = stackEntry.isCastFaceDown() ? 0 : stackEntry.getSpellManaValue();
             return manaValue <= maxManaValuePredicate.maxManaValue();
+        }
+        if (predicate instanceof StackEntryColoredManaSpentPredicate) {
+            return !gameData.getSpellCastColorsSpent(stackEntry.getCard().getId()).isEmpty();
         }
         if (predicate instanceof StackEntryManaSpentLessThanManaValuePredicate) {
             if (stackEntry.isCastFaceDown()) return false;

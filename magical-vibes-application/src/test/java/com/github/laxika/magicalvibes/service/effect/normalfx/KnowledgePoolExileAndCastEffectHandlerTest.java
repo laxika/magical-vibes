@@ -187,12 +187,14 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 Card kpCard = createCard("Knowledge Pool");
                 Permanent kp = new Permanent(kpCard);
 
-                KnowledgePoolExileAndCastEffect effect =
-                        new KnowledgePoolExileAndCastEffect(UUID.randomUUID(), kp.getId(), player1Id);
+                KnowledgePoolExileAndCastEffect effect = new KnowledgePoolExileAndCastEffect();
+                // The cast trigger's entry: Knowledge Pool its source, the caster its "that player", the spell its
+                // triggering card.
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, kpCard, player1Id, kpCard.getName(),
-                        List.of(effect)
+                        List.of(effect), player1Id, kp.getId()
                 );
+                entry.setTriggeringCardId(UUID.randomUUID());
 
 
                 knowledgePoolExileAndCastHandler.resolve(gd, entry, effect);
@@ -213,12 +215,14 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 );
                 gd.stack.add(originalSpell);
 
-                KnowledgePoolExileAndCastEffect effect =
-                        new KnowledgePoolExileAndCastEffect(originalCard.getId(), kp.getId(), player1Id);
+                KnowledgePoolExileAndCastEffect effect = new KnowledgePoolExileAndCastEffect();
+                // The cast trigger's entry: Knowledge Pool its source, the caster its "that player", the spell its
+                // triggering card.
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, kpCard, player1Id, kpCard.getName(),
-                        List.of(effect)
+                        List.of(effect), player1Id, kp.getId()
                 );
+                entry.setTriggeringCardId(originalCard.getId());
 
                 stubExileCardTrackedWithSource();
 
@@ -250,12 +254,14 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 );
                 gd.stack.add(originalSpell);
 
-                KnowledgePoolExileAndCastEffect effect =
-                        new KnowledgePoolExileAndCastEffect(originalCard.getId(), kp.getId(), player1Id);
+                KnowledgePoolExileAndCastEffect effect = new KnowledgePoolExileAndCastEffect();
+                // The cast trigger's entry: Knowledge Pool its source, the caster its "that player", the spell its
+                // triggering card.
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, kpCard, player1Id, kpCard.getName(),
-                        List.of(effect)
+                        List.of(effect), player1Id, kp.getId()
                 );
+                entry.setTriggeringCardId(originalCard.getId());
 
                 CardView mockCardView = mock(CardView.class);
                 when(cardViewFactory.create(poolCard)).thenReturn(mockCardView);

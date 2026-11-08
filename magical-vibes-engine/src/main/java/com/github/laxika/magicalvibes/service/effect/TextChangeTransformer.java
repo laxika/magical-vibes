@@ -34,7 +34,6 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -416,15 +415,11 @@ public final class TextChangeTransformer {
                 yield condition == conditional.condition() && wrapped == conditional.wrapped() ? conditional
                         : new ConditionalEffect(condition, wrapped);
             }
-            // An authored "you may" spell-cast ability (Pontiff of Blight's granted extort): its spell filter is inside.
+            // A "you may": the words of the effect it wraps.
             case MayEffect may -> {
                 CardEffect wrapped = apply(may.wrapped(), substitution);
                 yield wrapped == may.wrapped() ? may
                         : new MayEffect(wrapped, may.prompt(), may.elseEffect(), may.choicePlayer(), may.choicePlayerId());
-            }
-            case SpellCastTriggerEffect trigger -> {
-                CardPredicate spellFilter = apply(trigger.spellFilter(), substitution);
-                yield spellFilter == trigger.spellFilter() ? trigger : trigger.withSpellFilter(spellFilter);
             }
             case EnchantedPermanentConditionalEffect conditional -> {
                 PermanentPredicate filter = apply(conditional.filter(), substitution);

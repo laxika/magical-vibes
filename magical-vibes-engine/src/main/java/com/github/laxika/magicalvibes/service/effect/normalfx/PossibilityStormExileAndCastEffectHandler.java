@@ -40,20 +40,20 @@ public class PossibilityStormExileAndCastEffectHandler implements NormalEffectHa
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var typedEffect = (PossibilityStormExileAndCastEffect) effect;
-        UUID sourcePermanentId = typedEffect.sourcePermanentId();
-        UUID castingPlayerId = typedEffect.castingPlayerId();
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        UUID castingPlayerId = entry.getTargetId();
         String playerName = gameData.playerIdToName.get(castingPlayerId);
 
         StackEntry originalSpell = null;
         for (StackEntry stackEntry : gameData.stack) {
-            if (stackEntry.getTargetableId().equals(typedEffect.originalSpellCardId())) {
+            if (stackEntry.getTargetableId().equals(entry.getTriggeringCardId())) {
                 originalSpell = stackEntry;
                 break;
             }
         }
 
-        Card originalCard = typedEffect.originalSpellCard();
+        Card originalCard = entry.getTriggeringSpellSnapshot() == null
+                ? null : entry.getTriggeringSpellSnapshot().getCard();
         if (originalSpell != null) {
             originalCard = originalSpell.getCard();
             gameData.stack.remove(originalSpell);
@@ -66,6 +66,9 @@ public class PossibilityStormExileAndCastEffectHandler implements NormalEffectHa
             log.info("Game {} - Possibility Storm's trigger finds no spell on the stack", gameData.id);
         }
 
+        if (originalCard == null) {
+            return;
+        }
         EnumSet<CardType> spellTypes = EnumSet.of(originalCard.getType());
         spellTypes.addAll(originalCard.getAdditionalTypes());
 

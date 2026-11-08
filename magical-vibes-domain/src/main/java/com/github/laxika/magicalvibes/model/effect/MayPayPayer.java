@@ -12,7 +12,10 @@ public enum MayPayPayer {
     /** Any player, offered in APNAP order ("if any player pays {X}"). */
     ANY_PLAYER,
 
-    /** Any player other than the player whose spell caused the trigger, offered in APNAP order. */
+    /**
+     * Any player other than the player whose spell caused the trigger (the controller of the stack entry's triggering
+     * spell), offered in APNAP order.
+     */
     ANY_OTHER_PLAYER,
 
     /**

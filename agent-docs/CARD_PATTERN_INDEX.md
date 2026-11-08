@@ -3,7 +3,7 @@
 > (or a factory such as `.nth(n, …)` / `.withIntervening(…)`) is shorthand: author it as the cast trigger's filter and the
 > ability's effects, `addTrigger(Triggers.youCastSpell().withFilter(filter)[.nthThisTurn(n)…][, TriggerOptions…], effects…)`
 > (`.anySpell()` for a null filter), with "you may" a `MayEffect`, a mana cost a `MayPayManaEffect` and a target filter a
-> target group. See `SpellCastTriggerEffect` in `EFFECTS_INDEX.md`; the record itself is built by the engine.
+> target group. The record is gone (effect-slot-refactor.md step 15, run 17w3).
 
 | end-step draw after casting a spell from a graveyard or activating an ability of a graveyard card | `l/LaboratoryDrudge.java` + `ConditionalEffect(ControllerCastSpellFromGraveyardOrActivatedGraveyardAbilityThisTurn, DrawCardEffect)` |
 | sorcery that looks at six, may put one land tapped onto the battlefield and one Elf into hand, then random-bottoms the rest | `b/BountyOfSkemfar.java` + `LookAtTopCardsRevealTwoTypesToHandThenRestEffect.landAndSubtypeToBattlefieldAndHandRestOnBottomRandom(...)` |

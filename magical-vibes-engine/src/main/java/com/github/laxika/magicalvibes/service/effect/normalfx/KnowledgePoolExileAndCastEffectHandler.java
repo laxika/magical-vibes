@@ -34,15 +34,14 @@ public class KnowledgePoolExileAndCastEffectHandler implements NormalEffectHandl
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (KnowledgePoolExileAndCastEffect) effect;
-        UUID kpPermanentId = e.knowledgePoolPermanentId();
+        UUID kpPermanentId = entry.getSourcePermanentId();
 
         // Step 1: The triggered ability exists independently of its source (CR 113.7a). If Knowledge Pool
         // has already left the battlefield, its last known information is used: the spell is still exiled
         // with it and the choice still draws from the cards exiled with it.
 
         // Step 2: Find original spell on stack by card ID
-        UUID originalSpellCardId = e.originalSpellCardId();
+        UUID originalSpellCardId = entry.getTriggeringCardId();
         StackEntry originalSpell = null;
         for (StackEntry se : gameData.stack) {
             if (se.getTargetableId().equals(originalSpellCardId)) {
@@ -61,7 +60,7 @@ public class KnowledgePoolExileAndCastEffectHandler implements NormalEffectHandl
 
         // Step 3: Remove original spell from stack, add to KP pool + player exile
         // "that player" = the player who cast the original spell (not the KP controller)
-        UUID castingPlayerId = e.castingPlayerId();
+        UUID castingPlayerId = entry.getTargetId();
         Card originalCard = originalSpell.getCard();
         gameData.stack.remove(originalSpell);
 
