@@ -96,6 +96,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean, AsksDeath
             case TRIGGERING_PERMANENT_CONTROLLER ->
                     single(gameQueryService.findTriggeringPermanentController(gameData, entry), amount);
             case DEFENDING_PLAYER -> single(defendingPlayerId, amount);
+            case OTHER_CHOSEN_PLAYER -> otherChosenPlayerLosses(gameData, entry, source, amount);
             case EACH_PLAYER -> eachPlayerLosses(gameData, e, entry, controllerId, amount, false);
             case EACH_OPPONENT -> eachPlayerLosses(gameData, e, entry, controllerId, amount, true);
             case EACH_OTHER_PLAYER -> eachPlayerLosses(gameData, e, entry,
@@ -117,6 +118,24 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean, AsksDeath
                     && entry.getCard().getOwnerId() != null ? entry.getCard().getOwnerId() : controllerId;
             lifeSupport.applyGainLife(gameData, gainingPlayerId, totalLifeLost);
         }
+    }
+
+    /**
+     * "The other chosen player": the players {@code source} (the live source or its last-known information) chose as
+     * it entered, but the player the trigger event was about.
+     */
+    private static Map<UUID, Integer> otherChosenPlayerLosses(GameData gameData, StackEntry entry, Permanent source,
+                                                              int amount) {
+        if (source == null || entry.getTriggeringPlayerId() == null) {
+            return Map.of();
+        }
+        Map<UUID, Integer> losses = new LinkedHashMap<>();
+        for (UUID playerId : source.getRememberedTargetPlayerIds()) {
+            if (!playerId.equals(entry.getTriggeringPlayerId()) && gameData.playerIds.contains(playerId)) {
+                losses.put(playerId, amount);
+            }
+        }
+        return losses;
     }
 
     private static Map<UUID, Integer> single(UUID playerId, int amount) {

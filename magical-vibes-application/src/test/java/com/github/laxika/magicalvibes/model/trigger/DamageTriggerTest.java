@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerChosenBySourcePredicate;
 import com.github.laxika.magicalvibes.service.trigger.DamageAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.DamageWatch;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
@@ -326,6 +327,32 @@ class DamageTriggerTest {
         assertThat(mangara.damagedFilter()).isEqualTo(DRAGON);
         assertThat(mangara.watchKey()).isEqualTo(Triggers.creatureDealsDamageToYouOrYourPermanent());
         assertThatThrownBy(() -> Triggers.creatureDealsDamageToYouOrYourPermanent().withCombatDamageOnly())
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void aDealsDamageToAPermanentOrPlayerTriggerFiltersTheRecipientAndHasItsOwnWatches() {
+        PlayerChosenBySourcePredicate chosen = new PlayerChosenBySourcePredicate();
+        DamageTrigger sower = Triggers.sourceDealsDamageToPermanentOrPlayer().withDamagedPlayerFilter(chosen)
+                .withDamagedFilter(DRAGON);
+
+        assertThat(sower.damagedPlayerFilter()).isEqualTo(chosen);
+        assertThat(sower.damagedFilter()).isEqualTo(DRAGON);
+        assertThat(sower.watchKey()).isEqualTo(Triggers.sourceDealsDamageToPermanentOrPlayer());
+        assertThat(Triggers.anotherSourceYouControlDealsDamageToPermanentOrPlayer())
+                .isNotEqualTo(Triggers.sourceDealsDamageToPermanentOrPlayer());
+
+        Card card = new Card();
+        card.addTrigger(sower, DRAW);
+        card.addTrigger(Triggers.anotherSourceYouControlDealsDamageToPermanentOrPlayer(), DRAW);
+        assertThat(DamageAbilityReader.printed(card, DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER))
+                .hasSize(1);
+        assertThat(DamageAbilityReader.printed(card,
+                DamageWatch.ON_ANOTHER_ALLY_SOURCE_DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER)).hasSize(1);
+        assertThat(DamageAbilityReader.printed(card, DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE)).isEmpty();
+        assertThatThrownBy(() -> Triggers.sourceDealsDamage().withDamagedPlayerFilter(chosen))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Triggers.sourceDealsDamageToPermanentOrPlayer().withCombatDamageOnly())
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

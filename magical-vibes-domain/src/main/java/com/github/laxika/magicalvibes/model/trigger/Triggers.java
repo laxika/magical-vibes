@@ -706,6 +706,17 @@ public final class Triggers {
                 new PermanentIsGoadedPredicate());
     }
 
+    /**
+     * "Whenever an opponent is dealt combat damage by one or more creatures you control", once for each opponent in each
+     * combat damage step: the emblem collector reads it (Lolth, Spider Queen's emblem), "that player" the stack entry's
+     * non-targeting {@code targetId} and triggering player, the combat damage dealt to them the event's value. No
+     * permanent's collector reads it.
+     */
+    public static CombatTrigger creaturesYouControlDealCombatDamageToOpponent() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ONE_OR_MORE_COMBAT_DAMAGE_TO_OPPONENT,
+                ObjectRelation.YOU_CONTROL);
+    }
+
     /** "Whenever a creature deals combat damage to its owner". */
     public static CombatTrigger creatureDealsCombatDamageToItsOwner() {
         return new CombatTrigger(CombatTrigger.CombatEvent.COMBAT_DAMAGE_TO_OWNER, ObjectRelation.ANY);
@@ -983,6 +994,28 @@ public final class Triggers {
      */
     public static DamageTrigger sourceDealsDamageToYou() {
         return new DamageTrigger(DamageTrigger.DamageEvent.SOURCE_DEALS_DAMAGE_TO_YOU, ObjectRelation.ANY);
+    }
+
+    /**
+     * "Whenever a source deals damage to a permanent or player", whoever controls the source: once for each source and
+     * each permanent and player it deals damage to, that permanent or player the stack entry's non-targeting
+     * {@code targetId} (also its triggering permanent or triggering player) and the damage dealt to it the event's
+     * value. {@code withFilter} / {@code withSpellFilter} narrow the source, {@code withDamagedFilter} /
+     * {@code withDamagedPlayerFilter} the recipient: "whenever damage is dealt to one of the chosen players" (Sower of
+     * Discord) is {@code .withDamagedPlayerFilter(new PlayerChosenBySourcePredicate())}.
+     */
+    public static DamageTrigger sourceDealsDamageToPermanentOrPlayer() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER, ObjectRelation.ANY);
+    }
+
+    /**
+     * "Whenever another source you control deals damage to a permanent or player", read as
+     * {@link #sourceDealsDamageToPermanentOrPlayer()} is (Ghyrson Starn's "exactly 1 damage" an event condition on the
+     * event's value).
+     */
+    public static DamageTrigger anotherSourceYouControlDealsDamageToPermanentOrPlayer() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER,
+                ObjectRelation.ANOTHER_YOU_CONTROL);
     }
 
     /** "Whenever this deals damage". */

@@ -56,6 +56,7 @@ public sealed interface PermanentPredicate permits
         PermanentCrewedBySourceThisTurnPredicate,
         PermanentCounterCountAtLeastPredicate,
         PermanentDealtDamageThisTurnPredicate,
+        PermanentDealtExcessDamageThisTurnPredicate,
         PermanentDealtNoncombatDamageThisTurnPredicate,
         PermanentDealtDamageToAnythingThisTurnPredicate,
         PermanentDealtCombatDamageToPlayerThisCombatPredicate,

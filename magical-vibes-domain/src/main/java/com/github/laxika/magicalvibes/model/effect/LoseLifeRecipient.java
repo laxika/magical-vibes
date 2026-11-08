@@ -32,6 +32,10 @@ package com.github.laxika.magicalvibes.model.effect;
  *       the attacked planeswalker), captured as the trigger's {@code attackedTargetId}; used by
  *       combat triggers such as "whenever this creature becomes blocked, defending player loses N
  *       life" (Vedalken Ghoul). The effect chooses no target.</li>
+ *   <li>{@link #OTHER_CHOSEN_PLAYER} — each player the source permanent chose as it entered other than the
+ *       player the trigger event was about ({@code StackEntry.triggeringPlayerId}): "the other chosen player" of Sower
+ *       of Discord. The chosen players are read from the source as the ability resolves, or from its last-known
+ *       information once it has left the battlefield. The effect chooses no target.</li>
  *   <li>{@link #EACH_PLAYER} — every player loses life, in {@code orderedPlayerIds} order.</li>
  *   <li>{@link #EACH_OPPONENT} — every opponent of the controller loses life, in
  *       {@code orderedPlayerIds} order.</li>
@@ -49,6 +53,7 @@ public enum LoseLifeRecipient {
     DYING_CREATURE_CONTROLLER,
     TRIGGERING_PERMANENT_CONTROLLER,
     DEFENDING_PLAYER,
+    OTHER_CHOSEN_PLAYER,
     /** The player whose upkeep is currently resolving; supplied by the trigger entry. */
     ACTIVE_PLAYER,
     EACH_PLAYER,

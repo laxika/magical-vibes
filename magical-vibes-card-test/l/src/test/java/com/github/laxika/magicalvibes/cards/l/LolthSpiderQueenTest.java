@@ -7,15 +7,19 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -163,6 +167,44 @@ class LolthSpiderQueenTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(12);
+    }
+
+    @Test
+    @DisplayName("With two opponents the emblem reads only the damaged opponent's life lost and only they lose life")
+    void emblemReadsOnlyTheDamagedOpponentsLifeLost() {
+        Player player3 = addThirdPlayer();
+        addReadyLolth(player1, 8);
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, player3.getId());
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(bear)));
+        resolveCombat(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(12);
+        assertThat(gd.getLife(player3.getId())).isEqualTo(18);
+    }
+
+    private Player addThirdPlayer() {
+        UUID player3Id = UUID.randomUUID();
+        Player player3 = new Player(player3Id, "Charlie");
+        gd.playerIds.add(player3Id);
+        gd.orderedPlayerIds.add(player3Id);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(player3Id, "Charlie");
+        gd.playerDecks.put(player3Id, new ArrayList<>());
+        gd.playerHands.put(player3Id, new ArrayList<>());
+        gd.playerBattlefields.put(player3Id, new ArrayList<>());
+        gd.playerGraveyards.put(player3Id, new ArrayList<>());
+        gd.playerCommandZones.put(player3Id, new ArrayList<>());
+        gd.playerManaPools.put(player3Id, new ManaPool());
+        gd.playerLifeTotals.put(player3Id, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), player3Id, "Charlie");
+        return player3;
     }
 
     private Permanent addReadyLolth(Player player, int loyalty) {

@@ -1165,9 +1165,9 @@ public class ConditionEvaluationService {
                     ctx.targetId() != null && gameData.getLife(ctx.targetId()) == c.lifeTotal();
             case TargetPlayerLifeAtMost c ->
                     ctx.targetId() != null && gameData.getLife(ctx.targetId()) <= c.threshold();
-            case TargetPlayerLostLifeThisTurn ignored ->
+            case TargetPlayerLostLifeThisTurn c ->
                     ctx.targetId() != null
-                            && gameData.lifeLostThisTurn.getOrDefault(ctx.targetId(), 0) > 0;
+                            && gameData.lifeLostThisTurn.getOrDefault(ctx.targetId(), 0) >= c.minimumAmount();
             case TargetPlayerHasRadCounters ignored ->
                     ctx.targetId() != null
                             && gameData.playerRadCounters.getOrDefault(ctx.targetId(), 0) > 0;

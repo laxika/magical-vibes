@@ -42,6 +42,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMoreCreaturesThanControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerChosenBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanSourceOwnerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -2993,6 +2994,19 @@ class TargetLegalityServiceTest {
                 new PlayerControlsMoreCreaturesThanControllerPredicate())).isTrue();
         assertThat(sut.matchesPlayerPredicate(gd, player1Id, player1Id,
                 new PlayerControlsMoreCreaturesThanControllerPredicate())).isFalse();
+    }
+
+    @Test
+    void chosenBySourcePredicateMatchesOnlyThePlayersTheSourceChose() {
+        Permanent source = new Permanent(new Card());
+        source.getRememberedTargetPlayerIds().add(player2Id);
+        when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
+
+        PlayerChosenBySourcePredicate predicate = new PlayerChosenBySourcePredicate();
+
+        assertThat(sut.matchesPlayerPredicate(gd, player1Id, player2Id, predicate, source.getId())).isTrue();
+        assertThat(sut.matchesPlayerPredicate(gd, player1Id, player1Id, predicate, source.getId())).isFalse();
+        assertThat(sut.matchesPlayerPredicate(gd, player1Id, player2Id, predicate, null)).isFalse();
     }
 
     @Test

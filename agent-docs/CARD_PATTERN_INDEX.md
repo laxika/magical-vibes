@@ -489,7 +489,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | first spell during each opponent's turn, face-down top-card exile with indefinite play permission | `b/BlightwingBandit.java` + `SpellCastTriggerEffect` + `ExileTopCardMayPlayWhileExiledEffect(true, true)` |
 | secret council vote, draw for one vote and damage a random opponent for the other | `t/TruthOrConsequences.java` + `TruthOrConsequencesEffect` |
 | controller draw, per-opponent may-draw choices, and one random-target damage trigger per card drawn | `e/ExplosionOfRiches.java` + `ExplosionOfRichesEffect` |
-| exact-1-damage source trigger reflected to each matching permanent or player | `g/GhyrsonStarnKelermorph.java` + `GhyrsonStarnKelermorphEffect` |
+| exact-1-damage source trigger reflected to each matching permanent or player | `g/GhyrsonStarnKelermorph.java` (`Triggers.anotherSourceYouControlDealsDamageToPermanentOrPlayer()` + event condition) |
 | beginning-of-combat random opponent attack requirement | `r/RuhanOfTheFomori.java` |
 | attack-triggered left/right pile evasion | `r/RagingRiver.java` + `RagingRiverEffectHandler` |
 | each opponent separates creatures into piles and controller chooses sacrifice pile | `MakeAnExampleEffect` + `MakeAnExampleEffectHandler` |

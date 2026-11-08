@@ -189,6 +189,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToP
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToPlayerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentDealtExcessDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToAnythingThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageToSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithPermanentThatDealtDamageToSourceControllerLastTurnPredicate;
@@ -3117,6 +3118,8 @@ public class PredicateEvaluationService {
             case PermanentHasCumulativeUpkeepPredicate ignored -> permanent.hasCumulativeUpkeep();
             case PermanentDealtDamageThisTurnPredicate ignored ->
                     gameData != null && gameData.permanentsDealtDamageThisTurn.contains(permanent.getId());
+            case PermanentDealtExcessDamageThisTurnPredicate ignored ->
+                    gameData != null && gameData.permanentsDealtExcessDamageThisTurn.contains(permanent.getId());
             case PermanentDealtNoncombatDamageThisTurnPredicate ignored ->
                     gameData != null && gameData.permanentsDealtNoncombatDamageThisTurn.contains(permanent.getId());
             case PermanentDealtDamageToAnythingThisTurnPredicate ignored ->

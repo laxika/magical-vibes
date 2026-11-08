@@ -3,14 +3,19 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.ArchfiendOfDespair;
 import com.github.laxika.magicalvibes.cards.e.Exsanguinate;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -133,6 +138,42 @@ class SowerOfDiscordTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Sower of Discord");
         harness.assertLife(player1, 14);
         harness.assertLife(player2, 14);
+    }
+
+    @Test
+    void damageToAPlayerWhoWasNotChosenDoesNotTriggerLifeLoss() {
+        Player player3 = addThirdPlayer();
+        castSowerOfDiscord();
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId(), player2.getId()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player3.getId());
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+        harness.assertLife(player3, 18);
+    }
+
+    private Player addThirdPlayer() {
+        UUID player3Id = UUID.randomUUID();
+        Player player3 = new Player(player3Id, "Charlie");
+        gd.playerIds.add(player3Id);
+        gd.orderedPlayerIds.add(player3Id);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(player3Id, "Charlie");
+        gd.playerDecks.put(player3Id, new ArrayList<>());
+        gd.playerHands.put(player3Id, new ArrayList<>());
+        gd.playerBattlefields.put(player3Id, new ArrayList<>());
+        gd.playerGraveyards.put(player3Id, new ArrayList<>());
+        gd.playerCommandZones.put(player3Id, new ArrayList<>());
+        gd.playerManaPools.put(player3Id, new ManaPool());
+        gd.playerLifeTotals.put(player3Id, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), player3Id, "Charlie");
+        return player3;
     }
 
     private Permanent castSowerOfDiscord() {

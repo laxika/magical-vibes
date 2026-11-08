@@ -8,13 +8,22 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeToThresholdOnCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -44,8 +53,13 @@ public class LolthSpiderQueen extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -8,
-                List.of(new CreateEmblemEffect(
-                        List.of(new LoseLifeToThresholdOnCombatDamageEffect(8)), EMBLEM_TEXT)),
+                List.of(new CreateEmblemEffect(new TriggeredAbility(
+                        Triggers.creaturesYouControlDealCombatDamageToOpponent(),
+                        TriggerOptions.DEFAULT.withInterveningIf(
+                                new NotCondition(new TargetPlayerLostLifeThisTurn(8))),
+                        new LoseLifeEffect(new Sum(new Fixed(8),
+                                new Scaled(new LifeLostThisTurn(CountScope.TARGET_PLAYER), -1)),
+                                LoseLifeRecipient.TRIGGERING_PLAYER)), EMBLEM_TEXT)),
                 "−8: You get an emblem with \"" + EMBLEM_TEXT + "\"."));
     }
 }

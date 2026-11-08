@@ -20,6 +20,7 @@ public sealed interface PlayerPredicate permits
         PlayerRelationPredicate,
         PlayerIdPredicate,
         PlayerOtherThanTriggeringPlayerPredicate,
+        PlayerChosenBySourcePredicate,
         PlayerOtherThanSourceOwnerPredicate,
         PlayerIsActiveOpponentPredicate {
 }

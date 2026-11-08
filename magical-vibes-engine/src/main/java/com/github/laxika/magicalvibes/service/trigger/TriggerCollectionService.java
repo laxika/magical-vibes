@@ -184,7 +184,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyCr
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetOnAllyLandEntersEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactEntersTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactTapTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EvolveEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
@@ -4149,8 +4148,7 @@ public class TriggerCollectionService {
      * controller as it dealt the damage the fallback for "its controller" (a spell's), the summed damage its event
      * value ({@code eventValue}: the damage the source dealt in all, or to you for "deals damage to you"). An ability
      * with a target has it chosen as the ability goes on the stack (CR 603.3d; Circle of Affliction's "target
-     * player"). A one-effect ability whose effect has a class-keyed handler on the watch (Sower of Discord's, Ghyrson
-     * Starn's) goes to that handler instead.
+     * player"). A one-effect ability whose effect has a class-keyed handler on the watch goes to that handler instead.
      */
     private void collectSourceDealsDamageAbilities(GameData gameData, Permanent watcher, UUID controllerId,
             List<DamageWatch> watches, TriggerContext.SourceDealsDamage event, int eventValue) {
@@ -4195,6 +4193,132 @@ public class TriggerCollectionService {
                 });
             }
         }
+    }
+
+    /**
+     * Collects {@code watcher}'s printed "a source deals damage to a permanent or player" abilities for one source's
+     * damage in one event, once for each permanent and player it dealt damage to (CR 603.2c; Ghyrson Starn's ruling):
+     * {@link DamageWatch#ON_ANY_SOURCE_DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER} always, and
+     * {@link DamageWatch#ON_ANOTHER_ALLY_SOURCE_DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER} when {@code controllerId} controls
+     * the source and the watcher isn't it.
+     */
+    private void collectSourceDealsDamageToPermanentOrPlayerAbilities(GameData gameData, Permanent watcher,
+            UUID controllerId, TriggerContext.SourceDealsDamage event) {
+        List<DamageWatch> watches = new ArrayList<>(2);
+        watches.add(DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER);
+        if (controllerId.equals(event.sourceControllerId()) && !watcher.getId().equals(event.sourcePermanentId())) {
+            watches.add(DamageWatch.ON_ANOTHER_ALLY_SOURCE_DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER);
+        }
+        if (watches.stream().allMatch(watch -> DamageAbilityReader.printed(watcher.getCard(), watch).isEmpty())) {
+            return;
+        }
+        event.damageToPlayers().forEach((playerId, damage) -> {
+            if (damage > 0) {
+                collectDamageRecipientAbilities(gameData, watcher, controllerId, watches, event, playerId, true,
+                        damage);
+            }
+        });
+        event.damageToPermanents().forEach((permanentId, damage) -> {
+            if (damage > 0) {
+                collectDamageRecipientAbilities(gameData, watcher, controllerId, watches, event, permanentId, false,
+                        damage);
+            }
+        });
+    }
+
+    /**
+     * Collects {@code watcher}'s abilities of {@code watches} for the damage {@code event}'s source dealt to one
+     * recipient ({@code recipientId}, a player when {@code playerRecipient}). Each ability triggers when the trigger's
+     * filters match the source ({@link #damageSourceMatches}) and the recipient ({@link #damageRecipientMatches}) and
+     * its intervening "if" and event condition hold, judged with the recipient as the context's target (and
+     * triggering permanent) and the damage dealt to it as the event value (CR 603.4, CR 603.2: Ghyrson Starn's "exactly
+     * 1 damage"). It goes on the stack as one object with the effects the card wrote (CR 603.3): the recipient its
+     * non-targeting {@code targetId} ("that permanent or player"), a player also its triggering player and a permanent
+     * its triggering permanent with that permanent's controller, the damage dealt to it its event value.
+     */
+    private void collectDamageRecipientAbilities(GameData gameData, Permanent watcher, UUID controllerId,
+            List<DamageWatch> watches, TriggerContext.SourceDealsDamage event, UUID recipientId,
+            boolean playerRecipient, int damage) {
+        ConditionContext context = ConditionContext.forPermanent(watcher, controllerId).withTargetId(recipientId);
+        if (!playerRecipient) {
+            context = context.withTriggeringPermanentId(recipientId);
+        }
+        TriggerJudge judge = conditionEvaluationService.judge(gameData, context, damage);
+        for (DamageWatch watch : watches) {
+            Trigger watched = watch.trigger();
+            for (TriggeredAbility ability : judge.filter(DamageAbilityReader.printed(watcher.getCard(), watch))) {
+                DamageTrigger trigger = DamageAbilityReader.trigger(ability, watched);
+                if (!damageSourceMatches(gameData, watcher, controllerId, trigger, event)
+                        || !damageRecipientMatches(gameData, watcher, controllerId, trigger, event, recipientId,
+                        playerRecipient)) {
+                    continue;
+                }
+                List<DamageAbilityReader.DamageEffect> read = DamageAbilityReader.read(ability, watched);
+                for (DamageAbilityReader.DamageEffect effect : read) {
+                    DamageAbilityReader.requireNoLimitOrMultiplicity(effect, watched);
+                }
+                List<CardEffect> effects = DamageAbilityReader.effectsOf(read);
+                if (effects.isEmpty()) continue;
+                var match = new TriggerMatchContext(gameData, watcher, controllerId, effects.getFirst());
+                dispatch(match, watch, effects.getFirst(), event, () -> {
+                    queueDamageRecipientAbility(gameData, watcher, controllerId, effects, recipientId,
+                            playerRecipient, damage);
+                    return true;
+                });
+            }
+        }
+    }
+
+    /**
+     * Whether the recipient of a source's damage matches the recipient filters of {@code trigger}: a player by its
+     * damaged-player filter, a permanent by its damaged filter (on its snapshot as it was dealt the damage, or as it is
+     * now). A trigger with neither filter matches every recipient; one with a filter only for one kind of recipient
+     * matches no recipient of the other kind.
+     */
+    private boolean damageRecipientMatches(GameData gameData, Permanent watcher, UUID controllerId,
+                                           DamageTrigger trigger, TriggerContext.SourceDealsDamage event,
+                                           UUID recipientId, boolean playerRecipient) {
+        if (trigger.damagedFilter() == null && trigger.damagedPlayerFilter() == null) return true;
+        if (playerRecipient) {
+            return trigger.damagedPlayerFilter() != null && targetLegalityService.matchesPlayerPredicate(
+                    gameData, controllerId, recipientId, trigger.damagedPlayerFilter(), watcher.getId());
+        }
+        if (trigger.damagedFilter() == null) return false;
+        Permanent damaged = event.damagedPermanentSnapshots().get(recipientId);
+        if (damaged == null) {
+            damaged = gameQueryService.findPermanentById(gameData, recipientId);
+        }
+        return damaged != null && damageFilterMatches(gameData, watcher, controllerId, trigger.damagedFilter(), damaged);
+    }
+
+    /**
+     * Puts a "deals damage to a permanent or player" ability of {@code watcher} on the stack, as
+     * {@link #collectDamageRecipientAbilities} says.
+     */
+    private void queueDamageRecipientAbility(GameData gameData, Permanent watcher, UUID controllerId,
+            List<CardEffect> effects, UUID recipientId, boolean playerRecipient, int damage) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                watcher.getCard(),
+                controllerId,
+                watcher.getCard().getName() + "'s ability",
+                new ArrayList<>(effects),
+                recipientId,
+                watcher.getId());
+        entry.setNonTargeting(true);
+        entry.setEventValue(damage);
+        if (playerRecipient) {
+            entry.setTriggeringPlayerId(recipientId);
+        } else {
+            entry.setTriggeringPermanentId(recipientId);
+            entry.setTriggeringPermanentControllerId(gameQueryService.findPermanentController(gameData, recipientId));
+        }
+        entry.setSourcePermanentSnapshot(new Permanent(watcher));
+        gameData.enqueueTrigger(entry);
+
+        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+        log.info("Game {} - {} triggers after {} damage was dealt to a permanent or player", gameData.id,
+                watcher.getCard().getName(), damage);
     }
 
     /**
@@ -4384,6 +4508,7 @@ public class TriggerCollectionService {
                     collectSourceDealsDamageAbilities(gameData, perm, watcherPlayerId,
                             List.of(DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE_TO_YOU), ctx, damageToWatcherController);
                 }
+                collectSourceDealsDamageToPermanentOrPlayerAbilities(gameData, perm, watcherPlayerId, ctx);
             }
         });
 
@@ -8963,10 +9088,11 @@ public class TriggerCollectionService {
      * Collects {@code watcher}'s abilities of {@code watches} for {@code event}: the printed ones (none while face down,
      * CR 708.2), the ones granted until a time or until it leaves, and, when {@code readGrants} (the damage source's
      * own), the ones a static ability grants it, unless it has lost its abilities. Each ability triggers when its trigger's filters match (the creature that dealt the
-     * damage, the creature dealt it, combat only) and its intervening "if" holds (CR 603.4), and goes on the stack as
-     * one object with the effects the card wrote (CR 603.3): the creature dealt the damage is its triggering
-     * permanent, the damage its event value. A one-effect ability whose effect has a class-keyed handler on the watch
-     * (Greatbow Doyen's, Maarika's) goes to that handler instead.
+     * damage, the creature dealt it, combat only) and its intervening "if" holds (CR 603.4), judged with the creature
+     * dealt the damage as the context's triggering permanent (Maarika's "if that creature was dealt excess damage this
+     * turn"), and goes on the stack as one object with the effects the card wrote (CR 603.3): the creature dealt the
+     * damage is its triggering permanent, the damage its event value. A one-effect ability whose effect has a
+     * class-keyed handler on the watch (Greatbow Doyen's) goes to that handler instead.
      */
     private void collectDealsDamageToCreatureAbilities(GameData gameData, Permanent watcher, UUID controllerId,
             List<DamageWatch> watches, boolean readGrants, DealsDamageToCreatureEvent event) {
@@ -8974,7 +9100,8 @@ public class TriggerCollectionService {
             return;
         }
         TriggerJudge judge = conditionEvaluationService.judge(gameData,
-                ConditionContext.forPermanent(watcher, controllerId), event.damage());
+                ConditionContext.forPermanent(watcher, controllerId).withTriggeringPermanentId(event.damagedCreatureId()),
+                event.damage());
         TriggerContext context = new TriggerContext.CreatureDealsDamageToCreature(
                 event.damageSource(), event.damagedCreatureId(), event.damage(), event.combatDamage(),
                 event.damagedCreature(), event.damagedCreatureControllerId());
@@ -14800,7 +14927,17 @@ public class TriggerCollectionService {
         }
     }
 
-    /** Fires emblem triggers for a combat-damage event dealt to a player. */
+    /**
+     * The emblems' "whenever an opponent is dealt combat damage by one or more creatures you control" abilities
+     * ({@code Triggers.creaturesYouControlDealCombatDamageToOpponent()}; Lolth, Spider Queen's emblem) for the combat
+     * damage {@code controllerId}'s creatures dealt {@code damagedPlayerId} in one combat damage step. Abilities of
+     * emblems function in the command zone (CR 114.4). Each ability whose intervening "if" holds as it triggers (CR
+     * 603.4: "if that player lost less than 8 life this turn", judged with that player as the context's target) goes
+     * on the stack once as one object of its effects (CR 603.3), the emblem's source card as its source, "that player"
+     * its non-targeting {@code targetId} and triggering player, the combat damage dealt to them its event value; the
+     * intervening "if" wraps each effect, so it is checked again as the ability resolves. Nothing makes an emblem's
+     * ability trigger additional times; an ability takes no limit, multiplicity or filter here.
+     */
     public void checkEmblemCombatDamageTriggers(GameData gameData, UUID controllerId,
                                                 UUID damagedPlayerId,
                                                 Map<Permanent, Integer> combatDamageDealtToPlayer) {
@@ -14815,28 +14952,47 @@ public class TriggerCollectionService {
                 .map(entry -> entry.getKey().getCard())
                 .findFirst()
                 .orElse(null);
+        int damage = combatDamageDealtToPlayer.values().stream().filter(amount -> amount > 0)
+                .mapToInt(Integer::intValue).sum();
+        Trigger watched = Triggers.creaturesYouControlDealCombatDamageToOpponent();
 
         for (Emblem emblem : gameData.emblems) {
             if (!controllerId.equals(emblem.controllerId())) continue;
 
-            for (CardEffect effect : emblem.staticEffects()) {
-                if (!(effect instanceof EmblemCombatDamageTriggerEffect trigger)) continue;
-                if (gameData.lifeLostThisTurn.getOrDefault(damagedPlayerId, 0) >= trigger.lifeThreshold()) {
+            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
+                if (ability.conditions().stream().noneMatch(condition -> condition.trigger().equals(watched))) {
+                    continue;
+                }
+                TriggerOptions options = ability.options();
+                if (options.limit() != TriggerLimit.NONE || options.multiplicity() != TriggerMultiplicity.EACH) {
+                    throw new IllegalStateException("The emblem combat damage reader judges no limit or "
+                            + "multiplicity: " + ability);
+                }
+                Card source = emblem.sourceCard() != null ? emblem.sourceCard() : fallbackSource;
+                if (source == null) continue;
+                if (!conditionEvaluationService.triggerConditionsMet(gameData, options,
+                        ConditionContext.forCard(source, controllerId).withTargetId(damagedPlayerId), damage)) {
                     continue;
                 }
 
-                Card source = emblem.sourceCard() != null ? emblem.sourceCard() : fallbackSource;
-                if (source == null) continue;
-
                 String description = (emblem.sourceCard() != null ? emblem.sourceCard().getName() : "Emblem")
                         + "'s emblem";
+                Condition interveningIf = options.interveningIf();
+                List<CardEffect> effects = ability.effects().stream()
+                        .map(EffectRegistration::effect)
+                        .map(effect -> interveningIf == null ? effect : (CardEffect) new ConditionalEffect(interveningIf, effect))
+                        .toList();
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         source,
                         controllerId,
                         description,
-                        List.of(trigger.triggeredEffect()));
+                        new ArrayList<>(effects),
+                        damagedPlayerId,
+                        (UUID) null);
                 entry.setNonTargeting(true);
+                entry.setTriggeringPlayerId(damagedPlayerId);
+                entry.setEventValue(damage);
                 gameData.enqueueTrigger(entry);
                 gameLogService.append(gameData, GameLog.text(
                         description + " triggers for combat damage dealt to an opponent."));

@@ -88,6 +88,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePr
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentDealtExcessDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnteredBattlefieldThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAttachedPermanentPredicate;
@@ -2101,6 +2102,18 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentDealtDamageThisTurnPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentDealtExcessDamageThisTurnPredicate matches only a permanent dealt excess damage this turn")
+        void dealtExcessDamageThisTurnPredicateMatchesOnlyExcessDamage() {
+            Permanent excess = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            Permanent damaged = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
+            gd.permanentsDealtExcessDamageThisTurn.add(excess.getId());
+            gd.permanentsDealtDamageThisTurn.add(damaged.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, excess, new PermanentDealtExcessDamageThisTurnPredicate())).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, damaged, new PermanentDealtExcessDamageThisTurnPredicate())).isFalse();
         }
 
         @Test

@@ -76,6 +76,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreCardsInHandThanC
 import com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanSourceOwnerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerIsActiveOpponentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerChosenBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerIdPredicate;
@@ -6212,6 +6213,18 @@ public class TargetLegalityService {
             case PlayerOtherThanTriggeringPlayerPredicate ignored -> triggeringPlayerId != null
                     && targetPlayerId != null
                     && !triggeringPlayerId.equals(targetPlayerId);
+            case PlayerChosenBySourcePredicate ignored -> {
+                if (sourcePermanentId == null || targetPlayerId == null) {
+                    yield false;
+                }
+                Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                if (source == null) {
+                    source = gameData.departedPermanentSnapshots.values().stream()
+                            .filter(snapshot -> snapshot.getId().equals(sourcePermanentId))
+                            .findFirst().orElse(null);
+                }
+                yield source != null && source.getRememberedTargetPlayerIds().contains(targetPlayerId);
+            }
             case PlayerOtherThanSourceOwnerPredicate ignored -> {
                 if (sourcePermanentId == null || targetPlayerId == null) {
                     yield false;

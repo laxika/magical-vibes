@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -11,11 +12,14 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentDealtExcessDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
 import java.util.List;
 
 @CardRegistration(set = "SLD", collectorNumber = "435")
@@ -30,7 +34,10 @@ public class MaarikaBrutalGladiator extends Card {
         PermanentPredicate noncreatureNonland = new PermanentAllOfPredicate(List.of(
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()),
                 new PermanentNotPredicate(new PermanentIsLandPredicate())));
-        addTrigger(Triggers.creatureYouControlDealsDamageToCreature(),
-                new SacrificePermanentsEffect(1, noncreatureNonland, SacrificeRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.dealsDamageToCreature(),
+                TriggerOptions.DEFAULT.withInterveningIf(
+                        new TriggeringPermanentMatches(new PermanentDealtExcessDamageThisTurnPredicate())),
+                new SacrificePermanentsEffect(1, noncreatureNonland,
+                        SacrificeRecipient.TRIGGERING_PERMANENT_CONTROLLER));
     }
 }
