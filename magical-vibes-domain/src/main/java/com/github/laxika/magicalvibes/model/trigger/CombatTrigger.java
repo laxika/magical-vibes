@@ -101,11 +101,14 @@ public record CombatTrigger(CombatEvent event, ObjectRelation relation, Permanen
         ONE_OR_MORE_ATTACK_YOU,
         /** An opponent attacks a planeswalker you control with one or more creatures, once for each planeswalker. */
         ONE_OR_MORE_ATTACK_YOUR_PLANESWALKER,
-        /**
-         * An attacking creature causes a triggered ability of its own to trigger, or this creature enlists a creature
-         * (Aradesh, the Founder; Benalish Knight-Counselor).
-         */
+        /** An attacking creature causes a triggered ability of its own to trigger (Firebender Ascension). */
         ATTACKING_CREATURE_ABILITY_TRIGGERS,
+        /**
+         * This creature enlists a creature: its controller pays the cost of its enlist ability by tapping that creature
+         * as it attacks (CR 702.154c). The filter is the enlisted creature's ("enlists a nontoken creature"), which is
+         * the stack entry's triggering permanent.
+         */
+        ENLISTS,
         /** A creature attacks and isn't blocked. */
         ATTACKS_UNBLOCKED,
         /** One or more creatures attack you and aren't blocked. */

@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.BoostAttackingCreatureOnAttacksYouEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.BoostReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -15,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEff
 import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,6 +28,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -73,10 +77,12 @@ public class GarrukApexPredator extends Card {
         // and gains trample until end of turn."
         addActivatedAbility(new ActivatedAbility(
                 -8,
-                List.of(new CreateEmblemEffect(
-                        List.of(new BoostAttackingCreatureOnAttacksYouEffect(5, 5, Set.of(Keyword.TRAMPLE))),
+                List.of(new CreateEmblemEffect(List.of(),
                         "Whenever a creature attacks you, it gets +5/+5 and gains trample until end of turn.",
-                        EmblemRecipient.TARGET_PLAYER)),
+                        EmblemRecipient.TARGET_PLAYER, List.of(),
+                        List.of(new TriggeredAbility(Triggers.creatureAttacksYou(),
+                                new BoostReferencedPermanentEffect(PermanentReference.TRIGGERING,
+                                        new Fixed(5), new Fixed(5), Set.of(Keyword.TRAMPLE)))))),
                 "−8: Target opponent gets an emblem with \"Whenever a creature attacks you, it "
                         + "gets +5/+5 and gains trample until end of turn.\"",
                 new PlayerPredicateTargetFilter(

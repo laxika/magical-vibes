@@ -159,6 +159,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAttackedDuringContro
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedOrBlockedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedSourceControllerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentEnlistedCreatureThisCombatPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttacksPlayerWithMostLifePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttacksWhileSourceControllerHasMostLifePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourcePredicate;
@@ -1936,6 +1937,8 @@ public class PredicateEvaluationService {
                     attackedDuringControllersLastTurn(gameData, permanent);
             case PermanentAttackedThisTurnPredicate ignored ->
                     permanent.isAttackedThisTurn();
+            case PermanentEnlistedCreatureThisCombatPredicate ignored ->
+                    gameData != null && gameData.creaturesThatEnlistedThisCombat.contains(permanent.getId());
             case PermanentAttackedOrBlockedThisTurnPredicate ignored ->
                     permanent.isAttackedThisTurn() || permanent.isBlockedThisTurn();
             case PermanentIsBlockedPredicate ignored ->

@@ -18,8 +18,7 @@ import java.util.UUID;
  */
 public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer, UUID choicePlayerId)
         implements CardEffect, CombatDamageTriggerContextEffect,
-        TriggeringPermanentSourceEffect, CombatOpponentReferencingEffect,
-        TriggeringPermanentManaValueEffect {
+        TriggeringPermanentSourceEffect, CombatOpponentReferencingEffect {
 
     public MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer) {
         this(wrapped, prompt, elseEffect, choicePlayer, null);
@@ -84,15 +83,5 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
     public boolean sourceIsTriggeringPermanent() {
         return wrapped instanceof TriggeringPermanentSourceEffect source
                 && source.sourceIsTriggeringPermanent();
-    }
-
-    @Override
-    public boolean usesTriggeringPermanentManaValue() {
-        return usesTriggeringPermanentManaValue(wrapped) || usesTriggeringPermanentManaValue(elseEffect);
-    }
-
-    private static boolean usesTriggeringPermanentManaValue(CardEffect effect) {
-        return effect instanceof TriggeringPermanentManaValueEffect valueEffect
-                && valueEffect.usesTriggeringPermanentManaValue();
     }
 }

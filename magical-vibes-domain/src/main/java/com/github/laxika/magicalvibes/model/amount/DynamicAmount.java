@@ -16,6 +16,7 @@ public sealed interface DynamicAmount permits
         AurasAttachedToTriggeringPermanent,
         CardTypesAmongTriggeringCards,
         TriggeringCardManaValue,
+        TriggeringPermanentManaValue,
         LifeLostWhenTriggeringPermanentEntered,
         ArtifactsPutIntoGraveyardFromBattlefieldThisTurn,
         PermanentsPutIntoGraveyardFromBattlefieldThisTurn,

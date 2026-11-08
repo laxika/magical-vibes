@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -44,5 +45,22 @@ class KodamaOfTheEastTreeTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(findPermanents(player1, "Grizzly Bears")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A permanent that left before the ability resolves bounds the choice by its last-known mana value")
+    void boundsByTheLastKnownManaValueOfAPermanentThatLeft() {
+        harness.addToBattlefield(player1, new KodamaOfTheEastTree());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        Permanent giant = harness.enterBattlefieldAndReturn(player1, new HillGiant());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, giant);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.HandCardChoice choice = gd.interaction.activeInteraction(
+                PendingInteraction.HandCardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIndices()).containsExactly(0);
     }
 }

@@ -154,4 +154,22 @@ class ArniMetalbrowTest extends BaseCardTest {
         assertThat(bears.isAttacking()).isTrue();
         assertThat(bears.getAttackTarget()).isEqualTo(player2.getId());
     }
+
+    @Test
+    @DisplayName("An attacker that left before the ability resolves bounds the choice by its last-known mana value")
+    void attackerThatLeftBoundsTheChoiceByItsLastKnownManaValue() {
+        addCreatureReady(player1, new ArniMetalbrow());
+        Permanent giant = addCreatureReady(player1, new HillGiant());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        declareAttackers(List.of(1));
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, giant);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
 }

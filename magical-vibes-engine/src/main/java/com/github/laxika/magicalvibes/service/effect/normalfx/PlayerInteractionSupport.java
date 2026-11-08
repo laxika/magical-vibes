@@ -98,9 +98,9 @@ public class PlayerInteractionSupport {
     }
 
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect,
-                                          int xValue, Integer eventValue, UUID sourceEquipmentCardId,
+                                          int xValue, Integer maxManaValue, UUID sourceEquipmentCardId,
                                           UUID sourceCardId, UUID blockingAttackerId) {
-        applyPutCardToBattlefield(gameData, playerId, effect, xValue, eventValue, sourceEquipmentCardId,
+        applyPutCardToBattlefield(gameData, playerId, effect, xValue, maxManaValue, sourceEquipmentCardId,
                 sourceCardId, null, null, blockingAttackerId, ignored -> true, null);
     }
 
@@ -139,15 +139,15 @@ public class PlayerInteractionSupport {
     }
 
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect,
-                                           int xValue, Integer eventValue, UUID sourceEquipmentCardId,
+                                           int xValue, Integer maxManaValue, UUID sourceEquipmentCardId,
                                            UUID sourceCardId, CardEffect thenEffect, CardPredicate thenCondition,
                                            UUID blockingAttackerId, Predicate<Card> additionalFilter, UUID sourcePermanentId) {
-        applyPutCardToBattlefield(gameData, playerId, effect, xValue, eventValue, sourceEquipmentCardId,
+        applyPutCardToBattlefield(gameData, playerId, effect, xValue, maxManaValue, sourceEquipmentCardId,
                 sourceCardId, thenEffect, thenCondition, blockingAttackerId, additionalFilter, sourcePermanentId, null);
     }
 
     public void applyPutCardToBattlefield(GameData gameData, UUID playerId, PutCardToBattlefieldEffect effect,
-                                           int xValue, Integer eventValue, UUID sourceEquipmentCardId,
+                                           int xValue, Integer maxManaValue, UUID sourceEquipmentCardId,
                                            UUID sourceCardId, CardEffect thenEffect, CardPredicate thenCondition,
                                            UUID blockingAttackerId, Predicate<Card> additionalFilter, UUID sourcePermanentId,
                                            Permanent sourcePermanentSnapshot) {
@@ -176,8 +176,8 @@ public class PlayerInteractionSupport {
                 if (effect.maxManaValueBoundedByX() && handCard.getManaValue() > xValue) {
                     continue;
                 }
-                if (effect.maxManaValueBoundedByEventValue()
-                        && (eventValue == null || handCard.getManaValue() > eventValue)) {
+                if (effect.maxManaValue() != null
+                        && (maxManaValue == null || handCard.getManaValue() > maxManaValue)) {
                     continue;
                 }
                 validIndices.add(i);

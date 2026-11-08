@@ -8,7 +8,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeToOwnerOfTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentManaValue;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +22,7 @@ public class LoseLifeToOwnerOfTriggeringPermanentEffectHandler implements Normal
 
     private final GameQueryService gameQueryService;
     private final LifeSupport lifeSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -27,7 +31,13 @@ public class LoseLifeToOwnerOfTriggeringPermanentEffectHandler implements Normal
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        // "They" is the owner of the permanent as it is now, else as it last existed on the battlefield (CR 608.2h).
         Permanent permanent = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+        if (permanent == null && entry.getTriggeringPermanentId() != null) {
+            permanent = gameData.departedPermanentSnapshots.values().stream()
+                    .filter(departed -> departed.getId().equals(entry.getTriggeringPermanentId()))
+                    .findFirst().orElse(null);
+        }
         Card triggeringCard = permanent == null
                 ? entry.lastKnownPermanentCard(entry.getTriggeringPermanentId()) : permanent.getCard();
         if (triggeringCard == null) {
@@ -43,7 +53,9 @@ public class LoseLifeToOwnerOfTriggeringPermanentEffectHandler implements Normal
         if (ownerId == null) {
             return;
         }
-        int manaValue = triggeringCard == null ? entry.getEventValue() : triggeringCard.getManaValue();
+        // "Its mana value" as the ability resolves, else as it last existed on the battlefield (CR 608.2h).
+        int manaValue = amountEvaluationService.evaluate(gameData, new TriggeringPermanentManaValue(),
+                AmountContext.forStackEntry(entry, null));
         lifeSupport.applyLifeLoss(gameData, ownerId, manaValue, entry.getCard().getName());
     }
 }

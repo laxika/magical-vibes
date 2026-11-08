@@ -5,9 +5,12 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.m.MentorOfTheMeek;
 import com.github.laxika.magicalvibes.cards.n.NoviceInspector;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -210,5 +213,25 @@ class DelneyStreetwiseLookoutTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Delney, Streetwise Lookout");
         harness.assertInGraveyard(player1, "Doomed Traveler");
         assertThat(countPermanents(player1, "Spirit")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Each additional trigger is its own stack object, so a controller asked for the order can order them")
+    void additionalTriggersCanBeOrderedOneByOne() {
+        harness.setAutoOrderTriggers(player1, false);
+        addCreatureReady(player1, new DelneyStreetwiseLookout());
+        addCreatureReady(player1, new MentorOfTheMeek());
+        harness.setHand(player1, List.of(new NoviceInspector()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        while (gd.interaction.activeInteraction() instanceof PendingInteraction.ColorChoice order
+                && order.context() instanceof ChoiceContext.TriggerOrder) {
+            harness.handleListChoice(player1, order.options().getFirst());
+        }
+
+        assertThat(gd.stack).hasSize(4);
+        assertThat(gd.stack).extracting(StackEntry::getTargetableId).doesNotHaveDuplicates();
     }
 }

@@ -5,6 +5,7 @@ import java.util.function.Predicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.service.trigger.CombatAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.TriggerJudge;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
@@ -32,7 +33,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.TargetGroup;
-import com.github.laxika.magicalvibes.model.effect.BoostAttackingCreatureOnAttacksYouEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -65,8 +65,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToDefendingPlayerCr
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CanOnlyAttackAloneEffect;
@@ -2195,11 +2193,6 @@ public class CombatAttackService {
                                 attackTrigger.setTriggeringPermanentId(attacker.getId());
                                 attackTrigger.setTriggeringPermanentOwnerId(
                                         gameData.defaultControllerOf(attacker.getId()));
-                                if (abilityEffects.stream().anyMatch(e -> e instanceof MayPayManaEffect mayPay
-                                        && mayPay.wrapped() instanceof TriggeringPermanentManaValueEffect valueEffect
-                                        && valueEffect.usesTriggeringPermanentManaValue())) {
-                                    attackTrigger.setEventValue(attacker.getCard().getManaValue());
-                                }
                                 gameData.stack.add(attackTrigger);
                             }
                         }
@@ -2571,39 +2564,10 @@ public class CombatAttackService {
             }
         }
 
-        // Emblem version of "whenever a creature attacks you" (Garruk, Apex Predator's emblem). The
-        // emblem wording lacks the "or a planeswalker you control" clause, so it only fires when the
-        // attacked target is the emblem's controller themselves.
+        // The emblems' "whenever a creature attacks you" abilities (Garruk, Apex Predator's emblem).
         for (int idx : attackerIndices) {
-            Permanent attacker = battlefield.get(idx);
-            UUID attackedTargetId = resolvedTargets.get(idx);
-            if (!gameData.playerIds.contains(attackedTargetId)) continue;
-            for (Emblem emblem : gameData.emblems) {
-                if (!emblem.controllerId().equals(attackedTargetId)) continue;
-                for (CardEffect emblemEffect : emblem.staticEffects()) {
-                    if (!(emblemEffect instanceof BoostAttackingCreatureOnAttacksYouEffect boost)) continue;
-
-                    Card source = emblem.sourceCard();
-                    String desc = (source != null ? source.getName() : "Emblem") + "'s emblem";
-                    StackEntry trigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            source,
-                            attackedTargetId,
-                            desc,
-                            new ArrayList<>(List.of(
-                                    new BoostTargetCreatureEffect(boost.powerBoost(), boost.toughnessBoost()),
-                                    new GrantKeywordEffect(boost.keywords(), GrantScope.TARGET, null,
-                                            GrantDuration.END_OF_TURN, null)
-                            )),
-                            attacker.getId(),
-                            (UUID) null
-                    );
-                    trigger.setNonTargeting(true);
-                    gameData.stack.add(trigger);
-                    gameLogService.append(gameData, GameLog.text(desc + " triggers."));
-                    log.info("Game {} - emblem attack trigger boosts {}", gameData.id, attacker.getCard().getName());
-                }
-            }
+            triggerCollectionService.checkEmblemAttackTriggers(gameData, battlefield.get(idx), resolvedTargets.get(idx),
+                    playerId);
         }
 
         // Check for "whenever a creature attacks" triggers (ON_ANY_CREATURE_ATTACKS). These fire once
@@ -3025,6 +2989,7 @@ public class CombatAttackService {
                 triggerCollectionService.checkEnchantedPermanentTapTriggers(
                         gameData, supporter, context.playerId());
                 usedSupporterIds.add(supporter.getId());
+                gameData.creaturesThatEnlistedThisCombat.add(attacker.getId());
                 boostPowers.put(attacker.getId(), gameQueryService.getEffectivePower(gameData, supporter));
                 enlistedSupporters.put(attacker.getId(), supporter.getId());
                 gameLogService.append(gameData, GameLog.text(
@@ -3073,15 +3038,90 @@ public class CombatAttackService {
                 enlistTrigger.setChosenPermanentId(enlistedSupporters.get(boost.getKey()));
                 enlistTrigger.setSourcePermanentSnapshot(new Permanent(attacker));
                 gameData.stack.add(enlistTrigger);
-                Permanent enlistedCreature = gameQueryService.findPermanentById(
-                        gameData, enlistedSupporters.get(boost.getKey()));
-                triggerCollectionService.checkEnlistmentTriggeredAbilityTriggers(
-                        gameData, attacker, enlistTrigger, enlistedCreature);
+                triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
+                        gameData, attacker, enlistTrigger);
                 gameLogService.append(gameData,
                         GameLog.builder().card(attacker.getCard()).text("'s enlist ability triggers.").build());
+                Permanent enlistedCreature = gameQueryService.findPermanentById(
+                        gameData, enlistedSupporters.get(boost.getKey()));
+                if (enlistedCreature != null) {
+                    collectEnlistAbilities(gameData, playerId, attacker, enlistedCreature);
+                }
             } finally {
                 gameData.restoreTriggeredAbilityCopies(previousCopies);
             }
+        }
+    }
+
+    /**
+     * "Whenever this creature enlists a [filter] creature" abilities of {@code attacker} ({@code Triggers.enlists()};
+     * Guardian of New Benalia, Goblin Morale Sergeant, Benalish Knight-Counselor): they trigger as its controller pays
+     * its enlist cost by tapping {@code enlisted} (CR 702.154c), the trigger's filter judged on the enlisted creature as
+     * it is then, with its event condition and intervening "if". Each ability goes on the stack as one object of its
+     * effects (CR 603.3) as written, a "you may" asked as it resolves (CR 603.5), the enlisted creature its triggering
+     * permanent ("that creature", read as the ability resolves, else as it last existed, CR 608.2h). An effect that
+     * makes an ability trigger an additional time is judged as for an ability that isn't an attack trigger, as the
+     * records' collectors judged it. A creature that has lost its abilities or is face down has none; an ability with a
+     * target, limit or multiplicity throws (no card has one).
+     */
+    private void collectEnlistAbilities(GameData gameData, UUID playerId, Permanent attacker, Permanent enlisted) {
+        Trigger enlists = CombatWatch.ON_ENLISTS.trigger();
+        List<CombatAbilityReader.CombatEffect> reads = new ArrayList<>();
+        if (!attacker.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, attacker)) {
+            reads.addAll(CombatAbilityReader.read(WatchedAbilities.printed(attacker.getCard(), CombatWatch.ON_ENLISTS),
+                    enlists));
+        }
+        if (!gameQueryService.hasLostAllAbilities(gameData, attacker)) {
+            reads.addAll(CombatAbilityReader.read(WatchedAbilities.temporary(attacker, enlists), enlists));
+            reads.addAll(CombatAbilityReader.read(WatchedAbilities.persistent(attacker, enlists), enlists));
+            reads.addAll(CombatAbilityReader.read(
+                    grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, attacker, enlists), enlists));
+        }
+        FilterContext filterContext = FilterContext.of(gameData)
+                .withSourceCardId(attacker.getOriginalCard().getId())
+                .withSourceControllerId(playerId)
+                .withSourcePermanentId(attacker.getId());
+        ConditionContext conditionContext = ConditionContext.forPermanent(attacker, playerId)
+                .withTriggeringPermanentId(enlisted.getId());
+        for (List<CombatAbilityReader.CombatEffect> ability : CombatAbilityReader.byAbility(reads)) {
+            CombatAbilityReader.CombatEffect first = ability.getFirst();
+            CombatAbilityReader.requireNoLimitOrMultiplicity(first, enlists);
+            if (first.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
+                    enlisted, first.filter(), filterContext)) {
+                continue;
+            }
+            if (!conditionEvaluationService.triggerConditionsMet(gameData, first.options(), conditionContext)) {
+                continue;
+            }
+            List<CardEffect> effects = ability.stream().map(CombatAbilityReader.CombatEffect::effectAsJudged).toList();
+            if (effects.stream().anyMatch(effect -> effect.targetSpec() != TargetSpec.NONE)) {
+                throw new IllegalStateException("The enlist collector chooses no targets: " + first.ability());
+            }
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    attacker.getCard(),
+                    playerId,
+                    attacker.getCard().getName() + "'s enlist trigger",
+                    new ArrayList<>(effects),
+                    null,
+                    attacker.getId());
+            entry.setNonTargeting(true);
+            entry.setSourcePermanentSnapshot(new Permanent(attacker));
+            entry.setTriggeringPermanentId(enlisted.getId());
+            entry.setTriggeringPermanentControllerId(playerId);
+            entry.setTriggeringPermanent(enlisted);
+            // An effect that makes an ability trigger an additional time is judged as for an ability that isn't an
+            // attack trigger, as the records' collectors judged it: Isshin, Two Heavens as One doesn't apply.
+            int previousCopies = gameData.beginTriggeredAbilityCopies(1 + gameQueryService
+                    .countAdditionalTriggeredAbilityTriggers(gameData, playerId, attacker, false));
+            try {
+                gameData.enqueueTrigger(entry);
+            } finally {
+                gameData.restoreTriggeredAbilityCopies(previousCopies);
+            }
+            gameLogService.append(gameData, GameLog.abilityTriggers(attacker.getCard()));
+            log.info("Game {} - {} enlist ability triggers for enlisting {}",
+                    gameData.id, attacker.getCard().getName(), enlisted.getCard().getName());
         }
     }
 

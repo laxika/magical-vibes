@@ -152,6 +152,7 @@ public class CombatService {
             permanent.clearUntilEndOfCombatAnimation();
         }));
         gameData.declaredAttackerIdsThisCombat.clear();
+        gameData.creaturesThatEnlistedThisCombat.clear();
         gameData.clearDelayedActions(DelayedBlockOrBecomesBlockedTrigger.class);
         gameData.ragingRiverBlockRestrictionsThisCombat.clear();
         gameData.combatDamagePlayerAssignments.clear();

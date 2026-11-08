@@ -469,6 +469,7 @@ public class TurnProgressionService {
                 }
                 gameData.cardsPutIntoGraveyardThisCombat.clear();
                 gameData.declaredAttackerIdsThisCombat.clear();
+                gameData.creaturesThatEnlistedThisCombat.clear();
                 gameData.forEachPermanent((playerId, p) -> {
                     p.setAttackedThisCombat(false);
                     p.setBlockedThisCombat(false);
@@ -609,6 +610,7 @@ public class TurnProgressionService {
         }
         gameData.cardsPutIntoGraveyardThisCombat.clear();
         gameData.declaredAttackerIdsThisCombat.clear();
+        gameData.creaturesThatEnlistedThisCombat.clear();
         gameData.forEachPermanent((playerId, permanent) -> {
             permanent.setAttackedThisCombat(false);
             permanent.setBlockedThisCombat(false);

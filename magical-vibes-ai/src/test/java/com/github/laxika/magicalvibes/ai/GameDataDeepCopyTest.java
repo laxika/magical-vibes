@@ -380,6 +380,19 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    void deepCopyPreservesCreaturesThatEnlistedThisCombatIndependently() {
+        UUID attackerId = UUID.randomUUID();
+        gd.creaturesThatEnlistedThisCombat.add(attackerId);
+
+        GameData copy = gd.simulationCopy();
+
+        // Aradesh, the Founder's intervening "if" reads it again as its ability resolves in the simulated combat.
+        assertThat(copy.creaturesThatEnlistedThisCombat).containsExactly(attackerId);
+        copy.creaturesThatEnlistedThisCombat.add(UUID.randomUUID());
+        assertThat(gd.creaturesThatEnlistedThisCombat).containsExactly(attackerId);
+    }
+
+    @Test
     @DisplayName("Deep copy preserves simultaneous-death granted-trigger snapshots independently")
     void deepCopyPreservesSimultaneousDeathGrantedTriggerSnapshots() {
         UUID permanentId = UUID.randomUUID();

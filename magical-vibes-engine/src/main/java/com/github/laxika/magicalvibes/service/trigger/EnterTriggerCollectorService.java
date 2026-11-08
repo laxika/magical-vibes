@@ -40,7 +40,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentLosesLifeEqualToPowerToughnessDifferenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringPermanentSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -173,11 +172,6 @@ public class EnterTriggerCollectorService {
         log.info("Game {} - {} any-permanent-enters trigger queued", match.gameData().id,
                 match.permanent().getCard().getName());
         return true;
-    }
-
-    private boolean usesTriggeringPermanentManaValue(CardEffect effect) {
-        return effect instanceof TriggeringPermanentManaValueEffect valueEffect
-                && valueEffect.usesTriggeringPermanentManaValue();
     }
 
     private Permanent findEnteringPermanent(com.github.laxika.magicalvibes.model.GameData gameData,
@@ -581,8 +575,6 @@ public class EnterTriggerCollectorService {
     private boolean handleEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.sourceCard();
-        int eventValue = may.usesTriggeringPermanentManaValue()
-                ? pe.enteringCard().getManaValue() : 0;
         boolean sourceIsEnteringPermanent = may instanceof TriggeringPermanentSourceEffect source
                 && source.sourceIsTriggeringPermanent();
         UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
@@ -633,7 +625,7 @@ public class EnterTriggerCollectorService {
             match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
                     mayTargetId,
                     match.permanent().getId(),
-                    eventValue,
+                    0,
                     match.markSourceOncePerTurnOnAcceptance(),
                     null);
             StackEntry entry = match.gameData().stack.getLast();
@@ -736,9 +728,6 @@ public class EnterTriggerCollectorService {
     private boolean handleEnterMayPay(TriggerMatchContext match, MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.permanent() != null ? match.permanent().getCard() : match.sourceCard();
-        int eventValue = mayPay.wrapped() instanceof TriggeringPermanentManaValueEffect valueEffect
-                && valueEffect.usesTriggeringPermanentManaValue()
-                ? pe.enteringCard().getManaValue() : 0;
         if (mayPay.sourceIsTriggeringPermanent()) {
             UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
             if (enteringPermanentId == null) {
@@ -752,7 +741,11 @@ public class EnterTriggerCollectorService {
                 }
             } else {
                 match.gameData().queueMayAbility(sourceCard, match.controllerId(), mayPay,
-                        pe.mayPayTargetCardId(), enteringPermanentId, eventValue);
+                        pe.mayPayTargetCardId(), enteringPermanentId, 0);
+                // "That creature" is the entering permanent, read as the ability resolves (CR 608.2h).
+                StackEntry entry = match.gameData().stack.getLast();
+                entry.setTriggeringPermanentId(enteringPermanentId);
+                entry.setTriggeringCardId(pe.enteringCard().getId());
             }
             logTriggered(match);
             log.info("Game {} - {} triggers for {} entering (may pay mana)",
@@ -782,7 +775,6 @@ public class EnterTriggerCollectorService {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard,
                     match.controllerId(), sourceCard.getName() + "'s ability", List.of(mayPay),
                     targetCardId, sourcePermanentId);
-            entry.setEventValue(eventValue);
             entry.setTriggeringPermanentId(enteringPermanentId);
             entry.setTriggeringCardId(pe.enteringCard().getId());
             entry.setNonTargeting(!isTargeting(mayPay));
@@ -1210,9 +1202,6 @@ public class EnterTriggerCollectorService {
                         gameQueryService.getEffectivePower(match.gameData(), enteringPermanent));
                 entry.setTriggeringPermanentToughnessAtTrigger(
                         gameQueryService.getEffectiveToughness(match.gameData(), enteringPermanent));
-                if (usesTriggeringPermanentManaValue(effect)) {
-                    entry.setEventValue(enteringPermanent.getCard().getManaValue());
-                }
             }
             match.gameData().stack.add(entry);
         }

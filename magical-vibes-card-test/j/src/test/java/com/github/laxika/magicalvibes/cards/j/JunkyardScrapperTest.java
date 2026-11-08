@@ -164,4 +164,17 @@ class JunkyardScrapperTest extends BaseCardTest {
         harness.passUntil(player2, TurnStep.UPKEEP);
         assertThat(gd.exilePlayPermissions).doesNotContainKey(candidate.getId());
     }
+
+    @Test
+    void seeksBelowTheLastKnownManaValueOfAnArtifactThatLeft() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new JunkyardScrapper());
+        Card candidate = new FountainOfYouth();
+        harness.setLibrary(player1, List.of(candidate));
+
+        Permanent sphere = harness.enterBattlefieldAndReturn(player1, new CommandersSphere());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, sphere);
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(source.getId())).containsExactly(candidate);
+    }
 }

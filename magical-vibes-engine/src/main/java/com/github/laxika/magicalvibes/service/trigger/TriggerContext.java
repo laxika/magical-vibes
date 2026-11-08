@@ -1022,15 +1022,6 @@ public sealed interface TriggerContext {
     record VotingFinished(VotingResult result) implements TriggerContext {}
 
     /** Context for an attacking creature causing one of its triggered abilities to trigger. */
-    record AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility,
-                                              boolean enlistment, Permanent enlistedCreature) implements TriggerContext {
-        public AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility,
-                                                  boolean enlistment) {
-            this(attackingCreature, triggeredAbility, enlistment, null);
-        }
-
-        public AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility) {
-            this(attackingCreature, triggeredAbility, false, null);
-        }
-    }
+    record AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility)
+            implements TriggerContext {}
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.ScryWhenThisCreatureEnlistsEffect;
+import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,7 +18,7 @@ import java.util.List;
 public class GuardianOfNewBenalia extends Card {
 
     public GuardianOfNewBenalia() {
-        addTrigger(Triggers.attackingCreatureYouControlAbilityTriggers(), new ScryWhenThisCreatureEnlistsEffect());
+        addTrigger(Triggers.enlists(), new ScryEffect(2));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

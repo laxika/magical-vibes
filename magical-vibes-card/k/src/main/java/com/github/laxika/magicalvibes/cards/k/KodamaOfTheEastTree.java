@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentManaValue;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -19,7 +20,7 @@ public class KodamaOfTheEastTree extends Card {
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 new MayEffect(
                         new PutCardToBattlefieldEffect(new CardIsPermanentPredicate(), "permanent")
-                                .boundedByEventValue(),
+                                .boundedBy(new TriggeringPermanentManaValue()),
                         "Put a permanent card with equal or lesser mana value from your hand onto the battlefield?"));
     }
 }

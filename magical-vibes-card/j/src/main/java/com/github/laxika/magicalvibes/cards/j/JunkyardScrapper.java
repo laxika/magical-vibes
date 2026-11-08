@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentManaValue;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -25,6 +25,6 @@ public class JunkyardScrapper extends Card {
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
         addTrigger(Triggers.enters(Triggers.NONTOKEN_ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new SeekLibraryEffect(new Fixed(1), nonlandArtifact, LibrarySearchDestination.EXILE_WITH_SOURCE,
-                        new ManaValueBound(new EventValue(), false, -1), false, true));
+                        new ManaValueBound(new TriggeringPermanentManaValue(), false, -1), false, true));
     }
 }

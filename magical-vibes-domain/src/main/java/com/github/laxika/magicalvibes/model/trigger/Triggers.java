@@ -601,13 +601,19 @@ public final class Triggers {
                 ObjectRelation.OPPONENT_CONTROLS);
     }
 
-    /**
-     * An attacking creature you control causes a triggered ability of its own to trigger, or this creature enlists a
-     * creature.
-     */
+    /** An attacking creature you control causes a triggered ability of its own to trigger. */
     public static CombatTrigger attackingCreatureYouControlAbilityTriggers() {
         return new CombatTrigger(CombatTrigger.CombatEvent.ATTACKING_CREATURE_ABILITY_TRIGGERS,
                 ObjectRelation.YOU_CONTROL);
+    }
+
+    /**
+     * "Whenever this creature enlists a creature" (CR 702.154c): as it attacks, its controller taps a creature to pay
+     * its enlist cost. With {@link CombatTrigger#withFilter}, "enlists a nontoken creature"; the enlisted creature is the
+     * stack entry's triggering permanent ("that creature").
+     */
+    public static CombatTrigger enlists() {
+        return new CombatTrigger(CombatTrigger.CombatEvent.ENLISTS, ObjectRelation.THIS);
     }
 
     /** "Whenever this creature attacks and isn't blocked". */

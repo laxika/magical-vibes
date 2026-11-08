@@ -33,6 +33,7 @@ import com.github.laxika.magicalvibes.model.rules.RulesObserver;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.DamageTrigger;
+import com.github.laxika.magicalvibes.model.trigger.CombatTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.LibraryTrigger;
@@ -9428,24 +9429,6 @@ public class TriggerCollectionService {
      */
     public void checkAttackingCreatureTriggeredAbilityTriggers(GameData gameData, Permanent attacker,
                                                                 StackEntry triggeredAbility) {
-        checkAttackingCreatureTriggeredAbilityTriggers(gameData, attacker, triggeredAbility, false, null);
-    }
-
-    public void checkEnlistmentTriggeredAbilityTriggers(GameData gameData, Permanent attacker,
-                                                        StackEntry triggeredAbility) {
-        checkEnlistmentTriggeredAbilityTriggers(gameData, attacker, triggeredAbility, null);
-    }
-
-    public void checkEnlistmentTriggeredAbilityTriggers(GameData gameData, Permanent attacker,
-                                                        StackEntry triggeredAbility,
-                                                        Permanent enlistedCreature) {
-        checkAttackingCreatureTriggeredAbilityTriggers(gameData, attacker, triggeredAbility, true,
-                enlistedCreature);
-    }
-
-    private void checkAttackingCreatureTriggeredAbilityTriggers(GameData gameData, Permanent attacker,
-                                                                StackEntry triggeredAbility, boolean enlistment,
-                                                                Permanent enlistedCreature) {
         if (attacker == null || triggeredAbility == null) {
             return;
         }
@@ -9458,8 +9441,7 @@ public class TriggerCollectionService {
             return;
         }
 
-        TriggerContext context = new TriggerContext.AttackingCreatureTriggeredAbility(
-                attacker, triggeredAbility, enlistment, enlistedCreature);
+        TriggerContext context = new TriggerContext.AttackingCreatureTriggeredAbility(attacker, triggeredAbility);
         for (Permanent watcher : List.copyOf(battlefield)) {
             dispatchWatch(gameData, watcher, controllerId, CombatWatch.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS, context);
         }
@@ -12684,7 +12666,7 @@ public class TriggerCollectionService {
             // A mana value bound compares against the creature's actual last known power, which can be
             // negative (CR 208.3), so an unclamped power excludes even mana value 0.
             boolean powerBoundsManaValue = entryEffects.stream().anyMatch(
-                    e -> e instanceof PutCardToBattlefieldEffect put && put.maxManaValueBoundedByEventValue());
+                    e -> e instanceof PutCardToBattlefieldEffect put && put.maxManaValue() != null);
             entry.setEventValue(powerBoundsManaValue ? dyingPowerAtDeath : dyingPower);
             // "This ability triggers only once each turn" can't be made to trigger an additional time.
             int additionalCopies = limit == TriggerLimit.ONCE_EACH_TURN ? 0
@@ -14898,6 +14880,42 @@ public class TriggerCollectionService {
             for (TriggeredAbility ability : emblem.triggeredAbilities()) {
                 if (emblemSeesEntering(gameData, emblem, ability, enteringControllerId, entering)) {
                     putEmblemAbilityOnStack(gameData, emblem, ability, entering, enteringControllerId, "entering");
+                }
+            }
+        }
+    }
+
+    /**
+     * The emblems' "whenever a creature attacks you" abilities ({@code Triggers.creatureAttacksYou()}; Garruk, Apex
+     * Predator's emblem) for {@code attacker}, which {@code attackerControllerId} declared as an attacker attacking
+     * {@code attackedTargetId}. Abilities of emblems function in the command zone (CR 114.4); such an ability triggers
+     * only when the creature attacks the emblem's controller, not a planeswalker or battle (CR 508.3a). Each one goes on
+     * the stack once as one object of its effects (CR 603.3), the emblem's source card as its source and the attacking
+     * creature as its triggering permanent ("it", read as the ability resolves). An emblem isn't a permanent (CR 110.1),
+     * so nothing makes its ability trigger additional times. The reader judges no filter or options; an ability with
+     * one fails loudly instead of triggering wrongly.
+     */
+    public void checkEmblemAttackTriggers(GameData gameData, Permanent attacker, UUID attackedTargetId,
+                                          UUID attackerControllerId) {
+        if (gameData.emblems.isEmpty() || attacker == null || attackedTargetId == null) return;
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            if (!emblem.controllerId().equals(attackedTargetId)) continue;
+            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
+                boolean attacksYou = false;
+                for (TriggerCondition condition : ability.conditions()) {
+                    if (!(condition.trigger() instanceof CombatTrigger trigger)
+                            || trigger.event() != CombatTrigger.CombatEvent.ATTACKS_YOU) {
+                        continue;
+                    }
+                    if (trigger.relation() != ObjectRelation.ANY || trigger.filter() != null
+                            || !ability.options().equals(TriggerOptions.DEFAULT)) {
+                        throw new IllegalStateException(emblemName(emblem) + " has an attack ability its reader "
+                                + "doesn't judge: " + ability);
+                    }
+                    attacksYou = true;
+                }
+                if (attacksYou) {
+                    putEmblemAbilityOnStack(gameData, emblem, ability, attacker, attackerControllerId, "attacking");
                 }
             }
         }

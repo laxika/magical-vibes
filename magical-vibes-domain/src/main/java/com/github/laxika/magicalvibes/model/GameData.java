@@ -422,6 +422,12 @@ public class GameData {
     public final Set<UUID> playersWhoAttackedWithCommanderThisTurn = ConcurrentHashMap.newKeySet();
     /** Permanent IDs declared as attackers in the current combat. */
     public final Set<UUID> declaredAttackerIdsThisCombat = ConcurrentHashMap.newKeySet();
+    /**
+     * IDs of the attacking creatures that enlisted a creature in the current combat (CR 702.154c): their controller paid
+     * their enlist cost by tapping another creature as they attacked. Read by
+     * {@code PermanentEnlistedCreatureThisCombatPredicate}; cleared with {@link #declaredAttackerIdsThisCombat}.
+     */
+    public final Set<UUID> creaturesThatEnlistedThisCombat = ConcurrentHashMap.newKeySet();
     /** Raging River: each attacking permanent maps to the independent nonflying pile restrictions
      * chosen for it during the current combat. */
     public final Map<UUID, List<Set<UUID>>> ragingRiverBlockRestrictionsThisCombat = new ConcurrentHashMap<>();
@@ -6061,7 +6067,7 @@ public class GameData {
             observeTrigger(RulesObserver.Route.SUSPENDED_QUEUE, entry);
             suspendedZoneTriggers.add(entry);
             for (int i = 1; i < activeTriggeredAbilityCopies; i++) {
-                suspendedZoneTriggers.add(new StackEntry(entry));
+                suspendedZoneTriggers.add(entry.copyForNewStackObject());
             }
             return;
         }
@@ -6069,7 +6075,7 @@ public class GameData {
             observeTrigger(RulesObserver.Route.MANA_ABILITY_QUEUE, entry);
             pendingManaAbilityTriggers.add(entry);
             for (int i = 1; i < activeTriggeredAbilityCopies; i++) {
-                pendingManaAbilityTriggers.add(new StackEntry(entry));
+                pendingManaAbilityTriggers.add(entry.copyForNewStackObject());
             }
         } else {
             stack.add(entry);
@@ -6150,8 +6156,10 @@ public class GameData {
                 gameData.reportStackArrival(entry);
             }
             if (added && entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
+                // Each additional time the ability triggers puts another object on the stack (CR 603.3), with an
+                // identity of its own: its controller orders them (CR 603.3b).
                 for (int i = 1; i < gameData.activeTriggeredAbilityCopies(); i++) {
-                    StackEntry copy = new StackEntry(entry);
+                    StackEntry copy = entry.copyForNewStackObject();
                     super.add(copy);
                     gameData.recordStackEntryForCrime(copy);
                 }
@@ -10257,6 +10265,7 @@ public class GameData {
         copy.playersWhoAttackedWithTokenThisTurn.addAll(this.playersWhoAttackedWithTokenThisTurn);
         copy.playersWhoAttackedWithCommanderThisTurn.addAll(this.playersWhoAttackedWithCommanderThisTurn);
         copy.declaredAttackerIdsThisCombat.addAll(this.declaredAttackerIdsThisCombat);
+        copy.creaturesThatEnlistedThisCombat.addAll(this.creaturesThatEnlistedThisCombat);
         this.ragingRiverBlockRestrictionsThisCombat.forEach((attackerId, restrictions) ->
                 copy.ragingRiverBlockRestrictionsThisCombat.put(attackerId,
                         restrictions.stream().map(restriction -> Set.copyOf(restriction)).toList()));

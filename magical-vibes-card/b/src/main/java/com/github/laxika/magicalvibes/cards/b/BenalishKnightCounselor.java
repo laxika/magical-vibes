@@ -9,8 +9,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BenalishKnightCounselor extends Card {
 
     public BenalishKnightCounselor() {
-        // Enlist is loaded from Scryfall and handled during attacker declaration.
-        addTrigger(Triggers.attackingCreatureYouControlAbilityTriggers(),
-                new GrantAdditionalPlusOnePlusOneCounterToNextCreatureSpellEffect());
+        addTrigger(Triggers.enlists(), new GrantAdditionalPlusOnePlusOneCounterToNextCreatureSpellEffect());
     }
 }

@@ -240,4 +240,18 @@ class BrainstealerDragonTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
     }
+
+    @Test
+    @DisplayName("A permanent that left before the ability resolves still costs its owner its last-known mana value")
+    void ownerLosesLastKnownManaValueWhenThePermanentLeftFirst() {
+        harness.addToBattlefield(player1, new BrainstealerDragon());
+        Card creature = new GrizzlyBears();
+        creature.setOwnerId(player2.getId());
+
+        Permanent bears = harness.enterBattlefieldAndReturn(player1, creature);
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears);
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
 }

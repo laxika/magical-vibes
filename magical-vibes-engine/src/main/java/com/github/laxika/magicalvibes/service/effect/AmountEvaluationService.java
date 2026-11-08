@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsDiscardedT
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongTriggeringCards;
 import com.github.laxika.magicalvibes.model.amount.TriggeringCardManaValue;
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentManaValue;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongPermanentsSacrificedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongSpellsCastThisTurn;
@@ -666,6 +667,7 @@ public class AmountEvaluationService {
             case CardTypesAmongTriggeringCards ignored ->
                     ctx.stackEntry() == null ? 0 : countCardTypesAmongCards(ctx.stackEntry().getTriggeringCards());
             case TriggeringCardManaValue ignored -> triggeringCardManaValue(gameData, ctx.stackEntry());
+            case TriggeringPermanentManaValue ignored -> triggeringPermanentManaValue(gameData, ctx.stackEntry());
             case AurasAttachedToTriggeringPermanent auras -> {
                 var attachments = ctx.stackEntry() == null ? null : ctx.stackEntry().getTriggeringAttachments();
                 yield attachments == null ? 0 : auras.controlledByYou()
@@ -1478,6 +1480,36 @@ public class AmountEvaluationService {
      * The mana value of {@code entry}'s triggering card: the card as it was in the event (its triggering cards), else
      * the card where it is now; 0 without one.
      */
+    /**
+     * "That permanent's mana value" as the ability resolves: the triggering permanent's current mana value, else its
+     * mana value as it last existed on the battlefield (CR 608.2h): its departure snapshot, the entry's triggering
+     * permanent snapshot, or the card the entry remembered for it or recorded as it entered.
+     */
+    private int triggeringPermanentManaValue(GameData gameData, StackEntry entry) {
+        if (entry == null || entry.getTriggeringPermanentId() == null) {
+            return 0;
+        }
+        UUID triggeringId = entry.getTriggeringPermanentId();
+        Permanent triggering = gameQueryService.findPermanentById(gameData, triggeringId);
+        if (triggering != null) {
+            return triggering.getCard().getManaValue();
+        }
+        for (Permanent departed : gameData.departedPermanentSnapshots.values()) {
+            if (departed.getId().equals(triggeringId)) {
+                return departed.getCard().getManaValue();
+            }
+        }
+        Permanent snapshot = entry.getTriggeringPermanentSnapshot();
+        if (snapshot != null && snapshot.getId().equals(triggeringId)) {
+            return snapshot.getCard().getManaValue();
+        }
+        Card lastKnown = entry.lastKnownPermanentCard(triggeringId);
+        if (lastKnown == null) {
+            lastKnown = entry.getTriggeringCardSnapshot();
+        }
+        return lastKnown == null ? 0 : lastKnown.getManaValue();
+    }
+
     private int triggeringCardManaValue(GameData gameData, StackEntry entry) {
         if (entry == null || entry.getTriggeringCardId() == null) {
             return 0;

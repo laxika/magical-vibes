@@ -58,12 +58,11 @@ public enum CombatWatch implements TriggerWatch {
     ON_CREATURES_ATTACK_YOU(Triggers.creaturesAttackYou(), Zone.BATTLEFIELD),
     /** "Whenever an opponent attacks a planeswalker you control with one or more creatures". */
     ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL(Triggers.opponentAttacksYourPlaneswalker(), Zone.BATTLEFIELD),
-    /**
-     * An attacking creature you control causes a triggered ability of its own to trigger, or this creature enlists a
-     * creature.
-     */
+    /** An attacking creature you control causes a triggered ability of its own to trigger. */
     ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS(Triggers.attackingCreatureYouControlAbilityTriggers(),
             Zone.BATTLEFIELD),
+    /** "Whenever this creature enlists a creature" (CR 702.154c). */
+    ON_ENLISTS(Triggers.enlists(), Zone.BATTLEFIELD),
     /** "Whenever this creature attacks and isn't blocked". */
     ON_ATTACKS_UNBLOCKED(Triggers.attacksUnblocked(), Zone.BATTLEFIELD),
     /** "Whenever enchanted creature attacks and isn't blocked". */

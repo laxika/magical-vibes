@@ -13,8 +13,7 @@ import java.util.List;
  *
  * <p>{@code staticEffects} is a pass-through payload — the handler stores it on the emblem verbatim
  * and never resolves it. Each element is a static/marker effect read later by whichever service
- * owns that behaviour (the layered pass for {@code GrantKeywordEffect}, {@code CombatAttackService}
- * for {@code BoostAttackingCreatureOnAttacksYouEffect}, {@code TriggerCollectionService} for the
+ * owns that behaviour (the layered pass for {@code GrantKeywordEffect}, {@code TriggerCollectionService} for the
  * emblem trigger markers, …). Emblems are never removed once created.</p>
  *
  * <p>{@code triggeredAbilities} are the emblem's triggered abilities written as abilities: "whenever you cast a
@@ -22,7 +21,9 @@ import java.util.List;
  * {@code new TriggeredAbility(Triggers.youCastSpell().withFilter(creatureOrPlaneswalker),
  * new GivePoisonCountersEffect(2, PoisonRecipient.TARGET_PLAYER)).withTargetFilter(opponent)}. An emblem has no card
  * that binds its effects to a target group, so a targeted ability names its target filter itself
- * ({@link TriggeredAbility#targetFilter()}). The spell-cast collector reads the cast abilities.</p>
+ * ({@link TriggeredAbility#targetFilter()}). The spell-cast collector reads the cast abilities, the emblem enters, tap and
+ * combat damage readers theirs, and {@code TriggerCollectionService.checkEmblemAttackTriggers} "whenever a creature
+ * attacks you" ({@code Triggers.creatureAttacksYou()}, Garruk, Apex Predator).</p>
  *
  * <p>{@code reminderText} is the emblem's own rules text without the enclosing quotes — the handler
  * logs {@code "<player> gets an emblem with \"<reminderText>\"."}.</p>
