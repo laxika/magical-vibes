@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.ActOfAggression;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.FolkOfThePines;
+import com.github.laxika.magicalvibes.cards.g.GhostlyFlame;
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.m.Manabarbs;
 import com.github.laxika.magicalvibes.cards.m.MoorFiend;
@@ -46,6 +47,24 @@ class JusticeTest extends BaseCardTest {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 14);
+    }
+
+    @Test
+    @CardUsed({Justice.class, GhostlyFlame.class, Incinerate.class})
+    @DisplayName("A red spell still triggers Justice while Ghostly Flame makes it a colorless source of damage")
+    void redSpellTriggersJusticeUnderGhostlyFlame() {
+        harness.addToBattlefield(player2, new Justice());
+        harness.addToBattlefield(player2, new GhostlyFlame());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new Incinerate()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.passBothPriorities(); // Justice resolves: 3 to Incinerate's controller (player1)
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
     }
 
     @Test

@@ -80,6 +80,24 @@ public class GainLifeEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (e.recipient() == GainLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER) {
+            // "Its controller": the triggering permanent's controller as the ability resolves, else as it last
+            // existed (CR 608.2h); a spell source's controller as it dealt the damage.
+            UUID recipientId = entry.getTriggeringPermanentId() == null ? null
+                    : gameQueryService.findPermanentController(gameData, entry.getTriggeringPermanentId());
+            if (recipientId == null && entry.getTriggeringPermanentId() != null) {
+                recipientId = entry.getRemovedPermanentControllers().get(entry.getTriggeringPermanentId());
+            }
+            if (recipientId == null) {
+                recipientId = entry.getTriggeringPermanentControllerId();
+            }
+            if (recipientId != null && gameData.playerIds.contains(recipientId)) {
+                lifeSupport.applyGainLife(gameData, recipientId, amount, null,
+                        entry.getCard(), entry.getEntryType());
+            }
+            return;
+        }
+
         if (e.recipient() == GainLifeRecipient.EACH_PLAYER) {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 lifeSupport.applyGainLife(gameData, playerId, amount, null,

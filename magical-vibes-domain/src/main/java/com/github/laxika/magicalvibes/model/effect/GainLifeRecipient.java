@@ -15,6 +15,12 @@ public enum GainLifeRecipient {
     /** The player whose action caused the trigger ("that player"; Aven Shrine). */
     /** The player recorded as the trigger's target channel, without making the effect targeted. */
     TRIGGERING_PLAYER,
+    /**
+     * The controller of the stack entry's triggering permanent as the ability resolves, or as it last existed; for a
+     * spell or card source, its controller as the event happened ("its controller gains that much life"; Essence
+     * Sliver).
+     */
+    TRIGGERING_PERMANENT_CONTROLLER,
     /** Every player in the game. */
     EACH_PLAYER
 }

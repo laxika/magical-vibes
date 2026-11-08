@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.trigger;
 
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.Objects;
@@ -23,24 +24,45 @@ import java.util.Objects;
  *                 creatures") it is the damaged permanent; for the other "deals damage" events it is the permanent
  *                 that deals the damage (each of the creatures for "one or more creatures you control deal damage").
  *                 The damage collectors read it from the ability, through {@code DamageAbilityReader}, so
- *                 {@link #watchKey()} drops it
- * @param damagedFilter what the creature dealt the damage must be, or {@code null} for any: "whenever this creature
+ *                 {@link #watchKey()} drops it. On a {@link DamageEvent#DEALS_DAMAGE} trigger about another source
+ *                 ({@link ObjectRelation#ANY}, {@link ObjectRelation#YOU_CONTROL}) it is the source when that is a
+ *                 permanent, and {@link #spellFilter} the source when it isn't
+ * @param spellFilter what the source of the damage must be when it isn't a permanent (a spell, or a card dealing
+ *                 damage from another zone), or {@code null}: "whenever a red creature or spell deals damage" is
+ *                 {@code Triggers.sourceDealsDamage().withFilter(red creature).withSpellFilter(new
+ *                 CardColorPredicate(RED))}. Only a {@link DamageEvent#DEALS_DAMAGE} trigger about another source has
+ *                 one. A trigger with a filter or a spell filter triggers only for a source of a kind it has a filter
+ *                 for (a permanent source that has left the battlefield is judged on its card's characteristics); one
+ *                 with neither for every source. {@link #watchKey()} drops it
+ * @param damagedFilter what the permanent dealt the damage must be, or {@code null} for any: "whenever this creature
  *                 deals damage to a Vampire" is {@code Triggers.dealsDamageToCreature().withDamagedFilter(new
  *                 PermanentHasSubtypePredicate(VAMPIRE))}. Only a {@link DamageEvent#DEALS_DAMAGE_TO_CREATURE}
- *                 trigger has one, judged on the damaged creature as the damage was dealt; {@link #watchKey()} drops it
+ *                 trigger has one, judged on the damaged creature as the damage was dealt, and a
+ *                 {@link DamageEvent#CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT} trigger, judged on the damaged
+ *                 permanent ("to you or a white creature you control": damage to you always counts);
+ *                 {@link #watchKey()} drops it
  * @param combatOnly whether only combat damage counts: "whenever this creature deals combat damage to a creature".
  *                 Only a {@link DamageEvent#DEALS_DAMAGE_TO_CREATURE} trigger has it; {@link #watchKey()} drops it
  */
 public record DamageTrigger(DamageEvent event, ObjectRelation relation, PermanentPredicate filter,
-                            PermanentPredicate damagedFilter, boolean combatOnly) implements Trigger {
+                            CardPredicate spellFilter, PermanentPredicate damagedFilter, boolean combatOnly)
+        implements Trigger {
 
     public DamageTrigger {
         Objects.requireNonNull(event, "event");
         Objects.requireNonNull(relation, "relation");
-        if ((damagedFilter != null || combatOnly) && event != DamageEvent.DEALS_DAMAGE_TO_CREATURE) {
+        if (combatOnly && event != DamageEvent.DEALS_DAMAGE_TO_CREATURE) {
+            throw new IllegalArgumentException("Only a deals-damage-to-a-creature trigger is combat only: " + event);
+        }
+        if (damagedFilter != null && event != DamageEvent.DEALS_DAMAGE_TO_CREATURE
+                && event != DamageEvent.CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT) {
+            throw new IllegalArgumentException("Only a deals-damage-to-a-creature or a deals-damage-to-you-or-a-"
+                    + "permanent-you-control trigger has a damaged-permanent filter: " + event);
+        }
+        if (spellFilter != null && (event != DamageEvent.DEALS_DAMAGE
+                || relation != ObjectRelation.ANY && relation != ObjectRelation.YOU_CONTROL)) {
             throw new IllegalArgumentException(
-                    "Only a deals-damage-to-a-creature trigger has a damaged-creature filter or is combat only: "
-                            + event);
+                    "Only a trigger on another source dealing damage has a spell filter: " + event + " " + relation);
         }
     }
 
@@ -51,7 +73,7 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
 
     /** A trigger on a permanent that relates to the source as {@code relation} says and matches {@code filter}. */
     public DamageTrigger(DamageEvent event, ObjectRelation relation, PermanentPredicate filter) {
-        this(event, relation, filter, null, false);
+        this(event, relation, filter, null, null, false);
     }
 
     /**
@@ -63,19 +85,33 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
         if (this.filter != null) {
             throw new IllegalStateException("This damage trigger already has a filter: " + this);
         }
-        return new DamageTrigger(event, relation, filter, damagedFilter, combatOnly);
+        return new DamageTrigger(event, relation, filter, spellFilter, damagedFilter, combatOnly);
+    }
+
+    /**
+     * This {@link DamageEvent#DEALS_DAMAGE} trigger on another source narrowed to a source that isn't a permanent and
+     * matches {@code spellFilter}, as {@link #spellFilter} says: "whenever a red creature or spell deals damage".
+     */
+    public DamageTrigger withSpellFilter(CardPredicate spellFilter) {
+        Objects.requireNonNull(spellFilter, "spellFilter");
+        if (this.spellFilter != null) {
+            throw new IllegalStateException("This damage trigger already has a spell filter: " + this);
+        }
+        return new DamageTrigger(event, relation, filter, spellFilter, damagedFilter, combatOnly);
     }
 
     /**
      * This {@link DamageEvent#DEALS_DAMAGE_TO_CREATURE} trigger narrowed to a damaged creature that matches
-     * {@code damagedFilter}: "whenever this creature deals damage to a Vampire".
+     * {@code damagedFilter}: "whenever this creature deals damage to a Vampire", or this
+     * {@link DamageEvent#CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT} trigger to a damaged permanent that matches
+     * it ("to you or a white creature you control").
      */
     public DamageTrigger withDamagedFilter(PermanentPredicate damagedFilter) {
         Objects.requireNonNull(damagedFilter, "damagedFilter");
         if (this.damagedFilter != null) {
             throw new IllegalStateException("This damage trigger already has a damaged-creature filter: " + this);
         }
-        return new DamageTrigger(event, relation, filter, damagedFilter, combatOnly);
+        return new DamageTrigger(event, relation, filter, spellFilter, damagedFilter, combatOnly);
     }
 
     /**
@@ -83,7 +119,7 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
      * deals combat damage to a creature".
      */
     public DamageTrigger withCombatDamageOnly() {
-        return new DamageTrigger(event, relation, filter, damagedFilter, true);
+        return new DamageTrigger(event, relation, filter, spellFilter, damagedFilter, true);
     }
 
     /**
@@ -92,7 +128,8 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
      */
     @Override
     public Trigger watchKey() {
-        return filter == null && damagedFilter == null && !combatOnly ? this : new DamageTrigger(event, relation);
+        return filter == null && spellFilter == null && damagedFilter == null && !combatOnly
+                ? this : new DamageTrigger(event, relation);
     }
 
     /**

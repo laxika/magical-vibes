@@ -211,78 +211,6 @@ class DamageTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("queues life gain for damage from a controlled noncreature source")
-    void queuesLifeGainForControlledNoncreatureSource() {
-        Permanent tamanoa = createPermanent("Tamanoa");
-        Card sourceCard = new Card();
-        sourceCard.setName("Shock");
-        sourceCard.setType(CardType.INSTANT);
-        GainLifeEffect effect = new GainLifeEffect(new EventValue());
-        var ctx = new TriggerContext.SourceDealsDamage(sourceCard, player1Id, 2,
-                Map.of(player2Id, 2));
-
-        boolean result = registry.dispatch(
-                match(tamanoa, player1Id, effect), DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE, effect, ctx);
-
-        assertThat(result).isTrue();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(2);
-    }
-
-    @Test
-    @DisplayName("does not queue life gain for damage from a creature source")
-    void doesNotQueueLifeGainForCreatureSource() {
-        Permanent tamanoa = createPermanent("Tamanoa");
-        Card sourceCard = createCard("Grizzly Bears");
-        GainLifeEffect effect = new GainLifeEffect(new EventValue());
-        var ctx = new TriggerContext.SourceDealsDamage(sourceCard, player1Id, 2,
-                Map.of(player2Id, 2));
-
-        boolean result = registry.dispatch(
-                match(tamanoa, player1Id, effect), DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE, effect, ctx);
-
-        assertThat(result).isFalse();
-        assertThat(gd.stack).isEmpty();
-    }
-
-    @Test
-    @DisplayName("does not queue life gain for a noncreature source controlled by another player")
-    void doesNotQueueLifeGainForAnotherPlayersSource() {
-        Permanent tamanoa = createPermanent("Tamanoa");
-        Card sourceCard = new Card();
-        sourceCard.setName("Shock");
-        sourceCard.setType(CardType.INSTANT);
-        GainLifeEffect effect = new GainLifeEffect(new EventValue());
-        var ctx = new TriggerContext.SourceDealsDamage(sourceCard, player2Id, 2,
-                Map.of(player1Id, 2));
-
-        boolean result = registry.dispatch(
-                match(tamanoa, player1Id, effect), DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE, effect, ctx);
-
-        assertThat(result).isFalse();
-        assertThat(gd.stack).isEmpty();
-    }
-
-    @Test
-    @DisplayName("uses the current type of a permanent damage source")
-    void usesCurrentTypeOfPermanentSource() {
-        Permanent tamanoa = createPermanent("Tamanoa");
-        Permanent source = createPermanent("Animated Artifact");
-        GainLifeEffect effect = new GainLifeEffect(new EventValue());
-        var ctx = new TriggerContext.SourceDealsDamage(source.getCard(), player1Id, source.getId(), 2,
-                Map.of(player2Id, 2));
-
-        when(gameQueryService.findPermanentById(gd, source.getId())).thenReturn(source);
-        when(gameQueryService.isCreature(gd, source)).thenReturn(false);
-
-        boolean result = registry.dispatch(
-                match(tamanoa, player1Id, effect), DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE, effect, ctx);
-
-        assertThat(result).isTrue();
-        assertThat(gd.stack).hasSize(1);
-    }
-
-    @Test
     @DisplayName("queues a source-controller sacrifice trigger for opponent damage")
     void queuesSourceControllerSacrificeTrigger() {
         gd.playerIds.add(player1Id);
@@ -1400,29 +1328,36 @@ class DamageTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("A red spell's damage: Justice's effect reads the total as the event value and the caster as the fallback controller")
-        void redSourceDamageRecordsTheTotalAndTheController() {
-            gd.playerIds.add(player1Id);
-            gd.playerIds.add(player2Id);
-            Permanent watcher = createPermanent("Justice");
-            Card spell = createCard("Lightning Bolt");
-            var record = new com.github.laxika.magicalvibes.model.effect.ReflectSourceDamageToItsControllerEffect(
-                    com.github.laxika.magicalvibes.model.CardColor.RED);
-            var red = java.util.Set.of(com.github.laxika.magicalvibes.model.CardColor.RED);
-            when(gameQueryService.getEffectiveCardColors(gd, spell)).thenReturn(red);
-            when(gameQueryService.getDamageSourceColors(gd, red)).thenReturn(red);
-            var ctx = new TriggerContext.SourceDealsDamage(spell, player2Id, 3);
+        @DisplayName("The source, damage-to-you, chosen-color creature and fight abilities' effects go on the stack through no record handler")
+        void theSourceDamageAbilitiesHaveNoRecordHandler() {
+            var gainLife = new GainLifeEffect(new EventValue());
+            var destroy = new com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect(
+                    PermanentReference.TRIGGERING);
+            assertThat(registry.handles(DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE, gainLife)).isFalse();
+            assertThat(registry.handles(DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE, gainLife)).isFalse();
+            assertThat(registry.handles(DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, destroy)).isFalse();
+            assertThat(registry.handles(DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT,
+                    new com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentEffect(
+                            new EventValue()))).isFalse();
+        }
 
-            boolean result = registry.dispatch(match(watcher, player1Id, record),
-                    DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE, record, ctx);
+        @Test
+        @DisplayName("A creature you control fights: the card's delayed counters go on the stack unchanged, the fighter its triggering permanent")
+        void fightGoesOnTheStackUnchangedWithTheFighter() {
+            Permanent watcher = createPermanent("Foe-Razer Regent");
+            Permanent fighter = createPermanent("Grizzly Bears");
+            var delayed = new com.github.laxika.magicalvibes.model.effect.RegisterDelayedCountersOnTriggeringPermanentEffect(
+                    new com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect(
+                            CounterType.PLUS_ONE_PLUS_ONE, 2));
+            var ctx = new TriggerContext.CreatureFights(fighter);
+
+            boolean result = registry.dispatch(match(watcher, player1Id, delayed),
+                    ActionWatch.ON_ALLY_CREATURE_FIGHTS, delayed, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).singleElement().satisfies(entry -> {
-                assertThat(entry.getEffectsToResolve()).containsExactly(record.triggeredEffect());
-                assertThat(entry.getEventValue()).isEqualTo(3);
-                assertThat(entry.getTriggeringPermanentId()).isNull();
-                assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
-                assertThat(entry.getTargetId()).isNull();
+                assertThat(entry.getEffectsToResolve()).containsExactly(delayed);
+                assertThat(entry.getTriggeringPermanentId()).isEqualTo(fighter.getId());
             });
         }
 

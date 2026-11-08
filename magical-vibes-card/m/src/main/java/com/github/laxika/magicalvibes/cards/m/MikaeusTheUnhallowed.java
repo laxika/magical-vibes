@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DestroyDamageSourcePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -23,9 +24,9 @@ import java.util.Set;
 public class MikaeusTheUnhallowed extends Card {
 
     public MikaeusTheUnhallowed() {
-        addTrigger(Triggers.permanentDealsDamageToYou(),
-                new DestroyDamageSourcePermanentEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN)));
+        addTrigger(Triggers.permanentDealsDamageToYou()
+                        .withFilter(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)),
+                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
 
         addStaticEffect(new StaticBoostEffect(
                 1, 1, Set.of(Keyword.UNDYING), GrantScope.OWN_CREATURES,

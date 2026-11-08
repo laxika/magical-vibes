@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.a.ActOfAggression;
 import com.github.laxika.magicalvibes.cards.f.FireWhip;
 import com.github.laxika.magicalvibes.cards.m.MoorishCavalry;
 import com.github.laxika.magicalvibes.cards.s.SpinedSliver;
 import com.github.laxika.magicalvibes.cards.s.Squire;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,6 +20,28 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({EssenceSliver.class, FireWhip.class, MoorishCavalry.class, SpinedSliver.class, Squire.class})
 class EssenceSliverTest extends BaseCardTest {
+
+    @Test
+    @CardUsed({EssenceSliver.class, ActOfAggression.class})
+    @DisplayName("The Sliver's controller as the ability resolves gains the life")
+    void sliversControllerAsTheAbilityResolvesGainsTheLife() {
+        Permanent sliver = addCreatureReady(player1, new EssenceSliver());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        sliver.setAttacking(true);
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player2, List.of(new ActOfAggression()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player2, 0, sliver.getId());
+        harness.assertOnBattlefield(player2, "Essence Sliver");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 20);
+    }
 
     @Test
     @DisplayName("Essence Sliver gains life for the damage it deals")

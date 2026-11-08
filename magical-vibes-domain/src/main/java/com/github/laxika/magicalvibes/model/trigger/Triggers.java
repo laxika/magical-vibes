@@ -946,9 +946,20 @@ public final class Triggers {
         return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, ObjectRelation.YOU_CONTROL);
     }
 
-    /** "Whenever a source deals damage"; the effect filters the source ("a red creature or spell"). */
+    /**
+     * "Whenever a source deals damage", whoever controls it; {@code withFilter} narrows the source as a permanent and
+     * {@code withSpellFilter} as a spell or card ("a red creature or spell", "a Sliver").
+     */
     public static DamageTrigger sourceDealsDamage() {
         return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE, ObjectRelation.ANY);
+    }
+
+    /**
+     * "Whenever a source you control deals damage"; filtered as {@link #sourceDealsDamage()} is ("a red source you
+     * control", "a noncreature source you control").
+     */
+    public static DamageTrigger sourceYouControlDealsDamage() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.DEALS_DAMAGE, ObjectRelation.YOU_CONTROL);
     }
 
     /** "Whenever an instant or sorcery spell you control deals damage". */

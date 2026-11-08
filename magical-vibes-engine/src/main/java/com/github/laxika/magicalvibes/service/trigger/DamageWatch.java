@@ -88,8 +88,10 @@ public enum DamageWatch implements TriggerWatch {
     /** "Whenever a source you control deals noncombat damage to an opponent", from the graveyard. */
     GRAVEYARD_ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT(
             Triggers.sourceYouControlDealsNoncombatDamageToOpponent(), Zone.GRAVEYARD),
-    /** "Whenever a source deals damage"; the effect filters the source ("a red creature or spell"). */
+    /** "Whenever a source deals damage"; the trigger's filters say which source ("a red creature or spell"). */
     ON_ANY_SOURCE_DEALS_DAMAGE(Triggers.sourceDealsDamage(), Zone.BATTLEFIELD),
+    /** "Whenever a source you control deals damage"; the trigger's filters say which source ("a red source"). */
+    ON_ALLY_SOURCE_DEALS_DAMAGE(Triggers.sourceYouControlDealsDamage(), Zone.BATTLEFIELD),
     /** "Whenever an instant or sorcery spell you control deals damage". */
     ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE(Triggers.instantOrSorceryYouControlDealsDamage(), Zone.BATTLEFIELD),
     /** "Whenever an instant or sorcery spell you control deals damage to an opponent", once for each opponent. */
@@ -136,8 +138,8 @@ public enum DamageWatch implements TriggerWatch {
     ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT(
             Triggers.sourceOpponentControlsDealsDamageToYouOrYourPermanent(), Zone.BATTLEFIELD),
     /**
-     * "Whenever a creature deals damage to you or a permanent you control"; the effect filters the creature ("of the
-     * chosen color").
+     * "Whenever a creature deals damage to you or a permanent you control"; the trigger's filter narrows the creature
+     * ("of the chosen color") and its damaged filter the permanent ("a white creature you control").
      */
     ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT(
             Triggers.creatureDealsDamageToYouOrYourPermanent(), Zone.BATTLEFIELD),

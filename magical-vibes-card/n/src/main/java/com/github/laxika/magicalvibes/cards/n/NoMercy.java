@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyDamageSourcePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,7 +15,7 @@ public class NoMercy extends Card {
 
     public NoMercy() {
         // Whenever a creature deals damage to you, destroy it.
-        addTrigger(Triggers.permanentDealsDamageToYou(),
-                new DestroyDamageSourcePermanentEffect(new PermanentIsCreaturePredicate()));
+        addTrigger(Triggers.permanentDealsDamageToYou().withFilter(new PermanentIsCreaturePredicate()),
+                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
     }
 }

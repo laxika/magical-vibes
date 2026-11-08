@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.trigger;
 
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.trigger.DamageAbilityReader;
@@ -248,6 +251,48 @@ class DamageTriggerTest {
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> Triggers.dealsDamageToCreature().withDamagedFilter(DRAGON).withDamagedFilter(DRAGON))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void aSourceDealsDamageTriggerNamesTheSourceAsAPermanentAndAsASpell() {
+        CardPredicate redSpell = new CardColorPredicate(CardColor.RED);
+        DamageTrigger justice = Triggers.sourceDealsDamage().withFilter(DRAGON).withSpellFilter(redSpell);
+        DamageTrigger redTerror = Triggers.sourceYouControlDealsDamage().withSpellFilter(redSpell);
+
+        assertThat(justice.filter()).isEqualTo(DRAGON);
+        assertThat(justice.spellFilter()).isEqualTo(redSpell);
+        assertThat(justice.watchKey()).isEqualTo(Triggers.sourceDealsDamage());
+        assertThat(redTerror.filter()).isNull();
+        assertThat(redTerror.watchKey()).isEqualTo(Triggers.sourceYouControlDealsDamage());
+        assertThat(Triggers.sourceYouControlDealsDamage()).isNotEqualTo(Triggers.sourceDealsDamage());
+
+        Card card = new Card();
+        card.addTrigger(justice, DRAW);
+        assertThat(DamageAbilityReader.printed(card, DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE)).hasSize(1);
+        assertThat(DamageAbilityReader.trigger(card.getTriggeredAbilities().getFirst(),
+                Triggers.sourceDealsDamage())).isEqualTo(justice);
+    }
+
+    @Test
+    void onlyATriggerOnAnotherSourceDealingDamageHasASpellFilter() {
+        CardPredicate redSpell = new CardColorPredicate(CardColor.RED);
+        assertThatThrownBy(() -> Triggers.dealsDamage().withSpellFilter(redSpell))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Triggers.permanentDealsDamageToYou().withSpellFilter(redSpell))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> Triggers.sourceDealsDamage().withSpellFilter(redSpell).withSpellFilter(redSpell))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void aCreatureDealsDamageToYouOrYourPermanentTriggerTakesADamagedPermanentFilter() {
+        DamageTrigger mangara = Triggers.creatureDealsDamageToYouOrYourPermanent().withFilter(DRAGON)
+                .withDamagedFilter(DRAGON);
+
+        assertThat(mangara.damagedFilter()).isEqualTo(DRAGON);
+        assertThat(mangara.watchKey()).isEqualTo(Triggers.creatureDealsDamageToYouOrYourPermanent());
+        assertThatThrownBy(() -> Triggers.creatureDealsDamageToYouOrYourPermanent().withCombatDamageOnly())
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
