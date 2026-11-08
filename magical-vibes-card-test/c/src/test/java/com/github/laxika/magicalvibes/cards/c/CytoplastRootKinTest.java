@@ -52,8 +52,8 @@ class CytoplastRootKinTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent charger = findPermanent(player1, "Mistral Charger");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(rootKin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -71,8 +71,8 @@ class CytoplastRootKinTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent charger = findPermanent(player2, "Mistral Charger");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(rootKin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -87,8 +87,8 @@ class CytoplastRootKinTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent charger = findPermanent(player1, "Mistral Charger");
 
-        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(rootKin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -166,6 +166,7 @@ class CytoplastRootKinTest extends BaseCardTest {
         harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
         harness.passBothPriorities();
         Permanent charger = findPermanent(player1, "Mistral Charger");
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         resolveAllTriggers();
 

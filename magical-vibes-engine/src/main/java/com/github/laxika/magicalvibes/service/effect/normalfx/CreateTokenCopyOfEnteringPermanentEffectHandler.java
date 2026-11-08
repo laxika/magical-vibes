@@ -26,9 +26,7 @@ public class CreateTokenCopyOfEnteringPermanentEffectHandler implements NormalEf
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var copyEffect = (CreateTokenCopyOfEnteringPermanentEffect) effect;
-        UUID enteringPermanentId = entry.getTriggeringPermanentId() != null
-                ? entry.getTriggeringPermanentId()
-                : entry.getTargetId();
+        UUID enteringPermanentId = entry.getTriggeringPermanentId();
         if (enteringPermanentId == null) {
             return;
         }

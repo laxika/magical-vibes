@@ -35,8 +35,8 @@ class NovijenSagesTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent charger = findPermanent(player1, "Mistral Charger");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(sages.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -51,8 +51,8 @@ class NovijenSagesTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent charger = findPermanent(player1, "Mistral Charger");
 
-        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(sages.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -70,8 +70,8 @@ class NovijenSagesTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent charger = findPermanent(player2, "Mistral Charger");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(sages.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

@@ -33,6 +33,6 @@ public class SwordsmanSharpScoundrel extends Card {
 
         addTrigger(Triggers.creatureAttacks().withFilter(new PermanentAllOfPredicate(List.of(
                         new PermanentControlledBySourceControllerPredicate(), new PermanentIsEquippedPredicate()))),
-                DrawDiscardAndConniveEffect.forEnteringPermanent());
+                DrawDiscardAndConniveEffect.ofTriggeringPermanent());
     }
 }

@@ -39,9 +39,4 @@ public record CreateTokenCopyOfEnteringPermanentEffect(
     public static CreateTokenCopyOfEnteringPermanentEffect nonlegendary() {
         return new CreateTokenCopyOfEnteringPermanentEffect(false, false, false, false, false, true);
     }
-
-    @Override
-    public boolean usesEnteringPermanentReference() {
-        return true;
-    }
 }

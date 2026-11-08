@@ -29,6 +29,6 @@ public class BaronStruckerHYDRAOverlord extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.VILLAIN))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),
-                new MayEffect(DrawDiscardAndConniveEffect.forEnteringPermanent(), "Have it connive?"));
+                new MayEffect(DrawDiscardAndConniveEffect.ofTriggeringPermanent(), "Have it connive?"));
     }
 }

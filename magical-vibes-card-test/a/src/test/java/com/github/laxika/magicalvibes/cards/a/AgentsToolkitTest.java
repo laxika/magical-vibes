@@ -38,10 +38,9 @@ class AgentsToolkitTest extends BaseCardTest {
         castBears(player1);
         Permanent bears = findPermanent(player1, "Grizzly Bears");
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
-                .isNotNull();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
         harness.handleListChoice(player1, "flying counters");
         harness.passBothPriorities();
 
@@ -78,8 +77,8 @@ class AgentsToolkitTest extends BaseCardTest {
         castBears(player1);
         Permanent bears = findPermanent(player1, "Grizzly Bears");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(toolkit.getCounterCount(counterType)).isEqualTo(1);
         assertThat(bears.getCounterCount(counterType)).isEqualTo(1);
@@ -91,8 +90,8 @@ class AgentsToolkitTest extends BaseCardTest {
         castBears(player1);
         Permanent bears = findPermanent(player1, "Grizzly Bears");
 
-        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         for (CounterType type : List.of(CounterType.PLUS_ONE_PLUS_ONE, CounterType.FLYING,
                 CounterType.DEATHTOUCH, CounterType.SHIELD)) {
@@ -122,9 +121,9 @@ class AgentsToolkitTest extends BaseCardTest {
         castBears(player1);
         Permanent bears = findPermanent(player1, "Grizzly Bears");
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(toolkit.getCounterCount(CounterType.HASTE)).isZero();
         assertThat(bears.getCounterCount(CounterType.HASTE)).isEqualTo(1);
@@ -136,8 +135,8 @@ class AgentsToolkitTest extends BaseCardTest {
         toolkit.setCounterCount(CounterType.HASTE, 1);
         castBears(player1);
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
@@ -159,10 +158,10 @@ class AgentsToolkitTest extends BaseCardTest {
         castBears(player1);
         Permanent bears = findPermanent(player1, "Grizzly Bears");
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        assertThat(gd.stack).hasSize(1);
         toolkit.setCounterCount(CounterType.FLYING, 1);
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(toolkit.getCounterCount(CounterType.FLYING)).isZero();
         assertThat(bears.getCounterCount(CounterType.FLYING)).isEqualTo(1);

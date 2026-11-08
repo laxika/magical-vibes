@@ -44,7 +44,9 @@ public class SetSelfBasePowerToughnessFromEnteringCreatureEffectHandler implemen
 
         int power;
         int toughness;
-        Permanent entering = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        // "That creature" is the stack entry's triggering permanent: as it is now, else as it last existed (CR 608.2h).
+        Permanent entering = entry.getTriggeringPermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
         if (entering != null) {
             power = gameQueryService.getEffectivePower(gameData, entering);
             toughness = gameQueryService.getEffectiveToughness(gameData, entering);

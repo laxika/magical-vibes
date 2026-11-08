@@ -17,6 +17,6 @@ public class ShelindaYevonAcolyte extends Card {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new EnteringCreatureSourcePowerBranchEffect(
                         new PutCountersOnSourceEffect(1, 1, 1),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)));
+                        PutCounterOnTargetPermanentEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, 1)));
     }
 }

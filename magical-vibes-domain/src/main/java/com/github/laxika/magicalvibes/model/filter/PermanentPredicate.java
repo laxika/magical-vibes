@@ -172,6 +172,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsSourceCardPredicate,
         PermanentIsTargetCardPredicate,
         PermanentIsSourceOrPairedPredicate,
+        PermanentIsPairedPredicate,
         PermanentIsSourcePermanentPredicate,
         PermanentPutOntoBattlefieldBySourcePredicate,
         PermanentIsTriggeringPermanentPredicate,

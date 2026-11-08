@@ -368,7 +368,7 @@ public class CreatureControlService {
             }
         }
 
-        // Soulbond lasts only while you control both (CR 702.94) — control change breaks the pair.
+        // Soulbond lasts only while you control both (CR 702.95) — control change breaks the pair.
         UUID partnerId = permanent.getPairedWithId();
         if (partnerId != null) {
             permanent.setPairedWithId(null);

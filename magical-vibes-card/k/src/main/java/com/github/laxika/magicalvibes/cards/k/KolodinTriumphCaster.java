@@ -33,7 +33,7 @@ public class KolodinTriumphCaster extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.MOUNT))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new BecomeSaddledUntilEndOfTurnEffect(GrantScope.SELF));
+                new BecomeSaddledUntilEndOfTurnEffect(GrantScope.TRIGGERING_PERMANENT));
 
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(

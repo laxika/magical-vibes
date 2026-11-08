@@ -36,8 +36,8 @@ class CytospawnShamblerTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent charger = findPermanent(player1, "Mistral Charger");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(shambler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -55,8 +55,8 @@ class CytospawnShamblerTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent charger = findPermanent(player2, "Mistral Charger");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(shambler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -71,8 +71,8 @@ class CytospawnShamblerTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent charger = findPermanent(player1, "Mistral Charger");
 
-        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(shambler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -189,8 +189,8 @@ class CytospawnShamblerTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent charger = findPermanent(player1, "Mistral Charger");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(shambler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -205,10 +205,10 @@ class CytospawnShamblerTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent charger = findPermanent(player1, "Mistral Charger");
 
-        harness.handleMayAbilityChosen(player1, true);
         gd.playerBattlefields.get(player1.getId()).remove(charger);
         gd.playerHands.get(player1.getId()).add(charger.getCard());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(shambler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

@@ -6,9 +6,4 @@ package com.github.laxika.magicalvibes.model.effect;
  * battlefield, else as it last existed there.
  */
 public record ManaEchoesEffect() implements CardEffect {
-
-    @Override
-    public boolean usesEnteringPermanentReference() {
-        return true;
-    }
 }

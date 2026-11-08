@@ -90,9 +90,9 @@ All paths relative to `cards/`.
 | Animate self (X/X) | `c/ChimericStaff.java` | AnimatePermanentsEffect(XValue, XValue, subtypes, …, SELF, UEOT) |
 | Sorcery-speed ability | `t/ThrullSurgeon.java` | ActivationTimingRestriction.SORCERY_SPEED |
 | Metalcraft exile-flicker | `a/ArgentSphinx.java` | FlickerEffect.exileSelfReturnAtEndStep() + METALCRAFT restriction |
-| Soulbond + paired flicker grant | `d/DeadeyeNavigator.java` | SoulbondChoosePartnerEffect + SoulbondPairWithEnteringEffect; STATIC ConditionalEffect(SourceIsPaired, GrantActivatedAbilityEffect(flickerSelfUnderYourControl, SELF_AND_PAIRED)) |
-| Soulbond + paired triggered ability | `t/TandemLookout.java` | SoulbondChoosePartnerEffect + SoulbondPairWithEnteringEffect; STATIC ConditionalEffect(SourceIsPaired, GrantTriggeredAbilityEffect(Triggers.dealsDamageToPlayer(), DrawCardEffect(1), SELF_AND_PAIRED)) |
-| Soulbond + paired haste | `l/LightningMauler.java` | SoulbondChoosePartnerEffect + SoulbondPairWithEnteringEffect; STATIC ConditionalEffect(SourceIsPaired, GrantKeywordEffect(HASTE, SELF_AND_PAIRED)) |
+| Soulbond + paired flicker grant | `d/DeadeyeNavigator.java` | SoulbondChoosePartnerEffect + MayEffect(SoulbondPairWithEnteringEffect) behind the both-unpaired intervening "if"; STATIC ConditionalEffect(SourceIsPaired, GrantActivatedAbilityEffect(flickerSelfUnderYourControl, SELF_AND_PAIRED)) |
+| Soulbond + paired triggered ability | `t/TandemLookout.java` | SoulbondChoosePartnerEffect + MayEffect(SoulbondPairWithEnteringEffect) behind the both-unpaired intervening "if"; STATIC ConditionalEffect(SourceIsPaired, GrantTriggeredAbilityEffect(Triggers.dealsDamageToPlayer(), DrawCardEffect(1), SELF_AND_PAIRED)) |
+| Soulbond + paired haste | `l/LightningMauler.java` | SoulbondChoosePartnerEffect + MayEffect(SoulbondPairWithEnteringEffect) behind the both-unpaired intervening "if"; STATIC ConditionalEffect(SourceIsPaired, GrantKeywordEffect(HASTE, SELF_AND_PAIRED)) |
 | Metalcraft tap ability | `v/VedalkenCertarch.java` | ActivationTimingRestriction.METALCRAFT + target filter |
 | Power-gated tap ability | `b/BloodshotTrainee.java` | ActivationTimingRestriction.POWER_4_OR_GREATER + creature target filter |
 | Attack-only ability | `a/AncientHellkite.java` | ActivationTimingRestriction.ONLY_WHILE_ATTACKING + opponent creature filter (PermanentNotPredicate(PermanentControlledBySourceControllerPredicate)) |

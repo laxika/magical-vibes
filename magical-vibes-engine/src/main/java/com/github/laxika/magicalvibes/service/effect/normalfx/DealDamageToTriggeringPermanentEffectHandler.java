@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -15,14 +15,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link DealDamageToTriggeringAttackerEffect}: deals the effect's damage to the attacking
+ * Resolves {@link DealDamageToTriggeringPermanentEffect}: deals the effect's damage to the attacking
  * creature stored as the stack entry's non-targeting {@code targetId}. The attacker condition was
  * already checked when the trigger was declared, so the damage is dealt unconditionally here.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DealDamageToTriggeringAttackerEffectHandler implements NormalEffectHandlerBean {
+public class DealDamageToTriggeringPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
@@ -31,15 +31,16 @@ public class DealDamageToTriggeringAttackerEffectHandler implements NormalEffect
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return DealDamageToTriggeringAttackerEffect.class;
+        return DealDamageToTriggeringPermanentEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        DealDamageToTriggeringAttackerEffect e = (DealDamageToTriggeringAttackerEffect) effect;
+        DealDamageToTriggeringPermanentEffect e = (DealDamageToTriggeringPermanentEffect) effect;
 
-        Permanent attacker = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
-        if (attacker == null) {
+        Permanent triggering = entry.getTriggeringPermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+        if (triggering == null) {
             return;
         }
 
@@ -52,7 +53,12 @@ public class DealDamageToTriggeringAttackerEffectHandler implements NormalEffect
         int evaluatedDamage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
         int damage = evaluatedDamage;
-        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" deals " + damage + " damage to ").card(attacker.getCard()).text(".").build());
-        damageSupport.dealCreatureDamage(gameData, entry, attacker, damage);
+        // Protection from the source and "prevent all damage this would deal" apply as to a targeted creature.
+        if (damageSupport.isDamagePreventedForCreature(gameData, entry, triggering)) {
+            return;
+        }
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" deals " + damage + " damage to ")
+                .card(triggering.getCard()).text(".").build());
+        damageSupport.dealCreatureDamage(gameData, entry, triggering, damage);
     }
 }

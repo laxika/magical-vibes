@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.condition.AllConditions;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -12,8 +15,15 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsPairedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "VOC", collectorNumber = "34")
 @CardRegistration(set = "VOC", collectorNumber = "72")
@@ -25,7 +35,13 @@ public class DoomWeaver extends Card {
                 new MayEffect(new SoulbondChoosePartnerEffect(),
                         "Pair Doom Weaver with another unpaired creature you control?"));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new SoulbondPairWithEnteringEffect());
+                TriggerOptions.DEFAULT.withInterveningIf(new AllConditions(List.of(
+                        new NotCondition(new SourceIsPaired()),
+                        new TriggeringPermanentMatches(new PermanentAllOfPredicate(List.of(
+                                new PermanentControlledBySourceControllerPredicate(),
+                                new PermanentNotPredicate(new PermanentIsPairedPredicate()))))))),
+                new MayEffect(new SoulbondPairWithEnteringEffect(),
+                        "Pair Doom Weaver with that creature?"));
 
         // While paired, both creatures have "When this creature dies, draw cards equal to its power."
         addStaticEffect(new ConditionalEffect(

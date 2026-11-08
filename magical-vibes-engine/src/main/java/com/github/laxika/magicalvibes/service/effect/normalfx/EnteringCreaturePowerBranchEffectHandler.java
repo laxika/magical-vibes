@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -28,19 +30,13 @@ public class EnteringCreaturePowerBranchEffectHandler implements NormalEffectHan
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         EnteringCreaturePowerBranchEffect branchEffect = (EnteringCreaturePowerBranchEffect) effect;
-        Permanent enteringPermanent = entry.getTargetId() == null
-                ? null
-                : gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        Integer lastKnownPower = entry.getTargetId() == null
-                ? null
-                : entry.getLastKnownPermanentPowers().get(entry.getTargetId());
+        // "Its power" is the stack entry's triggering permanent's as the ability resolves, else as it last existed
+        // on the battlefield (CR 608.2h).
+        UUID enteringId = entry.getTriggeringPermanentId();
+        Permanent enteringPermanent = enteringId == null ? null : gameQueryService.findPermanentById(gameData, enteringId);
         int power = enteringPermanent != null
                 ? gameQueryService.getEffectivePower(gameData, enteringPermanent)
-                : lastKnownPower != null
-                        ? lastKnownPower
-                        : entry.getSourcePermanentSnapshot() == null
-                                ? Integer.MIN_VALUE
-                                : entry.getSourcePermanentSnapshot().getEffectivePower();
+                : lastKnownPower(gameData, entry, enteringId);
         CardEffect branch = power >= branchEffect.minPower()
                 ? branchEffect.powerAtLeast()
                 : branchEffect.belowPower();
@@ -55,5 +51,21 @@ public class EnteringCreaturePowerBranchEffectHandler implements NormalEffectHan
             log.warn("No handler for entering-creature power branch effect: {}",
                     branch.getClass().getSimpleName());
         }
+    }
+
+    private static int lastKnownPower(GameData gameData, StackEntry entry, UUID enteringId) {
+        if (enteringId != null) {
+            Integer recorded = entry.getLastKnownPermanentPowers().get(enteringId);
+            if (recorded != null) {
+                return recorded;
+            }
+            for (Permanent departed : gameData.departedPermanentSnapshots.values()) {
+                if (departed.getId().equals(enteringId) && departed.getLastKnownPower() != null) {
+                    return departed.getLastKnownPower();
+                }
+            }
+        }
+        return entry.getTriggeringPermanentPowerAtTrigger() == null
+                ? Integer.MIN_VALUE : entry.getTriggeringPermanentPowerAtTrigger();
     }
 }

@@ -13,13 +13,13 @@ import java.util.UUID;
  *
  * @param amount number of cards to draw and discard
  * @param targetPermanent whether the counter is applied to this effect's targeted permanent
- * @param useEnteringPermanentReference whether the counter is applied to the permanent that
- *                                      caused an enter-the-battlefield trigger
+ * @param triggeringPermanent whether "it connives": the conniving permanent is the stack entry's triggering
+ *                            permanent (the creature that entered or attacked), read as the ability resolves
  * @param fixedSourcePermanentId optional non-targeting permanent reference used by effects that
  *                               capture a permanent outside the ordinary target system
  */
 public record DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPermanent,
-                                          boolean useEnteringPermanentReference,
+                                          boolean triggeringPermanent,
                                           UUID fixedSourcePermanentId)
         implements CardDrawingEffect, CombatDamageTriggerContextEffect {
 
@@ -40,11 +40,12 @@ public record DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPe
     }
 
     private DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPermanent,
-                                        boolean useEnteringPermanentReference) {
-        this(amount, targetPermanent, useEnteringPermanentReference, null);
+                                        boolean triggeringPermanent) {
+        this(amount, targetPermanent, triggeringPermanent, null);
     }
 
-    public static DrawDiscardAndConniveEffect forEnteringPermanent() {
+    /** "It connives": the stack entry's triggering permanent connives. */
+    public static DrawDiscardAndConniveEffect ofTriggeringPermanent() {
         return new DrawDiscardAndConniveEffect(new Fixed(1), false, true);
     }
 
@@ -66,11 +67,6 @@ public record DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPe
         return targetPermanent
                 ? TargetSpec.benign(TargetPredicates.permanent())
                 : new TargetSpec(null, false, null, true, 1);
-    }
-
-    @Override
-    public boolean usesEnteringPermanentReference() {
-        return useEnteringPermanentReference;
     }
 
     @Override

@@ -1041,8 +1041,8 @@ public class AmountEvaluationService {
                     targetEffectiveToughness(gameData, ctx);
             case TriggeringPermanentToughness ignored ->
                     triggeringPermanentToughness(gameData, ctx);
-            case TriggeringPermanentPower ignored ->
-                    triggeringPermanentPower(gameData, ctx);
+            case TriggeringPermanentPower power ->
+                    triggeringPermanentPower(gameData, ctx, power.allowNegative());
             case TargetPower power ->
                     targetEffectivePower(gameData, ctx, power.allowNegative());
             case TargetPowerPlusToughness ignored ->
@@ -1278,12 +1278,6 @@ public class AmountEvaluationService {
     }
 
     private int triggeringPermanentToughness(GameData gameData, AmountContext ctx) {
-        if (ctx.targetPermanentId() != null) {
-            Permanent triggering = gameQueryService.findPermanentById(gameData, ctx.targetPermanentId());
-            if (triggering != null) {
-                return Math.max(0, gameQueryService.getEffectiveToughness(gameData, triggering));
-            }
-        }
         StackEntry entry = ctx.stackEntry();
         if (entry == null) {
             return 0;
@@ -1317,7 +1311,7 @@ public class AmountEvaluationService {
      * last existed on the battlefield (CR 608.2h), which the collector recorded as the ability triggered (a dying
      * creature's last-known power) or the departure recorded since.
      */
-    private int triggeringPermanentPower(GameData gameData, AmountContext ctx) {
+    private int triggeringPermanentPower(GameData gameData, AmountContext ctx, boolean allowNegative) {
         StackEntry entry = ctx.stackEntry();
         if (entry == null) {
             return 0;
@@ -1326,22 +1320,26 @@ public class AmountEvaluationService {
         Permanent triggering = triggeringId == null ? null : gameQueryService.findPermanentById(gameData, triggeringId);
         if (triggering != null) {
             return gameQueryService.isCreature(gameData, triggering)
-                    ? Math.max(0, gameQueryService.getEffectivePower(gameData, triggering)) : 0;
+                    ? floor(gameQueryService.getEffectivePower(gameData, triggering), allowNegative) : 0;
         }
         if (entry.getTriggeringPermanentPowerAtTrigger() != null) {
-            return Math.max(0, entry.getTriggeringPermanentPowerAtTrigger());
+            return floor(entry.getTriggeringPermanentPowerAtTrigger(), allowNegative);
         }
         if (triggeringId == null) {
             return 0;
         }
         for (Permanent departed : gameData.departedPermanentSnapshots.values()) {
             if (departed.getId().equals(triggeringId) && departed.getLastKnownPower() != null) {
-                return Math.max(0, departed.getLastKnownPower());
+                return floor(departed.getLastKnownPower(), allowNegative);
             }
         }
         Permanent snapshot = entry.getTriggeringPermanentSnapshot();
         return snapshot != null && snapshot.getId().equals(triggeringId) && snapshot.getLastKnownPower() != null
-                ? Math.max(0, snapshot.getLastKnownPower()) : 0;
+                ? floor(snapshot.getLastKnownPower(), allowNegative) : 0;
+    }
+
+    private static int floor(int power, boolean allowNegative) {
+        return allowNegative ? power : Math.max(0, power);
     }
 
     private int attachedPermanentColorCount(GameData gameData, AmountContext ctx) {

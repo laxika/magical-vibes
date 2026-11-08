@@ -33,8 +33,8 @@ class CytoplastManipulatorTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent charger = findPermanent(player1, "Mistral Charger");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(manipulator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -49,6 +49,7 @@ class CytoplastManipulatorTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent charger = findPermanent(player1, "Mistral Charger");
 
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(manipulator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -67,8 +68,8 @@ class CytoplastManipulatorTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent charger = findPermanent(player2, "Mistral Charger");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(manipulator.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -196,8 +197,8 @@ class CytoplastManipulatorTest extends BaseCardTest {
         Permanent entering = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(p -> p.getCard() instanceof MistralCharger && p != stolen)
                 .findFirst().orElseThrow();
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(entering.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(manipulator, stolen);

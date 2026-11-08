@@ -1,9 +1,16 @@
 package com.github.laxika.magicalvibes.model.amount;
 
 /**
- * The power of the permanent that caused a trigger, as it last existed when the ability triggered
- * (the stack entry's {@code triggeringPermanentPowerAtTrigger}), counted as at least 0. 0 when the
- * entry recorded none. Grand Ossuary's "a number of +1/+1 counters equal to its power".
+ * "That creature's power": the power of the stack entry's triggering permanent as the ability resolves, its current
+ * power while it is on the battlefield, else the value the collector recorded as the ability triggered, else its
+ * departure snapshot (CR 608.2h). Counted as at least 0 unless {@code allowNegative}: "base power becomes equal to
+ * that creature's power" copies a negative power (Belligerent Yearling).
+ *
+ * @param allowNegative whether a negative power is kept rather than counted as 0
  */
-public record TriggeringPermanentPower() implements DynamicAmount {
+public record TriggeringPermanentPower(boolean allowNegative) implements DynamicAmount {
+
+    public TriggeringPermanentPower() {
+        this(false);
+    }
 }

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AssaultGriffin;
+import com.github.laxika.magicalvibes.cards.b.BurrentonForgeTender;
 import com.github.laxika.magicalvibes.cards.g.GarrukPrimalHunter;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Card;
@@ -20,7 +21,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CircleOfFlame.class, RuneclawBear.class, AssaultGriffin.class, GarrukPrimalHunter.class})
+@CardUsed({CircleOfFlame.class, BurrentonForgeTender.class, RuneclawBear.class, AssaultGriffin.class, GarrukPrimalHunter.class})
 class CircleOfFlameTest extends BaseCardTest {
 
     /** Puts Circle of Flame on player1's battlefield and the given attacker on player2's. */
@@ -95,6 +96,18 @@ class CircleOfFlameTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Protection from red prevents the damage to the attacker (CR 702.16e)")
+    void protectionFromRedPreventsTheDamage() {
+        Permanent attacker = setUpAttack(new BurrentonForgeTender());
+
+        declareAttackers(player2, List.of(0));
+        assertThat(gd.stack).hasSize(1);
+        harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
+
+        assertThat(attacker.getMarkedDamage()).isZero();
     }
 
     @Test

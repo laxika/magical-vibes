@@ -18,6 +18,6 @@ public class TributeToTheWorldTree extends Card {
                 new EnteringCreaturePowerBranchEffect(
                         3,
                         new DrawCardEffect(1),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)));
+                        PutCounterOnTargetPermanentEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, 2)));
     }
 }

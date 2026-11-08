@@ -39,8 +39,8 @@ class SimicBasiliskTest extends BaseCardTest {
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(basilisk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -54,8 +54,8 @@ class SimicBasiliskTest extends BaseCardTest {
         harness.castFromHand(player1, new GrizzlyBears(), "{1}{G}");
 
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         Permanent bears = findPermanent(player1, "Grizzly Bears");
         assertThat(basilisk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
@@ -73,8 +73,8 @@ class SimicBasiliskTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent bears = findPermanent(player2, "Grizzly Bears");
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(basilisk.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

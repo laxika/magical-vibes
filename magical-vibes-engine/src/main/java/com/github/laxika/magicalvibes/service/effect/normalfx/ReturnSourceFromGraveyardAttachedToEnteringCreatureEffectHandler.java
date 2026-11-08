@@ -45,9 +45,10 @@ public class ReturnSourceFromGraveyardAttachedToEnteringCreatureEffectHandler im
             return;
         }
 
-        Permanent enteringCreature = entry.getTargetId() == null
+        // "That creature" is the stack entry's triggering permanent, where it is now; none if it has left.
+        Permanent enteringCreature = entry.getTriggeringPermanentId() == null
                 ? null
-                : gameQueryService.findPermanentById(gameData, entry.getTargetId());
+                : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
         if (sourceCard.isAura() && (enteringCreature == null
                 || !auraAttachmentService.canEnchant(gameData, sourceCard,
                         entry.getControllerId(), enteringCreature))) {

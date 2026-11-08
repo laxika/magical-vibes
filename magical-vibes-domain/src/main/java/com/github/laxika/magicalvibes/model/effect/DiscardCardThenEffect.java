@@ -101,13 +101,6 @@ public record DiscardCardThenEffect(
                                  DiscardRecipient recipient, boolean useEntryTarget) {
         this(filter, thenEffect, cardDescription, null, useEntryTarget, null, null, recipient);
     }
-    @Override
-    public boolean usesEnteringPermanentReference() {
-        if (thenEffect instanceof SequenceEffect sequence) {
-            return sequence.steps().stream().anyMatch(CardEffect::usesEnteringPermanentReference);
-        }
-        return thenEffect != null && thenEffect.usesEnteringPermanentReference();
-    }
 
     @Override
     public TargetSpec targetSpec() {

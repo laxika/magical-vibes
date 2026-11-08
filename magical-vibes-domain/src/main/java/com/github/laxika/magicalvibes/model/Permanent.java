@@ -221,7 +221,7 @@ public class Permanent {
      */
     private UUID lastAttachedTo;
     /**
-     * Soulbond pairing (CR 702.94): id of the other creature this permanent is paired with, or
+     * Soulbond pairing (CR 702.95): id of the other creature this permanent is paired with, or
      * {@code null} when unpaired. Cleared when either leaves the battlefield, changes controller,
      * or ceases to be a creature.
      */

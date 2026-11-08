@@ -49,7 +49,7 @@ public class EndureEffectHandler implements NormalEffectHandlerBean {
             source = entry.getSourcePermanentSnapshot();
         }
         UUID enduringPermanentId = endure.target() == EndureEffect.Target.TRIGGERING_PERMANENT
-                ? entry.getTargetId()
+                ? entry.getTriggeringPermanentId()
                 : entry.getSourcePermanentId();
         int amount = amountEvaluationService.evaluate(gameData, endure.amount(),
                 AmountContext.forStackEntry(entry, source));
@@ -98,7 +98,8 @@ public class EndureEffectHandler implements NormalEffectHandlerBean {
         ChooseOneEffect tokenChoice = new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(counterLabel,
                         endure.target() == EndureEffect.Target.TRIGGERING_PERMANENT
-                                ? new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, amount)
+                                ? PutCounterOnTargetPermanentEffect.onTriggeringPermanent(
+                                        CounterType.PLUS_ONE_PLUS_ONE, amount)
                                 : new PutCountersOnSourceEffect(1, 1, amount)),
                 new ChooseOneEffect.ChooseOneOption(tokenLabel,
                         new CreateTokenForPlayerEffect(tokenControllerId, spirit))

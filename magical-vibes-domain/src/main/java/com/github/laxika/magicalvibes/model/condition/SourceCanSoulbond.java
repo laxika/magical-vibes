@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /**
- * Soulbond self-ETB intervening-if (CR 702.94a): the source is unpaired and the controller
+ * Soulbond self-ETB intervening-if (CR 702.95a): the source is unpaired and the controller
  * controls at least one other unpaired creature.
  */
 public record SourceCanSoulbond() implements Condition {

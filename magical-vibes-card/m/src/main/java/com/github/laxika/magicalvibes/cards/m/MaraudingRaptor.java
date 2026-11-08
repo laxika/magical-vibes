@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureThenBoostSourceIfDamagedEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentThenBoostSourceIfDamagedEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -20,7 +20,7 @@ public class MaraudingRaptor extends Card {
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTypePredicate(CardType.CREATURE), 1, CostModificationScope.SELF));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new DealDamageToTargetCreatureThenBoostSourceIfDamagedEffect(
+                new DealDamageToTriggeringPermanentThenBoostSourceIfDamagedEffect(
                         2, new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR), 2, 0));
     }
 }

@@ -64,11 +64,6 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
     }
 
     @Override
-    public boolean usesEnteringPermanentReference() {
-        return wrapped.usesEnteringPermanentReference();
-    }
-
-    @Override
     public boolean referencesCombatOpponent() {
         return referencesCombatOpponent(wrapped) || referencesCombatOpponent(elseEffect);
     }

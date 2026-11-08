@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveChosenCounterFromSourceToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -31,8 +32,10 @@ public class AgentsToolkit extends Card {
         }
 
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MoveChosenCounterFromSourceToEnteringCreatureEffect(java.util.Arrays.stream(CounterType.values())
-                        .filter(type -> type != CounterType.ANY && type != CounterType.SILVER).toList()));
+                new MayEffect(new MoveChosenCounterFromSourceToEnteringCreatureEffect(
+                        java.util.Arrays.stream(CounterType.values())
+                                .filter(type -> type != CounterType.ANY && type != CounterType.SILVER).toList()),
+                        "Move a counter from this artifact onto that creature?"));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

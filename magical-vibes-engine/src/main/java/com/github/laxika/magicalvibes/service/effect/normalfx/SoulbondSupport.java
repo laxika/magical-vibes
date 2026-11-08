@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Soulbond pairing helpers (CR 702.94): pair two unpaired creatures under the same controller,
+ * Soulbond pairing helpers (CR 702.95): pair two unpaired creatures under the same controller,
  * and clear the link when either leaves / changes control / ceases to be a creature.
  */
 @Slf4j

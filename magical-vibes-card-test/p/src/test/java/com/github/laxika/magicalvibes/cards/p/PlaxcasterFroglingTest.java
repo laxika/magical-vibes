@@ -36,8 +36,8 @@ class PlaxcasterFroglingTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent charger = findPermanent(player1, "Mistral Charger");
         assertThat(frogling.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -56,8 +56,8 @@ class PlaxcasterFroglingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent charger = findPermanent(player2, "Mistral Charger");
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(frogling.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -156,8 +156,8 @@ class PlaxcasterFroglingTest extends BaseCardTest {
         harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         Permanent charger = findPermanent(player1, "Mistral Charger");
         assertThat(frogling.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);

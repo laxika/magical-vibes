@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.t.TransguildCourier;
 import com.github.laxika.magicalvibes.cards.t.Tatterkite;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -32,8 +33,8 @@ class SimicInitiateTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent courier = findPermanent(player1, "Transguild Courier");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(initiate);
         assertThat(courier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -51,8 +52,8 @@ class SimicInitiateTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent courier = findPermanent(player2, "Transguild Courier");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(initiate);
         assertThat(courier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -67,8 +68,8 @@ class SimicInitiateTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent courier = findPermanent(player1, "Transguild Courier");
 
-        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(initiate);
         assertThat(initiate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -94,8 +95,8 @@ class SimicInitiateTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent courier = findPermanent(player1, "Transguild Courier");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(initiate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(courier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -111,12 +112,33 @@ class SimicInitiateTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent tatterkite = findPermanent(player1, "Tatterkite");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(initiate);
         assertThat(initiate.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(tatterkite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Graft goes on the stack and its controller chooses as it resolves (CR 603.5)")
+    void graftGoesOnTheStackAndAsksAsItResolves() {
+        Permanent initiate = castInitiate();
+
+        harness.castFromHand(player1, new TransguildCourier(), "{4}");
+        harness.passBothPriorities();
+        Permanent courier = findPermanent(player1, "Transguild Courier");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(initiate);
+        assertThat(courier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private Permanent castInitiate() {

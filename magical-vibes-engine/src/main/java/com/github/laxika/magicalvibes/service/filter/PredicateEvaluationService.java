@@ -282,6 +282,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBestowedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsRenownedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsPairedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceOrPairedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPutOntoBattlefieldBySourcePredicate;
@@ -2517,6 +2518,7 @@ public class PredicateEvaluationService {
                 }
                 yield sourcePermanent != null && sourcePermanent.getId().equals(permanent.getId());
             }
+            case PermanentIsPairedPredicate ignored -> permanent.getPairedWithId() != null;
             case PermanentIsSourceOrPairedPredicate ignored -> {
                 Permanent sourcePermanent = filterContext == null ? null : filterContext.sourcePermanentSnapshot();
                 if (filterContext != null && filterContext.sourcePermanentId() != null && gameData != null) {
@@ -3828,6 +3830,7 @@ public class PredicateEvaluationService {
                 Permanent source = context == null ? null : context.sourcePermanentSnapshot();
                 yield source != null && source.getId().equals(permanent.getId());
             }
+            case PermanentIsPairedPredicate ignored -> permanent.getPairedWithId() != null;
             case PermanentIsSourceOrPairedPredicate ignored -> {
                 Permanent source = context == null ? null : context.sourcePermanentSnapshot();
                 if (context != null && context.gameData() != null && context.sourcePermanentId() != null) {

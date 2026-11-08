@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 @Slf4j
 @Component
@@ -37,11 +38,14 @@ public class ManaEchoesEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent enteringPermanent = entry.getTargetId() == null
-                ? null : gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        // "It" is the stack entry's triggering permanent: as it is now, else as it last existed on the battlefield.
+        UUID enteringId = entry.getTriggeringPermanentId();
+        Permanent enteringPermanent = enteringId == null
+                ? null : gameQueryService.findPermanentById(gameData, enteringId);
         Card lastKnownEntering = enteringPermanent != null ? null
-                : entry.getTargetId() != null && entry.lastKnownPermanentCard(entry.getTargetId()) != null
-                ? entry.lastKnownPermanentCard(entry.getTargetId())
+                : entry.getTriggeringPermanentLastKnownCard() != null ? entry.getTriggeringPermanentLastKnownCard()
+                : enteringId != null && entry.lastKnownPermanentCard(enteringId) != null
+                ? entry.lastKnownPermanentCard(enteringId)
                 // The creature as it entered, when it left before any last-known information was recorded.
                 : entry.getTriggeringCardSnapshot();
         Set<CardSubtype> enteringTypes;

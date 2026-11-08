@@ -124,11 +124,13 @@ class LlanowarRebornTest extends BaseCardTest {
     @DisplayName("Graft cannot move a counter removed before resolution")
     void counterRemovedBeforeResolution() {
         Permanent reborn = addRebornWithCounter();
-        castCreature(player1);
-        harness.handleMayAbilityChosen(player1, true);
+        castCreatureLeavingGraftOnTheStack(player1);
 
         reborn.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
         harness.passBothPriorities();
+
+        // "If this permanent has a +1/+1 counter on it" is checked again as the ability resolves (CR 603.4).
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(reborn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(findPermanent(player1, "Grizzly Bears")
@@ -139,13 +141,13 @@ class LlanowarRebornTest extends BaseCardTest {
     @DisplayName("Graft keeps the source counter when the entering creature has left")
     void enteringCreatureLeavesBeforeResolution() {
         Permanent reborn = addRebornWithCounter();
-        castCreature(player1);
-        harness.handleMayAbilityChosen(player1, true);
+        castCreatureLeavingGraftOnTheStack(player1);
 
         Permanent creature = findPermanent(player1, "Grizzly Bears");
         gd.playerBattlefields.get(player1.getId()).remove(creature);
         gd.playerHands.get(player1.getId()).add(creature.getCard());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(reborn.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -190,10 +192,14 @@ class LlanowarRebornTest extends BaseCardTest {
     }
 
     private void castCreature(com.github.laxika.magicalvibes.model.Player player) {
+        castCreatureLeavingGraftOnTheStack(player);
+        harness.passBothPriorities();
+    }
+
+    private void castCreatureLeavingGraftOnTheStack(com.github.laxika.magicalvibes.model.Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castFromHand(player, new GrizzlyBears(), "{1}{G}");
-        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }

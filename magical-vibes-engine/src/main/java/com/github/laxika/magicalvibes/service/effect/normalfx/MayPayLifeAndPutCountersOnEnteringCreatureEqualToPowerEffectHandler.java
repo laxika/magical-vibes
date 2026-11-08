@@ -28,15 +28,16 @@ public class MayPayLifeAndPutCountersOnEnteringCreatureEqualToPowerEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent enteringPermanent = entry.getTargetId() == null
-                ? null : gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        // "Its power" is the stack entry's triggering permanent's, as the ability resolves (CR 608.2h).
+        Permanent enteringPermanent = entry.getTriggeringPermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
         int power = enteringPermanent == null
                 ? Math.max(0, entry.getTriggeringPermanentPowerAtTrigger() == null
                         ? 0 : entry.getTriggeringPermanentPowerAtTrigger())
                 : Math.max(0, gameQueryService.getEffectivePower(gameData, enteringPermanent));
         MayPayLifeEffect mayPayLife = new MayPayLifeEffect(
                 power,
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, power),
+                PutCounterOnTargetPermanentEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, power),
                 "Pay " + power + " life to put " + power + " +1/+1 counter(s) on it?");
         mayPayLifeEffectResolutionHandler.resolve(gameData, entry, mayPayLife);
     }

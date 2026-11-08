@@ -34,8 +34,8 @@ class HeliumSquirterTest extends BaseCardTest {
 
         Permanent enemy = castEnemyOfTheGuildpact(player1);
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(squirter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(enemy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -48,8 +48,8 @@ class HeliumSquirterTest extends BaseCardTest {
 
         Permanent enemy = castEnemyOfTheGuildpact(player1);
 
-        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(squirter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(enemy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -143,8 +143,8 @@ class HeliumSquirterTest extends BaseCardTest {
         Permanent squirter = castSquirter();
         Permanent enemy = castEnemyOfTheGuildpact(player2);
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(squirter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(enemy.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -159,8 +159,8 @@ class HeliumSquirterTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent tatterkite = findPermanent(player1, "Tatterkite");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(squirter.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(tatterkite.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

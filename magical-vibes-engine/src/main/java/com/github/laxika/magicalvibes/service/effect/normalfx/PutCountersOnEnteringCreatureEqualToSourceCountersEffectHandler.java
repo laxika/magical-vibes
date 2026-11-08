@@ -30,9 +30,9 @@ public class PutCountersOnEnteringCreatureEqualToSourceCountersEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        UUID enteringPermanentId = entry.getTriggeringPermanentId() != null
-                ? entry.getTriggeringPermanentId() : entry.getTargetId();
-        Permanent enteringCreature = gameQueryService.findPermanentById(gameData, enteringPermanentId);
+        UUID enteringPermanentId = entry.getTriggeringPermanentId();
+        Permanent enteringCreature = enteringPermanentId == null
+                ? null : gameQueryService.findPermanentById(gameData, enteringPermanentId);
         if (source == null) {
             // Last known information: the source left the battlefield while the trigger was on the stack.
             source = entry.getSourcePermanentSnapshot();

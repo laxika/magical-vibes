@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringAttackerEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -38,6 +38,6 @@ public class StormQueenOfWakanda extends Card {
                         new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, anotherAttackingCreature));
 
         addTrigger(Triggers.creatureAttacksYou().withFilter(new PermanentHasKeywordPredicate(Keyword.FLYING)),
-                new DealDamageToTriggeringAttackerEffect(new SourcePower()));
+                new DealDamageToTriggeringPermanentEffect(new SourcePower()));
     }
 }

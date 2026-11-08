@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -30,24 +32,23 @@ public class EnteringCreatureSourcePowerBranchEffectHandler implements NormalEff
         EnteringCreatureSourcePowerBranchEffect branchEffect =
                 (EnteringCreatureSourcePowerBranchEffect) effect;
 
+        // Both powers are read as the ability resolves, each creature's last known one once it has left
+        // the battlefield (CR 608.2h).
         Permanent enteringPermanent = entry.getTriggeringPermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
-        int enteringPower = enteringPermanent == null
-                ? entry.getTriggeringPermanentPowerAtTrigger() == null
-                        ? Integer.MIN_VALUE
-                        : entry.getTriggeringPermanentPowerAtTrigger()
-                : gameQueryService.getEffectivePower(gameData, enteringPermanent);
+        int enteringPower = enteringPermanent != null
+                ? gameQueryService.getEffectivePower(gameData, enteringPermanent)
+                : lastKnownPower(gameData, entry.getTriggeringPermanentId(),
+                        entry.getTriggeringPermanentPowerAtTrigger(), null);
 
         Permanent sourcePermanent = entry.getSourcePermanentId() == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        int sourcePower = sourcePermanent == null
-                ? entry.getSourcePowerAtTrigger() != null ? entry.getSourcePowerAtTrigger()
-                : entry.getSourcePermanentSnapshot() == null
-                        ? Integer.MIN_VALUE
-                        : entry.getSourcePermanentSnapshot().getEffectivePower()
-                : gameQueryService.getEffectivePower(gameData, sourcePermanent);
+        int sourcePower = sourcePermanent != null
+                ? gameQueryService.getEffectivePower(gameData, sourcePermanent)
+                : lastKnownPower(gameData, entry.getSourcePermanentId(), entry.getSourcePowerAtTrigger(),
+                        entry.getSourcePermanentSnapshot());
 
         CardEffect branch = enteringPower < sourcePower
                 ? branchEffect.belowSourcePower()
@@ -63,5 +64,19 @@ public class EnteringCreatureSourcePowerBranchEffectHandler implements NormalEff
             log.warn("No handler for entering-creature/source-power branch effect: {}",
                     branch.getClass().getSimpleName());
         }
+    }
+
+    private static int lastKnownPower(GameData gameData, UUID permanentId, Integer recorded, Permanent snapshot) {
+        if (permanentId != null) {
+            for (Permanent departed : gameData.departedPermanentSnapshots.values()) {
+                if (departed.getId().equals(permanentId) && departed.getLastKnownPower() != null) {
+                    return departed.getLastKnownPower();
+                }
+            }
+        }
+        if (recorded != null) {
+            return recorded;
+        }
+        return snapshot == null ? Integer.MIN_VALUE : snapshot.getEffectivePower();
     }
 }

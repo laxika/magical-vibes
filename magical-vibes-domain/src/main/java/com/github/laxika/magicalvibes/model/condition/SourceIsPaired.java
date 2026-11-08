@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /**
- * True while the source permanent is soulbond-paired with another creature (CR 702.94).
+ * True while the source permanent is soulbond-paired with another creature (CR 702.95).
  */
 public record SourceIsPaired() implements Condition {
 

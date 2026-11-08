@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureThenBoostSourceIfDamagedEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentThenBoostSourceIfDamagedEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class DealDamageToTargetCreatureThenBoostSourceIfDamagedEffectHandler implements NormalEffectHandlerBean {
+public class DealDamageToTriggeringPermanentThenBoostSourceIfDamagedEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
     private final GameQueryService gameQueryService;
@@ -25,13 +25,15 @@ public class DealDamageToTargetCreatureThenBoostSourceIfDamagedEffectHandler imp
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return DealDamageToTargetCreatureThenBoostSourceIfDamagedEffect.class;
+        return DealDamageToTriggeringPermanentThenBoostSourceIfDamagedEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var damageEffect = (DealDamageToTargetCreatureThenBoostSourceIfDamagedEffect) effect;
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        var damageEffect = (DealDamageToTriggeringPermanentThenBoostSourceIfDamagedEffect) effect;
+        // "It" is the creature that entered, as it is when the ability resolves: nothing if it has left (CR 608.2h).
+        Permanent target = entry.getTriggeringPermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
         if (target == null) {
             return;
         }

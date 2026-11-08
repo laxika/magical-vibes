@@ -32,7 +32,9 @@ public class MoveChosenCounterFromSourceToEnteringCreatureEffectHandler implemen
         MoveChosenCounterFromSourceToEnteringCreatureEffect moveEffect =
                 (MoveChosenCounterFromSourceToEnteringCreatureEffect) effect;
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        Permanent enteringCreature = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        // "That creature" is the stack entry's triggering permanent, where it is now; nothing if it has left.
+        Permanent enteringCreature = entry.getTriggeringPermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
         if (source == null || enteringCreature == null) {
             return;
         }

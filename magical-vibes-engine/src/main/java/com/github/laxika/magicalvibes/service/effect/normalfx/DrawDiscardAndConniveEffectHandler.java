@@ -48,8 +48,8 @@ public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBe
                 : null;
         UUID sourcePermanentId = e.fixedSourcePermanentId() != null
                 ? e.fixedSourcePermanentId()
-                : e.useEnteringPermanentReference()
-                ? entry.getTargetId() != null ? entry.getTargetId() : entry.getTriggeringPermanentId()
+                : e.triggeringPermanent()
+                ? entry.getTriggeringPermanentId()
                 : e.targetPermanent()
                 ? targetIds == null ? entry.getTargetId() : targetIds.stream().findFirst().orElse(entry.getTargetId())
                 : entry.getSourcePermanentId();

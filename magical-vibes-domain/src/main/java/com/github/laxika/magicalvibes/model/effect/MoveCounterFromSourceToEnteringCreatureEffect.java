@@ -3,11 +3,10 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
- * Moves one counter of the given type from the source permanent onto the creature that caused an
- * enter-the-battlefield trigger.
- *
- * <p>This is a non-targeting trigger marker: the enter-trigger collector binds the entering
- * permanent to the stack entry, and resolution uses the source and bound permanent ids.</p>
+ * Moves one counter of the given type from the source permanent onto "that creature": the stack entry's
+ * triggering permanent, read as the ability resolves, never a target. Graft's "you may move a +1/+1 counter from
+ * this permanent onto that creature" is a {@link MayEffect} around it behind the intervening "if" "if this
+ * permanent has a +1/+1 counter on it".
  *
  * @param counterType the kind of counter moved
  */
@@ -16,10 +15,5 @@ public record MoveCounterFromSourceToEnteringCreatureEffect(CounterType counterT
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.NONE;
-    }
-
-    @Override
-    public boolean usesEnteringPermanentReference() {
-        return true;
     }
 }

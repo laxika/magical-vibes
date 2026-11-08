@@ -37,8 +37,8 @@ class SporebackTrollTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent charger = findPermanent(player1, "Mistral Charger");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(troll.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -53,6 +53,7 @@ class SporebackTrollTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent charger = findPermanent(player1, "Mistral Charger");
 
+        harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(troll.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -71,8 +72,8 @@ class SporebackTrollTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent charger = findPermanent(player2, "Mistral Charger");
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(troll.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -184,8 +185,8 @@ class SporebackTrollTest extends BaseCardTest {
         harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
         harness.passBothPriorities();
         Permanent charger = findPermanent(player1, "Mistral Charger");
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Sporeback Troll");
@@ -199,7 +200,6 @@ class SporebackTrollTest extends BaseCardTest {
         harness.castFromHand(player1, new MistralCharger(), "{1}{W}");
         harness.passBothPriorities();
         Permanent charger = findPermanent(player1, "Mistral Charger");
-        harness.handleMayAbilityChosen(player1, true);
 
         harness.setHand(player1, List.of(new WreckingBall()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -207,6 +207,7 @@ class SporebackTrollTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castAndResolveInstant(player1, 0, troll.getId());
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInGraveyard(player1, "Sporeback Troll");
         assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

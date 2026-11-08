@@ -33,8 +33,8 @@ class VigeanGraftmageTest extends BaseCardTest {
 
         Permanent scout = castSilkwingScout(player1);
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(graftmage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(scout.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -47,8 +47,8 @@ class VigeanGraftmageTest extends BaseCardTest {
 
         Permanent scout = castSilkwingScout(player2);
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(graftmage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(scout.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -61,8 +61,8 @@ class VigeanGraftmageTest extends BaseCardTest {
 
         Permanent scout = castSilkwingScout(player1);
 
-        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(graftmage.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(scout.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(0);
@@ -172,8 +172,8 @@ class VigeanGraftmageTest extends BaseCardTest {
         graftmage.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         Permanent scout = castSilkwingScout(player1);
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(scout.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Vigean Graftmage");

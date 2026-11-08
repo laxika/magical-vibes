@@ -27,7 +27,9 @@ public class SoulbondPairWithEnteringEffectHandler implements NormalEffectHandle
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        Permanent entering = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        // "That creature" is the stack entry's triggering permanent, where it is now.
+        Permanent entering = entry.getTriggeringPermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
         if (source == null || entering == null) {
             return;
         }

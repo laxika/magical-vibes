@@ -10,9 +10,4 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * @param subtype the subtype added to the triggering permanent's granted subtypes
  */
 public record GrantSubtypeToTriggeringPermanentEffect(CardSubtype subtype) implements CardEffect {
-
-    @Override
-    public boolean usesEnteringPermanentReference() {
-        return true;
-    }
 }

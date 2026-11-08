@@ -1,10 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-/** Puts the same number of each counter kind on the creature that caused the enter trigger. */
+/** Puts the same number of each counter kind on "that creature": the stack entry's triggering permanent. */
 public record PutCountersOnEnteringCreatureEqualToSourceCountersEffect() implements CardEffect {
-
-    @Override
-    public boolean usesEnteringPermanentReference() {
-        return true;
-    }
 }

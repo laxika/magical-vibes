@@ -6105,31 +6105,39 @@ public class TriggerCollectionService {
         boolean triggered = false;
         for (CardEffect resolved : effects) {
             if (resolved instanceof MayEffect may) {
-                if (may.usesEnteringPermanentReference() && enteringPermanent != null) {
-                    gameData.queueMayAbility(card, controllerId, may, enteringPermanent.getId(), null);
-                } else {
-                    gameData.queueMayAbility(card, controllerId, may);
-                }
+                gameData.queueMayAbility(card, controllerId, may);
+                StackEntry mayEntry = gameData.stack.getLast();
                 if (stampVersion) {
-                    gameData.stack.getLast().setTriggeringCardGraveyardEntryVersion(
-                            gameData.graveyardEntryVersion(card.getId()));
+                    mayEntry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                 }
+                recordEnteringPermanent(mayEntry, enteringPermanent, may);
             } else {
                 StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
                         card.getName() + "'s ability", new ArrayList<>(List.of(resolved)));
                 if (stampVersion) {
                     entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                 }
-                if (resolved.usesEnteringPermanentReference()) {
-                    entry.setTargetId(enteringPermanent != null ? enteringPermanent.getId() : null);
-                    entry.setNonTargeting(true);
-                }
+                recordEnteringPermanent(entry, enteringPermanent, resolved);
                 gameData.enqueueTrigger(entry);
             }
             gameLogService.append(gameData, GameLog.abilityTriggers(card));
             triggered = true;
         }
         return triggered;
+    }
+
+    /**
+     * "That creature" of a graveyard card's enters ability is the stack entry's triggering permanent, read as the
+     * ability resolves (Sword of the Meek, Dragon Wings); a non-targeting ability says so.
+     */
+    private static void recordEnteringPermanent(StackEntry entry, Permanent enteringPermanent, CardEffect effect) {
+        if (enteringPermanent == null) {
+            return;
+        }
+        entry.setTriggeringPermanentId(enteringPermanent.getId());
+        if (effect.targetSpec() == TargetSpec.NONE) {
+            entry.setNonTargeting(true);
+        }
     }
 
     /** From the graveyard, "whenever an artifact you control enters" and "an enchantment you control". */
@@ -9536,6 +9544,13 @@ public class TriggerCollectionService {
                                                 TemporaryGlobalTriggeredAbility watcher,
                                                 CardEffect effect,
                                                 UUID targetId, int eventValue) {
+        enqueueTemporaryGlobalTrigger(gameData, watcher, effect, targetId, eventValue, null);
+    }
+
+    private void enqueueTemporaryGlobalTrigger(GameData gameData,
+                                                TemporaryGlobalTriggeredAbility watcher,
+                                                CardEffect effect,
+                                                UUID targetId, int eventValue, UUID triggeringPermanentId) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 watcher.sourceCard(),
@@ -9544,6 +9559,9 @@ public class TriggerCollectionService {
                 new ArrayList<>(List.of(effect)));
         entry.setTargetId(targetId);
         entry.setEventValue(eventValue);
+        if (triggeringPermanentId != null) {
+            entry.setTriggeringPermanentId(triggeringPermanentId);
+        }
         if (watcher.ability().hasTrigger(TapWatch.ON_ANY_CREATURE_BECOMES_TAPPED.trigger())) {
             entry.setTriggeringPermanentId(targetId);
         }
@@ -14827,18 +14845,12 @@ public class TriggerCollectionService {
         boolean triggered = false;
         for (CardEffect resolved : effects) {
             if (resolved instanceof MayEffect may) {
-                if (may.usesEnteringPermanentReference()) {
-                    gameData.queueMayAbility(card, graveyardOwnerId, may, enteringPermanent.getId(), null);
-                } else {
-                    gameData.queueMayAbility(card, graveyardOwnerId, may);
-                }
+                gameData.queueMayAbility(card, graveyardOwnerId, may);
+                recordEnteringPermanent(gameData.stack.getLast(), enteringPermanent, may);
             } else {
                 StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, graveyardOwnerId,
                         card.getName() + "'s ability", new ArrayList<>(List.of(resolved)));
-                if (resolved.usesEnteringPermanentReference()) {
-                    entry.setTargetId(enteringPermanent.getId());
-                    entry.setNonTargeting(true);
-                }
+                recordEnteringPermanent(entry, enteringPermanent, resolved);
                 gameData.enqueueTrigger(entry);
             }
             gameLogService.append(gameData, GameLog.abilityTriggers(card));
@@ -14863,7 +14875,9 @@ public class TriggerCollectionService {
 
             CardEffect resolvedEffect = ZoneChangeAbilityReader.strictEffect(watcher.ability());
 
-            enqueueTemporaryGlobalTrigger(gameData, watcher, resolvedEffect, enteringPermanent.getId(), 0);
+            // "A copy of that creature" (Theoretical Duplication) is the stack entry's triggering permanent.
+            enqueueTemporaryGlobalTrigger(gameData, watcher, resolvedEffect, enteringPermanent.getId(), 0,
+                    enteringPermanent.getId());
         }
     }
 

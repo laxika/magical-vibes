@@ -560,8 +560,7 @@ public class MayAbilityHandlerService {
             // Effects that copy an entering permanent need the target permanent ID from the trigger
             boolean needsEnteringTarget = ability.effects().stream()
                     .anyMatch(e -> e instanceof CreateTokenCopyOfTargetPermanentEffect
-                            || e instanceof DiscardCardThenEffect discard && discard.useEntryTarget()
-                            || e.usesEnteringPermanentReference());
+                            || e instanceof DiscardCardThenEffect discard && discard.useEntryTarget());
             if (needsEnteringTarget && ability.targetCardId() != null) {
                 entry.setTargetId(ability.targetCardId());
             }
@@ -569,8 +568,7 @@ public class MayAbilityHandlerService {
                     && discard.useEntryTarget())) {
                 entry.setNonTargeting(true);
             }
-            if (ability.effects().stream().anyMatch(e -> e.usesEnteringPermanentReference()
-                    || e instanceof OtherAttackingCreatureReferenceEffect)) {
+            if (ability.effects().stream().anyMatch(OtherAttackingCreatureReferenceEffect.class::isInstance)) {
                 entry.setNonTargeting(true);
             }
             if (ability.effects().stream().anyMatch(ImprintDyingCreatureEffect.class::isInstance)) {

@@ -34,9 +34,12 @@ public class BecomeSaddledUntilEndOfTurnEffectHandler implements NormalEffectHan
         var saddle = (BecomeSaddledUntilEndOfTurnEffect) effect;
         List<UUID> targetIds;
         if (saddle.scope() == GrantScope.SELF) {
-            UUID sourceId = entry.getSourcePermanentId() != null
-                    ? entry.getSourcePermanentId() : entry.getTargetId();
+            UUID sourceId = entry.getSourcePermanentId();
             targetIds = sourceId == null ? List.of() : List.of(sourceId);
+        } else if (saddle.scope() == GrantScope.TRIGGERING_PERMANENT) {
+            // "It becomes saddled": the stack entry's triggering permanent, where it is now (Kolodin).
+            UUID triggeringId = entry.getTriggeringPermanentId();
+            targetIds = triggeringId == null ? List.of() : List.of(triggeringId);
         } else if (saddle.scope() == GrantScope.TARGET) {
             targetIds = entry.targetsForEffect(effect);
             if (targetIds.isEmpty() && entry.getTargetId() != null) {

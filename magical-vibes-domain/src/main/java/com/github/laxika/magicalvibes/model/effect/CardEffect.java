@@ -129,12 +129,6 @@ public interface CardEffect {
     default boolean resolvesWhenTargetIllegal() { return false; }
 
     /**
-     * Returns whether an enter-trigger collector should bind the entering permanent as the
-     * hidden reference used by this effect.
-     */
-    default boolean usesEnteringPermanentReference() { return false; }
-
-    /**
      * Returns whether a hand-choice follow-up reads the permanent just put onto the battlefield.
      * The hand-choice completion code binds that permanent as the follow-up's chosen reference.
      */

@@ -35,8 +35,8 @@ class VigeanHydroponTest extends BaseCardTest {
         Permanent hydropon = castHydropon(player1);
         Permanent ragworm = castRagworm(player1);
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(hydropon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(ragworm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -48,8 +48,8 @@ class VigeanHydroponTest extends BaseCardTest {
         Permanent hydropon = castHydropon(player1);
         Permanent ragworm = castRagworm(player2);
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(hydropon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
         assertThat(ragworm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -61,8 +61,8 @@ class VigeanHydroponTest extends BaseCardTest {
         Permanent hydropon = castHydropon(player1);
         Permanent ragworm = castRagworm(player1);
 
-        harness.handleMayAbilityChosen(player1, false);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(hydropon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
         assertThat(ragworm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -112,8 +112,8 @@ class VigeanHydroponTest extends BaseCardTest {
         hydropon.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         Permanent ragworm = castRagworm(player1);
 
-        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(ragworm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         harness.assertNotOnBattlefield(player1, "Vigean Hydropon");
@@ -125,11 +125,10 @@ class VigeanHydroponTest extends BaseCardTest {
     void graftDoesNothingWhenSourceHasLeft() {
         Permanent hydropon = castHydropon(player1);
         Permanent ragworm = castRagworm(player1);
-        harness.handleMayAbilityChosen(player1, true);
-        gd.playerBattlefields.get(player1.getId()).remove(hydropon);
-        gd.playerGraveyards.get(player1.getId()).add(hydropon.getCard());
+        harness.sacrifice(hydropon);
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(ragworm.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -139,11 +138,11 @@ class VigeanHydroponTest extends BaseCardTest {
     void graftDoesNothingWhenEnteringCreatureHasLeft() {
         Permanent hydropon = castHydropon(player1);
         Permanent ragworm = castRagworm(player1);
-        harness.handleMayAbilityChosen(player1, true);
         gd.playerBattlefields.get(player1.getId()).remove(ragworm);
         gd.playerGraveyards.get(player1.getId()).add(ragworm.getCard());
 
         harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(hydropon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(5);
     }
