@@ -166,8 +166,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemLifeGainTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardOnAllyLandEntersEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseTargetsAtRandomEffect;
@@ -12867,8 +12865,8 @@ public class TriggerCollectionService {
 
     /**
      * "Whenever a creature dealt damage by this creature (or by equipped or enchanted creature) this turn dies",
-     * with the dying creature's last-known information bound into the effects that need it: its toughness, its
-     * card for a "may exile that card", its controller for "its controller loses N life".
+     * with the dying creature's last-known information on the stack entry for the effects that read it: its toughness,
+     * its card for a "may exile that card", its controller for "its controller loses N life".
      */
     private boolean collectDamagedCreatureDeath(GameData gameData, Permanent sourcePermanent, UUID controllerId,
                                                 List<CardEffect> effects, CreatureDeath death) {
@@ -12880,13 +12878,12 @@ public class TriggerCollectionService {
         UUID dyingCreatureCardId = dyingCreatureCard.getId();
         boolean triggered = false;
         for (CardEffect effect : effects) {
-            CardEffect materializedEffect = materializeDamagedCreatureDiesEffect(effect, dyingPermanent);
             triggered = true;
-            if (materializedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    || materializedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                    || materializedEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+            if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                    || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                    || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                 gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                        sourceCard, controllerId, List.of(materializedEffect),
+                        sourceCard, controllerId, List.of(effect),
                         "damaged creature dies", sourcePermanentId));
                 continue;
             }
@@ -12895,7 +12892,7 @@ public class TriggerCollectionService {
                     sourceCard,
                     controllerId,
                     sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(materializedEffect)),
+                    new ArrayList<>(List.of(effect)),
                     null,
                     sourcePermanentId
             );
@@ -12904,10 +12901,14 @@ public class TriggerCollectionService {
             // The graveyard visit this trigger refers to (CR 400.7): a later effect that acts on "that card"
             // must not act on the same card after it has left and returned to a graveyard again.
             triggerEntry.setTriggeringCard(dyingCreatureCardId, gameData.graveyardEntryVersion(dyingCreatureCardId));
+            // "That creature's toughness" (Abattoir Ghoul) is its last-known toughness (CR 608.2h).
+            triggerEntry.setTriggeringPermanent(dyingPermanent);
+            triggerEntry.setTriggeringPermanentToughnessAtTrigger(dyingPermanent.getLastKnownToughness() != null
+                    ? dyingPermanent.getLastKnownToughness() : dyingPermanent.getEffectiveToughness());
             // "its controller loses N life" reads the dying creature's last-known controller from
             // the entry's targetId; the ability itself chooses no target. Other abilities use targetId
             // for their own purposes, so it is only bound for that recipient.
-            if (materializedEffect instanceof LoseLifeEffect lose
+            if (effect instanceof LoseLifeEffect lose
                     && lose.recipient() == LoseLifeRecipient.DYING_CREATURE_CONTROLLER) {
                 triggerEntry.setTargetId(dyingControllerId);
             }
@@ -12916,19 +12917,6 @@ public class TriggerCollectionService {
             log.info("Game {} - {} triggers (damaged creature died this turn)", gameData.id, sourceCard.getName());
         }
         return triggered;
-    }
-
-    /**
-     * Binds the dying creature's last-known toughness into the effects that need it; the card itself is the
-     * stack entry's triggering card.
-     */
-    private static CardEffect materializeDamagedCreatureDiesEffect(CardEffect effect, Permanent dyingPermanent) {
-        if (effect instanceof GainLifeEqualToToughnessEffect) {
-            int toughness = dyingPermanent.getLastKnownToughness() != null
-                    ? dyingPermanent.getLastKnownToughness() : dyingPermanent.getEffectiveToughness();
-            return new GainLifeEffect(Math.max(0, toughness));
-        }
-        return effect;
     }
 
     /**

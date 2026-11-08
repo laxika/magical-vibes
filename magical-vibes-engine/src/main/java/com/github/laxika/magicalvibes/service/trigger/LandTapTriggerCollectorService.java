@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaPool;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -40,11 +39,8 @@ import com.github.laxika.magicalvibes.model.action.DelayedChooseOpponentGainsCon
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeWhenOpponentTapsLandOfSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTappedLandToHandEffect;
@@ -52,7 +48,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapLandsThatCouldProduceSameManaAsTappedLandEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -158,9 +153,7 @@ public class LandTapTriggerCollectorService {
             return true;
         }
         handleAddOneOfEachManaType(match, mana, ctx);
-        dealDamageHandlerProvider.getObject().resolve(
-                match.gameData(), entry, new DealDamageToPlayersEffect(
-                        damage.damage(), DamageRecipient.TARGET_PLAYER));
+        dealDamageHandlerProvider.getObject().resolve(match.gameData(), entry, damage.triggeredEffect());
         return true;
     }
 
@@ -236,11 +229,12 @@ public class LandTapTriggerCollectorService {
                 sourceCard,
                 tappedLandDealsDamage ? tappingPlayerId : match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(new DealDamageToPlayersEffect(
-                        trigger.damage(), DamageRecipient.TARGET_PLAYER))),
+                new ArrayList<>(List.of(trigger.triggeredEffect())),
                 tappingPlayerId,
                 sourcePermanentId);
         entry.setNonTargeting(true);
+        entry.setTriggeringPlayerId(tappingPlayerId);
+        entry.setTriggeringPermanentId(tappedLandId);
         if (damageSource != null) {
             entry.setSourcePermanentSnapshot(new Permanent(damageSource));
         }
@@ -265,9 +259,11 @@ public class LandTapTriggerCollectorService {
         StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(), match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new MayEffect(new GainLifeEffect(trigger.lifeAmount()),
-                        "Gain " + trigger.lifeAmount() + " life?"))),
+                new ArrayList<>(List.of(trigger.triggeredEffect())),
                 null, match.permanent().getId());
+        entry.setNonTargeting(true);
+        entry.setTriggeringPlayerId(lt.tappingPlayerId());
+        entry.setTriggeringPermanentId(tappedLand.getId());
         match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
@@ -960,10 +956,11 @@ public class LandTapTriggerCollectorService {
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new SkipNextUntapEffect(TapUntapScope.TRIGGERING))),
+                new ArrayList<>(List.of(trigger.triggeredEffect())),
                 null,
                 match.permanent().getId());
         entry.setTriggeringPermanentId(tappedLand.getId());
+        entry.setTriggeringPlayerId(lt.tappingPlayerId());
         entry.setNonTargeting(true);
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -22,9 +23,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -43,7 +44,6 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
-import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -150,8 +150,7 @@ class EnterTriggerCollectorServiceTest {
         lenient().when(gameQueryService.computeStaticBonus(any(GameData.class), any(Permanent.class), isNull()))
                 .thenReturn(EMPTY_BONUS);
         registry = new TriggerCollectorRegistry();
-        TriggerCollectorRegistry.scanBean(new EnterTriggerCollectorService(gameLogService,
-                new AmountEvaluationService(predicateEvaluationService, gameQueryService), gameQueryService,
+        TriggerCollectorRegistry.scanBean(new EnterTriggerCollectorService(gameLogService, gameQueryService,
                 graveyardTargetingService,
                 predicateEvaluationService,
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService)), registry);
@@ -490,10 +489,10 @@ class EnterTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("Self-or-ally flying trigger materializes entering power for a may life gain")
-    void selfOrAllyFlyingGainLifeUsesEnteringPower() {
-        addAllyCreatureTrigger(ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD,
-                new MayEffect(new GainLifeEqualToPowerEffect(), "Gain life?"));
+    @DisplayName("Self-or-ally may life gain equal to that creature's power goes on the stack as written, the entering creature its triggering permanent")
+    void selfOrAllyFlyingGainLifeReadsTheTriggeringPermanent() {
+        MayEffect authored = new MayEffect(new GainLifeEffect(new TriggeringPermanentPower()), "Gain life?");
+        addAllyCreatureTrigger(ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD, authored);
 
         Card entering = enteringCreature(4, 1);
         Permanent enteringPermanent = new Permanent(entering);
@@ -503,9 +502,10 @@ class EnterTriggerCollectorServiceTest {
         service.checkAllyCreatureEntersTriggers(gd, player1Id, entering, 0);
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(enteringPermanent.getId());
-        MayEffect may = (MayEffect) gd.stack.getFirst().getEffectsToResolve().getFirst();
-        assertThat(may.wrapped()).isEqualTo(new GainLifeEffect(new TargetPower()));
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.getEffectsToResolve()).containsExactly(authored);
+        assertThat(entry.getTriggeringPermanentId()).isEqualTo(enteringPermanent.getId());
+        assertThat(entry.getTriggeringCardId()).isEqualTo(entering.getId());
     }
 
     @Test

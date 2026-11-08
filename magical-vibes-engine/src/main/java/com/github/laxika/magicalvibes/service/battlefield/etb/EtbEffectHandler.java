@@ -9,8 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
  * <p>Handlers cover three shapes of behaviour, all expressed through the return value:
  * <ul>
  *   <li><b>Unwrap / materialise</b> — return a different effect (e.g. a modal {@code ChooseOneEffect}
- *       unwrapped to the chosen option, or {@code GainLifeEqualToToughnessEffect} materialised into a
- *       concrete {@code GainLifeEffect}).</li>
+ *       unwrapped to the chosen option).</li>
  *   <li><b>Intervening-if gate</b> (CR 603.4) — return the effect unchanged when the condition is met,
  *       or {@code null} to drop the trigger entirely when it is not.</li>
  *   <li><b>Conditional no-op</b> — return {@code null} to drop the trigger (e.g. a cast-from-hand

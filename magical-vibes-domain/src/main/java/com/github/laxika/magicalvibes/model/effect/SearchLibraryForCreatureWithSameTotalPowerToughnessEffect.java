@@ -1,18 +1,9 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Searches the controller's library for a creature card whose power plus toughness equals the
- * entering creature's current total power and toughness, then puts it onto the battlefield.
- *
- * @param powerAtTrigger      last-known power captured when the triggering creature entered
- * @param toughnessAtTrigger  last-known toughness captured when the triggering creature entered
+ * Searches the controller's library for a creature card whose power plus toughness equals the total power and
+ * toughness of the stack entry's triggering permanent (Wild Pair), read as the ability resolves: its current power and
+ * toughness, or as it last existed on the battlefield (CR 608.2h). Then puts that card onto the battlefield.
  */
-public record SearchLibraryForCreatureWithSameTotalPowerToughnessEffect(
-        Integer powerAtTrigger,
-        Integer toughnessAtTrigger
-) implements CardEffect {
-
-    public SearchLibraryForCreatureWithSameTotalPowerToughnessEffect() {
-        this(null, null);
-    }
+public record SearchLibraryForCreatureWithSameTotalPowerToughnessEffect() implements CardEffect {
 }

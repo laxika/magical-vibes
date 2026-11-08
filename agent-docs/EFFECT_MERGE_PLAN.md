@@ -1970,7 +1970,7 @@ Checked and found to differ semantically. Do not re-propose without new evidence
 - `CantLoseGameEffect` vs `CantLoseGameFromLifeEffect` — the former also stops opponents winning.
 - `ChooseNumberEffect` vs `ChooseNumberOnEnterEffect` — marker read via interface at `StackResolutionService:659` vs a registered handler. Merging without an ETB exclusion would double-prompt.
 - `IfWonClashEffect` / `IfLostClashEffect` — the pair deliberately models both branches.
-- `GainLifeEqualToToughness/DamageDealt/DyingCreatureToughness/ControlledCreatureCombatDamage` — marker records with **no handlers**, matched by `instanceof` at trigger-collection time. Reworking that is out of scope for an effect merge.
+- `GainLifeEqualToDamageDealt/ControlledCreatureCombatDamage` — marker records with **no handlers**, matched by `instanceof` at trigger-collection time. Reworking that is out of scope for an effect merge.
 - Capability interfaces (`AttackCostEffect`, `BlockCostEffect`, `BoardWipeEffect`, `CounterUnlessEffect`, the `ProtectionGrantingEffect` family, …) — these *are* the consolidation mechanism, not duplication.
 - Already-consolidated survivors: `ExileGraveyardCardsEffect`, `ReturnCardFromGraveyardEffect`, `ReturnToHandEffect`, `PreventDamageEffect`, `TapPermanentsEffect`, `UntapPermanentsEffect`.
 

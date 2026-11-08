@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.CastForMadnessCost;
 import com.github.laxika.magicalvibes.model.condition.CastFromZone;
 import com.github.laxika.magicalvibes.model.condition.CollectEvidenceCostPaid;
@@ -26,7 +25,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
@@ -233,15 +231,6 @@ class EtbEffectResolverTest {
         source.setCast(false);
         assertThat(resolver.resolve(new EtbEffectContext(gameData, card, controllerId,
                 false, 0, false, false, false, source), wasCast)).isEqualTo(new DrawCardEffect(0));
-    }
-
-    @Test
-    @DisplayName("GainLifeEqualToToughness: materialises toughness read at trigger time")
-    void gainLifeEqualToToughness() {
-        card.setToughness(4);
-        CardEffect resolved = resolver.resolve(ctx(true, 0, false), new GainLifeEqualToToughnessEffect());
-        assertThat(resolved).isInstanceOf(GainLifeEffect.class);
-        assertThat(((GainLifeEffect) resolved).amount()).isEqualTo(new Fixed(4));
     }
 
     @Test

@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentToughness;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -23,6 +24,6 @@ public class OrchardWarden extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.TREEFOLK))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MayEffect(new GainLifeEqualToToughnessEffect(), "Gain life equal to that creature's toughness?"));
+                new MayEffect(new GainLifeEffect(new TriggeringPermanentToughness()), "Gain life equal to that creature's toughness?"));
     }
 }

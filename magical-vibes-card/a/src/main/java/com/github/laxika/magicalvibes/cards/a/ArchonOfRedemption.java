@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToPowerEffect;
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentPower;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -22,6 +23,6 @@ public class ArchonOfRedemption extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasKeywordPredicate(Keyword.FLYING))),
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
-                new MayEffect(new GainLifeEqualToPowerEffect(), "Gain life equal to that creature's power?"));
+                new MayEffect(new GainLifeEffect(new TriggeringPermanentPower()), "Gain life equal to that creature's power?"));
     }
 }

@@ -298,7 +298,8 @@ class LandTapTriggerCollectorServiceTest {
             assertThat(entry.getSourcePermanentSnapshot().getId()).isEqualTo(manabarbs.getId());
             assertThat(entry.isNonTargeting()).isTrue();
             assertThat(entry.getEffectsToResolve()).containsExactly(
-                    new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER));
+                    new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER));
+            assertThat(entry.getTriggeringPlayerId()).isEqualTo(player2Id);
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
 
@@ -658,7 +659,7 @@ class LandTapTriggerCollectorServiceTest {
             assertThat(gd.stack).isEmpty();
             verify(dealDamageHandler).resolve(
                     eq(gd), any(StackEntry.class), eq(new DealDamageToPlayersEffect(
-                            1, DamageRecipient.TARGET_PLAYER)));
+                            1, DamageRecipient.TRIGGERING_PLAYER)));
         }
 
         @Test
@@ -688,7 +689,7 @@ class LandTapTriggerCollectorServiceTest {
             assertThat(gd.stack).isEmpty();
             verify(dealDamageHandler).resolve(
                     eq(gd), any(StackEntry.class), eq(new DealDamageToPlayersEffect(
-                            1, DamageRecipient.TARGET_PLAYER)));
+                            1, DamageRecipient.TRIGGERING_PLAYER)));
         }
 
         @Test

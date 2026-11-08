@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentToughness;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -29,7 +30,7 @@ public class RighteousValkyrie extends Card {
                                         new PermanentHasSubtypePredicate(CardSubtype.ANGEL),
                                         new PermanentHasSubtypePredicate(CardSubtype.CLERIC))))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new GainLifeEqualToToughnessEffect());
+                new GainLifeEffect(new TriggeringPermanentToughness()));
         addStaticEffect(new ConditionalEffect(
                         new ControllerLifeAtLeast(7, true),
                         new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES)));

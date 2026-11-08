@@ -41,8 +41,8 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *   <li>{@link #mayPutAnyNumberMatchingOntoBattlefieldRestOnBottomRandom(int, CardPredicate)} — you
  *       may put any number of matching cards onto the battlefield; the rest go on the bottom in a
  *       random order (Nissa, Genesis Mage −10).</li>
- *   <li>{@link #putOneOnTopRestOnBottom(int)} — put one back on top, rest on the bottom (Cream of
- *       the Crop's materialised trigger).</li>
+ *   <li>{@link #putOneOnTopRestOnBottom(DynamicAmount)} — put one back on top, rest on the bottom (Cream of
+ *       the Crop, X its triggering creature's power).</li>
  *   <li>{@link #mayPutOneOnTopRestToGraveyard(int)} — you may put one back on top, rest into the
  *       graveyard (Gutless Plunderer).</li>
  * </ul>
@@ -860,9 +860,17 @@ public record LookAtTopCardsEffect(
                 null, new Fixed(maxTotalManaValue), null, null);
     }
 
-    /** Put one of the looked-at cards on top of your library and the rest on the bottom (Cream of the Crop). */
+    /** Put one of the looked-at cards on top of your library and the rest on the bottom. */
     public static LookAtTopCardsEffect putOneOnTopRestOnBottom(int lookCount) {
-        return new LookAtTopCardsEffect(new Fixed(lookCount), new Fixed(1), null,
+        return putOneOnTopRestOnBottom(new Fixed(lookCount));
+    }
+
+    /**
+     * Put one of the {@code lookCount} looked-at cards on top of your library and the rest on the bottom, the count read
+     * as the effect resolves (Cream of the Crop's "where X is that creature's power", {@code TriggeringPermanentPower}).
+     */
+    public static LookAtTopCardsEffect putOneOnTopRestOnBottom(DynamicAmount lookCount) {
+        return new LookAtTopCardsEffect(lookCount, new Fixed(1), null,
                 LookDestination.BOTTOM_OF_LIBRARY, false, LibrarySearchDestination.TOP_OF_LIBRARY, false);
     }
 

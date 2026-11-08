@@ -1042,8 +1042,7 @@ public class AmountEvaluationService {
             case TriggeringPermanentToughness ignored ->
                     triggeringPermanentToughness(gameData, ctx);
             case TriggeringPermanentPower ignored ->
-                    ctx.stackEntry() == null || ctx.stackEntry().getTriggeringPermanentPowerAtTrigger() == null
-                            ? 0 : Math.max(0, ctx.stackEntry().getTriggeringPermanentPowerAtTrigger());
+                    triggeringPermanentPower(gameData, ctx);
             case TargetPower power ->
                     targetEffectivePower(gameData, ctx, power.allowNegative());
             case TargetPowerPlusToughness ignored ->
@@ -1289,19 +1288,19 @@ public class AmountEvaluationService {
         if (entry == null) {
             return 0;
         }
-        if (entry.getTriggeringPermanentToughnessAtTrigger() != null) {
-            return Math.max(0, entry.getTriggeringPermanentToughnessAtTrigger());
-        }
         // "That creature's toughness" as the ability resolves: the triggering permanent's current toughness, else its
-        // toughness as it last existed on the battlefield (CR 608.2h).
+        // toughness as it last existed on the battlefield (CR 608.2h), which the collector may have recorded.
         UUID triggeringId = entry.getTriggeringPermanentId();
-        if (triggeringId == null) {
-            return 0;
-        }
-        Permanent triggering = gameQueryService.findPermanentById(gameData, triggeringId);
+        Permanent triggering = triggeringId == null ? null : gameQueryService.findPermanentById(gameData, triggeringId);
         if (triggering != null) {
             return gameQueryService.isCreature(gameData, triggering)
                     ? Math.max(0, gameQueryService.getEffectiveToughness(gameData, triggering)) : 0;
+        }
+        if (entry.getTriggeringPermanentToughnessAtTrigger() != null) {
+            return Math.max(0, entry.getTriggeringPermanentToughnessAtTrigger());
+        }
+        if (triggeringId == null) {
+            return 0;
         }
         for (Permanent departed : gameData.departedPermanentSnapshots.values()) {
             if (departed.getId().equals(triggeringId) && departed.getLastKnownToughness() != null) {
@@ -1311,6 +1310,38 @@ public class AmountEvaluationService {
         Permanent snapshot = entry.getTriggeringPermanentSnapshot();
         return snapshot != null && snapshot.getId().equals(triggeringId) && snapshot.getLastKnownToughness() != null
                 ? Math.max(0, snapshot.getLastKnownToughness()) : 0;
+    }
+
+    /**
+     * "That creature's power" as the ability resolves: the triggering permanent's current power, else its power as it
+     * last existed on the battlefield (CR 608.2h), which the collector recorded as the ability triggered (a dying
+     * creature's last-known power) or the departure recorded since.
+     */
+    private int triggeringPermanentPower(GameData gameData, AmountContext ctx) {
+        StackEntry entry = ctx.stackEntry();
+        if (entry == null) {
+            return 0;
+        }
+        UUID triggeringId = entry.getTriggeringPermanentId();
+        Permanent triggering = triggeringId == null ? null : gameQueryService.findPermanentById(gameData, triggeringId);
+        if (triggering != null) {
+            return gameQueryService.isCreature(gameData, triggering)
+                    ? Math.max(0, gameQueryService.getEffectivePower(gameData, triggering)) : 0;
+        }
+        if (entry.getTriggeringPermanentPowerAtTrigger() != null) {
+            return Math.max(0, entry.getTriggeringPermanentPowerAtTrigger());
+        }
+        if (triggeringId == null) {
+            return 0;
+        }
+        for (Permanent departed : gameData.departedPermanentSnapshots.values()) {
+            if (departed.getId().equals(triggeringId) && departed.getLastKnownPower() != null) {
+                return Math.max(0, departed.getLastKnownPower());
+            }
+        }
+        Permanent snapshot = entry.getTriggeringPermanentSnapshot();
+        return snapshot != null && snapshot.getId().equals(triggeringId) && snapshot.getLastKnownPower() != null
+                ? Math.max(0, snapshot.getLastKnownPower()) : 0;
     }
 
     private int attachedPermanentColorCount(GameData gameData, AmountContext ctx) {

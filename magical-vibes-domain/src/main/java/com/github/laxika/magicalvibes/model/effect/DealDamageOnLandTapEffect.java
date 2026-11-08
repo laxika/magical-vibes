@@ -13,6 +13,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>{@code tappedLandDeals} selects the damage source: {@code false} for the trigger's own permanent
  * (Overabundance, Manabarbs), {@code true} when the tapped land itself deals the damage (Barbflare
  * Gremlin).
+ *
+ * <p>A trigger-condition record the land-tap collector judges by class: it is never resolved directly. The collector
+ * puts {@link #triggeredEffect()} on the stack (or, inside a triggered mana ability, resolves it at once) with the
+ * tapping player as the entry's triggering player.
  */
 public record DealDamageOnLandTapEffect(int damage, PermanentPredicate landFilter, boolean tappedLandDeals)
         implements CardEffect {
@@ -23,5 +27,10 @@ public record DealDamageOnLandTapEffect(int damage, PermanentPredicate landFilte
 
     public DealDamageOnLandTapEffect(int damage, PermanentPredicate landFilter) {
         this(damage, landFilter, false);
+    }
+
+    /** "Deals {damage} damage to that player": the player who tapped the land, the entry's triggering player. */
+    public CardEffect triggeredEffect() {
+        return new DealDamageToPlayersEffect(damage, DamageRecipient.TRIGGERING_PLAYER);
     }
 }
