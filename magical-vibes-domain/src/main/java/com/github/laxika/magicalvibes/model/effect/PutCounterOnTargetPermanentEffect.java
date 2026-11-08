@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -69,6 +70,22 @@ public record PutCounterOnTargetPermanentEffect(CounterType counterType, Dynamic
     public static PutCounterOnTargetPermanentEffect upToOneTarget(CounterType counterType,
                                                                     DynamicAmount amount) {
         return new PutCounterOnTargetPermanentEffect(counterType, amount, null, null, false, null, true);
+    }
+
+    /**
+     * "Put N counters on it / that creature", "it" the stack entry's triggering permanent (the creature that
+     * entered): not targeted, and placed wherever that permanent is as the ability resolves. The count is evaluated
+     * against the ability's source, and its controller orders the counter replacements as for a target.
+     */
+    public static PutCounterOnTargetPermanentEffect onTriggeringPermanent(CounterType counterType,
+                                                                          DynamicAmount amount) {
+        return new PutCounterOnTargetPermanentEffect(counterType, amount, new PermanentIsTriggeringPermanentPredicate(),
+                null, false, null, false);
+    }
+
+    /** {@link #onTriggeringPermanent(CounterType, DynamicAmount)} with a fixed count. */
+    public static PutCounterOnTargetPermanentEffect onTriggeringPermanent(CounterType counterType, int count) {
+        return onTriggeringPermanent(counterType, new Fixed(count));
     }
 
     /** Targeting effect whose legal targets are restricted to permanents matching {@code targetPredicate}. */

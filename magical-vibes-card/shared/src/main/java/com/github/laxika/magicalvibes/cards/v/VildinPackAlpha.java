@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
-import com.github.laxika.magicalvibes.model.effect.TransformEnteringCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -29,7 +30,7 @@ public class VildinPackAlpha extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.WEREWOLF))),
                         ObjectRelation.YOU_CONTROL),
-                new TransformEnteringCreatureEffect());
+                new MayEffect(TransformTargetPermanentEffect.ofTriggeringPermanent(), "Transform it?"));
 
         // At the beginning of each upkeep, if a player cast two or more spells last turn,
         // transform Vildin-Pack Alpha.

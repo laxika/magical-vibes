@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -25,7 +27,9 @@ public class TransformTargetPermanentEffectHandler implements NormalEffectHandle
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        UUID targetId = ((TransformTargetPermanentEffect) effect).triggeringPermanent()
+                ? entry.getTriggeringPermanentId() : entry.getTargetId();
+        Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return;
         }

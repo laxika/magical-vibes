@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService
 import com.github.laxika.magicalvibes.service.trigger.ZoneChangeWatch;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,18 +36,25 @@ public class BecomeCopyOfEnteringCreatureEffectHandler implements NormalEffectHa
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (BecomeCopyOfEnteringCreatureEffect) effect;
-
-        // The source permanent (Unstable Shapeshifter) is carried as the stack entry's self-target.
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {
             log.info("Game {} - Become-copy-of-entering source no longer on the battlefield", gameData.id);
             return;
         }
 
-        Permanent entering = gameQueryService.findPermanentById(gameData, e.enteringPermanentId());
-        if (entering == null) {
-            entering = e.enteringPermanent();
+        // "That creature" is the stack entry's triggering permanent: as it is now, else as it last existed on the
+        // battlefield (CR 608.2h), its copiable values then (CR 707.2).
+        UUID enteringId = entry.getTriggeringPermanentId();
+        Permanent entering = enteringId == null ? null : gameQueryService.findPermanentById(gameData, enteringId);
+        if (entering == null && enteringId != null) {
+            entering = gameData.departedPermanentSnapshots.values().stream()
+                    .filter(snapshot -> snapshot.getId().equals(enteringId))
+                    .findFirst()
+                    .orElse(null);
+        }
+        if (entering == null && entry.getAttachedPermanentSnapshot() != null
+                && entry.getAttachedPermanentSnapshot().getId().equals(enteringId)) {
+            entering = entry.getAttachedPermanentSnapshot();
         }
         if (entering == null) {
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(),

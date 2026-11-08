@@ -1790,7 +1790,7 @@ source-restriction axis handled in `DamageSupport.dealCreatureDamage`.
 
 **23a Target**: `AttachSourceToTargetPermanentEffect()` — source attaches to `targetId`.
 **Absorbs**: `AttachSourceAuraToTargetCreatureEffect` (2),
-`AttachSourceEquipmentToTargetCreatureEffect` (3).
+`AttachSourceEquipmentToTargetCreatureEffect` (3). Both have a non-targeting form reading the stack entry's triggering permanent (`AttachSourceAuraToTargetCreatureEffect.ofTriggeringPermanent()`, `AttachSourceEquipmentToTargetCreatureEffect.forTriggeringCreature()`, step 15 run 17x3b) that the merged effect keeps.
 
 **23b Target**: `AttachTargetToTargetPermanentEffect()` — `targetIds[0]` attaches to `targetIds[1]`.
 **Absorbs**: `AttachTargetAuraToTargetCreatureEffect` (2),

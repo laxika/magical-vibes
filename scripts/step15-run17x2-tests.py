@@ -6,6 +6,7 @@ ability resolves (CR 608.2h), each changing the creature's controller with Act o
 
 - `GreatbowDoyenTest#damagedCreaturesControllerAsTheAbilityResolvesIsDealtTheDamage`
 - `JusticeTest#sourcesControllerAsTheAbilityResolvesIsDealtTheDamage`
+- `FlayedNimTest#damagedCreaturesControllerAsTheAbilityResolvesLosesTheLife`
 
 Idempotent: a test already holding its case is left alone. Per letter test module.
 
@@ -70,6 +71,34 @@ TESTS = {
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 14);
+    }
+
+"""),
+    "FlayedNimTest": ("f", "damagedCreaturesControllerAsTheAbilityResolvesLosesTheLife",
+                      "@CardUsed({FlayedNim.class, ", "@CardUsed({FlayedNim.class, ActOfAggression.class, ",
+                      """    @Test
+    @DisplayName("The damaged creature's controller as the ability resolves loses the life")
+    void damagedCreaturesControllerAsTheAbilityResolvesLosesTheLife() {
+        Permanent nim = addCreatureReady(player1, new FlayedNim());
+        nim.setAttacking(true);
+        // A 0/4 blocker survives the Nim's 2 damage, so its controller can change in response.
+        Permanent blocker = addCreatureReady(player2, new SteelWall());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player1, List.of(new ActOfAggression()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+        harness.assertOnBattlefield(player1, "Steel Wall");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
     }
 
 """),

@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToEnteringCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,6 +22,7 @@ public class PrisonTerm extends Card {
                 .addStaticEffect(new EnchantedCreatureCantActivateAbilitiesEffect())
                 // Whenever a creature an opponent controls enters, you may attach this Aura to that creature.
                 .addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.OPPONENT_CONTROLS),
-                        new AttachSourceAuraToEnteringCreatureEffect());
+                        new MayEffect(AttachSourceAuraToTargetCreatureEffect.ofTriggeringPermanent(),
+                        "Attach this Aura to that creature?"));
     }
 }

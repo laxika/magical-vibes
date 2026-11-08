@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfEnteringCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,7 +33,8 @@ public class SarkhanSoulAflame extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new BecomeCopyOfEnteringCreatureUntilEndOfTurnEffect(
-                        "Sarkhan, Soul Aflame", Set.of(CardSupertype.LEGENDARY)));
+                new MayEffect(new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
+                        "Sarkhan, Soul Aflame", Set.of(CardSupertype.LEGENDARY)).ofTriggeringPermanent(),
+                        "Have Sarkhan become a copy of it until end of turn?"));
     }
 }

@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.ActOfAggression;
 import com.github.laxika.magicalvibes.cards.a.AlphaMyr;
 import com.github.laxika.magicalvibes.cards.e.ElectrostaticBolt;
 import com.github.laxika.magicalvibes.cards.s.SteelWall;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -15,8 +17,33 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FlayedNim.class, FistsOfTheAnvil.class, ElectrostaticBolt.class, SteelWall.class, AlphaMyr.class})
+@CardUsed({FlayedNim.class, ActOfAggression.class, FistsOfTheAnvil.class, ElectrostaticBolt.class, SteelWall.class, AlphaMyr.class})
 class FlayedNimTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The damaged creature's controller as the ability resolves loses the life")
+    void damagedCreaturesControllerAsTheAbilityResolvesLosesTheLife() {
+        Permanent nim = addCreatureReady(player1, new FlayedNim());
+        nim.setAttacking(true);
+        // A 0/4 blocker survives the Nim's 2 damage, so its controller can change in response.
+        Permanent blocker = addCreatureReady(player2, new SteelWall());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player1, List.of(new ActOfAggression()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+        harness.assertOnBattlefield(player1, "Steel Wall");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 18);
+        harness.assertLife(player2, 20);
+    }
 
     @Test
     @DisplayName("Regeneration ability creates a regeneration shield")

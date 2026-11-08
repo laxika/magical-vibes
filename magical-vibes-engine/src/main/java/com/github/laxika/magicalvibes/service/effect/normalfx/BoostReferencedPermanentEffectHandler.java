@@ -47,6 +47,18 @@ public class BoostReferencedPermanentEffectHandler implements NormalEffectHandle
         referenced.setPowerModifier(referenced.getPowerModifier() + powerBoost);
         referenced.setToughnessModifier(referenced.getToughnessModifier() + toughnessBoost);
         referenced.getGrantedKeywords().addAll(boost.keywords());
+        // As for a targeted pump: the abilities of the boosted permanent already on the stack see it with the boost
+        // as their last-known source (Ogre Battledriver's pump of a creature whose own enters ability waits).
+        gameData.stack.stream()
+                .filter(stackEntry -> referenced.getId().equals(stackEntry.getSourcePermanentId()))
+                .forEach(stackEntry -> {
+                    Permanent previous = stackEntry.getSourcePermanentSnapshot();
+                    Permanent refreshed = new Permanent(referenced);
+                    if (previous != null && previous.getId().equals(referenced.getId())) {
+                        refreshed.setTransformationSequence(previous.getTransformationSequence());
+                    }
+                    stackEntry.setSourcePermanentSnapshot(refreshed);
+                });
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(referenced.getCard())

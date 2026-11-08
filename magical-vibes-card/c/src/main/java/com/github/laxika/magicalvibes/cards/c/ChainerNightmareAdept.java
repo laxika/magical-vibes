@@ -6,10 +6,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AllowCastMatchingCardsFromGraveyardThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCastFromZonePredicate;
@@ -18,7 +19,6 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "MH2", collectorNumber = "289")
 @CardRegistration(set = "C19", collectorNumber = "39")
@@ -44,6 +44,6 @@ public class ChainerNightmareAdept extends Card {
                                         Triggers.NONTOKEN,
                                         new PermanentNotPredicate(new PermanentCastFromZonePredicate(Zone.HAND)))))),
                         ObjectRelation.YOU_CONTROL),
-                new BoostEnteringCreatureEffect(0, 0, Set.of(Keyword.HASTE), GrantDuration.UNTIL_YOUR_NEXT_TURN));
+                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TRIGGERING_PERMANENT, GrantDuration.UNTIL_YOUR_NEXT_TURN));
     }
 }

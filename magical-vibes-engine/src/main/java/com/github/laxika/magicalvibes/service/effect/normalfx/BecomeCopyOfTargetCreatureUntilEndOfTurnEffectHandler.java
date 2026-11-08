@@ -42,11 +42,19 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID targetId = entry.getTargetId();
+        boolean triggeringPermanent = ((BecomeCopyOfTargetCreatureUntilEndOfTurnEffect) effect).triggeringPermanent();
+        UUID targetId = triggeringPermanent ? entry.getTriggeringPermanentId() : entry.getTargetId();
         if (targetId == null) return;
 
         Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
-        Card lastKnownTarget = targetPerm == null && entry.isNonTargeting() ? entry.getTriggeringCardSnapshot() : null;
+        if (targetPerm == null && triggeringPermanent) {
+            // "That creature" left the battlefield: it is copied as it last existed there (CR 608.2h, CR 707.2).
+            targetPerm = gameData.departedPermanentSnapshots.values().stream()
+                    .filter(snapshot -> snapshot.getId().equals(targetId))
+                    .findFirst().orElse(null);
+        }
+        Card lastKnownTarget = targetPerm == null && (triggeringPermanent || entry.isNonTargeting())
+                ? entry.getTriggeringCardSnapshot() : null;
         if (targetPerm == null && lastKnownTarget == null) {
             log.info("Game {} - Become-copy-until-end-of-turn target no longer exists", gameData.id);
             return;

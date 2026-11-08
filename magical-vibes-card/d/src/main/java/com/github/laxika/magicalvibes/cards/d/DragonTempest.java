@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.BoostEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "DTK", collectorNumber = "136")
 @CardRegistration(set = "IMA", collectorNumber = "125")
@@ -33,7 +33,7 @@ public class DragonTempest extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasKeywordPredicate(Keyword.FLYING))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new BoostEnteringCreatureEffect(0, 0, Set.of(Keyword.HASTE)));
+                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TRIGGERING_PERMANENT));
 
         // Whenever a Dragon you control enters, this enchantment deals X damage to any target,
         // where X is the number of Dragons you control.

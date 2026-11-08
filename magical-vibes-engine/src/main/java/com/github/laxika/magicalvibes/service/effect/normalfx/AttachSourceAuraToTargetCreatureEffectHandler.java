@@ -31,7 +31,9 @@ public class AttachSourceAuraToTargetCreatureEffectHandler implements NormalEffe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent target = gameQueryService.findPermanentById(gameData,
+                ((AttachSourceAuraToTargetCreatureEffect) effect).triggeringPermanent()
+                        ? entry.getTriggeringPermanentId() : entry.getTargetId());
         if (target == null) {
             
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s attach ability fizzles (target creature no longer exists)."));

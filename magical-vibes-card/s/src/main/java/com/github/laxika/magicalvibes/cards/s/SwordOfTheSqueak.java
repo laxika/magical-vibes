@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToEnteringCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerEqualsPredicate;
@@ -45,7 +46,8 @@ public class SwordOfTheSqueak extends Card {
                                         new PermanentHasSubtypePredicate(CardSubtype.RAT),
                                         new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL))))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new AttachSourceEquipmentToEnteringCreatureEffect());
+                new MayEffect(AttachSourceEquipmentToTargetCreatureEffect.forTriggeringCreature(),
+                        "Attach this Equipment to it?"));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

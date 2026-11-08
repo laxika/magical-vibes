@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfEnteringCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,6 +14,7 @@ public class RenegadeDoppelganger extends Card {
         // Whenever another creature you control enters, you may have this creature become a copy
         // of that creature until end of turn.
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new BecomeCopyOfEnteringCreatureUntilEndOfTurnEffect());
+                new MayEffect(new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect().ofTriggeringPermanent(),
+                        "Have this creature become a copy of that creature until end of turn?"));
     }
 }

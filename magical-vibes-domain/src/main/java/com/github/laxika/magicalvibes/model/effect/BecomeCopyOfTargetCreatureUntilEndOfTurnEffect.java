@@ -13,7 +13,12 @@ import java.util.Set;
 /**
  * Causes the source permanent to become a copy of the target creature until end of turn.
  * At the cleanup step, the permanent reverts to its original card.
- * Used by Tilonalli's Skinshifter and similar shapeshifters.
+ * Used by Tilonalli's Skinshifter and similar shapeshifters. {@link #ofTriggeringPermanent()} copies the stack
+ * entry's triggering permanent instead, not targeted ("become a copy of that creature", Renegade Doppelganger): as
+ * it is while it is on the battlefield, else as it last existed there.
+ *
+ * @param triggeringPermanent whether the creature copied is the stack entry's triggering permanent rather than its
+ *                            {@code targetId}
  */
 public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
         String nameOverride,
@@ -24,7 +29,8 @@ public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
         Set<CardSubtype> additionalSubtypesOverride,
         Set<Keyword> additionalKeywordsOverride,
         Trigger retainedTrigger,
-        List<Ability> additionalAbilitiesOverride
+        List<Ability> additionalAbilitiesOverride,
+        boolean triggeringPermanent
 ) implements TemporaryCopyEffect {
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect {
@@ -38,6 +44,17 @@ public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
                 ? Set.of() : Set.copyOf(additionalKeywordsOverride);
         additionalAbilitiesOverride = additionalAbilitiesOverride == null
                 ? List.of() : List.copyOf(additionalAbilitiesOverride);
+    }
+
+    public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
+            String nameOverride, Set<CardSupertype> additionalSupertypesOverride,
+            Integer powerOverride, Integer toughnessOverride,
+            Set<CardType> additionalTypesOverride, Set<CardSubtype> additionalSubtypesOverride,
+            Set<Keyword> additionalKeywordsOverride, Trigger retainedTrigger,
+            List<Ability> additionalAbilitiesOverride) {
+        this(nameOverride, additionalSupertypesOverride, powerOverride, toughnessOverride,
+                additionalTypesOverride, additionalSubtypesOverride, additionalKeywordsOverride, retainedTrigger,
+                additionalAbilitiesOverride, false);
     }
 
     public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
@@ -82,8 +99,15 @@ public record BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(
                 retainedTrigger, List.of());
     }
 
+    /** This effect copying the stack entry's triggering permanent, not a target. */
+    public BecomeCopyOfTargetCreatureUntilEndOfTurnEffect ofTriggeringPermanent() {
+        return new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(nameOverride, additionalSupertypesOverride,
+                powerOverride, toughnessOverride, additionalTypesOverride, additionalSubtypesOverride,
+                additionalKeywordsOverride, retainedTrigger, additionalAbilitiesOverride, true);
+    }
+
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.permanent());
+        return triggeringPermanent ? TargetSpec.NONE : TargetSpec.benign(TargetPredicates.permanent());
     }
 }
