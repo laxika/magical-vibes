@@ -15,6 +15,6 @@ public class MortalWound extends Card {
         // When enchanted creature is dealt damage, destroy it.
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enchantedCreatureDealtDamage(),
-                        new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
+                        new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
     }
 }

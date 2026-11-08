@@ -16,7 +16,7 @@ public class HotSoup extends Card {
         addStaticEffect(new CantBeBlockedEffect());
         // Whenever equipped creature is dealt damage, destroy it.
         addTrigger(Triggers.enchantedCreatureDealtDamage(),
-                new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
+                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

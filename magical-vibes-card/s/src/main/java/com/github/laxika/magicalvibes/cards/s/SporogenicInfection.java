@@ -37,6 +37,6 @@ public class SporogenicInfection extends Card {
                 SacrificeRecipient.TARGET_PLAYER));
 
         addTrigger(Triggers.enchantedCreatureDealtDamage(),
-                new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
+                new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
     }
 }

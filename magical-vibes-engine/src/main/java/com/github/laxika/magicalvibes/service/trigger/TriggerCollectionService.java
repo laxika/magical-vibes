@@ -102,10 +102,8 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageDamagedCreatureControllerAndSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagedCreatureTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureDamagedByMatchingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyDamagedCreatureAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.EquipmentDamagesOtherDefendingCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipmentTapsAndLocksDamagedCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
@@ -8910,20 +8908,22 @@ public class TriggerCollectionService {
                     continue;
                 }
 
-                // The normal form deals damage; Flayed Nim's self-scoped form causes life loss.
-                CardEffect triggeredEffect = reflect.lifeLoss()
-                        ? new LoseLifeEffect(damage, LoseLifeRecipient.TARGET_PLAYER)
-                        : new DealDamageToPlayersEffect(damage, DamageRecipient.TARGET_PLAYER);
+                // "That creature deals that much damage to that creature's controller": the creature that dealt the
+                // damage is the entry's source, "that much" its event value and "that creature's controller" the
+                // controller of its triggering permanent as the ability resolves (CR 608.2h).
                 StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         damageSource.getCard(),
                         damageSourceControllerId,
                         damageSource.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(triggeredEffect)),
-                        damagedCreatureControllerId,
+                        new ArrayList<>(List.of(reflect.triggeredEffect())),
+                        (UUID) null,
                         damageSource.getId()
                 );
                 trigger.setNonTargeting(true);
+                trigger.setEventValue(damage);
+                trigger.setTriggeringPermanentId(damagedCreatureId);
+                trigger.setTriggeringPermanentControllerId(damagedCreatureControllerId);
                 gameData.stack.add(trigger);
 
                 gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
@@ -9079,7 +9079,7 @@ public class TriggerCollectionService {
                 gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
                 log.info("Game {} - {} schedules the damaged creature for destruction at end of combat",
                         gameData.id, watcher.getCard().getName());
-            } else if (effect instanceof EquipmentDamagesOtherDefendingCreaturesEffect) {
+            } else if (effect instanceof EquipmentDamagesOtherDefendingCreaturesEffect splash) {
                 // "equipped creature" — the watcher is the Equipment, so it must be attached to
                 // the creature that dealt the damage. The ability triggered when the damage was
                 // dealt, so a host that has already died to the same combat damage (which detaches
@@ -9088,21 +9088,20 @@ public class TriggerCollectionService {
                 if (damagedCreatureId == null) continue;
                 if (!wasBlocking(gameData, damageSource, damagedCreatureId, combatDamage)) continue;
 
-                // The Equipment deals that much damage to each other creature defending player controls.
+                // The Equipment deals that much damage (the entry's event value) to each other creature (not its
+                // triggering permanent) defending player controls (the entry's non-targeting player).
                 StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         watcher.getCard(),
                         damageSourceControllerId,
                         watcher.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(new DealDamageToEachMatchingPermanentEffect(damage,
-                                new PermanentAllOfPredicate(List.of(
-                                        new PermanentIsCreaturePredicate(),
-                                        new PermanentNotPredicate(new PermanentIsSpecificPermanentPredicate(damagedCreatureId)))),
-                                EachPermanentScope.TARGET_PLAYER))),
+                        new ArrayList<>(List.of(splash.triggeredEffect())),
                         damagedCreatureControllerId,
                         watcher.getId()
                 );
                 trigger.setNonTargeting(true);
+                trigger.setEventValue(damage);
+                trigger.setTriggeringPermanentId(damagedCreatureId);
                 gameData.stack.add(trigger);
 
                 gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));

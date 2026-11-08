@@ -13,6 +13,6 @@ public class MireBlight extends Card {
     public MireBlight() {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enchantedCreatureDealtDamage(),
-                        new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
+                        new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
     }
 }

@@ -81,7 +81,6 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TakeInitiativeEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -2253,14 +2252,6 @@ public class CombatDamageService {
                     continue;
                 }
 
-                if (effect instanceof TargetPlayerLosesGameEffect) {
-                    gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
-                            creature.getCard().getName() + "'s triggered ability",
-                            List.of(new TargetPlayerLosesGameEffect(defenderId)), null, creature.getId()));
-                    gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s ability triggers \u2014 " + gameData.playerIdToName.get(defenderId) + " loses the game."));
-                    continue;
-                }
-
                 if (effect instanceof ReturnPermanentsOnCombatDamageToPlayerEffect bounce
                         && bounce.fixedCount() == 0) {
                     gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
@@ -3364,8 +3355,9 @@ public class CombatDamageService {
     /**
      * Processes combat damage reflection triggers registered this turn (e.g. Harsh Justice).
      * For each attacking creature that dealt combat damage to a protected player this step, the
-     * creature deals that much damage back to its controller (the active player). Each creature
-     * reflects separately, with the attacking creature as the damage source.
+     * creature deals that much damage back to its controller. Each creature reflects separately, with
+     * the attacking creature as the damage source and triggering permanent: "that much" is the entry's
+     * event value and "its controller" the creature's controller as the ability resolves.
      */
     private void processCombatDamageReflectionTriggers(GameData gameData,
                                                        Map<Permanent, Integer> combatDamageDealtToPlayer,
@@ -3384,10 +3376,12 @@ public class CombatDamageService {
                         attacker.getCard(),
                         reflection.protectedPlayerId(),
                         reflection.sourceCard().getName() + "'s reflected combat damage",
-                        List.of(new DealDamageToPlayersEffect(damage, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER)),
+                        List.of(new DealDamageToPlayersEffect(new EventValue(),
+                                DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER)),
                         attackerId,
                         attacker.getId());
                 se.setNonTargeting(true);
+                se.setEventValue(damage);
                 se.setTriggeringPermanentId(attacker.getId());
                 se.setTriggeringPermanentControllerId(attackerId);
                 gameData.stack.add(se);

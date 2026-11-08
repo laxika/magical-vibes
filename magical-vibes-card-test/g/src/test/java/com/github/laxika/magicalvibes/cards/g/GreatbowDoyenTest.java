@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.ActOfAggression;
 import com.github.laxika.magicalvibes.cards.f.FemerefArchers;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KeenEyedArchers;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -19,11 +21,37 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GreatbowDoyen.class, KeenEyedArchers.class, GrizzlyBears.class, SerraAngel.class,
+@CardUsed({GreatbowDoyen.class, ActOfAggression.class, KeenEyedArchers.class, GrizzlyBears.class, SerraAngel.class,
         FemerefArchers.class, SkyhunterSkirmisher.class, Terror.class})
 class GreatbowDoyenTest extends BaseCardTest {
 
     // ===== Static: other Archer creatures you control get +1/+1 =====
+
+    @Test
+    @DisplayName("The damaged creature's controller as the ability resolves is dealt the damage")
+    void damagedCreaturesControllerAsTheAbilityResolvesIsDealtTheDamage() {
+        addCreatureReady(player1, new GreatbowDoyen());
+        Permanent archer = addCreatureReady(player1, new KeenEyedArchers());
+        archer.setAttacking(true);
+        // A 4/4 blocker survives the boosted 3/3 Archer's damage, so its controller can change in response.
+        Permanent blocker = addCreatureReady(player2, new SerraAngel());
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(1);
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player1, List.of(new ActOfAggression()));
+        harness.addMana(player1, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player1, 0, blocker.getId());
+        harness.assertOnBattlefield(player1, "Serra Angel");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 17);
+        harness.assertLife(player2, 20);
+    }
 
     @Test
     @DisplayName("Other Archer creatures you control get +1/+1")

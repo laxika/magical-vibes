@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.cards.a.ActOfAggression;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBarbarians;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.FolkOfThePines;
@@ -11,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,9 +22,31 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Justice.class, BalduvianBarbarians.class, BalduvianBears.class, Incinerate.class,
+@CardUsed({Justice.class, ActOfAggression.class, BalduvianBarbarians.class, BalduvianBears.class, Incinerate.class,
         FolkOfThePines.class, Pyroclasm.class, MoorFiend.class, Manabarbs.class, Mountain.class})
 class JusticeTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The red creature's controller as the ability resolves is dealt the damage")
+    void sourcesControllerAsTheAbilityResolvesIsDealtTheDamage() {
+        Permanent attacker = addCreatureReady(player1, new BalduvianBarbarians());
+        harness.addToBattlefield(player2, new Justice());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        attacker.setAttacking(true);
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, this::resolveCombat);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.setHand(player2, List.of(new ActOfAggression()));
+        harness.addMana(player2, ManaColor.RED, 5);
+        harness.castAndResolveInstant(player2, 0, attacker.getId());
+        harness.assertOnBattlefield(player2, "Balduvian Barbarians");
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 14);
+    }
 
     @Test
     @DisplayName("A red spell dealing damage reflects that much to the spell's controller")

@@ -441,7 +441,7 @@ counters placed as the trigger event value; "do this only once each turn" is
 `Triggers.plusOneCountersPutOnCreatureYouControl() from the graveyard` (Moss-Pit Skeleton; fires once for
 each +1/+1 counter-placement event on a creature controlled by the graveyard card's owner),
 `Triggers.youPutCountersOnPermanentOrPlayer()` (All Will Be One; fires once for each counter-placement
-event caused by the controller, including poison counters, and uses the spell-target trigger pipeline),
+event caused by the controller, including poison counters, and uses the spell-target trigger pipeline; "that much damage" is `DealDamageToAnyTargetEffect(new EventValue())`, the counters put the choice's event value),
 `Triggers.youPutTimeCountersOnPermanentYouControl()` (Kate Stewart; fires once when one or more time
 counters are put on a permanent controlled by the placing player, including entry counters; non-targeting),
 `Triggers.youPutCountersOnCreature()` (Rikku, Resourceful Guardian; fires once per placement event for

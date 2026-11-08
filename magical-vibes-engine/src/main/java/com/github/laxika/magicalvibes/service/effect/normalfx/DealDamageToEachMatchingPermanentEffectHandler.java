@@ -75,7 +75,8 @@ public class DealDamageToEachMatchingPermanentEffectHandler implements NormalEff
                 .withSourceControllerId(entry.getControllerId())
                 .withSourcePermanentSnapshot(source)
                 .withSourcePermanentId(entry.getSourcePermanentId())
-                .withDefendingPlayerId(entry.getDefendingPlayerId());
+                .withDefendingPlayerId(entry.getDefendingPlayerId())
+                .withTriggeringPermanentId(entry.getTriggeringPermanentId());
         boolean resolvingSpellSource = source == null
                 && (entry.getEntryType() == StackEntryType.INSTANT_SPELL
                 || entry.getEntryType() == StackEntryType.SORCERY_SPELL);

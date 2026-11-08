@@ -1388,4 +1388,98 @@ class DamageTriggerCollectorServiceTest {
         assertThat(pending.targetFilter()).isEqualTo(targetFilter);
         assertThat(pending.effects()).containsExactly(damage);
     }
+
+    /**
+     * The damage collectors put the card's effect, or a trigger-condition record's {@code triggeredEffect()}, on the
+     * stack unchanged: "that much" is the event value and "that source" / "that creature" the triggering permanent.
+     */
+    @Nested
+    @DisplayName("Damage effects read the stack entry")
+    class DamageEffectsReadTheEntry {
+
+        @Test
+        @DisplayName("Counters put: the authored damage goes to the target choice with the counters as its event value")
+        void countersPlacedCarriesTheCountAsTheEventValue() {
+            Permanent watcher = createPermanent("All Will Be One");
+            var damage = new DealDamageToAnyTargetEffect(new EventValue());
+            var ctx = new TriggerContext.CountersPlaced(player1Id, 4);
+
+            boolean result = registry.dispatch(match(watcher, player1Id, damage),
+                    CounterWatch.ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER, damage, ctx);
+
+            assertThat(result).isTrue();
+            var pending = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+            assertThat(pending.effects()).containsExactly(damage);
+            assertThat(pending.spellManaSpentX()).isEqualTo(4);
+        }
+
+        @Test
+        @DisplayName("Opponent source damage: the \"you may\" goes on the stack unchanged, the source its triggering permanent")
+        void opponentSourceDamageMayRecordsTheSource() {
+            Permanent watcher = createPermanent("Flameblade Angel");
+            Permanent source = createPermanent("Shock source");
+            var may = new MayEffect(new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(1,
+                    com.github.laxika.magicalvibes.model.effect.DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER),
+                    "Deal 1 damage?");
+            var ctx = new TriggerContext.SourceDamageToYouOrYourPermanent(source.getCard(), player2Id,
+                    source.getId(), player1Id);
+
+            boolean result = registry.dispatch(match(watcher, player1Id, may),
+                    DamageWatch.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT, may, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEffectsToResolve()).containsExactly(may);
+                assertThat(entry.getTriggeringPermanentId()).isEqualTo(source.getId());
+                assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
+            });
+        }
+
+        @Test
+        @DisplayName("A red spell's damage: Justice's effect reads the total as the event value and the caster as the fallback controller")
+        void redSourceDamageRecordsTheTotalAndTheController() {
+            gd.playerIds.add(player1Id);
+            gd.playerIds.add(player2Id);
+            Permanent watcher = createPermanent("Justice");
+            Card spell = createCard("Lightning Bolt");
+            var record = new com.github.laxika.magicalvibes.model.effect.ReflectSourceDamageToItsControllerEffect(
+                    com.github.laxika.magicalvibes.model.CardColor.RED);
+            var red = java.util.Set.of(com.github.laxika.magicalvibes.model.CardColor.RED);
+            when(gameQueryService.getEffectiveCardColors(gd, spell)).thenReturn(red);
+            when(gameQueryService.getDamageSourceColors(gd, red)).thenReturn(red);
+            var ctx = new TriggerContext.SourceDealsDamage(spell, player2Id, 3);
+
+            boolean result = registry.dispatch(match(watcher, player1Id, record),
+                    DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE, record, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEffectsToResolve()).containsExactly(record.triggeredEffect());
+                assertThat(entry.getEventValue()).isEqualTo(3);
+                assertThat(entry.getTriggeringPermanentId()).isNull();
+                assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
+                assertThat(entry.getTargetId()).isNull();
+            });
+        }
+
+        @Test
+        @DisplayName("Enchanted creature dealt damage: \"destroy it\" goes on the stack unchanged, the creature its triggering permanent")
+        void enchantedCreatureDestroyGoesOnTheStackUnchanged() {
+            Permanent aura = createPermanent("Mortal Wound");
+            Permanent creature = createPermanent("Grizzly Bears");
+            var destroy = new com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect(
+                    PermanentReference.TRIGGERING);
+            when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player2Id);
+            var ctx = new TriggerContext.DamageToCreature(creature, 2, player1Id);
+
+            boolean result = registry.dispatch(match(aura, player1Id, destroy),
+                    DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, destroy, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEffectsToResolve()).containsExactly(destroy);
+                assertThat(entry.getTriggeringPermanentId()).isEqualTo(creature.getId());
+            });
+        }
+    }
 }

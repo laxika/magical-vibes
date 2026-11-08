@@ -18,6 +18,6 @@ public class Cryoshatter extends Card {
                 .addTrigger(Triggers.enchantedPermanentBecomesTapped(),
                         new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED))
                 .addTrigger(Triggers.enchantedCreatureDealtDamage(),
-                        new DestroyReferencedPermanentEffect(PermanentReference.ATTACHED));
+                        new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
     }
 }

@@ -18,9 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerLosesLi
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToDamageSourceControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentWhenSingleTargetCreatureSpellDealsDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -929,11 +927,11 @@ public class DamageTriggerCollectorService {
         TriggerContext.CountersPlaced countersPlaced = (TriggerContext.CountersPlaced) ctx;
         if (countersPlaced.amount() <= 0) return false;
 
+        // "That much damage" (All Will Be One) is the entry's event value: the counters put, carried by the choice.
         Card sourceCard = match.permanent().getCard();
-        DealDamageToAnyTargetEffect damage = new DealDamageToAnyTargetEffect(countersPlaced.amount());
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                sourceCard, match.controllerId(), new ArrayList<>(List.of(damage)), false,
-                sourceCard.getTargetFilter(), 0, match.permanent().getId()));
+                sourceCard, match.controllerId(), new ArrayList<>(List.of(trigger)), false,
+                sourceCard.getTargetFilter(), countersPlaced.amount(), match.permanent().getId()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} counter-placement trigger fires for {} damage",
                 match.gameData().id, sourceCard.getName(), countersPlaced.amount());
@@ -1197,38 +1195,6 @@ public class DamageTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(aura.getCard()));
         log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE token trigger fires",
-                gameData.id, aura.getCard().getName());
-        return true;
-    }
-
-    @CollectsDamageTrigger(value = DestroyReferencedPermanentEffect.class,
-            watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
-    private boolean handleEnchantedCreatureDealtDamageDestroy(TriggerMatchContext match,
-            DestroyReferencedPermanentEffect effect, TriggerContext ctx) {
-        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
-        if (dc.damageDealt() <= 0) return false;
-
-        GameData gameData = match.gameData();
-        Permanent aura = match.permanent();
-
-        // "Destroy it" names the creature that was dealt damage when the trigger fired, even if the
-        // Equipment is moved to another creature before the trigger resolves (Hot Soup, Mortal Wound).
-        CardEffect boundEffect = effect.reference() == PermanentReference.ATTACHED
-                ? new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING, effect.cannotBeRegenerated())
-                : effect;
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                aura.getCard(),
-                match.controllerId(),
-                aura.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(boundEffect)),
-                null,
-                aura.getId()
-        );
-        entry.setTriggeringPermanentId(dc.damagedCreature().getId());
-        gameData.enqueueTrigger(entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(aura.getCard()));
-        log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE destroy trigger fires",
                 gameData.id, aura.getCard().getName());
         return true;
     }
@@ -1703,12 +1669,12 @@ public class DamageTriggerCollectorService {
             return false;
         }
 
-        MayEffect boundMay = new MayEffect(
-                new DealDamageToDamageSourceControllerEffect(
-                        1, damage.sourcePermanentId(), damage.sourceControllerId()),
-                may.prompt(), may.elseEffect(), may.choicePlayer());
-        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), boundMay,
-                null, match.permanent().getId());
+        // "That source's controller" is the controller of the entry's triggering permanent as the ability resolves
+        // (CR 608.2h), or the controller a spell source had as it dealt the damage.
+        StackEntry entry = match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may,
+                null, match.permanent().getId(), 0, false, null, null);
+        entry.setTriggeringPermanentId(damage.sourcePermanentId());
+        entry.setTriggeringPermanentControllerId(damage.sourceControllerId());
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers after an opponent-controlled source dealt damage to its controller or permanent",
                 match.gameData().id, match.permanent().getCard().getName());
@@ -1762,17 +1728,20 @@ public class DamageTriggerCollectorService {
         if (recipientId == null || !gameData.playerIds.contains(recipientId)) return false;
 
         Permanent watcher = match.permanent();
-        // The watcher deals the summed damage to the red source's controller. Reuse the standard
-        // TARGET_PLAYER damage effect with the recipient set as the (non-chosen) target.
+        // The watcher deals the summed damage (the entry's event value) to the source's controller: a creature's
+        // controller as the ability resolves (CR 608.2h), a spell's as it dealt the damage.
         StackEntry se = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 watcher.getCard(),
                 match.controllerId(),
                 watcher.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new DealDamageToPlayersEffect(sd.totalDamage(), DamageRecipient.TARGET_PLAYER))),
-                recipientId,
+                new ArrayList<>(List.of(trigger.triggeredEffect())),
+                (UUID) null,
                 watcher.getId());
         se.setNonTargeting(true);
+        se.setEventValue(sd.totalDamage());
+        se.setTriggeringPermanentId(sd.sourcePermanentId());
+        se.setTriggeringPermanentControllerId(recipientId);
         gameData.stack.add(se);
 
         gameLogService.append(gameData, GameLog.cardThen(watcher.getCard(),
@@ -2011,10 +1980,11 @@ public class DamageTriggerCollectorService {
                 watcher.getCard(),
                 match.controllerId(),
                 watcher.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new DealDamageToTargetCreatureEffect(dc.damage()))),
+                new ArrayList<>(List.of(trigger.triggeredEffect())),
                 damageSource.getId(),
                 watcher.getId());
         entry.setNonTargeting(true);
+        entry.setEventValue(dc.damage());
         gameData.stack.add(entry);
 
         gameLogService.append(gameData, GameLog.cardTextCard(watcher.getCard(),
@@ -2084,10 +2054,11 @@ public class DamageTriggerCollectorService {
                 watcher.getCard(),
                 match.controllerId(),
                 watcher.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new DealDamageToPlayersEffect(damage, DamageRecipient.EACH_OPPONENT))),
+                new ArrayList<>(List.of(effect.triggeredEffect())),
                 null,
                 watcher.getId());
         entry.setNonTargeting(true);
+        entry.setEventValue(damage);
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
         return true;
