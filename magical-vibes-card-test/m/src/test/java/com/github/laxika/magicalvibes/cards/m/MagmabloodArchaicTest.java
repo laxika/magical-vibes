@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SproutSwarm;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MagmabloodArchaic.class, Divination.class, GrizzlyBears.class, SproutSwarm.class})
+@CardUsed({MagmabloodArchaic.class, Cancel.class, Divination.class, GrizzlyBears.class, SproutSwarm.class})
 class MagmabloodArchaicTest extends BaseCardTest {
 
     @Test
@@ -145,6 +147,28 @@ class MagmabloodArchaicTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, archaic)).isEqualTo(2);
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(2);
         resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("A countered instant or sorcery still boosts by the colors spent to cast it")
+    void counteredSpellStillBoostsByItsColorsSpent() {
+        Permanent archaic = addCreatureReady(player1, new MagmabloodArchaic());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card divination = new Divination();
+        harness.setHand(player1, List.of(divination));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.castSorcery(player1, 0, 0);
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castInstant(player2, 0, divination.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(divination);
+
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, archaic)).isEqualTo(4);
     }
 
     @Test

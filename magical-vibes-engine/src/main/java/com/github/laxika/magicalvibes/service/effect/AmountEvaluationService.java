@@ -286,6 +286,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringSpellPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -621,8 +623,14 @@ public class AmountEvaluationService {
                             ManaColor.valueOf(gameData.chosenSpellColor.name()));
             case ColorManaPairsSpentToCast c ->
                     colorManaPairsSpentToCast(gameData, c, ctx);
+            // A cast trigger carries the triggering spell's colors spent in X, as it carries the mana spent: "for each
+            // color of mana spent to cast that spell" (Magmablood Archaic).
             case ColorsSpentToCast ignored ->
-                    ctx.sourceCard() == null ? 0 : gameData.getSpellCastColorsSpent(ctx.sourceCard().getId()).size();
+                    ctx.stackEntry() != null && ctx.stackEntry().getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                            && ctx.stackEntry().getTriggeringSpellSnapshot() != null
+                            ? ctx.xValue()
+                            : ctx.sourceCard() == null ? 0
+                            : gameData.getSpellCastColorsSpent(ctx.sourceCard().getId()).size();
             case ColorsAmongControlledPermanents count ->
                     countColorsAmongControlledPermanents(gameData, count, ctx);
             case ColorsAmongControlledPermanentsAndSpellsCastThisTurn ignored ->
@@ -2169,6 +2177,7 @@ public class AmountEvaluationService {
             case CREATURE_SPELL, ENCHANTMENT_SPELL, SORCERY_SPELL, INSTANT_SPELL,
                     ARTIFACT_SPELL, PLANESWALKER_SPELL, BATTLE_SPELL -> entry.getCard().getName();
         };
+        CardPredicate filter = bindTriggeringSpellName(gameData, count.filter(), entry);
         int matches = 0;
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!isPlayerInScope(gameData, playerId, count.scope(), ctx)) continue;
@@ -2180,12 +2189,44 @@ public class AmountEvaluationService {
                         : ctx.sourcePermanent() != null ? ctx.sourcePermanent().getCard() : null;
                 if (count.excludeSourceCard() && sourceCard != null
                         && sourceCard.getId().equals(card.getId())) continue;
-                if (matchesGraveyardCountFilter(gameData, card, count.filter(), playerId, spellName)) {
+                if (matchesGraveyardCountFilter(gameData, card, filter, playerId, spellName)) {
                     matches++;
                 }
             }
         }
         return matches;
+    }
+
+    /**
+     * {@code filter} with "the same name as that spell" ({@link CardSharesNameWithTriggeringSpellPredicate}) read
+     * from {@code entry}'s triggering spell as the ability resolves: the live spell while it is on the stack, else the
+     * entry's snapshot of it (CR 608.2h). A face-down spell, or no triggering spell, has no name, which no card has.
+     */
+    private CardPredicate bindTriggeringSpellName(GameData gameData, CardPredicate filter, StackEntry entry) {
+        return switch (filter) {
+            case null -> null;
+            case CardSharesNameWithTriggeringSpellPredicate ignored -> {
+                String name = triggeringSpellName(gameData, entry);
+                yield name == null ? new CardNotPredicate(new CardTruePredicate()) : new CardNamedPredicate(name);
+            }
+            case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
+                    .map(part -> bindTriggeringSpellName(gameData, part, entry)).toList());
+            case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
+                    .map(part -> bindTriggeringSpellName(gameData, part, entry)).toList());
+            case CardNotPredicate not -> new CardNotPredicate(bindTriggeringSpellName(gameData, not.predicate(), entry));
+            default -> filter;
+        };
+    }
+
+    private static String triggeringSpellName(GameData gameData, StackEntry entry) {
+        if (entry == null || entry.getTriggeringCardId() == null) {
+            return null;
+        }
+        StackEntry spell = gameData.stack.stream()
+                .filter(se -> se.getTargetableId().equals(entry.getTriggeringCardId()))
+                .findFirst()
+                .orElse(entry.getTriggeringSpellSnapshot());
+        return spell == null || spell.isCastFaceDown() ? null : spell.getCard().getName();
     }
 
     private int countCreatureCardsInGraveyardFromBattlefieldThisTurn(GameData gameData,

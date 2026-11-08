@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.d.DeepwoodWolverine;
 import com.github.laxika.magicalvibes.cards.f.FlailingSoldier;
+import com.github.laxika.magicalvibes.cards.m.MycosynthLattice;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -67,6 +68,20 @@ class JeweledTorqueTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         harness.assertLife(player1, lifeBefore);
+    }
+
+    @Test
+    @CardUsed({MycosynthLattice.class})
+    @DisplayName("A spell of the chosen color made colorless by Mycosynth Lattice does not trigger")
+    void spellMadeColorlessByMycosynthLatticeDoesNotTrigger() {
+        Permanent torque = harness.addToBattlefieldAndReturn(player1, new JeweledTorque());
+        torque.setChosenColor(CardColor.GREEN);
+        harness.addToBattlefield(player1, new MycosynthLattice());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castFromHand(player1, new DeepwoodWolverine(), "{G}");
+
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test

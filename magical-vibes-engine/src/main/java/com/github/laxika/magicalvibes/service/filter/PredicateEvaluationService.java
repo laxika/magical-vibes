@@ -123,6 +123,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithControlledCreatureOrGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithLegendaryControlledPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
@@ -675,7 +676,8 @@ public class PredicateEvaluationService {
                 }
                 Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
                 CardColor chosenColor = source == null ? null : source.getChosenColor();
-                yield chosenColor != null && card.getColors().contains(chosenColor);
+                // The card's colors as effects leave them, as CardColorPredicate reads them.
+                yield chosenColor != null && gameQueryService.getEffectiveCardColors(gameData, card).contains(chosenColor);
             }
             case CardKeywordPredicate p -> {
                 if (p.restriction() != null) {
@@ -1252,6 +1254,8 @@ public class PredicateEvaluationService {
                     gameData != null && gameData.playerBattlefields.values().stream()
                             .flatMap(java.util.List::stream)
                             .anyMatch(perm -> !perm.isFaceDown() && perm.getCard().getName().equals(card.getName()));
+            // Only the graveyard count that has the resolving entry knows the triggering spell (AmountEvaluationService).
+            case CardSharesNameWithTriggeringSpellPredicate ignored -> false;
             case CardSharesNameWithLegendaryControlledPermanentPredicate ignored -> {
                 if (gameData == null || cardOwnerId == null
                         || !card.getSupertypes().contains(CardSupertype.LEGENDARY)) {

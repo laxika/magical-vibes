@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.SpellCastDamageToCasterEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -22,13 +23,13 @@ import java.util.List;
 public class Mindsparker extends Card {
 
     public Mindsparker() {
-        addTrigger(Triggers.opponentCastsSpell(), new SpellCastDamageToCasterEffect(2,
-                new CardAllOfPredicate(List.of(
+        addTrigger(Triggers.opponentCastsSpell().withFilter(new CardAllOfPredicate(List.of(
                         new CardAnyOfPredicate(List.of(
                                 new CardColorPredicate(CardColor.WHITE),
                                 new CardColorPredicate(CardColor.BLUE))),
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.INSTANT),
-                                new CardTypePredicate(CardType.SORCERY)))))));
+                                new CardTypePredicate(CardType.SORCERY)))))),
+                new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PLAYER));
     }
 }

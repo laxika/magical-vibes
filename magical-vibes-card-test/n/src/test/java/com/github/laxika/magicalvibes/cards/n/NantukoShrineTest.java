@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.a.AngelicWall;
+import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.d.DuskImp;
 import com.github.laxika.magicalvibes.cards.w.WordsOfWisdom;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -16,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NantukoShrine.class, AngelicWall.class, DuskImp.class, WordsOfWisdom.class})
+@CardUsed({NantukoShrine.class, AngelicWall.class, Cancel.class, DuskImp.class, WordsOfWisdom.class})
 class NantukoShrineTest extends BaseCardTest {
 
     @Test
@@ -44,6 +47,29 @@ class NantukoShrineTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Angelic Wall");
+    }
+
+    @Test
+    @DisplayName("A spell countered before the ability resolves is counted by its name as it last existed")
+    void counteredSpellIsCountedByItsName() {
+        harness.addToBattlefield(player1, new NantukoShrine());
+        harness.setGraveyard(player2, List.of(new AngelicWall()));
+        harness.forceActivePlayer(player1);
+        Card wall = new AngelicWall();
+        harness.setHand(player1, List.of(wall));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castCreature(player1, 0);
+        harness.setHand(player2, List.of(new Cancel()));
+        harness.addMana(player2, ManaColor.BLUE, 3);
+
+        harness.castInstant(player2, 0, wall.getId());
+        // The Shrine's ability for Cancel itself resolves first (no card named Cancel in a graveyard), then Cancel.
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(wall);
+
+        harness.passBothPriorities();
+        assertThat(countPermanents(player1, "Squirrel")).isEqualTo(2);
     }
 
     @Test

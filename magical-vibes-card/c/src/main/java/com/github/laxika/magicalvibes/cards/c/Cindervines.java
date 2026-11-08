@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.SpellCastDamageToCasterEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -25,8 +24,8 @@ import java.util.List;
 public class Cindervines extends Card {
 
     public Cindervines() {
-        addTrigger(Triggers.opponentCastsSpell(),
-                new SpellCastDamageToCasterEffect(1, new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))));
+        addTrigger(Triggers.opponentCastsSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

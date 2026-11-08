@@ -29,10 +29,12 @@ import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
-import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -40,7 +42,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnOnSpellCastEffect;
-import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnChosenColorSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
@@ -51,19 +52,15 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysForSameNameC
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfManaValueEqualsSourceCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateSquirrelTokensForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.FirstSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -833,47 +830,6 @@ class SpellCastTriggerCollectorServiceTest {
         }
     }
 
-    @Nested
-    @DisplayName("ON_ANY_PLAYER_CASTS_SPELL — CasterLosesLifeOnChosenColorSpellCastEffect")
-    class AnyPlayerChosenColorLifeLoss {
-
-        @Test
-        @DisplayName("puts a life-loss trigger on the stack for a matching spell")
-        void triggersForMatchingColor() {
-            Permanent perm = createPermanent("Curse of Wizardry");
-            perm.setChosenColor(CardColor.RED);
-            var effect = new CasterLosesLifeOnChosenColorSpellCastEffect(1);
-            Card spellCard = createCard("Lightning Bolt", CardColor.RED);
-            spellCard.setColors(List.of(CardColor.RED));
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getLast().getTargetId()).isEqualTo(player2Id);
-        }
-
-        @Test
-        @DisplayName("does not trigger for a spell of another color")
-        void ignoresAnotherColor() {
-            Permanent perm = createPermanent("Curse of Wizardry");
-            perm.setChosenColor(CardColor.RED);
-            var effect = new CasterLosesLifeOnChosenColorSpellCastEffect(1);
-            Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
-    }
-
     // ===== ON_ANY_PLAYER_CASTS_SPELL — PutPlusOnePlusOneCounterOnSourceOnColorSpellCastEffect =====
 
     @Nested
@@ -1395,42 +1351,29 @@ class SpellCastTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("A same-name graveyard life trigger binds the caster as a non-target")
-    void sameNameGraveyardLifeTriggerBindsCaster() {
+    @DisplayName("A same-name graveyard trigger goes on the stack as written, the caster its non-targeting player")
+    void sameNameGraveyardTriggerGoesOnTheStackAsWritten() {
         Permanent perm = createPermanent("Aven Shrine");
-        var effect = new GainLifeForSameNameCardsInGraveyardsOnSpellCastEffect();
+        CardEffect gainLife = new GainLifeEffect(
+                new CardsInGraveyard(new CardSharesNameWithTriggeringSpellPredicate(), CountScope.ANY_PLAYER),
+                GainLifeRecipient.TRIGGERING_PLAYER);
+        CastAbility ability = castAbility(Triggers.playerCastsSpell().anySpell(), gainLife);
         Card spellCard = createInstant("Grizzly Bears");
-        var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+        gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, spellCard, player2Id, "Grizzly Bears",
+                new ArrayList<>()));
+        everySpellMatches();
 
-        boolean result = registry.dispatch(match(perm, player1Id, effect),
-                SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
+        boolean result = sut.collectCastAbility(match(perm, player1Id, gainLife), ability,
+                new TriggerContext.SpellCast(spellCard, player2Id, true), false);
 
         assertThat(result).isTrue();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(player2Id);
-        assertThat(gd.stack.getLast().isNonTargeting()).isTrue();
-    }
-
-    @Test
-    @DisplayName("A same-name graveyard Squirrel trigger binds the caster as a non-target")
-    void sameNameGraveyardSquirrelTriggerBindsCaster() {
-        Permanent perm = createPermanent("Nantuko Shrine");
-        var effect = new CreateSquirrelTokensForSameNameCardsInGraveyardsOnSpellCastEffect();
-        Card spellCard = createInstant("Grizzly Bears");
-        var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-        boolean result = registry.dispatch(match(perm, player1Id, effect),
-                SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
-
-        assertThat(result).isTrue();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(player2Id);
-        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
-        assertThat(gd.stack.getLast().isNonTargeting()).isTrue();
-        assertThat(gd.stack.getLast().getEffectsToResolve()).singleElement()
-                .isEqualTo(new CreateTokenForTargetPlayerEffect(new CreateTokenEffect(
-                        new CardsInGraveyard(new CardNamedPredicate("Grizzly Bears"), CountScope.ANY_PLAYER),
-                        "Squirrel", 1, 1, CardColor.GREEN, List.of(CardSubtype.SQUIRREL), Set.of(), Set.of())));
+        assertThat(gd.stack).hasSize(2);
+        StackEntry entry = gd.stack.getLast();
+        assertThat(entry.getTargetId()).isEqualTo(player2Id);
+        assertThat(entry.isNonTargeting()).isTrue();
+        assertThat(entry.getTriggeringCardId()).isEqualTo(spellCard.getId());
+        assertThat(entry.getTriggeringSpellSnapshot().getCard()).isEqualTo(spellCard);
+        assertThat(entry.getEffectsToResolve()).containsExactly(gainLife);
     }
 
     @Test
@@ -1460,29 +1403,6 @@ class SpellCastTriggerCollectorServiceTest {
         assertThat(registry.dispatch(match(perm, player1Id, effect),
                 SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, noncreatureContext)).isFalse();
         assertThat(gd.stack).isEmpty();
-    }
-
-    @Test
-    @DisplayName("A same-name graveyard damage trigger binds the caster as a non-target")
-    void sameNameGraveyardDamageTriggerBindsCaster() {
-        Permanent perm = createPermanent("Dwarven Shrine");
-        var effect = new DealDamageForSameNameCardsInGraveyardsOnSpellCastEffect();
-        Card spellCard = createInstant("Grizzly Bears");
-        var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-        boolean result = registry.dispatch(match(perm, player1Id, effect),
-                SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, effect, ctx);
-
-        assertThat(result).isTrue();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(player2Id);
-        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
-        assertThat(gd.stack.getLast().isNonTargeting()).isTrue();
-        assertThat(gd.stack.getLast().getEffectsToResolve()).singleElement()
-                .isEqualTo(new DealDamageToPlayersEffect(
-                        new Scaled(new CardsInGraveyard(
-                                new CardNamedPredicate("Grizzly Bears"), CountScope.ANY_PLAYER), 2),
-                        DamageRecipient.TRIGGERING_PLAYER));
     }
 
     @Test

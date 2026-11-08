@@ -49,8 +49,11 @@ public class RevealHandAndDiscardMatchingCardsEffectHandler implements NormalEff
         }
 
         UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
+        // "With that spell's mana value" (Infernal Kirin) is a card filter on the ability's X, which the cast
+        // collector gives it.
         List<Card> discarded = new ArrayList<>(hand.stream()
-                .filter(card -> predicateEvaluationService.matchesCardPredicate(card, e.predicate(), sourceCardId))
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(card, e.predicate(), sourceCardId,
+                        gameData, targetPlayerId, null, null, entry.getXValue()))
                 .toList());
         if (discarded.isEmpty()) {
             String description = CardPredicateUtils.describeFilter(e.predicate());

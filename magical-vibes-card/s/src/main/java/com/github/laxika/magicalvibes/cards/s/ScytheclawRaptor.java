@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.SpellCastDamageToCasterEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LCI", collectorNumber = "165")
@@ -11,7 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ScytheclawRaptor extends Card {
 
     public ScytheclawRaptor() {
-        addTrigger(Triggers.playerCastsSpell(),
-                SpellCastDamageToCasterEffect.whenCasterIsNotActiveTurn(4));
+        // Whenever a player casts a spell, if it's not their turn, this creature deals 4 damage to them.
+        addTrigger(Triggers.playerCastsSpell().notDuringCastersTurn(),
+                new DealDamageToPlayersEffect(4, DamageRecipient.TRIGGERING_PLAYER));
     }
 }

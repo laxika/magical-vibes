@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -34,6 +36,7 @@ public class BecomeCreatureEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final UnattachTriggerSupport unattachTriggerSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -50,6 +53,13 @@ public class BecomeCreatureEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        // A power or toughness amount is determined once, as the effect resolves (CR 608.2h).
+        AmountContext amountContext = AmountContext.forStackEntry(entry, source);
+        int power = becomeCreature.powerAmount() == null ? becomeCreature.power()
+                : amountEvaluationService.evaluate(gameData, becomeCreature.powerAmount(), amountContext);
+        int toughness = becomeCreature.toughnessAmount() == null ? becomeCreature.toughness()
+                : amountEvaluationService.evaluate(gameData, becomeCreature.toughnessAmount(), amountContext);
+
         UUID oldAttachedTo = source.getAttachedTo();
         boolean losesAttachmentSubtype = oldAttachedTo != null
                 && source.getCard().getSubtypes().stream()
@@ -58,8 +68,8 @@ public class BecomeCreatureEffectHandler implements NormalEffectHandlerBean {
         copy.setType(CardType.CREATURE);
         copy.setAdditionalTypes(becomeCreature.additionalTypes());
         copy.setSubtypes(becomeCreature.subtypes());
-        copy.setPower(becomeCreature.power());
-        copy.setToughness(becomeCreature.toughness());
+        copy.setPower(power);
+        copy.setToughness(toughness);
         EnumSet<Keyword> keywords = EnumSet.noneOf(Keyword.class);
         keywords.addAll(copy.getKeywords());
         keywords.addAll(becomeCreature.keywords());
@@ -86,6 +96,6 @@ public class BecomeCreatureEffectHandler implements NormalEffectHandlerBean {
         }
 
         gameLogService.append(gameData, GameLog.cardThen(copy,
-                " becomes a " + becomeCreature.power() + "/" + becomeCreature.toughness() + " creature."));
+                 " becomes a " + power + "/" + toughness + " creature."));
     }
 }

@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CasterLosesLifeOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameInControllerGraveyardPredicate;
@@ -32,8 +33,8 @@ public class DragonlordKolaghan extends Card {
                 new CardTypePredicate(CardType.CREATURE),
                 new CardTypePredicate(CardType.PLANESWALKER)
         ));
-        addTrigger(Triggers.opponentCastsSpell(), new CasterLosesLifeOnSpellCastEffect(
-                new CardAllOfPredicate(List.of(creatureOrPlaneswalker,
-                        new CardNameInControllerGraveyardPredicate())), 10));
+        addTrigger(Triggers.opponentCastsSpell().withFilter(new CardAllOfPredicate(List.of(creatureOrPlaneswalker,
+                        new CardNameInControllerGraveyardPredicate()))),
+                new LoseLifeEffect(10, LoseLifeRecipient.TRIGGERING_PLAYER));
     }
 }
