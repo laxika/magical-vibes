@@ -37,7 +37,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLandDropEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
-import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
@@ -561,9 +560,6 @@ public class MayAbilityHandlerService {
                     .anyMatch(e -> e instanceof CreateTokenCopyOfTargetPermanentEffect);
             if (needsEnteringTarget && ability.targetCardId() != null) {
                 entry.setTargetId(ability.targetCardId());
-            }
-            if (ability.effects().stream().anyMatch(OtherAttackingCreatureReferenceEffect.class::isInstance)) {
-                entry.setNonTargeting(true);
             }
             if (ability.effects().stream().anyMatch(ImprintDyingCreatureEffect.class::isInstance)) {
                 entry.setNonTargeting(true);

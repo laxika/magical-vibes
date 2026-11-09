@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,7 +32,8 @@ public class ForbiddenOrchard extends Card {
         // Spirit creature token.
         addTrigger(Triggers.playerTapsLandForMana(), new CreateTokenForTargetPlayerEffect(
                 new CreateTokenEffect("Spirit", 1, 1, null,
-                        List.of(CardSubtype.SPIRIT), Set.of(), Set.of())
+                        List.of(CardSubtype.SPIRIT), Set.of(), Set.of()),
+                PlayerRelation.OPPONENT
         ));
     }
 }

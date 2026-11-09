@@ -37,7 +37,6 @@ import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.GrantCanBeBlockedOnlyByFilterToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToHandEffect;
@@ -9251,9 +9250,10 @@ public class GameData {
 
     /**
      * {@link #queueMayAbility(Card, UUID, MayEffect, UUID, UUID, UUID)} for a triggered ability {@code
-     * grantingPermanentId} granted ({@link StackEntry#getGrantingPermanentId()}), or {@code null}.
+     * grantingPermanentId} granted ({@link StackEntry#getGrantingPermanentId()}), or {@code null}; returns the entry
+     * it put on the stack.
      */
-    public void queueGrantedMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
+    public StackEntry queueGrantedMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
                                        UUID sourcePermanentId, UUID attackedTargetId, UUID grantingPermanentId) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -9266,10 +9266,8 @@ public class GameData {
         );
         entry.setAttackedTargetId(attackedTargetId);
         entry.setGrantingPermanentId(grantingPermanentId);
-        if (may.wrapped() instanceof OtherAttackingCreatureReferenceEffect) {
-            entry.setNonTargeting(true);
-        }
         stack.add(entry);
+        return entry;
     }
 
     /**

@@ -77,7 +77,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TakeInitiativeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
@@ -2282,18 +2281,6 @@ public class CombatDamageService {
 
                 // The "you may" of a combat damage trigger is decided as the ability resolves (CR 603.5),
                 // so this trigger goes on the stack and its MayEffect prompts at resolution.
-                if (effect instanceof MayEffect may
-                        && may.wrapped() instanceof SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect) {
-                    StackEntry discardEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(),
-                            attackerId, creature.getCard().getName() + "'s triggered ability", List.of(effect),
-                            defenderId, creature.getId());
-                    discardEntry.setSourcePermanentSnapshot(new Permanent(creature));
-                    discardEntry.setNonTargeting(true);
-                    gameData.stack.add(discardEntry);
-                    gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
-                            "'s combat damage trigger goes on the stack."));
-                    continue;
-                }
                 if (effect instanceof MayEffect may) {
                     if (may.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                         // An opponent-graveyard scope on a combat damage trigger means the damaged

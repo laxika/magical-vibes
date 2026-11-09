@@ -149,8 +149,13 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
-        applyEffect(gameData, entry, e, target);
-        String description = basePowerToughnessDescription(e);
+        resolveOn(gameData, entry, e, target);
+    }
+
+    /** Sets {@code target}'s base power and toughness as {@code effect} says, for the ability {@code entry}. */
+    public void resolveOn(GameData gameData, StackEntry entry, SetBasePowerToughnessEffect effect, Permanent target) {
+        applyEffect(gameData, entry, effect, target);
+        String description = basePowerToughnessDescription(effect);
         gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(description).build());
         log.info("Game {} - {}{}", gameData.id, target.getCard().getName(), description);
     }

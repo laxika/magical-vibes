@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import java.util.UUID;
+import java.util.ArrayList;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -27,6 +32,7 @@ class ForbiddenOrchardTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         harness.handleListChoice(player1, "BLUE");
+        harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isEqualTo(before + 1);
         assertThat(land.isTapped()).isTrue();
@@ -50,12 +56,14 @@ class ForbiddenOrchardTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "GREEN");
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         advanceToNextTurn();
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "RED");
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(findPermanents(player2, "Spirit")).hasSize(2);
@@ -69,6 +77,7 @@ class ForbiddenOrchardTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "WHITE");
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(findPermanents(player2, "Spirit")).hasSize(1);
@@ -89,6 +98,7 @@ class ForbiddenOrchardTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.handleListChoice(player1, "BLACK");
+        harness.handlePermanentChosen(player1, player2.getId());
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         harness.assertNotOnBattlefield(player2, "Spirit");
@@ -108,6 +118,7 @@ class ForbiddenOrchardTest extends BaseCardTest {
 
         harness.activateAbility(player2, 0, null, null);
         harness.handleListChoice(player2, "BLUE");
+        harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
 
         assertThat(findPermanents(player1, "Spirit")).hasSize(1);
@@ -118,5 +129,44 @@ class ForbiddenOrchardTest extends BaseCardTest {
         harness.setHand(player2, List.of());
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);
         harness.passUntilWithNoAttackers(player1, TurnStep.PRECOMBAT_MAIN);
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
+    }
+
+    @Test
+    @DisplayName("The controller chooses which opponent creates the Spirit; the controller is not a legal target")
+    void controllerChoosesWhichOpponentCreatesTheSpirit() {
+        Player player3 = addThirdPlayer();
+        harness.addToBattlefield(player1, new ForbiddenOrchard());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.handleListChoice(player1, "BLUE");
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player3, "Spirit")).hasSize(1);
+        harness.assertNotOnBattlefield(player2, "Spirit");
+        harness.assertNotOnBattlefield(player1, "Spirit");
     }
 }

@@ -141,13 +141,11 @@ import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerGrant;
 import com.github.laxika.magicalvibes.model.effect.PutVoyageCounterOnExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnVoyagingCardFromExileEffect;
-import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
@@ -503,12 +501,14 @@ public class TriggerCollectionService {
         });
     }
 
-    /** Fires control-change triggers before the changed permanent moves to its new battlefield. */
+    /**
+     * Fires control-change triggers before the changed permanent moves to its new battlefield: "whenever an opponent
+     * gains control of a permanent from you", where every other player is an opponent (CR 806.1).
+     */
     public void checkOpponentGainsControlTriggers(GameData gameData, Permanent changedPermanent,
                                                    UUID previousControllerId, UUID newControllerId) {
         if (changedPermanent == null || previousControllerId == null || newControllerId == null
-                || previousControllerId.equals(newControllerId)
-                || !newControllerId.equals(gameQueryService.getOpponentId(gameData, previousControllerId))) {
+                || previousControllerId.equals(newControllerId)) {
             return;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(previousControllerId);
@@ -3543,12 +3543,10 @@ public class TriggerCollectionService {
         // A "you may" under an intervening "if" goes on the stack as the "if", its question asked as it resolves once
         // the "if" still holds (CR 603.4, 603.5).
         if (interveningIf == null && toQueue instanceof MayEffect may) {
-            int mayEventValue = may.wrapped() instanceof DrawCardEffect draw
-                    && draw.amount() instanceof com.github.laxika.magicalvibes.model.amount.EventValue
-                    ? damageDealt : 0;
             UUID mayTargetId = may.wrapped().targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     ? null : damagedPlayerId;
-            gameData.queueMayAbility(source.getCard(), controllerId, may, mayTargetId, source.getId(), mayEventValue);
+            gameData.queueMayAbility(source.getCard(), controllerId, may, mayTargetId, source.getId(), damageDealt,
+                    false, null, null).setTriggeringPlayerId(damagedPlayerId);
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s damage trigger fires."));
             return;
         }
@@ -3581,14 +3579,10 @@ public class TriggerCollectionService {
             se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
                     desc, List.of(effect));
         }
-        if (interveningIf != null
-                || toQueue instanceof DiscardEffect
-                || (toQueue instanceof DrawCardEffect draw
-                        && draw.amount() instanceof com.github.laxika.magicalvibes.model.amount.EventValue)
-                || (toQueue instanceof MillEffect mill
-                        && mill.count() instanceof com.github.laxika.magicalvibes.model.amount.EventValue)) {
-            se.setEventValue(damageDealt);
-        }
+        // The damage dealt and the player dealt it are the event's ("discards that many cards", "draw that many
+        // cards"), whatever the effects are.
+        se.setEventValue(damageDealt);
+        se.setTriggeringPlayerId(damagedPlayerId);
         se.setNonTargeting(true);
         gameData.stack.add(se);
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s damage trigger goes on the stack."));
@@ -12728,6 +12722,7 @@ public class TriggerCollectionService {
                         markOnAcceptance
                 ).withTriggeringCard(dyingCard.getId(), gameData.graveyardEntryVersion(dyingCard.getId()))
                         .withTriggeringPermanent(dyingPermanent, death.attachments())
+                        .withTriggeringPermanentController(death.controllerId())
                         .withGraveyardTargetMaxManaValue(graveyardTargetMaxManaValueAtDeath(
                                 gameData, controllerId, resolvedEffect, dyingPermanent)));
                 anyEffectFired = true;

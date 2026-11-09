@@ -46,12 +46,18 @@ public class DealDamageToTargetPlayerOrPlaneswalkerEffectHandler implements Norm
                 AmountContext.forStackEntry(entry, source));
 
         int rawDamage = damage;
+        // "It deals damage" / "have that creature deal damage": the creature the trigger event was about deals it, as it
+        // is now or as it last existed on the battlefield (CR 608.2h), so the damage has its characteristics.
+        StackEntry dealing = e.triggeringCreatureDealsDamage()
+                ? damageSupport.entryDealtByTriggeringPermanent(gameData, entry)
+                : entry;
+        if (dealing == null) return;
         // "The damage can't be prevented" is scoped to this one damage event, so the flag is raised
         // only around the resolution itself and always dropped again.
         boolean previous = gameData.unpreventableDamageInProgress;
         gameData.unpreventableDamageInProgress = previous || e.unpreventable();
         try {
-            damageSupport.resolveAnyTargetDamage(gameData, entry, targetId, rawDamage, false);
+            damageSupport.resolveAnyTargetDamage(gameData, dealing, targetId, rawDamage, false);
         } finally {
             gameData.unpreventableDamageInProgress = previous;
         }

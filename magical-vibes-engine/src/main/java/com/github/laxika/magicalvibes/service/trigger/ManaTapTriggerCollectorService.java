@@ -44,10 +44,10 @@ public class ManaTapTriggerCollectorService {
         TriggerContext.PermanentTapForMana permanentTap = (TriggerContext.PermanentTapForMana) ctx;
         Permanent tappedPermanent = gameQueryService.findPermanentById(
                 match.gameData(), permanentTap.tappedPermanentId());
+        // "Whenever an opponent taps an artifact for mana": any player other than the controller (CR 806.1).
         if (match.permanent() == null || tappedPermanent == null
                 || !gameQueryService.isArtifact(match.gameData(), tappedPermanent)
-                || !permanentTap.tappingPlayerId().equals(
-                        gameQueryService.getOpponentId(match.gameData(), match.controllerId()))) {
+                || permanentTap.tappingPlayerId().equals(match.controllerId())) {
             return false;
         }
 
@@ -61,6 +61,8 @@ public class ManaTapTriggerCollectorService {
                 permanentTap.tappedPermanentId(),
                 match.permanent().getId());
         entry.setNonTargeting(true);
+        entry.setTriggeringPlayerId(permanentTap.tappingPlayerId());
+        entry.setTriggeringPermanentId(permanentTap.tappedPermanentId());
         match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers when an opponent taps an artifact for mana",

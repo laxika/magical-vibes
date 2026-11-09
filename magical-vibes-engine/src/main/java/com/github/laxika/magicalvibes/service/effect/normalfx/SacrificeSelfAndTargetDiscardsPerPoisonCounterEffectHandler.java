@@ -33,7 +33,7 @@ public class SacrificeSelfAndTargetDiscardsPerPoisonCounterEffectHandler impleme
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         
 
-        UUID targetPlayerId = entry.getTargetId();
+        UUID targetPlayerId = entry.getTriggeringPlayerId();
         UUID sourcePermanentId = entry.getSourcePermanentId();
 
         if (targetPlayerId == null || sourcePermanentId == null) {
@@ -58,7 +58,7 @@ public class SacrificeSelfAndTargetDiscardsPerPoisonCounterEffectHandler impleme
     /** "If you do, that player discards a card for each poison counter they have." */
     @Override
     public void continueAfterDeparture(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID targetPlayerId = entry.getTargetId();
+        UUID targetPlayerId = entry.getTriggeringPlayerId();
         if (!entry.getResolutionResults().anySacrificed()) {
             return;
         }

@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import java.util.UUID;
+import java.util.ArrayList;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -118,5 +123,51 @@ class KarplusanMinotaurTest extends BaseCardTest {
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 20);
         harness.assertOnBattlefield(player2, "Karplusan Minotaur");
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
+    }
+
+    @Test
+    @DisplayName("A lost flip's target is chosen by the opponent its controller chooses")
+    void lostFlipControllerChoosesTheOpponentWhoChoosesTheTarget() {
+        Player player3 = addThirdPlayer();
+        harness.addToBattlefield(player1, new KarplusanMinotaur());
+
+        harness.inMutationScope(() -> {
+            harness.getTriggerCollectionService().checkControllerLosesCoinFlipTriggers(gd, player1.getId());
+            harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd);
+        });
+
+        PendingInteraction.PermanentChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(opponentChoice.playerId()).isEqualTo(player1.getId());
+        assertThat(opponentChoice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player3.getId());
+        harness.handlePermanentChosen(player1, player3.getId());
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice.playerId()).isEqualTo(player3.getId());
+        harness.handlePermanentChosen(player3, player1.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        harness.assertLife(player2, 20);
+        harness.assertLife(player3, 20);
     }
 }

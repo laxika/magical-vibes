@@ -1702,6 +1702,26 @@ public class TriggeredAbilityQueueService {
         while (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) {
             PermanentChoiceContext.SpellTargetTriggerAnyTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
 
+            // "Any target of an opponent's choice": the controller chooses which opponent chooses the target.
+            if (pending.opponentChoosesTarget() && pending.choosingPlayerId() == null) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+                List<UUID> opponents = gameData.orderedPlayerIds.stream()
+                        .filter(playerId -> !playerId.equals(pending.controllerId()))
+                        .toList();
+                if (opponents.isEmpty()) {
+                    continue;
+                }
+                if (opponents.size() == 1) {
+                    gameData.queueInteractionFirst(pending.withChoosingPlayer(opponents.getFirst()));
+                    continue;
+                }
+                gameData.interaction.setPermanentChoiceContext(
+                        new PermanentChoiceContext.ChooseOpponentToChooseTriggerTarget(pending));
+                playerInputService.beginPlayerChoice(gameData, pending.controllerId(), opponents,
+                        pending.sourceCard().getName() + "'s ability - choose the opponent who chooses its target.");
+                return;
+            }
+
             if (pending.planarSource() != null) {
                 var targets = triggerTargetCollector.collect(gameData, pending.effects(), pending.targetFilter(),
                         pending.controllerId(), pending.sourceCard(), TriggerTargetCollector.Options.END_STEP);

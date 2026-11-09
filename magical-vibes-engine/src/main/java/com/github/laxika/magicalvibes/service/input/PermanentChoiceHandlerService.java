@@ -1014,6 +1014,8 @@ public class PermanentChoiceHandlerService {
             spellHandler.handlePsychicBattleRetarget(gameData, permanentId, retarget);
         } else if (context instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
             triggerHandler.handleSpellTargetTrigger(gameData, permanentId, stt);
+        } else if (context instanceof PermanentChoiceContext.ChooseOpponentToChooseTriggerTarget chooser) {
+            triggerHandler.handleChooseOpponentToChooseTriggerTarget(gameData, permanentId, chooser);
         } else if (context instanceof PermanentChoiceContext.DiscardTriggerAnyTarget dtt) {
             triggerHandler.handleDiscardTrigger(gameData, permanentId, dtt);
         } else if (context instanceof PermanentChoiceContext.PlotTriggerAnyTarget plotTrigger) {

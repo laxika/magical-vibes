@@ -57,6 +57,9 @@ import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TappedLandManaSupport;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.ArrayList;
 import java.util.List;
@@ -717,19 +720,25 @@ public class LandTapTriggerCollectorService {
         if (!match.permanent().getId().equals(lt.tappedLandId())) return false;
         if (!match.controllerId().equals(lt.tappingPlayerId())) return false;
 
-        UUID opponentId = gameQueryService.getOpponentId(match.gameData(), match.controllerId());
-        if (opponentId == null) return false;
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
+        // "Target opponent creates a token" (Forbidden Orchard): the ability targets, so it is no mana ability
+        // (CR 605.1b) and its target is chosen as it goes on the stack (CR 603.3d), among the players its effect
+        // can target.
+        GameData gameData = match.gameData();
+        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 match.permanent().getCard(),
                 match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                opponentId,
-                match.permanent().getId());
-        match.gameData().stack.add(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+                List.of(trigger),
+                true,
+                new PlayerPredicateTargetFilter(new PlayerRelationPredicate(trigger.targetPlayerRelation()),
+                        trigger.targetPlayerRelation() == PlayerRelation.OPPONENT
+                                ? "Target must be an opponent" : "Target must be a player"),
+                0,
+                match.permanent().getId(),
+                new Permanent(match.permanent())));
+        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
+        if (!gameData.interaction.isAwaitingInput()) {
+            triggerCollectionServiceProvider.getObject().processNextSpellTargetTrigger(gameData);
+        }
         return true;
     }
 

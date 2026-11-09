@@ -63,7 +63,6 @@ import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDefendingPlayerCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OtherAttackingCreatureReferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
@@ -1181,18 +1180,20 @@ public class CombatAttackService {
                     for (CardEffect effect : nonTargetingMayEffects) {
                         com.github.laxika.magicalvibes.model.effect.MayEffect may =
                                 (com.github.laxika.magicalvibes.model.effect.MayEffect) effect;
-                        UUID otherAttackerId = may.wrapped() instanceof OtherAttackingCreatureReferenceEffect
-                                ? findOtherAttackerId(attackerIndices, idx, battlefield) : null;
                         if ((may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.SequenceEffect sequence
                                 ? sequence.steps() : List.of(may.wrapped())).stream().anyMatch(step ->
                                 step instanceof com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect skip
                                         && skip.controllerStepOnly())) {
-                            gameData.queueMayAbilityForPlayer(attacker.getCard(), playerId, may, otherAttackerId,
+                            gameData.queueMayAbilityForPlayer(attacker.getCard(), playerId, may, null,
                                     attacker.getId(), playerId, new Permanent(attacker));
                         } else {
-                            gameData.queueGrantedMayAbility(attacker.getCard(), playerId, may, otherAttackerId,
+                            // The creatures declared as attackers with this one are the event's ("that creature",
+                            // the other one you attacked with: Creepy Puppeteer), read as the ability resolves.
+                            gameData.queueGrantedMayAbility(attacker.getCard(), playerId, may, null,
                                     attacker.getId(), attackedTargetForPendingMay(gameData, attacker, may),
-                                    grantingPermanents.get(may));
+                                    grantingPermanents.get(may)).setAttackingPermanentSnapshots(
+                                    attackerIndices.stream().map(battlefield::get)
+                                            .map(declared -> snapshotDeclaredAttacker(gameData, declared)).toList());
                         }
                     }
 
@@ -2116,10 +2117,10 @@ public class CombatAttackService {
                 }
 
                 // Optional ("you may") per-creature attack triggers go on the stack as CR 603.5
-                // resolution-time may abilities: the source permanent is the *attacking* creature
-                // ("that creature", the damage source), while the source card is the ability's owner
-                // whose target filter governs legal targets (e.g. Rage Forger's ping to a
-                // player/planeswalker). Mandatory effects keep the existing direct-stack path where
+                // resolution-time may abilities. A targeted one chooses its target with the ability's owner as
+                // its source and the attacking creature as the triggering permanent, which "have that creature
+                // deal 1 damage" (Rage Forger) reads as the damage source; an untargeted one has the attacking
+                // creature as its source permanent. Mandatory effects keep the existing direct-stack path where
                 // the ability's owner is the source and the attacked target is captured for effects
                 // like Hellrider's DealDamageToAttackedTargetEffect.
                 List<CardEffect> mayEffects = matchingEffects.stream()
@@ -2131,11 +2132,8 @@ public class CombatAttackService {
                 try {
                     for (CardEffect effect : mayEffects) {
                         if (effect.targetSpec().declaredTarget() != null) {
-                            UUID damageSourceId = effect instanceof MayEffect may
-                                    && may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect
-                                    ? attacker.getId() : perm.getId();
                             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                    perm.getCard(), playerId, List.of(effect), damageSourceId, playerId,
+                                    perm.getCard(), playerId, List.of(effect), perm.getId(), playerId,
                                     attacker.getAttackTarget(), attacker.getId()));
                         } else {
                             gameData.queueMayAbility(perm.getCard(), playerId, (MayEffect) effect, null,
@@ -3213,19 +3211,6 @@ public class CombatAttackService {
         } finally {
             gameData.restoreTriggeredAbilityCopies(previousCopies);
         }
-    }
-
-    private UUID findOtherAttackerId(List<Integer> attackerIndices, int sourceIndex,
-                                     List<Permanent> battlefield) {
-        if (attackerIndices.size() != 2) {
-            return null;
-        }
-        for (int attackerIndex : attackerIndices) {
-            if (attackerIndex != sourceIndex) {
-                return battlefield.get(attackerIndex).getId();
-            }
-        }
-        return null;
     }
 
     /**

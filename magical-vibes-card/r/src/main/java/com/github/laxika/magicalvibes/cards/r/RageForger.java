@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -36,14 +37,14 @@ public class RageForger extends Card {
 
         // Whenever a creature you control with a +1/+1 counter on it attacks, you may have that
         // creature deal 1 damage to target player or planeswalker. The player/planeswalker target
-        // is restricted by the card-level filter; the attacking creature is the damage source.
+        // is restricted by the card-level filter; the attacking creature, the trigger event's, deals the damage.
         target(new AnyTargetPredicateTargetFilter(new PermanentIsPlaneswalkerPredicate(),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"))
                 .addTrigger(Triggers.creatureYouControlAttacks()
                                 .withFilter(new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)),
                         new MayEffect(
-                                new DealDamageToTargetPlayerOrPlaneswalkerEffect(1),
+                                DealDamageToTargetPlayerOrPlaneswalkerEffect.byTriggeringCreature(new Fixed(1)),
                                 "Deal 1 damage to target player or planeswalker?"));
     }
 }

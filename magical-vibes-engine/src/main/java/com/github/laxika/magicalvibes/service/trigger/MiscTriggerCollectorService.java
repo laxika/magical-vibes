@@ -1443,7 +1443,7 @@ public class MiscTriggerCollectorService {
         var gameData = match.gameData();
         Permanent permanent = match.permanent();
 
-        enqueueCoinFlipTrigger(gameData, permanent, match.controllerId(), match.controllerId(), effect);
+        enqueueCoinFlipTrigger(gameData, permanent, match.controllerId(), effect);
         gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
         log.info("Game {} - {} triggers on winning a coin flip", gameData.id, permanent.getCard().getName());
         return true;
@@ -1455,34 +1455,40 @@ public class MiscTriggerCollectorService {
         var gameData = match.gameData();
         Permanent permanent = match.permanent();
 
-        enqueueCoinFlipTrigger(gameData, permanent, match.controllerId(), match.controllerId(), effect);
+        enqueueCoinFlipTrigger(gameData, permanent, match.controllerId(), effect);
         gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
         log.info("Game {} - {} triggers when any player wins a coin flip", gameData.id,
                 permanent.getCard().getName());
         return true;
     }
 
+    /**
+     * "Whenever you lose a coin flip, this creature deals 1 damage to any target of an opponent's choice" (Karplusan
+     * Minotaur): as the ability goes on the stack its controller chooses one of their opponents, who chooses the
+     * target. The only lose-a-coin-flip ability reads its target that way.
+     */
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_LOSES_COIN_FLIP)
     private boolean handleCoinFlipLostDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         var gameData = match.gameData();
         Permanent permanent = match.permanent();
-        UUID choosingPlayerId = gameQueryService.getOpponentId(gameData, match.controllerId());
-        if (choosingPlayerId == null) {
-            return true;
+        if (effect.targetSpec().declares(TargetPredicates.anyTarget())) {
+            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    permanent.getCard(), match.controllerId(), List.of(effect), permanent.getId(), null)
+                    .chosenByAnOpponent());
+        } else {
+            enqueueCoinFlipTrigger(gameData, permanent, match.controllerId(), effect);
         }
-
-        enqueueCoinFlipTrigger(gameData, permanent, match.controllerId(), choosingPlayerId, effect);
         gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
         log.info("Game {} - {} triggers on losing a coin flip", gameData.id, permanent.getCard().getName());
         return true;
     }
 
     private void enqueueCoinFlipTrigger(GameData gameData, Permanent permanent, UUID controllerId,
-            UUID choosingPlayerId, CardEffect effect) {
+            CardEffect effect) {
         if (effect.targetSpec().declares(TargetPredicates.anyTarget())) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    permanent.getCard(), controllerId, List.of(effect), permanent.getId(), choosingPlayerId));
+                    permanent.getCard(), controllerId, List.of(effect), permanent.getId(), controllerId));
             return;
         }
         gameData.enqueueTrigger(new StackEntry(

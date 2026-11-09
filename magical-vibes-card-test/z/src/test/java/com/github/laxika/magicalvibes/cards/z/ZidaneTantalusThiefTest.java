@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import java.util.UUID;
+import java.util.ArrayList;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Insurrection;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -132,5 +137,37 @@ class ZidaneTantalusThiefTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreature(player1, 0, 0, target.getId());
         resolveAllTriggers();
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
+    }
+
+    @Test
+    @DisplayName("Creates a Treasure when any opponent gains control of a permanent from you")
+    void anyOpponentGainingControlCreatesTreasure() {
+        Player player3 = addThirdPlayer();
+        harness.addToBattlefield(player1, new ZidaneTantalusThief());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+                .checkOpponentGainsControlTriggers(gd, target, player1.getId(), player3.getId()));
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Treasure")).hasSize(1);
     }
 }

@@ -138,6 +138,25 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
+    /**
+     * Completes {@code context}: {@code opponentId}, one of the ability controller's opponents, chooses its target,
+     * which is prompted next.
+     */
+    public void handleChooseOpponentToChooseTriggerTarget(GameData gameData, UUID opponentId,
+            PermanentChoiceContext.ChooseOpponentToChooseTriggerTarget context) {
+        PermanentChoiceContext.SpellTargetTriggerAnyTarget target = context.target();
+        if (opponentId == null || opponentId.equals(target.controllerId())
+                || !gameData.orderedPlayerIds.contains(opponentId)) {
+            return;
+        }
+        gameData.queueInteractionFirst(target.withChoosingPlayer(opponentId));
+        triggerCollectionService.processNextSpellTargetTrigger(gameData);
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
     public void handleSpellTargetTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
         boolean markOnAcceptance = stt.markSourceOncePerTurnOnAcceptance();
         List<CardEffect> effects = stt.effects();
@@ -363,17 +382,6 @@ public class PermanentChoiceTriggerHandlerService {
         }
         if (dtt.sourcePermanentSnapshot() != null) {
             entry.setSourcePermanentSnapshot(dtt.sourcePermanentSnapshot());
-        }
-        if (dtt.excludedGraveyardCardId() != null && dtt.effects().stream().anyMatch(effect ->
-                effect instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect damage
-                        && damage.triggeringCreatureDealsDamage())) {
-            // The dying creature deals the damage (last-known information): its lifelink and its
-            // controller apply to that damage rather than the watching permanent's.
-            Card dyingCreatureCard = gameQueryService.findCardInGraveyardById(gameData, dtt.excludedGraveyardCardId());
-            if (dyingCreatureCard != null) {
-                entry.setDamageSourceCard(dyingCreatureCard);
-                entry.setDamageSourceControllerId(dtt.controllerId());
-            }
         }
         pushTriggeredEntry(gameData, entry);
 

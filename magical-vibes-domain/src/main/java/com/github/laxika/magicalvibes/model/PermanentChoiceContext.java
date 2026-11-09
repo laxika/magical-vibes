@@ -1982,6 +1982,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                              UUID discardingPlayerId, Card discardedCard)
             implements PermanentChoiceContext {}
 
+    /**
+     * The controller of a triggered ability whose target is "of an opponent's choice" chooses which opponent makes the
+     * choice; {@code target} is then chosen by that player.
+     */
+    record ChooseOpponentToChooseTriggerTarget(SpellTargetTriggerAnyTarget target) implements PermanentChoiceContext {}
+
     record SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                        boolean playerTargetOnly, TargetFilter targetFilter,
                                        int spellManaSpentX, UUID sourcePermanentId,
@@ -1995,7 +2001,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        boolean markSourceOncePerTurnOnAcceptance,
                                        Permanent departedPermanent,
                                        java.util.Set<com.github.laxika.magicalvibes.model.ManaColor> producedManaColors,
-                                       UUID triggeringPlayerId, Integer eventValue)
+                                       UUID triggeringPlayerId, Integer eventValue,
+                                       boolean opponentChoosesTarget)
             implements PermanentChoiceContext {
 
         public SpellTargetTriggerAnyTarget {
@@ -2022,7 +2029,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource,
                     nonTargeting, triggeringCardId, triggeringPermanentSnapshot, triggeringPermanentPowerAtTrigger,
                     markSourceOncePerTurnOnAcceptance, departedPermanent, producedManaColors, triggeringPlayerId,
-                    null);
+                    null, false);
         }
 
         /**
@@ -2036,7 +2043,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     triggeringPermanentId, permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue,
                     planarSource, nonTargeting, triggeringCardId, triggeringPermanentSnapshot,
                     triggeringPermanentPowerAtTrigger, markSourceOncePerTurnOnAcceptance, departedPermanent,
-                    producedManaColors, triggeringPlayerId, value);
+                    producedManaColors, triggeringPlayerId, value, opponentChoosesTarget);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -2071,7 +2078,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     triggeringPermanentId, permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue,
                     planarSource, nonTargeting, triggeringCardId, triggeringPermanentSnapshot,
                     triggeringPermanentPowerAtTrigger, markSourceOncePerTurnOnAcceptance, departedPermanent,
-                    producedManaColors, playerId, eventValue);
+                    producedManaColors, playerId, eventValue, opponentChoosesTarget);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -2104,7 +2111,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     triggeringPermanentId, permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue,
                     planarSource, nonTargeting, triggeringCardId, triggeringPermanentSnapshot,
                     triggeringPermanentPowerAtTrigger, markSourceOncePerTurnOnAcceptance, departedPermanent, colors,
-                    triggeringPlayerId, eventValue);
+                    triggeringPlayerId, eventValue, opponentChoosesTarget);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -2132,7 +2139,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource.copy(),
                     nonTargeting, triggeringCardId, triggeringPermanentSnapshot,
                     triggeringPermanentPowerAtTrigger, markSourceOncePerTurnOnAcceptance, departedPermanent,
-                    producedManaColors, triggeringPlayerId, eventValue);
+                    producedManaColors, triggeringPlayerId, eventValue, opponentChoosesTarget);
         }
 
         /**
@@ -2146,19 +2153,42 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource,
                     nonTargeting, triggeringCardId, triggeringPermanentSnapshot, triggeringPermanentPowerAtTrigger,
                     markSourceOncePerTurnOnAcceptance, lastKnown == null ? null : new Permanent(lastKnown),
-                    producedManaColors, triggeringPlayerId, eventValue);
+                    producedManaColors, triggeringPlayerId, eventValue, opponentChoosesTarget);
         }
 
         /**
          * This choice for an ability whose "do this only once each turn" (CR 603.2h) is used up as the action is taken:
          * the stack entry it makes marks its source as the action resolves.
          */
+        /**
+         * This choice for an ability whose target is "of an opponent's choice" (Karplusan Minotaur): as it goes on the
+         * stack its controller chooses one of their opponents, who chooses the target ({@link #withChoosingPlayer}).
+         */
+        public SpellTargetTriggerAnyTarget chosenByAnOpponent() {
+            return new SpellTargetTriggerAnyTarget(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
+                    spellManaSpentX, sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
+                    permanentTargetControllerId, null, triggeringSpellManaValue, planarSource,
+                    nonTargeting, triggeringCardId, triggeringPermanentSnapshot, triggeringPermanentPowerAtTrigger,
+                    markSourceOncePerTurnOnAcceptance, departedPermanent, producedManaColors, triggeringPlayerId,
+                    eventValue, true);
+        }
+
+        /** This choice with {@code playerId} as the player who chooses the target. */
+        public SpellTargetTriggerAnyTarget withChoosingPlayer(UUID playerId) {
+            return new SpellTargetTriggerAnyTarget(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
+                    spellManaSpentX, sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
+                    permanentTargetControllerId, playerId, triggeringSpellManaValue, planarSource,
+                    nonTargeting, triggeringCardId, triggeringPermanentSnapshot, triggeringPermanentPowerAtTrigger,
+                    markSourceOncePerTurnOnAcceptance, departedPermanent, producedManaColors, triggeringPlayerId,
+                    eventValue, opponentChoosesTarget);
+        }
+
         public SpellTargetTriggerAnyTarget withMarkSourceOncePerTurnOnAcceptance() {
             return new SpellTargetTriggerAnyTarget(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
                     spellManaSpentX, sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
                     permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource,
                     nonTargeting, triggeringCardId, triggeringPermanentSnapshot, triggeringPermanentPowerAtTrigger,
-                    true, departedPermanent, producedManaColors, triggeringPlayerId, eventValue);
+                    true, departedPermanent, producedManaColors, triggeringPlayerId, eventValue, opponentChoosesTarget);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
