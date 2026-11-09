@@ -31,8 +31,10 @@ public class CopyDrawnInstantOrSorceryAndMayCastCopyEffectHandler implements Nor
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CopyDrawnInstantOrSorceryAndMayCastCopyEffect copyEffect =
                 (CopyDrawnInstantOrSorceryAndMayCastCopyEffect) effect;
-        Card drawnCard = copyEffect.drawnCard();
-        if (!drawnCard.hasType(CardType.INSTANT) && !drawnCard.hasType(CardType.SORCERY)) {
+        // "Copy that card": the card revealed as it was drawn, as the ability triggered (its last-known information if
+        // it left the hand meanwhile).
+        Card drawnCard = entry.triggeringSpellOrCard();
+        if (drawnCard == null || !drawnCard.hasType(CardType.INSTANT) && !drawnCard.hasType(CardType.SORCERY)) {
             return;
         }
         Card copy = copySupport.createCopyCard(drawnCard);

@@ -453,6 +453,7 @@ public sealed interface Condition permits
         TargetPlayerTurn,
         TargetPlayerIsController,
         TargetPlayerIs,
+        TargetPlayerIsChosenPlayer,
         TargetPlayerIsActivePlayer,
         TargetSpellCanBeCountered,
         TargetSpellManaSpentLessThanManaValue,

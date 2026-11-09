@@ -814,6 +814,7 @@ ability's own event (`TargetAbilityReader`) as the trigger is collected.
 collector in `DrawService.checkControllerDrawTriggers`, which judges the ability's count
 (`LibraryAbilityReader`), so the ability fires only when the controller's per-turn draw count is
 exactly that number, with the same stack and any-target handling.
+A draw ability's `withFilter(CardPredicate)` ("whenever you draw a Dragon card") is judged by the draw collectors on the drawn card as it is drawn, the card the entry's triggering card; "whenever you reveal a [card] this way" (`Triggers.youRevealCardThisWay()`) is collected for the permanent whose `RevealDrawnCardsEffect` revealed it, with the same stack and any-target handling.
 
 `Triggers.creatureDealtDamage()` also captures the damaged creature's controller as
 `triggeringPermanentControllerId`. Pair that capture with `MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER`

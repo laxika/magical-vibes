@@ -675,7 +675,14 @@ public class PredicateEvaluationService {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
                 }
-                Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
+                Permanent source = sourcePermanentId == null
+                        ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                if (source == null) {
+                    source = findPermanentByOriginalCardId(gameData, sourceCardId);
+                }
+                if (source == null) {
+                    source = sourcePermanentSnapshot;
+                }
                 String chosenName = source == null ? null : source.getChosenName();
                 yield chosenName != null && card.hasName(chosenName);
             }

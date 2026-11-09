@@ -7,16 +7,19 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import java.util.Objects;
 
 /**
- * A player draws a card (CR 121.1), discards one (CR 701.9a) or cycles one, scries (CR 701.22a), surveils
- * (CR 701.25a), searches their library (CR 701.23a) or shuffles it (CR 701.24a). Build it through {@link Triggers}.
+ * A player draws a card (CR 121.1), reveals a card they drew by the source's own reveal ability (CR 701.20a),
+ * discards one (CR 701.9a) or cycles one, scries (CR 701.22a), surveils (CR 701.25a), searches their library
+ * (CR 701.23a) or shuffles it (CR 701.24a). Build it through {@link Triggers}.
  *
  * @param event     what the player does
  * @param player    who does it, relative to the ability's controller: the player who draws, discards, cycles, scries,
  *                  surveils, searches or shuffles. For {@link LibraryEvent#THIS_DISCARDED} it is the controller of the
  *                  spell or ability that causes the discard ({@link PlayerRelation#ANY} for any discard), and an event
  *                  that names its player itself is {@link PlayerRelation#ANY}
- * @param qualifier what the discarded card must be, or {@code null} for any card: "whenever you discard a creature
- *                  card" is {@code Triggers.youDiscardCard().withFilter(new CardTypePredicate(CardType.CREATURE))}.
+ * @param qualifier what the drawn, revealed or discarded card must be, or {@code null} for any card: "whenever you
+ *                  discard a creature card" is
+ *                  {@code Triggers.youDiscardCard().withFilter(new CardTypePredicate(CardType.CREATURE))}, "whenever you
+ *                  draw a Dragon card" {@code Triggers.youDrawCard().withFilter(new CardSubtypePredicate(DRAGON))}.
  *                  For "one or more cards" it is enough that one of them matches. The collectors judge it from the
  *                  ability ({@code LibraryAbilityReader}), so {@link #watchKey()} drops it
  * @param nth       which of the player's events of this kind this turn triggers the ability, or {@code 0} for every
@@ -43,8 +46,8 @@ public record LibraryTrigger(LibraryEvent event, PlayerRelation player, CardPred
     }
 
     /**
-     * This trigger narrowed to a discarded card that matches {@code filter}, as {@link #qualifier} says: "whenever you
-     * discard a land card".
+     * This trigger narrowed to a drawn, revealed or discarded card that matches {@code filter}, as {@link #qualifier}
+     * says: "whenever you discard a land card".
      */
     public LibraryTrigger withFilter(CardPredicate filter) {
         Objects.requireNonNull(filter, "filter");
@@ -133,6 +136,11 @@ public record LibraryTrigger(LibraryEvent event, PlayerRelation player, CardPred
         DRAWS_FIRST_IN_DRAW_STEP,
         /** The player the source is attached to draws a card. */
         ENCHANTED_PLAYER_DRAWS,
+        /**
+         * The player reveals a card they drew by the source's own reveal ability ("whenever you reveal a [card] this
+         * way": Rowen, Keranos, God-Eternal Kefnet), once for each card revealed, as it is drawn.
+         */
+        REVEALS_CARD_THIS_WAY,
         /** The player discards a card, cycling included. */
         DISCARDS,
         /** A spell or ability an opponent of the player controls causes the player to discard a card. */

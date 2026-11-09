@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.cards.r.RoamingThrone;
 import com.github.laxika.magicalvibes.cards.b.Brainstorm;
 import com.github.laxika.magicalvibes.cards.d.DreadReturn;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -16,8 +18,37 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({InquisitorEisenhorn.class, DreadReturn.class, Brainstorm.class, Forest.class})
+@CardUsed({InquisitorEisenhorn.class, DreadReturn.class, Brainstorm.class, Forest.class, RoamingThrone.class})
 class InquisitorEisenhornTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Cherubael is still created when the revealed card leaves the hand before the ability resolves")
+    void createsCherubaelWhenTheRevealedCardLeftTheHand() {
+        harness.addToBattlefield(player1, new InquisitorEisenhorn());
+        harness.setLibrary(player1, List.of(new DreadReturn(), new Forest()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.setHand(player1, List.of());
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Cherubael")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Roaming Throne naming Human makes the reveal ability trigger an additional time")
+    void roamingThroneMakesTheRevealAbilityTriggerAnAdditionalTime() {
+        harness.addToBattlefield(player1, new InquisitorEisenhorn());
+        Permanent throne = harness.addToBattlefieldAndReturn(player1, new RoamingThrone());
+        throne.setChosenSubtype(CardSubtype.HUMAN);
+        harness.setLibrary(player1, List.of(new DreadReturn(), new Forest()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack).allSatisfy(entry -> assertThat(entry.getCard().getName()).isEqualTo("Inquisitor Eisenhorn"));
+    }
 
     @Test
     @DisplayName("May reveal the first instant or sorcery drawn on any turn to create Cherubael")

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
@@ -35,7 +34,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.AlmsCollectorDrawReplacement;
-import com.github.laxika.magicalvibes.model.effect.BoobyTrapEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChainsOfMephistophelesDrawReplacement;
@@ -67,10 +65,6 @@ import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileBottomRandomSupport;
 import com.github.laxika.magicalvibes.model.effect.DrawRestrictionEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawRevealTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawnCardTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.FirstDrawRevealTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardIfInstantOrSorceryEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyLibraryDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EmptyHandDrawExtraCardAndLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardFaceDownInsteadOfDrawReplacement;
@@ -84,11 +78,8 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCreatureToGraveyardE
 import com.github.laxika.magicalvibes.model.effect.SkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipDrawIfEmptyLibraryReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MiracleRevealEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealFirstDrawDrawOnBasicLandEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnFromGraveyardInsteadOfDrawEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.UbaMaskDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.WinGameOnEmptyLibraryDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ZursWeirdingDrawReplacementEffect;
@@ -105,6 +96,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
@@ -153,6 +145,7 @@ public class DrawService {
     private final DamageSupport damageSupport;
     private final PermanentControlSupport permanentControlSupport;
     private final TriggerCollectionService triggerCollectionService;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     private static final CreateTokenEffect WORDS_OF_WILDING_BEAR = new CreateTokenEffect(
             "Bear", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR), Set.of(), Set.of());
@@ -186,7 +179,8 @@ public class DrawService {
                        GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport,
                        DredgeSupport dredgeSupport,
                        ExileBottomRandomSupport exileBottomRandomSupport,
-                       @Lazy TriggerCollectionService triggerCollectionService) {
+                       @Lazy TriggerCollectionService triggerCollectionService,
+                       @Lazy PredicateEvaluationService predicateEvaluationService) {
         this.gameQueryService = gameQueryService;
         this.exileService = exileService;
         this.gameLogService = gameLogService;
@@ -205,6 +199,7 @@ public class DrawService {
         this.dredgeSupport = dredgeSupport;
         this.exileBottomRandomSupport = exileBottomRandomSupport;
         this.triggerCollectionService = triggerCollectionService;
+        this.predicateEvaluationService = predicateEvaluationService;
     }
 
     public void resolveDrawCard(GameData gameData, UUID playerId) {
@@ -2668,8 +2663,6 @@ public class DrawService {
 
     private void completeDrawCard(GameData gameData, UUID playerId, Card drawn) {
         drawn = gameData.restoreBombardmentCardForZoneChange(drawn);
-        boolean basicLandInLibrary = drawn.hasType(CardType.LAND)
-                && gameQueryService.cardHasSupertype(drawn, CardSupertype.BASIC, gameData, playerId);
         if (playerId.equals(gameData.activePlayerId) && gameData.currentStep == TurnStep.DRAW) {
             gameData.drawStepFirstDrawTaken.add(playerId);
         }
@@ -2687,8 +2680,7 @@ public class DrawService {
         checkOpponentDrawTriggers(gameData, playerId, drawn);
         checkPlanarDrawTriggers(gameData, playerId, drawn);
         checkEnchantedPlayerDrawTriggers(gameData, playerId);
-        checkBoobyTraps(gameData, playerId, drawn);
-        checkRevealFirstDrawTriggers(gameData, playerId, drawn, basicLandInLibrary);
+        revealDrawnCardByStaticAbilities(gameData, playerId, drawn);
         breathstealersCryptDrawReplacementHandler.afterDraw(gameData, playerId, drawn);
         checkMiracleReveal(gameData, playerId, drawn);
     }
@@ -2736,97 +2728,120 @@ public class DrawService {
     }
 
     /**
-     * Rowen: the controller reveals the first card they draw each turn; whenever that card is a basic
-     * land, a "draw a card" triggered ability is put onto the stack. Only the turn's first draw is
-     * revealed — {@code cardsDrawnThisTurn} has already been incremented for this draw, so first draw
-     * means a count of exactly 1. The extra draw is therefore never revealed itself.
+     * The static reveal abilities ({@link RevealDrawnCardsEffect}) that apply to this draw: the drawing player reveals
+     * the card as they draw it (CR 701.20a), before any later draw of the same instruction (CR 121.2). A permanent's
+     * mandatory reveal ("reveal the first card you draw each turn") reveals it at once and triggers the permanent's
+     * "whenever you reveal a [card] this way" abilities ({@link #revealDrawnCard}); an optional one ("you may reveal …
+     * as you draw it") asks now, during the draw (CR 121.9), and pauses a multi-card draw until it is answered
+     * ({@code RevealDrawnCardsHandler}). A face-up plane's reveal ("players reveal each card they draw") is logged.
      */
-    private void checkRevealFirstDrawTriggers(GameData gameData, UUID drawingPlayerId, Card drawn,
-                                              boolean basicLandInLibrary) {
-        if (gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0) != 1) {
+    private void revealDrawnCardByStaticAbilities(GameData gameData, UUID drawingPlayerId, Card drawn) {
+        int drawnThisTurn = gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0);
+        gameData.forEachBattlefield((controllerId, battlefield) -> {
+            for (Permanent perm : new ArrayList<>(battlefield)) {
+                // Only a permanent with a reveal of its own is asked for its active static abilities (ability loss).
+                if (perm.isFaceDown() || perm.getCard().getStaticEffects().stream()
+                        .noneMatch(RevealDrawnCardsEffect.class::isInstance)) {
+                    continue;
+                }
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
+                    if (!(effect instanceof RevealDrawnCardsEffect reveal)
+                            || !revealsDraw(gameData, reveal, perm, controllerId, drawingPlayerId, drawnThisTurn)) {
+                        continue;
+                    }
+                    if (reveal.optional()) {
+                        gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                                perm.getCard(), drawingPlayerId, List.of(reveal),
+                                perm.getCard().getName() + " - Reveal " + drawn.getName() + "?",
+                                drawn.getId(), null, perm.getId()));
+                    } else {
+                        revealDrawnCard(gameData, perm, drawingPlayerId, drawn);
+                    }
+                }
+            }
+        });
+        if (gameData.planechase == null) {
             return;
         }
-
-        List<Permanent> battlefield = gameData.playerBattlefields.get(drawingPlayerId);
-        if (battlefield == null) return;
-
-        for (Permanent perm : new ArrayList<>(battlefield)) {
-            boolean reveals = perm.getCard().getStaticEffects().stream()
-                    .anyMatch(e -> e instanceof RevealFirstDrawDrawOnBasicLandEffect);
-            if (!reveals) continue;
-
-            String drawerName = gameData.playerIdToName.get(drawingPlayerId);
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(drawerName + " reveals ")
-                    .card(drawn)
-                    .text(" with ")
-                    .card(perm.getCard())
-                    .text(".")
-                    .build());
-
-            if (basicLandInLibrary) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        drawingPlayerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(new DrawCardEffect(1))),
-                        drawingPlayerId,
-                        perm.getId()
-                ));
-                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), " triggers — draw a card."));
-                log.info("Game {} - {} triggers on {} revealing a basic land",
-                        gameData.id, perm.getCard().getName(), drawerName);
+        for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
+            boolean reveals = object.getCard().getStaticEffects().stream()
+                    .anyMatch(effect -> effect instanceof RevealDrawnCardsEffect reveal
+                            && reveal.revealer() == RevealDrawnCardsEffect.Revealer.EACH_PLAYER
+                            && (!reveal.firstCardEachTurn() || drawnThisTurn == 1));
+            if (reveals) {
+                logDrawReveal(gameData, drawingPlayerId, drawn, object.getCard());
             }
         }
     }
 
     /**
-     * Booby Trap: an opponent's Booby Trap makes the drawing (chosen) player reveal each card they
-     * draw; when the revealed card's name matches the trap's chosen name, the trap is sacrificed and
-     * — if it was — deals 10 damage to that player. The chosen player is always an opponent of the
-     * trap's controller.
+     * Whether {@code reveal}, a static ability of {@code perm} controlled by {@code controllerId}, makes the drawing
+     * player reveal this draw: the player it names (the controller, the chosen player, anyone), on the turns it names,
+     * the first card each turn ({@code drawnThisTurn} counts this draw) or every card.
      */
-    private void checkBoobyTraps(GameData gameData, UUID drawingPlayerId, Card drawn) {
-        gameData.forEachBattlefield((controllerId, battlefield) -> {
-            for (Permanent perm : new ArrayList<>(battlefield)) {
-                boolean isBoobyTrap = perm.getCard().getStaticEffects().stream()
-                        .anyMatch(e -> e instanceof BoobyTrapEffect);
-                if (!isBoobyTrap) continue;
-                if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                if (!perm.getChosenPlayerIds().contains(drawingPlayerId)) continue;
+    private static boolean revealsDraw(GameData gameData, RevealDrawnCardsEffect reveal, Permanent perm,
+                                       UUID controllerId, UUID drawingPlayerId, int drawnThisTurn) {
+        boolean revealer = switch (reveal.revealer()) {
+            case CONTROLLER -> controllerId.equals(drawingPlayerId);
+            case CHOSEN_PLAYER -> perm.getChosenPlayerIds().contains(drawingPlayerId);
+            case EACH_PLAYER -> true;
+        };
+        return revealer
+                && (!reveal.firstCardEachTurn() || drawnThisTurn == 1)
+                && (!reveal.yourTurnsOnly() || controllerId.equals(gameData.activePlayerId));
+    }
 
-                String drawerName = gameData.playerIdToName.get(drawingPlayerId);
-                gameLogService.append(gameData, GameLog.builder()
-                        .text(drawerName + " reveals ")
-                        .card(drawn)
-                        .text(" with ")
-                        .card(perm.getCard())
-                        .text(".")
-                        .build());
-
-                if (perm.getChosenName() != null && drawn.hasName(perm.getChosenName())) {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            controllerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(new SacrificeSelfThenEffect(
-                                    new DealDamageToPlayersEffect(10, DamageRecipient.TARGET_PLAYER)))),
-                            drawingPlayerId,
-                            perm.getId()
-                    ));
-                    gameLogService.append(gameData, GameLog.builder()
-                            .card(perm.getCard())
-                            .text(" triggers on " + drawerName + " drawing ")
-                            .card(drawn)
-                            .text(".")
-                            .build());
-                    log.info("Game {} - Booby Trap triggers on {} drawing {}",
-                            gameData.id, drawerName, drawn.getName());
-                }
+    /**
+     * {@code revealingPlayerId} reveals {@code drawn}, the card they just drew, by {@code source}'s reveal ability: the
+     * reveal is logged and, when the player controls {@code source}, the source's "whenever you reveal a [card] this
+     * way" abilities trigger for the card ({@code Triggers.youRevealCardThisWay()}, their filter judged on the card), the
+     * card the entries' triggering card. One ability for each reveal source (Primitive Etchings' ruling: two reveal the
+     * same card and both trigger).
+     */
+    public void revealDrawnCard(GameData gameData, Permanent source, UUID revealingPlayerId, Card drawn) {
+        logDrawReveal(gameData, revealingPlayerId, drawn, source.getCard());
+        UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
+        if (!revealingPlayerId.equals(controllerId) || gameQueryService.hasLostAllAbilities(gameData, source)) {
+            return;
+        }
+        LibraryWatch watch = LibraryWatch.ON_CONTROLLER_REVEALS_CARD_THIS_WAY;
+        for (LibraryAbilityReader.LibraryEffect read : LibraryAbilityReader.readPrinted(source.getCard(), watch)) {
+            LibraryAbilityReader.requireNoCount(read, watch.trigger());
+            if (read.limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN) {
+                throw new IllegalStateException("The reveal collector marks no \"do this only once each turn\": "
+                        + read.ability());
             }
-        });
+            if (read.limitReached(gameData, source.getId())
+                    || !drawnCardMatches(gameData, source, read, drawn, revealingPlayerId)
+                    || !conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
+                    ConditionContext.forPermanent(source, revealingPlayerId).withTargetId(revealingPlayerId))) {
+                continue;
+            }
+            queueControllerDrawAbility(gameData, source, revealingPlayerId, read.effect(), read.effect(), drawn);
+            read.markLimit(gameData, source.getId());
+        }
+    }
+
+    /**
+     * Whether {@code drawn} is the card {@code read}'s ability is about ({@code withFilter}: "whenever you draw a Dragon
+     * card", "whenever you reveal a basic land card this way"), judged as it is drawn, with {@code source} as the
+     * filter's source: any card when the ability has no filter, and none when the draw has no card.
+     */
+    private boolean drawnCardMatches(GameData gameData, Permanent source, LibraryAbilityReader.LibraryEffect read,
+                                     Card drawn, UUID drawingPlayerId) {
+        if (read.filter() == null) {
+            return true;
+        }
+        return drawn != null && predicateEvaluationService.matchesCardPredicate(drawn, read.filter(),
+                source.getCard().getId(), gameData, drawingPlayerId, source.getId(), null, null, source);
+    }
+
+    /** Records {@code drawn} as {@code entry}'s triggering card ("it", "that card"), as it was drawn. */
+    private static void recordDrawnCard(StackEntry entry, Card drawn) {
+        if (drawn != null) {
+            entry.setTriggeringCard(drawn.getId(), -1);
+            entry.setTriggeringCards(List.of(drawn));
+        }
     }
 
     private static boolean targetsPlayerOrAnyTarget(CardEffect effect) {
@@ -2856,47 +2871,17 @@ public class DrawService {
             if (drawEffects.isEmpty()) continue;
 
             for (LibraryAbilityReader.LibraryEffect read : drawEffects) {
-                if (!drawTriggers(gameData, perm, drawingPlayerId, read, cardsDrawnThisTurn)) continue;
-                CardEffect authoredEffect = read.effect();
-                CardEffect effect = authoredEffect;
-
-                if (effect instanceof FirstDrawRevealTriggerEffect firstDraw) {
-                    if (drawn == null
-                            || (firstDraw.onlyOnControllerTurn()
-                            && !drawingPlayerId.equals(gameData.activePlayerId))
-                            || gameData.cardsDrawnThisTurn.getOrDefault(drawingPlayerId, 0) != 1) {
-                        continue;
-                    }
-
-                    if (firstDraw.revealBeforeChoice()) {
-                        logDrawReveal(gameData, drawingPlayerId, drawn, perm.getCard());
-                    }
-                    effect = firstDraw.effectFor(drawn);
-                    if (effect == null) {
-                        continue;
-                    }
-                } else if (effect instanceof DrawRevealTriggerEffect drawReveal) {
-                    if (drawn == null) {
-                        continue;
-                    }
-                    logDrawReveal(gameData, drawingPlayerId, drawn, perm.getCard());
-                    effect = drawReveal.effectFor(drawn);
-                    if (effect == null) {
-                        continue;
-                    }
+                if (!drawTriggers(gameData, perm, drawingPlayerId, read, cardsDrawnThisTurn)
+                        || !drawnCardMatches(gameData, perm, read, drawn, drawingPlayerId)) {
+                    continue;
                 }
-                if (effect instanceof DrawnCardTriggerEffect drawnCardTrigger) {
-                    effect = drawnCardTrigger.effectForDrawnCard(drawn);
-                    if (effect == null) {
-                        continue;
-                    }
-                }
+                CardEffect effect = read.effect();
                 if (!effect.triggersOnControllerDrawCount(cardsDrawnThisTurn)) {
                     continue;
                 }
 
                 if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
-                        ConditionContext.forPermanent(perm, drawingPlayerId))) {
+                        ConditionContext.forPermanent(perm, drawingPlayerId).withTargetId(drawingPlayerId))) {
                     continue;
                 }
 
@@ -2907,83 +2892,88 @@ public class DrawService {
                     continue;
                 }
 
-                if (effect instanceof RevealDrawnCardIfInstantOrSorceryEffect reveal) {
-                    // "You may reveal the first card you draw each turn as you draw it" is not a
-                    // triggered ability: the choice is made during the draw, before any later draw.
-                    gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
-                            perm.getCard(), drawingPlayerId, List.of(reveal),
-                            perm.getCard().getName() + " - Reveal " + reveal.drawnCard().getName() + "?",
-                            null, null, perm.getId()));
-                    continue;
-                }
-                int triggerCopies = 1 + gameQueryService.countAdditionalDrawTriggeredAbilityTriggers(
-                        gameData, drawingPlayerId, perm);
-                if (effect instanceof MayEffect may && !targetsPlayerOrAnyTarget(may.wrapped())) {
-                    for (int copy = 0; copy < triggerCopies; copy++) {
-                        gameData.queueMayAbility(perm.getCard(), drawingPlayerId, may, null, perm.getId());
-                    }
-                } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())
-                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                    // Targeted draw trigger: the controller must choose a target before the ability
-                    // goes on the stack. This includes player-only targets such as "target opponent".
-                    for (int copy = 0; copy < triggerCopies; copy++) {
-                        gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerAnyTarget(
-                                perm.getCard(),
-                                drawingPlayerId,
-                                new ArrayList<>(List.of(effect)),
-                                perm.getId()
-                        ));
-
-                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                        log.info("Game {} - {} controller-draw any-target trigger queued",
-                                gameData.id, perm.getCard().getName());
-                    }
-                } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        && (perm.getCard().getEffectTargetIndex(effect) >= 0
-                        || perm.getCard().getEffectTargetIndex(authoredEffect) >= 0)) {
-                    // A permanent-target draw trigger (Mantle of Tides): choose the target as the
-                    // ability is put on the stack, using the card's declared target filter.
-                    for (int copy = 0; copy < triggerCopies; copy++) {
-                        gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerPermanentTarget(
-                                perm.getCard(),
-                                drawingPlayerId,
-                                new ArrayList<>(List.of(effect)),
-                                perm.getId(),
-                                perm.getCard().getTargetFilter()
-                        ));
-
-                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                        log.info("Game {} - {} controller-draw permanent-target trigger queued",
-                                gameData.id, perm.getCard().getName());
-                    }
-                } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                    for (int copy = 0; copy < triggerCopies; copy++) {
-                        gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                                perm.getCard(), drawingPlayerId, new ArrayList<>(List.of(effect)), "draw", perm.getId()));
-                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    }
-                } else {
-                    for (int copy = 0; copy < triggerCopies; copy++) {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                drawingPlayerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(List.of(effect)),
-                                effect instanceof ChooseOneEffect ? null : drawingPlayerId,
-                                perm.getId()
-                        ));
-
-                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                        log.info("Game {} - {} controller-draw trigger pushed onto stack",
-                                gameData.id, perm.getCard().getName());
-                    }
-                }
+                queueControllerDrawAbility(gameData, perm, drawingPlayerId, effect, effect, drawn);
                 read.markLimit(gameData, perm.getId());
             }
         }
 
+    }
+
+    /**
+     * Puts {@code effect}, the effect of an ability of {@code perm} that triggered on {@code drawingPlayerId}'s own draw
+     * or reveal, toward the stack, once and once more for each effect that makes it trigger an additional time: a "you
+     * may" on the stack, a target chosen first (any target or a player; a permanent by the card's declared target
+     * filter), else on the stack with the drawing player as "that player" and {@code drawn} as its triggering card.
+     * {@code authoredEffect} is the effect as the card wrote it, for its declared target index.
+     */
+    private void queueControllerDrawAbility(GameData gameData, Permanent perm, UUID drawingPlayerId,
+                                            CardEffect effect, CardEffect authoredEffect, Card drawn) {
+        int triggerCopies = 1 + gameQueryService.countAdditionalDrawTriggeredAbilityTriggers(
+                gameData, drawingPlayerId, perm);
+        if (effect instanceof MayEffect may && !targetsPlayerOrAnyTarget(may.wrapped())) {
+            for (int copy = 0; copy < triggerCopies; copy++) {
+                gameData.queueMayAbility(perm.getCard(), drawingPlayerId, may, null, perm.getId());
+            }
+        } else if (effect.targetSpec().declares(TargetPredicates.anyTarget())
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            // Targeted draw trigger: the controller must choose a target before the ability
+            // goes on the stack. This includes player-only targets such as "target opponent".
+            for (int copy = 0; copy < triggerCopies; copy++) {
+                gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerAnyTarget(
+                        perm.getCard(),
+                        drawingPlayerId,
+                        new ArrayList<>(List.of(effect)),
+                        perm.getId()
+                ));
+
+                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                log.info("Game {} - {} controller-draw any-target trigger queued",
+                        gameData.id, perm.getCard().getName());
+            }
+        } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                && (perm.getCard().getEffectTargetIndex(effect) >= 0
+                || perm.getCard().getEffectTargetIndex(authoredEffect) >= 0)) {
+            // A permanent-target draw trigger (Mantle of Tides): choose the target as the
+            // ability is put on the stack, using the card's declared target filter.
+            for (int copy = 0; copy < triggerCopies; copy++) {
+                gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerPermanentTarget(
+                        perm.getCard(),
+                        drawingPlayerId,
+                        new ArrayList<>(List.of(effect)),
+                        perm.getId(),
+                        perm.getCard().getTargetFilter()
+                ));
+
+                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                log.info("Game {} - {} controller-draw permanent-target trigger queued",
+                        gameData.id, perm.getCard().getName());
+            }
+        } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            for (int copy = 0; copy < triggerCopies; copy++) {
+                gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                        perm.getCard(), drawingPlayerId, new ArrayList<>(List.of(effect)), "draw", perm.getId()));
+                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+            }
+        } else {
+            for (int copy = 0; copy < triggerCopies; copy++) {
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        drawingPlayerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(effect)),
+                        effect instanceof ChooseOneEffect ? null : drawingPlayerId,
+                        perm.getId()
+                );
+                recordDrawnCard(entry, drawn);
+                gameData.stack.add(entry);
+
+                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                log.info("Game {} - {} controller-draw trigger pushed onto stack",
+                        gameData.id, perm.getCard().getName());
+            }
+        }
     }
 
     private void checkGraveyardControllerDrawTriggerSlot(GameData gameData, UUID drawingPlayerId,
@@ -2996,6 +2986,7 @@ public class DrawService {
         for (Card card : new ArrayList<>(graveyard)) {
             for (LibraryAbilityReader.LibraryEffect read : LibraryAbilityReader.readPrinted(card, watch)) {
                 requireNoLimit(read, watch);
+                LibraryAbilityReader.requireNoFilter(read, watch.trigger());
                 if (!drawEventMatches(gameData, drawingPlayerId, read, cardsDrawnThisTurn)) continue;
                 CardEffect effect = read.effect();
                 if (!effect.triggersOnControllerDrawCount(cardsDrawnThisTurn)) continue;
@@ -3032,6 +3023,7 @@ public class DrawService {
                 LibraryWatch watch = LibraryWatch.GRAVEYARD_ON_OPPONENT_DRAWS;
                 for (LibraryAbilityReader.LibraryEffect read : LibraryAbilityReader.readPrinted(card, watch)) {
                     requireNoLimit(read, watch);
+                    LibraryAbilityReader.requireNoFilter(read, watch.trigger());
                     if (!drawEventMatches(gameData, drawingPlayerId, read, cardsDrawnThisTurn)) continue;
                     CardEffect effect = read.effect();
 
@@ -3164,18 +3156,11 @@ public class DrawService {
                 if (drawEffects.isEmpty()) continue;
 
                 for (LibraryAbilityReader.LibraryEffect read : drawEffects) {
-                    if (!drawTriggers(gameData, perm, drawingPlayerId, read, cardsDrawnThisTurn)) continue;
-                    CardEffect effect = read.effect();
-                    if (effect instanceof DrawRevealTriggerEffect drawReveal) {
-                        if (drawn == null) {
-                            continue;
-                        }
-                        logDrawReveal(gameData, drawingPlayerId, drawn, perm.getCard());
-                        effect = drawReveal.effectFor(drawn);
-                        if (effect == null) {
-                            continue;
-                        }
+                    if (!drawTriggers(gameData, perm, drawingPlayerId, read, cardsDrawnThisTurn)
+                            || !drawnCardMatches(gameData, perm, read, drawn, drawingPlayerId)) {
+                        continue;
                     }
+                    CardEffect effect = read.effect();
                     if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
                             ConditionContext.forPermanent(perm, playerId).withTargetId(drawingPlayerId))) {
                         continue;
@@ -3205,6 +3190,7 @@ public class DrawService {
                                 perm.getId()
                             );
                             trigger.setNonTargeting(true);
+                            recordDrawnCard(trigger, drawn);
                             gameData.stack.add(trigger);
                         }
 
@@ -3232,15 +3218,12 @@ public class DrawService {
             Card card = object.getCard();
             for (LibraryAbilityReader.LibraryEffect read : LibraryAbilityReader.readPrinted(card, watch)) {
                 requireNoLimit(read, watch);
-                if (!drawEventMatches(gameData, drawingPlayerId, read, cardsDrawnThisTurn)) continue;
-                CardEffect effect = read.effect();
-                if (effect instanceof DrawRevealTriggerEffect drawReveal) {
-                    logDrawReveal(gameData, drawingPlayerId, drawn, card);
-                    effect = drawReveal.effectFor(drawn);
-                    if (effect == null) {
-                        continue;
-                    }
+                if (!drawEventMatches(gameData, drawingPlayerId, read, cardsDrawnThisTurn)
+                        || read.filter() != null && !predicateEvaluationService.matchesCardPredicate(
+                        drawn, read.filter(), card.getId(), gameData, drawingPlayerId)) {
+                    continue;
                 }
+                CardEffect effect = read.effect();
 
                 if (effect instanceof MayEffect may) {
                     gameData.queueMayAbility(card, planarControllerId, may);
@@ -3254,6 +3237,7 @@ public class DrawService {
                         card.getName() + "'s ability",
                         new ArrayList<>(List.of(effect)));
                 entry.setTargetId(drawingPlayerId);
+                recordDrawnCard(entry, drawn);
                 entry.setSourcePlanarObject(object.copy());
                 gameData.enqueueTrigger(entry);
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));

@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealFirstDrawInstantOrSorceryCreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardsEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,8 +27,12 @@ public class InquisitorEisenhorn extends Card {
                 false, false, List.of(), List.of(), false, false, true, 0, Set.of(),
                 Set.of(CardSupertype.LEGENDARY));
 
-        addTrigger(Triggers.youDrawCard(),
-                new RevealFirstDrawInstantOrSorceryCreateTokenEffect(cherubael));
+        // You may reveal the first card you draw each turn as you draw it. Whenever you reveal an instant or
+        // sorcery card this way, create Cherubael.
+        addStaticEffect(RevealDrawnCardsEffect.mayRevealFirstEachTurn());
+        addTrigger(Triggers.youRevealCardThisWay().withFilter(new CardAnyOfPredicate(List.of(
+                new CardTypePredicate(CardType.INSTANT), new CardTypePredicate(CardType.SORCERY)))),
+                cherubael);
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 CreateTokenEffect.ofClueToken(new EventValue()));
     }

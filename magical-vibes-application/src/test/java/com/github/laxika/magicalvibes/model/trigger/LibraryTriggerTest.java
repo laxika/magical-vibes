@@ -99,6 +99,19 @@ class LibraryTriggerTest {
     }
 
     @Test
+    void aCardRevealedThisWayIsAnEventOfItsOwnWithTheRevealedCardsFilter() {
+        LibraryTrigger nonland = Triggers.youRevealCardThisWay().withFilter(NONLAND);
+
+        assertThat(Triggers.youRevealCardThisWay())
+                .isEqualTo(new LibraryTrigger(LibraryTrigger.LibraryEvent.REVEALS_CARD_THIS_WAY, PlayerRelation.YOU))
+                .isNotEqualTo(Triggers.youDrawCard());
+        assertThat(Triggers.youRevealCardThisWay().defaultZones()).isEqualTo(AbilityZones.BATTLEFIELD);
+        assertThat(nonland.qualifier()).isEqualTo(NONLAND);
+        assertThat(nonland.watchKey()).isEqualTo(Triggers.youRevealCardThisWay());
+        assertThat(Triggers.youDrawCard().withFilter(ARTIFACT).watchKey()).isEqualTo(Triggers.youDrawCard());
+    }
+
+    @Test
     void theEventsWithoutACollectorOfTheirOwnAreWatchedByTheCollectorThatReadsThem() {
         assertThat(Triggers.youCycleCard().watchKey()).isEqualTo(Triggers.youDiscardCard());
         assertThat(Triggers.opponentCausesYouToDiscardCard().watchKey()).isEqualTo(Triggers.youDiscardCard());

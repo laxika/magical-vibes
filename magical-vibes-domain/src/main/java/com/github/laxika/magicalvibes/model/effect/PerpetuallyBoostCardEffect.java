@@ -12,9 +12,20 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 public record PerpetuallyBoostCardEffect(Card card, DynamicAmount powerBoost, DynamicAmount toughnessBoost)
         implements CardEffect {
 
-    /** "That [permanent] perpetually gets +P/+T": the triggering permanent's card. */
+    /**
+     * "That [permanent] perpetually gets +P/+T": the triggering permanent's card; with no triggering permanent, the
+     * stack entry's triggering card ({@link #ofTriggeringCard}). The same record as {@link #ofTriggeringCard}.
+     */
     public static PerpetuallyBoostCardEffect ofTriggeringPermanent(int powerBoost, int toughnessBoost) {
         return new PerpetuallyBoostCardEffect(null, new Fixed(powerBoost), new Fixed(toughnessBoost));
+    }
+
+    /**
+     * "It perpetually gets +P/+T" of a card the trigger event was about ("whenever you draw a Dragon card"): the stack
+     * entry's triggering card, the card as the ability triggered. The same record as {@link #ofTriggeringPermanent}.
+     */
+    public static PerpetuallyBoostCardEffect ofTriggeringCard(int powerBoost, int toughnessBoost) {
+        return ofTriggeringPermanent(powerBoost, toughnessBoost);
     }
 
     public PerpetuallyBoostCardEffect(Card card, int powerBoost, int toughnessBoost) {

@@ -373,7 +373,8 @@ This index has been split into smaller files for faster lookup. Each file is und
 | seek a random matching card from the full library into hand (no shuffle) | `SeekFromLibraryToHandEffect` |
 | seek a random matching card from the full library into the graveyard, then shuffle | `SeekFromLibraryToGraveyardEffect` |
 | discard a card, then seek and exile a random card with greater mana value that you may play until the end of your next turn | `DiscardCardThenEffect` + `SeekFromLibraryWithGreaterManaValueEffect` |
-| trigger from the card actually drawn without revealing it | `DrawnCardTriggerEffect` |
+| trigger from the card actually drawn without revealing it | `Triggers.youDrawCard().withFilter(CardPredicate)` (the drawn card is the entry's triggering card) |
+| "reveal the first card you draw" / "whenever you reveal a [card] this way" | `RevealDrawnCardsEffect` + `Triggers.youRevealCardThisWay().withFilter(CardPredicate)` |
 | random card from a fixed spellbook into hand | `ConjureGoblinInfluxArraySpellbookEffect` or `ConjureSkywriterDjinnSpellbookEffect` |
 | landfall draft of three cards from a fixed spellbook into hand | `DraftSlimefootThallidTransplantSpellbookEffect` |
 | reveal target player's nonland cards only, exile a chosen one, then conjure a named card into that player's hand (Juggernaut Peddler) | `ChooseCardsFromTargetHandEffect(..., HandChoiceDestination.EXILE).withRevealMatchingOnly().withChosenCardThen(null, new ConjureCardIntoTargetPlayerHandEffect(card))` |

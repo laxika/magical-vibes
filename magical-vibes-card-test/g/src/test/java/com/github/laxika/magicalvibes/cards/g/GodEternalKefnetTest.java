@@ -26,6 +26,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GodEternalKefnetTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The revealed card is copied from its last-known information when it leaves the hand first")
+    void copiesTheRevealedCardWhenItLeftTheHand() {
+        harness.addToBattlefield(player1, new GodEternalKefnet());
+        harness.setLibrary(player1, List.of(new Divination(), new Forest(), new Mountain(), new Plains()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.setHand(player1, List.of());
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLUE)).isZero();
+    }
+
+    @Test
     @DisplayName("The first drawn instant or sorcery is copied and may be cast for two less")
     void copiesFirstDrawnInstantOrSorcery() {
         harness.addToBattlefield(player1, new GodEternalKefnet());

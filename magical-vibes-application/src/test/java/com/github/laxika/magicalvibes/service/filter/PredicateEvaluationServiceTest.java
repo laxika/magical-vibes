@@ -34,6 +34,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePr
 import com.github.laxika.magicalvibes.model.filter.CardHasExactlyTwoColorsPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasMorphAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenNamePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAdventurePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasKickerPredicate;
@@ -550,6 +551,26 @@ class PredicateEvaluationServiceTest {
                     belowCounters, predicate, sourceCard.getId(), gd, player1Id)).isTrue();
             assertThat(evaluator.matchesCardPredicate(
                     equalToCounters, predicate, sourceCard.getId(), gd, player1Id)).isFalse();
+        }
+
+        @Test
+        @DisplayName("CardHasSourceChosenNamePredicate reads the source permanent's chosen name, else its snapshot")
+        void cardHasSourceChosenNamePredicateReadsTheSourcePermanent() {
+            Card trapCard = createCreature("Booby Trap", 0, 0, CardColor.WHITE);
+            Permanent trap = addPermanent(player1Id, trapCard);
+            trap.setChosenName("Grizzly Bears");
+            Card bears = createCreature("Grizzly Bears", 2, 2, CardColor.GREEN);
+            Card elves = createCreature("Llanowar Elves", 1, 1, CardColor.GREEN);
+            CardHasSourceChosenNamePredicate predicate = new CardHasSourceChosenNamePredicate();
+
+            assertThat(evaluator.matchesCardPredicate(bears, predicate, trapCard.getId(), gd, player2Id,
+                    trap.getId(), null, null, trap)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(elves, predicate, trapCard.getId(), gd, player2Id,
+                    trap.getId(), null, null, trap)).isFalse();
+            gd.playerBattlefields.get(player1Id).remove(trap);
+            assertThat(evaluator.matchesCardPredicate(bears, predicate, trapCard.getId(), gd, player2Id,
+                    trap.getId(), null, null, trap)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(bears, predicate, trapCard.getId(), gd, player2Id)).isFalse();
         }
 
         @Test

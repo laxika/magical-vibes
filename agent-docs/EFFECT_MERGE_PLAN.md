@@ -178,7 +178,7 @@ Net: 7 records and 5 handlers deleted, 1 record and 1 handler added.
   does). Gating is covered by `ImpalerShrikeTest.noDrawWhenShrikeLeavesBeforeResolution` and
   `MindstabThrullTest.unblockedNoDiscardWhenThrullLeavesBeforeResolution`.
 - **`SacrificeSelfThenDealDamageToTargetPlayerEffect` was not unused.** `DrawService:700` constructs it
-  at runtime for Booby Trap's draw trigger (`BoobyTrapEffect` is only the static marker). Deleting it
+  at runtime for Booby Trap's draw trigger (its static marker is gone since effect-slot-refactor.md step 15, run 17z5). Deleting it
   outright would have removed Booby Trap's trigger. It is absorbed by `SacrificeSelfThenEffect` instead,
   with `DealDamageToPlayersEffect(10, DamageRecipient.TARGET_PLAYER)` as the payload.
 

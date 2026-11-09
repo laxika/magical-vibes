@@ -1566,6 +1566,14 @@ public final class Triggers {
         return new LibraryTrigger(LibraryTrigger.LibraryEvent.ENCHANTED_PLAYER_DRAWS, PlayerRelation.ANY);
     }
 
+    /**
+     * "Whenever you reveal a [card] this way": a card you drew and revealed by the source's own reveal ability
+     * ({@code RevealDrawnCardsEffect}), once for each card; narrow it with {@code withFilter} ("a basic land card").
+     */
+    public static LibraryTrigger youRevealCardThisWay() {
+        return new LibraryTrigger(LibraryTrigger.LibraryEvent.REVEALS_CARD_THIS_WAY, PlayerRelation.YOU);
+    }
+
     /** "Whenever an opponent discards a card", once for each card, cycling included */
     public static LibraryTrigger opponentDiscardsCard() {
         return new LibraryTrigger(LibraryTrigger.LibraryEvent.DISCARDS, PlayerRelation.OPPONENT);

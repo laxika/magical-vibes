@@ -44,6 +44,10 @@ import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupp
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -199,6 +203,9 @@ class DrawServiceTest {
     @Mock
     private TriggerCollectionService triggerCollectionService;
 
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
+
     @InjectMocks
     private DrawService sut;
 
@@ -308,6 +315,65 @@ class DrawServiceTest {
             sut.checkControllerDrawTriggers(gd, player1Id);
 
             assertThat(gd.stack).hasSize(2);
+        }
+    }
+
+    @Nested
+    @DisplayName("the drawn card's filter and the reveal abilities")
+    class DrawnCardFilter {
+
+        @Test
+        @DisplayName("judges a draw ability's filter on the drawn card and records the card as the triggering card")
+        void judgesTheFilterOnTheDrawnCardAndRecordsIt() {
+            CardPredicate creature = new CardTypePredicate(CardType.CREATURE);
+            Card whelpCard = createCard("Whelp", CardType.CREATURE);
+            whelpCard.addTrigger(Triggers.youDrawCard().withFilter(creature), new BoostSelfEffect(1, 1));
+            Permanent whelp = new Permanent(whelpCard);
+            gd.playerBattlefields.get(player1Id).add(whelp);
+            Card bears = createCard("Grizzly Bears", CardType.CREATURE);
+            Card forest = createCard("Forest", CardType.LAND);
+            lenient().when(predicateEvaluationService.matchesCardPredicate(eq(bears), eq(creature), eq(whelpCard.getId()),
+                    eq(gd), eq(player1Id), eq(whelp.getId()), any(), any(), eq(whelp))).thenReturn(true);
+
+            sut.checkControllerDrawTriggers(gd, player1Id, forest);
+            sut.checkControllerDrawTriggers(gd, player1Id);
+            assertThat(gd.stack).isEmpty();
+
+            sut.checkControllerDrawTriggers(gd, player1Id, bears);
+
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getSourcePermanentId()).isEqualTo(whelp.getId());
+                assertThat(entry.getTriggeringCards()).containsExactly(bears);
+                assertThat(entry.getTriggeringCardId()).isEqualTo(bears.getId());
+            });
+        }
+
+        @Test
+        @DisplayName("a card revealed by a permanent triggers that permanent's matching reveal abilities")
+        void aRevealedCardTriggersTheSourcesRevealAbilities() {
+            CardPredicate land = new CardTypePredicate(CardType.LAND);
+            Card rowenCard = createCard("Rowen", CardType.ENCHANTMENT);
+            rowenCard.addTrigger(Triggers.youRevealCardThisWay().withFilter(land), new DrawCardEffect(1));
+            Permanent rowen = new Permanent(rowenCard);
+            gd.playerBattlefields.get(player1Id).add(rowen);
+            Card forest = createCard("Forest", CardType.LAND);
+            Card bears = createCard("Grizzly Bears", CardType.CREATURE);
+            when(gameQueryService.findPermanentController(gd, rowen.getId())).thenReturn(player1Id);
+            lenient().when(predicateEvaluationService.matchesCardPredicate(eq(forest), eq(land), eq(rowenCard.getId()),
+                    eq(gd), eq(player1Id), eq(rowen.getId()), any(), any(), eq(rowen))).thenReturn(true);
+
+            sut.revealDrawnCard(gd, rowen, player1Id, bears);
+            sut.revealDrawnCard(gd, rowen, player2Id, forest);
+            assertThat(gd.stack).isEmpty();
+
+            sut.revealDrawnCard(gd, rowen, player1Id, forest);
+
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEffectsToResolve()).containsExactly(new DrawCardEffect(1));
+                assertThat(entry.getTriggeringCards()).containsExactly(forest);
+            });
+            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) ->
+                    e.plainText().equals("Player1 reveals Forest with Rowen.")));
         }
     }
 

@@ -35,6 +35,8 @@ public enum LibraryWatch implements TriggerWatch {
     ON_OPPONENT_DRAWS(Triggers.opponentDrawsCard(), Zone.BATTLEFIELD),
     /** "Whenever enchanted player draws a card", once for each card. */
     ON_ENCHANTED_PLAYER_DRAWS(Triggers.enchantedPlayerDrawsCard(), Zone.BATTLEFIELD),
+    /** "Whenever you reveal a [card] this way", once for each card the source revealed as it was drawn. */
+    ON_CONTROLLER_REVEALS_CARD_THIS_WAY(Triggers.youRevealCardThisWay(), Zone.BATTLEFIELD),
     /** "Whenever an opponent discards a card", once for each card, cycling included. */
     ON_OPPONENT_DISCARDS(Triggers.opponentDiscardsCard(), Zone.BATTLEFIELD),
     /** "Whenever you discard a card", once for each card, cycling included. */
