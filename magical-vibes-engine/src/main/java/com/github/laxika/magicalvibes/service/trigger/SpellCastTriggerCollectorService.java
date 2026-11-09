@@ -22,8 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValueXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
-import com.github.laxika.magicalvibes.model.amount.ColorsSpentToCast;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandAndDiscardMatchingCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
@@ -889,11 +887,10 @@ public class SpellCastTriggerCollectorService {
         boolean needsTargeting = needsPlayerTarget || needsPermanentTarget;
         boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
         boolean countersTriggeringSpell = resolved.stream().anyMatch(CounterSpellingEffect.class::isInstance);
-        // The reveal-and-counter abilities don't target the spell: they still resolve (revealing, and
-        // offering the free cast) after it was countered in response.
-        boolean revealsAndCountersTriggeringSpell = resolved.stream().anyMatch(effect ->
-                effect instanceof com.github.laxika.magicalvibes.model.effect.RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffect
-                        || effect instanceof com.github.laxika.magicalvibes.model.effect.RevealTopCardAndCounterTriggeringSpellIfManaValueMatchesEffect);
+        // A counter that acts on "that spell" without targeting it still resolves after the spell was countered in
+        // response (CR 608.2b): revealing, offering the free cast, flipping for its caster.
+        boolean countersWithoutTargetingTheSpell = resolved.stream().anyMatch(effect ->
+                effect instanceof CounterSpellingEffect counter && !counter.targetsTriggeringSpell());
         boolean needsSpellManaSpentX = resolved.stream().anyMatch(this::effectNeedsSpellManaSpentX)
                 || trigger.interveningIf() instanceof SpellCreatureManaSpentAtLeast;
         // A permanent target restricted by "that spell's mana value" (Skyfire Kirin) is chosen now, as the ability goes
@@ -901,15 +898,12 @@ public class SpellCastTriggerCollectorService {
         boolean targetRestrictedBySpellManaValue = needsPermanentTarget && readsManaValueX(
                 trigger.targetFilter() != null ? trigger.targetFilter() : boundTargetFilter(sourceCard, trigger.effects()));
         // An effect's own filter "with that spell's mana value" (Celestial Kirin's destroy, Infernal Kirin's discard)
-        // reads it the same way, as the ability's X; "for each color of mana spent to cast that spell" (Magmablood
-        // Archaic's ColorsSpentToCast) reads the colors spent on the spell as X, as ManaSpentToCast reads the mana.
+        // reads it the same way, as the ability's X. "For each color of mana spent to cast that spell" (Magmablood
+        // Archaic's ColorsSpentToCast) reads the colors the spell recorded as it was cast, as the ability resolves.
         boolean effectRestrictedBySpellManaValue = resolved.stream()
                 .anyMatch(SpellCastTriggerCollectorService::effectFilterReadsManaValueX);
-        boolean needsSpellColorsSpentX = resolved.stream()
-                .anyMatch(SpellCastTriggerCollectorService::effectReadsColorsSpent);
         int spellManaSpentX = targetRestrictedBySpellManaValue || effectRestrictedBySpellManaValue
                 ? spellManaValue(match.gameData(), spellCard)
-                : needsSpellColorsSpentX ? match.gameData().getSpellCastColorsSpent(spellCard.getId()).size()
                 : trigger.interveningIf() instanceof SpellCreatureManaSpentAtLeast
                 ? match.gameData().getSpellCastCreatureManaSpent(spellCard.getId())
                 : needsSpellManaSpentX ? match.gameData().getSpellCastManaSpent(spellCard.getId())
@@ -1022,12 +1016,7 @@ public class SpellCastTriggerCollectorService {
                         null,
                         null
                 );
-                if (resolved.stream().anyMatch(
-                        com.github.laxika.magicalvibes.model.effect.FlipCoinForTriggeringSpellAndCounterOnLossEffect.class::isInstance)) {
-                    // The spell is not a target of the ability, so the caster still flips if it already left the stack.
-                    entry.setNonTargeting(true);
-                }
-                if (revealsAndCountersTriggeringSpell) {
+                if (countersWithoutTargetingTheSpell) {
                     entry.setNonTargeting(true);
                 }
             } else if (selfTarget) {
@@ -1187,19 +1176,6 @@ public class SpellCastTriggerCollectorService {
             case MayEffect may -> effectReadsSourceChosenColors(may.wrapped());
             case SequenceEffect sequence -> sequence.steps().stream()
                     .anyMatch(SpellCastTriggerCollectorService::effectReadsSourceChosenColors);
-            default -> false;
-        };
-    }
-
-    /** Whether {@code effect} reads the colors of mana spent to cast the triggering spell. */
-    private static boolean effectReadsColorsSpent(CardEffect effect) {
-        return switch (effect) {
-            case BoostAllOwnCreaturesEffect boost -> boost.powerBoost() instanceof ColorsSpentToCast
-                    || boost.toughnessBoost() instanceof ColorsSpentToCast;
-            case ConditionalEffect conditional -> effectReadsColorsSpent(conditional.wrapped());
-            case MayEffect may -> effectReadsColorsSpent(may.wrapped());
-            case SequenceEffect sequence -> sequence.steps().stream()
-                    .anyMatch(SpellCastTriggerCollectorService::effectReadsColorsSpent);
             default -> false;
         };
     }

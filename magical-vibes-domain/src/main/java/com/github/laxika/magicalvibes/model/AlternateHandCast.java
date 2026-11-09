@@ -23,7 +23,7 @@ import java.util.Set;
  * the caster has priority ("as though it had flash"). An empty {@code costs} list models a free
  * cast ("without paying its mana cost").
  *
- * <p>{@code reduceManaBySacrificedManaValue} models emerge (CR 702.123): the alternate cost's mana
+ * <p>{@code reduceManaBySacrificedManaValue} models emerge (CR 702.119a): the alternate cost's mana
  * component is reduced by generic mana equal to the sacrificed creature's mana value (colored
  * components cannot be reduced). Pair with {@link ManaCastingCost} + {@link SacrificePermanentsCost}.
  */

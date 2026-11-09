@@ -34,8 +34,9 @@ import java.util.UUID;
  * @param deathTriggersSuppressed for a departure, whether a static ability such as Hushbringer's kept a creature
  *                     dying there from causing abilities to trigger, as it was just before it left; it matters
  *                     only if the move is a death
- * @param costOf       for a departure, the spell whose cost the permanent was sacrificed to pay (emerge), or
- *                     {@code null}
+ * @param castingSpell for a departure, the spell its controller was casting as it left (CR 601.2): sacrificed to pay
+ *                     that spell's costs or a mana ability's activated to pay for it ("when you sacrifice this while
+ *                     casting a spell with emerge"), or {@code null}
  * @param attachments  for a departure, the Auras and Equipment attached to the permanent just before it left;
  *                     {@link DepartedAttachments#NONE} otherwise
  * @param hauntedBy    for a departure, the cards in exile that haunted the permanent (CR 702.55b) just before it
@@ -45,7 +46,7 @@ import java.util.UUID;
  */
 public record ZoneChangeEvent(Card card, UUID ownerId, Zone from, Zone to, ZoneChangeCause cause,
                               Permanent permanent, UUID controllerId, List<Ability> grantedAbilities,
-                              boolean deathTriggersSuppressed, Card costOf,
+                              boolean deathTriggersSuppressed, Card castingSpell,
                               DepartedAttachments attachments, List<UUID> hauntedBy, UUID causeControllerId)
         implements RulesEvent {
 
@@ -61,7 +62,7 @@ public record ZoneChangeEvent(Card card, UUID ownerId, Zone from, Zone to, ZoneC
     /** This zone change, with {@code permanent} as the copy of the permanent that moved. */
     public ZoneChangeEvent withPermanent(Permanent permanent) {
         return new ZoneChangeEvent(card, ownerId, from, to, cause, permanent, controllerId, grantedAbilities,
-                deathTriggersSuppressed, costOf, attachments, hauntedBy, causeControllerId);
+                deathTriggersSuppressed, castingSpell, attachments, hauntedBy, causeControllerId);
     }
 
     /** A zone change with no granted abilities. */
@@ -74,16 +75,16 @@ public record ZoneChangeEvent(Card card, UUID ownerId, Zone from, Zone to, ZoneC
     /** A zone change with the given departure look-back and no resolving cause. */
     public ZoneChangeEvent(Card card, UUID ownerId, Zone from, Zone to, ZoneChangeCause cause,
                            Permanent permanent, UUID controllerId, List<Ability> grantedAbilities,
-                           boolean deathTriggersSuppressed, Card costOf,
+                           boolean deathTriggersSuppressed, Card castingSpell,
                            DepartedAttachments attachments, List<UUID> hauntedBy) {
-        this(card, ownerId, from, to, cause, permanent, controllerId, grantedAbilities, deathTriggersSuppressed, costOf,
-                attachments, hauntedBy, null);
+        this(card, ownerId, from, to, cause, permanent, controllerId, grantedAbilities, deathTriggersSuppressed,
+                castingSpell, attachments, hauntedBy, null);
     }
 
     /** This event with the controller of the spell or ability that was resolving as it happened. */
     public ZoneChangeEvent withCauseController(UUID resolvingControllerId) {
         return new ZoneChangeEvent(card, ownerId, from, to, cause, permanent, controllerId, grantedAbilities,
-                deathTriggersSuppressed, costOf, attachments, hauntedBy, resolvingControllerId);
+                deathTriggersSuppressed, castingSpell, attachments, hauntedBy, resolvingControllerId);
     }
 
     /** Whether a permanent left the battlefield (CR 603.6c). */
@@ -104,13 +105,14 @@ public record ZoneChangeEvent(Card card, UUID ownerId, Zone from, Zone to, ZoneC
     /** This event with another destination, for a move that a replacement effect sent elsewhere. */
     public ZoneChangeEvent withTo(Zone destination) {
         return new ZoneChangeEvent(card, ownerId, from, destination, cause, permanent, controllerId, grantedAbilities,
-                deathTriggersSuppressed, costOf, attachments, hauntedBy, causeControllerId);
+                deathTriggersSuppressed, castingSpell, attachments, hauntedBy, causeControllerId);
     }
 
     @Override
     public ZoneChangeEvent deepCopy() {
         return permanent == null ? this
                 : new ZoneChangeEvent(card, ownerId, from, to, cause, new Permanent(permanent), controllerId,
-                        grantedAbilities, deathTriggersSuppressed, costOf, attachments, hauntedBy, causeControllerId);
+                        grantedAbilities, deathTriggersSuppressed, castingSpell, attachments, hauntedBy,
+                        causeControllerId);
     }
 }

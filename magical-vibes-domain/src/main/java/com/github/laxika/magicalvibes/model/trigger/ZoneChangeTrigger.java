@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.trigger;
 
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 
@@ -26,10 +27,12 @@ import java.util.Set;
  * @param causedBy who must control the resolving spell or ability that moved it: "a spell or ability an opponent
  *                 controls causes a land you control to be put into a graveyard"; {@code ANY} for any or none
  * @param duringYourTurn whether it must move during its controller's turn: "during your turn"
+ * @param castingSpell what the spell its controller is casting as it moves must be, or {@code null} for a move at any
+ *                 time: "when you sacrifice this while casting a spell with emerge" (CR 601.2)
  */
 public record ZoneChangeTrigger(ObjectRelation relation, PermanentPredicate filter, Set<Zone> from, Zone to,
                                 Set<Zone> excludedTo, Set<ZoneChangeCause> causes, PlayerRelation causedBy,
-                                boolean duringYourTurn)
+                                boolean duringYourTurn, CardPredicate castingSpell)
         implements Trigger {
 
     public ZoneChangeTrigger {
@@ -46,32 +49,41 @@ public record ZoneChangeTrigger(ObjectRelation relation, PermanentPredicate filt
     /** A trigger for a move caused by anything, at any time. */
     public ZoneChangeTrigger(ObjectRelation relation, PermanentPredicate filter, Set<Zone> from, Zone to,
                              Set<ZoneChangeCause> causes) {
-        this(relation, filter, from, to, Set.of(), causes, PlayerRelation.ANY, false);
+        this(relation, filter, from, to, Set.of(), causes, PlayerRelation.ANY, false, null);
     }
 
     /** This trigger, for a move to any zone but {@code zones}. */
     public ZoneChangeTrigger notTo(Set<Zone> zones) {
-        return new ZoneChangeTrigger(relation, filter, from, to, zones, causes, causedBy, duringYourTurn);
+        return new ZoneChangeTrigger(relation, filter, from, to, zones, causes, causedBy, duringYourTurn,
+                castingSpell);
     }
 
     /** This trigger, for a move a resolving spell or ability that {@code player} controls caused. */
     public ZoneChangeTrigger causedBy(PlayerRelation player) {
-        return new ZoneChangeTrigger(relation, filter, from, to, excludedTo, causes, player, duringYourTurn);
+        return new ZoneChangeTrigger(relation, filter, from, to, excludedTo, causes, player, duringYourTurn,
+                castingSpell);
     }
 
     /** This trigger with {@code moved} as what the moving object must be. */
     public ZoneChangeTrigger withFilter(PermanentPredicate moved) {
-        return new ZoneChangeTrigger(relation, moved, from, to, excludedTo, causes, causedBy, duringYourTurn);
+        return new ZoneChangeTrigger(relation, moved, from, to, excludedTo, causes, causedBy, duringYourTurn,
+                castingSpell);
     }
 
     /** This trigger, for a move during any turn. */
     public ZoneChangeTrigger anyTurn() {
-        return new ZoneChangeTrigger(relation, filter, from, to, excludedTo, causes, causedBy, false);
+        return new ZoneChangeTrigger(relation, filter, from, to, excludedTo, causes, causedBy, false, castingSpell);
     }
 
     /** This trigger, for a move during its controller's turn only. */
     public ZoneChangeTrigger onlyDuringYourTurn() {
-        return new ZoneChangeTrigger(relation, filter, from, to, excludedTo, causes, causedBy, true);
+        return new ZoneChangeTrigger(relation, filter, from, to, excludedTo, causes, causedBy, true, castingSpell);
+    }
+
+    /** This trigger, for a move while its controller is casting a spell that {@code spell} matches (CR 601.2). */
+    public ZoneChangeTrigger whileCasting(CardPredicate spell) {
+        return new ZoneChangeTrigger(relation, filter, from, to, excludedTo, causes, causedBy, duringYourTurn,
+                Objects.requireNonNull(spell, "spell"));
     }
 
     /** A trigger whose moving object may be anything that relates to the source as {@code relation} says. */
@@ -126,7 +138,8 @@ public record ZoneChangeTrigger(ObjectRelation relation, PermanentPredicate filt
      */
     public boolean ownEntry() {
         return relation == ObjectRelation.THIS && filter == null && from.isEmpty() && to == Zone.BATTLEFIELD
-                && excludedTo.isEmpty() && causes.isEmpty() && causedBy == PlayerRelation.ANY && !duringYourTurn;
+                && excludedTo.isEmpty() && causes.isEmpty() && causedBy == PlayerRelation.ANY && !duringYourTurn
+                && castingSpell == null;
     }
 
     /** Whether a move from {@code fromZone} to {@code toZone} for {@code cause} is this trigger's kind of move. */

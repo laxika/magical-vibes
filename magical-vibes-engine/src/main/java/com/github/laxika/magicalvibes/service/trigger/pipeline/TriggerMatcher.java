@@ -73,6 +73,7 @@ final class TriggerMatcher {
                     && (!trigger.duringYourTurn() || gameData.activePlayerId != null
                     && gameData.activePlayerId.equals(candidate.controllerId()))
                     && causedBy(trigger.causedBy(), candidate, event)
+                    && castingSpellMatches(gameData, predicates, trigger, candidate, event)
                     && (movingObject ? relatesToItself(gameData, predicates, trigger, candidate, event)
                     : relates(gameData, predicates, trigger, candidate, event))) {
                 return trigger;
@@ -229,6 +230,23 @@ final class TriggerMatcher {
             case OPPONENT -> event.causeControllerId() != null
                     && !candidate.controllerId().equals(event.causeControllerId());
         };
+    }
+
+    /**
+     * Whether the spell the moving object's controller was casting as it moved is the one the trigger asks for: "when
+     * you sacrifice this while casting a spell with emerge" (CR 601.2), whether or not that spell's emerge cost is the
+     * one being paid (Foul Emissary's ruling). Only the controller of a permanent can sacrifice it (CR 701.21a), so the
+     * caster is the candidate's controller.
+     */
+    private static boolean castingSpellMatches(GameData gameData, PredicateEvaluationService predicates,
+                                               ZoneChangeTrigger trigger, TriggerCandidate candidate,
+                                               ZoneChangeEvent event) {
+        if (trigger.castingSpell() == null) {
+            return true;
+        }
+        return event.castingSpell() != null && candidate.controllerId().equals(event.controllerId())
+                && predicates.matchesCardPredicate(event.castingSpell(), trigger.castingSpell(),
+                candidate.sourceCard().getId(), gameData, candidate.controllerId());
     }
 
     /**

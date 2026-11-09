@@ -9500,13 +9500,13 @@ public class SpellCastingService {
         }
         Map<UUID, Card> triggerCards = new HashMap<>();
         permanents.forEach(permanent -> triggerCards.put(permanent.getId(), sacrificedCard.apply(permanent)));
-        // "When you sacrifice this to pay an emerge cost" (Foul Emissary) reads the spell from its departure.
-        Card previousSpell = gameData.rulesEvents.setPayingCostOf(sourceCard);
+        // "When you sacrifice this while casting a spell with emerge" (Foul Emissary) reads the spell from the event.
+        Card previousSpell = gameData.rulesEvents.setCastingSpell(sourceCard);
         try {
             departNowForSpellCost(gameData, player, sourceCard, permanents, purpose, triggerWithSourceCard,
                     removed, triggerCards);
         } finally {
-            gameData.rulesEvents.restorePayingCostOf(previousSpell);
+            gameData.rulesEvents.restoreCastingSpell(previousSpell);
         }
         return removed;
     }
@@ -13087,6 +13087,7 @@ public class SpellCastingService {
         stackEntry.setCopy(copy || preparedSpellCopy);
         stackEntry.setCastCopy(copy || preparedSpellCopy);
         stackEntry.setManaSpentToCast(gameData.getSpellCastManaSpent(card.getId()));
+        stackEntry.setColorsSpentToCast(gameData.getSpellCastColorsSpent(card.getId()));
         boolean controlledMount = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                 .anyMatch(permanent -> gameQueryService.effectiveCreatureSubtypes(gameData, permanent)
                         .contains(CardSubtype.MOUNT));
@@ -17916,7 +17917,7 @@ public class SpellCastingService {
         return cost.hasX() ? xValue : -emergeReduction;
     }
 
-    /** Emerge (CR 702.123): total cost reduced by generic mana equal to sacrificed permanents' mana values. */
+    /** Emerge (CR 702.119a): total cost reduced by generic mana equal to sacrificed permanents' mana values. */
     private int computeEmergeManaReduction(GameData gameData, AlternateHandCast altCast, List<UUID> sacrificePermanentIds) {
         if (!altCast.reduceManaBySacrificedManaValue()) {
             return 0;
@@ -17992,7 +17993,7 @@ public class SpellCastingService {
                 : castingCostService.getCastCostModifier(gameData, playerId, card, xValue, true);
 
         // Snapshot emerge reduction before sacrifice (creature must still be on the battlefield
-        // when its mana value is read — CR 702.123).
+        // when its mana value is read — CR 702.119a).
         int emergeReduction = computeEmergeManaReduction(gameData, altCast, sacrificePermanentIds);
         ManaCost sacrificedManaCost = computeSacrificedManaCost(gameData, altCast, sacrificePermanentIds);
 
@@ -18646,6 +18647,7 @@ public class SpellCastingService {
 
         if (castEntry != null) {
             castEntry.setManaSpentToCast(gameData.getSpellCastManaSpent(card.getId()));
+            castEntry.setColorsSpentToCast(gameData.getSpellCastColorsSpent(card.getId()));
             boolean controlledMount = gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
                     .anyMatch(permanent -> gameQueryService.effectiveCreatureSubtypes(gameData, permanent)
                             .contains(CardSubtype.MOUNT));

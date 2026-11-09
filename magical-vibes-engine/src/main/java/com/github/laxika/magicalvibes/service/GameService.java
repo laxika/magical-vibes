@@ -2311,16 +2311,40 @@ public class GameService {
                             permanentIndex, abilityIndex, xValue, targetId, targetZone, targetIds, damageAssignments);
             int revertableBefore = gameData.revertableManaActivations.size();
             PendingManaActivation parkedBefore = gameData.pendingRevertableManaActivation;
-            if (normalPriorityActivation) {
-                activation.run();
-            } else {
-                activateDuringManaPayment(gameData, activation);
+            Card castingSpell = normalPriorityActivation && manaActivation
+                    ? spellPaidFor(gameData, player.getId(), paymentIntent) : null;
+            Card previousSpell = castingSpell == null ? null : gameData.rulesEvents.setCastingSpell(castingSpell);
+            try {
+                if (normalPriorityActivation) {
+                    activation.run();
+                } else {
+                    activateDuringManaPayment(gameData, activation);
+                }
+            } finally {
+                if (castingSpell != null) {
+                    gameData.rulesEvents.restoreCastingSpell(previousSpell);
+                }
             }
             manaChoiceNarrowingService.narrowActiveManaColorChoice(gameData, player.getId(), paymentIntent);
             if (normalPriorityActivation && manaActivation) {
                 finishPriorityManaActivation(gameData, revertableBefore, parkedBefore, paymentIntent);
             }
         }
+    }
+
+    /**
+     * The spell a mana ability activated with {@code paymentIntent} pays for, or {@code null}: the hand card whose
+     * cast the client holds back until the pool covers it. Its controller is casting that spell while the ability's
+     * costs are paid (CR 601.2g, CR 605.3a), so a permanent sacrificed to pay them leaves while it is cast ("when you
+     * sacrifice this while casting a spell with emerge"). An unspecified intent names no spell.
+     */
+    private static Card spellPaidFor(GameData gameData, UUID playerId, ManaPaymentIntent paymentIntent) {
+        if (paymentIntent == null || !paymentIntent.isCast()) {
+            return null;
+        }
+        List<Card> hand = gameData.playerHands.get(playerId);
+        int index = paymentIntent.handCardIndex();
+        return hand == null || index < 0 || index >= hand.size() ? null : hand.get(index);
     }
 
     /**

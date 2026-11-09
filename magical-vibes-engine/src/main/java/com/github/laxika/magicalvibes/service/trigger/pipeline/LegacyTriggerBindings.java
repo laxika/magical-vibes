@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
-import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -15,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForEmergeSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -53,7 +51,7 @@ import org.springframework.stereotype.Service;
 /**
  * Puts the pilot families' triggered abilities on the stack with the event data their effects read from the stack
  * entry: the moved object as it last existed (the entry's source snapshot and triggering permanent, with its power,
- * counters, attachments and links), its graveyard entry version, the spell it was sacrificed for. These are the old
+ * counters, attachments and links), its graveyard entry version. These are the old
  * slot collectors' {@code @CollectsTrigger} handlers, moved here when their families left {@code EffectSlot}
  * (effect-slot-refactor.md step 10b) and now reading the {@link ZoneChangeEvent} instead of a {@code TriggerContext}.
  * They record the event on the entry, choose how the ability waits for its targets or its mode, and decline an
@@ -119,11 +117,6 @@ public class LegacyTriggerBindings {
             }
             Card card = candidate.sourceCard();
             return card.getPower() != null ? card.getPower() : 0;
-        }
-
-        /** The spell whose cost the permanent was sacrificed to pay, or {@code null}. */
-        Card castingSpell() {
-            return event.costOf();
         }
 
         Zone destination() {
@@ -304,7 +297,6 @@ public class LegacyTriggerBindings {
         register(h, ReturnAllCardsExiledWithSourceEffect.class, this::handleReturnAllCardsExiledWithSource);
         register(h, PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect.class,
                 this::handlePutSelfOnBottomAndReturnExiledCards);
-        register(h, CreateTokenForEmergeSacrificeEffect.class, this::handleCreateTokenForEmergeSacrifice);
         register(h, ChooseOneEffect.class, this::handleModalDeathTrigger);
     }
 
@@ -430,25 +422,6 @@ public class LegacyTriggerBindings {
         );
         entry.setSourcePermanentSnapshot(new Permanent(dyingPermanent));
         c.gameData().stack.add(entry);
-        return true;
-    }
-    private boolean handleCreateTokenForEmergeSacrifice(Ctx c, CreateTokenForEmergeSacrificeEffect effect) {
-        Card castingSpell = c.castingSpell();
-        boolean isEmergeSpell = castingSpell != null
-                && castingSpell.getCastingOption(AlternateHandCast.class)
-                .map(AlternateHandCast::reduceManaBySacrificedManaValue)
-                .orElse(false);
-        if (!isEmergeSpell) {
-            return false;
-        }
-
-        c.gameData().pendingSpellCastCostTriggers.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                c.dyingCard(),
-                c.controllerId(),
-                c.dyingCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect.tokenEffect()))
-        ));
         return true;
     }
     private boolean handleModalDeathTrigger(Ctx c, ChooseOneEffect effect) {

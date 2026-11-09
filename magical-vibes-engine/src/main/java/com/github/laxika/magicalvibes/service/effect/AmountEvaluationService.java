@@ -634,12 +634,12 @@ public class AmountEvaluationService {
                             ManaColor.valueOf(gameData.chosenSpellColor.name()));
             case ColorManaPairsSpentToCast c ->
                     colorManaPairsSpentToCast(gameData, c, ctx);
-            // A cast trigger carries the triggering spell's colors spent in X, as it carries the mana spent: "for each
-            // color of mana spent to cast that spell" (Magmablood Archaic).
+            // A cast trigger's "for each color of mana spent to cast that spell" (Magmablood Archaic) reads the colors
+            // the triggering spell recorded as it was cast: from the spell on the stack, else as it last existed there.
             case ColorsSpentToCast ignored ->
                     ctx.stackEntry() != null && ctx.stackEntry().getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                            && ctx.stackEntry().getTriggeringSpellSnapshot() != null
-                            ? ctx.xValue()
+                            && ctx.stackEntry().getTriggeringCardId() != null
+                            ? triggeringSpellColorsSpent(gameData, ctx.stackEntry())
                             : ctx.sourceCard() == null ? 0
                             : gameData.getSpellCastColorsSpent(ctx.sourceCard().getId()).size();
             case ColorsAmongControlledPermanents count ->
@@ -2752,6 +2752,22 @@ public class AmountEvaluationService {
             }
         }
         return count;
+    }
+
+    /**
+     * The number of colors of mana spent to cast the spell {@code entry}, a cast trigger, was about: the spell on the
+     * stack, else the entry's snapshot of it once it has left, as it last existed there (CR 608.2h); 0 when the entry
+     * records neither.
+     */
+    private static int triggeringSpellColorsSpent(GameData gameData, StackEntry entry) {
+        UUID triggeringCardId = entry.getTriggeringCardId();
+        StackEntry spell = gameData.stack.stream()
+                .filter(stackEntry -> stackEntry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                        && stackEntry.getEntryType() != StackEntryType.ACTIVATED_ABILITY)
+                .filter(stackEntry -> triggeringCardId.equals(stackEntry.getTargetableId()))
+                .findFirst()
+                .orElse(entry.getTriggeringSpellSnapshot());
+        return spell == null ? 0 : spell.getColorsSpentToCast().size();
     }
 
     private Card findTriggeringSpell(GameData gameData, AmountContext ctx) {

@@ -1,10 +1,12 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.a.AshnodsAltar;
 import com.github.laxika.magicalvibes.cards.e.ElderDeepFiend;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPaymentIntent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -17,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FoulEmissary.class, ElderDeepFiend.class, GrizzlyBears.class, Plains.class, Fling.class})
+@CardUsed({FoulEmissary.class, ElderDeepFiend.class, GrizzlyBears.class, Plains.class, Fling.class, AshnodsAltar.class, Forest.class})
 class FoulEmissaryTest extends BaseCardTest {
 
     @Test
@@ -145,5 +147,71 @@ class FoulEmissaryTest extends BaseCardTest {
         harness.castInstantWithSacrifice(player1, 0, player2.getId(), foulEmissary.getId());
         assertThat(findPermanents(player1, "Foul Emissary")).isEmpty();
         assertThat(findPermanents(player1, "Eldrazi Horror")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrificed to Ashnod's Altar while casting an emerge spell for its mana cost, it creates a token")
+    void createsTokenWhenSacrificedToAManaAbilityWhileCastingAnEmergeSpell() {
+        harness.addToBattlefield(player1, new AshnodsAltar());
+        addCreatureReady(player1, new FoulEmissary());
+        harness.setHand(player1, List.of(new ElderDeepFiend()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+
+        harness.activateAbilityToPayFor(player1, 0, ManaPaymentIntent.forCast(0, 0));
+        harness.assertInGraveyard(player1, "Foul Emissary");
+        harness.castCreature(player1, 0);
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        assertThat(gd.stack).anySatisfy(entry -> assertThat(entry.getCard().getName()).isEqualTo("Foul Emissary"));
+        for (int i = 0; i < 3 && !gd.stack.isEmpty(); i++) {
+            harness.passBothPriorities();
+        }
+        assertThat(findPermanents(player1, "Eldrazi Horror")).hasSize(1);
+        harness.assertOnBattlefield(player1, "Elder Deep-Fiend");
+    }
+
+    @Test
+    @DisplayName("Sacrificed for the emerge cost, its ability goes on the stack above the spell")
+    void sacrificedForTheEmergeCostTriggersAboveTheSpell() {
+        Permanent foulEmissary = addCreatureReady(player1, new FoulEmissary());
+        harness.setHand(player1, List.of(new ElderDeepFiend()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.castCreatureWithAlternateCost(player1, 0, List.of(foulEmissary.getId()));
+
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Elder Deep-Fiend");
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Foul Emissary");
+    }
+
+    @Test
+    @DisplayName("Sacrificed to Ashnod's Altar while casting a spell without emerge, it creates no token")
+    void doesNotCreateTokenWhenSacrificedToAManaAbilityWhileCastingANonEmergeSpell() {
+        harness.addToBattlefield(player1, new Forest());
+        harness.addToBattlefield(player1, new AshnodsAltar());
+        addCreatureReady(player1, new FoulEmissary());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        harness.tapPermanentToPayFor(player1, 0, ManaPaymentIntent.forCast(0, 0));
+        harness.activateAbilityToPayFor(player1, 1, ManaPaymentIntent.forCast(0, 0));
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getCard().getName()).isEqualTo("Grizzly Bears"));
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Eldrazi Horror")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Sacrificed to Ashnod's Altar with priority while casting nothing, it creates no token")
+    void doesNotCreateTokenWhenSacrificedToAManaAbilityWhileCastingNothing() {
+        harness.addToBattlefield(player1, new AshnodsAltar());
+        addCreatureReady(player1, new FoulEmissary());
+        harness.setHand(player1, List.of(new ElderDeepFiend()));
+
+        harness.activateAbility(player1, 0, null, null);
+
+        harness.assertInGraveyard(player1, "Foul Emissary");
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.pendingManaAbilityTriggers).isEmpty();
     }
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.trigger;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
@@ -10,6 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.service.trigger.ZoneChangeAbilityReader;
 import org.junit.jupiter.api.Test;
@@ -73,6 +76,18 @@ class ZoneChangeTriggerTest {
                 .matchesMove(Zone.BATTLEFIELD, Zone.HAND, ZoneChangeCause.OTHER)).isTrue();
         assertThat(Triggers.milled(ObjectRelation.THIS)
                 .matchesMove(Zone.LIBRARY, Zone.GRAVEYARD, ZoneChangeCause.OTHER)).isFalse();
+    }
+
+    @Test
+    void whileCastingNamesTheSpellAndKeepsTheRestOfTheTrigger() {
+        CardPredicate emerge = new CardKeywordPredicate(Keyword.EMERGE);
+        ZoneChangeTrigger trigger = Triggers.sacrificed(ObjectRelation.THIS).whileCasting(emerge);
+
+        assertThat(trigger.castingSpell()).isSameAs(emerge);
+        assertThat(trigger.matchesMove(Zone.BATTLEFIELD, Zone.GRAVEYARD, ZoneChangeCause.SACRIFICE)).isTrue();
+        assertThat(trigger.withFilter(null).castingSpell()).isSameAs(emerge);
+        assertThat(trigger.looksBack()).isTrue();
+        assertThat(Triggers.sacrificed(ObjectRelation.THIS).castingSpell()).isNull();
     }
 
     @Test

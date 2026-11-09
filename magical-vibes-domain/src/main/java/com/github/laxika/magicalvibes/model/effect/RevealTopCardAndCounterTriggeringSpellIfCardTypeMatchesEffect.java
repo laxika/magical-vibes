@@ -7,4 +7,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * controller are read from the stack entry's triggering spell (CR 608.2h).
  */
 public record RevealTopCardAndCounterTriggeringSpellIfCardTypeMatchesEffect() implements CounterSpellingEffect {
+
+    @Override
+    public boolean targetsTriggeringSpell() {
+        return false;
+    }
 }

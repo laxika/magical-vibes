@@ -169,6 +169,12 @@ public class StackEntry {
     @Setter private boolean activationUsedTreasureMana;
     /** Mana spent to cast this spell, retained until a permanent spell enters the battlefield. */
     @Setter private int manaSpentToCast;
+    /**
+     * The colors of mana spent to cast this spell (colorless is no color, CR 105.1), recorded as it becomes cast, so a
+     * cast trigger's "for each color of mana spent to cast that spell" reads them as it resolves: from the spell on the
+     * stack, else from the entry's snapshot of it once it has left (CR 608.2h; Magmablood Archaic).
+     */
+    private Set<ManaColor> colorsSpentToCast = Set.of();
     /** Additional entry counters granted by costs paid for the spell, also retained by copies. */
     @Setter private int additionalEnterCounters;
     @Setter private Zone targetZone;
@@ -1169,6 +1175,7 @@ public class StackEntry {
         this.activationTreasureManaSpent = source.activationTreasureManaSpent;
         this.activationUsedTreasureMana = source.activationUsedTreasureMana;
         this.manaSpentToCast = source.manaSpentToCast;
+        this.colorsSpentToCast = source.colorsSpentToCast;
         this.additionalEnterCounters = source.additionalEnterCounters;
         this.targetZone = source.targetZone;
         this.targetCardIds = source.targetCardIds.isEmpty() ? List.of() : new ArrayList<>(source.targetCardIds);
@@ -1616,6 +1623,7 @@ public class StackEntry {
         this.activationTreasureManaSpent = 0;
         this.activationUsedTreasureMana = false;
         this.manaSpentToCast = 0;
+        this.colorsSpentToCast = Set.of();
         this.copy = false;
         this.castCopy = false;
         this.nonTargeting = false;
@@ -2208,6 +2216,11 @@ public class StackEntry {
     public void setTriggeringCard(UUID cardId, long graveyardEntryVersion) {
         this.triggeringCardId = cardId;
         this.triggeringCardGraveyardEntryVersion = graveyardEntryVersion;
+    }
+
+    /** Records {@code colors} as the colors of mana spent to cast this spell; an immutable copy is kept. */
+    public void setColorsSpentToCast(Set<ManaColor> colors) {
+        this.colorsSpentToCast = colors == null || colors.isEmpty() ? Set.of() : Set.copyOf(colors);
     }
 
     /**

@@ -227,6 +227,35 @@ class RulesEventLogTest {
     }
 
     @Test
+    void aDepartureWhileASpellIsBeingCastCarriesItUntilRestored() {
+        Card spell = new Card();
+        Card sacrificed = new Card();
+        Card later = new Card();
+        Card previous = log.setCastingSpell(spell);
+
+        log.departed(new Permanent(sacrificed), sacrificed, List.of(sacrificed.getId()), owner, null, Zone.GRAVEYARD);
+        log.restoreCastingSpell(previous);
+        log.departed(new Permanent(later), later, List.of(later.getId()), owner, null, Zone.GRAVEYARD);
+
+        List<RulesEventBatch> pending = log.pending();
+        assertThat(((ZoneChangeEvent) pending.get(0).events().getFirst()).castingSpell()).isSameAs(spell);
+        assertThat(((ZoneChangeEvent) pending.get(1).events().getFirst()).castingSpell()).isNull();
+    }
+
+    @Test
+    void aCopyKeepsTheSpellBeingCast() {
+        Card spell = new Card();
+        Card sacrificed = new Card();
+        log.setCastingSpell(spell);
+
+        RulesEventLog copy = new RulesEventLog();
+        copy.copyFrom(log);
+        copy.departed(new Permanent(sacrificed), sacrificed, List.of(sacrificed.getId()), owner, null, Zone.GRAVEYARD);
+
+        assertThat(((ZoneChangeEvent) copy.drain().getFirst().events().getFirst()).castingSpell()).isSameAs(spell);
+    }
+
+    @Test
     void whileSuppressedNothingIsEmittedOrTracked() {
         Card card = new Card();
         log.suppress();

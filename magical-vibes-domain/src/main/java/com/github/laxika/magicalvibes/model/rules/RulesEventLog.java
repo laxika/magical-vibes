@@ -82,7 +82,7 @@ public final class RulesEventLog {
     /** Departure events not yet drained, keyed by each physical card that left with the permanent. */
     private final Map<UUID, ZoneChangeEvent> departures = new HashMap<>();
     private final Map<UUID, ZoneChangeCause> causes = new HashMap<>();
-    private Card payingCostOf;
+    private Card castingSpell;
     private final Consumer<RulesEventBatch> onClose;
     private final Supplier<UUID> resolvingController;
 
@@ -235,17 +235,18 @@ public final class RulesEventLog {
     }
 
     /**
-     * Names {@code spell} as the spell whose cost the permanents leaving from now on are sacrificed to pay, until
-     * {@link #restorePayingCostOf} puts {@code previous}, the value this returns, back.
+     * Names {@code spell} as the spell its controller is casting while the permanents leaving from now on leave
+     * (CR 601.2): sacrificed to pay its costs, or to pay the cost of a mana ability activated to pay for it
+     * (CR 601.2g, CR 605.3a). {@link #restoreCastingSpell} puts {@code previous}, the value this returns, back.
      */
-    public Card setPayingCostOf(Card spell) {
-        Card previous = payingCostOf;
-        payingCostOf = spell;
+    public Card setCastingSpell(Card spell) {
+        Card previous = castingSpell;
+        castingSpell = spell;
         return previous;
     }
 
-    public void restorePayingCostOf(Card previous) {
-        payingCostOf = previous;
+    public void restoreCastingSpell(Card previous) {
+        castingSpell = previous;
     }
 
 
@@ -367,7 +368,7 @@ public final class RulesEventLog {
         }
         ZoneChangeEvent event = new ZoneChangeEvent(card, ownerOr(ownerId, card), Zone.BATTLEFIELD, intendedTo,
                 causes.getOrDefault(lastKnown.getId(), ZoneChangeCause.OTHER), lastKnown, controllerId,
-                grantedAbilities, deathTriggersSuppressed, payingCostOf, attachments, hauntedBy, resolvingController.get());
+                grantedAbilities, deathTriggersSuppressed, castingSpell, attachments, hauntedBy, resolvingController.get());
         for (UUID cardId : cardIds) {
             departures.put(cardId, event);
             cardZones.put(cardId, intendedTo);
@@ -454,7 +455,7 @@ public final class RulesEventLog {
         cardOwners.putAll(source.cardOwners);
         causes.clear();
         causes.putAll(source.causes);
-        payingCostOf = source.payingCostOf;
+        castingSpell = source.castingSpell;
         departures.clear();
         source.departures.forEach((cardId, event) -> departures.put(cardId,
                 (ZoneChangeEvent) copies.computeIfAbsent(event, RulesEvent::deepCopy)));

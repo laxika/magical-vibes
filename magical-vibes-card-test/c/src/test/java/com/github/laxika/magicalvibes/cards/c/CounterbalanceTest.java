@@ -18,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Counterbalance.class, KjeldoranOutrider.class, RonomHulk.class, RiteOfFlame.class,
-        HangarbackWalker.class})
+        HangarbackWalker.class, Counterspell.class})
 class CounterbalanceTest extends BaseCardTest {
 
     @Test
@@ -221,6 +221,28 @@ class CounterbalanceTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.castFromHand(player2, card, manaCost);
         resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("The ability still resolves and offers the reveal after the spell was countered in response")
+    void abilityResolvesAfterTheSpellWasCounteredInResponse() {
+        harness.addToBattlefield(player1, new Counterbalance());
+        harness.setLibrary(player1, List.of(new KjeldoranOutrider()));
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        KjeldoranOutrider spell = new KjeldoranOutrider();
+        harness.castFromHand(player2, spell, "{1}{W}");
+        harness.setHand(player1, List.of(new Counterspell()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+
+        harness.castInstant(player1, 0, spell.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerGraveyards.get(player2.getId())).anyMatch(card -> card.getId().equals(spell.getId()));
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
