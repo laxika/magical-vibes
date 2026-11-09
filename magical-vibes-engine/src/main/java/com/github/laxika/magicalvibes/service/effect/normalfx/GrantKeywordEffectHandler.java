@@ -139,33 +139,15 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 }
                 targetIds.addAll(triggeringSpell.getDeclaredTargetIds());
             }
-            FilterContext filterContext = resolutionFilterContext(gameData, entry);
-            int count = 0;
-            for (UUID targetId : targetIds) {
-                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-                if (target == null
-                        || (grant.filter() != null
-                        && !predicateEvaluationService.matchesPermanentPredicate(target, grant.filter(), filterContext))) {
-                    continue;
-                }
-                Set<Keyword> grantableKeywords = grantableKeywords(gameData, target, grant.keywords());
-                if (grantableKeywords.isEmpty()) {
-                    continue;
-                }
-                addLegacyBucket(target, grant.duration(), grantableKeywords);
-                gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
-                        entry.getCard().getName(), null, entry.getControllerId(),
-                        new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, grant.filter(),
-                                grant.duration(), grant.grantCondition()),
-                        target.getId(), null, null, floatingDurationFor(grant.duration()), 0));
-                count++;
-            }
+            grantToEach(gameData, entry, grant, targetIds, "target creature(s)");
+            return;
+        }
 
-            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
-                    .text(" gives " + formatKeywords(grant.keywords()) + " to " + count
-                            + " target creature(s) " + durationLabel(grant.duration()) + ".").build());
-            log.info("Game {} - {} grants {} to {} target(s)", gameData.id, entry.getCard().getName(),
-                    grant.keywords(), count);
+        if (grant.scope() == GrantScope.DECLARED_ATTACKERS) {
+            // "They gain …" of a "whenever you attack" ability: the attacking creatures the entry recorded as the
+            // ability triggered, wherever they are now.
+            grantToEach(gameData, entry, grant, entry.getAttackingPermanentSnapshots().stream()
+                    .map(Permanent::getId).toList(), "attacking creature(s)");
             return;
         }
 
@@ -564,4 +546,37 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 .reduce((a, b) -> a + ", " + b)
                 .orElse("");
     }
+
+    /** Grants {@code grant}'s keywords to each of {@code permanentIds} still on the battlefield that its filter admits. */
+    private void grantToEach(GameData gameData, StackEntry entry, GrantKeywordEffect grant, List<UUID> permanentIds,
+                             String recipients) {
+        FilterContext filterContext = resolutionFilterContext(gameData, entry);
+        int count = 0;
+        for (UUID targetId : permanentIds) {
+            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
+            if (target == null
+                    || (grant.filter() != null
+                    && !predicateEvaluationService.matchesPermanentPredicate(target, grant.filter(), filterContext))) {
+                continue;
+            }
+            Set<Keyword> grantableKeywords = grantableKeywords(gameData, target, grant.keywords());
+            if (grantableKeywords.isEmpty()) {
+                continue;
+            }
+            addLegacyBucket(target, grant.duration(), grantableKeywords);
+            gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
+                    entry.getCard().getName(), null, entry.getControllerId(),
+                    new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, grant.filter(),
+                            grant.duration(), grant.grantCondition()),
+                    target.getId(), null, null, floatingDurationFor(grant.duration()), 0));
+            count++;
+        }
+
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
+                .text(" gives " + formatKeywords(grant.keywords()) + " to " + count
+                        + " " + recipients + " " + durationLabel(grant.duration()) + ".").build());
+        log.info("Game {} - {} grants {} to {} {}", gameData.id, entry.getCard().getName(),
+                grant.keywords(), count, recipients);
+    }
+
 }

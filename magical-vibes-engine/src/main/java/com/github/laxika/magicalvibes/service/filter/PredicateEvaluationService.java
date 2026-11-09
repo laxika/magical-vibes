@@ -2900,6 +2900,16 @@ public class PredicateEvaluationService {
                                 .getOrDefault(permanent.getId(), java.util.Set.of())
                                 .contains(sourcePermanentId);
             }
+            case PermanentBlockingSourcePredicate blockingPredicate
+                    when blockingPredicate.blocked() == com.github.laxika.magicalvibes.model.effect.PermanentReference.TRIGGERING -> {
+                // "A creature that's blocking it": the permanent the trigger event was about, as it is now or as it
+                // last existed (CR 608.2h).
+                UUID blockedId = filterContext == null ? null : filterContext.triggeringPermanentId();
+                if (blockedId == null && filterContext != null && filterContext.triggeringPermanentSnapshot() != null) {
+                    blockedId = filterContext.triggeringPermanentSnapshot().getId();
+                }
+                yield blockedId != null && permanent.isBlocking() && permanent.getBlockingTargetIds().contains(blockedId);
+            }
             case PermanentBlockingSourcePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;

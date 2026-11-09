@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class FrontierWarmonger extends Card {
 
     public FrontierWarmonger() {
-        addTrigger(Triggers.youAttack(), new GrantKeywordEffect(
-                Keyword.MENACE, GrantScope.TARGETS, new PermanentIsAttackingOpponentOrTheirPlaneswalkerPredicate()));
+        addTrigger(Triggers.youAttack().withFilter(new PermanentIsAttackingOpponentOrTheirPlaneswalkerPredicate()),
+                new GrantKeywordEffect(Keyword.MENACE, GrantScope.DECLARED_ATTACKERS));
     }
 }

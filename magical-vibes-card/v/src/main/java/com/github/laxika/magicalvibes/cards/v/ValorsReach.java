@@ -21,7 +21,7 @@ public class ValorsReach extends Card {
     public ValorsReach() {
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(new ExactlyAttackers(2)),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGETS));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.DECLARED_ATTACKERS));
         target(TargetFilters.creatureYouControl(), 0, 2)
                 .addTrigger(Triggers.chaosEnsues(),
                         new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS));

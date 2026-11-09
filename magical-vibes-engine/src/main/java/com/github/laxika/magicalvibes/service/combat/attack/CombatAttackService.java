@@ -37,7 +37,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackDamage;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedAttackUntap;
@@ -61,7 +60,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToDefendingPlayerCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
@@ -72,7 +70,6 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountA
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotChosenDuringLastCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
@@ -205,7 +202,7 @@ public class CombatAttackService {
     }
 
     private record AttackTriggerSource(Permanent permanent, CombatWatch watch,
-                                       List<CombatAbilityReader.CombatEffect> effects, List<UUID> bandMembers) {
+                                       List<CombatAbilityReader.CombatEffect> effects, List<Integer> bandAttackerIndices) {
         private AttackTriggerSource(Permanent permanent, CombatWatch watch,
                                     List<CombatAbilityReader.CombatEffect> effects) {
             this(permanent, watch, effects, null);
@@ -1189,9 +1186,12 @@ public class CombatAttackService {
                         } else {
                             // The creatures declared as attackers with this one are the event's ("that creature",
                             // the other one you attacked with: Creepy Puppeteer), read as the ability resolves.
-                            gameData.queueGrantedMayAbility(attacker.getCard(), playerId, may, null,
-                                    attacker.getId(), attackedTargetForPendingMay(gameData, attacker, may),
-                                    grantingPermanents.get(may)).setAttackingPermanentSnapshots(
+                            // The defending player stays the one the creature attacked if an attacked planeswalker
+                            // or battle leaves before the "you may" is answered (CR 508.5).
+                            StackEntry mayEntry = gameData.queueGrantedMayAbility(attacker.getCard(), playerId, may,
+                                    null, attacker.getId(), attacker.getAttackTarget(), grantingPermanents.get(may));
+                            mayEntry.setDefendingPlayerId(defendingPlayerOf(gameData, attacker));
+                            mayEntry.setAttackingPermanentSnapshots(
                                     attackerIndices.stream().map(battlefield::get)
                                             .map(declared -> snapshotDeclaredAttacker(gameData, declared)).toList());
                         }
@@ -1202,8 +1202,7 @@ public class CombatAttackService {
                         // to one creature the defending player controls" (Decimator Beetle). The normal
                         // pipeline collects only one target, so route to the bespoke two-step flow.
                         boolean isTriggerTimeModal = otherEffects.size() == 1
-                                && (otherEffects.getFirst() instanceof ChooseOneAtTriggerTimeEffect
-                                || otherEffects.getFirst() instanceof ChooseModeNotChosenDuringLastCombatEffect);
+                                && otherEffects.getFirst() instanceof ChooseOneAtTriggerTimeEffect;
                         boolean isCounterMove = otherEffects.stream().anyMatch(e -> e instanceof AttackCounterMoveEffect);
                         boolean needsGraveyardTarget = otherEffects.stream()
                                 .filter(e -> !e.targetsChosenByReflexiveAbility())
@@ -1216,45 +1215,23 @@ public class CombatAttackService {
                                         || e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                                         || e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
                         UUID attackedTargetId = attacker.getAttackTarget();
-                        Permanent attackedPermanent = attackedTargetId == null ? null
-                                : gameQueryService.findPermanentById(gameData, attackedTargetId);
-                        UUID defendingPlayerId = attackedTargetId == null ? null
-                                : gameData.playerIds.contains(attackedTargetId) ? attackedTargetId
-                                : attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)
-                                        ? attackedPermanent.getProtectorPlayerId()
-                                        : gameQueryService.findPermanentController(gameData, attackedTargetId);
+                        UUID defendingPlayerId = defendingPlayerOf(gameData, attacker);
+                        // A granted ability is the creature's own, so the creature's controller controls it (CR 113.8);
+                        // "choose one that wasn't chosen during your last combat" (Yotian Courier) is the modal's
+                        // restriction, judged as the mode is chosen.
                         if (otherEffects.size() > 1
                                 && otherEffects.stream().allMatch(e -> e instanceof ChooseOneAtTriggerTimeEffect)) {
-                            Set<UUID> usedGrantingPermanents = new HashSet<>();
                             for (CardEffect modalTrigger : otherEffects) {
                                 gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                                        attacker.getCard(),
-                                        grantedAbilityController(gameData, attacker, modalTrigger, playerId,
-                                                usedGrantingPermanents),
+                                        attacker.getCard(), playerId,
                                         ((ChooseOneAtTriggerTimeEffect) modalTrigger).choice(), attacker.getId(),
                                         false, false, null, null, null, false));
                             }
                         } else if (isTriggerTimeModal) {
-                            CardEffect modalEffect = otherEffects.getFirst();
-                            ChooseOneEffect modal;
-                            boolean rememberLastChosenMode = false;
-                            if (modalEffect instanceof ChooseModeNotChosenDuringLastCombatEffect lastCombatModal) {
-                                List<ChooseOneEffect.ChooseOneOption> availableOptions = lastCombatModal.options().stream()
-                                        .filter(option -> !option.label().equals(attacker.getChosenMode()))
-                                        .toList();
-                                if (availableOptions.isEmpty()) {
-                                    continue;
-                                }
-                                modal = new ChooseOneEffect(availableOptions);
-                                rememberLastChosenMode = true;
-                            } else {
-                                modal = ((ChooseOneAtTriggerTimeEffect) modalEffect).choice();
-                            }
                             gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                                    attacker.getCard(),
-                                    grantedAbilityController(gameData, attacker, modalEffect, playerId, new HashSet<>()),
-                                    modal, attacker.getId(), false, false,
-                                    null, null, null, rememberLastChosenMode));
+                                    attacker.getCard(), playerId,
+                                    ((ChooseOneAtTriggerTimeEffect) otherEffects.getFirst()).choice(),
+                                    attacker.getId(), false, false, null, null, null, false));
                         } else if (isCounterMove) {
                             gameData.queueInteraction(
                                     new PermanentChoiceContext.AttackCounterMoveFirstTarget(
@@ -1682,16 +1659,18 @@ public class CombatAttackService {
                     : printedYouAttack.getFirst().ability();
             List<CombatAbilityReader.CombatEffect> laterYouAttack = new ArrayList<>();
             for (var registration : printedYouAttack) {
-                if (registration.effect() instanceof com.github.laxika.magicalvibes.model.effect.BoostCreaturesInAttackingBandsEffect) {
-                    Map<UUID, List<UUID>> declaredBands = new java.util.LinkedHashMap<>();
+                // "Whenever two or more creatures you control attack in a band" (EACH_BAND): an ability of its own for
+                // each declared band of two or more (CR 702.22c), whose attacking creatures are the band's.
+                if (registration.multiplicity() == TriggerMultiplicity.EACH_BAND) {
+                    Map<UUID, List<Integer>> declaredBands = new java.util.LinkedHashMap<>();
                     for (int attackerIndex : attackerIndices) {
                         Permanent attacker = battlefield.get(attackerIndex);
                         if (attacker.getBandId() != null) {
                             declaredBands.computeIfAbsent(attacker.getBandId(), ignored -> new ArrayList<>())
-                                    .add(attacker.getId());
+                                    .add(attackerIndex);
                         }
                     }
-                    for (List<UUID> members : declaredBands.values()) {
+                    for (List<Integer> members : declaredBands.values()) {
                         if (members.size() >= 2) {
                             attackTriggerSources.add(new AttackTriggerSource(perm,
                                     CombatWatch.ON_ALLY_CREATURES_ATTACK, List.of(registration), List.copyOf(members)));
@@ -1725,8 +1704,11 @@ public class CombatAttackService {
             // its filter (CR 603.2), and "they", "those creatures" and "their total power" are the matching attackers
             // as they were declared. A filtered ability is a group of its own, so its filter is the group's.
             PermanentPredicate attackerFilter = allyAttackEffects.getFirst().filter();
-            List<Integer> sourceAttackerIndices = attackerFilter == null ? attackerIndices
-                    : matchingAttackerIndices(gameData, battlefield, attackerIndices, perm, playerId, attackerFilter);
+            List<Integer> declaredAttackerIndices = triggerSource.bandAttackerIndices() != null
+                    ? triggerSource.bandAttackerIndices() : attackerIndices;
+            List<Integer> sourceAttackerIndices = attackerFilter == null ? declaredAttackerIndices
+                    : matchingAttackerIndices(gameData, battlefield, declaredAttackerIndices, perm, playerId,
+                    attackerFilter);
             if (sourceAttackerIndices.isEmpty()) continue;
 
             List<CardEffect> filteredEffects = new ArrayList<>();
@@ -1740,7 +1722,8 @@ public class CombatAttackService {
                 boolean once = read.limit() == TriggerLimit.ONCE;
                 boolean firstTime = read.limit() == TriggerLimit.FIRST_TIME_EACH_TURN;
                 if ((read.limit() != TriggerLimit.NONE && !firstOfTurn && !once && !firstTime)
-                        || read.multiplicity() != TriggerMultiplicity.EACH) {
+                        || (read.multiplicity() != TriggerMultiplicity.EACH
+                        && read.multiplicity() != TriggerMultiplicity.EACH_BAND)) {
                     throw new IllegalStateException("The \"whenever you attack\" collector reads no "
                             + read.options() + ": " + read.ability());
                 }
@@ -1774,25 +1757,6 @@ public class CombatAttackService {
                 }
             }
             if (filteredEffects.isEmpty()) continue;
-
-            List<UUID> filteredDeclaredAttackerIds = null;
-            for (int effectIndex = 0; effectIndex < filteredEffects.size(); effectIndex++) {
-                if (filteredEffects.get(effectIndex) instanceof GrantKeywordEffect grant
-                        && grant.scope() == GrantScope.TARGETS && grant.filter() != null) {
-                    FilterContext attackFilterContext = FilterContext.of(gameData)
-                            .withSourceCardId(perm.getCard().getId())
-                            .withSourceControllerId(playerId);
-                    filteredDeclaredAttackerIds = sourceAttackerIndices.stream()
-                            .map(battlefield::get)
-                            .filter(attacker -> predicateEvaluationService.matchesPermanentPredicate(
-                                    attacker, grant.filter(), attackFilterContext))
-                            .map(Permanent::getId)
-                            .toList();
-                    filteredEffects.set(effectIndex, new GrantKeywordEffect(grant.keywords(), GrantScope.TARGETS,
-                            null, grant.duration(), grant.grantCondition()));
-                }
-            }
-            if (filteredDeclaredAttackerIds != null && filteredDeclaredAttackerIds.isEmpty()) continue;
 
             int previousCopies = oncePerTurn ? gameData.beginTriggeredAbilityCopies(1)
                     : beginAttackTriggerCopies(gameData, playerId, perm);
@@ -1858,9 +1822,8 @@ public class CombatAttackService {
                         log.info("Game {} - {} targeted ON_ALLY_CREATURES_ATTACK trigger queued for target selection",
                                 gameData.id, perm.getCard().getName());
                     } else {
-                        boolean referencesDeclaredAttackers = filteredEffects.stream()
-                                .anyMatch(e -> e instanceof GrantKeywordEffect grant
-                                        && grant.scope() == GrantScope.TARGETS);
+                        // "They" / "those creatures" (GrantScope.DECLARED_ATTACKERS) and a band's creatures are the
+                        // entry's attacking creatures, recorded below whatever the effects are.
                         StackEntry attackTrigger = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
@@ -1873,17 +1836,8 @@ public class CombatAttackService {
                                 null,
                                 null,
                                 null,
-                                filteredDeclaredAttackerIds != null
-                                        ? filteredDeclaredAttackerIds
-                                        : referencesDeclaredAttackers
-                                        ? sourceAttackerIndices.stream().map(battlefield::get).map(Permanent::getId).toList()
-                                        : null
+                                null
                         );
-                        attackTrigger.setNonTargeting(referencesDeclaredAttackers);
-                        if (triggerSource.bandMembers() != null) {
-                            attackTrigger.setDeclaredTargetIds(triggerSource.bandMembers());
-                            attackTrigger.setNonTargeting(true);
-                        }
                         if (attackerFilter != null) {
                             // "That many" (The Ur-Dragon's "whenever one or more Dragons you control attack, draw
                             // that many cards") is the number of matching attackers.
@@ -4114,51 +4068,18 @@ public class CombatAttackService {
     }
 
     /**
-     * An ability granted by an attached permanent ("Whenever equipped creature attacks ...") is
-     * controlled by the player who controls the granting permanent, not by the creature's controller
-     * (CR 603.3a). Returns that player for a granted effect, or {@code fallbackControllerId} when the
-     * effect is not granted by an attachment. {@code usedGrantingPermanents} keeps several equal
-     * grants from resolving to the same attachment.
+     * The player {@code attacker} attacks, the controller of the planeswalker it attacks or the protector of the battle
+     * it attacks (CR 508.5), or {@code null} when it attacks nothing.
      */
-    private UUID grantedAbilityController(GameData gameData, Permanent attacker, CardEffect effect,
-                                          UUID fallbackControllerId, Set<UUID> usedGrantingPermanents) {
-        for (Map.Entry<UUID, List<Permanent>> battlefield : gameData.playerBattlefields.entrySet()) {
-            for (Permanent source : battlefield.getValue()) {
-                if (!source.isAttached() || !attacker.getId().equals(source.getAttachedTo())
-                        || usedGrantingPermanents.contains(source.getId())) {
-                    continue;
-                }
-                boolean grantsEffect = source.getCard().getStaticEffects().stream()
-                        .anyMatch(e -> e instanceof GrantTriggeredAbilityEffect grant
-                                && grant.grantedAbility() instanceof TriggeredAbility granted
-                                && granted.hasWatchedTrigger(CombatWatch.ON_ATTACK.trigger())
-                                && grant.grantedEffect().equals(effect));
-                if (grantsEffect) {
-                    usedGrantingPermanents.add(source.getId());
-                    return battlefield.getKey();
-                }
-            }
-        }
-        return fallbackControllerId;
-    }
-
-    /**
-     * CR 508.5: "the defending player" stays the player the creature attacked even if an attacked
-     * planeswalker or battle leaves before the pending "you may" is answered, so a may-ability that only
-     * needs the defending player is queued with that player rather than with the attacked permanent.
-     */
-    private UUID attackedTargetForPendingMay(GameData gameData, Permanent attacker,
-                                             com.github.laxika.magicalvibes.model.effect.MayEffect may) {
+    private UUID defendingPlayerOf(GameData gameData, Permanent attacker) {
         UUID attackedTargetId = attacker.getAttackTarget();
-        if (attackedTargetId == null || gameData.playerIds.contains(attackedTargetId)
-                || !(may.wrapped() instanceof DealDamageToDefendingPlayerCreaturesEffect)) {
+        if (attackedTargetId == null || gameData.playerIds.contains(attackedTargetId)) {
             return attackedTargetId;
         }
         Permanent attackedPermanent = gameQueryService.findPermanentById(gameData, attackedTargetId);
-        UUID defendingPlayerId = attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)
+        return attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)
                 ? attackedPermanent.getProtectorPlayerId()
                 : gameQueryService.findPermanentController(gameData, attackedTargetId);
-        return defendingPlayerId != null ? defendingPlayerId : attackedTargetId;
     }
 
     /**

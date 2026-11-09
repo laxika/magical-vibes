@@ -135,8 +135,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.NextMatchingSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCastTriggerToSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SpellCastTriggerGrant;
 import com.github.laxika.magicalvibes.model.effect.PutVoyageCounterOnExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -15671,15 +15669,12 @@ public class TriggerCollectionService {
             entry.setXValue(attackerCount);
             entry.setSourcePlanarObject(object.copy());
             entry.setNonTargeting(true);
-            // "Those creatures gain double strike" (Valor's Reach): the creatures that attacked are the grant's
-            // declared, untargeted recipients, fixed as the ability triggers.
-            if (matchingEffects.stream().anyMatch(effect -> effect instanceof GrantKeywordEffect grant
-                    && grant.scope() == GrantScope.TARGETS)) {
-                entry.setDeclaredTargetIds(gameData.playerBattlefields.getOrDefault(attackingPlayerId, List.of()).stream()
-                        .filter(Permanent::isAttacking)
-                        .map(Permanent::getId)
-                        .toList());
-            }
+            // The creatures that attacked are the entry's attacking creatures whatever the effects are ("those
+            // creatures gain double strike", Valor's Reach), fixed as the ability triggers.
+            entry.setAttackingPermanentSnapshots(gameData.playerBattlefields.getOrDefault(attackingPlayerId, List.of())
+                    .stream()
+                    .filter(Permanent::isAttacking)
+                    .toList());
             gameData.enqueueTrigger(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(object.getCard()));
         }

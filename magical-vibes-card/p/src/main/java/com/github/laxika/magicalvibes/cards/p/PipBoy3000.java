@@ -2,16 +2,15 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -35,14 +34,14 @@ public class PipBoy3000 extends Card {
                                 new DiscardEffect(1, DiscardRecipient.CONTROLLER))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Pick a Perk — Put a +1/+1 counter on that creature",
-                        new PutCountersOnSourceEffect(1, 1, 1)),
+                        new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING,
+                                CounterType.PLUS_ONE_PLUS_ONE)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Check Map — Untap up to two target lands",
                         List.of(new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS)),
                         TargetFilters.land(), null, 0, 2, false, null)
         )));
-        addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.attacks(),
-                attackChoice), GrantScope.EQUIPPED_CREATURE));
+        addTrigger(Triggers.attacks(), attackChoice);
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

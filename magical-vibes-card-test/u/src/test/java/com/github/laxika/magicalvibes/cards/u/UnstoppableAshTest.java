@@ -28,7 +28,7 @@ class UnstoppableAshTest extends BaseCardTest {
     void allyBecomesBlockedGetsBoost() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.setAttacking(true);
-        addCreatureReady(player1, new UnstoppableAsh());
+        Permanent ash = addCreatureReady(player1, new UnstoppableAsh());
         addCreatureReady(player2, new GrizzlyBears());
 
         prepareDeclareBlockers();
@@ -38,7 +38,8 @@ class UnstoppableAshTest extends BaseCardTest {
         StackEntry trigger = gd.stack.getFirst();
         assertThat(trigger.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(trigger.getCard().getName()).isEqualTo("Unstoppable Ash");
-        assertThat(trigger.getSourcePermanentId()).isEqualTo(bears.getId());
+        assertThat(trigger.getSourcePermanentId()).isEqualTo(ash.getId());
+        assertThat(trigger.getTriggeringPermanentId()).isEqualTo(bears.getId());
         assertThat(trigger.isNonTargeting()).isTrue();
 
         harness.passBothPriorities();

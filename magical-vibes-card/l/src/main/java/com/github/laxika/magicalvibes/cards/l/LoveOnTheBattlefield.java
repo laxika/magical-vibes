@@ -19,11 +19,11 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class LoveOnTheBattlefield extends Card {
 
     public LoveOnTheBattlefield() {
-        // The two attackers are fixed when the trigger fires: GrantScope.TARGETS carries the declared
-        // attackers, so a creature that left combat before resolution still gains first strike.
+        // The two attackers are fixed when the trigger fires: GrantScope.DECLARED_ATTACKERS reads the entry's
+        // attacking creatures, so a creature that left combat before resolution still gains first strike.
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(new ExactlyAttackers(2)),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGETS),
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.DECLARED_ATTACKERS),
                 new DrawCardEffect(1),
                 new GrantEffectToOwnCreaturesUntilEndOfCombatEffect(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),

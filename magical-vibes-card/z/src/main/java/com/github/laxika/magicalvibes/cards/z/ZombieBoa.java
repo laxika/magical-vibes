@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceOfChosenColorUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,7 +23,7 @@ public class ZombieBoa extends Card {
                 List.of(
                         new ChooseColorAtResolutionEffect(),
                         new GrantEffectToSourceOfChosenColorUntilEndOfTurnEffect(
-                                new TriggeredAbility(Triggers.becomesBlocked(),
+                                new TriggeredAbility(Triggers.becomesBlocked(), TriggerOptions.EACH_BLOCKER,
                                 new DestroyCreatureBlockingThisEffect()))
                 ),
                 "{1}{B}: Choose a color. Whenever Zombie Boa becomes blocked by a creature of that color this turn, destroy that creature.",

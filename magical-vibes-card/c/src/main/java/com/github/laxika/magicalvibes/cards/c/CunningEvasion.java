@@ -12,6 +12,6 @@ public class CunningEvasion extends Card {
     public CunningEvasion() {
         // Whenever a creature you control becomes blocked, you may return it to its owner's hand.
         addTrigger(Triggers.creatureYouControlBecomesBlocked(),
-                new MayEffect(ReturnToHandEffect.self(), "Return it to its owner's hand?"));
+                new MayEffect(ReturnToHandEffect.triggering(), "Return it to its owner's hand?"));
     }
 }

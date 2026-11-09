@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PipBoy3000.class, Forest.class, GrizzlyBears.class})
+@CardUsed({PipBoy3000.class, Forest.class, GrizzlyBears.class, Humble.class})
 class PipBoy3000Test extends BaseCardTest {
 
     private static final String SORT_INVENTORY = "Sort Inventory — Draw a card, then discard a card";
@@ -194,6 +195,22 @@ class PipBoy3000Test extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    void equipmentsOwnAbilityTriggersForACreatureThatLostItsAbilities() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        equip(creature);
+        harness.setHand(player1, List.of(new Humble()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+
+        declareAttackers(List.of(0));
+        harness.handleListChoice(player1, PICK_A_PERK);
+        harness.passBothPriorities();
+
+        assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private void equip(Permanent creature) {

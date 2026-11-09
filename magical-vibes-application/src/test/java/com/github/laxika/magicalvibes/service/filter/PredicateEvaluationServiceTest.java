@@ -3129,6 +3129,35 @@ class PredicateEvaluationServiceTest {
             assertThat(evaluator.matchesPermanentPredicate(blocker, new PermanentBlockingSourcePredicate(), context))
                     .isFalse();
         }
+
+        @Test
+        @DisplayName("Of the triggering permanent, matches a creature blocking it whatever the source is")
+        void triggeringPermanentMatchesItsBlocker() {
+            Permanent watcher = new Permanent(createCreature("Hill Giant", 3, 3, CardColor.RED));
+            gd.playerBattlefields.get(player1Id).add(watcher);
+            FilterContext context = FilterContext.of(gd)
+                    .withSourceCardId(watcher.getOriginalCard().getId())
+                    .withSourceControllerId(player1Id)
+                    .withTriggeringPermanentId(attacker.getId());
+
+            assertThat(evaluator.matchesPermanentPredicate(blocker,
+                    PermanentBlockingSourcePredicate.ofTriggeringPermanent(), context)).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(blocker, new PermanentBlockingSourcePredicate(), context))
+                    .isFalse();
+        }
+
+        @Test
+        @DisplayName("Of the triggering permanent, reads its last-known information once it has left")
+        void triggeringPermanentSnapshotMatchesItsBlocker() {
+            Permanent departed = new Permanent(attacker);
+            gd.playerBattlefields.get(player1Id).remove(attacker);
+            FilterContext context = FilterContext.of(gd)
+                    .withSourceControllerId(player1Id)
+                    .withTriggeringPermanentSnapshot(departed);
+
+            assertThat(evaluator.matchesPermanentPredicate(blocker,
+                    PermanentBlockingSourcePredicate.ofTriggeringPermanent(), context)).isTrue();
+        }
     }
 
     @Nested

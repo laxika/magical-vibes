@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -53,6 +55,7 @@ public class ChatzukMightyGuitarist extends Card {
                         new CardKeywordPredicate(Keyword.BANDING))),
                 2,
                 CostModificationScope.SELF));
-        addTrigger(Triggers.youAttack(), new BoostCreaturesInAttackingBandsEffect());
+        addTrigger(Triggers.youAttack(), TriggerOptions.DEFAULT.withMultiplicity(TriggerMultiplicity.EACH_BAND),
+                new BoostCreaturesInAttackingBandsEffect());
     }
 }

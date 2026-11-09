@@ -21,7 +21,7 @@ public class LabyrinthRaptor extends Card {
     public LabyrinthRaptor() {
         PermanentHasKeywordPredicate menace = new PermanentHasKeywordPredicate(Keyword.MENACE);
         PermanentAllOfPredicate blockingCreature = new PermanentAllOfPredicate(List.of(
-                new PermanentIsCreaturePredicate(), new PermanentBlockingSourcePredicate()));
+                new PermanentIsCreaturePredicate(), PermanentBlockingSourcePredicate.ofTriggeringPermanent()));
 
         addTrigger(Triggers.creatureYouControlBecomesBlocked().withFilter(menace),
                 new SacrificePermanentsEffect(1, blockingCreature, SacrificeRecipient.DEFENDING_PLAYER));

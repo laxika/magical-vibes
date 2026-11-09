@@ -33,6 +33,6 @@ public class SeiferBalambRival extends Card {
         addTrigger(Triggers.creatureYouControlBecomesBlocked(),
                 TriggerOptions.DEFAULT.withEventCondition(new AllOf(List.of(
                         new AttackedTargetIsOpponent(), new BlockedByMinCreatures(2)))),
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TRIGGERING_PERMANENT));
     }
 }

@@ -16,7 +16,7 @@ public class GrazilaxxIllithidScholar extends Card {
     public GrazilaxxIllithidScholar() {
         // Whenever a creature you control becomes blocked, you may return it to its owner's hand.
         addTrigger(Triggers.creatureYouControlBecomesBlocked(),
-                new MayEffect(ReturnToHandEffect.self(), "Return that creature to its owner's hand?"));
+                new MayEffect(ReturnToHandEffect.triggering(), "Return that creature to its owner's hand?"));
 
         // Whenever one or more creatures you control deal combat damage to a player, draw a card.
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),

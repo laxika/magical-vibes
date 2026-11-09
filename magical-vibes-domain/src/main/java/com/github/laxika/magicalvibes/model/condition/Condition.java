@@ -68,6 +68,7 @@ public sealed interface Condition permits
         AttackingCreaturesGreaterThanSourceCounters,
         CardTypesAmongControlledPermanentsAndGraveyardAtLeast,
         BasicLandTypesAmongControlledLandsAtLeast,
+        BlockPairLesserPower,
         BlockedByMinCreatures,
         SourceBlocksWithAtLeastAndOnlyMatchingBlockers,
         BuybackPaid,

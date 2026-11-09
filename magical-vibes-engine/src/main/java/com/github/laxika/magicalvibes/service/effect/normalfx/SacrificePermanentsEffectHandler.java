@@ -419,6 +419,7 @@ public class SacrificePermanentsEffectHandler implements NormalEffectHandlerBean
                 .withSourcePermanentSnapshot(source)
                 .withSourcePermanentId(source != null ? source.getId() : entry.getSourcePermanentId())
                 .withTargetCardId(targetCardId)
+                .withTriggeringPermanentId(entry.getTriggeringPermanentId())
                 .withTriggeringPermanentSnapshot(entry.getTriggeringPermanentSnapshot());
     }
 

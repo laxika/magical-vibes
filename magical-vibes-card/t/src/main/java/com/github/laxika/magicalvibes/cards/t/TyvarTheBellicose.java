@@ -25,7 +25,7 @@ public class TyvarTheBellicose extends Card {
 
     public TyvarTheBellicose() {
         addTrigger(Triggers.youAttack().withFilter(new PermanentHasSubtypePredicate(CardSubtype.ELF)),
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGETS));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.DECLARED_ATTACKERS));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.thisManaAbilityResolves(),
                         TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),

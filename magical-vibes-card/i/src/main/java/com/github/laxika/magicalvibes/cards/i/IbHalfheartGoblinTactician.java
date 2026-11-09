@@ -32,8 +32,9 @@ public class IbHalfheartGoblinTactician extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentHasSubtypePredicate(CardSubtype.GOBLIN),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))),
-                new SacrificeSelfThenEffect(new DealDamageToEachMatchingPermanentEffect(
-                        4, new PermanentBlockingSourcePredicate(), EachPermanentScope.ALL_PLAYERS)));
+                SacrificeSelfThenEffect.ofTriggeringPermanent(new DealDamageToEachMatchingPermanentEffect(
+                        4, new PermanentBlockingSourcePredicate(), EachPermanentScope.ALL_PLAYERS)
+                        .dealtByTriggeringPermanent()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -14,6 +14,12 @@ public enum GrantScope {
     TARGET_AND_SHARING_CREATURES,
     /** All targets chosen for one multi-target group. */
     TARGETS,
+    /**
+     * The attacking creatures a "whenever you attack" ability's trigger event was about ("they gain …", "those
+     * creatures gain …"): the stack entry's attacking creatures as the ability triggered
+     * ({@code StackEntry.getAttackingPermanentSnapshots()}), wherever they are as it resolves. No target.
+     */
+    DECLARED_ATTACKERS,
     ENCHANTED_CREATURE,
     ENCHANTED_PERMANENT,
     EQUIPPED_CREATURE,

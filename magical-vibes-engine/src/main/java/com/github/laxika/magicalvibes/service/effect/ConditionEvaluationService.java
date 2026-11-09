@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.model.condition.AttackedPlayerPoisoned;
 import com.github.laxika.magicalvibes.model.condition.AttacksPlayerAlone;
 import com.github.laxika.magicalvibes.model.condition.BasicLandTypesAmongControlledLandsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.BeholdCostPaid;
+import com.github.laxika.magicalvibes.model.condition.BlockPairLesserPower;
 import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
 import com.github.laxika.magicalvibes.model.condition.BuybackPaid;
 import com.github.laxika.magicalvibes.model.condition.CameUnderControlThisTurn;
@@ -2176,6 +2177,19 @@ public class ConditionEvaluationService {
                     isTopCardOfLibraryType(gameData, resolveLibraryOwner(gameData, ctx, c.libraryOwner()), c);
             case BlockedByMinCreatures c ->
                     countBlockersOfSource(gameData, ctx) >= c.minBlockers();
+            case BlockPairLesserPower c -> {
+                Permanent attacker = ctx.triggeringPermanentId() == null
+                        ? null : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
+                Permanent blocker = ctx.targetId() == null
+                        ? null : gameQueryService.findPermanentById(gameData, ctx.targetId());
+                if (attacker == null || blocker == null) {
+                    yield false;
+                }
+                int attackerPower = gameQueryService.getEffectivePower(gameData, attacker);
+                int blockerPower = gameQueryService.getEffectivePower(gameData, blocker);
+                yield c.lesser() == com.github.laxika.magicalvibes.model.effect.BlockParticipant.BLOCKER
+                        ? blockerPower < attackerPower : attackerPower < blockerPower;
+            }
             case SourceBlocksWithAtLeastAndOnlyMatchingBlockers c ->
                     sourceBlocksWithAtLeastAndOnlyMatchingBlockers(gameData, ctx, c);
             case ImprintedCardMatches c -> imprintedCardMatches(gameData, ctx, c);

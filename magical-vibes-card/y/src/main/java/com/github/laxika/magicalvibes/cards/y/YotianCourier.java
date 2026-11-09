@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotChosenDuringLastCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
@@ -30,13 +30,13 @@ public class YotianCourier extends Card {
         CardAllOfPredicate nonlandCard = new CardAllOfPredicate(List.of(
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
 
-        addTrigger(Triggers.attacks(), new ChooseModeNotChosenDuringLastCombatEffect(List.of(
+        addTrigger(Triggers.attacks(), new ChooseOneAtTriggerTimeEffect(ChooseOneEffect.notChosenDuringLastCombat(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a tapped Powerstone token.",
                         CreateTokenEffect.ofPowerstoneToken(new Fixed(1))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Seek a nonland card with mana value equal to the number of Powerstones you control.",
                         new SeekLibraryEffect(new Fixed(1), nonlandCard, LibrarySearchDestination.HAND,
-                                new ManaValueBound(powerstones, true, 0))))));
+                                new ManaValueBound(powerstones, true, 0)))))));
     }
 }

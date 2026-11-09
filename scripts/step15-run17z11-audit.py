@@ -67,16 +67,9 @@ CLASSIFIED = {
     ("CombatBlockService.java", "GrantKeywordEffect"): C,
     ("CombatBlockService.java", "BoostSelfWhenBlockingKeywordEffect"): C,
     ("CombatBlockService.java", "BoostSelfWhenCombatOpponentMatchesEffect"): C,
-    # 17z11c2 (split from 17z11c): the "a creature becomes blocked" watchers' blocked creature as the source and the
-    # attacker-and-blocker pair.
-    ("CombatBlockService.java", "BoostReferencedPermanentEffect"): C2,
-    ("CombatBlockService.java", "BlockPairConditionalEffect"): C2,
-    # 17z11d: the attack collectors' declared attackers, attacked player and rebuilt modal.
-    ("CombatAttackService.java", "ChooseModeNotChosenDuringLastCombatEffect"): D,
-    ("CombatAttackService.java", "GrantKeywordEffect"): D,
-    ("CombatAttackService.java", "BoostCreaturesInAttackingBandsEffect"): D,
-    ("CombatAttackService.java", "GrantTriggeredAbilityEffect"): D,
-    ("CombatAttackService.java", "DealDamageToDefendingPlayerCreaturesEffect"): D,
+    # 17z11c2 and 17z11d (done): the "a creature becomes blocked" watchers, the attacker-and-blocker pair and the attack
+    # collectors' declared attackers, band, attacked player, granted controller and rebuilt modal no longer read an
+    # effect's class; neither does the planar "whenever you attack" collector's GrantKeywordEffect (was 17z11f's).
     # 17z11e: the step collectors' "that player", enchanted permanent, emblem and random-mode bindings.
     ("StepTriggerService.java", "EmblemStepTriggerEffect"): E,
     ("StepTriggerService.java", "LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect"): E,
@@ -125,7 +118,6 @@ CLASSIFIED = {
     ("TriggerCollectionService.java", "DealDamageToEnchantedPermanentControllerEffect"): F,
     ("TriggerCollectionService.java", "RegisterDelayedReturnDyingCreatureUnderControlEffect"): F,
     ("TriggerCollectionService.java", "TemporaryGlobalTriggerEffect"): F,
-    ("TriggerCollectionService.java", "GrantKeywordEffect"): F,
     # Classified ROUTE: the class picks the path or is a trigger condition.
     ("CombatAttackService.java", "SkipNextUntapEffect"): "ROUTE",
     ("CombatAttackService.java", "ChooseOneAtTriggerTimeEffect"): "ROUTE",
@@ -134,6 +126,7 @@ CLASSIFIED = {
     ("CombatAttackService.java", "GraveyardCardChoosingEffect"): "ROUTE",
     ("CombatAttackService.java", "CastTargetInstantOrSorceryFromGraveyardEffect"): "ROUTE",
     ("CombatAttackService.java", "RegisterDelayedVehicleAttackEffect"): "ROUTE",
+    ("CombatTriggerService.java", "ChooseOneAtTriggerTimeEffect"): "ROUTE",
     ("CombatDamageService.java", "TransformGrantingPermanentEffect"): "ROUTE",
     ("CombatDamageService.java", "ConjureDuplicateOfCombatDamageSourceIntoHandEffect"): "ROUTE",
     ("CombatDamageService.java", "RenownEffect"): "ROUTE",
@@ -157,7 +150,7 @@ CLASSIFIED = {
     ("TriggerCollectionService.java", "AttachedCreatureBecomesCopyOfExiledCreatureEffect"): "STATIC",
     ("TriggerCollectionService.java", "DrawCardEffect"): "ROUTE",
 }
-OPEN_ROWS = {C2, D, E, F}
+OPEN_ROWS = {E, F}
 
 # The other reads run 17z11 read by hand, all ROUTE or STATIC: a restriction, prevention or replacement, an as-enters
 # choice, a mana ability resolved at once, a modal, graveyard or target prompt picked, a skip or trigger condition.

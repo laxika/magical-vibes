@@ -13,6 +13,6 @@ public class AngelicGuardian extends Card {
 
     public AngelicGuardian() {
         addTrigger(Triggers.youAttack(),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGETS));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.DECLARED_ATTACKERS));
     }
 }

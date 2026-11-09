@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -40,8 +41,15 @@ public class DealDamageToEachMatchingPermanentEffectHandler implements NormalEff
     }
 
     @Override
-    public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+    public void resolve(GameData gameData, StackEntry abilityEntry, CardEffect effect) {
         var e = (DealDamageToEachMatchingPermanentEffect) effect;
+        // "It deals 4 damage to each creature blocking it": the triggering permanent is the source the damage and the
+        // predicate are read with.
+        StackEntry entry = e.damageSource() == DamageSource.TRIGGERING_PERMANENT
+                ? damageSupport.entryDealtByTriggeringPermanent(gameData, abilityEntry) : abilityEntry;
+        if (entry == null) {
+            return;
+        }
 
         UUID targetPlayerId = entry.getTargetId();
         if (e.scope() == EachPermanentScope.TARGET_PLAYER) {

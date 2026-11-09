@@ -80,7 +80,7 @@
 | playtest artifact with tap-to-surveil and temporary graveyard animation | `m/Microscope.java` + `AnimateTargetGraveyardCardEffect` |
 | global static replacement that makes every creature assign combat damage using mana value | `n/NarodTheBeigeFlower.java` + `AssignCombatDamageWithManaValueEffect(ALL_CREATURES)` |
 | global static replacement that exiles nontoken creatures with blood counters and grants the source keywords from those exiled cards | `r/RayamiFirstOfTheFallen.java` + `ExileNontokenCreaturesInsteadOfDyingWithBloodCounterEffect` + `GainKeywordsOfCreatureCardsExiledWithSourceEffect(..., BLOOD)` |
-| playtest legendary banding creature with banding-creature cost reduction and band-size attack boosts | `c/ChatzukMightyGuitarist.java` + `ReduceCastCostForMatchingSpellsEffect` + `BoostCreaturesInAttackingBandsEffect` |
+| playtest legendary banding creature with banding-creature cost reduction and band-size attack boosts | `c/ChatzukMightyGuitarist.java` + `ReduceCastCostForMatchingSpellsEffect` + `TriggerMultiplicity.EACH_BAND` + `BoostCreaturesInAttackingBandsEffect` |
 | playtest creature that enters with five custom counters for each Forest or Plant its controller controls | `d/DairyCow.java` + `EnterWithCountersEffect(MILK, Scaled(PermanentCount(Forest or Plant, CONTROLLER), 5))` |
 | playtest creature with library-only ninjutsu and a mandatory combat-damage draw | `p/PanglacialShinobi.java` + `LibraryNinjutsuEffect` + `DrawCardEffect` |
 | mulligan-time reveal and look at top two | `n/NoRegretsEgret.java` + `NoRegretsEgretEffect` | `addStaticEffect`, a static ability of the hand; accepting publicly reveals the card, privately reveals up to two library cards in order, and leaves the normal mulligan decision available |
@@ -106,7 +106,7 @@
 | look at four cards, choose one name, take all matching looked-at cards and lose life per card, random-bottom the rest | `s/StrokeOfLuck.java` + `LookAtTopCardsChooseSameNameToHandEffect` |
 | target opponent creature perpetually gets -2/-2 and gains an upkeep trigger that perpetually gives it -1/-1 | `s/SewerPlague.java` + `PerpetuallyBoostTargetCreatureEffect` + `PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect` |
 | ETB choose-up-to-one modal with a two-creature perpetual base-power exchange or a perpetual self base-P/T set | `h/HighFaePrankster.java` + `ChooseOneAtTriggerTimeEffect` + `PerpetuallyExchangeTargetCreatureBasePowerEffect` / `PerpetuallySetSourceBasePowerToughnessEffect` |
-| attack trigger alternates between a tapped Powerstone and an exact-Powerstone-count nonland Seek | `y/YotianCourier.java` + `ChooseModeNotChosenDuringLastCombatEffect` + `Permanent.chosenMode` |
+| attack trigger alternates between a tapped Powerstone and an exact-Powerstone-count nonland Seek | `y/YotianCourier.java` + `ChooseOneAtTriggerTimeEffect(ChooseOneEffect.notChosenDuringLastCombat(...))` + `Permanent.chosenMode` |
 | filtered public hand reveal, mandatory discard or fallback draw, and life loss | `m/MindSpike.java` + `MindSpikeEffect` |
 | ETB reveals matching creature and land cards from a target opponent's hand, then perpetually makes the chosen card enter tapped | `b/BoareskyrTollkeeper.java` + `RevealMatchingCardsFromTargetHandAndKeepEffect` + `PerpetuallyEnterTappedChosenCardEffect` |
 | graveyard-count beginning-of-combat boost with five color-specific specialize faces | `s/SarevokTheUsurper.java` + `SpecializeSarevokEffect` + `SeekLibraryAndConjureDuplicatesInGraveyardEffect` |

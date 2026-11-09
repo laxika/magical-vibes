@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -160,6 +161,20 @@ public class CombatTriggerService {
                             ? beginAttackTriggerCopies(gameData, auraOwnerId, perm)
                             : -1;
                     try {
+                        if (slot == CombatWatch.ON_ATTACK && effectsForStack.size() == 1
+                                && effectsForStack.getFirst() instanceof ChooseOneAtTriggerTimeEffect modal) {
+                            // "Whenever equipped creature attacks, choose one —" (Pip-Boy 3000): the mode is chosen as
+                            // the ability goes on the stack (CR 700.2b); "that creature" is the attacking creature, the
+                            // entry's triggering permanent. The Equipment's own ability is its controller's, a granted
+                            // one the creature's (CR 113.8).
+                            boolean ownTrigger = isOwnAttackTrigger(perm, slot);
+                            gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                                    perm.getCard(), ownTrigger ? auraOwnerId : finalCreatureControllerId,
+                                    modal.choice(), ownTrigger ? perm.getId() : creature.getId(), false, false, null,
+                                    creature.getAttackTarget(), creature.getId(), false));
+                            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                            continue;
+                        }
                         if (slot == CombatWatch.ON_ATTACK && effectsForStack.stream()
                                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
                             UUID attackedTargetId = creature.getAttackTarget();

@@ -24,5 +24,11 @@ public enum TriggerMultiplicity {
      * Ghoul), where combat damage from several creatures at once is several occurrences of one event (CR 603.2c).
      * Only damage triggers have it.
      */
-    EACH_SOURCE
+    EACH_SOURCE,
+    /**
+     * Once for each band of two or more of the attacking creatures declared (CR 702.22c): "whenever two or more
+     * creatures you control attack in a band" (Chatzuk, Mighty Guitarist), where the band's creatures are the
+     * ability's attacking creatures. Only "whenever you attack" has it.
+     */
+    EACH_BAND
 }
