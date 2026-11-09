@@ -267,9 +267,9 @@ class MayAbilityHandlerServiceTest {
         UUID triggeringCardId = UUID.randomUUID();
         CardEffect effect = new CardEffect() { };
 
-        gd.pendingMayAbilities.add(PendingMayAbility.forSpellCastTrigger(
-                sourceCard, PLAYER1_ID, List.of(effect), "Test Source — effect?", null,
-                sourcePermanentId, triggeringCardId));
+        gd.pendingMayAbilities.add(new PendingMayAbility(sourceCard, PLAYER1_ID, List.of(effect),
+                "Test Source — effect?", null, null, sourcePermanentId, null, 0, 0, null, null, null, null, null,
+                triggeringCardId, 0, null, null, null));
         gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(
                 PLAYER1_ID, "Test Source — effect?", null));
 

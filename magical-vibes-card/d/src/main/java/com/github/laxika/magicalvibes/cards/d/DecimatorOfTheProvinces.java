@@ -28,7 +28,8 @@ public class DecimatorOfTheProvinces extends Card {
         ), true));
 
         // When you cast this spell, creatures you control get +2/+2 and gain trample until end of turn.
-        addTrigger(Triggers.youCastThisSpell(), new BoostAllOwnCreaturesEffect(2, 2));
-        addTrigger(Triggers.youCastThisSpell(), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+        addTrigger(Triggers.youCastThisSpell(),
+                new BoostAllOwnCreaturesEffect(2, 2),
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
     }
 }

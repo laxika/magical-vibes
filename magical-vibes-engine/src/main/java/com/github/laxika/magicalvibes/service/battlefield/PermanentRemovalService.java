@@ -3321,7 +3321,7 @@ public class PermanentRemovalService {
             if (destroyedBySpellOrAbility && !wasCreature) {
                 recordNoncreaturePermanentDestroyedByOpponent(gameData, target, controllerId);
             }
-            triggerCollectionService.retargetEnchantedPermanentControllerDamage(gameData, target.getId(),
+            triggerCollectionService.recordEnchantedPermanentDeparture(gameData, target.getId(),
                     controllerId);
         } else if (exiledFromBattlefield > 0 && destroyedBySpellOrAbility && !wasCreature) {
             // The permanent was still destroyed when a replacement effect exiled it instead of

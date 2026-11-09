@@ -1518,15 +1518,18 @@ public class DeathTriggerCollectorService {
         }
 
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
-        match.gameData().stack.add(new StackEntry(
+        StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect)),
-                cd.dyingCreatureControllerId(),
+                null,
                 match.permanent().getId()
-        ));
+        );
+        // "Its controller" is the dying creature's last-known controller (CR 608.2h).
+        entry.setTriggeringPermanentControllerId(cd.dyingCreatureControllerId());
+        match.gameData().stack.add(entry);
         logAnyCreatureDeath(match);
         return true;
     }

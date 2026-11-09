@@ -22,7 +22,8 @@ public class ZhulodokVoidGorger extends Card {
                         .withFilter(new CardAllOfPredicate(List.of(
                                 new CardIsColorlessPredicate(),
                                 new CardMinManaValuePredicate(7, true))))
-                        .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.HAND)),
+                        .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.HAND))
+                        .grantedToTheSpell(),
                 new CascadeEffect(),
                 new CascadeEffect());
     }

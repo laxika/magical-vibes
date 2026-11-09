@@ -47,7 +47,7 @@ public record CopyTriggeringSpellEffect(boolean tokenCopy, boolean retargetToSou
                                         List<CardSubtype> additionalSubtypes, Integer powerOverride,
                                         Integer toughnessOverride, int copies, DynamicAmount dynamicCopies,
                                         boolean startingLoyaltyFromX)
-        implements TriggeringSpellReferencingEffect {
+        implements CardEffect {
 
     public CopyTriggeringSpellEffect {
         grantedKeywords = grantedKeywords == null ? Set.of() : Set.copyOf(grantedKeywords);

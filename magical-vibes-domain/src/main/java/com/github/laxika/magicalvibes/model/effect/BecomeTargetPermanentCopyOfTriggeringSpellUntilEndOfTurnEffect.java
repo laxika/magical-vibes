@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * turn.
  */
 public record BecomeTargetPermanentCopyOfTriggeringSpellUntilEndOfTurnEffect()
-        implements TriggeringSpellReferencingEffect, TemporaryCopyEffect {
+        implements TemporaryCopyEffect {
 
     @Override
     public TargetSpec targetSpec() {

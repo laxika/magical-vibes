@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.IsamaruHoundOfKonda;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MoxAmber;
+import com.github.laxika.magicalvibes.cards.r.RoamingThrone;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -23,7 +25,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({JodahTheUnifier.class, CaptainSisay.class, EsikaGodOfTheTree.class, GrizzlyBears.class, MoxAmber.class, AdelizTheCinderWind.class, HillGiant.class, IsamaruHoundOfKonda.class, LlanowarElves.class})
+@CardUsed({JodahTheUnifier.class, CaptainSisay.class, EsikaGodOfTheTree.class, GrizzlyBears.class, MoxAmber.class, AdelizTheCinderWind.class, HillGiant.class, IsamaruHoundOfKonda.class, LlanowarElves.class,
+        RoamingThrone.class})
 class JodahTheUnifierTest extends BaseCardTest {
 
     @Test
@@ -204,6 +207,27 @@ class JodahTheUnifierTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         harness.assertOnBattlefield(player2, "Isamaru, Hound of Konda");
+    }
+
+    @Test
+    @DisplayName("Jodah's ability is its own, so Roaming Throne naming Human makes it trigger an additional time")
+    void roamingThroneDoublesJodahsAbility() {
+        prepareCasterTurn();
+        harness.addToBattlefield(player1, new JodahTheUnifier());
+        Permanent throne = new Permanent(new RoamingThrone());
+        throne.setChosenSubtype(CardSubtype.HUMAN);
+        gd.playerBattlefields.get(player1.getId()).add(throne);
+        harness.setLibrary(player1, List.of(new HillGiant(), new IsamaruHoundOfKonda(), new LlanowarElves()));
+
+        harness.setHand(player1, List.of(new AdelizTheCinderWind()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                .hasSize(2)
+                .allMatch(entry -> entry.getCard().getName().equals("Jodah, the Unifier"));
     }
 
     private void prepareCasterTurn() {

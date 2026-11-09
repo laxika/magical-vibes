@@ -15,7 +15,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TardisBay extends Card {
 
     public TardisBay() {
-        addTrigger(Triggers.youCastSpell().withFilter(new CardMinManaValuePredicate(2, true)).nthThisTurn(1),
+        addTrigger(Triggers.youCastSpell().withFilter(new CardMinManaValuePredicate(2, true)).nthThisTurn(1)
+                        .grantedToTheSpell(),
                 new CascadeEffect());
         target(TargetFilters.artifact()).addTrigger(Triggers.chaosEnsues(),
                 SequenceEffect.of(

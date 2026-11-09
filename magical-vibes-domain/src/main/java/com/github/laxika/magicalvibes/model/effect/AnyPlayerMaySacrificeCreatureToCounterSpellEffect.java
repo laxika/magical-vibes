@@ -18,7 +18,7 @@ public record AnyPlayerMaySacrificeCreatureToCounterSpellEffect(
         UUID targetCardId,
         boolean anyAccepted,
         List<UUID> chosenSacrificePermanentIds
-) implements TriggeringSpellReferencingEffect {
+) implements CardEffect {
 
     public AnyPlayerMaySacrificeCreatureToCounterSpellEffect(List<UUID> remainingPlayerIds,
             UUID abilityControllerId, UUID targetCardId, boolean anyAccepted) {

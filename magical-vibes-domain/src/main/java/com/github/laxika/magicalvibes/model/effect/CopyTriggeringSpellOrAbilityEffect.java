@@ -15,5 +15,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * targets and X; the activation trigger's stack-entry and payment filters ({@code AbilityTrigger.withStackEntryFilter},
  * {@code withPayment}) are judged then. A "you may" is asked as the ability resolves (CR 603.5).
  */
-public record CopyTriggeringSpellOrAbilityEffect() implements TriggeringSpellReferencingEffect {
+public record CopyTriggeringSpellOrAbilityEffect() implements CardEffect {
 }

@@ -31,12 +31,9 @@ public class HideousTaskmaster extends Card {
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(TargetFilters.creatureAnOpponentControls(), 0, 99)
                 .addTrigger(Triggers.youCastThisSpell(),
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addTrigger(Triggers.youCastThisSpell(),
-                        new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS))
-                .addTrigger(Triggers.youCastThisSpell(),
-                        new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.TARGET))
-                .addTrigger(Triggers.youCastThisSpell(),
+                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS),
+                        new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.TARGET),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.attacks(),
                                 new SacrificePermanentsEffect(

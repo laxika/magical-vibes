@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * implementation.
  */
 public record TriggeringSpellControllerSacrificesPermanentsEffect(
-        DynamicAmount count, PermanentPredicate filter) implements TriggeringSpellReferencingEffect {
+        DynamicAmount count, PermanentPredicate filter) implements CardEffect {
 
     public TriggeringSpellControllerSacrificesPermanentsEffect(int count, PermanentPredicate filter) {
         this(new Fixed(count), filter);

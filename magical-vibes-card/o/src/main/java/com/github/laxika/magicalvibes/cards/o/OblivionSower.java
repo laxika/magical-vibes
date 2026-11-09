@@ -20,8 +20,7 @@ public class OblivionSower extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.youCastThisSpell(),
-                new ExileTopCardsOfTargetPlayerLibraryEffect(4));
-        addTrigger(Triggers.youCastThisSpell(),
+                new ExileTopCardsOfTargetPlayerLibraryEffect(4),
                 new PutAnyNumberOfOwnedLandCardsFromExileOntoBattlefieldEffect());
     }
 }

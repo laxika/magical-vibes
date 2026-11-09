@@ -5,5 +5,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * ability resolves ({@code TargetSpellManaValue}: the spell, else as it last existed on the stack).
  */
 public record LoseLifeToOwnerOfTriggeringSpellEffect()
-        implements TriggeringSpellReferencingEffect {
+        implements CardEffect {
 }

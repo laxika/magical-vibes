@@ -5,5 +5,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * total mana value of the revealed cards. The revealed cards remain on top of their libraries.
  */
 public record EachPlayerRevealsTopCardAndSetsTriggeringSpellXValueEffect()
-        implements TriggeringSpellReferencingEffect {
+        implements CardEffect {
 }

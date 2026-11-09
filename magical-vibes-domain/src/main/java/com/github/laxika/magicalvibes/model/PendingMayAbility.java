@@ -179,15 +179,6 @@ public record PendingMayAbility(
                 0, 0, null, null, null, null, sourceControllerId, null, 0);
     }
 
-    /** Creates a may ability that acts on the spell that caused its spell-cast trigger. */
-    public static PendingMayAbility forSpellCastTrigger(Card sourceCard, UUID controllerId,
-                                                        List<CardEffect> effects, String description,
-                                                        String manaCost, UUID sourcePermanentId,
-                                                        UUID triggeringCardId) {
-        return new PendingMayAbility(sourceCard, controllerId, effects, description, null, manaCost,
-                sourcePermanentId, null, 0, 0, null, null, null, null, null, triggeringCardId, 0, null, null, null);
-    }
-
     public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description,
                              UUID targetCardId, String manaCost, UUID sourcePermanentId,
                              TapMultiplePermanentsCost tapPermanentsCost, int lifeCost, int additionalLifeCost,

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /** Deals damage to each opponent using the triggering spell as the damage source. */
 public record DealDamageToEachOpponentFromTriggeringSpellEffect(DynamicAmount amount)
-        implements TriggeringSpellReferencingEffect, DamageDealingEffect {
+        implements DamageDealingEffect {
 
     public DealDamageToEachOpponentFromTriggeringSpellEffect(int amount) {
         this(new Fixed(amount));

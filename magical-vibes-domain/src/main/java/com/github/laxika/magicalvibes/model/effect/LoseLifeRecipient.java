@@ -21,8 +21,8 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@link #DYING_CREATURE_CONTROLLER} — the last-known controller of the creature that died,
  *       for {@code Triggers.creatureDies(DAMAGED_BY_THIS)} triggers such as "whenever a creature dealt damage by
  *       that creature dies this turn, its controller loses 2 life" (Touch of Moonglove). The
- *       graveyard pipeline binds that player onto the trigger's {@code targetId} when the ability is
- *       put on the stack; the effect chooses no target.</li>
+ *       death collectors record that player on every entry as its {@code triggeringPermanentControllerId},
+ *       whatever the effects are; the effect chooses no target.</li>
  *   <li>{@link #TRIGGERING_PERMANENT_CONTROLLER} — the controller of the permanent the trigger event was about
  *       ({@code StackEntry.triggeringPermanentId}) as the ability resolves, or its last known controller once it has
  *       left the battlefield, or the controller the entry recorded for a source that was never a permanent: "its

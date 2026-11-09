@@ -19,8 +19,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class HydroidKrasis extends Card {
 
     public HydroidKrasis() {
-        addTrigger(Triggers.youCastThisSpell(), new GainLifeEffect(new Divided(new XValue(), 2)));
-        addTrigger(Triggers.youCastThisSpell(), new DrawCardEffect(new Divided(new XValue(), 2)));
+        addTrigger(Triggers.youCastThisSpell(),
+                new GainLifeEffect(new Divided(new XValue(), 2)),
+                new DrawCardEffect(new Divided(new XValue(), 2)));
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue()));
     }
 }

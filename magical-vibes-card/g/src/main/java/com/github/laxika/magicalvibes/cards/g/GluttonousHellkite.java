@@ -16,10 +16,10 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class GluttonousHellkite extends Card {
 
     public GluttonousHellkite() {
-        addTrigger(Triggers.youCastThisSpell(), new SacrificePermanentsEffect(
-                new XValue(), new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_PLAYER,
-                false, true, false, true));
         addTrigger(Triggers.youCastThisSpell(),
+                new SacrificePermanentsEffect(
+                new XValue(), new PermanentIsCreaturePredicate(), SacrificeRecipient.EACH_PLAYER,
+                false, true, false, true),
                 new GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect(
                         new Scaled(new EventValue(), 2)));
     }

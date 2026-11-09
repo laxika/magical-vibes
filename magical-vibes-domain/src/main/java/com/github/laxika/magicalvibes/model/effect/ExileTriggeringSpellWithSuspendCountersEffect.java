@@ -9,7 +9,7 @@ public record ExileTriggeringSpellWithSuspendCountersEffect(
         int counters,
         CardEffect followUp,
         boolean skipIfCastFromExile
-) implements TriggeringSpellReferencingEffect {
+) implements CardEffect {
 
     public ExileTriggeringSpellWithSuspendCountersEffect(int counters) {
         this(counters, null, false);

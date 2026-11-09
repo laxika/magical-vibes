@@ -17,8 +17,8 @@ public class KozilekCompleated extends Card {
 
     public KozilekCompleated() {
         addTrigger(Triggers.youCastThisSpell(),
-                new GivePoisonCountersEffect(2, PoisonRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.youCastThisSpell(), new EachOpponentDiscardsDownToHandSizeEffect(2));
+                new GivePoisonCountersEffect(2, PoisonRecipient.EACH_OPPONENT),
+                new EachOpponentDiscardsDownToHandSizeEffect(2));
         addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
                 new DefendingPlayerPoisonCounters(), new PermanentTruePredicate(),
                 SacrificeRecipient.DEFENDING_PLAYER));

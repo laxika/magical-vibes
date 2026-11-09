@@ -42,7 +42,7 @@ UNWRAP = re.compile(r"\.(wrapped|thenEffect|elseEffect|tokenEffect|innerEffect|r
 
 # Rows of step 15 (effect-slot-refactor.md, run 17z11's Findings).
 B, C, C2, D, E, E2, E3, F = "17z11b", "17z11c", "17z11c2", "17z11d", "17z11e", "17z11e2", "17z11e3", "17z11f"
-F2, F3 = "17z11f2", "17z11f3"
+F4 = "17z11f4"
 LEGALITY = ("CombatHelper.java", "CombatService.java", "AttackLegalityService.java", "BlockLegalityService.java")
 
 CLASSIFIED = {
@@ -88,33 +88,29 @@ CLASSIFIED = {
     # effect acts only on a spell is aimed at "that spell or ability" (the counter-unless, counterspelling and
     # triggering-spell reads, the ward identification, Chancellor of the Annex's opening-hand counter); Glyph Keeper's
     # "for the first time each turn" is the trigger's limit.
-    # 17z11f2: the "when you cast this spell" collector (cascade, demonstrate, ripple, the triggering-spell marker, a
-    # granted cascade's single copy) and Venser's emblem.
-    ("TriggerCollectionService.java", "ExileTargetOnControllerSpellCastEffect"): F2,
-    ("TriggerCollectionService.java", "CascadeEffect"): F2,
-    ("TriggerCollectionService.java", "DemonstrateEffect"): F2,
-    ("TriggerCollectionService.java", "RippleEffect"): F2,
-    ("TriggerCollectionService.java", "TriggeringSpellReferencingEffect"): F2,
-    # 17z11f3: TriggerCollectionService's and the enter service's other bindings, and the combat damage rebuilds.
-    ("CombatDamageService.java", "GainLifeEqualToControlledCreatureCombatDamageEffect"): F3,
-    ("CombatDamageService.java", "ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffect"): F3,
-    ("CombatDamageService.java", "ReturnPermanentsOnCombatDamageToPlayerEffect"): F3,
-    ("EtbTriggerService.java", "TriggeredAbilityCounterEffect"): F3,
-    ("EtbTriggerService.java", "DealDividedDamageEffect"): F3,
-    ("EtbTriggerService.java", "PreventDividedDamageEffect"): F3,
-    ("EtbTriggerService.java", "DistributeCountersAmongTargetsEffect"): F3,
-    ("EtbTriggerService.java", "SacrificeArtifactThenDealDividedDamageEffect"): F3,
-    ("TriggerCollectionService.java", "SearchBlueOrBlackCreatureToBattlefieldOnAllyCombatDamageEffect"): F3,
-    ("TriggerCollectionService.java", "ReturnPermanentsOnCombatDamageToPlayerEffect"): F3,
-    ("TriggerCollectionService.java", "TransformSelfWhenChosenPermanentLeavesEffect"): F3,
-    ("TriggerCollectionService.java", "RegisterDelayedVehicleAttackEffect"): F3,
-    ("TriggerCollectionService.java", "DealDamageToPlayersEffect"): F3,
-    ("TriggerCollectionService.java", "ClashOutcomeConditionalEffect"): F3,
-    ("TriggerCollectionService.java", "PutCardToBattlefieldEffect"): F3,
-    ("TriggerCollectionService.java", "LoseLifeEffect"): F3,
-    ("TriggerCollectionService.java", "DealDamageToEnchantedPermanentControllerEffect"): F3,
-    ("TriggerCollectionService.java", "RegisterDelayedReturnDyingCreatureUnderControlEffect"): F3,
-    ("TriggerCollectionService.java", "TemporaryGlobalTriggerEffect"): F3,
+    # 17z11f2 (done): the "when you cast this spell" collector puts each ability on the stack as one object and records
+    # the spell whatever the effects are, its "you may" asked as it resolves; a granted cascade is the trigger's
+    # grantedToTheSpell(); Venser's emblem is a TriggeredAbility.
+    # 17z11f3 (done): the recipient bakes: the tap, activation and dying-creature entries record the permanent's
+    # controller whatever the effects are, and an Aura's abilities on the stack record its enchanted permanent's
+    # last-known controller as the permanent dies.
+    # 17z11f4: TriggerCollectionService's and the enter service's other bindings, and the combat damage rebuilds.
+    ("CombatDamageService.java", "GainLifeEqualToControlledCreatureCombatDamageEffect"): F4,
+    ("CombatDamageService.java", "ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffect"): F4,
+    ("CombatDamageService.java", "ReturnPermanentsOnCombatDamageToPlayerEffect"): F4,
+    ("EtbTriggerService.java", "TriggeredAbilityCounterEffect"): F4,
+    ("EtbTriggerService.java", "DealDividedDamageEffect"): F4,
+    ("EtbTriggerService.java", "PreventDividedDamageEffect"): F4,
+    ("EtbTriggerService.java", "DistributeCountersAmongTargetsEffect"): F4,
+    ("EtbTriggerService.java", "SacrificeArtifactThenDealDividedDamageEffect"): F4,
+    ("TriggerCollectionService.java", "SearchBlueOrBlackCreatureToBattlefieldOnAllyCombatDamageEffect"): F4,
+    ("TriggerCollectionService.java", "ReturnPermanentsOnCombatDamageToPlayerEffect"): F4,
+    ("TriggerCollectionService.java", "TransformSelfWhenChosenPermanentLeavesEffect"): F4,
+    ("TriggerCollectionService.java", "RegisterDelayedVehicleAttackEffect"): F4,
+    ("TriggerCollectionService.java", "ClashOutcomeConditionalEffect"): F4,
+    ("TriggerCollectionService.java", "PutCardToBattlefieldEffect"): F4,
+    ("TriggerCollectionService.java", "RegisterDelayedReturnDyingCreatureUnderControlEffect"): F4,
+    ("TriggerCollectionService.java", "TemporaryGlobalTriggerEffect"): F4,
     # Classified ROUTE: the class picks the path or is a trigger condition.
     ("CombatAttackService.java", "SkipNextUntapEffect"): "ROUTE",
     ("CombatAttackService.java", "ChooseOneAtTriggerTimeEffect"): "ROUTE",
@@ -137,7 +133,7 @@ CLASSIFIED = {
     ("StepTriggerService.java", "RemoveEggCounterFromExileAndReturnEffect"): "ENGINE",
     ("StepTriggerService.java", "ChooseOneEffect"): "ROUTE",
     ("TriggerCollectionService.java", "EnterBattlefieldOnDiscardEffect"): "ROUTE",
-    ("TriggerCollectionService.java", "ChooseOneAtTriggerTimeEffect"): F3,
+    ("TriggerCollectionService.java", "ChooseOneAtTriggerTimeEffect"): F4,
     ("TriggerCollectionService.java", "ChooseOneEffect"): "ROUTE",
     ("TriggerCollectionService.java", "ReselectTargetAtRandomEffect"): "ROUTE",
     ("TriggerCollectionService.java", "TriggeredModalEffect"): "ROUTE",
@@ -147,7 +143,7 @@ CLASSIFIED = {
     ("TriggerCollectionService.java", "AttachedCreatureBecomesCopyOfExiledCreatureEffect"): "STATIC",
     ("TriggerCollectionService.java", "DrawCardEffect"): "ROUTE",
 }
-OPEN_ROWS = {F2, F3}
+OPEN_ROWS = {F4}
 
 # The other reads run 17z11 read by hand, all ROUTE or STATIC: a restriction, prevention or replacement, an as-enters
 # choice, a mana ability resolved at once, a modal, graveyard or target prompt picked, a skip or trigger condition.

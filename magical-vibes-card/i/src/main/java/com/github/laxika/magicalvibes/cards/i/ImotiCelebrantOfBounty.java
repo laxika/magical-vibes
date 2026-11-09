@@ -17,6 +17,6 @@ public class ImotiCelebrantOfBounty extends Card {
 
         // Spells with mana value 6 or greater that its controller casts have cascade. The generic
         // spell-cast collector snapshots the triggering spell's mana value for CascadeEffect.
-        addTrigger(Triggers.youCastSpell().withFilter(new CardMinManaValuePredicate(6, true)), new CascadeEffect());
+        addTrigger(Triggers.youCastSpell().withFilter(new CardMinManaValuePredicate(6, true)).grantedToTheSpell(), new CascadeEffect());
     }
 }

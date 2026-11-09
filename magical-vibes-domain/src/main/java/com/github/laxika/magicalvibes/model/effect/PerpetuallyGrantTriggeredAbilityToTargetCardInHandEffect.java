@@ -14,11 +14,11 @@ public record PerpetuallyGrantTriggeredAbilityToTargetCardInHandEffect(
         List<Ability> grantedAbilities,
         CardPredicate filter) implements CardEffect {
 
-    /** One triggered ability with {@code trigger} for each of {@code grantedEffects}, in order. */
+    /** One triggered ability with {@code trigger} and {@code grantedEffects}, in order (CR 603.3: one object). */
     public PerpetuallyGrantTriggeredAbilityToTargetCardInHandEffect(Trigger trigger,
                                                                     List<CardEffect> grantedEffects,
                                                                     CardPredicate filter) {
-        this(grantedEffects.stream().<Ability>map(effect -> new TriggeredAbility(trigger, effect)).toList(), filter);
+        this(List.of(new TriggeredAbility(trigger, grantedEffects.toArray(CardEffect[]::new))), filter);
     }
 
     /** The grant as the slot and effects that stand for it. */

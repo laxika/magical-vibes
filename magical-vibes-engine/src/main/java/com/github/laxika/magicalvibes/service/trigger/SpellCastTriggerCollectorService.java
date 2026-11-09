@@ -22,7 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValueXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
-import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalPlusOnePlusOneCounterToSnowPaidCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -397,8 +396,9 @@ public class SpellCastTriggerCollectorService {
     private boolean handleGenericSpellCastTrigger(TriggerMatchContext match, CastAbility trigger,
                                                     Card spellCard, UUID castingPlayerId,
                                                     UUID exiledSourcePermanentId, Zone castZone) {
-        if (trigger.effects().size() > 1
-                && trigger.effects().stream().allMatch(CascadeEffect.class::isInstance)) {
+        // An ability the source gives the spell ("spells you cast … have cascade, cascade") is the spell's: the spell is
+        // its source (CR 113.7) and each instance triggers separately (CR 702.85c).
+        if (trigger.filter().grantedToTheSpell() && match.sourceCard() != spellCard) {
             boolean queued = false;
             TriggerMatchContext spellSourced = new TriggerMatchContext(match.gameData(), match.permanent(),
                     match.controllerId(), match.rawEffect(), spellCard, match.sourcePlanarObject(),

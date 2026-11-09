@@ -195,6 +195,14 @@ public record SpellTrigger(SpellEvent event, PlayerRelation player, SpellFilter 
         return filtered(SpellFilter::withEveryPlayersSpells);
     }
 
+    /**
+     * This trigger as the ability the source gives each such spell, not its own: "spells you cast with mana value 6 or
+     * greater have cascade" ({@link SpellFilter#grantedToTheSpell}).
+     */
+    public SpellTrigger grantedToTheSpell() {
+        return filtered(SpellFilter::withGrantedToTheSpell);
+    }
+
     private SpellTrigger filtered(UnaryOperator<SpellFilter> change) {
         if (event != SpellEvent.CAST && event != SpellEvent.COPIED) {
             throw new IllegalStateException("Only a cast or copy trigger has a spell filter: " + event);

@@ -14,7 +14,7 @@ public record AnyPlayerMayPayLifeToCounterSpellEffect(
         List<UUID> remainingPlayerIds,
         UUID abilityControllerId,
         UUID targetCardId
-) implements TriggeringSpellReferencingEffect, CounterSpellingEffect {
+) implements CounterSpellingEffect {
 
     public AnyPlayerMayPayLifeToCounterSpellEffect(int lifeCost) {
         this(new Fixed(lifeCost));

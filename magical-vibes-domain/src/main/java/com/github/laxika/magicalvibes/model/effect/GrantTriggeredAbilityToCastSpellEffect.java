@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.LegacySlots;
  * battlefield.
  */
 public record GrantTriggeredAbilityToCastSpellEffect(Ability grantedAbility)
-        implements TriggeringSpellReferencingEffect {
+        implements CardEffect {
 
     /** The grant as the slot and effect that stand for it. */
     public GrantTriggeredAbilityToCastSpellEffect(EffectSlot slot, CardEffect grantedEffect) {

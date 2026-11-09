@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -167,12 +166,7 @@ class VenserTheSojournerTest extends BaseCardTest {
     @Test
     @DisplayName("Emblem triggers when controller casts a spell, allowing exile of target permanent")
     void emblemTriggersOnSpellCast() {
-        addReadyVenser(player1);
-        // Manually create the emblem (simulating ultimate already resolved)
-        Emblem emblem = new Emblem(player1.getId(), List.of(
-                new ExileTargetOnControllerSpellCastEffect()
-        ), new VenserTheSojourner());
-        gd.emblems.add(emblem);
+        getEmblem(player1);
 
         // Add a target permanent on opponent's battlefield
         harness.addToBattlefield(player2, new GoldMyr());
@@ -204,11 +198,7 @@ class VenserTheSojournerTest extends BaseCardTest {
     @Test
     @DisplayName("Emblem does not trigger when opponent casts a spell")
     void emblemDoesNotTriggerForOpponentSpells() {
-        addReadyVenser(player1);
-        Emblem emblem = new Emblem(player1.getId(), List.of(
-                new ExileTargetOnControllerSpellCastEffect()
-        ), new VenserTheSojourner());
-        gd.emblems.add(emblem);
+        getEmblem(player1);
 
         harness.addToBattlefield(player1, new GoldMyr());
 
@@ -305,6 +295,14 @@ class VenserTheSojournerTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Etched Champion");
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(champion.getCard());
+    }
+
+    private void getEmblem(Player player) {
+        Permanent venser = addReadyVenser(player);
+        venser.setCounterCount(CounterType.LOYALTY, 8);
+        harness.activateAbility(player, 0, 2, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.emblems).hasSize(1);
     }
 
     private Permanent addReadyVenser(Player player) {

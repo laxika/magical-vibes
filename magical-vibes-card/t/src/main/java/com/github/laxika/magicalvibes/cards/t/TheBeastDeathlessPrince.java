@@ -27,12 +27,9 @@ public class TheBeastDeathlessPrince extends Card {
     public TheBeastDeathlessPrince() {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.youCastThisSpell(),
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addTrigger(Triggers.youCastThisSpell(),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.youCastThisSpell(),
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET))
-                .addTrigger(Triggers.youCastThisSpell(),
+                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
 
         addStaticEffect(new EntersTappedEffect());

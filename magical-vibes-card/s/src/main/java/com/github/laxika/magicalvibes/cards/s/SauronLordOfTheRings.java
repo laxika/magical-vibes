@@ -22,9 +22,10 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SauronLordOfTheRings extends Card {
 
     public SauronLordOfTheRings() {
-        addTrigger(Triggers.youCastThisSpell(), new AmassGoblinsEffect(5, CardSubtype.ORC));
-        addTrigger(Triggers.youCastThisSpell(), new MillEffect(5, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.youCastThisSpell(), ReturnCardFromGraveyardEffect.builder()
+        addTrigger(Triggers.youCastThisSpell(),
+                new AmassGoblinsEffect(5, CardSubtype.ORC),
+                new MillEffect(5, MillRecipient.CONTROLLER),
+                ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .mandatory(true)

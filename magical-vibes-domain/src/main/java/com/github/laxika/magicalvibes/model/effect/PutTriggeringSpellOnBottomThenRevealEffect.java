@@ -7,5 +7,5 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * reveals until a card matching {@code predicate} is found and offers that card for a free cast.
  */
 public record PutTriggeringSpellOnBottomThenRevealEffect(CardPredicate predicate)
-        implements TriggeringSpellReferencingEffect {
+        implements CardEffect {
 }

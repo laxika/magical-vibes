@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * set, when the creature enters the battlefield (Torgal, A Fine Hound).
  */
 public record GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect(
-        DynamicAmount amount, boolean countedOnEntry) implements TriggeringSpellReferencingEffect {
+        DynamicAmount amount, boolean countedOnEntry) implements CardEffect {
 
     public GrantAdditionalPlusOnePlusOneCountersToTriggeringCreatureSpellEffect(DynamicAmount amount) {
         this(amount, false);

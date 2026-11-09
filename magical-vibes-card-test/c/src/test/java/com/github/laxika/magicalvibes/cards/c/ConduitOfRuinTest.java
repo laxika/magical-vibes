@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.s.SilentSkimmer;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -74,6 +75,23 @@ class ConduitOfRuinTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The cast trigger goes on the stack and its optional search is asked as it resolves")
+    void castTriggerAsksItsMayAsItResolves() {
+        harness.setHand(player1, List.of(new ConduitOfRuin()));
+        harness.setLibrary(player1, List.of(new RuinProcessor()));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 
     private void castConduit(Card... library) {

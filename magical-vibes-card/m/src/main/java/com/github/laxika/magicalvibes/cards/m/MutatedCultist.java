@@ -21,8 +21,8 @@ public class MutatedCultist extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be a permanent or opponent"
         ), 0, 1)
-                .addTrigger(Triggers.youCastThisSpell(), new RemoveAllCountersFromTargetPermanentOrPlayerEffect())
                 .addTrigger(Triggers.youCastThisSpell(),
+                        new RemoveAllCountersFromTargetPermanentOrPlayerEffect(),
                         new ReduceCastCostForNextMatchingSpellEffect(new CardTruePredicate(), new EventValue()));
     }
 }

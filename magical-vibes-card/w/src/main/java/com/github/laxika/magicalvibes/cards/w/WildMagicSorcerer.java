@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class WildMagicSorcerer extends Card {
 
     public WildMagicSorcerer() {
-        addTrigger(Triggers.youCastSpell().castFrom(Zone.EXILE).nthThisTurn(1), new CascadeEffect());
+        addTrigger(Triggers.youCastSpell().castFrom(Zone.EXILE).nthThisTurn(1).grantedToTheSpell(),
+                new CascadeEffect());
     }
 }

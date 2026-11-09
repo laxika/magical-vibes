@@ -64,7 +64,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingSourceDamage;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasGreaterPowerOrToughnessThanSource;
@@ -101,7 +100,6 @@ import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -116,13 +114,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyLinkedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringSpellReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
@@ -168,8 +164,6 @@ import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.EvolveEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetOnControllerSpellCastEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
@@ -1028,21 +1022,9 @@ public class TriggerCollectionService {
         collectIncrementTriggers(gameData, spellCard, castingPlayerId);
 
         // Emblem spell cast triggers: the emblems' cast abilities (Ajani, Jace, Telepath Unbound, Ral, Jace, Unraveler
-        // of Secrets, Garruk, Caller of Beasts, ...), then the marker still read by class (Venser's). Mana-spent readers
-        // must run before clearSpellCastManaSpent.
+        // of Secrets, Garruk, Caller of Beasts, Venser, ...). Mana-spent readers must run before clearSpellCastManaSpent.
         for (Emblem emblem : gameData.emblems) {
             collectEmblemCastAbilities(gameData, emblem, ctx);
-            for (CardEffect effect : emblem.staticEffects()) {
-                if (effect instanceof ExileTargetOnControllerSpellCastEffect) {
-                    if (!emblem.controllerId().equals(castingPlayerId)) continue;
-                    gameData.queueInteraction(new PermanentChoiceContext.EmblemTriggerTarget(
-                            "Venser's emblem",
-                            emblem.controllerId(),
-                            List.of(new ExileTargetPermanentEffect()),
-                            emblem.sourceCard()
-                    ));
-                }
-            }
         }
 
         int pathOfAncestryScries = gameData.getSpellCastPathOfAncestryManaSpent(spellCard.getId());
@@ -1616,9 +1598,9 @@ public class TriggerCollectionService {
         }
 
         // "When you cast this spell, ..." abilities of the just-cast card itself (it's a spell on the stack, not a
-        // permanent), collected together by collectSelfCastEffects: replicate, demonstrate, the card's own abilities
-        // (their options judged as they trigger) and the targeted ones perpetually granted to it.
-        List<CardEffect> selfCastEffects = new ArrayList<>();
+        // permanent), each one object on the stack (collectSelfCastAbilities): replicate, demonstrate, the card's own
+        // abilities (their options judged as they trigger) and the ones perpetually granted to it.
+        List<List<CardEffect>> selfCastAbilities = new ArrayList<>();
         if (spellCard.getManaCost() != null) {
             // A granted replicate (CR 702.56a): "When you cast this spell, if a replicate cost was paid for it, copy it
             // for each time its replicate cost was paid", its intervening "if" judged here and again as it resolves.
@@ -1635,7 +1617,7 @@ public class TriggerCollectionService {
                             && replicatedSpell.getRepeatedAdditionalCosts().contains(replicateCost))
                     .map(replicateCost -> new ConditionalEffect(new RepeatedAdditionalCostPaid(replicateCost),
                             new CopyTriggeringSpellEffect().withCopies(new RepeatedAdditionalCostCount(replicateCost))))
-                    .forEach(selfCastEffects::add);
+                    .forEach(replicate -> selfCastAbilities.add(List.of(replicate)));
         }
 
         ManaPool castingPlayerPool = gameData.playerManaPools.get(castingPlayerId);
@@ -1676,8 +1658,8 @@ public class TriggerCollectionService {
         // Each granted instance of demonstrate triggers separately (e.g. two Silverquill Lecturers).
         gameQueryService.getSpellCastingAbilityGrantValues(
                         gameData, castingPlayerId, spellCard, Keyword.DEMONSTRATE, castZone)
-                .forEach(grant -> selfCastEffects.add(new MayEffect(
-                        new DemonstrateEffect(), "Copy " + spellCard.getName() + "?")));
+                .forEach(grant -> selfCastAbilities.add(List.of(new MayEffect(
+                        new DemonstrateEffect(), "Copy " + spellCard.getName() + "?"))));
         StackEntry selfCastSpellEntry = gameData.stack.stream()
                 .filter(entry -> entry.getTargetableId().equals(spellCard.getId()))
                 .findFirst()
@@ -1693,31 +1675,17 @@ public class TriggerCollectionService {
             requireNoLimit(ability, spellCard);
             List<CardEffect> effects = triggeredEffects(gameData, ability, selfCastContext,
                     UnaryOperator.identity());
-            if (effects != null) {
-                selfCastEffects.addAll(effects);
+            if (effects != null && !effects.isEmpty()) {
+                selfCastAbilities.add(effects);
             }
         }
-        List<CardEffect> perpetualSelfCastEffects =
-                gameData.perpetualTriggerEffects(spellCard.getId(),
-                        SpellAbilityWatch.ON_SELF_CAST.trigger(), SpellAbilityWatch.ON_SELF_CAST.zone());
-        if (!perpetualSelfCastEffects.isEmpty()) {
-            for (CardEffect grantedAbility : perpetualSelfCastEffects) {
-                if (!grantedAbility.targetSpec().equals(com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE)) {
-                    selfCastEffects.add(grantedAbility);
-                    continue;
-                }
-                // "This spell" is the triggering spell (Inspiring Easel's "copy it"), copied as it last existed on the
-                // stack once it has left (CR 608.2h).
-                StackEntry grantedTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, spellCard,
-                        castingPlayerId, spellCard.getName() + "'s ability", List.of(grantedAbility));
-                grantedTrigger.setSourceZone(castZone);
-                grantedTrigger.setTriggeringCardId(spellCard.getId());
-                grantedTrigger.setTriggeringSpell(selfCastSpellEntry);
-                grantedTrigger.setNonTargeting(true);
-                gameData.stack.add(grantedTrigger);
+        for (Ability granted : gameData.perpetualAbilities(spellCard.getId())) {
+            if (granted instanceof TriggeredAbility triggered && triggered.hasTrigger(
+                    SpellAbilityWatch.ON_SELF_CAST.trigger(), SpellAbilityWatch.ON_SELF_CAST.zone())) {
+                selfCastAbilities.add(triggered.effects().stream().map(EffectRegistration::effect).toList());
             }
         }
-        collectSelfCastEffects(gameData, spellCard, castingPlayerId, castZone, selfCastSpellEntry, selfCastEffects);
+        collectSelfCastAbilities(gameData, spellCard, castingPlayerId, castZone, selfCastSpellEntry, selfCastAbilities);
 
         if (castZone == Zone.HAND && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))) {
             List<Permanent> casterBattlefield = gameData.playerBattlefields.get(castingPlayerId);
@@ -1945,152 +1913,87 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Collects the effects of {@code spellCard}'s "when you cast this spell" abilities that trigger, {@code effects}
-     * (their options already judged, an intervening "if" wrapped around each): the copy, storm, cascade and
-     * demonstrate effects each go on the stack as the stack object their keyword makes, bound to the spell
-     * ({@code selfCastSpellEntry}); the other effects go on the stack together as one object, their targets chosen as
-     * it is put there (CR 603.3d). That object holds the effects of every such ability, as this collector has always
-     * put them there: cards write one "when you cast this spell" ability as several (Hydroid Krasis's "you gain half X
-     * life and draw half X cards"), so they are grouped by ability only once those cards are merged.
+     * Puts {@code spellCard}'s "when you cast this spell" abilities that trigger on the stack, {@code abilities} the
+     * effects of each (their options already judged, an intervening "if" wrapped around each), each ability one object
+     * (CR 603.3): a keyword's (cascade, ripple, demonstrate, storm, replicate; CR 702.85c) as any other. Each entry
+     * records the spell ({@code spellEntry}, its X, kick and the zone it was cast from) as its triggering spell, whatever
+     * its effects are; "copy it" and cascade's "this spell's mana value" read it as the ability resolves, as it last
+     * existed on the stack once it has left (CR 608.2h). A "you may" is asked as the ability resolves (CR 603.5). An
+     * ability whose effects target chooses its targets as it goes on the stack (CR 603.3d).
      */
-    private void collectSelfCastEffects(GameData gameData, Card spellCard, UUID castingPlayerId, Zone castZone,
-                                        StackEntry selfCastSpellEntry, List<CardEffect> effects) {
-        List<CardEffect> selfCastTriggeredEffects = new ArrayList<>();
-        for (CardEffect effect : effects) {
-            if (effect instanceof ExileTriggeringSpellWithSuspendCountersEffect suspend
-                    && suspend.skipIfCastFromExile() && castZone == Zone.EXILE) {
+    private void collectSelfCastAbilities(GameData gameData, Card spellCard, UUID castingPlayerId, Zone castZone,
+                                          StackEntry spellEntry, List<List<CardEffect>> abilities) {
+        for (List<CardEffect> abilityEffects : abilities) {
+            List<CardEffect> effects = abilityEffects.stream()
+                    .filter(effect -> !(effect instanceof ExileTriggeringSpellWithSuspendCountersEffect suspend
+                            && suspend.skipIfCastFromExile() && castZone == Zone.EXILE))
+                    .toList();
+            if (effects.isEmpty()) {
                 continue;
             }
-            if (copiesThisSpell(effect)) {
-                // "Copy this spell" ("copy it if …", "you may copy it", Banish into Fable's two copies, and the
-                // counted copies of storm, replicate, gravestorm and "copy it X times", whose count is read as the
-                // ability resolves) is one object on the stack (CR 603.3) whose triggering spell is this spell: the copy is made from the
-                // spell as the ability resolves, or as it last existed on the stack once it has left (CR 608.2h).
-                // Its options were judged as it triggered; an intervening "if" stays wrapped (CR 603.4) and a
-                // "you may" is asked as it resolves (CR 603.5).
-                if (selfCastSpellEntry == null) continue;
-                StackEntry copyTrigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        spellCard,
-                        castingPlayerId,
-                        spellCard.getName() + "'s ability",
-                        new ArrayList<>(List.of(effect))
-                );
-                copyTrigger.setSourceZone(castZone);
-                recordTriggeringSpell(gameData, copyTrigger, selfCastSpellEntry);
-                gameData.stack.add(copyTrigger);
-                log.info("Game {} - {} self-cast copy trigger queued for {}",
-                        gameData.id, spellCard.getName(), castingPlayerId);
-            } else if (effect instanceof CascadeEffect) {
-                StackEntry cascadeTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                        spellCard, castingPlayerId, spellCard.getName() + "'s cascade ability",
-                        new ArrayList<>(List.of(effect)),
-                        selfCastSpellEntry == null ? 0 : selfCastSpellEntry.getXValue());
-                cascadeTrigger.setKicked(selfCastSpellEntry != null && selfCastSpellEntry.wasKicked());
-                cascadeTrigger.setSourceZone(castZone);
-                gameData.stack.add(cascadeTrigger);
-            } else if (DemonstrateEffect.isWrappedBy(effect)) {
-                // CR 702.144a / CR 603.5 — demonstrate goes on the stack when the spell is cast;
-                // whether to copy is decided when the trigger resolves.
-                StackEntry demonstrateTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                        spellCard, castingPlayerId, spellCard.getName() + "'s demonstrate ability",
-                        new ArrayList<>(List.of(effect)));
-                demonstrateTrigger.setSourceZone(castZone);
-                demonstrateTrigger.setTriggeringCardId(spellCard.getId());
-                demonstrateTrigger.setTriggeringSpell(selfCastSpellEntry);
-                demonstrateTrigger.setNonTargeting(true);
-                gameData.stack.add(demonstrateTrigger);
-                gameLogService.append(gameData, GameLog.abilityTriggers(spellCard));
-            } else {
-                selfCastTriggeredEffects.add(effect);
-            }
-        }
-        if (!selfCastTriggeredEffects.isEmpty()) {
-            if (selfCastTriggeredEffects.size() == 1
-                    && selfCastTriggeredEffects.getFirst() instanceof MayEffect may
-                    && may.targetSpec() == TargetSpec.NONE
-                    && !(may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.RippleEffect)) {
-                gameData.pendingMayAbilities.add(PendingMayAbility.forSpellCastTrigger(
-                        spellCard,
-                        castingPlayerId,
-                        new ArrayList<>(List.of(may.wrapped())),
-                        spellCard.getName() + " — " + may.prompt(),
-                        null,
-                        null,
-                        spellCard.getId()));
-                log.info("Game {} - {} self-cast may trigger queued for {}",
-                        gameData.id, spellCard.getName(), castingPlayerId);
-            } else {
-                // Targeted ON_SELF_CAST (e.g. Abundant Maw: "target opponent loses 3 life") chooses
-                // targets as the ability goes on the stack — reuse SpellTargetTriggerAnyTarget.
-                // Multi-target ("up to N target permanents", Elder Deep-Fiend) reuses the ETB
-                // multi-target slot walker with a null source permanent id.
-                boolean needsPlayerTarget = selfCastTriggeredEffects.stream()
-                        .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-                boolean needsPermanentTarget = selfCastTriggeredEffects.stream()
-                        .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-                boolean needsGraveyardTarget = selfCastTriggeredEffects.stream()
-                        .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
-                if (needsGraveyardTarget && !needsPlayerTarget && !needsPermanentTarget) {
-                    gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                            spellCard, castingPlayerId, new ArrayList<>(selfCastTriggeredEffects)));
-                    log.info("Game {} - {} self-cast graveyard-target trigger queued for {}",
-                            gameData.id, spellCard.getName(), castingPlayerId);
-                } else if (needsPlayerTarget || needsPermanentTarget) {
-                    boolean multiTarget = spellCard.getTargetGroups().size() > 1
-                            || etbTokenTargetService.needsSlotBySlotTargetSelection(spellCard);
-                    if (multiTarget) {
-                        gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                                spellCard, castingPlayerId, new ArrayList<>(selfCastTriggeredEffects),
-                                null, new ArrayList<>(), 0, 0));
-                        log.info("Game {} - {} self-cast multi-target trigger queued for {}",
-                                gameData.id, spellCard.getName(), castingPlayerId);
-                    } else {
-                        boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
-                        boolean optionalTarget = spellCard.getTargetGroups().size() == 1
-                                && spellCard.getTargetGroups().getFirst().getMinTargets() == 0
-                                && spellCard.getTargetGroups().getFirst().getMaxTargets() == 1
-                                && selfCastTriggeredEffects.stream().anyMatch(effect ->
-                                spellCard.getEffectTargetIndex(effect)
-                                        == spellCard.getTargetGroups().getFirst().getIndex());
-                        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                                spellCard, castingPlayerId, new ArrayList<>(selfCastTriggeredEffects),
-                                playerTargetOnly, spellCard.getTargetFilter(), 0, null, optionalTarget));
-                        log.info("Game {} - {} self-cast targeting trigger queued for {}",
-                                gameData.id, spellCard.getName(), castingPlayerId);
-                    }
-                } else {
-                    // Carry the spell's X onto the trigger so "reveal the top X cards" (Genesis Hydra)
-                    // sees the value locked in on cast (CR 601.2b); 0 for spells without {X}.
-                    int selfCastX = 0;
-                    boolean selfCastKicked = false;
-                    for (StackEntry se : gameData.stack) {
-                        if (se.getTargetableId().equals(spellCard.getId())) {
-                            selfCastX = se.getXValue();
-                            selfCastKicked = se.wasKicked();
-                            break;
-                        }
-                    }
-                    StackEntry selfCastTrigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            spellCard,
-                            castingPlayerId,
-                            spellCard.getName() + "'s ability",
-                            new ArrayList<>(selfCastTriggeredEffects),
-                            selfCastX
-                    );
-                    selfCastTrigger.setKicked(selfCastKicked);
-                    selfCastTrigger.setSourceZone(castZone);
-                    if (selfCastTriggeredEffects.stream()
-                            .anyMatch(TriggeringSpellReferencingEffect.class::isInstance)) {
-                        selfCastTrigger.setTriggeringCardId(spellCard.getId());
-                    }
-                    gameData.stack.add(selfCastTrigger);
-                    log.info("Game {} - {} self-cast trigger queued for {}",
-                            gameData.id, spellCard.getName(), castingPlayerId);
+            if (!queueSelfCastTargetChoice(gameData, spellCard, castingPlayerId, effects)) {
+                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, spellCard, castingPlayerId,
+                        spellCard.getName() + "'s ability", new ArrayList<>(effects));
+                trigger.setSourceZone(castZone);
+                if (spellEntry != null) {
+                    recordTriggeringSpell(gameData, trigger, spellEntry);
+                    trigger.setKicked(spellEntry.wasKicked());
                 }
+                gameData.stack.add(trigger);
+                log.info("Game {} - {} self-cast trigger queued for {}",
+                        gameData.id, spellCard.getName(), castingPlayerId);
             }
         }
+    }
+
+    /**
+     * Queues the target choice of a "when you cast this spell" ability whose {@code effects} target, its targets chosen
+     * as it goes on the stack (CR 603.3d).
+     *
+     * @return whether the ability targets
+     */
+    private boolean queueSelfCastTargetChoice(GameData gameData, Card spellCard, UUID castingPlayerId,
+                                              List<CardEffect> effects) {
+        // A single target (Abundant Maw: "target opponent loses 3 life") reuses SpellTargetTriggerAnyTarget; several
+        // ("up to N target permanents", Elder Deep-Fiend) the enter multi-target slot walker with no source permanent.
+        boolean needsPlayerTarget = effects.stream()
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+        boolean needsPermanentTarget = effects.stream()
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        boolean needsGraveyardTarget = effects.stream()
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+        if (needsGraveyardTarget && !needsPlayerTarget && !needsPermanentTarget) {
+            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    spellCard, castingPlayerId, new ArrayList<>(effects)));
+            log.info("Game {} - {} self-cast graveyard-target trigger queued for {}",
+                    gameData.id, spellCard.getName(), castingPlayerId);
+            return true;
+        }
+        if (!needsPlayerTarget && !needsPermanentTarget) {
+            return false;
+        }
+        boolean multiTarget = spellCard.getTargetGroups().size() > 1
+                || etbTokenTargetService.needsSlotBySlotTargetSelection(spellCard);
+        if (multiTarget) {
+            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                    spellCard, castingPlayerId, new ArrayList<>(effects),
+                    null, new ArrayList<>(), 0, 0));
+            log.info("Game {} - {} self-cast multi-target trigger queued for {}",
+                    gameData.id, spellCard.getName(), castingPlayerId);
+            return true;
+        }
+        boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
+        boolean optionalTarget = spellCard.getTargetGroups().size() == 1
+                && spellCard.getTargetGroups().getFirst().getMinTargets() == 0
+                && spellCard.getTargetGroups().getFirst().getMaxTargets() == 1
+                && effects.stream().anyMatch(effect ->
+                spellCard.getEffectTargetIndex(effect) == spellCard.getTargetGroups().getFirst().getIndex());
+        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                spellCard, castingPlayerId, new ArrayList<>(effects),
+                playerTargetOnly, spellCard.getTargetFilter(), 0, null, optionalTarget));
+        log.info("Game {} - {} self-cast targeting trigger queued for {}",
+                gameData.id, spellCard.getName(), castingPlayerId);
+        return true;
     }
 
     /** Whether {@code effect} is a replicate copy counting the payments of {@code replicateCost}. */
@@ -2099,21 +2002,6 @@ public class TriggerCollectionService {
             case CopyTriggeringSpellEffect copy -> copy.dynamicCopies() instanceof RepeatedAdditionalCostCount count
                     && replicateCost.equals(count.manaCost());
             case ConditionalEffect conditional -> countsReplicatePayments(conditional.wrapped(), replicateCost);
-            default -> false;
-        };
-    }
-
-    /**
-     * Whether {@code effect}, the effect of a "when you cast this spell" ability, copies that spell and does nothing
-     * else: {@link CopyTriggeringSpellEffect}, behind a "you may", an "if" or in a sequence of such steps.
-     */
-    private static boolean copiesThisSpell(CardEffect effect) {
-        return switch (effect) {
-            case CopyTriggeringSpellEffect ignored -> true;
-            case MayEffect may -> may.elseEffect() == null && copiesThisSpell(may.wrapped());
-            case ConditionalEffect conditional -> copiesThisSpell(conditional.wrapped());
-            case SequenceEffect sequence -> !sequence.steps().isEmpty()
-                    && sequence.steps().stream().allMatch(TriggerCollectionService::copiesThisSpell);
             default -> false;
         };
     }
@@ -9674,19 +9562,16 @@ public class TriggerCollectionService {
                     markTapTriggered(gameData, perm, read);
                     continue;
                 }
-                UUID bakedTargetId = bakeTriggeringPermanentControllerTarget(resolved, controllerId);
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         ownerId,
                         perm.getCard().getName() + "'s ability",
                         new ArrayList<>(List.of(resolved)),
-                        bakedTargetId,
+                        null,
                         perm.getId()
                 );
-                entry.setTriggeringPermanentId(tappedPermanent.getId());
-                // "It" as it last existed on the battlefield, should it leave before the ability resolves (CR 608.2h).
-                entry.setTriggeringPermanent(tappedPermanent);
+                recordTappedPermanent(entry, tappedPermanent, controllerId);
                 gameData.enqueueTrigger(entry);
                 markTapTriggered(gameData, perm, read);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
@@ -9718,17 +9603,16 @@ public class TriggerCollectionService {
                     markTapTriggered(gameData, perm, read);
                     continue;
                 }
-                UUID bakedTargetId = bakeTriggeringPermanentControllerTarget(resolved, controllerId);
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         ownerId,
                         perm.getCard().getName() + "'s ability",
                         new ArrayList<>(List.of(resolved)),
-                        bakedTargetId,
+                        null,
                         perm.getId()
                 );
-                entry.setTriggeringPermanentId(tappedPermanent.getId());
+                recordTappedPermanent(entry, tappedPermanent, controllerId);
                 gameData.enqueueTrigger(entry);
                 markTapTriggered(gameData, perm, read);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
@@ -9783,17 +9667,16 @@ public class TriggerCollectionService {
                     markTapTriggered(gameData, perm, read);
                     continue;
                 }
-                UUID bakedTargetId = bakeTriggeringPermanentControllerTarget(resolved, controllerId);
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         ownerId,
                         perm.getCard().getName() + "'s ability",
                         new ArrayList<>(List.of(resolved)),
-                        bakedTargetId,
+                        null,
                         perm.getId()
                 );
-                entry.setTriggeringPermanentId(tappedPermanent.getId());
+                recordTappedPermanent(entry, tappedPermanent, controllerId);
                 gameData.enqueueTrigger(entry);
                 markTapTriggered(gameData, perm, read);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
@@ -9995,17 +9878,14 @@ public class TriggerCollectionService {
     }
 
     /**
-     * For ally/opponent becomes-tapped slots: bake the tapped permanent's controller as
-     * {@code targetId} only when the resolved effect deals damage to
-     * {@link DamageRecipient#TRIGGERING_PERMANENT_CONTROLLER}. Other effects keep {@code null}
-     * so may-target tap triggers (Surgespanner) still choose at resolution.
+     * Records the permanent that became tapped on a becomes-tapped ability's entry whatever its effects are: "it" and
+     * "that permanent's controller" (Royal Decree) as it is as the ability resolves, or as it last existed on the
+     * battlefield once it has left (CR 608.2h).
      */
-    private static UUID bakeTriggeringPermanentControllerTarget(CardEffect resolved, UUID tappedControllerId) {
-        if (resolved instanceof DealDamageToPlayersEffect damage
-                && damage.recipient() == DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER) {
-            return tappedControllerId;
-        }
-        return null;
+    private static void recordTappedPermanent(StackEntry entry, Permanent tappedPermanent, UUID tappedControllerId) {
+        entry.setTriggeringPermanentId(tappedPermanent.getId());
+        entry.setTriggeringPermanent(tappedPermanent);
+        entry.setTriggeringPermanentControllerId(tappedControllerId);
     }
 
     // ── Becomes-untapped triggers ──────────────────────────────────────
@@ -10369,7 +10249,7 @@ public class TriggerCollectionService {
                     continue;
                 }
                 UUID targetId = activationTriggerTargetId(
-                        resolved, null, null, activatedPermanentControllerId);
+                        resolved, null, null);
                 int triggerCopies = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
                         gameData, ownerId, perm);
                 for (int copy = 0; copy < triggerCopies; copy++) {
@@ -10713,7 +10593,7 @@ public class TriggerCollectionService {
                 if (resolved == null) continue;
 
                 UUID targetId = activationTriggerTargetId(
-                        resolved, null, activatingPlayerId, activatedPermanentControllerId);
+                        resolved, null, activatingPlayerId);
                 StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
@@ -10766,7 +10646,7 @@ public class TriggerCollectionService {
                         activatedPermanent);
                 if (resolved == null) continue;
                 UUID targetId = activationTriggerTargetId(
-                        resolved, abilityEntry, activatingPlayerId, activatedPermanentControllerId);
+                        resolved, abilityEntry, activatingPlayerId);
                 StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
@@ -10780,6 +10660,7 @@ public class TriggerCollectionService {
                 if (activation.marksOnAcceptance()) {
                     trigger.setMarkSourceOncePerTurnOnAcceptance(true);
                 }
+                recordActivatedPermanent(trigger, activatedPermanent, activatedPermanentControllerId);
                 gameData.enqueueTrigger(trigger);
                 markActivationLimit(gameData, perm, activation);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
@@ -11155,7 +11036,7 @@ public class TriggerCollectionService {
                                 gameData.id, perm.getCard().getName(), abilityEntry.getCard().getName());
                     } else {
                         UUID targetId = activationTriggerTargetId(
-                                resolved, abilityEntry, null, activatedPermanentControllerId);
+                                resolved, abilityEntry, null);
                         StackEntry activationTrigger = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
@@ -11171,6 +11052,8 @@ public class TriggerCollectionService {
                         if (activation.marksOnAcceptance()) {
                             activationTrigger.setMarkSourceOncePerTurnOnAcceptance(true);
                         }
+                        recordActivatedPermanent(activationTrigger, activatedPermanent,
+                                activatedPermanentControllerId);
                         gameData.enqueueTrigger(activationTrigger);
                         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                         log.info("Game {} - {} triggers on non-mana ability activation ({})",
@@ -11229,7 +11112,7 @@ public class TriggerCollectionService {
                     continue;
                 }
                 UUID targetId = activationTriggerTargetId(
-                        resolved, null, activatingPlayerId, activatedPermanentControllerId);
+                        resolved, null, activatingPlayerId);
                 StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
@@ -11256,15 +11139,23 @@ public class TriggerCollectionService {
     }
 
     private UUID activationTriggerTargetId(List<CardEffect> effects, StackEntry abilityEntry,
-                                           UUID defaultTargetId, UUID activatedPermanentControllerId) {
+                                           UUID defaultTargetId) {
         if (effects.stream().anyMatch(EffectResolution::targetsSpellOnStack)) {
             return abilityEntry == null ? null : abilityEntry.getTargetableId();
         }
-        if (effects.stream().anyMatch(effect -> effect instanceof DealDamageToPlayersEffect damage
-                && damage.recipient() == DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER)) {
-            return activatedPermanentControllerId;
-        }
         return defaultTargetId;
+    }
+
+    /**
+     * Records the permanent whose ability was activated on an activation ability's entry whatever its effects are:
+     * "that permanent's controller" is read from it as the ability resolves, or as it last existed (CR 608.2h).
+     */
+    private static void recordActivatedPermanent(StackEntry entry, Permanent activatedPermanent,
+                                                 UUID activatedPermanentControllerId) {
+        if (activatedPermanent != null) {
+            entry.setTriggeringPermanentId(activatedPermanent.getId());
+        }
+        entry.setTriggeringPermanentControllerId(activatedPermanentControllerId);
     }
 
     // ── Life-loss triggers ─────────────────────────────────────────────
@@ -12825,13 +12716,8 @@ public class TriggerCollectionService {
             triggerEntry.setTriggeringPermanent(dyingPermanent);
             triggerEntry.setTriggeringPermanentToughnessAtTrigger(dyingPermanent.getLastKnownToughness() != null
                     ? dyingPermanent.getLastKnownToughness() : dyingPermanent.getEffectiveToughness());
-            // "its controller loses N life" reads the dying creature's last-known controller from
-            // the entry's targetId; the ability itself chooses no target. Other abilities use targetId
-            // for their own purposes, so it is only bound for that recipient.
-            if (effect instanceof LoseLifeEffect lose
-                    && lose.recipient() == LoseLifeRecipient.DYING_CREATURE_CONTROLLER) {
-                triggerEntry.setTargetId(dyingControllerId);
-            }
+            // "Its controller" is the dying creature's last-known controller (CR 608.2h), whatever the effects are.
+            triggerEntry.setTriggeringPermanentControllerId(dyingControllerId);
             gameData.stack.add(triggerEntry);
             gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} triggers (damaged creature died this turn)", gameData.id, sourceCard.getName());
@@ -13248,11 +13134,12 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Points the triggered abilities already on the stack that deal damage to the controller of the permanent an
-     * Aura enchants at that controller as the permanent dies: they can no longer see the permanent.
+     * Records on the triggered abilities already on the stack whose source is an Aura enchanting the permanent that
+     * dies the permanent's last-known controller (CR 608.2h) and the Aura as it is now, whatever their effects are:
+     * "enchanted permanent's controller" can no longer be read from the permanent once it has left.
      */
-    public void retargetEnchantedPermanentControllerDamage(GameData gameData, UUID dyingPermanentId,
-                                                           UUID dyingPermanentControllerId) {
+    public void recordEnchantedPermanentDeparture(GameData gameData, UUID dyingPermanentId,
+                                                  UUID dyingPermanentControllerId) {
         Map<UUID, Permanent> auras = new LinkedHashMap<>();
         gameData.forEachPermanent((playerId, perm) -> auras.put(perm.getId(), perm));
         gameData.simultaneousDyingPermanents.forEach(auras::putIfAbsent);
@@ -13263,10 +13150,8 @@ public class TriggerCollectionService {
             }
             for (StackEntry pending : gameData.stack) {
                 if (pending.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                        && perm.getId().equals(pending.getSourcePermanentId())
-                        && pending.getEffectsToResolve().stream().anyMatch(
-                        e -> e instanceof DealDamageToEnchantedPermanentControllerEffect)) {
-                    pending.setTargetId(dyingPermanentControllerId);
+                        && perm.getId().equals(pending.getSourcePermanentId())) {
+                    pending.rememberRemovedPermanentController(dyingPermanentId, dyingPermanentControllerId);
                     if (pending.getSourcePermanentSnapshot() == null) {
                         pending.setSourcePermanentSnapshot(new Permanent(perm));
                     }
@@ -13458,25 +13343,13 @@ public class TriggerCollectionService {
                     new ArrayList<>(List.of(effect))
             );
             triggerEntry.setTriggeringCardId(dyingCard.getId());
-            LoseLifeEffect loseLife = findLoseLifeEffect(effect);
-            if (loseLife != null && loseLife.recipient() == LoseLifeRecipient.DYING_CREATURE_CONTROLLER) {
-                triggerEntry.setTargetId(dyingCreatureControllerId);
-            }
+            // "Its controller" is the dying creature's last-known controller (CR 608.2h), whatever the effects are.
+            triggerEntry.setTriggeringPermanentControllerId(dyingCreatureControllerId);
             gameData.stack.add(triggerEntry);
         }
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} graveyard creature-death trigger queued",
                 gameData.id, sourceCard.getName());
-    }
-
-    private LoseLifeEffect findLoseLifeEffect(CardEffect effect) {
-        if (effect instanceof LoseLifeEffect loseLife) {
-            return loseLife;
-        }
-        if (effect instanceof ConditionalEffect conditional) {
-            return findLoseLifeEffect(conditional.wrapped());
-        }
-        return null;
     }
 
     /** Fires "whenever you lose a coin flip" triggers for the losing player's battlefield. */
@@ -13637,12 +13510,8 @@ public class TriggerCollectionService {
                     (UUID) null,
                     (UUID) null);
             entry.setTriggeringCardId(dyingCardId);
-            // "its controller loses N life" reads the dying creature's last-known controller from the
-            // entry's targetId; the ability itself chooses no target.
-            if (watcher.effect() instanceof LoseLifeEffect lose
-                    && lose.recipient() == LoseLifeRecipient.DYING_CREATURE_CONTROLLER) {
-                entry.setTargetId(dyingCreatureControllerId);
-            }
+            // "Its controller" is the dying creature's last-known controller (CR 608.2h), whatever the effects are.
+            entry.setTriggeringPermanentControllerId(dyingCreatureControllerId);
             gameData.enqueueTrigger(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} triggers because a creature it damaged died",
@@ -17047,9 +16916,9 @@ public class TriggerCollectionService {
                                         SpellFilter filter, PlanarObject planarObject, boolean throughDispatch) {
         if (ctx instanceof TriggerContext.SpellCast spellCast) {
             CastAbility cast = CastAbility.of(ability, filter);
-            // A granted cascade is one ability nothing makes trigger additional times.
-            boolean singleCopy = !cast.effects().isEmpty()
-                    && cast.effects().stream().allMatch(CascadeEffect.class::isInstance);
+            // An ability the source gives the spell is the spell's: nothing makes the source's abilities trigger it
+            // additional times.
+            boolean singleCopy = filter.grantedToTheSpell();
             boolean perManaFromSource = watch == SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL;
             return collectLimitedAbility(gameData, perm, sourceCard, controllerId, watch, ctx, ability, planarObject,
                     throughDispatch, singleCopy, match -> spellCastTriggerCollectorService.collectCastAbility(match,

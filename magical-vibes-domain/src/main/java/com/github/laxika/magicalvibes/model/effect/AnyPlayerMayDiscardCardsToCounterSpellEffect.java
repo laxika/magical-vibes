@@ -13,7 +13,7 @@ public record AnyPlayerMayDiscardCardsToCounterSpellEffect(
         UUID abilityControllerId,
         UUID targetCardId,
         boolean afterDiscard
-) implements TriggeringSpellReferencingEffect, CounterSpellingEffect {
+) implements CounterSpellingEffect {
 
     public AnyPlayerMayDiscardCardsToCounterSpellEffect(int cardsToDiscard) {
         this(cardsToDiscard, List.of(), null, null, false);

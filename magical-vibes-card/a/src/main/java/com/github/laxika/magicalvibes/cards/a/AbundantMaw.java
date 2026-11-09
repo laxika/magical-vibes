@@ -35,7 +35,8 @@ public class AbundantMaw extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         ))
-                .addTrigger(Triggers.youCastThisSpell(), new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER))
-                .addTrigger(Triggers.youCastThisSpell(), new GainLifeEffect(3));
+                .addTrigger(Triggers.youCastThisSpell(),
+                        new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER),
+                        new GainLifeEffect(3));
     }
 }

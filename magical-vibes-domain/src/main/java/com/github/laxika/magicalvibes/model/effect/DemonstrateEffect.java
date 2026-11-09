@@ -5,11 +5,4 @@ package com.github.laxika.magicalvibes.model.effect;
  * player choose an opponent who also gets a copy. The spell is the stack entry's triggering spell, as it was when the
  * ability triggered.
  */
-public record DemonstrateEffect() implements TriggeringSpellReferencingEffect {
-
-    /** Returns whether an effect already contains a demonstrate trigger. */
-    public static boolean isWrappedBy(CardEffect effect) {
-        return effect instanceof DemonstrateEffect
-                || effect instanceof MayEffect may && isWrappedBy(may.wrapped());
-    }
-}
+public record DemonstrateEffect() implements CardEffect {}

@@ -32,12 +32,12 @@ public class FlayerOfLoyalties extends Card {
         // Untap it. Until end of turn, it has base power and toughness 10/10 and gains trample,
         // annihilator 2, and haste.
         target(TargetFilters.creature())
-                .addTrigger(Triggers.youCastThisSpell(), new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addTrigger(Triggers.youCastThisSpell(), new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.youCastThisSpell(), new SetBasePowerToughnessEffect(10, 10))
                 .addTrigger(Triggers.youCastThisSpell(),
-                        new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.TARGET))
-                .addTrigger(Triggers.youCastThisSpell(), new GrantEffectToTargetUntilEndOfTurnEffect(
+                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET),
+                        new SetBasePowerToughnessEffect(10, 10),
+                        new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.TARGET),
+                        new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.attacks(),
                         new SacrificePermanentsEffect(
                                 2, new PermanentTruePredicate(), SacrificeRecipient.DEFENDING_PLAYER))));

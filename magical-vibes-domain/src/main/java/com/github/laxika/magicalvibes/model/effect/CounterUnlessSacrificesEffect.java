@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
  */
 public record CounterUnlessSacrificesEffect(PermanentPredicate filter, String sacrificeDescription,
                                             int requiredCount)
-        implements CounterUnlessEffect, TriggeringSpellReferencingEffect {
+        implements CounterUnlessEffect {
 
     /** Creates the unrestricted permanent-sacrifice variant used by ward. */
     public CounterUnlessSacrificesEffect() {
