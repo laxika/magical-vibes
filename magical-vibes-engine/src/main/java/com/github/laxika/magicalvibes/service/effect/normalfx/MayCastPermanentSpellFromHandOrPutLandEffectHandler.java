@@ -5,12 +5,15 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastPermanentSpellFromHandOrPutLandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -23,6 +26,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class MayCastPermanentSpellFromHandOrPutLandEffectHandler implements NormalEffectHandlerBean {
 
+    private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -44,7 +48,9 @@ public class MayCastPermanentSpellFromHandOrPutLandEffectHandler implements Norm
                 new CardTypePredicate(CardType.CREATURE),
                 new CardTypePredicate(CardType.ENCHANTMENT),
                 new CardTypePredicate(CardType.PLANESWALKER)));
-        int maxManaValue = Math.max(0, entry.getEventValue());
+        // "That spell's mana value": the triggering spell's, as it last existed on the stack once it has left (CR 608.2h).
+        int maxManaValue = Math.max(0, amountEvaluationService.evaluate(gameData, new TargetSpellManaValue(),
+                AmountContext.forStackEntry(entry, null)));
         List<Card> eligible = hand.stream()
                 .filter(card -> !card.hasType(CardType.LAND))
                 .filter(card -> card.getManaValue() <= maxManaValue)

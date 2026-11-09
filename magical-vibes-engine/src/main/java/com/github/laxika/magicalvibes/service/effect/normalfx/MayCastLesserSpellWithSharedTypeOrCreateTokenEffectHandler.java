@@ -6,9 +6,12 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastLesserSpellWithSharedTypeOrCreateTokenEffect;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +26,7 @@ import java.util.function.Predicate;
 @RequiredArgsConstructor
 public class MayCastLesserSpellWithSharedTypeOrCreateTokenEffectHandler implements NormalEffectHandlerBean {
 
+    private final AmountEvaluationService amountEvaluationService;
     private final CreateTokenEffectHandler createTokenEffectHandler;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
@@ -45,15 +49,9 @@ public class MayCastLesserSpellWithSharedTypeOrCreateTokenEffectHandler implemen
             return;
         }
 
-        int triggeringManaValue = entry.getEventValue();
-        if (triggeringManaValue == 0) {
-            triggeringManaValue = triggeringSpell.getManaValue();
-            StackEntry spellEntry = findStackEntry(gameData, triggeringSpell.getId());
-            if (spellEntry != null) {
-                triggeringManaValue += spellEntry.getXValue();
-            }
-        }
-        final int effectiveTriggeringManaValue = triggeringManaValue;
+        // "Lesser mana value" than the triggering spell's, as it last existed on the stack once it has left (CR 608.2h).
+        final int effectiveTriggeringManaValue = amountEvaluationService.evaluate(gameData, new TargetSpellManaValue(),
+                AmountContext.forStackEntry(entry, null));
         // "A spell with lesser mana value that shares a card type" considers only the half of a split
         // card being cast (CR 709.3a), so a split card is offered as the halves that qualify.
         Predicate<Card> qualifies = spell -> spell.getManaValue() < effectiveTriggeringManaValue
@@ -112,13 +110,6 @@ public class MayCastLesserSpellWithSharedTypeOrCreateTokenEffectHandler implemen
         }
         return gameData.getSpellsCastThisTurn(controllerId).stream()
                 .filter(card -> card.getId().equals(triggeringCardId))
-                .findFirst()
-                .orElse(null);
-    }
-
-    private StackEntry findStackEntry(GameData gameData, UUID cardId) {
-        return gameData.stack.stream()
-                .filter(stackEntry -> stackEntry.getCard() != null && stackEntry.getTargetableId().equals(cardId))
                 .findFirst()
                 .orElse(null);
     }

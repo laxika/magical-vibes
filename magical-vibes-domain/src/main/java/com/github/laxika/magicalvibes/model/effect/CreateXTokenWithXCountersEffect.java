@@ -20,7 +20,7 @@ public record CreateXTokenWithXCountersEffect(
         DynamicAmount counterAmount,
         CounterType counterType,
         boolean entersWithCounters
-) implements TriggeringSpellManaValueEffect {
+) implements CardEffect {
 
     public CreateXTokenWithXCountersEffect(CreateTokenEffect tokenTemplate, DynamicAmount counterAmount,
                                            CounterType counterType) {

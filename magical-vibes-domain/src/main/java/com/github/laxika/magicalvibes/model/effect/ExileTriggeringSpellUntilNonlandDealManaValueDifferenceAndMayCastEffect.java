@@ -6,5 +6,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * and offers that card for a free cast.
  */
 public record ExileTriggeringSpellUntilNonlandDealManaValueDifferenceAndMayCastEffect()
-        implements TriggeringSpellManaValueEffect {
+        implements CardEffect {
 }

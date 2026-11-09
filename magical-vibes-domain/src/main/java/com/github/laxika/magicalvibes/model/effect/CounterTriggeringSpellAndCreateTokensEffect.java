@@ -5,12 +5,12 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 /**
  * Counters the spell that caused a spell-cast trigger, then creates the supplied tokens for that
- * spell's controller. The caster and the spell's mana value are carried independently by the
- * triggered stack entry so token creation still happens if the spell cannot be countered or has
- * already left the stack.
+ * spell's controller. The caster is carried by the triggered stack entry, and a token amount of
+ * {@code TargetSpellManaValue} reads the spell as it last existed on the stack, so token creation
+ * still happens if the spell cannot be countered or has already left the stack.
  */
 public record CounterTriggeringSpellAndCreateTokensEffect(CreateTokenEffect token)
-        implements TokenCreatingEffect, TriggeringSpellManaValueEffect {
+        implements TokenCreatingEffect {
 
     @Override
     public DynamicAmount tokenAmount() {

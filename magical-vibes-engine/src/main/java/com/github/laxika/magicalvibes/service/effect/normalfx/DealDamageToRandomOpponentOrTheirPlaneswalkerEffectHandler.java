@@ -49,11 +49,18 @@ public class DealDamageToRandomOpponentOrTheirPlaneswalkerEffectHandler implemen
         if (opponents.isEmpty()) return;
 
         UUID chosenOpponent = opponents.get(ThreadLocalRandom.current().nextInt(opponents.size()));
+        // The amount is determined as the ability resolves ("that spell's mana value": the triggering spell, as it last
+        // existed on the stack once it has left, CR 608.2h), before the recipient is chosen.
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) source = entry.getSourcePermanentSnapshot();
+        int damage = amountEvaluationService.evaluate(gameData, e.damage(),
+                AmountContext.forStackEntry(entry, source));
         boolean hasPlaneswalker = gameData.playerBattlefields
                 .getOrDefault(chosenOpponent, List.of()).stream()
                 .anyMatch(permanent -> gameQueryService.isPlaneswalker(gameData, permanent));
         if (hasPlaneswalker) {
-            var targetEffect = new DealDamageToTargetPlayerOrPlaneswalkerEffect(e.damage());
+            var targetEffect = new DealDamageToTargetPlayerOrPlaneswalkerEffect(damage);
             var targetFilter = new AnyTargetPredicateTargetFilter(
                     new PermanentAllOfPredicate(List.of(
                             new PermanentIsPlaneswalkerPredicate(),
@@ -63,16 +70,11 @@ public class DealDamageToRandomOpponentOrTheirPlaneswalkerEffectHandler implemen
             gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     entry.getCard(), entry.getControllerId(), List.of(targetEffect), false, targetFilter, 0,
                     entry.getSourcePermanentId(), entry.getSourcePermanentSnapshot(), false, null, chosenOpponent,
-                    entry.getControllerId(), entry.getEventValue(), null, true));
+                    entry.getControllerId(), damage, null, true));
             triggerCollectionService.processNextSpellTargetTrigger(gameData);
             return;
         }
 
-        Permanent source = entry.getSourcePermanentId() == null
-                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null) source = entry.getSourcePermanentSnapshot();
-        int damage = amountEvaluationService.evaluate(gameData, e.damage(),
-                AmountContext.forStackEntry(entry, source));
         int rawDamage = damage;
         damageSupport.resolveAnyTargetDamage(gameData, entry, chosenOpponent, rawDamage, false);
         gameOutcomeService.checkWinCondition(gameData);

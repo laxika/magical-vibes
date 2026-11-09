@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({KeeperOfSecrets.class, GrizzlyBears.class})
+@CardUsed({KeeperOfSecrets.class, GrizzlyBears.class, Counterspell.class})
 class KeeperOfSecretsTest extends BaseCardTest {
 
     @Test
@@ -121,5 +122,26 @@ class KeeperOfSecretsTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 6);
         resolveAllTriggers();
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 6);
+    }
+
+    @Test
+    @DisplayName("A spell countered before the ability resolves still deals its mana value to the target opponent")
+    void counteredSpellStillDealsItsManaValue() {
+        harness.addToBattlefield(player1, new KeeperOfSecrets());
+        GrizzlyBears spell = new GrizzlyBears();
+        gd.addToExile(player1.getId(), spell);
+        gd.exilePlayPermissions.put(spell.getId(), player1.getId());
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromExile(player1, spell.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, spell.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
     }
 }

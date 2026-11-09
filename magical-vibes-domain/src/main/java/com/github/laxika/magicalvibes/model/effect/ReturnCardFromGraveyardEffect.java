@@ -385,8 +385,7 @@ public record ReturnCardFromGraveyardEffect(
         boolean requiresPowerAtMostSacrificedPower,
         boolean hasteUntilEndOfTurn,
         boolean returnToHandAtYourNextEndStep,
-        boolean attachToSourceOptional) implements TargetCardGroupEffect,
-        TriggeringSpellManaValueEffect {
+        boolean attachToSourceOptional) implements TargetCardGroupEffect {
         public ReturnCardFromGraveyardEffect(
         GraveyardChoiceDestination destination,
         CardPredicate filter,

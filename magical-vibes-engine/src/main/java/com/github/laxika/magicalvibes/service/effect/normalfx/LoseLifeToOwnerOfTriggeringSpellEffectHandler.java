@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeToOwnerOfTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class LoseLifeToOwnerOfTriggeringSpellEffectHandler implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
+    private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
     private final LifeSupport lifeSupport;
 
@@ -33,6 +37,8 @@ public class LoseLifeToOwnerOfTriggeringSpellEffectHandler implements NormalEffe
         }
 
         UUID ownerId = triggeringSpell.getOwnerId();
-        lifeSupport.applyLifeLoss(gameData, ownerId, entry.getEventValue(), entry.getCard().getName());
+        // "Equal to that spell's mana value": as it last existed on the stack once it has left (CR 608.2h).
+        lifeSupport.applyLifeLoss(gameData, ownerId, amountEvaluationService.evaluate(gameData, new TargetSpellManaValue(),
+                AmountContext.forStackEntry(entry, null)), entry.getCard().getName());
     }
 }

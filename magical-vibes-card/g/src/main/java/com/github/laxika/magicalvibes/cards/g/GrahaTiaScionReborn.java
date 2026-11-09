@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEqualToAmountEffect;
@@ -29,7 +29,7 @@ public class GrahaTiaScionReborn extends Card {
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),
                 new MayPayLifeEqualToAmountEffect(
-                        new EventValue(), heroToken(),
+                        new TargetSpellManaValue(), heroToken(),
                         "Pay life equal to that spell's mana value to create a Hero token?"));
     }
 
@@ -37,7 +37,7 @@ public class GrahaTiaScionReborn extends Card {
         return new CreateXTokenWithXCountersEffect(
                 new CreateTokenEffect("Hero", 1, 1, null,
                         List.of(CardSubtype.HERO), Set.of(), Set.of()),
-                new EventValue(),
+                new TargetSpellManaValue(),
                 CounterType.PLUS_ONE_PLUS_ONE);
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -23,7 +23,7 @@ public class ChromeHostSeedshark extends Card {
 
     public ChromeHostSeedshark() {
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                new CreateXTokenWithXCountersEffect(incubatorToken(), new EventValue(), CounterType.PLUS_ONE_PLUS_ONE));
+                new CreateXTokenWithXCountersEffect(incubatorToken(), new TargetSpellManaValue(), CounterType.PLUS_ONE_PLUS_ONE));
     }
 
     private static CreateTokenEffect incubatorToken() {

@@ -19,7 +19,7 @@ public record QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTar
                                            boolean useEventValueAsX,
                                            boolean useEntryTargetAsTriggeringPermanent,
                                            UUID sourcePermanentId)
-        implements CombatDamageTriggerContextEffect, TriggeringSpellManaValueEffect {
+        implements CombatDamageTriggerContextEffect {
 
     public QueueReflexiveAbilityEffect(CardEffect effect) {
         this(effect, false, false, false);

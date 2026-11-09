@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.a.AppetiteForTheUnnatural;
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MetallurgicSummonings.class, Divination.class, GrizzlyBears.class, Shock.class,
-        PropheticPrism.class, AppetiteForTheUnnatural.class})
+        PropheticPrism.class, AppetiteForTheUnnatural.class, Counterspell.class})
 class MetallurgicSummoningsTest extends BaseCardTest {
 
     @Test
@@ -207,5 +208,26 @@ class MetallurgicSummoningsTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.exiledCards).extracting(exiled -> exiled.card().getId()).contains(source.getId());
+    }
+
+    @Test
+    @DisplayName("A spell countered before the ability resolves still sizes the Construct by its mana value")
+    void counteredSpellStillCreatesConstructOfItsManaValue() {
+        harness.addToBattlefield(player1, new MetallurgicSummonings());
+        Divination divination = new Divination();
+        harness.setHand(player1, List.of(divination));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castSorcery(player1, 0, 0);
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, divination.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Divination");
+        harness.passBothPriorities();
+
+        Permanent construct = findPermanent(player1, "Construct");
+        assertThat(gqs.getEffectivePower(gd, construct)).isEqualTo(3);
+        assertThat(gqs.getEffectiveToughness(gd, construct)).isEqualTo(3);
     }
 }

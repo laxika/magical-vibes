@@ -39,7 +39,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEqualToTriggeringSpellManaValueDifferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeringSpellManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.CopiedSpellReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -67,7 +66,7 @@ import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.ModalSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
@@ -84,7 +83,6 @@ import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SpellCreatureManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
-import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
@@ -916,11 +914,12 @@ public class SpellCastTriggerCollectorService {
                 ? match.gameData().getSpellCastCreatureManaSpent(spellCard.getId())
                 : needsSpellManaSpentX ? match.gameData().getSpellCastManaSpent(spellCard.getId())
                 : triggeringSpell != null ? triggeringSpell.getXValue() : 0;
-        // The event value an effect reads: the number of kicks for a kicked-spell ability, else the spell's mana value.
-        boolean carriesTriggeringSpellManaValue = (trigger.filter().kicker() != SpellFilter.Kicker.ANY) || resolved.stream()
-                .anyMatch(this::effectCarriesTriggeringSpellManaValue);
+        // The cast event's value, recorded on every entry and choice whatever the effects are: the number of kicks for a
+        // kicked-spell ability, else the spell's mana value as the ability triggers (with the chosen X, CR 202.3e). An
+        // effect reads "that spell's mana value" as it resolves (TargetSpellManaValue: the live spell, else the entry's
+        // snapshot of it, CR 608.2h), so this value is only the fallback where neither is kept.
         int triggeringSpellManaValue = (trigger.filter().kicker() != SpellFilter.Kicker.ANY) ? kickCount
-                : carriesTriggeringSpellManaValue ? spellManaValue(match.gameData(), spellCard) : 0;
+                : spellManaValue(match.gameData(), spellCard);
 
         if (optionalAbility != null) {
             resolved = optionalAbility;
@@ -938,7 +937,9 @@ public class SpellCastTriggerCollectorService {
         } else if (needsGraveyardTarget) {
             // A graveyard target restricted by "that spell's mana value" (Krile Baldesion) is chosen now, as the ability
             // goes on the stack (CR 603.3d), against the spell's mana value as the choice's X.
-            int graveyardTargetX = carriesTriggeringSpellManaValue ? triggeringSpellManaValue : 0;
+            int graveyardTargetX = resolved.stream()
+                    .anyMatch(SpellCastTriggerCollectorService::graveyardTargetReadsManaValueX)
+                    ? triggeringSpellManaValue : 0;
             // A graveyard target restricted by "that spell" ("the same name as that spell", Harness the Storm) is chosen
             // against the triggering spell, which the stack entry keeps for the check as the ability resolves.
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
@@ -966,6 +967,7 @@ public class SpellCastTriggerCollectorService {
             entry.setTriggeringSpellCastIndex(
                     match.gameData().getSpellCastIndexThisTurn(castingPlayerId, spellCard.getId()));
             entry.setTriggeringSpellTurnCastIndex(match.gameData().getSpellCastOrdinalThisTurn(spellCard.getId()) - 1);
+            entry.setEventValue(triggeringSpellManaValue);
             // The caster stays known if the spell leaves the stack (e.g. is countered) before this resolves.
             entry.setCounteredSpellControllerId(castingPlayerId);
             preservePlanarSource(entry, match);
@@ -989,14 +991,14 @@ public class SpellCastTriggerCollectorService {
                         sourceCard, match.controllerId(), queued, sourcePermanentId,
                         List.of(), 0, 0, List.of(), targetRestrictedBySpellManaValue ? spellManaSpentX : 0,
                         List.of(), false, spellCard.getId(),
-                        null, carriesTriggeringSpellManaValue ? triggeringSpellManaValue : 0));
+                        null, triggeringSpellManaValue));
             } else {
                 match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                         sourceCard, match.controllerId(), queued, playerTargetOnly,
                         trigger.targetFilter() != null ? trigger.targetFilter()
                                 : boundTargetFilter(sourceCard, trigger.effects()),
                         spellManaSpentX, sourcePermanentId, null, false, null, null,
-                        match.controllerId(), carriesTriggeringSpellManaValue ? triggeringSpellManaValue : null,
+                        match.controllerId(), triggeringSpellManaValue,
                         match.sourcePlanarObject() == null ? null : match.sourcePlanarObject().copy(),
                         false, spellCard.getId()
                 ).withTriggeringPlayer(castingPlayerId));
@@ -1069,10 +1071,8 @@ public class SpellCastTriggerCollectorService {
                 spellTargets.addAll(triggeringSpell.getDeclaredTargetIds());
                 entry.setTriggeringSpellTargetIds(List.copyOf(spellTargets));
             }
-            if (carriesTriggeringSpellManaValue) {
-                entry.setTriggeringCardSnapshot(spellCard);
-                entry.setEventValue(triggeringSpellManaValue);
-            }
+            entry.setTriggeringCardSnapshot(spellCard);
+            entry.setEventValue(triggeringSpellManaValue);
             if (interveningSpellManaValueCondition) {
                 entry.setEventValue(interveningSpellManaValue);
             }
@@ -1143,6 +1143,24 @@ public class SpellCastTriggerCollectorService {
             case MayEffect may -> effectFilterReadsManaValueX(may.wrapped());
             case SequenceEffect sequence -> sequence.steps().stream()
                     .anyMatch(SpellCastTriggerCollectorService::effectFilterReadsManaValueX);
+            default -> false;
+        };
+    }
+
+    /**
+     * Whether {@code effect}'s graveyard target is restricted by the X the ability goes on the stack with ("return target
+     * creature card with mana value equal to that spell's mana value", Krile Baldesion): it is chosen now, as the ability
+     * goes on the stack (CR 603.3d), so the choice takes the spell's mana value as its X.
+     */
+    private static boolean graveyardTargetReadsManaValueX(CardEffect effect) {
+        return switch (effect) {
+            case ReturnCardFromGraveyardEffect returnEffect -> returnEffect.targetGraveyard()
+                    && (returnEffect.requiresManaValueEqualsX() || returnEffect.requiresManaValueAtMostX()
+                    || readsManaValueX(returnEffect.filter()));
+            case ConditionalEffect conditional -> graveyardTargetReadsManaValueX(conditional.wrapped());
+            case MayEffect may -> graveyardTargetReadsManaValueX(may.wrapped());
+            case SequenceEffect sequence -> sequence.steps().stream()
+                    .anyMatch(SpellCastTriggerCollectorService::graveyardTargetReadsManaValueX);
             default -> false;
         };
     }
@@ -1443,39 +1461,6 @@ public class SpellCastTriggerCollectorService {
                     || replacement.condition() instanceof SpellManaSpentGreaterThanSourcePower
                     || effectNeedsSpellManaSpentX(replacement.baseEffect())
                     || effectNeedsSpellManaSpentX(replacement.upgradedEffect());
-        }
-        return false;
-    }
-
-    private boolean effectCarriesTriggeringSpellManaValue(CardEffect effect) {
-        if (effect instanceof TriggeringSpellManaValueEffect) {
-            return true;
-        }
-        if (effect instanceof DealDamageToAnyTargetEffect damage
-                && amountEvaluationService.referencesTargetSpellManaValue(damage.damage())) {
-            return true;
-        }
-        if (effect instanceof LoseLifeEffect loseLife
-                && amountEvaluationService.referencesTargetSpellManaValue(loseLife.amount())) {
-            return true;
-        }
-        if (effect instanceof PutCounterOnTargetPermanentEffect putCounter) {
-            return amountEvaluationService.referencesEventValue(putCounter.amount());
-        }
-        if (effect instanceof SequenceEffect sequence) {
-            return sequence.steps().stream().anyMatch(this::effectCarriesTriggeringSpellManaValue);
-        }
-        if (effect instanceof MayEffect may) {
-            return effectCarriesTriggeringSpellManaValue(may.wrapped())
-                    || (may.elseEffect() != null && effectCarriesTriggeringSpellManaValue(may.elseEffect()));
-        }
-        if (effect instanceof ConditionalEffect conditional) {
-            return conditional.condition() instanceof EventValueAtLeast
-                    || effectCarriesTriggeringSpellManaValue(conditional.wrapped());
-        }
-        if (effect instanceof ConditionalReplacementEffect replacement) {
-            return effectCarriesTriggeringSpellManaValue(replacement.baseEffect())
-                    || effectCarriesTriggeringSpellManaValue(replacement.upgradedEffect());
         }
         return false;
     }

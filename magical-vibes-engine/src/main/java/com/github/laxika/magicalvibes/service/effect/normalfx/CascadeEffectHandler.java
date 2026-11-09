@@ -8,9 +8,12 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
@@ -37,6 +40,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CascadeEffectHandler implements NormalEffectHandlerBean {
 
+    private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
@@ -53,8 +57,11 @@ public class CascadeEffectHandler implements NormalEffectHandlerBean {
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
         String sourceName = entry.getCard().getName();
+        // A cascade granted by a cast trigger compares with the triggering spell's mana value, as it last existed on the
+        // stack once it has left (CR 608.2h); a spell's own cascade with its own (CR 702.85a).
         int threshold = entry.getTriggeringCardId() != null
-                ? entry.getEventValue()
+                ? amountEvaluationService.evaluate(gameData, new TargetSpellManaValue(),
+                        AmountContext.forStackEntry(entry, null))
                 : entry.getCard().getManaValue() + (entry.getCard().getParsedManaCost() == null
                 ? 0 : entry.getXValue() * entry.getCard().getParsedManaCost().getXSymbolCount());
 

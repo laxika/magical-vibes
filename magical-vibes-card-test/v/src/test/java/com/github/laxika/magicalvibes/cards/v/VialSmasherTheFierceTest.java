@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.NicolBolasPlaneswalker;
@@ -18,7 +19,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({VialSmasherTheFierce.class, GrizzlyBears.class, NicolBolasPlaneswalker.class,
-        DarkRitual.class, WalkingBallista.class})
+        DarkRitual.class, WalkingBallista.class, Counterspell.class})
 class VialSmasherTheFierceTest extends BaseCardTest {
 
     @Test
@@ -165,5 +166,24 @@ class VialSmasherTheFierceTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("A first spell countered before the ability resolves deals its mana value as it last existed")
+    void counteredFirstSpellStillDealsItsManaValueAsItLastExisted() {
+        harness.addToBattlefield(player1, new VialSmasherTheFierce());
+        WalkingBallista ballista = new WalkingBallista();
+        harness.setHand(player1, List.of(ballista));
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        gs.playCard(gd, player1, 0, 3, null, null);
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, ballista.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Walking Ballista");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 14);
     }
 }

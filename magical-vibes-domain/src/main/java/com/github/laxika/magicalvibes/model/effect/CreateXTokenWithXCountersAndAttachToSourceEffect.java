@@ -12,7 +12,7 @@ import java.util.Set;
 /** Creates a token with dynamic counters, then attaches the source Equipment to it. */
 public record CreateXTokenWithXCountersAndAttachToSourceEffect(
         CreateXTokenWithXCountersEffect tokenEffect
-) implements TokenCreatingEffect, TriggeringSpellManaValueEffect {
+) implements TokenCreatingEffect {
 
     public CreateXTokenWithXCountersAndAttachToSourceEffect(
             String tokenName, int power, int toughness, CardColor color, Set<CardColor> colors,

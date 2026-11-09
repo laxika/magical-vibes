@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.s.SolRing;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GrahaTiaScionReborn.class, DarkRitual.class, Divination.class, SolRing.class})
+@CardUsed({GrahaTiaScionReborn.class, DarkRitual.class, Divination.class, SolRing.class, Counterspell.class})
 class GrahaTiaScionRebornTest extends BaseCardTest {
 
     @Test
@@ -149,5 +150,26 @@ class GrahaTiaScionRebornTest extends BaseCardTest {
 
         harness.assertLife(player1, 22);
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    void counteredSpellStillSetsTheLifeAndCounters() {
+        harness.addToBattlefield(player1, new GrahaTiaScionReborn());
+        Divination divination = new Divination();
+        harness.setHand(player1, List.of(divination));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castSorcery(player1, 0, 0);
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, divination.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Divination");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        Permanent hero = findPermanent(player1, "Hero");
+        assertThat(hero.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(17);
     }
 }

@@ -1288,7 +1288,6 @@ class SpellCastTriggerCollectorServiceTest {
                     StackEntryType.CREATURE_SPELL, spellCard, player2Id, spellCard.getName(), List.of(), 0));
             everySpellMatches();
             var damage = new DealDamageToAnyTargetEffect(new TargetSpellManaValue());
-            when(amountEvaluationService.referencesTargetSpellManaValue(new TargetSpellManaValue())).thenReturn(true);
 
             boolean result = sut.collectCastAbility(match(perm, player1Id, damage),
                     castAbility(Triggers.opponentCastsSpell().anySpell(), damage),

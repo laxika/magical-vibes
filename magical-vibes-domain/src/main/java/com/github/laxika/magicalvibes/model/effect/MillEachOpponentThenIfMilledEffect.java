@@ -5,7 +5,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * entry's event value alone, so a follow-up reads the triggering spell's mana value from it (Saruman of Many Colors).
  */
 public record MillEachOpponentThenIfMilledEffect(int count, CardEffect thenEffect)
-        implements TriggeringSpellManaValueEffect {
+        implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
@@ -38,7 +38,7 @@ public class DeekahFractalTheorist extends Card {
                 Set.of(CardColor.GREEN, CardColor.BLUE),
                 List.of(CardSubtype.FRACTAL),
                 CounterType.PLUS_ONE_PLUS_ONE,
-                new EventValue());
+                new TargetSpellManaValue());
 
         // Magecraft — Whenever you cast or copy an instant or sorcery spell, create a Fractal
         // token and put +1/+1 counters on it equal to that spell's mana value.

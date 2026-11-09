@@ -6,5 +6,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * put onto the battlefield.
  */
 public record MayCastPermanentSpellFromHandOrPutLandEffect()
-        implements TriggeringSpellManaValueEffect {
+        implements CardEffect {
 }

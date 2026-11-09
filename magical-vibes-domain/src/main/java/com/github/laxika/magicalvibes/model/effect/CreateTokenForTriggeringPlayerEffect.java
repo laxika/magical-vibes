@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  */
 public record CreateTokenForTriggeringPlayerEffect(CreateTokenEffect token, boolean attacking,
                                                   boolean resolveCurrentController)
-        implements TokenCreatingEffect, TriggeringSpellManaValueEffect {
+        implements TokenCreatingEffect {
 
     public CreateTokenForTriggeringPlayerEffect(CreateTokenEffect token, boolean attacking) {
         this(token, attacking, false);

@@ -6,11 +6,14 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellUntilNonlandDealManaValueDifferenceAndMayCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.List;
 import java.util.UUID;
@@ -25,6 +28,7 @@ import org.springframework.stereotype.Component;
 public class ExileTriggeringSpellUntilNonlandDealManaValueDifferenceAndMayCastEffectHandler
         implements NormalEffectHandlerBean {
 
+    private final AmountEvaluationService amountEvaluationService;
     private final ExileService exileService;
     private final DamageSupport damageSupport;
     private final GameLogService gameLogService;
@@ -80,7 +84,9 @@ public class ExileTriggeringSpellUntilNonlandDealManaValueDifferenceAndMayCastEf
             return;
         }
 
-        int spellManaValue = entry.getEventValue();
+        // The exiled spell's mana value as it last existed on the stack (CR 608.2h).
+        int spellManaValue = amountEvaluationService.evaluate(gameData, new TargetSpellManaValue(),
+                AmountContext.forStackEntry(entry, null));
         int damageAmount = Math.abs(spellManaValue - hit.getManaValue());
         if (damageAmount > 0 && !damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
             int damage = damageAmount;

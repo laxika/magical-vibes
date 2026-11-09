@@ -25,7 +25,7 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
                                         PermanentPredicate attachedCountFilter, boolean unpreventable,
                                         boolean recordDamageDealt, TargetFilter triggeredTargetFilter,
                                         DamageSource damageSource)
-        implements DamageDealingEffect, CombatDamageTriggerContextEffect, TriggeringSpellManaValueEffect {
+        implements DamageDealingEffect, CombatDamageTriggerContextEffect {
 
     public DealDamageToPlayersEffect {
         if (damageSource == null) {

@@ -15,8 +15,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * {@link com.github.laxika.magicalvibes.model.LibrarySearchDestination#CAST_WITHOUT_PAYING} flow to
  * optionally cast that card for free and put the rest on the bottom in a random order.</p>
  *
- * <p>The {@link TriggeringSpellManaValueEffect} marker has the generic spell-cast triggers set the stack entry's
- * event value to the triggering spell's mana value for this effect.</p>
+ * <p>A cascade a cast trigger grants to another spell ("spells you cast with mana value 6 or greater have cascade")
+ * compares with that spell's mana value as the ability resolves (the triggering spell, else as it last existed on the
+ * stack, CR 608.2h); a spell's own cascade with its own.</p>
  *
  * @param instantOrSorceryOnly whether the qualifying card must be an instant or sorcery instead of
  *                             any nonland card
@@ -29,7 +30,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  */
 public record CascadeEffect(boolean instantOrSorceryOnly, CardPredicate qualifyingCardFilter,
                              boolean deferCastUntilEndOfTurn, boolean declinedCardStaysExiled)
-        implements TriggeringSpellManaValueEffect {
+        implements CardEffect {
 
     public CascadeEffect(boolean instantOrSorceryOnly, CardPredicate qualifyingCardFilter,
                          boolean deferCastUntilEndOfTurn) {

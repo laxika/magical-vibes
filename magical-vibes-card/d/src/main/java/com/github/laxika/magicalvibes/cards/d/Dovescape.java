@@ -6,12 +6,13 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CounterTriggeringSpellAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
 import java.util.List;
 import java.util.Set;
 
@@ -26,7 +27,7 @@ public class Dovescape extends Card {
                 new CounterTriggeringSpellAndCreateTokensEffect(
                         new CreateTokenEffect(
                                 CardType.CREATURE,
-                                new EventValue(),
+                                new TargetSpellManaValue(),
                                 "Bird",
                                 1,
                                 1,

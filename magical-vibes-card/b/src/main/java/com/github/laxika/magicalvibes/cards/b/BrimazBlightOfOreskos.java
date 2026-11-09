@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.condition.CreatureSubtypeDiedUnderYourControlThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
@@ -40,7 +40,7 @@ public class BrimazBlightOfOreskos extends Card {
                                         new CardTypePredicate(CardType.ARTIFACT),
                                         new CardTypePredicate(CardType.CREATURE)))
                         ))),
-                new CreateXTokenWithXCountersEffect(incubatorToken(), new EventValue(), CounterType.PLUS_ONE_PLUS_ONE));
+                new CreateXTokenWithXCountersEffect(incubatorToken(), new TargetSpellManaValue(), CounterType.PLUS_ONE_PLUS_ONE));
 
         // At the beginning of each end step, if a Phyrexian died under your control this turn,
         // proliferate.

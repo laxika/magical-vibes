@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -7,8 +8,9 @@ import com.github.laxika.magicalvibes.cards.m.MammothSpider;
 import com.github.laxika.magicalvibes.cards.r.RoamingThrone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -21,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ImotiCelebrantOfBounty.class, CrawWurm.class, HillGiant.class, LlanowarElves.class,
-        MammothSpider.class, RoamingThrone.class})
+        MammothSpider.class, RoamingThrone.class, Counterspell.class})
 class ImotiCelebrantOfBountyTest extends BaseCardTest {
 
     @Test
@@ -148,5 +150,26 @@ class ImotiCelebrantOfBountyTest extends BaseCardTest {
     private void prepareTurn(Player activePlayer) {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.forceActivePlayer(activePlayer);
+    }
+
+    @Test
+    @DisplayName("A granted cascade of a spell countered in response compares with its mana value as it last existed")
+    void grantedCascadeOfACounteredSpellUsesItsManaValue() {
+        prepareTurn(player1);
+        harness.addToBattlefield(player1, new ImotiCelebrantOfBounty());
+        harness.setLibrary(player1, List.of(new MammothSpider(), new LlanowarElves()));
+        CrawWurm wurm = new CrawWurm();
+        harness.castFromHand(player1, wurm, "{4}{G}{G}");
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, wurm.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Craw Wurm");
+        harness.passBothPriorities();
+
+        List<String> castable = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
+                .params().cards().stream().map(Card::getName).toList();
+        assertThat(castable).containsExactly("Mammoth Spider");
     }
 }

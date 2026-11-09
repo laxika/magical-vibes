@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * The choice is not a target, matching the rules wording of Vial Smasher the Fierce.
  */
 public record DealDamageToRandomOpponentOrTheirPlaneswalkerEffect(DynamicAmount damage)
-        implements DamageDealingEffect, TriggeringSpellManaValueEffect {
+        implements DamageDealingEffect {
 
     public DealDamageToRandomOpponentOrTheirPlaneswalkerEffect(int damage) {
         this(new Fixed(damage));

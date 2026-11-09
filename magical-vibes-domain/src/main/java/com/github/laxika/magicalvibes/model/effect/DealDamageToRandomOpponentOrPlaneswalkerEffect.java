@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * @param damage the amount of damage to deal, evaluated at resolution
  */
 public record DealDamageToRandomOpponentOrPlaneswalkerEffect(DynamicAmount damage)
-        implements DamageDealingEffect, TriggeringSpellManaValueEffect {
+        implements DamageDealingEffect {
 
     public DealDamageToRandomOpponentOrPlaneswalkerEffect(int damage) {
         this(new Fixed(damage));

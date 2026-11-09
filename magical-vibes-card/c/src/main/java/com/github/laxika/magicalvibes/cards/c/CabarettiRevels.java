@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -20,6 +20,6 @@ public class CabarettiRevels extends Card {
                         new Fixed(1),
                         new CardTypePredicate(CardType.CREATURE),
                         LibrarySearchDestination.BATTLEFIELD,
-                        new ManaValueBound(new EventValue(), false, -1)));
+                        new ManaValueBound(new TargetSpellManaValue(), false, -1)));
     }
 }

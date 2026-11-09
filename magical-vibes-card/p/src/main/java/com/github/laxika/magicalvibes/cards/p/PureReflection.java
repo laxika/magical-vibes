@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
@@ -21,7 +21,7 @@ public class PureReflection extends Card {
 
     public PureReflection() {
         CreateTokenEffect reflectionToken = new CreateTokenEffect(
-                "Reflection", new EventValue(), new EventValue(), CardColor.WHITE,
+                "Reflection", new TargetSpellManaValue(), new TargetSpellManaValue(), CardColor.WHITE,
                 List.of(CardSubtype.REFLECTION), Set.of(), Set.of());
 
         addTrigger(Triggers.playerCastsSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),

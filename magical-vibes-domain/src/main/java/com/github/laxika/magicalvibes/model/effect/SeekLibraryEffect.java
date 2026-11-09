@@ -21,7 +21,7 @@ public record SeekLibraryEffect(DynamicAmount count, CardPredicate filter,
                                 LibrarySearchDestination destination, ManaValueBound manaValueBound,
                                 boolean faceDown, boolean grantPlayUntilNextTurn, CardSubtype grantSubtype,
                                 boolean battlefieldCloaked, boolean triggersSeekAbilities)
-        implements TriggeringSpellManaValueEffect {
+        implements CardEffect {
 
     public SeekLibraryEffect {
         Objects.requireNonNull(count, "count");

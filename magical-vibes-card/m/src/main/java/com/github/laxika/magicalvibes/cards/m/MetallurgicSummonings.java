@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
@@ -26,7 +26,7 @@ public class MetallurgicSummonings extends Card {
 
     public MetallurgicSummonings() {
         CreateTokenEffect constructToken = new CreateTokenEffect(
-                "Construct", new EventValue(), new EventValue(), null,
+                "Construct", new TargetSpellManaValue(), new TargetSpellManaValue(), null,
                 List.of(CardSubtype.CONSTRUCT), Set.of(), Set.of(CardType.ARTIFACT));
 
         addTrigger(Triggers.youCastSpell()

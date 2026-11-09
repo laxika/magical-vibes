@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GhostlyPrison;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SecretArcadeDustyParlor.class, GrizzlyBears.class, Forest.class, GhostlyPrison.class})
+@CardUsed({SecretArcadeDustyParlor.class, GrizzlyBears.class, Forest.class, GhostlyPrison.class, Counterspell.class})
 class SecretArcadeDustyParlorTest extends BaseCardTest {
 
     @Test
@@ -175,5 +176,26 @@ class SecretArcadeDustyParlorTest extends BaseCardTest {
         harness.passBothPriorities();
         return gqs.findPermanentById(gd,
                 harness.getPermanentId(player1, "Secret Arcade // Dusty Parlor"));
+    }
+
+    @Test
+    void dustyParlorUsesACounteredEnchantmentsManaValue() {
+        castRoom(1);
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        GhostlyPrison prison = new GhostlyPrison();
+        harness.setHand(player1, List.of(prison));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0);
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, prison.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Ghostly Prison");
+        harness.passBothPriorities();
+
+        assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 }

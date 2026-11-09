@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 /** Offers an optional payment of life equal to a dynamic amount before resolving an effect. */
 public record MayPayLifeEqualToAmountEffect(DynamicAmount amount, CardEffect wrapped, String prompt)
-        implements CardEffect, TriggeringSpellManaValueEffect {
+        implements CardEffect {
 
     public MayPayLifeEqualToAmountEffect {
         if (amount == null) {

@@ -5,14 +5,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentCountAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public class EndrekSahrMasterBreeder extends Card {
     public EndrekSahrMasterBreeder() {
         addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
                 new CreateTokenForTriggeringPlayerEffect(
-                        new CreateTokenEffect(new EventValue(), "Thrull", 1, 1,
+                        new CreateTokenEffect(new TargetSpellManaValue(), "Thrull", 1, 1,
                                 CardColor.BLACK, List.of(CardSubtype.THRULL), Set.of(), Set.of())));
 
         addTrigger(Triggers.sourceState(new PermanentNotPredicate(new PermanentControllerControlsPermanentCountAtMostPredicate(
