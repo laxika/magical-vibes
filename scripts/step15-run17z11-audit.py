@@ -42,7 +42,7 @@ UNWRAP = re.compile(r"\.(wrapped|thenEffect|elseEffect|tokenEffect|innerEffect|r
 
 # Rows of step 15 (effect-slot-refactor.md, run 17z11's Findings).
 B, C, C2, D, E, E2, E3, F = "17z11b", "17z11c", "17z11c2", "17z11d", "17z11e", "17z11e2", "17z11e3", "17z11f"
-F4 = "17z11f4"
+F4, F6 = "17z11f4", "17z11f6"
 LEGALITY = ("CombatHelper.java", "CombatService.java", "AttackLegalityService.java", "BlockLegalityService.java")
 
 CLASSIFIED = {
@@ -94,23 +94,24 @@ CLASSIFIED = {
     # 17z11f3 (done): the recipient bakes: the tap, activation and dying-creature entries record the permanent's
     # controller whatever the effects are, and an Aura's abilities on the stack record its enchanted permanent's
     # last-known controller as the permanent dies.
-    # 17z11f4: TriggerCollectionService's and the enter service's other bindings, and the combat damage rebuilds.
-    ("CombatDamageService.java", "GainLifeEqualToControlledCreatureCombatDamageEffect"): F4,
-    ("CombatDamageService.java", "ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffect"): F4,
-    ("CombatDamageService.java", "ReturnPermanentsOnCombatDamageToPlayerEffect"): F4,
-    ("EtbTriggerService.java", "TriggeredAbilityCounterEffect"): F4,
-    ("EtbTriggerService.java", "DealDividedDamageEffect"): F4,
-    ("EtbTriggerService.java", "PreventDividedDamageEffect"): F4,
-    ("EtbTriggerService.java", "DistributeCountersAmongTargetsEffect"): F4,
-    ("EtbTriggerService.java", "SacrificeArtifactThenDealDividedDamageEffect"): F4,
-    ("TriggerCollectionService.java", "SearchBlueOrBlackCreatureToBattlefieldOnAllyCombatDamageEffect"): F4,
-    ("TriggerCollectionService.java", "ReturnPermanentsOnCombatDamageToPlayerEffect"): F4,
-    ("TriggerCollectionService.java", "TransformSelfWhenChosenPermanentLeavesEffect"): F4,
-    ("TriggerCollectionService.java", "RegisterDelayedVehicleAttackEffect"): F4,
-    ("TriggerCollectionService.java", "ClashOutcomeConditionalEffect"): F4,
-    ("TriggerCollectionService.java", "PutCardToBattlefieldEffect"): F4,
-    ("TriggerCollectionService.java", "RegisterDelayedReturnDyingCreatureUnderControlEffect"): F4,
-    ("TriggerCollectionService.java", "TemporaryGlobalTriggerEffect"): F4,
+    # 17z11f4 (done; split into 17z11f4 and 17z11f6): the ally-death entry records the creature's actual last-known
+    # power whatever the effects are (Minn reads it with TriggeringPermanentPower(true)); Liliana's and Kaito's emblems
+    # and Noble Purpose are triggered abilities; a clash ability's event value is its outcome; the land-enter and tap
+    # modals are chosen as triggered by TriggeredModalEffect.choiceMadeAsTriggered; Havengul Mystery's and Zenos's
+    # "chosen creature" is the trigger's filter; Power Pack's random target is the entry's, the class only picking the
+    # random-target path (ROUTE).
+    ("CombatDamageService.java", "ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffect"): "ROUTE",
+    # 17z11f6: the temporary global trigger unwraps, Balthier and Fran's crewed Vehicle, Cephalid Constable's
+    # trigger-time targets, Strict Proctor's static rebuild and the enter service's divided-assignment gate.
+    ("CombatDamageService.java", "ReturnPermanentsOnCombatDamageToPlayerEffect"): F6,
+    ("EtbTriggerService.java", "TriggeredAbilityCounterEffect"): F6,
+    ("EtbTriggerService.java", "DealDividedDamageEffect"): F6,
+    ("EtbTriggerService.java", "PreventDividedDamageEffect"): F6,
+    ("EtbTriggerService.java", "DistributeCountersAmongTargetsEffect"): F6,
+    ("EtbTriggerService.java", "SacrificeArtifactThenDealDividedDamageEffect"): F6,
+    ("TriggerCollectionService.java", "ReturnPermanentsOnCombatDamageToPlayerEffect"): F6,
+    ("TriggerCollectionService.java", "RegisterDelayedVehicleAttackEffect"): F6,
+    ("TriggerCollectionService.java", "TemporaryGlobalTriggerEffect"): F6,
     # Classified ROUTE: the class picks the path or is a trigger condition.
     ("CombatAttackService.java", "SkipNextUntapEffect"): "ROUTE",
     ("CombatAttackService.java", "ChooseOneAtTriggerTimeEffect"): "ROUTE",
@@ -133,7 +134,6 @@ CLASSIFIED = {
     ("StepTriggerService.java", "RemoveEggCounterFromExileAndReturnEffect"): "ENGINE",
     ("StepTriggerService.java", "ChooseOneEffect"): "ROUTE",
     ("TriggerCollectionService.java", "EnterBattlefieldOnDiscardEffect"): "ROUTE",
-    ("TriggerCollectionService.java", "ChooseOneAtTriggerTimeEffect"): F4,
     ("TriggerCollectionService.java", "ChooseOneEffect"): "ROUTE",
     ("TriggerCollectionService.java", "ReselectTargetAtRandomEffect"): "ROUTE",
     ("TriggerCollectionService.java", "TriggeredModalEffect"): "ROUTE",
@@ -143,7 +143,7 @@ CLASSIFIED = {
     ("TriggerCollectionService.java", "AttachedCreatureBecomesCopyOfExiledCreatureEffect"): "STATIC",
     ("TriggerCollectionService.java", "DrawCardEffect"): "ROUTE",
 }
-OPEN_ROWS = {F4}
+OPEN_ROWS = {F6}
 
 # The other reads run 17z11 read by hand, all ROUTE or STATIC: a restriction, prevention or replacement, an as-enters
 # choice, a mana ability resolved at once, a modal, graveyard or target prompt picked, a skip or trigger condition.

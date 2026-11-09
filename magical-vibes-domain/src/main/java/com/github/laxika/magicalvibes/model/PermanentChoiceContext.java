@@ -3658,7 +3658,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  opponent controls (e.g. Entangling Trap: "Whenever you clash, tap target creature an opponent
      *  controls. If you won, ..."). The {@code effects} have already been resolved for the clash
      *  outcome (win-conditional effects included only on a won clash). */
-    record ClashTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
+    /** A "whenever you clash" ability's target choice; {@code eventValue} is the clash's outcome (1 won, 0 not). */
+    record ClashTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId,
+                              int eventValue) implements PermanentChoiceContext {}
 
     /** Transform trigger that first chooses a target opponent, then up to one creature that player controls. */
     record TransformOpponentThenCreatureTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,

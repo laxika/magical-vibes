@@ -679,6 +679,7 @@ public class PermanentChoiceTriggerHandlerService {
                 ctt.sourcePermanentId()
         );
         entry.setTargetFilter(TargetFilters.creatureAnOpponentControls());
+        entry.setEventValue(ctt.eventValue());
         pushTriggeredEntry(gameData, entry);
 
         String targetName = getTargetDisplayName(gameData, permanentId);

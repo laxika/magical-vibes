@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.IfWonClashEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -11,12 +12,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SylvanEchoes extends Card {
 
     public SylvanEchoes() {
-        // Whenever you clash and win, you may draw a card.
-        //
-        // Non-targeting clash trigger: TriggerCollectionService.fireClashTriggers keeps the
-        // IfWonClashEffect branch only when the controller won and pushes the wrapped effect
-        // straight onto the stack.
-        addTrigger(Triggers.youClash(), new IfWonClashEffect(
-                new MayEffect(new DrawCardEffect(1), "Draw a card?")));
+        addTrigger(Triggers.youClash(), TriggerOptions.DEFAULT.withEventCondition(new EventValueAtLeast(1)),
+                new MayEffect(new DrawCardEffect(1), "Draw a card?"));
     }
 }

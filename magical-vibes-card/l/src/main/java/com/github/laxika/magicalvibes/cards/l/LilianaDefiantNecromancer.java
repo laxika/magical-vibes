@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -52,8 +55,9 @@ public class LilianaDefiantNecromancer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -8,
                 List.of(new CreateEmblemEffect(
-                        List.of(new RegisterDelayedReturnDyingCreatureUnderControlEffect(
-                                false, null, 0, null, null)),
+                        new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANY),
+                                new RegisterDelayedReturnDyingCreatureUnderControlEffect(
+                                        false, null, 0, null, null)),
                         "Whenever a creature dies, return it to the battlefield under your control at "
                                 + "the beginning of the next end step.")),
                 "-8: You get an emblem with \"Whenever a creature dies, return it to the battlefield "

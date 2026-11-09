@@ -17,9 +17,8 @@ import java.util.List;
  *       If you win, repeat this process." (e.g. Hoarder's Greed)</li>
  * </ul>
  *
- * <p>This is the clash-<em>source</em> counterpart to {@link IfWonClashEffect}: this effect
- * <em>initiates</em> a clash from a spell/ability resolution, whereas {@code IfWonClashEffect}
- * is a "whenever you clash" trigger clause consumed by {@code TriggerCollectionService}.
+ * <p>This effect <em>initiates</em> a clash from a spell/ability resolution. A "whenever you clash" ability
+ * ({@code Triggers.youClash()}) reads the clash's outcome as its event value: 1 if its controller won, else 0.
  *
  * @param beforeClash        effects executed at the start of each iteration, before the clash
  * @param onWin              the effect to execute when the controller wins the clash (may be

@@ -165,7 +165,7 @@ class ImprintDyingCreatureEffectHandlerTest {
                 ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect();
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, vatCard, player1Id, "Mimic Vat trigger",
-                        List.of(effect), vatPerm.getId(), (UUID) null
+                        List.of(effect), (UUID) null, vatPerm.getId()
                 );
                 entry.setTriggeringCardId(dyingCard.getId());
 
@@ -199,7 +199,7 @@ class ImprintDyingCreatureEffectHandlerTest {
                 ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect();
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, vatCard, player1Id, "Mimic Vat trigger",
-                        List.of(effect), vatPerm.getId(), (UUID) null
+                        List.of(effect), (UUID) null, vatPerm.getId()
                 );
                 entry.setTriggeringCardId(dyingCard.getId());
 
@@ -228,7 +228,7 @@ class ImprintDyingCreatureEffectHandlerTest {
                 ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect();
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, vatCard, player1Id, "Mimic Vat trigger",
-                        List.of(effect), vatId, (UUID) null
+                        List.of(effect), (UUID) null, vatId
                 );
                 entry.setTriggeringCardId(dyingCard.getId());
 
@@ -251,7 +251,7 @@ class ImprintDyingCreatureEffectHandlerTest {
                 ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect();
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, vatCard, player1Id, "Mimic Vat trigger",
-                        List.of(effect), vatPerm.getId(), (UUID) null
+                        List.of(effect), (UUID) null, vatPerm.getId()
                 );
                 entry.setTriggeringCardId(dyingCardId);
 
@@ -274,7 +274,7 @@ class ImprintDyingCreatureEffectHandlerTest {
                 ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect();
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, vatCard, player1Id, "Mimic Vat trigger",
-                        List.of(effect), vatPerm.getId(), (UUID) null
+                        List.of(effect), (UUID) null, vatPerm.getId()
                 );
                 entry.setTriggeringCardId(dyingCard.getId());
 

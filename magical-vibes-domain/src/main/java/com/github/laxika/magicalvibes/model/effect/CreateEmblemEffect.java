@@ -21,9 +21,11 @@ import java.util.List;
  * {@code new TriggeredAbility(Triggers.youCastSpell().withFilter(creatureOrPlaneswalker),
  * new GivePoisonCountersEffect(2, PoisonRecipient.TARGET_PLAYER)).withTargetFilter(opponent)}. An emblem has no card
  * that binds its effects to a target group, so a targeted ability names its target filter itself
- * ({@link TriggeredAbility#targetFilter()}). The spell-cast collector reads the cast abilities, the emblem enters, tap and
- * combat damage readers theirs, and {@code TriggerCollectionService.checkEmblemAttackTriggers} "whenever a creature
- * attacks you" ({@code Triggers.creatureAttacksYou()}, Garruk, Apex Predator).</p>
+ * ({@link TriggeredAbility#targetFilter()}). The spell-cast collector reads the cast abilities, the emblem enters, tap,
+ * creature-death and combat damage readers theirs ("whenever a creature dies", Liliana, Defiant Necromancer; "whenever a
+ * creature you control deals combat damage to a player", Kaito Shizuki), and
+ * {@code TriggerCollectionService.checkEmblemAttackTriggers} "whenever a creature attacks you"
+ * ({@code Triggers.creatureAttacksYou()}, Garruk, Apex Predator).</p>
  *
  * <p>{@code reminderText} is the emblem's own rules text without the enclosing quotes — the handler
  * logs {@code "<player> gets an emblem with \"<reminderText>\"."}.</p>

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentPower;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -36,7 +37,7 @@ public class MinnWilyIllusionist extends Card {
                         List.of(StaticAbility.of(illusionBoost))));
 
         CardEffect illusionDies = new PutCardToBattlefieldEffect(new CardIsPermanentPredicate(), "permanent")
-                        .boundedByEventValue();
+                        .boundedBy(new TriggeringPermanentPower(true));
         addTrigger(Triggers.creatureDies(
                         new PermanentHasSubtypePredicate(CardSubtype.ILLUSION),
                         ObjectRelation.YOU_CONTROL),

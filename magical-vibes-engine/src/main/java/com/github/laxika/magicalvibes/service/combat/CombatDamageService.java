@@ -65,7 +65,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstestStrikeEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCreatureCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
@@ -753,7 +752,6 @@ public class CombatDamageService {
         // whether a life-dependent prevention applied to that same damage. Before dead creatures leave.
         processLifelink(gameData, state.combatDamageDealt, lifelinkDealers);
         processGainLifeEqualToDamageDealt(gameData, state.combatDamageDealt);
-        processGainLifeEqualToControlledCreatureCombatDamage(gameData, state.combatDamageDealt);
         checkCombatExcessDamageTriggers(gameData, state, atkBf, defBf);
         processAllyDealtDamageToPlaneswalkerTriggers(gameData, state);
         processOpponentSourceDamageToYouOrYourPermanentTriggers(gameData, state);
@@ -1924,33 +1922,6 @@ public class CombatDamageService {
         }
     }
 
-    private void processGainLifeEqualToControlledCreatureCombatDamage(GameData gameData, Map<Permanent, Integer> combatDamageDealt) {
-        for (var entry : combatDamageDealt.entrySet()) {
-            Permanent creature = entry.getKey();
-            int damageDealt = entry.getValue();
-            if (damageDealt <= 0) continue;
-            UUID controllerId = gameData.findControllerOf(creature);
-            if (controllerId == null) continue;
-            // "Whenever a creature you control deals combat damage, you gain that much life."
-            // Fires once per matching enchantment the creature's controller controls (Noble Purpose).
-            gameData.forEachPermanent((ownerId, perm) -> {
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
-                    if (effect instanceof GainLifeEqualToControlledCreatureCombatDamageEffect) {
-                        UUID enchantmentControllerId = gameQueryService.findPermanentController(gameData, perm.getId());
-                        if (controllerId.equals(enchantmentControllerId)) {
-                            StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                                    perm.getCard(), controllerId, perm.getCard().getName() + "'s ability",
-                                    List.of(new com.github.laxika.magicalvibes.model.effect.GainLifeEffect(damageDealt)),
-                                    (UUID) null, perm.getId());
-                            trigger.setNonTargeting(true);
-                            gameData.enqueueTrigger(trigger);
-                        }
-                    }
-                }
-            });
-        }
-    }
-
     /**
      * Queues ON_ANY_SOURCE_DEALS_DAMAGE reflection triggers (Justice) for each creature that dealt
      * combat damage this step. {@code combatDamageDealt} is keyed by the damage-source creature and
@@ -2254,11 +2225,11 @@ public class CombatDamageService {
                     }
                     Card chosenCard = randomCandidates.get(
                             java.util.concurrent.ThreadLocalRandom.current().nextInt(randomCandidates.size()));
+                    // "Target ... chosen at random": the target is picked as the ability goes on the stack and is the
+                    // entry's, never bound into the effect.
                     StackEntry randomSe = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
-                            creature.getCard().getName() + "'s triggered ability",
-                            List.of(new com.github.laxika.magicalvibes.model.effect
-                                    .ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffect(chosenCard.getId())),
-                            null, creature.getId());
+                            creature.getCard().getName() + "'s triggered ability", List.of(effect),
+                            chosenCard.getId(), Zone.GRAVEYARD, creature.getId());
                     randomSe.setSourcePermanentSnapshot(new Permanent(creature));
                     randomSe.setNonTargeting(true);
                     gameData.stack.add(randomSe);
@@ -2716,7 +2687,7 @@ public class CombatDamageService {
         List<Permanent> attackerBattlefield = gameData.playerBattlefields.get(attackerId);
         if (!battleDamage && !ownerRelativePass) {
             triggerCollectionService.checkEmblemAllyCreatureCombatDamageToPlayerTriggers(
-                    gameData, creature, attackerId, damageDealt);
+                    gameData, creature, attackerId, defenderId, damageDealt);
             triggerCollectionService.collectTemporaryGlobalTriggers(
                     gameData, CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER,
                     creature.getId(), damageDealt);

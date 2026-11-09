@@ -22,7 +22,6 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -52,7 +51,6 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LegacySlots;
-import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LifeGainOpponentLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.ManaCopyRider;
@@ -65,7 +63,6 @@ import com.github.laxika.magicalvibes.model.PendingSourceDamage;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TextReplacement;
-import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasGreaterPowerOrToughnessThanSource;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
@@ -94,7 +91,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardNameAtRe
 import com.github.laxika.magicalvibes.model.effect.CommanderCreaturesDealPowerDamageToPreventedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseGameIfSourceDealtDamageToPlayerThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -144,14 +140,11 @@ import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityE
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ReselectTargetAtRandomEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfWhenChosenPermanentLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.model.effect.ClashOutcomeConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
@@ -176,15 +169,12 @@ import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEqualToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchBlueOrBlackCreatureToBattlefieldOnAllyCombatDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TemporaryGlobalTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -3236,39 +3226,51 @@ public class TriggerCollectionService {
         });
     }
 
+    /**
+     * The emblems' "whenever a creature you control deals combat damage to a player" abilities
+     * ({@code Triggers.creatureYouControlDealsCombatDamageToPlayer()}; Kaito Shizuki's emblem) for {@code creature},
+     * which {@code creatureControllerId} controls, dealing {@code damageDealt} combat damage to {@code damagedPlayerId}.
+     * Abilities of emblems function in the command zone (CR 114.4). Each one goes on the stack once as one object of its
+     * effects (CR 603.3), the emblem's source card as its source, and records the event whatever its effects are: the
+     * creature as its triggering permanent, the player dealt damage as its triggering player and the damage as its
+     * event value. Nothing makes an emblem's ability trigger additional times (CR 110.1: an emblem isn't a permanent);
+     * the reader judges no filter or options, and an ability with one fails loudly instead of triggering wrongly.
+     */
     public void checkEmblemAllyCreatureCombatDamageToPlayerTriggers(GameData gameData, Permanent creature,
-                                                                     UUID creatureControllerId, int damageDealt) {
+                                                                     UUID creatureControllerId, UUID damagedPlayerId,
+                                                                     int damageDealt) {
         if (creature == null || creatureControllerId == null || damageDealt <= 0) {
             return;
         }
-
-        for (Emblem emblem : gameData.emblems) {
+        Trigger watched = Triggers.creatureYouControlDealsCombatDamageToPlayer();
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
             if (!emblem.controllerId().equals(creatureControllerId)) {
                 continue;
             }
-            for (CardEffect effect : emblem.staticEffects()) {
-                if (!(effect instanceof SearchBlueOrBlackCreatureToBattlefieldOnAllyCombatDamageEffect)) {
+            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
+                if (ability.conditions().stream().noneMatch(condition -> condition.trigger().equals(watched))) {
                     continue;
                 }
-                Card source = emblem.sourceCard();
-                Card sourceCard = source != null ? source : creature.getCard();
-                String description = (source != null ? source.getName() : "Emblem") + "'s emblem";
+                if (!ability.options().equals(TriggerOptions.DEFAULT)) {
+                    throw new IllegalStateException(emblemName(emblem) + " has a combat damage ability its reader "
+                            + "doesn't judge: " + ability);
+                }
+                Card source = emblem.sourceCard() != null ? emblem.sourceCard() : creature.getCard();
+                String description = emblemName(emblem);
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
-                        sourceCard,
+                        source,
                         emblem.controllerId(),
                         description,
-                        List.of(new SearchLibraryEffect(
-                                new CardAllOfPredicate(List.of(
-                                        new CardTypePredicate(CardType.CREATURE),
-                                        new CardAnyOfPredicate(List.of(
-                                                new CardColorPredicate(CardColor.BLUE),
-                                                new CardColorPredicate(CardColor.BLACK))))),
-                                LibrarySearchDestination.BATTLEFIELD)));
+                        new ArrayList<>(ability.effects().stream().map(EffectRegistration::effect).toList()));
+                entry.setTriggeringPermanentId(creature.getId());
+                entry.setTriggeringPermanentControllerId(creatureControllerId);
+                entry.setTriggeringPlayerId(damagedPlayerId);
+                entry.setEventValue(damageDealt);
                 entry.setNonTargeting(true);
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.text(description + " triggers."));
-                log.info("Game {} - {} combat-damage search trigger queued", gameData.id, description);
+                log.info("Game {} - {} triggers for combat damage dealt to a player", gameData.id, description);
             }
         }
     }
@@ -4606,12 +4608,14 @@ public class TriggerCollectionService {
     /**
      * Captures, per controller, the permanents with "whenever a creature you control deals combat
      * damage" abilities before state-based actions remove them: the event happens while they are
-     * still on the battlefield (CR 603.2), so one destroyed by that same damage still triggers.
+     * still on the battlefield (CR 603.2), so one destroyed by that same damage still triggers. A
+     * permanent that has lost its printed abilities then (Song of the Dryads) has none to trigger.
      */
     public Map<UUID, List<Permanent>> snapshotAllyCreatureDealsCombatDamageWatchers(GameData gameData) {
         Map<UUID, List<Permanent>> watchers = new LinkedHashMap<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
-            if (!WatchedAbilities.printed(permanent.getCard(), CombatWatch.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE).isEmpty()) {
+            if (!WatchedAbilities.printed(permanent.getCard(), CombatWatch.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE).isEmpty()
+                    && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                 watchers.computeIfAbsent(controllerId, ignored -> new ArrayList<>()).add(permanent);
             }
         });
@@ -4647,6 +4651,9 @@ public class TriggerCollectionService {
         List<Permanent> allyWatchers = snapshottedAllyWatchers != null
                 ? snapshottedAllyWatchers : List.copyOf(battlefield);
         for (Permanent watcher : allyWatchers) {
+            if (snapshottedAllyWatchers == null && gameQueryService.hasLostPrintedAbilities(gameData, watcher)) {
+                continue;
+            }
             for (CardEffect effect : printedCombatEffects(watcher.getCard(), CombatWatch.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE,
                     conditionEvaluationService.judge(gameData,
                             ConditionContext.forPermanent(watcher, sourceControllerId)))) {
@@ -5433,11 +5440,8 @@ public class TriggerCollectionService {
     private boolean triggerAnotherPermanentLeaves(GameData gameData, Permanent perm, UUID controllerId,
             List<CardEffect> effects, ZoneChangeEvent event) {
         Permanent leavingPermanent = event.permanent();
-        UUID leavingId = leavingPermanent.getId();
         UUID ownerId = controllerId;
         for (CardEffect effect : effects) {
-            if (effect instanceof TransformSelfWhenChosenPermanentLeavesEffect
-                    && !leavingId.equals(perm.getChosenPermanentId())) continue;
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     perm.getCard(),
@@ -5447,9 +5451,7 @@ public class TriggerCollectionService {
                     null,
                     perm.getId()
             );
-            if (effect instanceof TransformSelfWhenChosenPermanentLeavesEffect) {
-                entry.setSourcePermanentSnapshot(new Permanent(perm));
-            }
+            entry.setSourcePermanentSnapshot(new Permanent(perm));
             entry.setTriggeringPermanent(leavingPermanent);
             gameData.enqueueTrigger(entry);
             gameLogService.append(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
@@ -6147,26 +6149,20 @@ public class TriggerCollectionService {
         }
         int triggerCount = 1 + gameQueryService.countETBExtraTriggers(gameData, landControllerId, landControllerId,
                 enteringLand);
-        List<CardEffect> resolvedEffects = new ArrayList<>();
-        for (CardEffect effect : effects) {
-            CardEffect resolved = effect;
-            if (resolved instanceof ChooseOneAtTriggerTimeEffect atTriggerTime
-                    && atTriggerTime.maximumChoices() == null) {
-                resolved = atTriggerTime.choice();
-            }
-            resolvedEffects.add(resolved);
-        }
+        List<CardEffect> resolvedEffects = List.copyOf(effects);
         if (resolvedEffects.isEmpty()) {
             return false;
         }
 
         int permanentTriggerCount = triggerCount
                 + gameQueryService.countAdditionalTriggeredAbilityTriggers(gameData, landControllerId, perm);
-        if (resolvedEffects.size() == 1
-                && resolvedEffects.getFirst() instanceof TriggeredModalEffect triggeredModalEffect) {
+        // A modal ability's mode is chosen as it goes on the stack (CR 603.3c).
+        ChooseOneEffect triggerTimeModal = resolvedEffects.size() == 1
+                ? TriggeredModalEffect.choiceMadeAsTriggered(resolvedEffects.getFirst()) : null;
+        if (triggerTimeModal != null) {
             for (int i = 0; i < permanentTriggerCount; i++) {
                 gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                        perm.getCard(), landControllerId, triggeredModalEffect.choice(), perm.getId(),
+                        perm.getCard(), landControllerId, triggerTimeModal, perm.getId(),
                         false, false, null, null, enteringPermanentId));
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             }
@@ -9523,10 +9519,11 @@ public class TriggerCollectionService {
                 }
                 if (read.limitReached(gameData, perm.getId())) continue;
                 CardEffect resolved = read.effect();
-                if (resolved instanceof ChooseOneAtTriggerTimeEffect atTriggerTime
-                        && atTriggerTime.maximumChoices() == null) {
+                // A modal ability's mode is chosen as it goes on the stack (CR 603.3c).
+                ChooseOneEffect triggerTimeModal = TriggeredModalEffect.choiceMadeAsTriggered(resolved);
+                if (triggerTimeModal != null) {
                     gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                            perm.getCard(), ownerId, atTriggerTime.choice(), perm.getId(),
+                            perm.getCard(), ownerId, triggerTimeModal, perm.getId(),
                             false, false, null, null, tappedPermanent.getId()));
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} triggers on ally permanent tap (awaiting mode)",
@@ -12328,45 +12325,45 @@ public class TriggerCollectionService {
         return (deck == null || deck.isEmpty()) ? null : deck.getFirst();
     }
 
+    /**
+     * The "whenever you clash" abilities of {@code clashingPlayerId}'s permanents, which trigger after the clash ends.
+     * The outcome is the ability's event value whatever its effects are: 1 if the player won (CR 701.30d), else 0.
+     * "Whenever you clash and win" is the event condition {@code EventValueAtLeast(1)}, judged as the ability triggers;
+     * "if you won" an "if" read from the entry as the ability resolves, so a later clash doesn't change it.
+     */
     private void fireClashTriggers(GameData gameData, UUID clashingPlayerId, boolean won) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(clashingPlayerId);
         if (battlefield == null) return;
+        int outcome = won ? 1 : 0;
 
         for (Permanent perm : new ArrayList<>(battlefield)) {
             if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
+            TriggerJudge judge = conditionEvaluationService.judge(gameData,
+                    ConditionContext.forPermanent(perm, clashingPlayerId), outcome);
             List<CardEffect> effects = ActionAbilityReader.printedEffects(perm.getCard(),
-                    ActionWatch.ON_CONTROLLER_CLASHES);
+                    ActionWatch.ON_CONTROLLER_CLASHES, judge);
             if (effects.isEmpty()) continue;
-
-            // Resolve win-conditional clauses now: the clash has ended, so the winner is fixed.
-            List<CardEffect> resolvedEffects = new ArrayList<>();
-            for (CardEffect effect : effects) {
-                if (effect instanceof ClashOutcomeConditionalEffect clashOutcome) {
-                    if (clashOutcome.appliesOnWin() == won) resolvedEffects.add(clashOutcome.wrapped());
-                } else {
-                    resolvedEffects.add(effect);
-                }
-            }
-            if (resolvedEffects.isEmpty()) continue;
 
             // Targeting clash triggers (Entangling Trap) route through the ClashTriggerTarget
             // interaction to pick an opponent's creature; non-targeting ones (Rebellion of the
             // Flamekin) go straight onto the stack as a triggered ability.
-            boolean needsTarget = resolvedEffects.stream()
+            boolean needsTarget = effects.stream()
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
             if (needsTarget) {
                 gameData.queueInteraction(new PermanentChoiceContext.ClashTriggerTarget(
-                        perm.getCard(), clashingPlayerId, resolvedEffects, perm.getId()));
+                        perm.getCard(), clashingPlayerId, effects, perm.getId(), outcome));
                 log.info("Game {} - {} clash trigger queued", gameData.id, perm.getCard().getName());
             } else {
-                gameData.stack.add(new StackEntry(
+                StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         clashingPlayerId,
                         perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(resolvedEffects),
+                        new ArrayList<>(effects),
                         null,
-                        perm.getId()));
+                        perm.getId());
+                entry.setEventValue(outcome);
+                gameData.stack.add(entry);
                 log.info("Game {} - {} clash trigger pushed to stack", gameData.id, perm.getCard().getName());
             }
         }
@@ -12502,21 +12499,14 @@ public class TriggerCollectionService {
             entry.setSourcePermanentSnapshot(new Permanent(perm));
             entry.setTriggeringPermanentId(dyingPermanent.getId());
             entry.rememberLastKnownPermanentCard(dyingPermanent.getId(), dyingCard);
-            // A comparison against another creature's power uses the dying creature's actual last
-            // known power, which can be negative (CR 208.3); only damage amounts treat it as 0.
-            boolean comparesPower = entryEffects.stream().anyMatch(
-                    e -> e instanceof ConditionalEffect c
-                            && c.condition() instanceof TriggeringPermanentPowerGreaterThanSourcePower);
-            entry.setTriggeringPermanentPowerAtTrigger(comparesPower ? dyingPowerAtDeath : dyingPower);
+            // "That creature's power" is its actual last-known power, which can be negative (CR 107.1b): a comparison
+            // or a mana value bound reads it as it is, an amount counts it as at least 0 unless it allows a negative.
+            entry.setTriggeringPermanentPowerAtTrigger(dyingPowerAtDeath);
             entry.setTriggeringCard(dyingCard.getId(), gameData.graveyardEntryVersion(dyingCard.getId()));
             entry.setTriggeringPermanent(dyingPermanent, death.attachments());
             // "Its toughness" (Proper Burial, South Wind Avatar): its last-known toughness (CR 608.2h).
             entry.setTriggeringPermanentToughnessAtTrigger(dyingToughnessAtDeath);
-            // A mana value bound compares against the creature's actual last known power, which can be
-            // negative (CR 208.3), so an unclamped power excludes even mana value 0.
-            boolean powerBoundsManaValue = entryEffects.stream().anyMatch(
-                    e -> e instanceof PutCardToBattlefieldEffect put && put.maxManaValue() != null);
-            entry.setEventValue(powerBoundsManaValue ? dyingPowerAtDeath : dyingPower);
+            entry.setEventValue(dyingPower);
             // "This ability triggers only once each turn" can't be made to trigger an additional time.
             int additionalCopies = limit == TriggerLimit.ONCE_EACH_TURN ? 0
                     : gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggers(
@@ -13520,45 +13510,76 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Emblem creature-death triggers — Liliana, Defiant Necromancer's "Whenever a creature dies,
-     * return it to the battlefield under your control at the beginning of the next end step."
-     * Emblems live outside the battlefield, so the permanent sweep above never sees them.
+     * The emblems' "whenever a creature dies" abilities: Sephiroth, One-Winged Angel's marker through its handler, and the
+     * emblems' triggered abilities ({@code Triggers.creatureDies(ObjectRelation.ANY)}; Liliana, Defiant Necromancer's
+     * "return it to the battlefield under your control at the beginning of the next end step"). Abilities of emblems
+     * function in the command zone (CR 114.4), so the permanent sweep never sees them. Each ability goes on the stack
+     * once as one object of its effects (CR 603.3), the emblem's source card as its source, and records the creature
+     * that died ("it": its card, its last-known permanent and controller) whatever its effects are. The reader judges
+     * the trigger's filter on the creature as it last existed and no options; an ability with options or another
+     * relation fails loudly instead of triggering wrongly.
      */
     private void collectEmblemCreatureDeathTriggers(GameData gameData, Card dyingCard,
                                                      TriggerContext.CreatureDeath context) {
-        for (Emblem emblem : gameData.emblems) {
-            for (CardEffect effect : emblem.staticEffects()) {
-                int previousCopies = gameData.beginTriggeredAbilityCopies(1 +
-                        gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggersForEmblem(
-                                gameData, emblem.controllerId()));
-                try {
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            int previousCopies = gameData.beginTriggeredAbilityCopies(1 +
+                    gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggersForEmblem(
+                            gameData, emblem.controllerId()));
+            try {
+                for (CardEffect effect : emblem.staticEffects()) {
                     if (effect instanceof EmblemCreatureDeathTriggerEffect) {
                         var match = new EmblemTriggerMatchContext(
                                 gameData, emblem, emblem.controllerId(), dyingCard, effect);
                         registry.dispatchEmblem(match, effect, context);
-                        continue;
                     }
-                    if (!(effect instanceof RegisterDelayedReturnDyingCreatureUnderControlEffect delayedReturn)) {
-                        continue;
-                    }
-                    Card source = emblem.sourceCard();
-                    String desc = (source != null ? source.getName() : "Emblem") + "'s emblem";
-                    StackEntry entry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            source != null ? source : dyingCard,
-                            emblem.controllerId(),
-                            desc,
-                            new ArrayList<>(List.of(delayedReturn))
-                    );
-                    entry.setTriggeringCardId(dyingCard.getId());
-                    gameData.stack.add(entry);
-                    gameLogService.append(gameData, GameLog.text(desc + " triggers (a creature died)."));
-                    log.info("Game {} - {} schedules a delayed return of {}", gameData.id, desc, dyingCard.getName());
-                } finally {
-                    gameData.restoreTriggeredAbilityCopies(previousCopies);
                 }
+                for (TriggeredAbility ability : emblem.triggeredAbilities()) {
+                    if (emblemSeesCreatureDie(gameData, emblem, ability, context)) {
+                        putEmblemDeathAbilityOnStack(gameData, emblem, ability, dyingCard, context);
+                    }
+                }
+            } finally {
+                gameData.restoreTriggeredAbilityCopies(previousCopies);
             }
         }
+    }
+
+    /** Whether {@code ability} of {@code emblem} triggers on the creature of {@code death} dying. */
+    private boolean emblemSeesCreatureDie(GameData gameData, Emblem emblem, TriggeredAbility ability,
+                                          TriggerContext.CreatureDeath death) {
+        ZoneChangeTrigger trigger = creatureDeathTrigger(ability);
+        if (trigger == null) {
+            return false;
+        }
+        if (trigger.relation() != ObjectRelation.ANY || !ability.options().equals(TriggerOptions.DEFAULT)) {
+            throw new IllegalStateException(emblemName(emblem) + " has a death ability its reader doesn't judge: "
+                    + ability);
+        }
+        Permanent lastKnown = death.dyingPermanent();
+        return trigger.filter() == null || lastKnown != null
+                && predicateEvaluationService.matchesPermanentPredicate(lastKnown, trigger.filter(),
+                FilterContext.of(gameData).withSourceControllerId(emblem.controllerId()));
+    }
+
+    private void putEmblemDeathAbilityOnStack(GameData gameData, Emblem emblem, TriggeredAbility ability,
+                                              Card dyingCard, TriggerContext.CreatureDeath death) {
+        Card source = emblem.sourceCard() != null ? emblem.sourceCard() : dyingCard;
+        String description = emblemName(emblem);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source,
+                emblem.controllerId(),
+                description,
+                new ArrayList<>(ability.effects().stream().map(EffectRegistration::effect).toList()));
+        entry.setTriggeringCardId(dyingCard.getId());
+        if (death.dyingPermanent() != null) {
+            entry.setTriggeringPermanent(death.dyingPermanent());
+        }
+        entry.setTriggeringPermanentControllerId(death.dyingCreatureControllerId());
+        entry.setNonTargeting(true);
+        gameData.stack.add(entry);
+        gameLogService.append(gameData, GameLog.text(description + " triggers (a creature died)."));
+        log.info("Game {} - {} triggers for {} dying", gameData.id, description, dyingCard.getName());
     }
 
     private boolean dispatchCounterReturnForLeavingSource(GameData gameData, UUID controllerId,
@@ -13893,8 +13914,6 @@ public class TriggerCollectionService {
                     && gameQueryService.withEnteringPermanent(gameData, leavingOwnerId != null ? leavingOwnerId : ownerId, leavingPermanent,
                     () -> gameQueryService.hasLostAllAbilities(gameData, perm))) return;
             for (CardEffect effect : schemeLeavesBattlefieldEffects(gameData, perm, ownerId, leavingPermanent)) {
-                if (effect instanceof TransformSelfWhenChosenPermanentLeavesEffect
-                        && !leavingId.equals(perm.getChosenPermanentId())) continue;
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
@@ -13904,9 +13923,7 @@ public class TriggerCollectionService {
                         null,
                         perm.getId()
                 );
-                if (effect instanceof TransformSelfWhenChosenPermanentLeavesEffect) {
-                    entry.setSourcePermanentSnapshot(new Permanent(perm));
-                }
+                entry.setSourcePermanentSnapshot(new Permanent(perm));
                 entry.setTriggeringPermanent(leavingPermanent);
                 gameData.enqueueTrigger(entry);
                 gameLogService.append(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));

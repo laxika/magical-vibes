@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentIsChosenPermanentPredicate;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -8,7 +10,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfWhenChosenPermanentLeavesEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,8 +29,9 @@ public class HavengulMystery extends Card {
 
         // When the creature put onto the battlefield with Havengul Mystery leaves the battlefield,
         // transform Havengul Mystery.
-        addTrigger(Triggers.leavesBattlefield(null, ObjectRelation.ANOTHER),
-                new TransformSelfWhenChosenPermanentLeavesEffect());
+        addTrigger(Triggers.leavesBattlefield(new PermanentIsChosenPermanentPredicate(),
+                        ObjectRelation.ANOTHER),
+                new TransformSelfEffect());
 
         // {T}, Pay 1 life: Add {B}.
         addActivatedAbility(new ActivatedAbility(

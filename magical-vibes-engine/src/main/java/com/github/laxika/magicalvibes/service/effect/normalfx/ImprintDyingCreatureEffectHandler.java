@@ -39,7 +39,8 @@ public class ImprintDyingCreatureEffectHandler implements NormalEffectHandlerBea
 
         // The ability resolves even if the source left the battlefield: the card is still exiled and the
         // previously exiled cards still return, but the new card is no longer linked to a permanent.
-        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        Permanent sourcePermanent = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Card sourceCard = sourcePermanent != null ? sourcePermanent.getCard() : entry.getCard();
 
         // Find the dying card in any graveyard

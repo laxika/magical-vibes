@@ -17,31 +17,22 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraOrEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGraveyardThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileFromHandToImprintEffect;
-import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLandDropEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
@@ -495,27 +486,25 @@ public class MayAbilityHandlerService {
         }
 
         if (accepted) {
-            StackEntry entry;
-            if (ability.sourcePermanentId() != null) {
-                // Combat damage trigger with source permanent and target context
-                entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        ability.sourceCard(),
-                        ability.controllerId(),
-                        ability.sourceCard().getName() + "'s ability",
-                        new ArrayList<>(ability.effects()),
-                        ability.targetCardId(),
-                        ability.sourcePermanentId()
-                );
-            } else {
-                entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        ability.sourceCard(),
-                        ability.controllerId(),
-                        ability.sourceCard().getName() + "'s ability",
-                        new ArrayList<>(ability.effects()),
-                        xValuePaid
-                );
+            // The entry records its source and the event's object whatever its effects are: the source permanent the
+            // pending ability names, else the permanent of its source card, and the object the event was about as a
+            // non-targeting referent (a targeted effect chose its target above).
+            UUID sourcePermanentId = ability.sourcePermanentId() != null
+                    ? ability.sourcePermanentId() : sourcePermanentOnBattlefield(gameData, ability);
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    ability.sourceCard(),
+                    ability.controllerId(),
+                    ability.sourceCard().getName() + "'s ability",
+                    new ArrayList<>(ability.effects()),
+                    ability.targetCardId(),
+                    sourcePermanentId
+            );
+            if (ability.sourcePermanentId() == null) {
+                entry.setXValue(xValuePaid);
+            }
+            if (ability.targetCardId() != null) {
+                entry.setNonTargeting(true);
             }
             entry.setActivePlayerId(ability.activePlayerId());
             entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
@@ -534,36 +523,6 @@ public class MayAbilityHandlerService {
                 entry.setXValue(ability.xValue());
             }
 
-            // Self-targeting effects need the source permanent's ID to resolve
-            boolean needsSelfTarget = ability.effects().stream().anyMatch(e ->
-                    e instanceof PutCountersOnSelfEffect
-                            || (e instanceof AnimatePermanentsEffect animate && animate.scope() == GrantScope.SELF)
-                            || e instanceof BoostSelfEffect
-                            || e instanceof ImprintDyingCreatureEffect
-                            || e instanceof ExileFromHandToImprintEffect
-                            || e instanceof ReturnDyingCreatureToBattlefieldEffect
-                            || e instanceof BecomeCopyOfDyingCreatureEffect);
-            if (needsSelfTarget) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(ability.controllerId());
-                if (battlefield != null) {
-                    for (Permanent p : battlefield) {
-                        if (p.getCard() == ability.sourceCard()) {
-                            entry.setTargetId(p.getId());
-                            break;
-                        }
-                    }
-                }
-            }
-
-            // Effects that copy an entering permanent need the target permanent ID from the trigger
-            boolean needsEnteringTarget = ability.effects().stream()
-                    .anyMatch(e -> e instanceof CreateTokenCopyOfTargetPermanentEffect);
-            if (needsEnteringTarget && ability.targetCardId() != null) {
-                entry.setTargetId(ability.targetCardId());
-            }
-            if (ability.effects().stream().anyMatch(ImprintDyingCreatureEffect.class::isInstance)) {
-                entry.setNonTargeting(true);
-            }
             entry.setAttackedTargetId(ability.attackedTargetId());
 
             gameData.stack.add(entry);
@@ -936,7 +895,6 @@ public class MayAbilityHandlerService {
                 handleResolutionTimeGraveyardTargetSelection(gameData, player, ability, pendingEntry);
                 return;
             }
-            if (pendingEntry != null) { setUpSelfTargetIfNeeded(gameData, ability, pendingEntry, innerEffect); }
             gameData.resolvedMayAccepted = true;
         } else {
             gameLogService.append(gameData,
@@ -990,7 +948,6 @@ public class MayAbilityHandlerService {
             handleResolutionTimeGraveyardTargetSelection(gameData, player, ability, pendingEntry);
             return;
         }
-        if (pendingEntry != null) { setUpSelfTargetIfNeeded(gameData, ability, pendingEntry, innerEffect); }
         gameData.resolvedMayAccepted = true;
         if (gameData.pendingEffectResolutionEntry != null) {
             effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry,
@@ -1189,13 +1146,18 @@ public class MayAbilityHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void setUpSelfTargetIfNeeded(GameData gameData, PendingMayAbility ability, StackEntry pendingEntry, CardEffect innerEffect) {
-        if (innerEffect == null) return;
-        boolean needsSelfTarget = innerEffect instanceof PutCountersOnSelfEffect || (innerEffect instanceof AnimatePermanentsEffect animate && animate.scope() == GrantScope.SELF) || innerEffect instanceof BoostSelfEffect || innerEffect instanceof ImprintDyingCreatureEffect || innerEffect instanceof ExileFromHandToImprintEffect || innerEffect instanceof ReturnDyingCreatureToBattlefieldEffect;
-        if (needsSelfTarget && pendingEntry.getTargetId() == null) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(ability.controllerId());
-            if (battlefield != null) { for (Permanent p : battlefield) { if (p.getCard() == ability.sourceCard()) { pendingEntry.setTargetId(p.getId()); break; } } }
+    /** The permanent of {@code ability}'s source card on its controller's battlefield, or {@code null}. */
+    private static UUID sourcePermanentOnBattlefield(GameData gameData, PendingMayAbility ability) {
+        List<Permanent> battlefield = gameData.playerBattlefields.get(ability.controllerId());
+        if (battlefield == null) {
+            return null;
         }
+        for (Permanent permanent : battlefield) {
+            if (permanent.getCard() == ability.sourceCard()) {
+                return permanent.getId();
+            }
+        }
+        return null;
     }
 
     /**

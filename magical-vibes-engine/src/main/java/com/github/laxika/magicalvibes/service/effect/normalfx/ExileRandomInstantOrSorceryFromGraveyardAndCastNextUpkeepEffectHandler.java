@@ -36,7 +36,7 @@ public class ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffectHand
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        UUID chosenCardId = ((ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffect) effect).chosenCardId();
+        UUID chosenCardId = entry.getTargetId();
         List<Card> graveyard = gameData.playerGraveyards.getOrDefault(controllerId, List.of());
         Card exiled = graveyard.stream()
                 .filter(card -> card.getId().equals(chosenCardId))

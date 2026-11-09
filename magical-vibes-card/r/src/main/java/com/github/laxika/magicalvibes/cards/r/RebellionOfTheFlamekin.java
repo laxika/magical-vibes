@@ -1,13 +1,14 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.IfLostClashEffect;
-import com.github.laxika.magicalvibes.model.effect.IfWonClashEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,18 +19,11 @@ import java.util.Set;
 public class RebellionOfTheFlamekin extends Card {
 
     public RebellionOfTheFlamekin() {
-        // Whenever you clash, you may pay {1}. If you do, create a 3/1 red Elemental Shaman creature
-        // token. If you won, that token gains haste until end of turn.
-        //
-        // The token is created either way, so both branches offer the same "pay {1}" may-pay; only
-        // the granted haste differs. Since the clash winner is fixed the moment the trigger fires,
-        // TriggerCollectionService.fireClashTriggers picks exactly one branch: the IfWonClashEffect
-        // (haste) variant on a win, the IfLostClashEffect (no haste) variant otherwise. Non-targeting,
-        // so it goes straight onto the stack rather than the ClashTriggerTarget interaction.
-        addTrigger(Triggers.youClash(), new IfWonClashEffect(
-                new MayPayManaEffect("{1}", createTokenEffect(Set.of(Keyword.HASTE)),
-                        "Pay {1} to create a 3/1 red Elemental Shaman with haste?")),
-                new IfLostClashEffect(
+        // The clash's outcome is the ability's event value, so exactly one "if" holds as it resolves.
+        addTrigger(Triggers.youClash(), new ConditionalEffect(new EventValueAtLeast(1),
+                        new MayPayManaEffect("{1}", createTokenEffect(Set.of(Keyword.HASTE)),
+                                "Pay {1} to create a 3/1 red Elemental Shaman with haste?")),
+                new ConditionalEffect(new NotCondition(new EventValueAtLeast(1)),
                         new MayPayManaEffect("{1}", createTokenEffect(Set.of()),
                                 "Pay {1} to create a 3/1 red Elemental Shaman?")));
     }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GruulKeyrune;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({FiveAlarmFire.class, GrizzlyBears.class, SerraAngel.class, GruulKeyrune.class})
+@CardUsed({FiveAlarmFire.class, GrizzlyBears.class, SerraAngel.class, GruulKeyrune.class,
+        SongOfTheDryads.class})
 class FiveAlarmFireTest extends BaseCardTest {
 
     private Permanent addFire() {
@@ -186,6 +188,24 @@ class FiveAlarmFireTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Serra Angel");
+        assertThat(fire.getCounterCount(CounterType.BLAZE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Five-Alarm Fire that lost its abilities to Song of the Dryads gets no blaze counter")
+    void fireTurnedIntoForestDoesNotTrigger() {
+        Permanent fire = addFire();
+        Permanent song = harness.addToBattlefieldAndReturn(player2, new SongOfTheDryads());
+        song.setAttachedTo(fire.getId());
+        addReadyCreature(new GrizzlyBears(), player1).setAttacking(true);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities(); // combat damage
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+        assertThat(gd.stack).isEmpty();
         assertThat(fire.getCounterCount(CounterType.BLAZE)).isZero();
     }
 }

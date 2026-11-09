@@ -312,14 +312,15 @@ public class LegacyTriggerBindings {
 
     private boolean handleDeathMayPayMana(Ctx c, MayPayManaEffect mayPay) {
         // CR 603.3d: the ability's target is chosen as the trigger goes on the stack even though
-        // the "you may pay" happens on resolution (Drainpipe Vermin). Untargeted may-pay death
-        // triggers (the Spellbomb cycle) skip the stack and prompt directly.
-        var wrappedSpec = mayPay.wrapped().targetSpec();
-        if (wrappedSpec.admits(TargetPredicate.Kind.PERMANENT) || wrappedSpec.admits(TargetPredicate.Kind.PLAYER)) {
+        // the "you may pay" happens on resolution (Drainpipe Vermin); the ability's declared target is its
+        // paid effect's, else its "if you don't" effect's. Untargeted may-pay death triggers (the Spellbomb
+        // cycle) go on the stack and ask as they resolve.
+        var targetSpec = mayPay.targetSpec();
+        if (targetSpec.admits(TargetPredicate.Kind.PERMANENT) || targetSpec.admits(TargetPredicate.Kind.PLAYER)) {
             c.gameData().queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     c.dyingCard(), c.controllerId(), new ArrayList<>(List.of(mayPay))
             ).withTriggeringPermanent(c.dyingPermanent(), c.event().attachments()));
-        } else if (wrappedSpec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+        } else if (targetSpec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             c.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     c.dyingCard(), c.controllerId(), List.of(mayPay)));
         } else {

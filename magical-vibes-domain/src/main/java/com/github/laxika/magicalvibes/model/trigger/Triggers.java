@@ -1987,7 +1987,10 @@ public final class Triggers {
         return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.PAYS_TAX, PlayerRelation.OPPONENT);
     }
 
-    /** "Whenever you clash" */
+    /**
+     * "Whenever you clash": its event value is the clash's outcome, 1 if you won, else 0. "Whenever you clash and win" /
+     * "whenever you win a clash" is the event condition {@code EventValueAtLeast(1)}, and "if you won" an "if" with it.
+     */
     public static PlayerActionTrigger youClash() {
         return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.CLASHES, PlayerRelation.YOU);
     }

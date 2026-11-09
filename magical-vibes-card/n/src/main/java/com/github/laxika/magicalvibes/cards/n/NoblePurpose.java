@@ -1,15 +1,16 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToControlledCreatureCombatDamageEffect;
 
 @CardRegistration(set = "8ED", collectorNumber = "31")
 @CardRegistration(set = "MMQ", collectorNumber = "32")
 public class NoblePurpose extends Card {
 
     public NoblePurpose() {
-        // Whenever a creature you control deals combat damage, you gain that much life.
-        addStaticEffect(new GainLifeEqualToControlledCreatureCombatDamageEffect());
+        addTrigger(Triggers.creatureYouControlDealsCombatDamage(), new GainLifeEffect(new EventValue()));
     }
 }
