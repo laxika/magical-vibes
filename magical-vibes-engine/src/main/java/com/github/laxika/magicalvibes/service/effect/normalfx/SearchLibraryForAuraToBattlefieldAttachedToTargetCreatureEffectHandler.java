@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentManaValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -16,6 +17,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
@@ -36,6 +39,7 @@ public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHand
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final LibrarySearchSupport librarySearchSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -108,12 +112,13 @@ public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHand
         log.info("Game {} - {} searches library for an Aura card ({} matches)", gameData.id, playerName, matchingCards.size());
     }
 
+    /**
+     * "Mana value less than or equal to that Aura" as the ability resolves: the entering Aura as it is, else as it last
+     * existed on the battlefield (CR 608.2h).
+     */
     private int triggeringAuraManaValue(GameData gameData, StackEntry entry) {
-        if (entry.getEventValue() > 0) return entry.getEventValue();
-        UUID triggeringPermanentId = entry.getTriggeringPermanentId();
-        Permanent triggeringPermanent = triggeringPermanentId == null
-                ? null : gameQueryService.findPermanentById(gameData, triggeringPermanentId);
-        return triggeringPermanent == null ? entry.getEventValue() : triggeringPermanent.getCard().getManaValue();
+        return amountEvaluationService.evaluate(gameData, new TriggeringPermanentManaValue(),
+                AmountContext.forStackEntry(entry, null));
     }
 
     private Set<String> controlledAuraNames(GameData gameData, UUID controllerId) {

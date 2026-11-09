@@ -34,7 +34,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenCreateTokensEqualToEnteringManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenDealDamageToEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -497,33 +496,6 @@ public class EnterTriggerCollectorService {
                     sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), enteringPermanentId));
         }
         logTriggered(match);
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = SacrificeSelfThenCreateTokensEqualToEnteringManaValueEffect.class,
-            watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
-    private boolean handleAnyCreatureSacrificeSelfCreateTokens(
-            TriggerMatchContext match,
-            SacrificeSelfThenCreateTokensEqualToEnteringManaValueEffect effect,
-            TriggerContext ctx) {
-        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        Card sourceCard = match.permanent().getCard();
-        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
-                    null,
-                    match.permanent().getId());
-            entry.setEventValue(pe.enteringCard().getManaValue());
-            entry.setNonTargeting(true);
-            match.gameData().stack.add(entry);
-        }
-        logTriggered(match);
-        log.info("Game {} - {} triggers for {} entering (sacrifice and create tokens)",
-                match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
         return true;
     }
 

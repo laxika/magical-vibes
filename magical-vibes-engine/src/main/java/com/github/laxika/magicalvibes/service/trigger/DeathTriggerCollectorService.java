@@ -1,19 +1,14 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
-import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -27,9 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemCreatureDeathTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.DyingCreatureControllerMaySearchLibraryForSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureControllerMaySearchLibraryForCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndReturnSourceToHandEffect;
@@ -46,8 +39,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCurseAttachedToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect;
@@ -66,8 +57,6 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -218,9 +207,6 @@ public class DeathTriggerCollectorService {
                 (match, effect, context) -> handleAllyNontokenMay(match, (MayEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, MayPayManaEffect.class,
                 (match, effect, context) -> handleAllyNontokenMayPay(match, (MayPayManaEffect) effect, context));
-        registerCreatureDeath(CreatureDeathWatch.ANY, DyingCreatureControllerMaySearchLibraryForSameNameEffect.class,
-                (match, effect, context) -> handleAnyCreatureDeathDyingControllerSearchesSameName(match,
-                        (DyingCreatureControllerMaySearchLibraryForSameNameEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, CardEffect.class,
                 (match, effect, context) -> handleAllyNontokenDefault(match, (CardEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, ConditionalEffect.class,
@@ -507,28 +493,6 @@ public class DeathTriggerCollectorService {
     boolean handleReturnSourceTransformedAttachedToTargetPlayer(TriggerMatchContext match,
             ReturnSourceTransformedFromGraveyardAttachedToTargetPlayerEffect effect, TriggerContext ctx) {
         addEnchantedPermanentDeathEntry(match, ctx, effect);
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = EnchantedCreatureControllerMaySearchLibraryForCreatureToBattlefieldEffect.class,
-            watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
-    boolean handleEnchantedCreatureControllerMaySearch(TriggerMatchContext match,
-            EnchantedCreatureControllerMaySearchLibraryForCreatureToBattlefieldEffect effect,
-            TriggerContext ctx) {
-        TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
-        // The trigger is the Aura's ability (controlled by the Aura's controller), but the dying creature's
-        // controller makes the choice and searches their own library.
-        StackEntry entry = addEnchantedPermanentDeathEntryReturning(match, ctx,
-                new MayEffect(
-                        new SearchLibraryEffect(new Fixed(1), new CardTypePredicate(CardType.CREATURE),
-                                LibrarySearchDestination.BATTLEFIELD,
-                                LibrarySearchPlayer.TRIGGERING_PERMANENT_CONTROLLER),
-                        "Search your library for a creature card and put it onto the battlefield?",
-                        null,
-                        MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER),
-                null, null);
-        entry.setNonTargeting(true);
-        entry.setTriggeringPermanentControllerId(epd.dyingPermanentControllerId());
         return true;
     }
 
@@ -1963,31 +1927,6 @@ public class DeathTriggerCollectorService {
         match.gameData().queueMayAbility(match.permanent().getCard(), cd.dyingCreatureControllerId(), mayPay,
                 null, match.permanent().getId());
         markDyingCard(match.gameData(), match.gameData().stack.getLast(), cd.dyingCard());
-        return true;
-    }
-
-    boolean handleAnyCreatureDeathDyingControllerSearchesSameName(TriggerMatchContext match,
-            DyingCreatureControllerMaySearchLibraryForSameNameEffect effect, TriggerContext ctx) {
-        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
-        String dyingName = cd.dyingCard().getName();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new MayEffect(
-                        new SearchTargetLibraryEffect(1, new CardNamedPredicate(dyingName),
-                                LibrarySearchDestination.BATTLEFIELD_UNDER_SEARCHER, true,
-                                LibrarySearchPlayer.TARGET_PLAYER),
-                        "Search your library for a card named " + dyingName
-                                + " and put it onto the battlefield?",
-                        null, MayChoicePlayer.TARGET_PLAYER))),
-                cd.dyingCreatureControllerId(),
-                match.permanent().getId()
-        );
-        entry.setNonTargeting(true);
-        match.gameData().stack.add(entry);
-        logAnyCreatureDeath(match);
         return true;
     }
 

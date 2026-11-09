@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTrigge
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import java.util.List;
@@ -44,6 +45,32 @@ class MayEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
         assertThat(gd.pendingMayAbilities).isEmpty();
         assertThat(gd.resolvingMayEffectFromStack).isFalse();
+    }
+
+    @Test
+    @DisplayName("Asks nothing for a graveyard return when no target card was chosen")
+    void skipsGraveyardReturnWithoutTargetCards() {
+        MayEffect mayEffect = new MayEffect(new ReturnTargetCardsFromGraveyardToHandEffect(null, 1), "Return?");
+        StackEntry entry = createEntry(createCard("Tilling Treefolk"), player1Id, List.of(mayEffect));
+
+        resolveEffect(gd, entry, mayEffect);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.resolvingMayEffectFromStack).isFalse();
+    }
+
+    @Test
+    @DisplayName("Asks for a graveyard return when a target card was chosen")
+    void asksForGraveyardReturnWithATargetCard() {
+        ReturnTargetCardsFromGraveyardToHandEffect returnCard = new ReturnTargetCardsFromGraveyardToHandEffect(null, 1);
+        MayEffect mayEffect = new MayEffect(returnCard, "Return?");
+        StackEntry entry = createEntry(createCard("Tilling Treefolk"), player1Id, List.of(mayEffect));
+        entry.setTargetCardIds(List.of(UUID.randomUUID()));
+
+        resolveEffect(gd, entry, mayEffect);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingMayAbilities.getFirst().effects()).containsExactly(returnCard);
     }
 
     @Test

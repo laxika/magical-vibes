@@ -295,6 +295,12 @@ Set<CardType> requiredCardTypes) implements TargetCardGroupEffect {
                 false, Set.of(), false, false, List.of(), false, false, null, false, true);
     }
 
+    /** Returns only its target cards, so with none chosen ("up to N", CR 601.2c) it does nothing. */
+    @Override
+    public boolean actsOnlyOnItsTargets() {
+        return true;
+    }
+
     @Override
     public TargetSpec targetSpec() {
         if (declaresGraveyardTarget) {

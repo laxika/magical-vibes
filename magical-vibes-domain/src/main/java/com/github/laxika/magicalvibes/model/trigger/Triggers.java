@@ -280,6 +280,14 @@ public final class Triggers {
         return new ZoneChangeTrigger(relation, filter, Set.of(Zone.LIBRARY), null, Set.of(ZoneChangeCause.MILL));
     }
 
+    /**
+     * "When [object] is exiled while you're activating a craft ability" (Market Gnome): exiled from the battlefield to
+     * pay a craft ability's cost, as the permanent with craft or as one of its materials (CR 702.167a).
+     */
+    public static ZoneChangeTrigger exiledWhileActivatingCraftAbility(ObjectRelation relation) {
+        return new ZoneChangeTrigger(relation, Set.of(Zone.BATTLEFIELD), Zone.EXILE, Set.of(ZoneChangeCause.CRAFT));
+    }
+
     /** "Whenever [a filter object] is put into exile from [zones]"; no zones for anywhere. */
     public static ZoneChangeTrigger exiledFrom(Set<Zone> from, PermanentPredicate filter, ObjectRelation relation) {
         return new ZoneChangeTrigger(relation, filter, from, Zone.EXILE, Set.of());
@@ -960,6 +968,15 @@ public final class Triggers {
      */
     public static DamageTrigger instantOrSorceryYouControlDealsDamageToOpponent() {
         return new DamageTrigger(DamageTrigger.DamageEvent.INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT,
+                ObjectRelation.YOU_CONTROL);
+    }
+
+    /**
+     * "Whenever an instant or sorcery spell you control deals damage to a player" (Syr Carah, the Bold): once for each
+     * player dealt damage, "that player" being that player and "that much" the damage dealt to them.
+     */
+    public static DamageTrigger instantOrSorceryYouControlDealsDamageToPlayer() {
+        return new DamageTrigger(DamageTrigger.DamageEvent.INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_PLAYER,
                 ObjectRelation.YOU_CONTROL);
     }
 

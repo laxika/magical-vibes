@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlanarTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlayerActionTrigger;
+import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.trigger.StateTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TapTrigger;
@@ -112,14 +113,17 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     }
 
     /**
-     * Rejects a {@link #targetFilter} on an ability with a trigger condition other than a cast trigger: only the
-     * spell-cast collector reads the ability's own target filter.
+     * Rejects a {@link #targetFilter} on an ability with a trigger condition other than a cast trigger or "whenever you
+     * gain life": only the spell-cast collector and the emblems' life-gain reader read the ability's own target filter
+     * (the permanents' life collectors reject one as they read the ability).
      */
     private static void requireTargetFilterReader(List<TriggerCondition> conditions, TargetFilter targetFilter) {
         if (targetFilter != null && conditions.stream().map(TriggerCondition::trigger).anyMatch(trigger
-                -> !(trigger instanceof SpellTrigger spell) || spell.event() != SpellTrigger.SpellEvent.CAST)) {
-            throw new IllegalArgumentException("Only the spell-cast collector reads an ability's own target filter: "
-                    + conditions);
+                -> !(trigger instanceof SpellTrigger spell && spell.event() == SpellTrigger.SpellEvent.CAST)
+                && !(trigger instanceof LifeTrigger life && life.event() == LifeTrigger.LifeEvent.GAINS
+                && life.player() == PlayerRelation.YOU && life.spellFilter() == null && !life.firstEachTurn()))) {
+            throw new IllegalArgumentException("Only the spell-cast collector and the emblems' life-gain reader read "
+                    + "an ability's own target filter: " + conditions);
         }
     }
 

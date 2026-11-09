@@ -111,7 +111,8 @@ public class SearchLibraryEffectHandler implements NormalEffectHandlerBean {
                 ? effect.castFromGraveyardCount()
                 : Math.max(0, amountEvaluationService.evaluate(gameData, effect.count(), amountContext));
 
-        CardPredicate filter = effect.filter();
+        // "A card with the same name" as the triggering permanent, read as the ability resolves (Verdant Succession).
+        CardPredicate filter = AmountEvaluationService.bindTriggeringPermanentName(gameData, effect.filter(), entry);
         ManaValueBound bound = effect.manaValueBound();
         boolean restricted = filter != null || bound != null || totalManaValueBound != null;
         CardPredicate searchFilter = restricted

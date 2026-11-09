@@ -5,12 +5,17 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.FirebenderAscensionEffect;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,6 +33,12 @@ public class FirebenderAscension extends Card {
                 List.of(new TriggeredAbility(Triggers.attacks(),
                         new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 1))),
                 List.of(), false, false, false, 0, Set.of()));
-        addTrigger(Triggers.attackingCreatureYouControlAbilityTriggers(), new FirebenderAscensionEffect());
+        // Whenever a creature you control attacking causes a triggered ability of that creature to trigger, put a
+        // quest counter on this enchantment. Then if it has four or more quest counters on it, you may copy that
+        // ability. You may choose new targets for the copy.
+        addTrigger(Triggers.attackingCreatureYouControlAbilityTriggers(),
+                new PutCountersOnSourceCardEffect(CounterType.QUEST),
+                new ConditionalEffect(new SourceCounterThreshold(4, CounterType.QUEST),
+                        new MayEffect(new CopyTriggeringSpellOrAbilityEffect(), "Copy that triggered ability?")));
     }
 }

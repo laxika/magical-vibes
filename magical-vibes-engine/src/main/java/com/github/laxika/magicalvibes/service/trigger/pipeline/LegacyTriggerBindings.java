@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourc
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardAndShuffleTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.SelfExiledWhileActivatingCraftAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
@@ -129,10 +128,6 @@ public class LegacyTriggerBindings {
 
         Zone destination() {
             return event.to();
-        }
-
-        boolean exiledWhileActivatingCraftAbility() {
-            return event.cause() == ZoneChangeCause.CRAFT;
         }
 
         boolean wasCreature() {
@@ -318,8 +313,6 @@ public class LegacyTriggerBindings {
         register(h, ChooseOneAtTriggerTimeEffect.class, this::handleModalSelfLeavesTrigger);
         register(h, ReturnTargetCardsFromGraveyardToBattlefieldEffect.class,
                 this::handleReturnTargetCardsFromGraveyardSelfLeaves);
-        register(h, SelfExiledWhileActivatingCraftAbilityEffect.class,
-                this::handleSelfExiledWhileActivatingCraftAbility);
         register(h, RemoveLinkedPermanentEffect.class, this::handleRemoveLinkedPermanent);
         register(h, ReturnAllCardsExiledWithSourceEffect.class, this::handleReturnAllCardsExiledWithSourceOnLeave);
         register(h, TargetPlayerGainsLifeEffect.class, this::handleSelfLeavesTargetPlayerGainsLife);
@@ -520,14 +513,6 @@ public class LegacyTriggerBindings {
         logSelfLeaves(c);
         return true;
     }
-    private boolean handleSelfExiledWhileActivatingCraftAbility(Ctx c, SelfExiledWhileActivatingCraftAbilityEffect effect) {
-        if (c.destination() != com.github.laxika.magicalvibes.model.Zone.EXILE
-                || !c.exiledWhileActivatingCraftAbility()) {
-            return false;
-        }
-        return handleSelfLeavesDefault(c, effect.wrapped());
-    }
-
     /**
      * "When this leaves the battlefield, exile / sacrifice the linked permanent": the effect goes on the stack as the
      * card wrote it and reads the link from the entry's source as it last existed (its chosen permanent) as it

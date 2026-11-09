@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnWhenInstantOrSorceryDealsDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -15,8 +14,8 @@ public class SyrCarahTheBold extends Card {
 
     public SyrCarahTheBold() {
         addTrigger(Triggers.dealsDamageToPlayer(), new ExileTopCardMayPlayThisTurnEffect(false));
-        addTrigger(Triggers.instantOrSorceryYouControlDealsDamage(),
-                new ExileTopCardMayPlayThisTurnWhenInstantOrSorceryDealsDamageToPlayerEffect());
+        addTrigger(Triggers.instantOrSorceryYouControlDealsDamageToPlayer(),
+                new ExileTopCardMayPlayThisTurnEffect(false));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

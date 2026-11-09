@@ -24,6 +24,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public record TapPermanentsEffect(TapUntapScope scope, PermanentPredicate filter, int chosenCount)
         implements CardEffect, CombatOpponentReferencingEffect {
 
+    /** "Tap up to N target permanents" taps only its targets, so with none chosen it does nothing. */
+    @Override
+    public boolean actsOnlyOnItsTargets() {
+        return scope == TapUntapScope.TARGET;
+    }
+
     @Override
     public boolean referencesCombatOpponent() {
         return scope == TapUntapScope.TARGET_PLAYERS_PERMANENTS;

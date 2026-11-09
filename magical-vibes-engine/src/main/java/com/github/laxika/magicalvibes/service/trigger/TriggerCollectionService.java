@@ -150,7 +150,6 @@ import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEff
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemLifeGainTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseTargetsAtRandomEffect;
@@ -195,7 +194,6 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchBlueOrBlackCreatureToBattlefieldOnAllyCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TemporaryGlobalTriggerEffect;
@@ -4369,9 +4367,14 @@ public class TriggerCollectionService {
                         sourceControllerId, onlyTargetCreatureId, damageToOnlyTargetCreature, context);
             }
             batch.getDamageToPlayers().forEach((damagedPlayerId, damage) -> {
-                if (damage > 0 && !damagedPlayerId.equals(sourceControllerId)) {
-                    queueInstantOrSorceryDealsDamageToOpponentTriggers(gameData, permanent, sourceControllerId,
-                            damagedPlayerId, damage);
+                if (damage <= 0) {
+                    return;
+                }
+                queueInstantOrSorceryDealsDamageToPlayerTriggers(gameData, permanent, sourceControllerId,
+                        damagedPlayerId, damage, DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_PLAYER);
+                if (!damagedPlayerId.equals(sourceControllerId)) {
+                    queueInstantOrSorceryDealsDamageToPlayerTriggers(gameData, permanent, sourceControllerId,
+                            damagedPlayerId, damage, DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT);
                 }
             });
         }
@@ -4407,14 +4410,14 @@ public class TriggerCollectionService {
 
     /**
      * "Whenever an instant or sorcery spell you control deals damage to an opponent" ({@link
-     * DamageWatch#ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT}) for one opponent dealt damage: each opponent is
-     * an occurrence of its own (CR 603.2c). "That player" is the ability's triggering player and "that much" its event
-     * value; a target is chosen as the ability goes on the stack (CR 603.3d).
+     * DamageWatch#ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT}) or "... to a player" ({@link
+     * DamageWatch#ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_PLAYER}, Syr Carah, the Bold) for one player dealt damage:
+     * each player is an occurrence of its own (CR 603.2c). "That player" is the ability's triggering player and "that
+     * much" its event value; a target is chosen as the ability goes on the stack (CR 603.3d).
      */
-    private void queueInstantOrSorceryDealsDamageToOpponentTriggers(GameData gameData, Permanent permanent,
-                                                                    UUID controllerId, UUID damagedPlayerId,
-                                                                    int damage) {
-        DamageWatch watch = DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT;
+    private void queueInstantOrSorceryDealsDamageToPlayerTriggers(GameData gameData, Permanent permanent,
+                                                                  UUID controllerId, UUID damagedPlayerId,
+                                                                  int damage, DamageWatch watch) {
         TriggerJudge judge = conditionEvaluationService.judge(gameData,
                 ConditionContext.forPermanent(permanent, controllerId).withTargetId(damagedPlayerId), damage);
         for (CardEffect effect : DamageAbilityReader.printedEffects(permanent.getCard(), watch, judge)) {
@@ -6207,9 +6210,6 @@ public class TriggerCollectionService {
                 entry.setTriggeringCardId(enteringCard.getId());
                 if (enteringPermanent != null) {
                     entry.setTriggeringPermanentId(enteringPermanent.getId());
-                }
-                if (capturesTriggeringAuraManaValue(dispatchEffect)) {
-                    entry.setEventValue(enteringCard.getManaValue());
                 }
                 entry.setMarkSourceOncePerTurnOnAcceptance(limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN);
                 if (enteringPermanent != null) {
@@ -9453,9 +9453,14 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Fires effects that care about an attacking creature causing one of its own triggered
-     * abilities to trigger. The ability is supplied as a snapshot so later stack changes cannot
-     * make a copy refer to a different trigger from the same source card.
+     * "Whenever a creature you control attacking causes a triggered ability of that creature to trigger" (Firebender
+     * Ascension, {@code Triggers.attackingCreatureYouControlAbilityTriggers()}) for {@code triggeredAbility}, an ability
+     * of {@code attacker} that its attack made trigger. Each such ability of the attacker's controller's permanents goes
+     * on the stack as written, one object of its effects (CR 603.3), above the ability that made it trigger, with
+     * the attacker as its triggering permanent and a snapshot of that ability as its triggering spell snapshot: "copy
+     * that ability" ({@code CopyTriggeringSpellOrAbilityEffect}) copies it as it was, even after it left the stack. A
+     * "you may" is asked as the ability resolves (CR 603.5). A permanent that lost its abilities has none; an ability
+     * with a filter, target, limit or multiplicity throws (no card has one).
      */
     public void checkAttackingCreatureTriggeredAbilityTriggers(GameData gameData, Permanent attacker,
                                                                 StackEntry triggeredAbility) {
@@ -9470,10 +9475,53 @@ public class TriggerCollectionService {
         if (battlefield == null) {
             return;
         }
-
-        TriggerContext context = new TriggerContext.AttackingCreatureTriggeredAbility(attacker, triggeredAbility);
+        Trigger watched = CombatWatch.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS.trigger();
         for (Permanent watcher : List.copyOf(battlefield)) {
-            dispatchWatch(gameData, watcher, controllerId, CombatWatch.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS, context);
+            List<CombatAbilityReader.CombatEffect> reads = new ArrayList<>();
+            if (!gameQueryService.hasLostAllAbilities(gameData, watcher)) {
+                if (!watcher.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, watcher)) {
+                    reads.addAll(CombatAbilityReader.read(WatchedAbilities.printed(watcher.getCard(),
+                            CombatWatch.ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS), watched));
+                }
+                reads.addAll(CombatAbilityReader.read(
+                        grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, watcher, watched), watched));
+            }
+            for (List<CombatAbilityReader.CombatEffect> ability : CombatAbilityReader.byAbility(reads)) {
+                CombatAbilityReader.CombatEffect first = ability.getFirst();
+                CombatAbilityReader.requireNoLimitOrMultiplicity(first, watched);
+                if (first.filter() != null) {
+                    throw new IllegalStateException("The attacking-creature ability reader judges no filter: "
+                            + first.ability());
+                }
+                if (!conditionEvaluationService.triggerConditionsMet(gameData, first.options(),
+                        ConditionContext.forPermanent(watcher, controllerId)
+                                .withTriggeringPermanentId(attacker.getId()))) {
+                    continue;
+                }
+                List<CardEffect> effects = ability.stream()
+                        .map(CombatAbilityReader.CombatEffect::effectAsJudged).toList();
+                if (effects.stream().anyMatch(effect -> effect.targetSpec() != TargetSpec.NONE)) {
+                    throw new IllegalStateException("The attacking-creature ability reader chooses no targets: "
+                            + first.ability());
+                }
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watcher.getCard(),
+                        controllerId,
+                        watcher.getCard().getName() + "'s triggered ability",
+                        new ArrayList<>(effects),
+                        null,
+                        watcher.getId());
+                entry.setNonTargeting(true);
+                entry.setSourcePermanentSnapshot(new Permanent(watcher));
+                entry.setTriggeringPermanentId(attacker.getId());
+                entry.setTriggeringPermanentControllerId(controllerId);
+                entry.setTriggeringSpell(triggeredAbility);
+                gameData.enqueueTrigger(entry);
+                gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
+                log.info("Game {} - {} triggers for {}'s attack-triggered ability",
+                        gameData.id, watcher.getCard().getName(), attacker.getCard().getName());
+            }
         }
     }
 
@@ -11677,36 +11725,56 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Fires emblem triggers whose text starts "Whenever you gain life". Emblems live outside the
-     * battlefield, so the permanent sweep in {@link #checkLifeGainTriggers} cannot see them.
+     * The emblems' "whenever you gain life" abilities ({@code Triggers.youGainLife()}; Professor Dellian Fel's emblem)
+     * for {@code lifeGainedAmount} life {@code gainingPlayerId} gained. Abilities of emblems function in the command zone
+     * (CR 114.4), so the permanent sweep of {@link #checkLifeGainTriggers} can't see them. Each one goes on the stack
+     * once as one object of its effects (CR 603.3), the emblem's source card as its source, "that much" its event
+     * value; a targeted ability ("target opponent", the ability's target filter) chooses its target as it goes on the
+     * stack (CR 603.3d). An emblem isn't a permanent (CR 110.1), so nothing makes its ability trigger additional times.
+     * The reader judges no options; an ability with one fails loudly instead of triggering wrongly.
      */
     private void collectEmblemLifeGainTriggers(GameData gameData, UUID gainingPlayerId,
                                                 int lifeGainedAmount) {
-        for (Emblem emblem : gameData.emblems) {
+        Trigger watched = Triggers.youGainLife();
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
             if (!emblem.controllerId().equals(gainingPlayerId)) continue;
 
-            for (CardEffect effect : emblem.staticEffects()) {
-                if (!(effect instanceof EmblemLifeGainTriggerEffect trigger)) continue;
-
+            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
+                if (ability.conditions().stream().noneMatch(condition -> condition.trigger().equals(watched))) {
+                    continue;
+                }
+                if (!ability.options().equals(TriggerOptions.DEFAULT)) {
+                    throw new IllegalStateException(emblemName(emblem) + " has a life-gain ability its reader "
+                            + "doesn't judge: " + ability);
+                }
                 Card source = emblem.sourceCard();
-                String description = (source != null ? source.getName() : "Emblem") + "'s emblem";
-                UUID opponentId = gameQueryService.getOpponentId(gameData, gainingPlayerId);
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        source,
-                        gainingPlayerId,
-                        description,
-                        new ArrayList<>(trigger.effects()),
-                        opponentId,
-                        (UUID) null
-                );
-                entry.setEventValue(lifeGainedAmount);
-                gameData.enqueueTrigger(entry);
-                gameLogService.append(gameData, GameLog.text(
-                        description + " triggers — target opponent loses that much life."));
+                String description = emblemName(emblem);
+                List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect).toList();
+                if (effects.stream().anyMatch(effect -> effect.targetSpec() != TargetSpec.NONE)) {
+                    boolean playerTargetOnly = effects.stream()
+                            .noneMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            source, gainingPlayerId, new ArrayList<>(effects), playerTargetOnly,
+                            ability.targetFilter(), 0, null, null, false, null, null, gainingPlayerId,
+                            (PlanarObject) null).withEventValue(lifeGainedAmount));
+                } else {
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            source,
+                            gainingPlayerId,
+                            description,
+                            new ArrayList<>(effects));
+                    entry.setEventValue(lifeGainedAmount);
+                    gameData.enqueueTrigger(entry);
+                }
+                gameLogService.append(gameData, GameLog.text(description + " triggers."));
                 log.info("Game {} - {} triggers on life gain ({} life)",
                         gameData.id, description, lifeGainedAmount);
             }
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            processNextSpellTargetTrigger(gameData);
         }
     }
 
@@ -15464,20 +15532,6 @@ public class TriggerCollectionService {
 
         dispatchWatch(gameData, room, controllerId, MiscWatch.ON_SELF_ROOM_DOOR_UNLOCKED,
                 new TriggerContext.RoomDoorUnlocked(room.getId(), doorIndex));
-    }
-
-    private boolean capturesTriggeringAuraManaValue(CardEffect effect) {
-        if (effect instanceof SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffect auraSearch) {
-            return auraSearch.restrictToTriggeringAura();
-        }
-        if (effect instanceof MayEffect may) {
-            return capturesTriggeringAuraManaValue(may.wrapped())
-                    || capturesTriggeringAuraManaValue(may.elseEffect());
-        }
-        if (effect instanceof ConditionalEffect conditional) {
-            return capturesTriggeringAuraManaValue(conditional.wrapped());
-        }
-        return false;
     }
 
     /**

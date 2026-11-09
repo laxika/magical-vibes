@@ -245,6 +245,11 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
          * damage to (CR 603.2c), that player being the event's player.
          */
         INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT,
+        /**
+         * An instant or sorcery spell deals damage to a player: once for each player it deals damage to (CR 603.2c),
+         * that player being the event's player.
+         */
+        INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_PLAYER,
         /** An instant or sorcery spell deals damage to an opponent or a battle. */
         INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT_OR_BATTLE,
         /** One or more creatures deal damage to a player. */

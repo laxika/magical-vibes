@@ -291,6 +291,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -2283,6 +2284,53 @@ public class AmountEvaluationService {
             }
         }
         return matches;
+    }
+
+    /**
+     * {@code filter} with "the same name" as the triggering permanent ({@link
+     * CardSharesNameWithTriggeringPermanentPredicate}) read from {@code entry} as the ability resolves: the permanent as
+     * it is, else as it last existed on the battlefield (CR 608.2h): its departure snapshot or the entry's triggering
+     * permanent snapshot. A face-down permanent, or none, has no name, which no card has. A filter without the
+     * predicate is returned as it is.
+     */
+    public static CardPredicate bindTriggeringPermanentName(GameData gameData, CardPredicate filter, StackEntry entry) {
+        return switch (filter) {
+            case null -> null;
+            case CardSharesNameWithTriggeringPermanentPredicate ignored -> {
+                String name = triggeringPermanentName(gameData, entry);
+                yield name == null ? new CardNotPredicate(new CardTruePredicate()) : new CardNamedPredicate(name);
+            }
+            case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
+                    .map(part -> bindTriggeringPermanentName(gameData, part, entry)).toList());
+            case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
+                    .map(part -> bindTriggeringPermanentName(gameData, part, entry)).toList());
+            case CardNotPredicate not -> new CardNotPredicate(bindTriggeringPermanentName(gameData, not.predicate(),
+                    entry));
+            default -> filter;
+        };
+    }
+
+    /** The name of {@code entry}'s triggering permanent as it is or last existed, or {@code null} for none. */
+    private static String triggeringPermanentName(GameData gameData, StackEntry entry) {
+        if (entry == null || entry.getTriggeringPermanentId() == null) {
+            return null;
+        }
+        UUID triggeringId = entry.getTriggeringPermanentId();
+        Permanent permanent = gameData.playerBattlefields.values().stream().flatMap(List::stream)
+                .filter(onBattlefield -> onBattlefield.getId().equals(triggeringId)).findFirst().orElse(null);
+        if (permanent == null) {
+            permanent = gameData.departedPermanentSnapshots.values().stream()
+                    .filter(departed -> departed.getId().equals(triggeringId)).findFirst().orElse(null);
+        }
+        if (permanent == null && entry.getTriggeringPermanentSnapshot() != null
+                && entry.getTriggeringPermanentSnapshot().getId().equals(triggeringId)) {
+            permanent = entry.getTriggeringPermanentSnapshot();
+        }
+        if (permanent == null) {
+            Card lastKnown = entry.lastKnownPermanentCard(triggeringId);
+            return lastKnown == null ? null : lastKnown.getName();
+        }
+        return permanent.isFaceDown() ? null : permanent.getCard().getName();
     }
 
     /**

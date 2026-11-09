@@ -24,7 +24,6 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageT
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnWhenInstantOrSorceryDealsDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -1303,36 +1302,6 @@ public class DamageTriggerCollectorService {
         log.info("Game {} - {} ON_SELF_DEALS_DAMAGE trigger fires ({} damage)",
                 gameData.id, sourceCard.getName(), sd.totalDamage());
         return true;
-    }
-
-    @CollectsDamageTrigger(value = ExileTopCardMayPlayThisTurnWhenInstantOrSorceryDealsDamageToPlayerEffect.class,
-            watch = DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE)
-    private boolean handleAllyInstantOrSorceryDealsDamageToPlayer(TriggerMatchContext match,
-            ExileTopCardMayPlayThisTurnWhenInstantOrSorceryDealsDamageToPlayerEffect effect,
-            TriggerContext ctx) {
-        TriggerContext.SourceDealsDamage sd = (TriggerContext.SourceDealsDamage) ctx;
-        if (sd.damageToPlayers().isEmpty() || match.permanent() == null) return false;
-
-        GameData gameData = match.gameData();
-        Permanent watcher = match.permanent();
-        boolean triggered = false;
-        for (Map.Entry<UUID, Integer> damageEntry : sd.damageToPlayers().entrySet()) {
-            if (damageEntry.getValue() <= 0) continue;
-
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.getCard(),
-                    match.controllerId(),
-                    watcher.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
-                    damageEntry.getKey(),
-                    watcher.getId());
-            entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
-            triggered = true;
-        }
-        return triggered;
     }
 
     /**

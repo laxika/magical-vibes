@@ -167,6 +167,10 @@ public final class LifeAbilityReader {
                 && limit != TriggerLimit.DO_ONLY_ONCE_EACH_TURN) {
             throw new IllegalStateException("No life collector reads " + limit + ": " + ability);
         }
+        if (ability.targetFilter() != null) {
+            throw new IllegalStateException("No permanent's life collector reads an ability's own target filter: "
+                    + ability);
+        }
         if (condition.spellFilter() != null && condition.player() != PlayerRelation.YOU) {
             throw new IllegalStateException("No life collector judges the spell of " + condition + ": " + ability);
         }

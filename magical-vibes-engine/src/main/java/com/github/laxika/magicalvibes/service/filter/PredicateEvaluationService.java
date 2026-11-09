@@ -123,6 +123,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithControlledCreatureOrGraveyardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithLegendaryControlledPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -1286,6 +1287,7 @@ public class PredicateEvaluationService {
                             .anyMatch(perm -> !perm.isFaceDown() && perm.getCard().getName().equals(card.getName()));
             // Only the graveyard count that has the resolving entry knows the triggering spell (AmountEvaluationService).
             case CardSharesNameWithTriggeringSpellPredicate ignored -> false;
+            case CardSharesNameWithTriggeringPermanentPredicate ignored -> false;
             case CardSharesNameWithLegendaryControlledPermanentPredicate ignored -> {
                 if (gameData == null || cardOwnerId == null
                         || !card.getSupertypes().contains(CardSupertype.LEGENDARY)) {

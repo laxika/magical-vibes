@@ -115,6 +115,32 @@ class GlorifierOfSufferingTest extends BaseCardTest {
                 .allSatisfy(p -> assertThat(p.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero());
     }
 
+    @Test
+    @DisplayName("The counters' targets are chosen when the reflexive ability triggers, after the sacrifice")
+    void targetsAreChosenWhenTheReflexiveAbilityTriggers() {
+        Permanent sacrifice = harness.addToBattlefieldAndReturn(player1, new DeconstructionHammer());
+        harness.castFromHand(player1, new GlorifierOfSuffering(), "{2}{W}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).singleElement().satisfies(entry -> assertThat(entry.getTargetIds()).isEmpty());
+
+        Permanent latecomer = harness.addToBattlefieldAndReturn(player1, new ArmoredKincaller());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handlePermanentChosen(player1, latecomer.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        assertThat(latecomer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+        assertThat(gd.stack).singleElement().satisfies(entry ->
+                assertThat(entry.getTargetIds()).containsExactly(latecomer.getId()));
+        harness.passBothPriorities();
+
+        assertThat(latecomer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+        harness.assertInGraveyard(player1, "Deconstruction Hammer");
+    }
+
     private void castGlorifier() {
         harness.castFromHand(player1, new GlorifierOfSuffering(), "{2}{W}");
         harness.passBothPriorities();

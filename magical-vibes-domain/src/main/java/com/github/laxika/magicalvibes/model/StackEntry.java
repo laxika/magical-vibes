@@ -629,7 +629,9 @@ public class StackEntry {
     /**
      * The spell a spell-cast trigger was about ("that spell", "its controller", "its colors", "its mana value"), or the
      * activated ability an activation trigger was about ({@link #triggeringActivatedAbility}), or the scheme a "whenever
-     * you set a scheme in motion" trigger was about (its set-in-motion stack object), as it was on the stack
+     * you set a scheme in motion" trigger was about (its set-in-motion stack object), or the triggered ability an
+     * "an attacking creature causes a triggered ability of it to trigger" trigger was about (Firebender Ascension), as it
+     * was on the stack
      * when the ability triggered: the last-known information the effects use once that spell has left
      * the stack (CR 608.2h), while it is still there they read it live. {@code null} when the event was about no spell.
      * Set through {@link #setTriggeringSpell}, which keeps a copy of its own.

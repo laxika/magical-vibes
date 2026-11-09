@@ -1020,8 +1020,4 @@ public sealed interface TriggerContext {
 
     /** Context for abilities that trigger after all players finish voting. */
     record VotingFinished(VotingResult result) implements TriggerContext {}
-
-    /** Context for an attacking creature causing one of its triggered abilities to trigger. */
-    record AttackingCreatureTriggeredAbility(Permanent attackingCreature, StackEntry triggeredAbility)
-            implements TriggerContext {}
 }

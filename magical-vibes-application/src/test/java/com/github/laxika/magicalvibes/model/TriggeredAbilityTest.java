@@ -36,6 +36,19 @@ class TriggeredAbilityTest {
                 .hasMessageContaining("own target filter");
     }
 
+    @Test
+    void aYouGainLifeAbilityNamesItsOwnTargetFilterForTheEmblemReader() {
+        TargetFilter creature = TargetFilters.creature();
+        TriggeredAbility lifeGain = new TriggeredAbility(Triggers.youGainLife(), new DrawCardEffect(1))
+                .withTargetFilter(creature);
+
+        assertThat(lifeGain.targetFilter()).isSameAs(creature);
+        assertThatThrownBy(() -> new TriggeredAbility(Triggers.opponentGainsLife(), new DrawCardEffect(1))
+                .withTargetFilter(creature))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("own target filter");
+    }
+
     private static final List<EffectRegistration> ZOMBIE =
             List.of(new EffectRegistration(CreateTokenEffect.blackZombie(1)));
 

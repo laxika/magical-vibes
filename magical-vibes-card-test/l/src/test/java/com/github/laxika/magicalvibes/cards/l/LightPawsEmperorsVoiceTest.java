@@ -176,6 +176,33 @@ class LightPawsEmperorsVoiceTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Clawing Torment")).isEmpty();
         assertThat(gameLogContains("Library is shuffled.")).isTrue();
     }
+    @Test
+    void boundsTheSearchByTheLastKnownManaValueOfAnAuraThatLeft() {
+        Permanent lightPaws = addCreatureReady(player1, new LightPawsEmperorsVoice());
+        Card enteringAura = aura("Entering Aura", "{2}");
+        Card eligibleAura = aura("Eligible Aura", "{2}");
+        Card sameNameAura = aura("Entering Aura", "{1}");
+        Card tooExpensiveAura = aura("Too Expensive Aura", "{3}");
+
+        harness.setHand(player1, List.of(enteringAura));
+        harness.setLibrary(player1, List.of(eligibleAura, sameNameAura, tooExpensiveAura));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castEnchantment(player1, 0, lightPaws.getId());
+        harness.passBothPriorities();
+        Permanent entered = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard() == enteringAura)
+                .findFirst().orElseThrow();
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, entered);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        // "With mana value less than or equal to that Aura": the Aura as it last existed, {2}. It no longer shares its
+        // name with an Aura you control, so the same-name card is eligible now.
+        PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search.params().cards()).containsExactlyInAnyOrder(eligibleAura, sameNameAura);
+    }
+
     private Card aura(String name, String manaCost) {
         Card card = card(name, CardType.ENCHANTMENT, manaCost);
         card.setSubtypes(List.of(CardSubtype.AURA));

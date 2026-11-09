@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.cards.r.RunedHalo;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ProfessorDellianFel.class, AngelOfMercy.class, GrizzlyBears.class, RunedHalo.class})
+@CardUsed({ProfessorDellianFel.class, AngelOfMercy.class, GrizzlyBears.class, RunedHalo.class, LeylineOfSanctity.class})
 class ProfessorDellianFelTest extends BaseCardTest {
 
     @Test
@@ -80,9 +81,31 @@ class ProfessorDellianFelTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 3);
+    }
+
+    @Test
+    @DisplayName("The emblem's ability can't target an opponent with hexproof, so that player loses no life")
+    void emblemCantTargetAnOpponentWithHexproof() {
+        addReadyProfessor(player1, 6);
+        harness.activateAbility(player1, 0, 3, null, null);
+        harness.passBothPriorities();
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        int opponentLifeBefore = gd.getLife(player2.getId());
+        int controllerLifeBefore = gd.getLife(player1.getId());
+        harness.setHand(player1, List.of(new AngelOfMercy()));
+        harness.addMana(player1, ManaColor.WHITE, 5);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(controllerLifeBefore + 3);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore);
     }
 
     private Permanent addReadyProfessor(Player player, int loyalty) {
@@ -170,6 +193,7 @@ class ProfessorDellianFelTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 3);

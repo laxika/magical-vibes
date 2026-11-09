@@ -21,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPutMilledLandsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
@@ -196,22 +195,10 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         }
 
         // An effect that acts only on its targets does nothing when its "up to N" / "any number of"
-        // target choice took none (CR 601.2c, 603.3d), so its "you may" has no choice to offer.
-        if (e.wrapped().actsOnlyOnItsTargets()
-                && entry.getDeclaredTargetIds().isEmpty() && targetId == null) {
-            return;
-        }
-
-        // An "up to N" graveyard return with no chosen cards has nothing to decide, so no choice is offered.
-        if (e.wrapped() instanceof ReturnTargetCardsFromGraveyardToHandEffect
-                && targetId == null && entry.getTargetCardIds().isEmpty()) {
-            return;
-        }
-
-        // An "up to N" target choice with no creature chosen (CR 601.2c) leaves nothing to tap, so no choice is offered.
-        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect tap
-                && tap.scope() == com.github.laxika.magicalvibes.model.effect.TapUntapScope.TARGET
-                && targetId == null && entry.getTargetIds().isEmpty()) {
+        // target choice took none (CR 601.2c, 603.3d): no permanent or player and no graveyard card was
+        // chosen, so its "you may" has no choice to offer.
+        if (e.wrapped().actsOnlyOnItsTargets() && targetId == null
+                && entry.getTargetIds().isEmpty() && entry.getTargetCardIds().isEmpty()) {
             return;
         }
 
