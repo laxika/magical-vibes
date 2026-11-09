@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.r.ReliquaryTower;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -10,8 +11,27 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RegalBehemoth.class, Forest.class})
+@CardUsed({RegalBehemoth.class, Forest.class, ReliquaryTower.class})
 class RegalBehemothTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The extra mana is one of the five colors, never colorless, when the land produced colorless mana")
+    void extraManaIsOfAColorWhenTheLandProducedColorless() {
+        harness.addToBattlefield(player1, new RegalBehemoth());
+        gd.monarchPlayerId = player1.getId();
+        harness.addToBattlefield(player1, new ReliquaryTower());
+
+        harness.activateAbility(player1, 1, 0, null, null);
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).containsExactlyInAnyOrder("WHITE", "BLUE", "BLACK", "RED", "GREEN");
+        harness.handleListChoice(player1, "RED");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isEqualTo(2);
+    }
 
     @Test
     @DisplayName("Its controller becomes the monarch when it enters")

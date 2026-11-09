@@ -19,6 +19,6 @@ public class RegalBehemoth extends Card {
 
         // Whenever you tap a land for mana while you're the monarch, add an additional one mana of any color.
         addTrigger(Triggers.playerTapsLandForMana(),
-                AddOneOfEachManaTypeProducedByLandEffect.anyColor(true, null, true));
+                AddOneOfEachManaTypeProducedByLandEffect.anyColor(true, true));
     }
 }

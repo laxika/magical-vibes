@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.a.AncientSpring;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.c.CityOfBrass;
 import com.github.laxika.magicalvibes.cards.g.GnatMiser;
@@ -18,8 +20,25 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Sasaya.class, SasayasEssence.class, Forest.class, GnatMiser.class, CityOfBrass.class,
-        MossfireValley.class})
+        MossfireValley.class, AncientSpring.class})
 class SasayaTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A land sacrificed for its mana still counts the other lands with its name, as it last existed")
+    void landSacrificedForItsManaStillCountsOtherLandsWithItsName() {
+        addTransformedSasaya();
+        harness.addToBattlefield(player1, new AncientSpring());
+        harness.addToBattlefield(player1, new AncientSpring());
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        harness.handleListChoice(player1, "WHITE");
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.WHITE)).isEqualTo(2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
+    }
 
     @Test
     @DisplayName("Reveals the hand as a cost and flips with seven land cards")

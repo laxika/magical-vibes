@@ -47,6 +47,8 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.normalfx.AddOneOfEachManaTypeProducedByLandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToPlayersEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -58,8 +60,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.Set;
 import java.util.UUID;
@@ -148,8 +150,8 @@ class LandTapTriggerCollectorServiceTest {
     @Mock
     private PredicateEvaluationService predicateEvaluationService;
 
-    @Mock
-    private ObjectProvider<DealDamageToPlayersEffectHandler> dealDamageHandlerProvider;
+    @Spy
+    private EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
 
     @Mock
     private DealDamageToPlayersEffectHandler dealDamageHandler;
@@ -158,6 +160,7 @@ class LandTapTriggerCollectorServiceTest {
     private LandTapTriggerCollectorService sut;
 
     private TriggerCollectorRegistry registry;
+    private AddOneOfEachManaTypeProducedByLandEffectHandler addOneOfEachHandler;
     private GameData gd;
     private UUID player1Id;
     private UUID player2Id;
@@ -171,6 +174,10 @@ class LandTapTriggerCollectorServiceTest {
         gd.playerManaPools.put(player2Id, new ManaPool());
         registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(sut, registry);
+        addOneOfEachHandler = new AddOneOfEachManaTypeProducedByLandEffectHandler(
+                gameQueryService, gameLogService, interactionHandlerRegistry);
+        effectHandlerRegistry.register(AddOneOfEachManaTypeProducedByLandEffect.class, addOneOfEachHandler);
+        effectHandlerRegistry.register(DealDamageToPlayersEffect.class, dealDamageHandler);
     }
 
     // ===== Helpers =====
@@ -620,6 +627,7 @@ class LandTapTriggerCollectorServiceTest {
     class AddOneOfEachManaType {
 
         @Test
+        @DisplayName("waits for the land's mana color choice with its own effect, which adds the produced color to the tapping player")
         void waitsForTheLandsManaColorChoice() {
             Permanent source = createPermanent("Mana Flare");
             Permanent land = new Permanent(createLandCard("City of Brass"));
@@ -634,9 +642,42 @@ class LandTapTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.pendingManaAbilityTriggers).hasSize(1);
-            assertThat(gd.pendingManaAbilityTriggers.getFirst().getControllerId()).isEqualTo(player2Id);
-            assertThat(gd.pendingManaAbilityTriggers.getFirst().isAwaitingProducedManaColor()).isTrue();
+            StackEntry parked = gd.pendingManaAbilityTriggers.getFirst();
+            assertThat(parked.getEffectsToResolve()).containsExactly(effect);
+            assertThat(parked.getTriggeringPlayerId()).isEqualTo(player2Id);
+            assertThat(parked.getTriggeringPermanentId()).isEqualTo(land.getId());
+            assertThat(parked.isAwaitingProducedManaColor()).isTrue();
             assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.RED)).isZero();
+
+            parked.setProducedManaColors(Set.of(ManaColor.RED));
+            addOneOfEachHandler.resolve(gd, parked, effect);
+
+            assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.RED)).isEqualTo(1);
+            assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.RED)).isZero();
+        }
+
+        @Test
+        @DisplayName("\"one mana of any color\" doesn't wait for the land's color choice: its own five-color choice is queued")
+        void anyColorManaQueuesItsOwnChoiceBehindTheLandsChoice() {
+            Permanent source = createPermanent("Regal Behemoth");
+            Permanent land = new Permanent(createLandCard("City of Brass"));
+            var effect = AddOneOfEachManaTypeProducedByLandEffect.anyColor(true, true);
+            gd.monarchPlayerId = player1Id;
+            var landChoice = new PendingInteraction.ColorChoice(
+                    player1Id, null, null, null, List.of("RED"), "Choose mana.");
+            gd.interaction.beginInteraction(landChoice);
+
+            boolean result = registry.dispatch(match(source, player1Id, effect),
+                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect,
+                    new TriggerContext.LandTap(player1Id, land.getId()));
+
+            assertThat(result).isTrue();
+            assertThat(gd.pendingManaAbilityTriggers).isEmpty();
+            assertThat(gd.interaction.activeInteraction()).isSameAs(landChoice);
+            assertThat(gd.pendingInteractions).hasSize(1);
+            var queued = (PendingInteraction.ColorChoice) gd.pendingInteractions.getFirst();
+            assertThat(queued.playerId()).isEqualTo(player1Id);
+            assertThat(queued.options()).containsExactly("WHITE", "BLUE", "BLACK", "RED", "GREEN");
         }
 
         @Test
@@ -650,7 +691,6 @@ class LandTapTriggerCollectorServiceTest {
             var ctx = new TriggerContext.LandTap(player2Id, forest.getId());
 
             when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
-            when(dealDamageHandlerProvider.getObject()).thenReturn(dealDamageHandler);
 
             boolean result = registry.dispatch(
                     match(triggerPerm, player1Id, effect),
@@ -681,7 +721,6 @@ class LandTapTriggerCollectorServiceTest {
             var ctx = new TriggerContext.LandTap(player2Id, forest.getId());
 
             when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
-            when(dealDamageHandlerProvider.getObject()).thenReturn(dealDamageHandler);
 
             boolean result = registry.dispatch(match(triggerPerm, player1Id, effect),
                     TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
@@ -768,8 +807,8 @@ class LandTapTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("returns false when tapped land is gone")
-        void returnsFalseWhenLandGone() {
+        @DisplayName("adds nothing when the tapped land is gone and the tap reported no mana")
+        void addsNothingWhenLandGone() {
             Permanent triggerPerm = createPermanent("Mirari's Wake");
             UUID missingLandId = UUID.randomUUID();
             var effect = new AddOneOfEachManaTypeProducedByLandEffect(true);
@@ -777,16 +816,14 @@ class LandTapTriggerCollectorServiceTest {
 
             when(gameQueryService.findPermanentById(gd, missingLandId)).thenReturn(null);
 
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+            registry.dispatch(match(triggerPerm, player1Id, effect), TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
-            assertThat(result).isFalse();
+            assertThat(gd.playerManaPools.get(player1Id).getTotalAllMana()).isZero();
         }
 
         @Test
-        @DisplayName("returns false when tapped land has no AwardManaEffect")
-        void returnsFalseWhenLandHasNoManaEffect() {
+        @DisplayName("adds nothing when the tapped land has no mana of a basic land type and the tap reported none")
+        void addsNothingWhenLandHasNoManaEffect() {
             Permanent triggerPerm = createPermanent("Mirari's Wake");
             Permanent land = new Permanent(createLandCard("Maze of Ith"));
             var effect = new AddOneOfEachManaTypeProducedByLandEffect(true);
@@ -794,11 +831,9 @@ class LandTapTriggerCollectorServiceTest {
 
             when(gameQueryService.findPermanentById(gd, land.getId())).thenReturn(land);
 
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
+            registry.dispatch(match(triggerPerm, player1Id, effect), TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
 
-            assertThat(result).isFalse();
+            assertThat(gd.playerManaPools.get(player1Id).getTotalAllMana()).isZero();
         }
     }
 

@@ -16,8 +16,8 @@ public class Lavaleaper extends Card {
 
     public Lavaleaper() {
         addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_CREATURES_INCLUDING_SELF));
-        addTrigger(Triggers.playerTapsLandForMana(),
-                new AddOneOfEachManaTypeProducedByLandEffect(false,
-                        new PermanentHasSupertypePredicate(CardSupertype.BASIC)));
+        // Whenever a player taps a basic land for mana, that player adds one mana of any type that land produced.
+        addTrigger(Triggers.playerTapsLandForMana().withFilter(new PermanentHasSupertypePredicate(CardSupertype.BASIC)),
+                new AddOneOfEachManaTypeProducedByLandEffect(false));
     }
 }

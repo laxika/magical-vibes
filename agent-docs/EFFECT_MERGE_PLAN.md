@@ -1691,7 +1691,7 @@ Independent, all LOW. Do as many as land cleanly; note any that don't.
 | `BoostEquippedCreatureUntilEndOfTurnEffect(DynamicAmount, DynamicAmount, Set<Keyword>)` | `BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect` | 11 + 3 |
 | `AwardManaOfColorsAmongControlledEffect(PermanentPredicate, boolean oneOfEach)` | `AwardOneManaOfEachColorAmongControlledEffect` | 1 + 1 |
 | `AddManaWhenLandOfSubtypeTappedForManaEffect(+ ManaRestriction)` | `AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect` | 2 + 1 |
-| `AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly, PermanentPredicate landFilter)` | `AddProducedManaWhenLandOfSubtypeTappedEffect`, `AddProducedManaWhenSnowLandTappedEffect` | 1 + 1 |
+| `AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly)` + the trigger's `withFilter` | `AddProducedManaWhenLandOfSubtypeTappedEffect`, `AddProducedManaWhenSnowLandTappedEffect` (and `TappedSnowLandDoesntUntapEffect`): **Gone** (effect-slot-refactor.md step 15, run 17z4b) | 1 + 1 |
 | `PlayWithHandRevealedEffect(boolean controllerOnly)` | `PlayWithHandsRevealedEffect`, `PlayWithOwnHandRevealedEffect` (+ delete the `PubliclyRevealedHandEffect` interface) | 1 + 1 |
 | `PayXManaThenEffect(String manaCost, CardEffect payload)` | `PayXManaGainXLifeEffect`, `PayXManaCreateXTokensEffect` | 1 + 1 |
 | `TargetPlayerChoosesCreatureEffect(boolean exile)` | `TargetPlayerChoosesCreatureDestroyEffect`, `TargetPlayerChoosesCreatureExileEffect` | 2 + 1 |
@@ -1707,10 +1707,9 @@ Independent, all LOW. Do as many as land cleanly; note any that don't.
   **Surfaces a latent bug**: the `AwardOneManaOfEachColor` branch multiplies by `manaMultiplier` and
   calls `pool.addCreatureMana` when `isCreatureSource`; the other branch does neither (`:680` adds a
   flat 1). Decide deliberately.
-- Land-tap trio: the three collectors in `trigger/LandTapTriggerCollectorService.java:205,233,263` are
-  token-for-token identical including a byte-identical log line; only the land-qualification guard
-  differs. The snow guard uses layer-aware `hasEffectiveSupertype`, so predicate evaluation must use
-  the layer-aware path.
+- Land-tap trio: done in effect-slot-refactor.md step 15, run 17z4b. The land qualification is the trigger's `withFilter`
+  (judged by `TriggerCollectionService.landTapMatches` through the layer-aware predicate path), and the
+  survivor resolves by its own handler, so it lost its `landFilter` component as well.
 - `PlayWithHandRevealed*`: both records have **zero components** and exist solely to hardcode a
   boolean behind an interface, read at exactly one site (`GameViewProjectionFactory:293`).
 - `PayXMana*`: the two handlers are byte-identical (100 vs 101 lines) except the injected support

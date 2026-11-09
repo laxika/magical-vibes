@@ -6,8 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
-import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenSnowLandTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.AddProducedManaWhenLandOfSubtypeTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.Card;
@@ -5525,14 +5524,14 @@ public class PredicateEvaluationService {
 
     /**
      * Triggered mana abilities (CR 605.1b) that fire when a land is tapped for mana and add mana
-     * on resolution, such as Caged Sun's extra-mana trigger.
+     * on resolution, such as Caged Sun's extra-mana trigger, alone or as the first step of the ability's
+     * sequence (Overabundance, Winter's Night).
      */
     private static boolean hasTriggeredManaAbility(Card card) {
         return WatchedAbilities.rawEffects(WatchedAbilities.printed(card, TapWatch.ON_ANY_PLAYER_TAPS_LAND)).stream()
+                .map(effect -> effect instanceof SequenceEffect sequence ? sequence.steps().getFirst() : effect)
                 .anyMatch(effect -> effect instanceof AddExtraManaOfChosenColorOnLandTapEffect
                         || effect instanceof AddOneOfEachManaTypeProducedByLandEffect
-                        || effect instanceof AddProducedManaWhenSnowLandTappedEffect
-                        || effect instanceof AddProducedManaWhenLandOfSubtypeTappedEffect
                         || effect instanceof AddManaOnEnchantedLandTapEffect);
     }
 }
