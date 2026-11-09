@@ -65,7 +65,7 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             // Nothing can be discarded, so there is no choice to offer and "if you do" can't happen.
             return;
         }
-        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect reveal
+        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.RevealSubtypeFromHandEffect reveal
                 && gameData.playerHands.getOrDefault(entry.getControllerId(), List.of()).stream()
                 .noneMatch(card -> gameQueryService.cardHasSubtype(
                         card, reveal.subtype(), gameData, entry.getControllerId()))) {
@@ -402,6 +402,11 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             UUID liveControllerId = gameQueryService.findPermanentController(gameData, entry.getTriggeringPermanentId());
             if (liveControllerId != null) {
                 return liveControllerId;
+            }
+            // Its last known controller once it has left (CR 608.2h).
+            UUID departedControllerId = entry.getRemovedPermanentControllers().get(entry.getTriggeringPermanentId());
+            if (departedControllerId != null) {
+                return departedControllerId;
             }
         }
         return entry.getTriggeringPermanentControllerId() != null

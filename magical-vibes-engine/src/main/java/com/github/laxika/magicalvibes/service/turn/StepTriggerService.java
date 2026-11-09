@@ -212,7 +212,6 @@ import com.github.laxika.magicalvibes.model.effect.ReboundCastFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulEchoUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOrRemoveCounterIfBlockedSinceLastUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -1220,11 +1219,6 @@ public class StepTriggerService {
                     StackEntry mayEntry = gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null,
                             perm.getId(), activePlayerId, new Permanent(perm));
                     recordAttachedPermanent(gameData, perm, mayEntry);
-                } else if (effect instanceof MayRevealSubtypeFromHandEffect mayReveal) {
-                    // CR 603.5: an optional ability goes on the stack whether or not its controller can
-                    // exercise the option. The reveal (and its hand check) is resolved by MayEffectHandler.
-                    MayEffect may = new MayEffect(mayReveal, mayReveal.prompt());
-                    gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId());
                 } else if (effect instanceof BecomeCopyOfTargetCreatureEffect copyEffect) {
                     // Targeted upkeep trigger: target is chosen at trigger time (CR 603.3d).
                     // Collect valid creature targets excluding self ("another creature").

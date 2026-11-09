@@ -67,7 +67,7 @@ import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect;
@@ -1572,12 +1572,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("MayRevealSubtypeFromHandEffect queues may ability when hand contains matching subtype")
+        @DisplayName("A \"you may reveal\" upkeep ability goes on the stack when hand contains matching subtype")
         void mayRevealSubtypeQueuesWhenSubtypeInHand() {
             gd.turnNumber = 2;
             Card priestCard = createCardWithName("Priest of the Wakening Sun");
             priestCard.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                    new MayRevealSubtypeFromHandEffect(CardSubtype.DINOSAUR, new GainLifeEffect(2),
+                    new MayEffect(new RevealSubtypeFromHandEffect(CardSubtype.DINOSAUR, new GainLifeEffect(2)),
                             "Reveal a Dinosaur card from your hand to gain 2 life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(priestCard));
 
@@ -1593,12 +1593,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("MayRevealSubtypeFromHandEffect still triggers when hand lacks matching subtype")
+        @DisplayName("A \"you may reveal\" upkeep ability still triggers when hand lacks matching subtype")
         void mayRevealSubtypeTriggersWhenNoSubtypeInHand() {
             gd.turnNumber = 2;
             Card priestCard = createCardWithName("Priest of the Wakening Sun");
             priestCard.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                    new MayRevealSubtypeFromHandEffect(CardSubtype.DINOSAUR, new GainLifeEffect(2),
+                    new MayEffect(new RevealSubtypeFromHandEffect(CardSubtype.DINOSAUR, new GainLifeEffect(2)),
                             "Reveal a Dinosaur card from your hand to gain 2 life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(priestCard));
 
@@ -1615,12 +1615,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("MayRevealSubtypeFromHandEffect still triggers when hand is empty")
+        @DisplayName("A \"you may reveal\" upkeep ability still triggers when hand is empty")
         void mayRevealSubtypeTriggersWhenHandEmpty() {
             gd.turnNumber = 2;
             Card priestCard = createCardWithName("Priest of the Wakening Sun");
             priestCard.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                    new MayRevealSubtypeFromHandEffect(CardSubtype.DINOSAUR, new GainLifeEffect(2),
+                    new MayEffect(new RevealSubtypeFromHandEffect(CardSubtype.DINOSAUR, new GainLifeEffect(2)),
                             "Reveal a Dinosaur card from your hand to gain 2 life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(priestCard));
 

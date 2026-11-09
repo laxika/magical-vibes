@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
@@ -91,8 +91,9 @@ public class RevealedMatchingHandCardChoiceInteractionHandler
                 && interaction.choosingPlayerId().equals(interaction.targetPlayerId())
                 && previousEffectIndex >= 0
                 && previousEffectIndex < pendingEntry.getEffectsToResolve().size()
-                && pendingEntry.getEffectsToResolve().get(previousEffectIndex) instanceof MayEffect may
-                && may.wrapped() instanceof MayRevealSubtypeFromHandEffect) {
+                && (pendingEntry.getEffectsToResolve().get(previousEffectIndex) instanceof MayEffect may
+                ? may.wrapped() : pendingEntry.getEffectsToResolve().get(previousEffectIndex))
+                instanceof RevealSubtypeFromHandEffect) {
             cardRevealService.revealMatchingHandCardsToAllPlayers(
                     gameData, interaction.targetPlayerId(), List.of(chosen));
         }

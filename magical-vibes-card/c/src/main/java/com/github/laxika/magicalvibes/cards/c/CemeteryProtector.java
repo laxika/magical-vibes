@@ -31,6 +31,6 @@ public class CemeteryProtector extends Card {
         CardEffect conditionalHuman = new ConditionalEffect(new TriggeringCardMatches(sharedType), createHuman);
 
         addTrigger(Triggers.youCastSpell().withFilter(sharedType), conditionalHuman);
-        addTrigger(Triggers.youPlayLand().withFilter(sharedType), createHuman);
+        addTrigger(Triggers.youPlayLand().withFilter(sharedType), conditionalHuman);
     }
 }

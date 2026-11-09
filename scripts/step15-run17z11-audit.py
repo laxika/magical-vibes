@@ -15,6 +15,10 @@ classification run 17z11 made of it by hand (`CLASSIFIED`, keyed by file and eff
 - `STATIC`: no triggered ability (combat legality, prevention, replacement, as-enters choices, mana resolved at once);
 - `ENGINE`: an effect the engine makes itself.
 
+The labels are keyed by file and effect class, so a later read of an already classified class in the same file is not
+flagged, and the scan doesn't read the `…CollectorService` handlers (`step15-run17z6-audit.py` lists those). Run 17z12
+found reads this scan labelled correctly but whose neighbours bind by class; see its Findings.
+
 A read with no entry is `UNCLASSIFIED`, with the window heuristic's guess (BIND, REBUILD, UNWRAP or ROUTE): a new read,
 or one a later run moved, to classify. The step's "done" check wants no read in an open row and none unclassified.
 
@@ -126,7 +130,10 @@ CLASSIFIED = {
     ("CombatDamageService.java", "DealDamageToTargetPlayerOrPlaneswalkerEffect"): "ROUTE",
     ("CombatDamageService.java", "DealDamageToAnyTargetEffect"): "ROUTE",
     ("EtbTriggerService.java", "ChooseOneEffect"): "ROUTE",
-    ("StepTriggerService.java", "MayRevealSubtypeFromHandEffect"): "ENGINE",
+    # Run 17z12: the upkeep collector's wrap of Priest of the Wakening Sun's reveal was labelled ENGINE, wrongly: it was the
+    # card's effect, rebuilt by class. The cards now write their "you may" (`RevealSubtypeFromHandEffect` in a
+    # `MayEffect`) and the read is gone. Darigaaz Reincarnated's egg-counter ability below is made by the engine for a
+    # card exiled with egg counters (the card declares no effect there), so nothing a card wrote is rewritten.
     ("StepTriggerService.java", "RemoveEggCounterFromExileAndReturnEffect"): "ENGINE",
     ("StepTriggerService.java", "ChooseOneEffect"): "ROUTE",
     ("TriggerCollectionService.java", "EnterBattlefieldOnDiscardEffect"): "ROUTE",

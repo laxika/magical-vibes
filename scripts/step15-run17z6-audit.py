@@ -14,6 +14,12 @@ with it:
 - BIND: records a value read from the effect's fields onto the entry (`entry.set...(effect.` / `(e.`);
 - ROUTE: none of these, so the class only picks the target choice or queue the ability goes through.
 
+The labels are a heuristic, not a classification: BIND only sees a value read from the effect's own fields, so a handler
+that records event data (a target, value, snapshot or triggering object) the watch's `CardEffect.class` default doesn't
+record is labelled ROUTE, and the defaults, which may branch on a class inside, are skipped. Run 17z12's independent
+verification read the handlers by hand against their defaults; the ones it found binding, rebuilding or unwrapping by
+class are listed in `OPEN` with their row of step 15 and printed as `OPEN(row)` whatever the heuristic says.
+
 Read-only. Usage: step15-run17z6-audit.py [--summary]
 """
 import pathlib
@@ -30,6 +36,38 @@ LEGACY = re.compile(r"\bregister\(h,\s*(\w+)\.class,\s*this::(\w+)\)")
 REBUILD = re.compile(r"new (?!MayEffect\(|ArrayList|StackEntry|Permanent\()\w+Effect\(|triggeredEffect\(\)|effectFor\w*\(")
 UNWRAP = re.compile(r"\.(wrapped|thenEffect|elseEffect|tokenEffect|innerEffect)\(\)")
 BIND = re.compile(r"\.set\w+\((?:effect|e|may|mayPay|marker|trigger)\.")
+
+# Run 17z12: handlers that record event data only for their class, rebuild or unwrap the card's effect (the rows of
+# step 15 that hold them; effect-slot-refactor.md, run 17z12's Findings). Defaults are named too.
+OPEN = {
+    ("EnterTriggerCollectorService.java", h): "17z12b" for h in (
+        "handleEnterDefault", "handleOpponentTokenEnterCreateCopies", "handleEnterMay", "handleEnterMayPay",
+        "handleAnyCreatureDrawEnteringController", "handleAllyCreatureExplore", "handlePowerToughnessDifferenceLifeLoss",
+        "handleLifeLossToEnteringController", "handleAnyCreatureSacrifice", "handleAllyCreatureEntersDealsPowerDamage",
+        "handleAllyCreatureDealsPowerDamageToEachOpponent", "handleAllyNontokenCreatureCreateTokenCopy",
+        "handleOpponentCreatureCreateTokenCopyThenExileOthers",
+        "handleOpponentCreatureExileTrackedTokensAndCreateTokenCopy")
+}
+OPEN.update({
+    ("FaceUpTriggerCollectorService.java", "handleTurnedCreatureDealsPowerDamageToEachOpponent"): "17z12b",
+    ("DamageTriggerCollectorService.java", "handleEnchantedCreatureDealtDamageToController"): "17z12c",
+    ("DamageTriggerCollectorService.java", "handleEnchantedCreatureDealtDamagePowerTarget"): "17z12c",
+    ("DamageTriggerCollectorService.java", "handleEnchantedCreatureDealtDamageToEachOpponent"): "17z12c",
+    ("DamageTriggerCollectorService.java", "handleEnchantedCreatureDealtDamageCreateTokens"): "17z12c",
+    ("DeathTriggerCollectorService.java", "handleAnyCreatureDeathBountyReward"): "17z12c",
+    ("DeathTriggerCollectorService.java", "handleAnyCreatureDeathDamageController"): "17z12c",
+    ("DeathTriggerCollectorService.java", "handleAnyCreatureDeathDestroyEnchanted"): "17z12c",
+    ("DiscardTriggerCollectorService.java", "handleDiscardMay"): "17z12d",
+    ("DiscardTriggerCollectorService.java", "handleCastDiscardedCard"): "17z12d",
+    ("DiscardTriggerCollectorService.java", "handleDamageToDiscardingPlayer"): "17z12d",
+    ("DiscardTriggerCollectorService.java", "handleExileDiscardedFromGraveyard"): "17z12d",
+    ("MiscTriggerCollectorService.java", "handleMilledLandsReturn"): "17z12d",
+    ("MiscTriggerCollectorService.java", "handleEventCardsGraveyardReturn"): "17z12d",
+    ("SeekTriggerCollectorService.java", "handleSeek"): "17z12e",
+    ("SpellCastTriggerCollectorService.java", "handleGenericSpellCastTrigger"): "17z12e",
+    ("LandTapTriggerCollectorService.java", "handleCampLandTap"): "17z12e",
+    ("LandTapTriggerCollectorService.java", "handleManaAbilitySequence"): "17z12e",
+})
 
 
 def method_body(text, name):
@@ -51,14 +89,20 @@ def main():
         for pattern in (ANNOTATED, DEATH, LEGACY):
             for match in pattern.finditer(text):
                 effect, handler = match.group(1), match.group(2)
-                if effect == "CardEffect":
+                row = OPEN.get((path.name, handler))
+                if effect == "CardEffect" and row is None:
                     continue
                 body = method_body(text, handler)
-                kinds = [kind for kind, regex in (("REBUILD", REBUILD), ("UNWRAP", UNWRAP), ("BIND", BIND))
-                         if regex.search(body)] or ["ROUTE"]
+                kinds = [f"OPEN({row})"] if row else [
+                    kind for kind, regex in (("REBUILD", REBUILD), ("UNWRAP", UNWRAP), ("BIND", BIND))
+                    if regex.search(body)] or ["ROUTE"]
                 for kind in kinds:
                     summary[(path.name, kind)] += 1
                 rows.append(f"{path.relative_to(E)}: {effect} -> {handler}: {'+'.join(kinds)}")
+    for (name, handler), row in OPEN.items():
+        if not any(f"{name}: " in r and f"-> {handler}:" in r for r in rows):
+            summary[(name, f"OPEN({row})")] += 1
+            rows.append(f"trigger/{name}: (no class-keyed registration) -> {handler}: OPEN({row})")
     if "--summary" in sys.argv:
         for (name, kind), count in sorted(summary.items()):
             print(f"{name}: {kind} {count}")

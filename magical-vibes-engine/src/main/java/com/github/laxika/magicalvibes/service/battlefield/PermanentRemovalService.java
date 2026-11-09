@@ -2577,11 +2577,6 @@ public class PermanentRemovalService {
                                 gameQueryService.getEffectivePower(gameData, target));
                         entry.setTriggeringPermanentToughnessAtTrigger(
                                 gameQueryService.getEffectiveToughness(gameData, target));
-                        if (entry.getEffectsToResolve().stream().anyMatch(effect ->
-                                effect instanceof com.github.laxika.magicalvibes.model.effect.MayEffect may
-                                        && may.choicePlayer() == com.github.laxika.magicalvibes.model.MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER)) {
-                            entry.setTriggeringPermanentControllerId(playerId);
-                        }
                     }
                 }
                 Integer powerAtDeparture = wasCreature ? gameQueryService.getEffectivePower(gameData, target) : null;
@@ -2681,12 +2676,9 @@ public class PermanentRemovalService {
         gameData.departedPermanentControllerIds.put(target.getCard().getId(), controllerId);
         gameData.departedPermanentControllerIds.put(target.getOriginalCard().getId(), controllerId);
         for (StackEntry entry : gameData.stack) {
-            if (target.getId().equals(entry.getTriggeringPermanentId())
-                    && entry.getEffectsToResolve().stream().anyMatch(
-                    com.github.laxika.magicalvibes.model.effect
-                            .EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect.class::isInstance)) {
-                // "That creature's controller" uses the creature's last known controller (CR 608.2h).
-                entry.setTargetId(controllerId);
+            if (target.getId().equals(entry.getTriggeringPermanentId())) {
+                // "That creature's controller" is the creature's last known controller (CR 608.2h), whatever the effects.
+                entry.getRemovedPermanentControllers().put(target.getId(), controllerId);
             }
         }
         gameData.playersWhosePermanentsLeftBattlefieldThisTurn.add(controllerId);

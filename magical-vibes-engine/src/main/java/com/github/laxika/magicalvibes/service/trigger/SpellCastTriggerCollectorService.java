@@ -26,18 +26,13 @@ import com.github.laxika.magicalvibes.model.effect.GrantAdditionalPlusOnePlusOne
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
-import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequiredEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfNameFoundElsewhereEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellingEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.amount.TriggeringSpellChosenColorCount;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -45,8 +40,6 @@ import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattle
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
 import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -744,8 +737,8 @@ public class SpellCastTriggerCollectorService {
             entry.setTriggeringSpellCastIndex(
                     match.gameData().getSpellCastIndexThisTurn(castingPlayerId, spellCard.getId()));
             entry.setTriggeringSpellTurnCastIndex(match.gameData().getSpellCastOrdinalThisTurn(spellCard.getId()) - 1);
-            if (triggeringSpell != null && resolved.stream().anyMatch(effect ->
-                    effect instanceof GrantKeywordEffect grant && grant.scope() == GrantScope.TARGETS)) {
+            // "Its targets" (Bloodlord of Vaasgoth's grant) are the spell's targets as it was cast, kept once it has left.
+            if (triggeringSpell != null) {
                 List<UUID> spellTargets = new ArrayList<>();
                 if (triggeringSpell.getTargetId() != null) {
                     spellTargets.add(triggeringSpell.getTargetId());
@@ -758,19 +751,9 @@ public class SpellCastTriggerCollectorService {
             if (interveningSpellManaValueCondition) {
                 entry.setEventValue(interveningSpellManaValue);
             }
-            if (trigger.interveningIf() != null) {
-                if (match.permanent() != null) {
-                    entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-                }
-            }
-            if (match.permanent() != null && containsChosenPlayerMill(resolved)) {
-                entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-            }
-            // "For each of the chosen colors it is" reads the source's choice as it resolves, as the source last
-            // existed once it has left the battlefield (CR 608.2h).
-            if (match.permanent() != null && resolved.stream()
-                    .anyMatch(effect -> SourcePermanentSnapshotRequiredEffect.isRequiredBy(effect)
-                            || effectReadsSourceChosenColors(effect))) {
+            // The source as the ability goes on the stack, whatever the effects are: its last known information once it
+            // has left the battlefield (CR 608.2h), and what a transform instruction compares (CR 701.27f).
+            if (match.permanent() != null) {
                 entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             }
             preservePlanarSource(entry, match);
@@ -842,18 +825,6 @@ public class SpellCastTriggerCollectorService {
                     .anyMatch(SpellCastTriggerCollectorService::readsManaValueX);
             case CardNotPredicate not -> readsManaValueX(not.predicate());
             case null, default -> false;
-        };
-    }
-
-    /** Whether {@code effect} counts the triggering spell's colors among the colors its source chose. */
-    private static boolean effectReadsSourceChosenColors(CardEffect effect) {
-        return switch (effect) {
-            case GainLifeEffect gainLife -> gainLife.amount() instanceof TriggeringSpellChosenColorCount;
-            case ConditionalEffect conditional -> effectReadsSourceChosenColors(conditional.wrapped());
-            case MayEffect may -> effectReadsSourceChosenColors(may.wrapped());
-            case SequenceEffect sequence -> sequence.steps().stream()
-                    .anyMatch(SpellCastTriggerCollectorService::effectReadsSourceChosenColors);
-            default -> false;
         };
     }
 
@@ -952,11 +923,6 @@ public class SpellCastTriggerCollectorService {
             }
         }
         return false;
-    }
-
-    private boolean containsChosenPlayerMill(List<CardEffect> effects) {
-        return effects.stream().anyMatch(effect -> effect instanceof MillEffect mill
-                && mill.recipient() == MillRecipient.CHOSEN_PLAYER);
     }
 
     private boolean hasAtLeastTwoCardTypes(GameData gameData, Card card, UUID playerId) {

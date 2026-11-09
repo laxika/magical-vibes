@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequiredEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -148,12 +147,9 @@ public class MiscTriggerCollectorService {
         if (cardEffects.isEmpty() || !cardEffects.getFirst().equals(effect)) {
             return true;
         }
+        // The judge left out the abilities whose intervening "if" doesn't hold; the effects go on the stack as written,
+        // an intervening "if" still around them for the check as the ability resolves (CR 603.4).
         List<CardEffect> triggeredEffects = cardEffects.stream()
-                .map(triggeredEffect -> triggeredEffect instanceof ConditionalEffect gate
-                        ? (conditionEvaluationService.isMet(match.gameData(), gate.condition(), context)
-                                ? gate.wrapped() : null)
-                        : triggeredEffect)
-                .filter(Objects::nonNull)
                 .filter(triggeredEffect -> !(triggeredEffect instanceof
                         com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect)
                         || match.permanent().getChosenPermanentId() != null)
@@ -1799,9 +1795,8 @@ public class MiscTriggerCollectorService {
                 null,
                 match.permanent().getId()
         );
-        if (SourcePermanentSnapshotRequiredEffect.isRequiredBy(effect)) {
-            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        }
+        // The source as the ability goes on the stack, whatever the effect is (CR 608.2h, 701.27f).
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
@@ -2748,14 +2743,8 @@ public class MiscTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId());
-        if (effect instanceof DealDamageToPlayersEffect damage
-                && amountEvaluationService.referencesEventValue(damage.amount())) {
-            entry.setEventValue(lifeLoss.lifeLostAmount());
-        } else if (effect instanceof PutCountersOnSelfEffect counters
-                && counters.amount() != null
-                && amountEvaluationService.referencesEventValue(counters.amount())) {
-            entry.setEventValue(lifeLoss.lifeLostAmount());
-        }
+        // "That much": the life lost, recorded whatever the effect is.
+        entry.setEventValue(lifeLoss.lifeLostAmount());
         match.gameData().enqueueTrigger(entry);
 
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));

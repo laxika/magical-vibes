@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,9 +21,8 @@ public class ArmoredKincaller extends Card {
         ControlsAnotherPermanent controlsAnotherDinosaur = new ControlsAnotherPermanent(dinosaur);
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MayRevealSubtypeFromHandEffect(
-                        CardSubtype.DINOSAUR,
-                        new ConditionalEffect(new NotCondition(controlsAnotherDinosaur), new GainLifeEffect(3)),
+                new MayEffect(new RevealSubtypeFromHandEffect(CardSubtype.DINOSAUR,
+                        new ConditionalEffect(new NotCondition(controlsAnotherDinosaur), new GainLifeEffect(3))),
                         "Reveal a Dinosaur card from your hand?"),
                 new ConditionalEffect(controlsAnotherDinosaur, new GainLifeEffect(3)));
     }

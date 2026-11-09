@@ -11,7 +11,7 @@ import java.util.Set;
  * its snapshot taken as the ability triggered, so the draw happens even if the source left the battlefield.
  */
 public record TrackCastSpellCardTypesEffect(Set<CardType> trackedTypes)
-        implements SourcePermanentSnapshotRequiredEffect {
+        implements CardEffect {
     public TrackCastSpellCardTypesEffect {
         trackedTypes = Set.copyOf(trackedTypes);
     }

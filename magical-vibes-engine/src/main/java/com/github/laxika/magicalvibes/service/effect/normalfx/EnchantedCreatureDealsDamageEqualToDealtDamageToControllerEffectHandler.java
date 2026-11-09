@@ -37,8 +37,12 @@ public class EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffectHan
         if (entry.getTriggeringPermanentId() != null) {
             UUID currentControllerId = gameQueryService.findPermanentController(
                     gameData, entry.getTriggeringPermanentId());
+            // Its last known controller once it has left (CR 608.2h).
+            UUID departedControllerId = entry.getRemovedPermanentControllers().get(entry.getTriggeringPermanentId());
             if (currentControllerId != null) {
                 controllerId = currentControllerId;
+            } else if (departedControllerId != null) {
+                controllerId = departedControllerId;
             }
         }
 

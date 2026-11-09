@@ -14,9 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequiredEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -27,7 +25,6 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
 
 /**
  * Trigger collector for the land-play abilities ("whenever [a player] plays a land"): a filtered one
@@ -49,8 +46,9 @@ public class PlayedCardNameTriggerCollectorService {
      * Collects {@code ability}, whose land-play trigger {@code trigger} narrows the land played by a filter or by the
      * zone it was played from, for the land play {@code landPlayed}: the trigger's filters and the intervening "if"
      * (CR 603.4) are judged as the land is played, and the ability goes on the stack as one object (CR 603.3), with
-     * "that player" the player who played the land. An intervening "if" is checked again as the ability resolves, and
-     * so is a filter that reads the card exiled with the source ("if it shares a card type with the exiled card"). An
+     * "that player" the player who played the land. An intervening "if" is checked again as the ability resolves; one
+     * the card writes as an effect condition on the triggering card ("if it shares a card type with the exiled card")
+     * is the card's own effect, judged as it resolves. An
      * ability whose effects are bound to a target of the card, or target a permanent, chooses its targets as it
      * triggers (CR 603.3d). The ability's limit is judged by the caller.
      *
@@ -91,16 +89,11 @@ public class PlayedCardNameTriggerCollectorService {
         if (interveningIf != null && !conditionEvaluationService.isMet(match.gameData(), interveningIf, context)) {
             return false;
         }
-        boolean recheckFilter = filter instanceof CardSharesCardTypeWithImprintedCardPredicate imprint
-                && imprint.requireImprintedCard();
         List<CardEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
             CardEffect effect = registration.effect();
             if (interveningIf != null) {
                 effect = new ConditionalEffect(interveningIf, effect);
-            }
-            if (recheckFilter) {
-                effect = new ConditionalEffect(new TriggeringCardMatches(filter), effect);
             }
             effects.add(effect);
         }
@@ -182,8 +175,7 @@ public class PlayedCardNameTriggerCollectorService {
         entry.setNonTargeting(true);
         // The source as the ability goes on the stack, so a transform instruction can tell whether it has transformed
         // since (CR 701.27f).
-        if (match.permanent() != null
-                && effects.stream().anyMatch(SourcePermanentSnapshotRequiredEffect::isRequiredBy)) {
+        if (match.permanent() != null) {
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         }
         match.gameData().stack.add(entry);
