@@ -30,7 +30,7 @@ public class IsleOfVesuva extends Card {
                 new CreateTokenCopyOfTargetPermanentEffect(
                         List.of(), Set.of(), null, null, Map.of(),
                         false, false, false, false,
-                        false, true, null, Set.of()));
+                        false, true, null, Set.of()).ofTriggeringPermanent());
         target(TargetFilters.creature()).addTrigger(Triggers.chaosEnsues(),
                 new DestroyTargetPermanentAndAllWithSameNameEffect(new PermanentIsCreaturePredicate()));
     }

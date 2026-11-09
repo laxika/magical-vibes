@@ -46,8 +46,11 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var copyEffect = (CreateTokenCopyOfTargetPermanentEffect) effect;
+        CreateTokenCopyOfTargetPermanentEffect.Copied copied = copyEffect.copied();
 
-        if (entry.getTriggeringPermanentIds().size() > 1 && entry.getTargetIds().isEmpty()) {
+        boolean oneOfSeveral = copied == CreateTokenCopyOfTargetPermanentEffect.Copied.TRIGGERING_PERMANENT
+                || copied == CreateTokenCopyOfTargetPermanentEffect.Copied.TARGET && entry.getTargetIds().isEmpty();
+        if (oneOfSeveral && entry.getTriggeringPermanentIds().size() > 1) {
             List<UUID> candidates = entry.getTriggeringPermanentIds().stream()
                     .filter(id -> gameQueryService.findPermanentById(gameData, id) != null)
                     .toList();
@@ -61,17 +64,11 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
             }
         }
 
-        List<UUID> targetIds = entry.targetsForBoundEffectGroup(copyEffect);
-        if (targetIds == null) {
-            targetIds = !entry.getTargetIds().isEmpty()
-                    ? entry.getTargetIds()
-                    : !entry.getTargetCardIds().isEmpty()
-                    ? entry.getTargetCardIds()
-                     : entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
-        } else if (targetIds.isEmpty() && entry.getDeclaredTargetIds().isEmpty()
-                && entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
-        }
+        List<UUID> targetIds = switch (copied) {
+            case TRIGGERING_PERMANENT -> triggeringPermanentToCopy(gameData, entry);
+            case EACH_TRIGGERING_PERMANENT -> triggeringPermanentIds(entry);
+            case TARGET -> targetIds(entry, copyEffect);
+        };
 
         Permanent sourcePermanent = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
@@ -109,6 +106,46 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
         for (UUID targetId : targetIds) {
             resolveForTarget(gameData, entry, copyEffect, targetId, copyCount);
         }
+    }
+
+    private static List<UUID> targetIds(StackEntry entry, CreateTokenCopyOfTargetPermanentEffect copyEffect) {
+        List<UUID> targetIds = entry.targetsForBoundEffectGroup(copyEffect);
+        if (targetIds == null) {
+            return !entry.getTargetIds().isEmpty()
+                    ? entry.getTargetIds()
+                    : !entry.getTargetCardIds().isEmpty()
+                    ? entry.getTargetCardIds()
+                    : entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
+        }
+        if (targetIds.isEmpty() && entry.getDeclaredTargetIds().isEmpty() && entry.getTargetId() != null) {
+            return List.of(entry.getTargetId());
+        }
+        return targetIds;
+    }
+
+    /**
+     * The permanents the trigger event was about, recorded on the entry: the group of a "one or more" event, else its
+     * one permanent.
+     */
+    private static List<UUID> triggeringPermanentIds(StackEntry entry) {
+        if (!entry.getTriggeringPermanentIds().isEmpty()) {
+            return entry.getTriggeringPermanentIds();
+        }
+        return entry.getTriggeringPermanentId() == null ? List.of() : List.of(entry.getTriggeringPermanentId());
+    }
+
+    /**
+     * "That creature", or "one of them" when only one of the event's permanents is still on the battlefield: that one;
+     * with none left, the first, copied as it last existed on the battlefield (CR 608.2h).
+     */
+    private List<UUID> triggeringPermanentToCopy(GameData gameData, StackEntry entry) {
+        List<UUID> ids = triggeringPermanentIds(entry);
+        return ids.stream()
+                .filter(id -> gameQueryService.findPermanentById(gameData, id) != null)
+                .findFirst()
+                .or(() -> ids.stream().findFirst())
+                .map(List::of)
+                .orElse(List.of());
     }
 
     /** Copies the creature chosen from the group that triggered the paused ability. */

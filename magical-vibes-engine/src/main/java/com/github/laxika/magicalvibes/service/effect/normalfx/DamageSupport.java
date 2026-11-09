@@ -757,8 +757,9 @@ public class DamageSupport {
      * The entry {@code entry}'s damage is dealt through when the permanent its trigger event was about deals it
      * ({@code DamageSource.TRIGGERING_PERMANENT}, "then that land deals 1 damage to that player"): that permanent is its
      * source and its controller the source's controller, as for {@link #entryDealtByEventDamageSource}. A permanent
-     * that has left the battlefield deals it as it last existed there (CR 608.2h), the entry's triggering permanent
-     * snapshot.
+     * that has left the battlefield deals it as it last existed there (CR 608.2h): the entry's triggering permanent
+     * snapshot, else the departure snapshot the game recorded as it left, with the keywords the entry recorded it had
+     * as it left.
      *
      * @return the entry, or {@code null} when the entry names no triggering permanent it can find or remember
      */
@@ -766,6 +767,11 @@ public class DamageSupport {
         UUID permanentId = entry.getTriggeringPermanentId();
         Permanent live = permanentId == null ? null : gameQueryService.findPermanentById(gameData, permanentId);
         Permanent dealer = live != null ? live : entry.getTriggeringPermanentSnapshot();
+        if (dealer == null && permanentId != null) {
+            dealer = gameData.departedPermanentSnapshots.values().stream()
+                    .filter(departed -> departed.getId().equals(permanentId))
+                    .findFirst().orElse(null);
+        }
         if (dealer == null) {
             return null;
         }
@@ -775,6 +781,9 @@ public class DamageSupport {
         damageEntry.setDamageSourceCard(dealer.getCard());
         damageEntry.setDamageSourceControllerId(controllerId);
         damageEntry.setSourcePermanentSnapshot(new Permanent(dealer));
+        if (live == null && entry.getTriggeringPermanentKeywordsAtLeave() != null) {
+            damageEntry.setTriggeringPermanentKeywordsAtLeave(entry.getTriggeringPermanentKeywordsAtLeave());
+        }
         return damageEntry;
     }
 

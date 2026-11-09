@@ -24,6 +24,6 @@ public class Necroduality extends Card {
                                 Triggers.NONTOKEN_CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new CreateTokenCopyOfTargetPermanentEffect());
+                new CreateTokenCopyOfTargetPermanentEffect().ofTriggeringPermanent());
     }
 }

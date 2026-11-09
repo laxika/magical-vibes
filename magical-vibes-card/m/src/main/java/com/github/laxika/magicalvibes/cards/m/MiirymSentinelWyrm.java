@@ -25,6 +25,7 @@ public class MiirymSentinelWyrm extends Card {
                                 Triggers.NONTOKEN_CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                CreateTokenCopyOfTargetPermanentEffect.nonLegendary(List.of(), Set.of(), null, null, Map.of()));
+                CreateTokenCopyOfTargetPermanentEffect.nonLegendary(List.of(), Set.of(), null, null, Map.of())
+                        .ofTriggeringPermanent());
     }
 }

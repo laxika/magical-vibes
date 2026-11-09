@@ -70,9 +70,13 @@ class TerrorOfThePeaksTest extends BaseCardTest {
         resolveAllTriggers();
 
         UUID enteringId = harness.getPermanentId(player1, "Hill Giant");
-        gd.playerBattlefields.get(player1.getId()).removeIf(permanent -> permanent.getId().equals(enteringId));
-
         harness.handlePermanentChosen(player1, player2.getId());
+
+        // The Giant dies with the ability on the stack, after its target was chosen as it was put there.
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player1, 0, enteringId);
+        harness.assertNotOnBattlefield(player1, "Hill Giant");
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);

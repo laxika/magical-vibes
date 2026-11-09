@@ -35,14 +35,14 @@ public class DragonTempest extends Card {
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.TRIGGERING_PERMANENT));
 
-        // Whenever a Dragon you control enters, this enchantment deals X damage to any target,
+        // Whenever a Dragon you control enters, it deals X damage to any target,
         // where X is the number of Dragons you control.
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new DealDamageToAnyTargetEffect(new PermanentCount(
+                DealDamageToAnyTargetEffect.fromEnteringPermanent(new PermanentCount(
                         new PermanentHasSubtypePredicate(CardSubtype.DRAGON), CountScope.CONTROLLER)));
     }
 }

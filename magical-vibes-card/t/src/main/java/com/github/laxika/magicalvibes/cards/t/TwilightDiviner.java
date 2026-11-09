@@ -27,6 +27,6 @@ public class TwilightDiviner extends Card {
                                         new PermanentEnteredOrCastFromZonePredicate(Zone.GRAVEYARD))),
                                 ObjectRelation.ANOTHER_YOU_CONTROL)),
                 TriggerOptions.ONE_OR_MORE.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                new CreateTokenCopyOfTargetPermanentEffect());
+                new CreateTokenCopyOfTargetPermanentEffect().ofTriggeringPermanent());
     }
 }

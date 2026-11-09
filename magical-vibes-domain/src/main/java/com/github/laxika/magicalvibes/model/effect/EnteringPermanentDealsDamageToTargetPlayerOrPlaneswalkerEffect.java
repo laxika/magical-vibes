@@ -5,13 +5,14 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 
 /**
- * Damage effect for an entering permanent that is made optional by a surrounding {@link MayEffect}.
- * The trigger collector binds the entering permanent as the source before the target is chosen.
+ * "It deals [amount] damage to target player or planeswalker", where "it" is the permanent the enter event was about
+ * (Aether Charge's Beast; often inside a {@link MayEffect}): the stack entry's triggering permanent deals the damage, as
+ * it is now or as it last existed on the battlefield, else (a creature's own "when this enters") the ability's source.
  */
 public record EnteringPermanentDealsDamageToTargetPlayerOrPlaneswalkerEffect(
         DynamicAmount amount,
         PlayerRelation playerRelation
-) implements DamageDealingEffect, TriggeringPermanentSourceEffect {
+) implements DamageDealingEffect {
 
     public EnteringPermanentDealsDamageToTargetPlayerOrPlaneswalkerEffect(int damage,
                                                                            PlayerRelation playerRelation) {

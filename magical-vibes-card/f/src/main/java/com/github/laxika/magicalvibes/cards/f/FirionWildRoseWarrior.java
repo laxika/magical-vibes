@@ -32,6 +32,7 @@ public class FirionWildRoseWarrior extends Card {
                                 new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 CreateTokenCopyOfTargetPermanentEffect.withAdditionalEffects(
-                        true, List.of(StaticAbility.of(List.of(ReduceEquipCostEffect.ofThisEquipmentOnly(2))))));
+                        true, List.of(StaticAbility.of(List.of(ReduceEquipCostEffect.ofThisEquipmentOnly(2)))))
+                        .ofTriggeringPermanent());
     }
 }

@@ -47,7 +47,7 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
                                           boolean preventRegenerationWithoutDamage,
                                           boolean sourceIsTriggeringPermanent,
                                           boolean recordDamageDealt)
-        implements DamageDealingEffect, TriggeringPermanentSourceEffect {
+        implements DamageDealingEffect {
 
     public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
                                        boolean exileInsteadOfDie, int targetGroup,

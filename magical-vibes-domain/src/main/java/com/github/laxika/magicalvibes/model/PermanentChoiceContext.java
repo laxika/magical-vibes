@@ -1780,30 +1780,15 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  up as its action is taken: the stack entry the choice makes marks its source as the action resolves. */
     record EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId,
                                UUID enteringPermanentId, UUID targetSourcePermanentId, TargetFilter targetFilter,
-                               boolean sourceIsEnteringPermanent, Integer enteringPowerAtTrigger,
-                               Integer enteringToughnessAtTrigger, UUID choosingPlayerId,
-                               Permanent triggeringPermanent, boolean markSourceOncePerTurnOnAcceptance)
+                               UUID choosingPlayerId, Permanent triggeringPermanent,
+                               boolean markSourceOncePerTurnOnAcceptance)
             implements PermanentChoiceContext {
 
         public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID enteringPermanentId,
-                                   UUID targetSourcePermanentId, TargetFilter targetFilter,
-                                   boolean sourceIsEnteringPermanent, Integer enteringPowerAtTrigger,
-                                   Integer enteringToughnessAtTrigger, UUID choosingPlayerId,
-                                   Permanent triggeringPermanent) {
+                                   UUID targetSourcePermanentId, TargetFilter targetFilter, UUID choosingPlayerId) {
             this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
-                    targetSourcePermanentId, targetFilter, sourceIsEnteringPermanent,
-                    enteringPowerAtTrigger, enteringToughnessAtTrigger, choosingPlayerId, triggeringPermanent, false);
-        }
-
-        public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                   UUID sourcePermanentId, UUID enteringPermanentId,
-                                   UUID targetSourcePermanentId, TargetFilter targetFilter,
-                                   boolean sourceIsEnteringPermanent, Integer enteringPowerAtTrigger,
-                                   Integer enteringToughnessAtTrigger, UUID choosingPlayerId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
-                    targetSourcePermanentId, targetFilter, sourceIsEnteringPermanent,
-                    enteringPowerAtTrigger, enteringToughnessAtTrigger, choosingPlayerId, null);
+                    targetSourcePermanentId, targetFilter, choosingPlayerId, null, false);
         }
 
         /**
@@ -1812,9 +1797,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
          */
         public EntersTriggerTarget withTriggeringPermanent(Permanent lastKnown) {
             return new EntersTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
-                    targetSourcePermanentId, targetFilter, sourceIsEnteringPermanent, enteringPowerAtTrigger,
-                    enteringToughnessAtTrigger, choosingPlayerId, lastKnown == null ? null : new Permanent(lastKnown),
-                    markSourceOncePerTurnOnAcceptance);
+                    targetSourcePermanentId, targetFilter, choosingPlayerId,
+                    lastKnown == null ? null : new Permanent(lastKnown), markSourceOncePerTurnOnAcceptance);
         }
 
         /**
@@ -1823,56 +1807,30 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
          */
         public EntersTriggerTarget withMarkSourceOncePerTurnOnAcceptance() {
             return new EntersTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
-                    targetSourcePermanentId, targetFilter, sourceIsEnteringPermanent, enteringPowerAtTrigger,
-                    enteringToughnessAtTrigger, choosingPlayerId, triggeringPermanent, true);
-        }
-
-        public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                   UUID sourcePermanentId, UUID enteringPermanentId,
-                                   UUID targetSourcePermanentId, TargetFilter targetFilter,
-                                   boolean sourceIsEnteringPermanent, Integer enteringPowerAtTrigger,
-                                   Integer enteringToughnessAtTrigger) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
-                    targetSourcePermanentId, targetFilter, sourceIsEnteringPermanent,
-                    enteringPowerAtTrigger, enteringToughnessAtTrigger, null);
-        }
-
-        public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                   UUID sourcePermanentId, UUID enteringPermanentId,
-                                   UUID targetSourcePermanentId, TargetFilter targetFilter,
-                                   boolean sourceIsEnteringPermanent) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
-                    targetSourcePermanentId, targetFilter, sourceIsEnteringPermanent, null, null);
+                    targetSourcePermanentId, targetFilter, choosingPlayerId, triggeringPermanent, true);
         }
 
         public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, null, null, null, false);
+            this(sourceCard, controllerId, effects, sourcePermanentId, null, null, null);
         }
 
         public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID enteringPermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId, null, null, false);
+            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId, null, null);
         }
 
         public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID enteringPermanentId,
                                    UUID targetSourcePermanentId) {
             this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
-                    targetSourcePermanentId, null, false);
+                    targetSourcePermanentId, null);
         }
 
         public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID enteringPermanentId,
                                    UUID targetSourcePermanentId, TargetFilter targetFilter) {
             this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
-                    targetSourcePermanentId, targetFilter, false);
-        }
-
-        public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                   UUID sourcePermanentId, UUID enteringPermanentId,
-                                   boolean sourceIsEnteringPermanent) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
-                    null, null, sourceIsEnteringPermanent);
+                    targetSourcePermanentId, targetFilter, (UUID) null);
         }
     }
 

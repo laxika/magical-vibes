@@ -10,7 +10,7 @@ import java.util.List;
 
 /** Exchanges the rules text characteristics of the triggering creature and another creature. */
 public record ExchangeTextBoxesEffect(PermanentPredicate targetPredicate)
-        implements CardEffect, TriggeringPermanentSourceEffect {
+        implements CardEffect {
 
     public ExchangeTextBoxesEffect() {
         this(anotherCreaturePredicate());

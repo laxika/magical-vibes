@@ -19,7 +19,7 @@ public class KambalProfiteeringMayor extends Card {
     public KambalProfiteeringMayor() {
         addTrigger(new TriggerCondition(Triggers.enters(Triggers.TOKEN, ObjectRelation.OPPONENT_CONTROLS)),
                 TriggerOptions.ONE_OR_MORE.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                CreateTokenCopyOfTargetPermanentEffect.tappedTokenCopy());
+                CreateTokenCopyOfTargetPermanentEffect.tappedTokenCopy().ofEachTriggeringPermanent());
         addTrigger(new TriggerCondition(Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)),
                 TriggerOptions.ONE_OR_MORE,
                 SequenceEffect.of(

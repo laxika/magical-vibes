@@ -2,14 +2,10 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -28,37 +24,6 @@ public class FaceUpTriggerCollectorService {
 
     public FaceUpTriggerCollectorService(GameLogService gameLogService) {
         this.gameLogService = gameLogService;
-    }
-
-    @CollectsWatchTrigger(value = DealDamageToPlayersEffect.class,
-            watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP)
-    private boolean handleTurnedCreatureDealsPowerDamageToEachOpponent(TriggerMatchContext match,
-                                                                         DealDamageToPlayersEffect effect,
-                                                                         TriggerContext ctx) {
-        if (effect.recipient() != DamageRecipient.EACH_OPPONENT
-                || !(effect.amount() instanceof SourcePower)) {
-            return handleCreatureTurnsFaceUp(match, effect, ctx);
-        }
-
-        TriggerContext.PermanentTurnsFaceUp faceUp = (TriggerContext.PermanentTurnsFaceUp) ctx;
-        Permanent turnedPermanent = faceUp.turnedPermanent();
-        Card sourceCard = match.permanent().getCard();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                turnedPermanent.getId());
-        entry.setSourcePermanentSnapshot(turnedPermanent);
-        entry.setDamageSourceCard(turnedPermanent.getCard());
-        entry.setTriggeringPermanentId(turnedPermanent.getId());
-        match.gameData().stack.add(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers when {} is turned face up",
-                match.gameData().id, sourceCard.getName(), turnedPermanent.getCard().getName());
-        return true;
     }
 
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP)

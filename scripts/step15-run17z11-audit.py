@@ -17,7 +17,9 @@ classification run 17z11 made of it by hand (`CLASSIFIED`, keyed by file and eff
 
 The labels are keyed by file and effect class, so a later read of an already classified class in the same file is not
 flagged, and the scan doesn't read the `…CollectorService` handlers (`step15-run17z6-audit.py` lists those). Run 17z12
-found reads this scan labelled correctly but whose neighbours bind by class; see its Findings.
+found reads this scan labelled correctly but whose neighbours bind by class; see its Findings. Its rows 17z12b to 17z12f
+are in the collector services, so `step15-run17z6-audit.py` lists them (run 17z12b closed 17z12b and opened 17z12f);
+none of this scan's reads is in them.
 
 A read with no entry is `UNCLASSIFIED`, with the window heuristic's guess (BIND, REBUILD, UNWRAP or ROUTE): a new read,
 or one a later run moved, to classify. The step's "done" check wants no read in an open row and none unclassified.

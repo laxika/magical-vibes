@@ -1407,8 +1407,7 @@ public class PermanentChoiceTriggerHandlerService {
         boolean declined = hasOptionalSingleTarget(ett.sourceCard(), ett.effects())
                 && isPlayerTarget
                 && permanentId.equals(ett.controllerId());
-        UUID sourcePermanentId = ett.sourceIsEnteringPermanent()
-                ? ett.enteringPermanentId() : ett.sourcePermanentId();
+        UUID sourcePermanentId = ett.sourcePermanentId();
         if (target != null || isPlayerTarget || isExiledCardTarget) {
             StackEntry entry = isExiledCardTarget
                     ? new StackEntry(
@@ -1431,6 +1430,8 @@ public class PermanentChoiceTriggerHandlerService {
             if (!declined) {
                 entry.setTargetId(permanentId);
             }
+            // The permanent the event was about, whatever the effects are: "it", "its controller", its power and
+            // toughness as the ability triggered, and its card as it last existed on the battlefield (CR 608.2h).
             entry.setTriggeringPermanentId(ett.enteringPermanentId());
             if (ett.enteringPermanentId() != null) {
                 entry.setTriggeringPermanentControllerId(
@@ -1438,20 +1439,13 @@ public class PermanentChoiceTriggerHandlerService {
                 Permanent enteringPermanent = gameQueryService.findPermanentById(gameData, ett.enteringPermanentId());
                 if (enteringPermanent != null) {
                     entry.rememberLastKnownPermanentCard(ett.enteringPermanentId(), enteringPermanent.getCard());
+                    entry.setTriggeringPermanentPowerAtTrigger(
+                            gameQueryService.getEffectivePower(gameData, enteringPermanent));
+                    entry.setTriggeringPermanentToughnessAtTrigger(
+                            gameQueryService.getEffectiveToughness(gameData, enteringPermanent));
                 }
             }
             entry.setMarkSourceOncePerTurnOnAcceptance(ett.markSourceOncePerTurnOnAcceptance());
-            if (ett.enteringPowerAtTrigger() != null) {
-                entry.setTriggeringPermanentPowerAtTrigger(ett.enteringPowerAtTrigger());
-                entry.setTriggeringPermanentToughnessAtTrigger(ett.enteringToughnessAtTrigger());
-            }
-            if (ett.sourceIsEnteringPermanent() && sourcePermanentId != null) {
-                Permanent enteringPermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-                if (enteringPermanent != null) {
-                    entry.setSourcePermanentSnapshot(new Permanent(enteringPermanent));
-                    entry.setDamageSourceCard(enteringPermanent.getCard());
-                }
-            }
             Permanent kickedSource = sourcePermanentId == null ? null
                     : gameQueryService.findPermanentById(gameData, sourcePermanentId);
             if (kickedSource != null && kickedSource.isKicked()) {

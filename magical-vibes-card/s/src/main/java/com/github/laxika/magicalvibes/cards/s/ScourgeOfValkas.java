@@ -49,7 +49,7 @@ public class ScourgeOfValkas extends Card {
     }
 
     private static DealDamageToAnyTargetEffect dragonDamage() {
-        return new DealDamageToAnyTargetEffect(
+        return DealDamageToAnyTargetEffect.fromEnteringPermanent(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.DRAGON), CountScope.CONTROLLER));
     }
 }

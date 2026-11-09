@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SavannahLions;
 import com.github.laxika.magicalvibes.cards.t.ThatcherRevolt;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -36,6 +37,26 @@ class VigilanteJusticeTest extends BaseCardTest {
         harness.passBothPriorities(); // resolve the damage trigger
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 1);
+    }
+
+    @Test
+    @DisplayName("The enchantment deals the damage, not the Human: a lifelinking Human gains no life")
+    void enchantmentIsTheDamageSource() {
+        harness.addToBattlefield(player1, new VigilanteJustice());
+        UUID justiceId = harness.getPermanentId(player1, "Vigilante Justice");
+
+        harness.setHand(player1, List.of(new EliteVanguard()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities(); // resolve Elite Vanguard
+        findPermanent(player1, "Elite Vanguard").getGrantedKeywords().add(Keyword.LIFELINK);
+
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities(); // resolve the damage trigger
+
+        harness.assertLife(player2, 19);
+        harness.assertLife(player1, 20);
+        assertThat(gd.damageDealtThisTurnBySource.get(justiceId)).isEqualTo(1);
     }
 
     @Test

@@ -12,6 +12,6 @@ public class PoisonbellyOgre extends Card {
 
     public PoisonbellyOgre() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
-                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
+                new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER));
     }
 }

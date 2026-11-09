@@ -15,10 +15,11 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Creates a token that's a copy of the permanent referenced by the stack entry's targetId.
- * Used for "create a token that's a copy of that artifact/creature" triggered abilities
- * where the permanent to copy is determined at trigger time (e.g. Mirrorworks).
- * The token copies all copiable characteristics per CR 707.2.
+ * Creates a token that's a copy of a permanent: the permanent referenced by the stack entry's targetId, or with
+ * {@link #ofTriggeringPermanent()} / {@link #ofEachTriggeringPermanent()} the permanent (or permanents) the trigger event
+ * was about, read from the entry's triggering permanents ("a token that's a copy of that creature", "for each of them"),
+ * which the ability doesn't target. A triggering permanent that has left the battlefield is copied as it last existed
+ * there (CR 608.2h). The token copies all copiable characteristics per CR 707.2.
  *
  * <p>Optional overrides support "except it's X/Y", "except it's also a [type]",
  * additional subtypes, colors or supertypes, removing legendary, and counters placed after the token enters.
@@ -50,9 +51,27 @@ public record CreateTokenCopyOfTargetPermanentEffect(
         String nameOverride,
         boolean replaceCardTypes,
         boolean hasteUntilEndOfTurn,
-        AnimatePermanentsEffect animateIfNotCreature
+        AnimatePermanentsEffect animateIfNotCreature,
+        Copied copied
 ) implements CardEffect {
+
+    /** What the token copies. */
+    public enum Copied {
+        /** The permanent the stack entry targets (or references by its targetId). */
+        TARGET,
+        /**
+         * The permanent the trigger event was about ("that creature"); with several ("one or more … enter"), one of them
+         * chosen as the ability resolves ("a copy of one of them").
+         */
+        TRIGGERING_PERMANENT,
+        /** Each permanent the trigger event was about ("for each of them, create a token that's a copy of it"). */
+        EACH_TRIGGERING_PERMANENT
+    }
+
     public CreateTokenCopyOfTargetPermanentEffect {
+        if (copied == null) {
+            copied = Copied.TARGET;
+        }
         if (animateIfNotCreature != null
                 && (!(animateIfNotCreature.power() instanceof Fixed)
                 || !(animateIfNotCreature.toughness() instanceof Fixed)
@@ -61,6 +80,43 @@ public record CreateTokenCopyOfTargetPermanentEffect(
             throw new IllegalArgumentException(
                     "Post-entry animation must be a permanent TARGET animation with fixed power and toughness");
         }
+    }
+
+    /** Backward-compatible constructor for copies of the entry's target. */
+    public CreateTokenCopyOfTargetPermanentEffect(
+            List<CardSubtype> additionalSubtypes,
+            Set<CardType> additionalTypes,
+            Integer powerOverride,
+            Integer toughnessOverride,
+            Map<CounterType, Integer> initialCounters,
+            boolean grantHaste,
+            boolean exileAtEndStep,
+            boolean sacrificeAtEndStep,
+            boolean tappedAndAttacking,
+            boolean trackWithSource,
+            boolean createForTargetController,
+            CardColor colorOverride,
+            Set<Keyword> additionalKeywords,
+            boolean sacrificeAtNextUpkeep,
+            List<Ability> additionalAbilities,
+            List<CardSubtype> creatureSubtypeOverride,
+            boolean tapped,
+            boolean removeLegendary,
+            DynamicAmount amount,
+            boolean exileAtEndOfCombat,
+            Set<CardSupertype> additionalSupertypes,
+            boolean chooseAttackTarget,
+            List<CardColor> additionalColors,
+            String nameOverride,
+            boolean replaceCardTypes,
+            boolean hasteUntilEndOfTurn,
+            AnimatePermanentsEffect animateIfNotCreature) {
+        this(additionalSubtypes, additionalTypes, powerOverride, toughnessOverride, initialCounters,
+                grantHaste, exileAtEndStep, sacrificeAtEndStep, tappedAndAttacking, trackWithSource,
+                createForTargetController, colorOverride, additionalKeywords, sacrificeAtNextUpkeep,
+                additionalAbilities, creatureSubtypeOverride, tapped, removeLegendary, amount,
+                exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors, nameOverride,
+                replaceCardTypes, hasteUntilEndOfTurn, animateIfNotCreature, Copied.TARGET);
     }
 
     /** Backward-compatible constructor for copies without a post-entry animation. */
@@ -178,7 +234,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
                 sacrificeAtNextUpkeep, additionalAbilities, creatureSubtypeOverride, tapped, removeLegendary,
                 amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
-                nameOverride, true, hasteUntilEndOfTurn, animateIfNotCreature);
+                nameOverride, true, hasteUntilEndOfTurn, animateIfNotCreature, copied);
     }
 
     /**
@@ -191,7 +247,29 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
                 sacrificeAtNextUpkeep, additionalAbilities, creatureSubtypeOverride, tapped, removeLegendary,
                 amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
-                nameOverride, replaceCardTypes, true, animateIfNotCreature);
+                nameOverride, replaceCardTypes, true, animateIfNotCreature, copied);
+    }
+
+    /**
+     * This copy effect, copying the permanent the trigger event was about instead of a target ("create a token that's a
+     * copy of that creature"); with several ("whenever one or more … enter"), one of them chosen as it resolves.
+     */
+    public CreateTokenCopyOfTargetPermanentEffect ofTriggeringPermanent() {
+        return withCopied(Copied.TRIGGERING_PERMANENT);
+    }
+
+    /** This copy effect, copying each permanent the trigger event was about ("for each of them, … a copy of it"). */
+    public CreateTokenCopyOfTargetPermanentEffect ofEachTriggeringPermanent() {
+        return withCopied(Copied.EACH_TRIGGERING_PERMANENT);
+    }
+
+    private CreateTokenCopyOfTargetPermanentEffect withCopied(Copied newCopied) {
+        return new CreateTokenCopyOfTargetPermanentEffect(additionalSubtypes, additionalTypes, powerOverride,
+                toughnessOverride, initialCounters, grantHaste, exileAtEndStep, sacrificeAtEndStep,
+                tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
+                sacrificeAtNextUpkeep, additionalAbilities, creatureSubtypeOverride, tapped, removeLegendary,
+                amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
+                nameOverride, replaceCardTypes, hasteUntilEndOfTurn, animateIfNotCreature, newCopied);
     }
 
     /**
@@ -208,7 +286,7 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 tappedAndAttacking, trackWithSource, createForTargetController, colorOverride, additionalKeywords,
                 sacrificeAtNextUpkeep, additionalAbilities, creatureSubtypeOverride, tapped, removeLegendary,
                 amount, exileAtEndOfCombat, additionalSupertypes, chooseAttackTarget, additionalColors,
-                nameOverride, replaceCardTypes, hasteUntilEndOfTurn, animation);
+                nameOverride, replaceCardTypes, hasteUntilEndOfTurn, animation, copied);
     }
 
     /** Backward-compatible full constructor without a name override. */
@@ -588,6 +666,6 @@ public record CreateTokenCopyOfTargetPermanentEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.permanent());
+        return copied == Copied.TARGET ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
     }
 }

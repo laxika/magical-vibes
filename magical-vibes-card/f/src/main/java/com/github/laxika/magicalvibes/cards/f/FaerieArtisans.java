@@ -26,7 +26,7 @@ public class FaerieArtisans extends Card {
         CreateTokenCopyOfTargetPermanentEffect copyEffect = new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(CardType.ARTIFACT), null, null, Map.of(), false, false, false, false,
                 true, false, null, Set.of(), false, List.of(), List.of(), false, false,
-                new Fixed(1), false, Set.of(), false);
+                new Fixed(1), false, Set.of(), false).ofTriggeringPermanent();
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 Triggers.CREATURE,
