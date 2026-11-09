@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.model.condition;
 
-/** At least the specified amount of mana produced by creatures was spent to cast the triggering spell. */
+/**
+ * At least the specified amount of mana produced by creatures was spent to cast the triggering spell: what the spell
+ * recorded as it became cast ({@code StackEntry.creatureManaSpentToCastThisSpell()}), read from the condition context's
+ * triggering spell.
+ */
 public record SpellCreatureManaSpentAtLeast(int minMana) implements Condition {
 
     @Override

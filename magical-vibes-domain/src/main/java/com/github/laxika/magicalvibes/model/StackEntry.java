@@ -167,8 +167,17 @@ public class StackEntry {
     @Setter private int activationTreasureManaSpent;
     /** Whether mana produced by a Treasure was spent to activate this ability. */
     @Setter private boolean activationUsedTreasureMana;
-    /** Mana spent to cast this spell, retained until a permanent spell enters the battlefield. */
+    /**
+     * Mana spent to cast this spell, retained until a permanent spell enters the battlefield. The cast trigger collection
+     * records it again as the spell becomes cast (CR 601.2i), so a cast trigger's "the amount of mana spent to cast that
+     * spell" reads it as it resolves, from the entry's snapshot of the spell ({@link #manaSpentToCastThisSpell}).
+     */
     @Setter private int manaSpentToCast;
+    /**
+     * Mana produced by creatures that was spent to cast this spell, recorded beside {@link #manaSpentToCast} as the spell
+     * becomes cast ("if at least three mana from creatures was spent to cast it", Inga and Esika).
+     */
+    @Setter private int creatureManaSpentToCast;
     /**
      * The colors of mana spent to cast this spell (colorless is no color, CR 105.1), recorded as it becomes cast, so a
      * cast trigger's "for each color of mana spent to cast that spell" reads them as it resolves: from the spell on the
@@ -1175,6 +1184,7 @@ public class StackEntry {
         this.activationTreasureManaSpent = source.activationTreasureManaSpent;
         this.activationUsedTreasureMana = source.activationUsedTreasureMana;
         this.manaSpentToCast = source.manaSpentToCast;
+        this.creatureManaSpentToCast = source.creatureManaSpentToCast;
         this.colorsSpentToCast = source.colorsSpentToCast;
         this.additionalEnterCounters = source.additionalEnterCounters;
         this.targetZone = source.targetZone;
@@ -1623,6 +1633,7 @@ public class StackEntry {
         this.activationTreasureManaSpent = 0;
         this.activationUsedTreasureMana = false;
         this.manaSpentToCast = 0;
+        this.creatureManaSpentToCast = 0;
         this.colorsSpentToCast = Set.of();
         this.copy = false;
         this.castCopy = false;
@@ -2216,6 +2227,19 @@ public class StackEntry {
     public void setTriggeringCard(UUID cardId, long graveyardEntryVersion) {
         this.triggeringCardId = cardId;
         this.triggeringCardGraveyardEntryVersion = graveyardEntryVersion;
+    }
+
+    /**
+     * The amount of mana spent to cast this spell: {@link #manaSpentToCast}, but 0 for a copy that wasn't cast, as a copy
+     * of a spell isn't cast and mana isn't an object it copies (CR 707.10).
+     */
+    public int manaSpentToCastThisSpell() {
+        return copy && !castCopy ? 0 : manaSpentToCast;
+    }
+
+    /** The mana produced by creatures spent to cast this spell, 0 for a copy that wasn't cast (CR 707.10). */
+    public int creatureManaSpentToCastThisSpell() {
+        return copy && !castCopy ? 0 : creatureManaSpentToCast;
     }
 
     /** Records {@code colors} as the colors of mana spent to cast this spell; an immutable copy is kept. */

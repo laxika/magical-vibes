@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.j.JacesIngenuity;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -10,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SummitfestClosingCeremony.class, JacesIngenuity.class, Shock.class})
+@CardUsed({SummitfestClosingCeremony.class, JacesIngenuity.class, Shock.class, Counterspell.class})
 class SummitfestClosingCeremonyTest extends BaseCardTest {
 
     @Test
@@ -122,5 +123,23 @@ class SummitfestClosingCeremonyTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player2, 18);
         assertThat(gd.getCardIntensity(ceremony)).isEqualTo(3);
+    }
+
+    @Test
+    void covercastIntensifiesForAFiveManaSpellCounteredInResponse() {
+        SummitfestClosingCeremony ceremony = new SummitfestClosingCeremony();
+        harness.castFromHand(player1, ceremony, "{3}{U}{R}");
+        harness.passBothPriorities();
+        JacesIngenuity ingenuity = new JacesIngenuity();
+        harness.castFromHand(player1, ingenuity, "{3}{U}{U}");
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, ingenuity.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Jace's Ingenuity");
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardIntensity(ceremony.getId())).isEqualTo(4);
     }
 }

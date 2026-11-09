@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -25,7 +25,7 @@ public class ManaformHellkite extends Card {
 
     public ManaformHellkite() {
         CreateTokenEffect dragonIllusion = new CreateTokenEffect(
-                CardType.CREATURE, new Fixed(1), "Dragon Illusion", new XValue(), new XValue(),
+                CardType.CREATURE, new Fixed(1), "Dragon Illusion", new ManaSpentToCast(), new ManaSpentToCast(),
                 CardColor.RED, null, List.of(CardSubtype.DRAGON, CardSubtype.ILLUSION),
                 Set.of(Keyword.FLYING, Keyword.HASTE), Set.of(), false, false, List.of(), List.of(),
                 false, true, false, 0, Set.of());

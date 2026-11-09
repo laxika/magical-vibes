@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastBeforeTriggeringSpellThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -50,7 +51,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTur
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -516,47 +516,25 @@ class SpellCastTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("snapshots spell mana spent into xValue when a resolved amount references X")
-        void snapshotsSpellManaSpentForXValueAmounts() {
+        @DisplayName("an ability reading the mana spent keeps the spell, its mana spent recorded, as its triggering spell")
+        void manaSpentAmountReadsTheTriggeringSpell() {
             Permanent perm = createPermanent("Aberrant Manawurm");
-            var innerEffect = new BoostSelfEffect(new XValue(), new Fixed(0));
+            var innerEffect = new BoostSelfEffect(new ManaSpentToCast(), new Fixed(0));
             var effect = authored(SpellFilter.ANY, List.of(innerEffect));
             Card spellCard = createCard("Lightning Bolt", CardColor.RED);
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
+            spellOnStack.setManaSpentToCast(3);
+            gd.stack.add(spellOnStack);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
-            when(amountEvaluationService.referencesXValue(new XValue())).thenReturn(true);
-            gd.addSpellCastManaSpent(spellCard.getId(), 3);
 
             sut.collectCastAbility(match(perm, player1Id, effect), effect, ctx, false);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getLast().getXValue()).isEqualTo(3);
-        }
-
-        @Test
-        @DisplayName("snapshots spell mana spent when a token's power references X")
-        void snapshotsSpellManaSpentForTokenPower() {
-            Permanent perm = createPermanent("Manaform Hellkite");
-            var token = new CreateTokenEffect(
-                    "Dragon Illusion", new XValue(), new XValue(), CardColor.RED,
-                    List.of(CardSubtype.DRAGON, CardSubtype.ILLUSION), Set.of(), Set.of());
-            var innerEffect = new CreateTokenForTriggeringPlayerEffect(token);
-            var effect = authored(SpellFilter.ANY, List.of(innerEffect));
-            Card spellCard = createCard("Lightning Bolt", CardColor.RED);
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
-
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
-                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
-            when(amountEvaluationService.referencesXValue(new Fixed(1))).thenReturn(false);
-            when(amountEvaluationService.referencesXValue(new XValue())).thenReturn(true);
-            gd.addSpellCastManaSpent(spellCard.getId(), 3);
-
-            sut.collectCastAbility(match(perm, player1Id, effect), effect, ctx, false);
-
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getLast().getXValue()).isEqualTo(3);
+            assertThat(gd.stack).hasSize(2);
+            assertThat(gd.stack.getLast().getXValue()).isZero();
+            assertThat(gd.stack.getLast().getTriggeringSpellSnapshot().getManaSpentToCast()).isEqualTo(3);
         }
 
         @Test
@@ -601,22 +579,23 @@ class SpellCastTriggerCollectorServiceTest {
         @DisplayName("an optional trigger whose effect reads the mana spent also goes on the stack, asked as it resolves")
         void optionalManaSpentTriggerGoesOnStack() {
             Permanent perm = createPermanent("Uncover the Moon-Letters");
-            var draw = new DrawCardEffect(new XValue());
+            var draw = new DrawCardEffect(new ManaSpentToCast());
             var mayEffect = new MayEffect(draw, "Draw cards?");
             Card spellCard = createInstant("Dark Ritual");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
-            gd.addSpellCastManaSpent(spellCard.getId(), 3);
+            StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
+            spellOnStack.setManaSpentToCast(3);
+            gd.stack.add(spellOnStack);
             everySpellMatches();
-            when(amountEvaluationService.referencesXValue(new XValue())).thenReturn(true);
             CastAbility ability = castAbility(Triggers.playerCastsSpell().anySpell(), mayEffect);
 
             boolean result = sut.collectCastAbility(match(perm, player1Id, mayEffect), ability, ctx, false);
 
             assertThat(result).isTrue();
             assertThat(gd.pendingMayAbilities).isEmpty();
-            assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(gd.stack.getLast()).satisfies(entry -> {
                 assertThat(entry.getEffectsToResolve()).containsExactly(new MayEffect(draw, "Draw cards?"));
-                assertThat(entry.getXValue()).isEqualTo(3);
+                assertThat(entry.getTriggeringSpellSnapshot().getManaSpentToCast()).isEqualTo(3);
             });
         }
 

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BurrentonForgeTender;
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.f.FieryTemper;
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.model.Card;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChandraDressedToKill.class, FieryTemper.class, ThinkTwice.class, BurrentonForgeTender.class})
+@CardUsed({ChandraDressedToKill.class, FieryTemper.class, ThinkTwice.class, BurrentonForgeTender.class, Counterspell.class})
 class ChandraDressedToKillTest extends BaseCardTest {
 
     @Test
@@ -309,5 +310,26 @@ class ChandraDressedToKillTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
         harness.activateAbility(player1, 0, 2, null, null);
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Emblem deals the mana spent on a red spell countered before its ability resolves")
+    void emblemDealsTheManaSpentOnASpellCounteredInResponse() {
+        createEmblem();
+        FieryTemper temper = new FieryTemper();
+        harness.setHand(player1, List.of(temper));
+        harness.addMana(player1, ManaColor.RED, 3);
+        harness.castInstant(player1, 0, player1.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, temper.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Fiery Temper");
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 17);
+        harness.assertLife(player1, 20);
     }
 }

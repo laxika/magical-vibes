@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEqualToTriggeringSpellManaValueDifferenceEffect;
@@ -32,10 +33,11 @@ public class LoseLifeEqualToTriggeringSpellManaValueDifferenceEffectHandler
         if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return;
         }
-        // The spell's mana value as the ability resolves, as it last existed on the stack once it has left (CR 608.2h);
-        // the mana spent to cast it is the ability's X, recorded as the ability triggered.
-        int amount = Math.max(0, amountEvaluationService.evaluate(gameData, new TargetSpellManaValue(),
-                AmountContext.forStackEntry(entry, null)) - entry.getXValue());
+        // The spell's mana value and the mana spent to cast it as the ability resolves, as it last existed on the stack
+        // once it has left (CR 608.2h): the mana spent is what the spell recorded as it became cast.
+        AmountContext context = AmountContext.forStackEntry(entry, null);
+        int amount = Math.max(0, amountEvaluationService.evaluate(gameData, new TargetSpellManaValue(), context)
+                - amountEvaluationService.evaluate(gameData, new ManaSpentToCast(), context));
         if (amount > 0) {
             lifeSupport.applyLifeLoss(gameData, targetPlayerId, amount, entry.getCard().getName());
         }

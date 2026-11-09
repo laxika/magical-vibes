@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.CopperHostCrusher;
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FurtiveAnalyst;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({IngaAndEsika.class, GrizzlyBears.class, CopperHostCrusher.class, Forest.class, FurtiveAnalyst.class})
+@CardUsed({IngaAndEsika.class, GrizzlyBears.class, CopperHostCrusher.class, Forest.class, FurtiveAnalyst.class, Counterspell.class})
 class IngaAndEsikaTest extends BaseCardTest {
 
     @Test
@@ -176,5 +177,29 @@ class IngaAndEsikaTest extends BaseCardTest {
         Card card = createCreature("Priority Holder");
         card.setManaCost("{G}");
         return card;
+    }
+
+    @Test
+    void counteredCreatureSpellStillDrawsByTheCreatureManaSpentOnIt() {
+        harness.addToBattlefield(player1, new IngaAndEsika());
+        harness.setHand(player1, List.of(createPriorityHoldingCreature()));
+        activateGrantedManaAbility(addCreatureReady(player1, new GrizzlyBears()));
+        harness.handleListChoice(player1, "GREEN");
+        activateGrantedManaAbility(addCreatureReady(player1, createCreature("Source Two")));
+        harness.handleListChoice(player1, "GREEN");
+        activateGrantedManaAbility(addCreatureReady(player1, createCreature("Source Three")));
+        harness.handleListChoice(player1, "GREEN");
+        Card spell = createCreature("Three Mana Creature");
+        harness.setHand(player1, List.of(spell));
+        harness.castCreature(player1, 0);
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, spell.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Three Mana Creature");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 }

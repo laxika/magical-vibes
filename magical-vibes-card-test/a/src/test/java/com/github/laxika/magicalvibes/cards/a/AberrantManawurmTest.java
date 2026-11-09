@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Hurricane;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({AberrantManawurm.class, Shock.class, Divination.class, Hurricane.class,
-        GrizzlyBears.class, LightningBolt.class})
+        GrizzlyBears.class, LightningBolt.class, Counterspell.class})
 class AberrantManawurmTest extends BaseCardTest {
 
     private Permanent addManawurm(Player player) {
@@ -171,4 +172,24 @@ class AberrantManawurmTest extends BaseCardTest {
         assertThat(manawurm.getToughnessModifier()).isZero();
     }
 
+    @Test
+    @DisplayName("A spell countered before the ability resolves still boosts by the mana spent to cast it")
+    void counteredSpellStillBoostsByTheManaSpentToCastIt() {
+        Permanent manawurm = addManawurm(player1);
+        setUpMainPhase(player1);
+        Divination divination = new Divination();
+        harness.setHand(player1, List.of(divination));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castSorcery(player1, 0, 0);
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, divination.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Divination");
+        harness.passBothPriorities();
+
+        assertThat(manawurm.getPowerModifier()).isEqualTo(3);
+        assertThat(manawurm.getToughnessModifier()).isZero();
+    }
 }

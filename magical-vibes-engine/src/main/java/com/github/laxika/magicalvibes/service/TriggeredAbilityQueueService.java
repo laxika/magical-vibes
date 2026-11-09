@@ -2134,6 +2134,18 @@ public class TriggeredAbilityQueueService {
         if (pending.eventValue() != null) {
             entry.setEventValue(pending.eventValue());
         }
+        // A spell-cast trigger's "that spell", as it is now, for an ability that goes on the stack without a target.
+        if (pending.triggeringCardId() != null) {
+            gameData.stack.stream()
+                    .filter(candidate -> candidate.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                            && candidate.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                            && pending.triggeringCardId().equals(candidate.getTargetableId()))
+                    .findFirst()
+                    .ifPresent(spell -> {
+                        entry.setTriggeringCardId(pending.triggeringCardId());
+                        entry.setTriggeringSpell(spell);
+                    });
+        }
         gameData.stack.add(entry);
     }
 

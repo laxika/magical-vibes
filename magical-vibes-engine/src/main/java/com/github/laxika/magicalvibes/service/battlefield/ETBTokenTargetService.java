@@ -996,6 +996,16 @@ public class ETBTokenTargetService {
         etbEntry.setTargetGroupSizes(List.copyOf(pending.groupSizes()));
         etbEntry.setEventValue(pending.eventValue());
         etbEntry.setTriggeringCardId(pending.triggeringCardId());
+        // A spell-cast trigger's "that spell", as it is while its targets are chosen (nothing happens in between, CR
+        // 603.3d), for the effects and conditions that read it once it has left the stack (CR 608.2h).
+        if (pending.triggeringCardId() != null) {
+            gameData.stack.stream()
+                    .filter(candidate -> candidate.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                            && candidate.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                            && pending.triggeringCardId().equals(candidate.getTargetableId()))
+                    .findFirst()
+                    .ifPresent(etbEntry::setTriggeringSpell);
+        }
         if (pending.stateTriggerEffectIndex() >= 0) {
             etbEntry.setStateTriggerEffectIndex(pending.stateTriggerEffectIndex());
         }

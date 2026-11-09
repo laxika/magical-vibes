@@ -1,7 +1,8 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /**
- * The mana spent to cast the triggering spell is greater than the source permanent's current power.
+ * The mana spent to cast the triggering spell (what it recorded as it became cast, read from the condition context's
+ * triggering spell) is greater than the source permanent's current power.
  */
 public record SpellManaSpentGreaterThanSourcePower() implements Condition {
 

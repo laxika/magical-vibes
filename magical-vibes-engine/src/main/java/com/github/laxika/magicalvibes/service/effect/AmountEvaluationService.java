@@ -426,10 +426,15 @@ public class AmountEvaluationService {
             case WebSlingingReturnedCreatureManaValue ignored ->
                     ctx.sourcePermanent() == null || ctx.sourcePermanent().getWebSlingingReturnedCreatureManaValue() == null
                             ? 0 : ctx.sourcePermanent().getWebSlingingReturnedCreatureManaValue();
-            // Cast triggers carry the triggering spell's payment in X, independently of
-            // the mana spent on the permanent that owns the ability.
+            // A cast trigger's "the amount of mana spent to cast that spell" is what the triggering spell recorded as it
+            // became cast, read from the entry's snapshot of it as the ability resolves (the same once the spell has left
+            // the stack, CR 608.2h), independently of the mana spent on the permanent that owns the ability. Another
+            // triggered ability about a card (a self-cast trigger) still reads its X.
             case ManaSpentToCast ignored ->
-                    ctx.stackEntry() != null && ctx.stackEntry().getTriggeringCardId() != null
+                    ctx.stackEntry() != null && ctx.stackEntry().getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                            && ctx.stackEntry().getTriggeringSpellSnapshot() != null
+                            ? ctx.stackEntry().getTriggeringSpellSnapshot().manaSpentToCastThisSpell()
+                            : ctx.stackEntry() != null && ctx.stackEntry().getTriggeringCardId() != null
                             ? ctx.xValue()
                             : ctx.sourcePermanent() != null
                             ? ctx.sourcePermanent().getManaSpentToCast()

@@ -871,6 +871,11 @@ public class TriggerCollectionService {
             if (spell.getCard() != null && spell.getCard().getId().equals(spellCard.getId()) && !spell.isCopy()) {
                 spell.setAdditionalEnterCounters(gameData.spellAdditionalEnterCounters
                         .getOrDefault(spellCard.getId(), 0));
+                // The mana spent to cast it, and the part of it creatures produced, as the spell becomes cast (CR
+                // 601.2i): the game's records are cleared once its cast triggers are collected, so the cast triggers
+                // read them from the spell's entry (or their snapshot of it) as they resolve.
+                spell.setManaSpentToCast(gameData.getSpellCastManaSpent(spellCard.getId()));
+                spell.setCreatureManaSpentToCast(gameData.getSpellCastCreatureManaSpent(spellCard.getId()));
             }
         }
         gameData.recordSpellCastFromZone(castingPlayerId, castZone, spellCard);
@@ -1068,7 +1073,12 @@ public class TriggerCollectionService {
             }
         }
 
-        int spellManaSpent = gameData.getSpellCastManaSpent(spellCard.getId());
+        // The spell as it is on the stack, its mana spent recorded (above): the graveyard and hand abilities below judge
+        // their intervening "if" on it and keep it as their triggering spell for the check as they resolve.
+        StackEntry castSpellEntry = gameData.stack.stream()
+                .filter(entry -> entry.getTargetableId().equals(spellCard.getId()))
+                .findFirst()
+                .orElse(null);
         boolean castUsingTreasureMana = gameData.spellCastUsedTreasureMana(spellCard.getId());
         gameData.clearSpellCastManaSpent(spellCard.getId());
         gameData.clearSpellCastManaSources(spellCard.getId());
@@ -1100,11 +1110,11 @@ public class TriggerCollectionService {
                     if (filter.nthThisTurn() > 0 && !isNthMatchingSpell(gameData, filter, castingPlayerId)) {
                         continue;
                     }
-                    // The intervening "if" (CR 603.4: "if five or more mana was spent to cast it", Covercast) with
-                    // the spell's mana spent as X, which the entry carries for the check as it resolves.
+                    // The intervening "if" (CR 603.4: "if five or more mana was spent to cast it", Covercast) on the
+                    // spell, which the entry keeps as its triggering spell for the check as it resolves.
                     if (trigger.interveningIf() != null && !conditionEvaluationService.isMet(gameData,
                             trigger.interveningIf(), ConditionContext.forCard(card, castingPlayerId)
-                                    .withXValue(spellManaSpent))) {
+                                    .withTriggeringSpell(castSpellEntry))) {
                         continue;
                     }
 
@@ -1126,7 +1136,7 @@ public class TriggerCollectionService {
                     entry.setTriggeringCardId(spellCard.getId());
                     entry.setTriggeringCardGraveyardEntryVersion(sourceEntryVersion);
                     entry.setSourceGraveyardEntryVersion(sourceEntryVersion);
-                    entry.setXValue(spellManaSpent);
+                    entry.setTriggeringSpell(castSpellEntry);
                     gameData.stack.add(entry);
 
                     log.info("Game {} - {} graveyard spell-cast trigger queued",
@@ -1149,11 +1159,11 @@ public class TriggerCollectionService {
                     Condition interveningIf = ability.options().interveningIf();
                     if (!predicateEvaluationService.matchesCardPredicate(spellCard, filter.spell(), null)
                             || interveningIf != null && !conditionEvaluationService.isMet(gameData, interveningIf,
-                            ConditionContext.forCard(card, castingPlayerId).withXValue(spellManaSpent))) {
+                            ConditionContext.forCard(card, castingPlayerId).withTriggeringSpell(castSpellEntry))) {
                         continue;
                     }
-                    // The intervening "if" (Covercast's mana spent) stays wrapped for the check as it resolves, with
-                    // the spell's mana spent as the entry's X.
+                    // The intervening "if" (Covercast's mana spent) stays wrapped for the check as it resolves, on the
+                    // entry's triggering spell.
                     List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect)
                             .map(effect -> interveningIf == null ? effect
                                     : (CardEffect) new ConditionalEffect(interveningIf, effect))
@@ -1166,7 +1176,7 @@ public class TriggerCollectionService {
                             new ArrayList<>(effects)
                     );
                     entry.setTriggeringCardId(spellCard.getId());
-                    entry.setXValue(spellManaSpent);
+                    entry.setTriggeringSpell(castSpellEntry);
                     gameData.stack.add(entry);
                     log.info("Game {} - {} hand spell-cast trigger queued", gameData.id, card.getName());
                 }

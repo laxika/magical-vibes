@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.c.Concentrate;
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindSpring;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TellahGreatSage.class, Concentrate.class, GrizzlyBears.class, MindSpring.class, Spellbook.class, Unsummon.class})
+@CardUsed({TellahGreatSage.class, Concentrate.class, GrizzlyBears.class, MindSpring.class, Spellbook.class, Unsummon.class, Counterspell.class})
 class TellahGreatSageTest extends BaseCardTest {
 
     @Test
@@ -159,5 +160,28 @@ class TellahGreatSageTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("A spell with eight mana spent countered before the ability resolves still draws and deals that damage")
+    void counteredEightManaSpellStillDrawsAndDealsTheManaSpent() {
+        castTellah();
+        MindSpring mindSpring = new MindSpring();
+        harness.setHand(player1, List.of(mindSpring));
+        harness.addMana(player1, ManaColor.BLUE, 8);
+        harness.castSorcery(player1, 0, 6);
+        int handSizeAfterCast = gd.playerHands.get(player1.getId()).size();
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, mindSpring.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Mind Spring");
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Hero")).isEqualTo(1);
+        harness.assertNotOnBattlefield(player1, "Tellah, Great Sage");
+        harness.assertLife(player2, 12);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeAfterCast + 2);
     }
 }

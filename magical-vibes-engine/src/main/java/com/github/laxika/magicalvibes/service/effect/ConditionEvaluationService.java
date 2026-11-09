@@ -1594,10 +1594,13 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && gameData.playersWhoseNoncreaturePermanentsWereDestroyedByOpponentThisTurn
                             .contains(ctx.controllerId());
+            // "If at least N mana (from creatures) was spent to cast it": what the triggering spell recorded as it became
+            // cast, the same as the ability triggers and as it resolves, once the spell has left the stack too.
             case SpellManaSpentAtLeast c ->
-                    ctx.xValue() >= c.minMana();
+                    ctx.triggeringSpell() != null && ctx.triggeringSpell().manaSpentToCastThisSpell() >= c.minMana();
             case SpellCreatureManaSpentAtLeast c ->
-                    ctx.xValue() >= c.minMana();
+                    ctx.triggeringSpell() != null
+                            && ctx.triggeringSpell().creatureManaSpentToCastThisSpell() >= c.minMana();
             case SpellManaValueEqualsSourceCounters c -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 int counterCount = source == null
@@ -1610,7 +1613,9 @@ public class ConditionEvaluationService {
             }
             case SpellManaSpentGreaterThanSourcePower ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
-                yield source != null && ctx.xValue() > gameQueryService.getEffectivePower(gameData, source);
+                yield source != null && ctx.triggeringSpell() != null
+                        && ctx.triggeringSpell().manaSpentToCastThisSpell()
+                        > gameQueryService.getEffectivePower(gameData, source);
             }
             case SpellXAtLeast c ->
                     ctx.xValue() >= c.minX();
