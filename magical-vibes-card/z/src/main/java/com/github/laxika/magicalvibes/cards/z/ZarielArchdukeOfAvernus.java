@@ -8,21 +8,23 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.condition.AllOf;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
+import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -55,16 +57,15 @@ public class ZarielArchdukeOfAvernus extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -6,
                 List.of(new CreateEmblemEffect(
-                        List.of(new EmblemStepTriggerEffect(
-                                EmblemTriggerStep.END_OF_FIRST_COMBAT,
-                                List.of(
-                                        new UntapPermanentsEffect(
-                                                TapUntapScope.TARGET,
-                                                new PermanentAllOfPredicate(List.of(
-                                                        new PermanentIsCreaturePredicate(),
-                                                        new PermanentControlledBySourceControllerPredicate()))),
-                                        new AdditionalCombatPhaseEffect(1)),
-                                EMBLEM_TEXT)),
+                        new TriggeredAbility(Triggers.endOfCombat(),
+                                TriggerOptions.DEFAULT.withEventCondition(
+                                        new AllOf(List.of(new ControllerTurn(), new FirstCombatPhase()))),
+                                new UntapPermanentsEffect(
+                                        TapUntapScope.TARGET,
+                                        new PermanentAllOfPredicate(List.of(
+                                                new PermanentIsCreaturePredicate(),
+                                                new PermanentControlledBySourceControllerPredicate()))),
+                                new AdditionalCombatPhaseEffect(1)),
                         EMBLEM_TEXT)),
                 "−6: You get an emblem with \"" + EMBLEM_TEXT + "\""));
     }

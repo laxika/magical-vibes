@@ -53,10 +53,11 @@ BIND = re.compile(r"\.set\w+\((?:effect|e|may|mayPay|marker|trigger)\.")
 # (`TriggeredModalTrigger.withModeCount`) instead of a rebuilt modal, C.A.M.P.'s target is its effect's and the
 # never-written counter step of the enchanted-land mana sequence is gone. Run 17z13's independent check opened rows
 # 17z13b to 17z13e; the handlers below are theirs (the reader sites of those rows are not handlers and aren't listed).
+# Run 17z13b closed its row: the emblem death and artifact-graveyard handlers are gone with `@CollectsEmblemTrigger`
+# (the emblems' abilities are `TriggeredAbility`s their readers judge).
 OPEN = {
     ("LandTapTriggerCollectorService.java", "handleReturnTappedLandToHand"): "17z13c",
     ("MiscTriggerCollectorService.java", "handleEnchantedPermanentTapRelicBind"): "17z13c",
-    ("DeathTriggerCollectorService.java", "handleEmblemArtifactGraveyardReturn"): "17z13b",
 }
 
 

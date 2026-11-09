@@ -9,14 +9,13 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreCreatures;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -25,6 +24,8 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -67,14 +68,12 @@ public class GarrukUnleashed extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -7,
                 List.of(new CreateEmblemEffect(
-                        List.of(new EmblemStepTriggerEffect(
-                                EmblemTriggerStep.END_STEP,
-                                List.of(new MayEffect(
+                        new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU),
+                                new MayEffect(
                                         new SearchLibraryEffect(
                                                 new CardTypePredicate(CardType.CREATURE),
                                                 LibrarySearchDestination.BATTLEFIELD),
                                         "Search your library for a creature card?")),
-                                EMBLEM_TEXT)),
                         EMBLEM_TEXT)),
                 "−7: You get an emblem with \"" + EMBLEM_TEXT + "\""));
     }

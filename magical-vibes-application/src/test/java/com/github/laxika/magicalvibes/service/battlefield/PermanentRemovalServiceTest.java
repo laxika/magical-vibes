@@ -594,7 +594,7 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
-        @DisplayName("Collects emblem artifact graveyard triggers for artifacts sent to graveyard")
+        @DisplayName("Collects the emblems' put-into-your-graveyard-from-the-battlefield triggers for an artifact")
         void firesArtifactGraveyardTrigger() {
             Permanent artifact = addPermanent(player1Id, createArtifact("Spellbook"));
             artifact.setCounterCount(CounterType.CHARGE, 2);
@@ -606,15 +606,15 @@ class PermanentRemovalServiceTest {
 
             prs.removePermanentToGraveyard(gd, artifact);
 
-            verify(triggerCollectionService).checkEmblemArtifactGraveyardTriggers(
+            verify(triggerCollectionService).checkEmblemPutIntoGraveyardFromBattlefieldTriggers(
                     eq(gd), eq(player1Id), eq(player1Id), eq(artifact.getOriginalCard()),
-                    eq(artifact.getCard().getManaValue()),
-                    argThat((Permanent lastKnown) -> lastKnown.getCounterCount(CounterType.CHARGE) == 2), eq(false));
+                    argThat((Permanent lastKnown) -> lastKnown.getCounterCount(CounterType.CHARGE) == 2));
         }
 
         @Test
-        @DisplayName("Emblem artifact graveyard triggers retain whether the artifact was sacrificed")
-        void artifactGraveyardTriggerRecordsSacrifice() {
+        @DisplayName("Collects the emblems' put-into-your-graveyard-from-the-battlefield triggers for a sacrificed "
+                + "artifact")
+        void artifactGraveyardTriggerForSacrifice() {
             Permanent artifact = addPermanent(player1Id, createArtifact("Spellbook"));
             artifact.setCounterCount(CounterType.CHARGE, 2);
             when(gameQueryService.isCreature(gd, artifact)).thenReturn(false);
@@ -627,10 +627,9 @@ class PermanentRemovalServiceTest {
             assertThat(prs.sacrificePermanentToGraveyard(gd, artifact)).isTrue();
 
             assertThat(gd.playerBattlefields.get(player1Id)).doesNotContain(artifact);
-            verify(triggerCollectionService).checkEmblemArtifactGraveyardTriggers(
+            verify(triggerCollectionService).checkEmblemPutIntoGraveyardFromBattlefieldTriggers(
                     eq(gd), eq(player1Id), eq(player1Id), eq(artifact.getOriginalCard()),
-                    eq(artifact.getCard().getManaValue()),
-                    argThat((Permanent lastKnown) -> lastKnown.getCounterCount(CounterType.CHARGE) == 2), eq(true));
+                    argThat((Permanent lastKnown) -> lastKnown.getCounterCount(CounterType.CHARGE) == 2));
         }
 
         @Test

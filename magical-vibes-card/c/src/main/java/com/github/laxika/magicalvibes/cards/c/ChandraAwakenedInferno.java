@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
@@ -11,11 +12,11 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
-import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -31,12 +32,13 @@ public class ChandraAwakenedInferno extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +2,
                 List.of(new CreateEmblemEffect(
-                        List.of(new EmblemStepTriggerEffect(
-                                EmblemTriggerStep.UPKEEP,
-                                List.of(new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER)),
-                                EMBLEM_TEXT)),
+                        List.of(),
                         EMBLEM_TEXT,
-                        EmblemRecipient.EACH_OPPONENT)),
+                        EmblemRecipient.EACH_OPPONENT,
+                        List.of(),
+                        List.of(
+                                new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                                        new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER))))),
                 "+2: Each opponent gets an emblem with \"" + EMBLEM_TEXT + "\"."
         ));
 

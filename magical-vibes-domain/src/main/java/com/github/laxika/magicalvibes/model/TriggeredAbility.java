@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -67,8 +68,9 @@ import java.util.UUID;
  * @param targetFilter the restriction on the ability's target when no card's target groups hold it, or {@code null}:
  *                   an emblem's ability ("target opponent gets two poison counters") or a granted one has no card that
  *                   binds its effects to a target group, so it names its target filter itself. Only the spell-cast
- *                   collector, the emblems' life-gain reader and the your-upkeep reader's player-target choice read
- *                   it, so only an ability whose every trigger condition is one of theirs has one.
+ *                   collector, the emblems' life-gain, draw and creature-death readers and the your-upkeep reader's
+ *                   player-target choice read it, so only an ability whose every trigger condition is one of theirs
+ *                   has one.
  */
 public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions options,
                                List<EffectRegistration> effects, SagaChapterTargets chapterTargets,
@@ -117,8 +119,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
 
     /**
      * Rejects a {@link #targetFilter} on an ability with a trigger condition other than a cast trigger, "whenever you
-     * gain life" or "at the beginning of your upkeep": only the spell-cast collector, the emblems' life-gain reader and
-     * the your-upkeep reader's player-target choice (a granted ability's "target opponent", Custody Battle) read the
+     * gain life", "whenever you draw a card", "whenever a creature dies" or "at the beginning of your upkeep": only the
+     * spell-cast collector, the emblems' life-gain, draw and creature-death readers (Teferi, Hero of Dominaria's
+     * "exile target permanent an opponent controls", Sephiroth, One-Winged Angel's "target opponent") and the
+     * your-upkeep reader's player-target choice (a granted ability's "target opponent", Custody Battle) read the
      * ability's own target filter (the permanents' life collectors reject one as they read the ability).
      */
     private static void requireTargetFilterReader(List<TriggerCondition> conditions, TargetFilter targetFilter) {
@@ -126,10 +130,16 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                 -> !(trigger instanceof SpellTrigger spell && spell.event() == SpellTrigger.SpellEvent.CAST)
                 && !(trigger instanceof LifeTrigger life && life.event() == LifeTrigger.LifeEvent.GAINS
                 && life.player() == PlayerRelation.YOU && life.spellFilter() == null && !life.firstEachTurn())
+                && !(trigger instanceof LibraryTrigger draw && draw.event() == LibraryTrigger.LibraryEvent.DRAWS
+                && draw.player() == PlayerRelation.YOU && draw.qualifier() == null && draw.nth() == 0)
+                && !(trigger instanceof ZoneChangeTrigger death && death.relation() == ObjectRelation.ANY
+                && death.from().equals(Set.of(Zone.BATTLEFIELD)) && death.to() == Zone.GRAVEYARD
+                && death.causes().isEmpty())
                 && !(trigger instanceof StepTrigger step && step.moment() == StepTrigger.Moment.UPKEEP
                 && step.player() == ActivePlayer.YOU))) {
-            throw new IllegalArgumentException("Only the spell-cast collector, the emblems' life-gain reader and the "
-                    + "your-upkeep reader read an ability's own target filter: " + conditions);
+            throw new IllegalArgumentException("Only the spell-cast collector, the emblems' life-gain, draw and "
+                    + "creature-death readers and the your-upkeep reader read an ability's own target filter: "
+                    + conditions);
         }
     }
 

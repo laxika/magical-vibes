@@ -62,6 +62,32 @@ class TriggeredAbilityTest {
                 .hasMessageContaining("own target filter");
     }
 
+    @Test
+    void aYouDrawACardAbilityNamesItsOwnTargetFilterForTheEmblemReader() {
+        TargetFilter opponentsPermanent = TargetFilters.permanentAnOpponentControls();
+        TriggeredAbility draw = new TriggeredAbility(Triggers.youDrawCard(), new DrawCardEffect(1))
+                .withTargetFilter(opponentsPermanent);
+
+        assertThat(draw.targetFilter()).isSameAs(opponentsPermanent);
+        assertThatThrownBy(() -> new TriggeredAbility(Triggers.opponentDrawsCard(), new DrawCardEffect(1))
+                .withTargetFilter(opponentsPermanent))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("own target filter");
+    }
+
+    @Test
+    void aCreatureDiesAbilityNamesItsOwnTargetFilterForTheEmblemReader() {
+        TargetFilter creature = TargetFilters.creature();
+        TriggeredAbility death = new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANY), new DrawCardEffect(1))
+                .withTargetFilter(creature);
+
+        assertThat(death.targetFilter()).isSameAs(creature);
+        assertThatThrownBy(() -> new TriggeredAbility(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
+                new DrawCardEffect(1)).withTargetFilter(creature))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("own target filter");
+    }
+
     private static final List<EffectRegistration> ZOMBIE =
             List.of(new EffectRegistration(CreateTokenEffect.blackZombie(1)));
 

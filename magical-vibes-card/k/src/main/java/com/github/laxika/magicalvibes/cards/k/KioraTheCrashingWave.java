@@ -5,16 +5,17 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.effect.PlayAdditionalLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -47,12 +48,10 @@ public class KioraTheCrashingWave extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -5,
                 List.of(new CreateEmblemEffect(
-                        List.of(new EmblemStepTriggerEffect(
-                                EmblemTriggerStep.END_STEP,
-                                List.of(new CreateTokenEffect(
+                        new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU),
+                                new CreateTokenEffect(
                                         "Kraken", 9, 9, CardColor.BLUE,
                                         List.of(CardSubtype.KRAKEN), Set.of(), Set.of())),
-                                EMBLEM_TEXT)),
                         EMBLEM_TEXT)),
                 "−5: You get an emblem with \"" + EMBLEM_TEXT + "\"."
         ));

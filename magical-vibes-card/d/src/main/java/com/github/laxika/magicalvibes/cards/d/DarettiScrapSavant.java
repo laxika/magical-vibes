@@ -6,14 +6,18 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUpToThenDrawThatManyEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -58,7 +62,12 @@ public class DarettiScrapSavant extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -10,
                 List.of(new CreateEmblemEffect(
-                        List.of(new EmblemArtifactGraveyardReturnTriggerEffect()), EMBLEM_TEXT)),
+                        new TriggeredAbility(
+                                Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, Triggers.ARTIFACT,
+                                        ObjectRelation.YOU_OWN),
+                                new RegisterDelayedReturnDyingCreatureUnderControlEffect(
+                                        false, null, 0, null, null, false, true, false)),
+                        EMBLEM_TEXT)),
                 "−10: You get an emblem with \"" + EMBLEM_TEXT + "\""
         ));
     }

@@ -7,15 +7,16 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.condition.Metalcraft;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
+import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -48,10 +49,9 @@ public class TezzeretArtificeMaster extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -9,
                 List.of(new CreateEmblemEffect(
-                        List.of(new EmblemStepTriggerEffect(EmblemTriggerStep.END_STEP,
-                                List.of(new SearchLibraryEffect(new CardIsPermanentPredicate(),
+                        new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU),
+                                new SearchLibraryEffect(new CardIsPermanentPredicate(),
                                         LibrarySearchDestination.BATTLEFIELD)),
-                                EMBLEM_TEXT)),
                         EMBLEM_TEXT)),
                 "−9: You get an emblem with \"" + EMBLEM_TEXT + "\""
         ));

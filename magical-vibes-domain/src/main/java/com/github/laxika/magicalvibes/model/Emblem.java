@@ -10,8 +10,7 @@ import java.util.UUID;
  * emblem was created; hand-built emblems without one use 0 (before every other effect).
  * {@code triggeredAbilities} are the emblem's triggered abilities as abilities ("whenever you cast a
  * creature or planeswalker spell, …"), which the trigger collectors read from the command zone;
- * {@code staticEffects} holds its static abilities and the trigger markers the collectors still read
- * as effects.
+ * {@code staticEffects} holds its static abilities.
  */
 public record Emblem(UUID controllerId, List<CardEffect> staticEffects, Card sourceCard,
                      List<ActivatedAbility> activatedAbilities, long timestamp,

@@ -24,6 +24,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
+import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTrackedTokensAndCreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
@@ -1185,6 +1190,66 @@ class EnterTriggerCollectorServiceTest {
         assertThat(choice.controllerId()).isEqualTo(player1Id);
         assertThat(choice.effects()).containsExactly(damage);
         assertThat(choice.triggeringPermanentId()).isEqualTo(artifact.getId());
+    }
+
+    @Test
+    @DisplayName("An emblem's \"put into your graveyard from the battlefield\" ability records the card and its "
+            + "last-known permanent, and ignores a permanent an opponent owns")
+    void emblemPutIntoYourGraveyardFromBattlefieldAbilityRecordsTheCard() {
+        RegisterDelayedReturnDyingCreatureUnderControlEffect returnIt =
+                new RegisterDelayedReturnDyingCreatureUnderControlEffect(false, null, 0, null, null, false, true,
+                        false);
+        Card source = emblemSource(new TriggeredAbility(
+                Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, Triggers.ARTIFACT, ObjectRelation.YOU_OWN), returnIt));
+        Card artifactCard = new Card();
+        artifactCard.setName("Artifact");
+        artifactCard.setType(CardType.ARTIFACT);
+        Permanent artifact = new Permanent(artifactCard);
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(artifact), eq(Triggers.ARTIFACT), any()))
+                .thenReturn(true);
+        UUID opponentId = UUID.randomUUID();
+
+        service.checkEmblemPutIntoGraveyardFromBattlefieldTriggers(gd, opponentId, opponentId, artifactCard, artifact);
+        assertThat(gd.stack).isEmpty();
+
+        service.checkEmblemPutIntoGraveyardFromBattlefieldTriggers(gd, player1Id, player1Id, artifactCard, artifact);
+
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getCard()).isSameAs(source);
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getEffectsToResolve()).containsExactly(returnIt);
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getTriggeringCardId()).isEqualTo(artifactCard.getId());
+            assertThat(entry.getTriggeringPermanentId()).isEqualTo(artifact.getId());
+        });
+    }
+
+    @Test
+    @DisplayName("An emblem's targeted \"whenever a creature dies\" ability queues its target choice with its own "
+            + "target filter, and the death reader skips a \"put into your graveyard\" ability")
+    void targetedEmblemCreatureDeathAbilityQueuesItsTargetChoice() {
+        GivePoisonCountersEffect poison = new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER);
+        TargetFilter opponent = TargetFilters.permanentAnOpponentControls();
+        Card source = emblemSource(new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANY), poison)
+                .withTargetFilter(opponent));
+        gd.emblems.add(new Emblem(player1Id, List.of(), source, List.of(), 0L, List.of(new TriggeredAbility(
+                Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, Triggers.ARTIFACT, ObjectRelation.YOU_OWN),
+                new DrawCardEffect(1)))));
+        Card creatureCard = enteringCreature(2, 2);
+        Permanent creature = new Permanent(creatureCard);
+        when(predicateEvaluationService.matchesPermanentPredicate(eq(creature), eq(Triggers.CREATURE),
+                any(FilterContext.class))).thenReturn(true);
+
+        service.checkCreatureDeathRegisteredTriggers(gd, player1Id, creature, 2, 2);
+
+        assertThat(gd.stack).isEmpty();
+        PermanentChoiceContext.DeathTriggerTarget choice =
+                gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+        assertThat(choice.dyingCard()).isSameAs(source);
+        assertThat(choice.controllerId()).isEqualTo(player1Id);
+        assertThat(choice.effects()).containsExactly(poison);
+        assertThat(choice.targetFilter()).isSameAs(opponent);
+        assertThat(choice.triggeringPermanent().getId()).isEqualTo(creature.getId());
     }
 
     /** A planeswalker card whose emblem, controlled by player 1, has {@code ability}. */

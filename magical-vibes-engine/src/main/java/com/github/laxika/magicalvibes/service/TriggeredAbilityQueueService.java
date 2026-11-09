@@ -2434,17 +2434,11 @@ public class TriggeredAbilityQueueService {
             TriggerTargetCollector.Result result = triggerTargetCollector.collect(
                     gameData,
                     pending.effects(),
-                    null,
+                    pending.targetFilter(),
                     pending.controllerId(),
                     pending.sourceCard(),
                     TriggerTargetCollector.Options.UPKEEP);
             List<UUID> validTargets = result.validTargets();
-            if (pending.opponentControlledOnly()) {
-                validTargets = validTargets.stream()
-                        .filter(id -> !pending.controllerId().equals(
-                                gameQueryService.findPermanentController(gameData, id)))
-                        .toList();
-            }
 
             if (validTargets.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class);
@@ -2457,9 +2451,7 @@ public class TriggeredAbilityQueueService {
 
             gameData.pollPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
-            String targetDesc = pending.opponentControlledOnly()
-                    ? "target permanent an opponent controls to exile"
-                    : "target permanent";
+            String targetDesc = "target permanent";
             playerInputService.beginPermanentChoice(gameData, pending.controllerId(), validTargets,
                     pending.emblemDescription() + "'s ability - Choose " + targetDesc + ".");
 

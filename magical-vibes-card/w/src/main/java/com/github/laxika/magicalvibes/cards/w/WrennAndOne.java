@@ -9,17 +9,18 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.OracleData;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -78,10 +79,8 @@ public class WrennAndOne extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -4,
                 List.of(new CreateEmblemEffect(
-                        List.of(new EmblemStepTriggerEffect(
-                                EmblemTriggerStep.PRECOMBAT_MAIN,
-                                List.of(new AwardManaEffect(ManaColor.GREEN, creaturesYouControl)),
-                                EMBLEM_TEXT)),
+                        new TriggeredAbility(Triggers.precombatMainPhase(ActivePlayer.YOU),
+                                new AwardManaEffect(ManaColor.GREEN, creaturesYouControl)),
                         EMBLEM_TEXT)),
                 "\u22124: You get an emblem with \"" + EMBLEM_TEXT + "\"."
         ));

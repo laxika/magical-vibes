@@ -6,9 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
+import com.github.laxika.magicalvibes.model.effect.DrawDuringEachOpponentsDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
@@ -49,11 +47,7 @@ public class TeferiWhoSlowsTheSunset extends Card {
                 List.of(new CreateEmblemEffect(
                         List.of(
                                 new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep.UNTAP),
-                                new EmblemStepTriggerEffect(
-                                        EmblemTriggerStep.OPPONENT_DRAW_STEP,
-                                        List.of(new DrawCardEffect(1)),
-                                        "You draw a card during each opponent's draw step."
-                                )
+                                new DrawDuringEachOpponentsDrawStepEffect(1)
                         ),
                         "Untap all permanents you control during each opponent's untap step. You draw a card during each opponent's draw step."
                 )),

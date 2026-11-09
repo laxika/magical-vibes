@@ -22,14 +22,14 @@ import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
-import com.github.laxika.magicalvibes.model.effect.EmblemCreatureDeathTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 import com.github.laxika.magicalvibes.model.rules.PermanentChange;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesObserver;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
+import com.github.laxika.magicalvibes.model.rules.RulesEvent;
+import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.DamageTrigger;
 import com.github.laxika.magicalvibes.model.trigger.CombatTrigger;
@@ -13106,36 +13106,113 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Emblems' "whenever an artifact is put into your graveyard from the battlefield" abilities. An emblem is no
-     * object the trigger pipeline lists, so its abilities are still collected as the artifact leaves.
+     * The emblems' "whenever [a filter permanent] is put into your graveyard from the battlefield" abilities
+     * ({@code Triggers.putIntoGraveyardFrom(BATTLEFIELD, filter, YOU_OWN)}; Daretti, Scrap Savant's "return that card to
+     * the battlefield at the beginning of the next end step") for {@code departed}, which {@code controllerId}
+     * controlled and which was just put into {@code graveyardOwnerId}'s graveyard as {@code card}. Abilities of emblems
+     * function in the command zone (CR 114.4); a permanent goes to its owner's graveyard, so "your graveyard" is the
+     * emblem controller's own. This is a leaves-the-battlefield ability (CR 603.6c): its filter is judged on the
+     * permanent as it last existed on the battlefield (CR 603.10a), and a token triggers it too before it ceases to
+     * exist (CR 111.7). Each matching ability goes on the stack once as one object of its effects (CR 603.3), the
+     * emblem's source card as its source, the permanent's card ("that card", for this stay in the graveyard,
+     * CR 400.7) and last-known permanent as its triggering card and permanent. The reader judges no other relation,
+     * cause, option or target; an ability with one fails loudly instead of triggering wrongly. The emblems'
+     * "whenever a creature dies" abilities are {@link #collectEmblemCreatureDeathTriggers}'.
      */
-    public void checkEmblemArtifactGraveyardTriggers(GameData gameData, UUID graveyardOwnerId,
-                                                     UUID artifactControllerId, Card artifactCard,
-                                                     int artifactManaValue, Permanent artifactPermanent,
-                                                     boolean wasSacrificed) {
-        collectEmblemArtifactGraveyardTriggers(gameData, graveyardOwnerId, artifactCard,
-                new TriggerContext.ArtifactGraveyard(graveyardOwnerId, artifactControllerId, artifactCard,
-                        artifactManaValue, new Permanent(artifactPermanent), wasSacrificed));
-    }
-
-    private void collectEmblemArtifactGraveyardTriggers(GameData gameData, UUID graveyardOwnerId,
-                                                        Card artifactCard, TriggerContext.ArtifactGraveyard context) {
-        if (artifactCard == null || artifactCard.isToken()) {
+    public void checkEmblemPutIntoGraveyardFromBattlefieldTriggers(GameData gameData, UUID graveyardOwnerId,
+                                                                   UUID controllerId, Card card,
+                                                                   Permanent departed) {
+        if (card == null || gameData.emblems.stream().allMatch(emblem -> emblem.triggeredAbilities().isEmpty())) {
             return;
         }
-        for (Emblem emblem : gameData.emblems) {
-            if (!emblem.controllerId().equals(graveyardOwnerId)) {
-                continue;
-            }
-            for (CardEffect effect : emblem.staticEffects()) {
-                if (!(effect instanceof EmblemArtifactGraveyardReturnTriggerEffect)) {
-                    continue;
+        Permanent lastKnown = departedAsItLastExisted(gameData, departed);
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
+                if (emblemSeesPutIntoYourGraveyardFromBattlefield(gameData, emblem, ability, graveyardOwnerId,
+                        lastKnown)) {
+                    putEmblemGraveyardFromBattlefieldAbilityOnStack(gameData, emblem, ability, card, lastKnown,
+                            controllerId);
                 }
-                var match = new EmblemTriggerMatchContext(
-                        gameData, emblem, emblem.controllerId(), artifactCard, effect);
-                registry.dispatchEmblem(match, effect, context);
             }
         }
+    }
+
+    /**
+     * {@code departed} as the departure's rules event holds it, with the characteristics it left the battlefield
+     * with; {@code departed} itself when the log no longer holds that event.
+     */
+    private static Permanent departedAsItLastExisted(GameData gameData, Permanent departed) {
+        List<RulesEventBatch> pending = gameData.rulesEvents.pending();
+        for (int index = pending.size() - 1; index >= 0; index--) {
+            List<RulesEvent> events = pending.get(index).events();
+            for (int eventIndex = events.size() - 1; eventIndex >= 0; eventIndex--) {
+                if (events.get(eventIndex) instanceof ZoneChangeEvent zoneChange && zoneChange.leftBattlefield()
+                        && zoneChange.permanent() != null
+                        && zoneChange.permanent().getId().equals(departed.getId())) {
+                    return zoneChange.permanent();
+                }
+            }
+        }
+        return departed;
+    }
+
+    /**
+     * Whether {@code ability} of {@code emblem} triggers on {@code lastKnown} being put into {@code graveyardOwnerId}'s
+     * graveyard from the battlefield. A battlefield-to-graveyard trigger whose relation isn't an owner's is the
+     * creature-death reader's.
+     */
+    private boolean emblemSeesPutIntoYourGraveyardFromBattlefield(GameData gameData, Emblem emblem,
+                                                                  TriggeredAbility ability, UUID graveyardOwnerId,
+                                                                  Permanent lastKnown) {
+        for (TriggerCondition condition : ability.conditions()) {
+            if (!(condition.trigger() instanceof ZoneChangeTrigger trigger)
+                    || !isPutIntoYourGraveyardFromBattlefield(trigger)) {
+                continue;
+            }
+            if (!trigger.causes().isEmpty() || !trigger.excludedTo().isEmpty()
+                    || trigger.causedBy() != com.github.laxika.magicalvibes.model.trigger.PlayerRelation.ANY
+                    || trigger.duringYourTurn() || trigger.castingSpell() != null
+                    || !ability.options().equals(TriggerOptions.DEFAULT) || ability.targetFilter() != null
+                    || ability.effects().stream().anyMatch(effect -> effect.effect().targetSpec() != TargetSpec.NONE)) {
+                throw new IllegalStateException(emblemName(emblem) + " has a graveyard ability its reader doesn't "
+                        + "judge: " + ability);
+            }
+            if (emblem.controllerId().equals(graveyardOwnerId) && (trigger.filter() == null
+                    || TriggeredAbilityStackService.departedFilterMatches(predicateEvaluationService,
+                    trigger.filter(), lastKnown, DepartedAttachments.NONE, emblemFilterContext(gameData, emblem)))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** "Whenever [a permanent] is put into your graveyard from the battlefield": an owner's battlefield-to-graveyard trigger. */
+    private static boolean isPutIntoYourGraveyardFromBattlefield(ZoneChangeTrigger trigger) {
+        return trigger.relation() == ObjectRelation.YOU_OWN && trigger.from().equals(Set.of(Zone.BATTLEFIELD))
+                && trigger.to() == Zone.GRAVEYARD;
+    }
+
+    private void putEmblemGraveyardFromBattlefieldAbilityOnStack(GameData gameData, Emblem emblem,
+                                                                 TriggeredAbility ability, Card card,
+                                                                 Permanent lastKnown, UUID controllerId) {
+        Card source = emblem.sourceCard() != null ? emblem.sourceCard() : card;
+        String description = emblemName(emblem);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source,
+                emblem.controllerId(),
+                description,
+                new ArrayList<>(ability.effects().stream().map(EffectRegistration::effect).toList()));
+        entry.setTriggeringCard(card.getId(), gameData.graveyardEntryVersion(card.getId()));
+        entry.setTriggeringPermanentId(lastKnown.getId());
+        entry.setTriggeringPermanent(lastKnown);
+        entry.setTriggeringPermanentControllerId(controllerId);
+        entry.setNonTargeting(true);
+        gameData.stack.add(entry);
+        gameLogService.append(gameData, GameLog.text(description + " triggers for " + card.getName()
+                + " put into a graveyard."));
+        log.info("Game {} - {} triggers for {} put into a graveyard from the battlefield", gameData.id, description,
+                card.getName());
     }
 
     /** Fires "whenever you win a coin flip" triggers for the winning player's battlefield. */
@@ -13464,14 +13541,16 @@ public class TriggerCollectionService {
     }
 
     /**
-     * The emblems' "whenever a creature dies" abilities: Sephiroth, One-Winged Angel's marker through its handler, and the
-     * emblems' triggered abilities ({@code Triggers.creatureDies(ObjectRelation.ANY)}; Liliana, Defiant Necromancer's
-     * "return it to the battlefield under your control at the beginning of the next end step"). Abilities of emblems
-     * function in the command zone (CR 114.4), so the permanent sweep never sees them. Each ability goes on the stack
-     * once as one object of its effects (CR 603.3), the emblem's source card as its source, and records the creature
-     * that died ("it": its card, its last-known permanent and controller) whatever its effects are. The reader judges
+     * The emblems' "whenever a creature dies" abilities ({@code Triggers.creatureDies(ObjectRelation.ANY)}; Liliana,
+     * Defiant Necromancer's "return it to the battlefield under your control at the beginning of the next end step",
+     * Sephiroth, One-Winged Angel's "target opponent loses 1 life and you gain 1 life"). Abilities of emblems function
+     * in the command zone (CR 114.4), so the permanent sweep never sees them. Each ability goes on the stack once as
+     * one object of its effects (CR 603.3), the emblem's source card as its source, and records the creature that
+     * died ("it": its card, its last-known permanent and controller) whatever its effects are; a targeted one's target
+     * is chosen as it goes on the stack (CR 603.3d), restricted by the ability's own target filter. The reader judges
      * the trigger's filter on the creature as it last existed and no options; an ability with options or another
-     * relation fails loudly instead of triggering wrongly.
+     * relation fails loudly instead of triggering wrongly. "Whenever [a permanent] is put into your graveyard from the
+     * battlefield" is {@link #checkEmblemPutIntoGraveyardFromBattlefieldTriggers}'.
      */
     private void collectEmblemCreatureDeathTriggers(GameData gameData, Card dyingCard,
                                                      TriggerContext.CreatureDeath context) {
@@ -13480,13 +13559,6 @@ public class TriggerCollectionService {
                     gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggersForEmblem(
                             gameData, emblem.controllerId()));
             try {
-                for (CardEffect effect : emblem.staticEffects()) {
-                    if (effect instanceof EmblemCreatureDeathTriggerEffect) {
-                        var match = new EmblemTriggerMatchContext(
-                                gameData, emblem, emblem.controllerId(), dyingCard, effect);
-                        registry.dispatchEmblem(match, effect, context);
-                    }
-                }
                 for (TriggeredAbility ability : emblem.triggeredAbilities()) {
                     if (emblemSeesCreatureDie(gameData, emblem, ability, context)) {
                         putEmblemDeathAbilityOnStack(gameData, emblem, ability, dyingCard, context);
@@ -13502,7 +13574,7 @@ public class TriggerCollectionService {
     private boolean emblemSeesCreatureDie(GameData gameData, Emblem emblem, TriggeredAbility ability,
                                           TriggerContext.CreatureDeath death) {
         ZoneChangeTrigger trigger = creatureDeathTrigger(ability);
-        if (trigger == null) {
+        if (trigger == null || isPutIntoYourGraveyardFromBattlefield(trigger)) {
             return false;
         }
         if (trigger.relation() != ObjectRelation.ANY || !ability.options().equals(TriggerOptions.DEFAULT)) {
@@ -13519,12 +13591,28 @@ public class TriggerCollectionService {
                                               Card dyingCard, TriggerContext.CreatureDeath death) {
         Card source = emblem.sourceCard() != null ? emblem.sourceCard() : dyingCard;
         String description = emblemName(emblem);
+        List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect).toList();
+        if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
+            PermanentChoiceContext.DeathTriggerTarget choice = new PermanentChoiceContext.DeathTriggerTarget(
+                    source, emblem.controllerId(), new ArrayList<>(effects), null, null, ability.targetFilter());
+            gameData.queueInteraction(death.dyingPermanent() != null
+                    ? choice.withTriggeringPermanent(death.dyingPermanent()) : choice);
+            gameLogService.append(gameData, GameLog.text(description + " triggers (a creature died)."));
+            log.info("Game {} - {} triggers for {} dying, awaiting its target", gameData.id, description,
+                    dyingCard.getName());
+            return;
+        }
+        if (effects.stream().anyMatch(effect -> effect.targetSpec() != TargetSpec.NONE)) {
+            throw new IllegalStateException(description + " has a death ability whose target its reader doesn't "
+                    + "choose: " + ability);
+        }
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 source,
                 emblem.controllerId(),
                 description,
-                new ArrayList<>(ability.effects().stream().map(EffectRegistration::effect).toList()));
+                new ArrayList<>(effects));
         entry.setTriggeringCardId(dyingCard.getId());
         if (death.dyingPermanent() != null) {
             entry.setTriggeringPermanent(death.dyingPermanent());
@@ -14489,24 +14577,12 @@ public class TriggerCollectionService {
 
         for (UUID controllerId : controllers) {
             List<Card> sources = gameData.creatureEntersDrawSourcesThisTurn.get(controllerId);
-            if (sources != null) {
-                for (Card sourceCard : new ArrayList<>(sources)) {
-                    gameData.queueMayAbility(sourceCard, controllerId,
-                            new MayEffect(new DrawCardEffect(), "Draw a card?"));
-                    log.info("Game {} - {} triggers for creature entering (may draw)",
-                            gameData.id, sourceCard.getName());
-                }
-            }
-
-            if (controllerId.equals(enteringCreatureControllerId)) {
-                List<Card> persistentSources = gameData.creatureEntersDrawSources.get(controllerId);
-                if (persistentSources == null) continue;
-                for (Card sourceCard : new ArrayList<>(persistentSources)) {
-                    gameData.queueMayAbility(sourceCard, controllerId,
-                            new MayEffect(new DrawCardEffect(), "Draw a card?"));
-                    log.info("Game {} - {} triggers for controlled creature entering (may draw)",
-                            gameData.id, sourceCard.getName());
-                }
+            if (sources == null) continue;
+            for (Card sourceCard : new ArrayList<>(sources)) {
+                gameData.queueMayAbility(sourceCard, controllerId,
+                        new MayEffect(new DrawCardEffect(), "Draw a card?"));
+                log.info("Game {} - {} triggers for creature entering (may draw)",
+                        gameData.id, sourceCard.getName());
             }
         }
     }

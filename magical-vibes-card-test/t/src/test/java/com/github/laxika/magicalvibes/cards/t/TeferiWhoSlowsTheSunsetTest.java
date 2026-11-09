@@ -242,6 +242,22 @@ class TeferiWhoSlowsTheSunsetTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(nextCard);
     }
 
+    @Test
+    @DisplayName("Emblem draws during each opponent's draw step without using the stack")
+    void emblemDrawsDuringOpponentsDrawStepWithoutTheStack() {
+        addReadyTeferi(player1, 7);
+        Card drawnByEmblem = new Island();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(drawnByEmblem));
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        advanceToDraw(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnByEmblem);
+    }
+
     private Permanent addReadyTeferi(Player player, int loyalty) {
         Permanent permanent = harness.addToBattlefieldAndReturn(player, new TeferiWhoSlowsTheSunset());
         permanent.setCounterCount(CounterType.LOYALTY, loyalty);

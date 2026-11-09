@@ -2712,9 +2712,6 @@ public class GameData {
     /** "Whenever a creature enters this turn, you may draw a card" delayed triggers (Beck). */
     public final Map<UUID, List<Card>> creatureEntersDrawSourcesThisTurn = new ConcurrentHashMap<>();
 
-    /** Persistent "Whenever a creature you control enters, you may draw a card" triggers. */
-    public final Map<UUID, List<Card>> creatureEntersDrawSources = new ConcurrentHashMap<>();
-
     /** "At the beginning of each combat this turn, untap all creatures that attacked this turn" delayed triggers. */
     public final Map<UUID, List<Card>> untapAttackedCreaturesEachCombatThisTurnSources = new ConcurrentHashMap<>();
 
@@ -11214,8 +11211,6 @@ public class GameData {
                 copy.pendingNextExhaustAbilityCopySourcesThisTurn.put(playerId, new ArrayList<>(sources)));
         this.creatureEntersDrawSourcesThisTurn.forEach((playerId, cards) ->
                 copy.creatureEntersDrawSourcesThisTurn.put(playerId, new ArrayList<>(cards)));
-        this.creatureEntersDrawSources.forEach((playerId, cards) ->
-                copy.creatureEntersDrawSources.put(playerId, new ArrayList<>(cards)));
         this.untapAttackedCreaturesEachCombatThisTurnSources.forEach((playerId, cards) ->
                 copy.untapAttackedCreaturesEachCombatThisTurnSources.put(playerId, new ArrayList<>(cards)));
 

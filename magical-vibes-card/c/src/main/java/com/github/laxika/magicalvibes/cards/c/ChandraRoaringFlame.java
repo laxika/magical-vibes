@@ -2,14 +2,15 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
-import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -46,11 +47,13 @@ public class ChandraRoaringFlame extends Card {
                 List.of(
                         new DealDamageToPlayersEffect(6, DamageRecipient.EACH_OPPONENT),
                         new CreateEmblemEffect(
-                                List.of(new EmblemStepTriggerEffect(EmblemTriggerStep.UPKEEP,
-                                        List.of(new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER)),
-                                        EMBLEM_TEXT)),
+                                List.of(),
                                 EMBLEM_TEXT,
-                                EmblemRecipient.EACH_PLAYER_DEALT_DAMAGE_THIS_WAY)
+                                EmblemRecipient.EACH_PLAYER_DEALT_DAMAGE_THIS_WAY,
+                                List.of(),
+                                List.of(
+                                        new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                                                new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER))))
                 ),
                 "−7: Chandra, Roaring Flame deals 6 damage to each opponent. Each player dealt "
                         + "damage this way gets an emblem with \"" + EMBLEM_TEXT + "\""

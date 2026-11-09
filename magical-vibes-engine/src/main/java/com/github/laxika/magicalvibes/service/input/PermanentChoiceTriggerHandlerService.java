@@ -1536,11 +1536,9 @@ public class PermanentChoiceTriggerHandlerService {
                     new ArrayList<>(ett.effects())
             );
             entry.setTargetId(permanentId);
-            if (ett.opponentControlledOnly()) {
-                // The opponent-control restriction is re-checked on resolution (CR 608.2b), so the target
-                // is illegal once its controller changes.
-                entry.setTargetFilter(TargetFilters.permanentAnOpponentControls());
-            }
+            // The ability's own target restriction is checked again as it resolves (CR 608.2b): Teferi's emblem's
+            // target is illegal once its controller changes.
+            entry.setTargetFilter(ett.targetFilter());
             pushTriggeredEntry(gameData, entry);
 
             

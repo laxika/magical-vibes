@@ -12,9 +12,9 @@ import java.util.List;
  * per-card effect class.
  *
  * <p>{@code staticEffects} is a pass-through payload — the handler stores it on the emblem verbatim
- * and never resolves it. Each element is a static/marker effect read later by whichever service
- * owns that behaviour (the layered pass for {@code GrantKeywordEffect}, {@code TriggerCollectionService} for the
- * emblem trigger markers, …). Emblems are never removed once created.</p>
+ * and never resolves it. Each element is a static effect read later by whichever service owns that behaviour (the
+ * layered pass for {@code GrantKeywordEffect}, the draw step for {@code DrawDuringEachOpponentsDrawStepEffect}, …); no
+ * triggered ability is held there. Emblems are never removed once created.</p>
  *
  * <p>{@code triggeredAbilities} are the emblem's triggered abilities written as abilities: "whenever you cast a
  * creature or planeswalker spell, target opponent gets two poison counters" is
@@ -22,15 +22,19 @@ import java.util.List;
  * new GivePoisonCountersEffect(2, PoisonRecipient.TARGET_PLAYER)).withTargetFilter(opponent)}. An emblem has no card
  * that binds its effects to a target group, so a targeted ability names its target filter itself
  * ({@link TriggeredAbility#targetFilter()}). The spell-cast collector reads the cast abilities, the emblem enters, tap,
- * creature-death and combat damage readers theirs ("whenever a creature dies", Liliana, Defiant Necromancer; "whenever a
- * creature you control deals combat damage to a player", Kaito Shizuki), and
+ * draw, life-gain, creature-death and combat damage readers theirs ("whenever a creature dies", Liliana, Defiant
+ * Necromancer; "whenever you draw a card, exile target permanent an opponent controls", Teferi, Hero of Dominaria;
+ * "whenever a creature you control deals combat damage to a player", Kaito Shizuki),
  * {@code TriggerCollectionService.checkEmblemAttackTriggers} "whenever a creature attacks you"
- * ({@code Triggers.creatureAttacksYou()}, Garruk, Apex Predator).</p>
+ * ({@code Triggers.creatureAttacksYou()}, Garruk, Apex Predator), the emblem graveyard readers "whenever a card is put
+ * into your graveyard from anywhere" (Tamiyo, the Moon Sage) and "whenever an artifact is put into your graveyard from
+ * the battlefield" (Daretti, Scrap Savant), and the emblem step reader the "at the beginning of [step]" abilities
+ * ({@code StepTrigger}; Sarkhan, the Dragonspeaker).</p>
  *
  * <p>{@code reminderText} is the emblem's own rules text without the enclosing quotes — the handler
  * logs {@code "<player> gets an emblem with \"<reminderText>\"."}.</p>
  *
- * @param staticEffects      the emblem's static/marker effects, stored verbatim
+ * @param staticEffects      the emblem's static effects, stored verbatim
  * @param reminderText       the emblem's rules text, unquoted, used for the game log
  * @param recipient          who gets the emblem; {@link EmblemRecipient#TARGET_PLAYER} makes the effect
  *                           declare a benign {@link TargetPredicates#player()} target

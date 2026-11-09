@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemArtifactGraveyardReturnTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfDyingCreatureEffect;
@@ -19,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndReturnSourceToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -1384,59 +1382,6 @@ public class DeathTriggerCollectorService {
             }
         }
         logAnyCreatureDeath(match);
-        return true;
-    }
-
-    @CollectsEmblemTrigger(EmblemCreatureDeathTriggerEffect.class)
-    boolean handleEmblemCreatureDeath(EmblemTriggerMatchContext match,
-            EmblemCreatureDeathTriggerEffect effect, TriggerContext ctx) {
-        Card source = match.emblem().sourceCard();
-        if (source == null) {
-            return false;
-        }
-
-        GameData gameData = match.gameData();
-        List<CardEffect> effects = new ArrayList<>(effect.effects());
-        if (effects.stream().anyMatch(cardEffect ->
-                cardEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        || cardEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
-            gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                    source, match.controllerId(), effects, null, null, effect.targetFilter()));
-        } else {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    source,
-                    match.controllerId(),
-                    source.getName() + "'s emblem ability",
-                    effects));
-        }
-        return true;
-    }
-
-    @CollectsEmblemTrigger(EmblemArtifactGraveyardReturnTriggerEffect.class)
-    boolean handleEmblemArtifactGraveyardReturn(EmblemTriggerMatchContext match,
-            EmblemArtifactGraveyardReturnTriggerEffect effect, TriggerContext ctx) {
-        TriggerContext.ArtifactGraveyard artifactGraveyard = (TriggerContext.ArtifactGraveyard) ctx;
-        Card artifactCard = artifactGraveyard.artifactCard();
-        if (artifactCard == null || artifactCard.isToken()) {
-            return false;
-        }
-
-        Card source = match.emblem().sourceCard();
-        String description = (source != null ? source.getName() : "Emblem") + "'s emblem";
-        RegisterDelayedReturnDyingCreatureUnderControlEffect delayedReturn =
-                new RegisterDelayedReturnDyingCreatureUnderControlEffect(
-                        false, null, 0, null, null, false, true, false, false, false);
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                source != null ? source : artifactCard,
-                match.controllerId(),
-                description,
-                new ArrayList<>(List.of(delayedReturn)));
-        markDyingCard(match.gameData(), entry, artifactCard);
-        match.gameData().stack.add(entry);
-        gameLogService.append(match.gameData(), GameLog.text(description + " triggers (an artifact was put into a graveyard)."));
-        log.info("Game {} - {} schedules a delayed return of {}", match.gameData().id, description, artifactCard.getName());
         return true;
     }
 

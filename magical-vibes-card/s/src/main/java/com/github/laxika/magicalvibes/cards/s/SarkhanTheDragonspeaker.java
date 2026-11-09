@@ -7,15 +7,17 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
+import com.github.laxika.magicalvibes.model.effect.EmblemRecipient;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -49,14 +51,15 @@ public class SarkhanTheDragonspeaker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -6,
                 List.of(new CreateEmblemEffect(
+                        List.of(),
+                        DRAW_EMBLEM_TEXT + " " + END_EMBLEM_TEXT,
+                        EmblemRecipient.CONTROLLER,
+                        List.of(),
                         List.of(
-                                new EmblemStepTriggerEffect(EmblemTriggerStep.DRAW_STEP,
-                                        List.of(new DrawCardEffect(2)), DRAW_EMBLEM_TEXT),
-                                new EmblemStepTriggerEffect(EmblemTriggerStep.END_STEP,
-                                        List.of(new DiscardHandEffect()), END_EMBLEM_TEXT)
-                        ),
-                        DRAW_EMBLEM_TEXT + " " + END_EMBLEM_TEXT
-                )),
+                                new TriggeredAbility(Triggers.drawStep(ActivePlayer.YOU),
+                                        new DrawCardEffect(2)),
+                                new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU),
+                                        new DiscardHandEffect())))),
                 "\u22126: You get an emblem with \"" + DRAW_EMBLEM_TEXT + "\" and \""
                         + END_EMBLEM_TEXT + "\""
         ));

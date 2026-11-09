@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemCreatureDeathTriggerEffect;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -68,9 +70,8 @@ class TheMasamuneTest extends BaseCardTest {
         Permanent equippedCreature = addCreatureReady(player1, new GrizzlyBears());
         Permanent masamune = addCreatureReady(player1, new TheMasamune());
         masamune.setAttachedTo(equippedCreature.getId());
-        gd.emblems.add(new Emblem(player1.getId(), List.of(
-                new EmblemCreatureDeathTriggerEffect(List.of(new DrawCardEffect()), null)),
-                new ExultantCultist()));
+        gd.emblems.add(new Emblem(player1.getId(), List.of(), new ExultantCultist(), List.of(), 0L,
+                List.of(new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANY), new DrawCardEffect()))));
         Permanent dyingCreature = addCreatureReady(player1, new GrizzlyBears());
 
         killWithShock(dyingCreature);
@@ -110,9 +111,8 @@ class TheMasamuneTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player1, 0, equippedCreature.getId());
-        gd.emblems.add(new Emblem(player1.getId(), List.of(
-                new EmblemCreatureDeathTriggerEffect(List.of(new DrawCardEffect()), null)),
-                new ExultantCultist()));
+        gd.emblems.add(new Emblem(player1.getId(), List.of(), new ExultantCultist(), List.of(), 0L,
+                List.of(new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANY), new DrawCardEffect()))));
         Permanent dyingCreature = addCreatureReady(player1, new GrizzlyBears());
 
         killWithShock(dyingCreature);

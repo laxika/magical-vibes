@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.f.FurnaceSkullbomb;
 import com.github.laxika.magicalvibes.cards.s.Spellbook;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -146,6 +147,38 @@ class DarettiScrapSavantTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(
                 player1, 0, 1, null, target.getId(), Zone.GRAVEYARD))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("-10 emblem triggers for an artifact token put into your graveyard, which returns nothing")
+    void minusTenEmblemTriggersForArtifactTokenThatReturnsNothing() {
+        addReadyDaretti(10);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        Permanent token = harness.addToBattlefieldAndReturn(player1, artifactToken());
+        harness.sacrifice(token);
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getDescription()).isEqualTo("Daretti, Scrap Savant's emblem"));
+        harness.passBothPriorities();
+        harness.passUntil(TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard().getName().equals("Artifact Token"));
+    }
+
+    private static Card artifactToken() {
+        Card card = new Card();
+        card.setName("Artifact Token");
+        card.setType(CardType.ARTIFACT);
+        card.setManaCost("");
+        card.setToken(true);
+        card.setColor(null);
+        card.setColors(List.of());
+        return card;
     }
 
     private Permanent addReadyDaretti(int loyalty) {

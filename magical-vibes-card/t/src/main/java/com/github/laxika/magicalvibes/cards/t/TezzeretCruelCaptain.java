@@ -7,13 +7,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
-import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -31,6 +30,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -90,23 +90,20 @@ public class TezzeretCruelCaptain extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -7,
                 List.of(new CreateEmblemEffect(
-                        List.of(new EmblemStepTriggerEffect(
-                                EmblemTriggerStep.BEGINNING_OF_COMBAT,
-                                List.of(
-                                        PutCounterOnTargetPermanentEffect.withTargetRestriction(
-                                                CounterType.PLUS_ONE_PLUS_ONE, 3, artifactYouControl),
-                                        new ConditionalEffect(
-                                                new TargetPermanentMatches(noncreatureArtifact),
-                                                new AnimatePermanentsEffect(
-                                                        0,
-                                                        0,
-                                                        List.of(CardSubtype.ROBOT),
-                                                        Set.of(),
-                                                        null,
-                                                        Set.of(CardType.CREATURE),
-                                                        GrantScope.TARGET,
-                                                        EffectDuration.PERMANENT))),
-                                EMBLEM_TEXT)),
+                        new TriggeredAbility(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                                PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                                        CounterType.PLUS_ONE_PLUS_ONE, 3, artifactYouControl),
+                                new ConditionalEffect(
+                                        new TargetPermanentMatches(noncreatureArtifact),
+                                        new AnimatePermanentsEffect(
+                                                0,
+                                                0,
+                                                List.of(CardSubtype.ROBOT),
+                                                Set.of(),
+                                                null,
+                                                Set.of(CardType.CREATURE),
+                                                GrantScope.TARGET,
+                                                EffectDuration.PERMANENT))),
                         EMBLEM_TEXT)),
                 "-7: You get an emblem with \"" + EMBLEM_TEXT + "\"."
         ));

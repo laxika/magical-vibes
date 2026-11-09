@@ -51,8 +51,6 @@ import com.github.laxika.magicalvibes.model.effect.OpponentDrawTwoOrMoreReplaced
 import com.github.laxika.magicalvibes.model.effect.QuantumRiddlerDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.SharedFateDrawReplacement;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayThisTurnDrawReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetOpponentPermanentOnDrawEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsChooseOneToHandDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.IslandSanctuaryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -3049,9 +3047,11 @@ public class DrawService {
 
     /**
      * The emblems' "whenever [a player / you / an opponent] draws a card" abilities (Ob Nixilis Reignited's "whenever a
-     * player draws a card, you lose 2 life"), which function in the command zone (CR 114.4): each goes on the stack as
-     * one object of its effects, the emblem as its source, the drawing player as the entry's triggering player.
-     * Then the markers still read by class (Teferi's emblem).
+     * player draws a card, you lose 2 life", Teferi, Hero of Dominaria's "whenever you draw a card, exile target
+     * permanent an opponent controls"), which function in the command zone (CR 114.4): each goes on the stack as one
+     * object of its effects, the emblem as its source. A targeted one's target is chosen as it goes on the stack
+     * (CR 603.3d), restricted by the ability's own target filter, and the ability is removed when there is no legal
+     * target; any other one is a non-targeting entry with the drawing player as its triggering player.
      */
     private void checkEmblemDrawTriggers(GameData gameData, UUID drawingPlayerId) {
         for (Emblem emblem : gameData.emblems) {
@@ -3061,32 +3061,31 @@ public class DrawService {
                                 && draw.event() == LibraryTrigger.LibraryEvent.DRAWS
                                 && drawnByRelatedPlayer(draw, emblem.controllerId(), drawingPlayerId));
                 if (!triggers) continue;
-                requireOnlyPlainEffects(ability, emblem);
+                requireOnlyPlainTriggers(ability, emblem);
                 Card source = emblem.sourceCard();
                 String description = source.getName() + "'s emblem";
+                List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect).toList();
+                if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
+                    gameData.queueInteraction(new PermanentChoiceContext.EmblemTriggerTarget(
+                            description, emblem.controllerId(), new ArrayList<>(effects), source,
+                            ability.targetFilter()));
+                    continue;
+                }
+                if (effects.stream().anyMatch(effect -> effect.targetSpec() != TargetSpec.NONE)) {
+                    throw new IllegalStateException(description + " has a draw ability whose target its reader "
+                            + "doesn't choose: " + ability);
+                }
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         source,
                         emblem.controllerId(),
                         description,
-                        new ArrayList<>(ability.effects().stream().map(EffectRegistration::effect).toList()));
+                        new ArrayList<>(effects));
                 entry.setNonTargeting(true);
                 entry.setTriggeringPlayerId(drawingPlayerId);
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.text(description + " triggers."));
                 log.info("Game {} - {} triggers when a player draws", gameData.id, description);
-            }
-            for (CardEffect effect : emblem.staticEffects()) {
-                if (emblem.controllerId().equals(drawingPlayerId)
-                        && effect instanceof ExileTargetOpponentPermanentOnDrawEffect) {
-                    gameData.queueInteraction(new PermanentChoiceContext.EmblemTriggerTarget(
-                            "Teferi's emblem",
-                            emblem.controllerId(),
-                            List.of(new ExileTargetPermanentEffect()),
-                            emblem.sourceCard(),
-                            true
-                    ));
-                }
             }
         }
 
@@ -3105,17 +3104,14 @@ public class DrawService {
     }
 
     /**
-     * The emblem draw reader puts an ability on the stack whole, without targets, filters, counts or options; an ability
-     * with any of them fails loudly instead of triggering wrongly.
+     * The emblem draw reader judges no qualifier, count or option; an ability with one fails loudly instead of
+     * triggering wrongly.
      */
-    private static void requireOnlyPlainEffects(TriggeredAbility ability, Emblem emblem) {
+    private static void requireOnlyPlainTriggers(TriggeredAbility ability, Emblem emblem) {
         boolean plainTrigger = ability.conditions().stream()
                 .allMatch(condition -> !(condition.trigger() instanceof LibraryTrigger draw)
                         || draw.qualifier() == null && draw.nth() == 0);
-        boolean targets = ability.effects().stream()
-                .map(EffectRegistration::effect)
-                .anyMatch(effect -> effect.targetSpec() != com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE);
-        if (!plainTrigger || targets || !ability.options().equals(TriggerOptions.DEFAULT)) {
+        if (!plainTrigger || !ability.options().equals(TriggerOptions.DEFAULT)) {
             throw new IllegalStateException(emblem.sourceCard().getName() + "'s emblem has a draw ability its reader "
                     + "doesn't judge: " + ability);
         }

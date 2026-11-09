@@ -108,8 +108,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Boon;
 import com.github.laxika.magicalvibes.model.BoonTrigger;
 import com.github.laxika.magicalvibes.model.Emblem;
-import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -135,6 +133,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.epic.EpicService;
@@ -196,6 +195,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnGraveyardCardsToBattlef
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawUpToNCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawDuringEachOpponentsDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.model.effect.DiscardSpecificCardEffect;
@@ -460,58 +460,87 @@ public class StepTriggerService {
      * @param gameData the current game state to modify
      */
     /**
-     * Puts step-triggered emblem abilities onto the stack. Emblems are never removed from the game;
-     * the step determines whether the active player must be the emblem's controller or an opponent.
+     * The emblems' "at the beginning of [step or phase]" abilities for {@code moment} whose trigger names
+     * {@code player} ("your upkeep", "each opponent's upkeep", "each end step"; Chandra, Roaring Flame's, Sarkhan, the
+     * Dragonspeaker's, Domri, Chaos Bringer's emblems), and "at end of combat on your turn, if it's the first combat
+     * phase" (Zariel, Archduke of Avernus's). Abilities of emblems function in the command zone (CR 114.4), so the
+     * battlefield sweeps never see them, and an emblem is never removed. {@code player} is judged against the emblem's
+     * controller; the event condition and intervening "if" are judged as the ability triggers, with the emblem's
+     * source card as the ability's source ({@link StepAbilityReader}). Each ability that triggers goes on the stack
+     * once as one object of its effects (CR 603.3): a graveyard or permanent target is chosen as it goes on the stack
+     * (CR 603.3d), restricted by the effects, and any other one records the player whose step it is
+     * ({@link #recordStepPlayer}). A step trigger naming another player relation fails loudly instead of triggering
+     * wrongly.
      */
-    private void collectEmblemStepTriggers(GameData gameData, EmblemTriggerStep step) {
-        for (Emblem emblem : gameData.emblems) {
-            boolean isControllerStep = gameData.activePlayerId.equals(emblem.controllerId());
-            boolean opponentStep = step == EmblemTriggerStep.OPPONENT_UPKEEP
-                    || step == EmblemTriggerStep.OPPONENT_DRAW_STEP;
-            boolean everyTurn = step == EmblemTriggerStep.EACH_END_STEP;
-            if (!everyTurn && ((opponentStep && isControllerStep) || (!opponentStep && !isControllerStep))) {
-                continue;
-            }
-            if (step == EmblemTriggerStep.END_OF_FIRST_COMBAT && gameData.combatPhasesThisTurn != 1) {
-                continue;
-            }
-            for (CardEffect effect : emblem.staticEffects()) {
-                if (!(effect instanceof EmblemStepTriggerEffect upkeepTrigger) || upkeepTrigger.step() != step) {
+    private void collectEmblemStepTriggers(GameData gameData, StepTrigger.Moment moment, ActivePlayer player) {
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            boolean related = switch (player) {
+                case YOU -> gameData.activePlayerId.equals(emblem.controllerId());
+                case OPPONENT -> !gameData.activePlayerId.equals(emblem.controllerId());
+                case ANY -> true;
+                default -> throw new IllegalArgumentException("No emblem step reader reads " + player);
+            };
+            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
+                if (!emblemStepAbility(emblem, ability, moment, player) || !related) {
                     continue;
                 }
                 Card source = emblem.sourceCard();
-                String description = (source != null ? source.getName() : "Emblem") + "'s emblem";
-                boolean needsGraveyardTarget = upkeepTrigger.effects().stream()
-                        .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
-                if (needsGraveyardTarget) {
-                    gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                            source, emblem.controllerId(), new ArrayList<>(upkeepTrigger.effects())));
-                    gameLogService.append(gameData, GameLog.text(
-                            description + " triggers: \"" + upkeepTrigger.reminderText() + "\""));
-                    log.info("Game {} - {} {} emblem trigger queued for graveyard target selection",
-                            gameData.id, description, step);
-                    continue;
+                List<CardEffect> effects = stepAbilityReader.triggeredEffects(gameData, ability,
+                        ConditionContext.forCard(source, emblem.controllerId()));
+                if (effects != null) {
+                    putEmblemStepAbilityOnStack(gameData, emblem, effects, moment);
                 }
-                boolean needsPermanentTarget = upkeepTrigger.effects().stream()
-                        .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-                if (needsPermanentTarget) {
-                    gameData.queueInteraction(new PermanentChoiceContext.EmblemTriggerTarget(
-                            description, emblem.controllerId(), new ArrayList<>(upkeepTrigger.effects()), source));
-                    gameLogService.append(gameData, GameLog.text(
-                            description + " triggers: \"" + upkeepTrigger.reminderText() + "\""));
-                    log.info("Game {} - {} {} emblem trigger queued for permanent target selection",
-                            gameData.id, description, step);
-                    continue;
-                }
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, source, emblem.controllerId(), description,
-                        new ArrayList<>(upkeepTrigger.effects()));
-                gameData.stack.add(recordStepPlayer(entry, gameData.activePlayerId));
-                gameLogService.append(gameData, GameLog.text(
-                        description + " triggers: \"" + upkeepTrigger.reminderText() + "\""));
-                log.info("Game {} - {} {} emblem trigger pushed onto stack", gameData.id, description, step);
             }
         }
+    }
+
+    /**
+     * Whether {@code ability} of {@code emblem} is an "at the beginning of {@code moment}" ability for {@code player}.
+     * An emblem's step ability that names a player relation no emblem step reader reads fails loudly.
+     */
+    private static boolean emblemStepAbility(Emblem emblem, TriggeredAbility ability, StepTrigger.Moment moment,
+                                             ActivePlayer player) {
+        boolean matches = false;
+        for (TriggerCondition condition : ability.conditions()) {
+            if (!(condition.trigger() instanceof StepTrigger step) || step.moment() != moment) {
+                continue;
+            }
+            if (step.player() != ActivePlayer.YOU && step.player() != ActivePlayer.OPPONENT
+                    && step.player() != ActivePlayer.ANY) {
+                throw new IllegalStateException(emblem.sourceCard().getName() + "'s emblem has a step ability its "
+                        + "reader doesn't judge: " + ability);
+            }
+            matches |= step.player() == player;
+        }
+        return matches;
+    }
+
+    private void putEmblemStepAbilityOnStack(GameData gameData, Emblem emblem, List<CardEffect> effects,
+                                             StepTrigger.Moment moment) {
+        Card source = emblem.sourceCard();
+        String description = source.getName() + "'s emblem";
+        if (effects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
+            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    source, emblem.controllerId(), new ArrayList<>(effects)));
+            gameLogService.append(gameData, GameLog.text(description + " triggers."));
+            log.info("Game {} - {} {} emblem trigger queued for graveyard target selection",
+                    gameData.id, description, moment);
+            return;
+        }
+        if (effects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
+            gameData.queueInteraction(new PermanentChoiceContext.EmblemTriggerTarget(
+                    description, emblem.controllerId(), new ArrayList<>(effects), source));
+            gameLogService.append(gameData, GameLog.text(description + " triggers."));
+            log.info("Game {} - {} {} emblem trigger queued for permanent target selection",
+                    gameData.id, description, moment);
+            return;
+        }
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY, source, emblem.controllerId(), description,
+                new ArrayList<>(effects));
+        gameData.stack.add(recordStepPlayer(entry, gameData.activePlayerId));
+        gameLogService.append(gameData, GameLog.text(description + " triggers."));
+        log.info("Game {} - {} {} emblem trigger pushed onto stack", gameData.id, description, moment);
     }
 
     /**
@@ -598,8 +627,8 @@ public class StepTriggerService {
         // still protected the permanent through the marking player's own untap step.
         expireCantPhaseOut(gameData);
 
-        collectEmblemStepTriggers(gameData, EmblemTriggerStep.UPKEEP);
-        collectEmblemStepTriggers(gameData, EmblemTriggerStep.OPPONENT_UPKEEP);
+        collectEmblemStepTriggers(gameData, StepTrigger.Moment.UPKEEP, ActivePlayer.YOU);
+        collectEmblemStepTriggers(gameData, StepTrigger.Moment.UPKEEP, ActivePlayer.OPPONENT);
         epicService.fireUpkeepTriggers(gameData);
         permanentRemovalService.processDelayedPermanentActions(gameData,
                 DelayedPermanentActionKind.SACRIFICE_AT_NEXT_UPKEEP);
@@ -2678,6 +2707,7 @@ public class StepTriggerService {
 
             if (replacements.getFirst().kind() == DrawReplacementKind.ISLAND_SANCTUARY) {
                 // Draw step triggered abilities (e.g. Howling Mine) still trigger at the beginning of the step.
+                drawDuringOpponentsDrawStep(gameData);
                 handleDrawStepTriggers(gameData);
             }
 
@@ -2689,12 +2719,40 @@ public class StepTriggerService {
 
         // Normal draw (turn-based action, rule 504.1)
         drawService.resolveDrawCard(gameData, activePlayerId);
+        drawDuringOpponentsDrawStep(gameData);
 
         // Check for draw step triggered abilities (e.g. Howling Mine)
         handleDrawStepTriggers(gameData);
 
         if (!gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
             playerInputService.processNextMayAbility(gameData);
+        }
+    }
+
+    /**
+     * "You draw a card during each opponent's draw step" (Teferi, Who Slows the Sunset's emblem,
+     * {@link DrawDuringEachOpponentsDrawStepEffect}): each emblem controller other than the active player draws right
+     * after the active player's draw-step draw (CR 504.1), with no player getting priority in between (the card's
+     * ruling), in APNAP order. Abilities of emblems function in the command zone (CR 114.4).
+     */
+    private void drawDuringOpponentsDrawStep(GameData gameData) {
+        UUID activePlayerId = gameData.activePlayerId;
+        List<UUID> players = gameData.orderedPlayerIds;
+        int activeIndex = players.indexOf(activePlayerId);
+        for (int offset = 1; offset < players.size(); offset++) {
+            UUID playerId = players.get((activeIndex + offset) % players.size());
+            for (Emblem emblem : List.copyOf(gameData.emblems)) {
+                if (!playerId.equals(emblem.controllerId())) {
+                    continue;
+                }
+                for (CardEffect effect : emblem.staticEffects()) {
+                    if (effect instanceof DrawDuringEachOpponentsDrawStepEffect draw) {
+                        for (int i = 0; i < draw.amount(); i++) {
+                            drawService.resolveDrawCard(gameData, playerId);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -2779,8 +2837,8 @@ public class StepTriggerService {
 
     public void handleDrawStepTriggers(GameData gameData) {
         UUID activePlayerId = gameData.activePlayerId;
-        collectEmblemStepTriggers(gameData, EmblemTriggerStep.OPPONENT_DRAW_STEP);
-        collectEmblemStepTriggers(gameData, EmblemTriggerStep.DRAW_STEP);
+        collectEmblemStepTriggers(gameData, StepTrigger.Moment.DRAW_STEP, ActivePlayer.OPPONENT);
+        collectEmblemStepTriggers(gameData, StepTrigger.Moment.DRAW_STEP, ActivePlayer.YOU);
 
         // Nafs Asp / Glass Asp: paying before this draw step is a special action (CR 116.2c,
         // AbilityActivationService.payDelayedTriggerCost) that removes the obligation; the payment
@@ -2966,7 +3024,7 @@ public class StepTriggerService {
         if (gameData.planechase != null) planechaseService.step(gameData,
                 YOUR_PRECOMBAT_MAIN_PHASE);
 
-        collectEmblemStepTriggers(gameData, EmblemTriggerStep.PRECOMBAT_MAIN);
+        collectEmblemStepTriggers(gameData, StepTrigger.Moment.PRECOMBAT_MAIN_PHASE, ActivePlayer.YOU);
         handleRadCounterTrigger(gameData);
 
         // Saga lore counters: add a lore counter to each Saga the active player controls (MTG Rule 714.3b)
@@ -3463,7 +3521,7 @@ public class StepTriggerService {
      * @param gameData the current game state to modify
      */
     public void handleEndOfCombatTriggers(GameData gameData) {
-        collectEmblemStepTriggers(gameData, EmblemTriggerStep.END_OF_FIRST_COMBAT);
+        collectEmblemStepTriggers(gameData, StepTrigger.Moment.END_OF_COMBAT, ActivePlayer.ANY);
         if (gameData.planechase != null) {
             planechaseService.step(gameData, END_OF_COMBAT);
         }
@@ -4245,8 +4303,8 @@ public class StepTriggerService {
             gameData.enqueueTrigger(entry);
             gameLogService.append(gameData, GameLog.cardThen(cardToReturn, "'s delayed return ability triggers."));
         }
-        collectEmblemStepTriggers(gameData, EmblemTriggerStep.END_STEP);
-        collectEmblemStepTriggers(gameData, EmblemTriggerStep.EACH_END_STEP);
+        collectEmblemStepTriggers(gameData, StepTrigger.Moment.END_STEP, ActivePlayer.YOU);
+        collectEmblemStepTriggers(gameData, StepTrigger.Moment.END_STEP, ActivePlayer.ANY);
 
         if (gameData.hasDelayedAction(ReturnExiledCardAtNextEndStepUnlessPays.class)) {
             List<ReturnExiledCardAtNextEndStepUnlessPays> pendingReturns = gameData.drainDelayedActions(
@@ -6088,7 +6146,7 @@ public class StepTriggerService {
             planechaseService.step(gameData, YOUR_BEGINNING_OF_COMBAT);
         }
         queueDelayedBeginningOfCombatTriggers(gameData);
-        collectEmblemStepTriggers(gameData, EmblemTriggerStep.BEGINNING_OF_COMBAT);
+        collectEmblemStepTriggers(gameData, StepTrigger.Moment.BEGINNING_OF_COMBAT, ActivePlayer.YOU);
 
         UUID activePlayerId = gameData.activePlayerId;
         List<Permanent> battlefield = gameData.permanentsAndFaceUpSchemes(activePlayerId);

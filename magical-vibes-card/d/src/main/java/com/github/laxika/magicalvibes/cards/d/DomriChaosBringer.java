@@ -9,15 +9,16 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
-import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -49,14 +50,12 @@ public class DomriChaosBringer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -8,
                 List.of(new CreateEmblemEffect(
-                        List.of(new EmblemStepTriggerEffect(
-                                EmblemTriggerStep.EACH_END_STEP,
-                                List.of(new CreateTokenEffect(
+                        new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),
+                                new CreateTokenEffect(
                                         CardType.CREATURE, 1, "Beast", 4, 4, CardColor.RED,
                                         Set.of(CardColor.RED, CardColor.GREEN), List.of(CardSubtype.BEAST),
                                         Set.of(Keyword.TRAMPLE), Set.of(), false, false, List.of(),
                                         List.of(), false, false, false, 0, Set.of())),
-                                EMBLEM_TEXT)),
                         EMBLEM_TEXT)),
                 "−8: You get an emblem with \"" + EMBLEM_TEXT + "\"."
         ));

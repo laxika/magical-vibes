@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.d.Dreadwaters;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.Recycle;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -322,6 +324,27 @@ class TamiyoTheMoonSageTest extends BaseCardTest {
                     .anyMatch(c -> c.getName().equals("Angel's Mercy"));
             assertThat(gd.playerHands.get(player1.getId()))
                     .noneMatch(c -> c.getName().equals("Angel's Mercy"));
+        }
+
+        @Test
+        @DisplayName("Emblem does not trigger for a token put into your graveyard")
+        void emblemIgnoresTokenPutIntoGraveyard() {
+            giveEmblem(player1);
+            Card tokenCard = new Card();
+            tokenCard.setName("Soldier");
+            tokenCard.setType(CardType.CREATURE);
+            tokenCard.setManaCost("");
+            tokenCard.setToken(true);
+            tokenCard.setColor(null);
+            tokenCard.setColors(List.of());
+            tokenCard.setPower(1);
+            tokenCard.setToughness(1);
+            Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCard);
+
+            harness.sacrifice(token);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.interaction.activeInteraction()).isNull();
         }
 
         @Test

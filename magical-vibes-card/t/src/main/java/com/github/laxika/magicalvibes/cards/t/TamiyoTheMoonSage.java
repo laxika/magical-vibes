@@ -3,19 +3,23 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeDuration;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardPutIntoGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -53,7 +57,11 @@ public class TamiyoTheMoonSage extends Card {
                 List.of(
                         new GrantNoMaximumHandSizeEffect(NoMaximumHandSizeDuration.REST_OF_GAME),
                         new CreateEmblemEffect(
-                                List.of(new ReturnCardPutIntoGraveyardToHandEffect()),
+                                new TriggeredAbility(
+                                        Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN,
+                                                ObjectRelation.YOU_OWN),
+                                        new MayEffect(new ReturnTriggeringCardToOwnerHandEffect(),
+                                                "Return that card to your hand?")),
                                 "Whenever a card is put into your graveyard from anywhere, you may "
                                         + "return it to your hand.")),
                 "−8: You get an emblem with \"You have no maximum hand size\" and \"Whenever a card is"

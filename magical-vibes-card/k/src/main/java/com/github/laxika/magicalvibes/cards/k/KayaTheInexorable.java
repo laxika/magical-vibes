@@ -10,10 +10,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
@@ -33,11 +32,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
 import java.util.List;
 import java.util.Set;
-import com.github.laxika.magicalvibes.model.Zone;
 
 @CardRegistration(set = "KHM", collectorNumber = "218")
 @CardRegistration(set = "KHM", collectorNumber = "288")
@@ -96,10 +96,8 @@ public class KayaTheInexorable extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -7,
                 List.of(new CreateEmblemEffect(
-                        List.of(new EmblemStepTriggerEffect(
-                                EmblemTriggerStep.UPKEEP,
-                                List.of(new MayCastLegendarySpellFromAnyZoneEffect(LEGENDARY_SPELL)),
-                                EMBLEM_TEXT)),
+                        new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                                new MayCastLegendarySpellFromAnyZoneEffect(LEGENDARY_SPELL)),
                         EMBLEM_TEXT)),
                 "-7: You get an emblem with \"" + EMBLEM_TEXT + "\"."
         ));

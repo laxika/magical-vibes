@@ -48,6 +48,8 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -506,6 +508,28 @@ class DrawServiceTest {
         sut.checkControllerDrawTriggers(gd, player2Id);
         assertThat(gd.stack).singleElement()
                 .satisfies(entry -> assertThat(entry.getTriggeringPlayerId()).isEqualTo(player2Id));
+    }
+
+    @Test
+    void emblemTargetedDrawTriggerQueuesItsTargetChoiceWithTheAbilitysTargetFilter() {
+        Card source = createCard("Teferi, Hero of Dominaria", CardType.PLANESWALKER);
+        TargetFilter opponentsPermanent = TargetFilters.permanentAnOpponentControls();
+        gd.emblems.add(new Emblem(player1Id, List.of(), source, List.of(), 0L,
+                List.of(new TriggeredAbility(Triggers.youDrawCard(), new ExileTargetPermanentEffect())
+                        .withTargetFilter(opponentsPermanent))));
+
+        sut.checkControllerDrawTriggers(gd, player2Id);
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class)).isFalse();
+
+        sut.checkControllerDrawTriggers(gd, player1Id);
+
+        PermanentChoiceContext.EmblemTriggerTarget choice =
+                gd.peekPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class);
+        assertThat(choice.controllerId()).isEqualTo(player1Id);
+        assertThat(choice.effects()).containsExactly(new ExileTargetPermanentEffect());
+        assertThat(choice.targetFilter()).isEqualTo(opponentsPermanent);
+        assertThat(gd.stack).isEmpty();
+        verify(triggeredAbilityQueueService).processNextEmblemTriggerTarget(gd);
     }
 
     @Test

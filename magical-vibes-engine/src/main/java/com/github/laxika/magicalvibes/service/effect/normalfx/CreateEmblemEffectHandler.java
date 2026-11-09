@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawOnControlledCreatureEntersEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,8 +17,9 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Adds the emblem to {@code gameData.emblems} under the recipient's control. The effect's static
- * effects are stored verbatim; nothing here resolves them.
+ * Adds the emblem to {@code gameData.emblems} under the recipient's control. The effect's static effects and
+ * abilities are stored verbatim; nothing here resolves or registers them: the trigger readers read the emblem's
+ * triggered abilities from the command zone.
  */
 @Slf4j
 @Component
@@ -62,11 +62,6 @@ public class CreateEmblemEffectHandler implements NormalEffectHandlerBean {
         emblemSource.freeze();
         gameData.emblems.add(new Emblem(recipientId, emblemEffect.staticEffects(), emblemSource,
                 emblemEffect.activatedAbilities(), gameData.nextTimestamp(), emblemEffect.triggeredAbilities()));
-        if (emblemEffect.staticEffects().stream().anyMatch(DrawOnControlledCreatureEntersEffect.class::isInstance)) {
-            gameData.creatureEntersDrawSources
-                    .computeIfAbsent(recipientId, ignored -> java.util.Collections.synchronizedList(new java.util.ArrayList<>()))
-                    .add(emblemSource);
-        }
 
         gameLogService.append(gameData, GameLog.text(
                 playerName + " gets an emblem with \"" + emblemEffect.reminderText() + "\"."));

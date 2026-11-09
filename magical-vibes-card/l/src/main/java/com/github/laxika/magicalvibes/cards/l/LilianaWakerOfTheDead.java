@@ -6,18 +6,19 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDiscardsOrLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -48,16 +49,14 @@ public class LilianaWakerOfTheDead extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -7,
                 List.of(new CreateEmblemEffect(
-                        List.of(new EmblemStepTriggerEffect(
-                                EmblemTriggerStep.BEGINNING_OF_COMBAT,
-                                List.of(ReturnCardFromGraveyardEffect.builder()
+                        new TriggeredAbility(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                                ReturnCardFromGraveyardEffect.builder()
                                         .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                         .filter(new CardTypePredicate(CardType.CREATURE))
                                         .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                                         .targetGraveyard(true)
                                         .grantHaste(true)
                                         .build()),
-                                EMBLEM_TEXT)),
                         EMBLEM_TEXT)),
                 "-7: You get an emblem with \"" + EMBLEM_TEXT + "\""
         ));

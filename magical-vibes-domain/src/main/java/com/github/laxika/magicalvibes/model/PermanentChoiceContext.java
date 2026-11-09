@@ -2388,10 +2388,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  player controls). Fired mid-resolution when the Faerie is championed. */
     record ChampionedTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
-    record EmblemTriggerTarget(String emblemDescription, UUID controllerId, List<CardEffect> effects, Card sourceCard, boolean opponentControlledOnly) implements PermanentChoiceContext {
-        /** Convenience constructor for backwards compatibility (targets any permanent). */
+    /**
+     * The permanent target of an emblem's triggered ability, chosen as it goes on the stack (CR 603.3d).
+     * {@code targetFilter} is the ability's own target filter ({@code TriggeredAbility.targetFilter()}: Teferi, Hero
+     * of Dominaria's "target permanent an opponent controls"), or {@code null} when only the effects restrict the
+     * target; the stack entry keeps it, so it is checked again as the ability resolves (CR 608.2b).
+     */
+    record EmblemTriggerTarget(String emblemDescription, UUID controllerId, List<CardEffect> effects, Card sourceCard,
+                               TargetFilter targetFilter) implements PermanentChoiceContext {
+        /** A target the effects alone restrict. */
         public EmblemTriggerTarget(String emblemDescription, UUID controllerId, List<CardEffect> effects, Card sourceCard) {
-            this(emblemDescription, controllerId, effects, sourceCard, false);
+            this(emblemDescription, controllerId, effects, sourceCard, null);
         }
     }
 

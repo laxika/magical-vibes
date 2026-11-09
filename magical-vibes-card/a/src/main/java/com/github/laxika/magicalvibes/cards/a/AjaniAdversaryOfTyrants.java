@@ -9,10 +9,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -20,6 +19,8 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -59,10 +60,9 @@ public class AjaniAdversaryOfTyrants extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -7,
                 List.of(new CreateEmblemEffect(
-                        List.of(new EmblemStepTriggerEffect(EmblemTriggerStep.END_STEP,
-                                List.of(new CreateTokenEffect(3, "Cat", 1, 1, CardColor.WHITE,
+                        new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU),
+                                new CreateTokenEffect(3, "Cat", 1, 1, CardColor.WHITE,
                                         List.of(CardSubtype.CAT), Set.of(Keyword.LIFELINK), Set.of())),
-                                EMBLEM_TEXT)),
                         EMBLEM_TEXT)),
                 "−7: You get an emblem with \"" + EMBLEM_TEXT + "\""
         ));

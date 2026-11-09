@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 
+import org.mockito.InOrder;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -55,8 +56,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.EmblemTriggerStep;
+import com.github.laxika.magicalvibes.model.effect.DrawDuringEachOpponentsDrawStepEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -164,7 +164,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -345,14 +347,32 @@ class StepTriggerServiceTest {
         void drawStepEmblemTriggersAfterTurnBasedDraw() {
             gd.turnNumber = 2;
             Card source = createCardWithName("Sarkhan, the Dragonspeaker");
-            gd.emblems.add(new Emblem(player1Id, List.of(new EmblemStepTriggerEffect(
-                    EmblemTriggerStep.DRAW_STEP, List.of(new GainLifeEffect(1)), "Draw-step effect")), source));
+            gd.emblems.add(new Emblem(player1Id, List.of(), source, List.of(), 0L, List.of(
+                    new TriggeredAbility(Triggers.drawStep(ActivePlayer.YOU), new GainLifeEffect(1)))));
 
             sut.handleDrawStep(gd);
 
             verify(drawService).resolveDrawCard(gd, player1Id);
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getDescription()).contains("Sarkhan, the Dragonspeaker");
+        }
+
+        @Test
+        @DisplayName("An opponent's draw-during-each-opponent's-draw-step emblem draws after the turn-based draw, "
+                + "without the stack")
+        void drawDuringEachOpponentsDrawStepEmblemDrawsWithoutTheStack() {
+            gd.turnNumber = 2;
+            Card source = createCardWithName("Teferi, Who Slows the Sunset");
+            gd.emblems.add(new Emblem(player2Id, List.of(new DrawDuringEachOpponentsDrawStepEffect(1)), source));
+            gd.emblems.add(new Emblem(player1Id, List.of(new DrawDuringEachOpponentsDrawStepEffect(1)), source));
+
+            sut.handleDrawStep(gd);
+
+            InOrder order = inOrder(drawService);
+            order.verify(drawService).resolveDrawCard(gd, player1Id);
+            order.verify(drawService).resolveDrawCard(gd, player2Id);
+            verify(drawService, times(1)).resolveDrawCard(gd, player1Id);
+            assertThat(gd.stack).isEmpty();
         }
 
         @Test
@@ -512,8 +532,8 @@ class StepTriggerServiceTest {
         @DisplayName("Opponent-upkeep emblem triggers for the active opponent")
         void opponentUpkeepEmblemTriggersForActiveOpponent() {
             Card source = createCardWithName("Sorin, Solemn Visitor");
-            gd.emblems.add(new Emblem(player1Id, List.of(new EmblemStepTriggerEffect(
-                    EmblemTriggerStep.OPPONENT_UPKEEP, List.of(new GainLifeEffect(1)), "Opponent-upkeep effect")), source));
+            gd.emblems.add(new Emblem(player1Id, List.of(), source, List.of(), 0L, List.of(
+                    new TriggeredAbility(Triggers.upkeep(ActivePlayer.OPPONENT), new GainLifeEffect(1)))));
             gd.activePlayerId = player2Id;
 
             sut.handleUpkeepTriggers(gd);
@@ -528,8 +548,8 @@ class StepTriggerServiceTest {
         @DisplayName("Opponent-upkeep emblem does not trigger during its controller's upkeep")
         void opponentUpkeepEmblemDoesNotTriggerDuringControllerUpkeep() {
             Card source = createCardWithName("Sorin, Solemn Visitor");
-            gd.emblems.add(new Emblem(player1Id, List.of(new EmblemStepTriggerEffect(
-                    EmblemTriggerStep.OPPONENT_UPKEEP, List.of(new GainLifeEffect(1)), "Opponent-upkeep effect")), source));
+            gd.emblems.add(new Emblem(player1Id, List.of(), source, List.of(), 0L, List.of(
+                    new TriggeredAbility(Triggers.upkeep(ActivePlayer.OPPONENT), new GainLifeEffect(1)))));
 
             sut.handleUpkeepTriggers(gd);
 

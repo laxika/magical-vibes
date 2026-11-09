@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -40,13 +42,18 @@ import com.github.laxika.magicalvibes.model.effect.MadnessMayCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreatureCardExileReplacement;
 import com.github.laxika.magicalvibes.model.effect.OwnGraveyardExileReplacement;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardPutIntoGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealAndPutOnBottomOfLibraryInsteadOfGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalColorGraveyardExileReplacement;
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryReplacementEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
@@ -947,44 +954,69 @@ public class GraveyardService {
     }
 
     /**
-     * Fires emblem-borne "whenever a card is put into your graveyard from anywhere, you may return it
-     * to your hand" triggers (Tamiyo, the Moon Sage's emblem). The trigger goes on the stack under the
-     * graveyard owner's control with the newly-arrived card as its source, so the resolution-time
-     * {@code MayEffect} prompt and {@code ReturnSourceCardFromGraveyardToOwnerHandEffect} both act on
-     * that exact card. Tokens are skipped: they cease to exist and can never be returned.
+     * The emblems' "whenever a card is put into your graveyard from anywhere" abilities
+     * ({@code Triggers.putIntoGraveyardFromAnywhere(filter, YOU_OWN)}; Tamiyo, the Moon Sage's "you may return it to
+     * your hand") for {@code card}, which just arrived in {@code ownerId}'s graveyard. Abilities of emblems function in
+     * the command zone (CR 114.4). A card goes to its owner's graveyard, so "your graveyard" is the emblem controller's
+     * own card; the trigger's filter is judged on the card as it arrived ("a card": a token isn't one, CR 108.2b). Each
+     * matching ability goes on the stack once as one object of its effects (CR 603.3), the emblem's source card as its
+     * source and the arrived card as its triggering card, for this stay in the graveyard: once the card leaves and
+     * returns it is a new object the ability can no longer move (CR 400.7). A "you may" is asked as it resolves
+     * (CR 603.5). The reader judges no other relation, origin, cause, option or target; an ability with one fails
+     * loudly instead of triggering wrongly. An ability that names the zone the card came from is another reader's.
      */
     private void collectEmblemPutIntoGraveyardTriggers(GameData gameData, UUID ownerId, Card card) {
-        if (isToken(gameData, card)) {
-            return;
-        }
         for (Emblem emblem : List.copyOf(gameData.emblems)) {
-            if (!emblem.controllerId().equals(ownerId)) {
+            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
+                if (emblemSeesCardPutIntoGraveyard(gameData, emblem, ability, ownerId, card)) {
+                    putEmblemGraveyardAbilityOnStack(gameData, emblem, ability, ownerId, card);
+                }
+            }
+        }
+    }
+
+    /** Whether {@code ability} of {@code emblem} triggers on {@code card} being put into {@code ownerId}'s graveyard. */
+    private boolean emblemSeesCardPutIntoGraveyard(GameData gameData, Emblem emblem, TriggeredAbility ability,
+                                                   UUID ownerId, Card card) {
+        for (TriggerCondition condition : ability.conditions()) {
+            if (!(condition.trigger() instanceof ZoneChangeTrigger trigger) || trigger.to() != Zone.GRAVEYARD
+                    || !trigger.from().isEmpty()) {
                 continue;
             }
-            for (CardEffect emblemEffect : emblem.staticEffects()) {
-                if (!(emblemEffect instanceof ReturnCardPutIntoGraveyardToHandEffect)) {
-                    continue;
-                }
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        card,
-                        ownerId,
-                        emblem.sourceCard().getName() + "'s emblem",
-                        new ArrayList<>(List.of(new MayEffect(
-                                new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                                "Return " + card.getName() + " to your hand?"))),
-                        null,
-                        (UUID) null
-                );
-                // A trigger from an earlier graveyard entry fizzles once the card has left and re-entered
-                // the graveyard, since that is a new object (CR 400.7).
-                trigger.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
-                gameData.stack.add(trigger);
-                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(ownerId)
-                        + "'s emblem triggers."));
-                log.info("Game {} - emblem graveyard-return trigger for {}", gameData.id, card.getName());
+            if (trigger.relation() != ObjectRelation.YOU_OWN || !trigger.excludedTo().isEmpty()
+                    || !trigger.causes().isEmpty() || trigger.causedBy() != PlayerRelation.ANY
+                    || trigger.duringYourTurn() || trigger.castingSpell() != null
+                    || !ability.options().equals(TriggerOptions.DEFAULT) || ability.targetFilter() != null
+                    || ability.effects().stream().anyMatch(effect -> effect.effect().targetSpec() != TargetSpec.NONE)) {
+                throw new IllegalStateException(emblem.sourceCard().getName() + "'s emblem has a graveyard ability "
+                        + "its reader doesn't judge: " + ability);
+            }
+            if (emblem.controllerId().equals(ownerId) && (trigger.filter() == null
+                    || predicateEvaluationService.matchesPermanentPredicate(new Permanent(card), trigger.filter(),
+                    FilterContext.of(gameData).withSourceControllerId(emblem.controllerId())
+                            .withSourceCardId(emblem.sourceCard().getId())))) {
+                return true;
             }
         }
+        return false;
+    }
+
+    private void putEmblemGraveyardAbilityOnStack(GameData gameData, Emblem emblem, TriggeredAbility ability,
+                                                  UUID ownerId, Card card) {
+        String description = emblem.sourceCard().getName() + "'s emblem";
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                emblem.sourceCard(),
+                emblem.controllerId(),
+                description,
+                new ArrayList<>(ability.effects().stream().map(EffectRegistration::effect).toList()));
+        entry.setTriggeringCard(card.getId(), gameData.graveyardEntryVersion(card.getId()));
+        entry.setTriggeringCards(List.of(card));
+        entry.setNonTargeting(true);
+        gameData.stack.add(entry);
+        gameLogService.append(gameData, GameLog.text(description + " triggers for " + card.getName() + "."));
+        log.info("Game {} - {} triggers for {} put into {}'s graveyard", gameData.id, description, card.getName(),
+                gameData.playerIdToName.get(ownerId));
     }
 
     /**

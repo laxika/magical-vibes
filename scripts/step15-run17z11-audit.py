@@ -81,8 +81,10 @@ CLASSIFIED = {
     # effect's class; neither does the planar "whenever you attack" collector's GrantKeywordEffect (was 17z11f's).
     # 17z11e (done): the end step's, the draw step's, the opponent's and chosen player's upkeep's and the emblems' "that
     # player" and the enchanted permanent's controller are recorded whatever the effects are; the emblem's step ability
-    # is found by its class (ROUTE).
-    ("StepTriggerService.java", "EmblemStepTriggerEffect"): "ROUTE",
+    # is found by its class (ROUTE). Run 17z13b: the emblems' step abilities are `TriggeredAbility`s the emblem step
+    # reader judges, `EmblemStepTriggerEffect` is gone; Teferi, Who Slows the Sunset's draw during each opponent's draw
+    # step is a static ability the draw step reads (STATIC).
+    ("StepTriggerService.java", "DrawDuringEachOpponentsDrawStepEffect"): "STATIC",
     # 17z11e2 (done): the Aura grants are granted abilities the your-upkeep and your-end-step readers read (the entry
     # names the granting permanent), the each-upkeep payment's "that player" the declared-target rule, Call to the
     # Kindred's "you may" records the enchanted creature, the Energy Flux family grants its ability, Admiral Beckett
@@ -144,7 +146,6 @@ CLASSIFIED = {
     ("TriggerCollectionService.java", "ChooseOneEffect"): "ROUTE",
     ("TriggerCollectionService.java", "ReselectTargetAtRandomEffect"): "ROUTE",
     ("TriggerCollectionService.java", "TriggeredModalEffect"): "ROUTE",
-    ("TriggerCollectionService.java", "EmblemCreatureDeathTriggerEffect"): "ROUTE",
     ("TriggerCollectionService.java", "OptionalTargetEffect"): "ROUTE",
     ("TriggerCollectionService.java", "ChooseSubtypeForSourceEffect"): "STATIC",
     ("TriggerCollectionService.java", "AttachedCreatureBecomesCopyOfExiledCreatureEffect"): "STATIC",
@@ -207,7 +208,7 @@ REVIEWED_ROUTE = {
         "AddOneOfEachManaTypeProducedByLandEffect", "ChooseCardNameAtResolutionEffect", "ChooseColorForSourceEffect",
         "ChooseTargetsAtRandomEffect", "CompleteDungeonEffect", "CounterUnlessDiscardsEffect",
         "CounterUnlessPaysEffect", "CounterUnlessSacrificesEffect", "DealDamageToAnyTargetEffect",
-        "EmblemArtifactGraveyardReturnTriggerEffect", "ExileTriggeringSpellWithSuspendCountersEffect",
+        "ExileTriggeringSpellWithSuspendCountersEffect",
         "GrantActivatedAbilityEffect", "GrantCastTriggerToSpellsEffect",
         "LoseGameIfSourceDealtDamageToPlayerThisTurnEffect", "NextMatchingSpellCostEffect",
         "PhaseInLinkedPermanentEffect", "ReturnTriggeringPermanentToBattlefieldEffect",

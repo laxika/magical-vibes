@@ -105,7 +105,7 @@ cast path type-checks the target automatically; an effect that targets a permane
 | Life-gain (`LifeGainTriggerAnyTarget`) | `Options.ATTACK` with the ability's target filter, else — | ✅ all players, or the filter's | ✅ the effect's declared permanents, or the filter's | ✅ with the filter | ✅ with the filter | ✅ with the filter | ❌ |
 | Enters (`EntersTriggerTarget`)      | `Options.ATTACK`   | ✅ | ✅ any permanent  | ✅ | ✅ | ✅ | ✅ |
 | Explore (`ExploreTriggerTarget`)    | —                  | ❌            | ✅ hard-coded to opponent creatures | n/a (hard-coded) | ❌ | ❌ | ❌ |
-| Emblem (`EmblemTriggerTarget`)      | —                  | ❌            | ✅ any permanent  | via bespoke `opponentControlledOnly` boolean | ❌ | ❌ | ❌ |
+| Emblem (`EmblemTriggerTarget`)      | `Options.UPKEEP`   | ❌            | ✅ any permanent  | ❌ | ✅ the ability's own (`TriggeredAbility.withTargetFilter`, kept on the stack entry; Teferi, Hero of Dominaria) | ✅ the ability's own | ❌ |
 | Saga chapter (`SagaChapterTarget`)  | —                  | "up to one" skip via self-target | ✅ creatures only | ❌ | ✅ (via chapter-level `Set<TargetFilter>`) | ❌ | ✅ first effect's spec predicate (`EffectResolution.targetPredicateOf`) |
 
 Legend: ✅ = supported, ❌ = not supported, — = no shared Options entry.
