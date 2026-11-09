@@ -46,8 +46,8 @@ public class ExileSourceCardFromGraveyardAndCollectEvidenceEffectHandler
         UUID sourceCardId = sourceCard.getId();
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, sourceCardId);
         // CR 400.7: a card that left the graveyard and came back is a new object this trigger can't find.
-        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
-                && gameData.graveyardEntryVersion(sourceCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
+        if (entry.sourceCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(sourceCardId) != entry.sourceCardGraveyardEntryVersion()) {
             return;
         }
         if (ownerId == null || !canCollectEvidence(gameData, entry, exileAndCollect.minimumManaValue(), sourceCardId)) {

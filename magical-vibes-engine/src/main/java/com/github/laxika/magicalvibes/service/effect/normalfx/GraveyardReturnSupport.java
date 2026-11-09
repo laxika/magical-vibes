@@ -167,8 +167,8 @@ public class GraveyardReturnSupport {
             return;
         }
         // A card that left the graveyard and came back is a new object the trigger cannot exile.
-        if (entry != null && entry.getTriggeringCardGraveyardEntryVersion() >= 0
-                && gameData.graveyardEntryVersion(sourceCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
+        if (entry != null && entry.sourceCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(sourceCardId) != entry.sourceCardGraveyardEntryVersion()) {
             return;
         }
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, sourceCardId);
@@ -1187,10 +1187,9 @@ public class GraveyardReturnSupport {
         // CR 400.7: a trigger that returns its own card refers to one stay in the graveyard; once the card has
         // left and re-entered it is a new object and the return does nothing.
         if (effect.filter() instanceof com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate
-                && entry != null && entry.getTriggeringCardGraveyardEntryVersion() >= 0
-                && entry.getCard() != null && entry.getCard().getId().equals(entry.getTriggeringCardId())
+                && entry != null && entry.getCard() != null && entry.sourceCardGraveyardEntryVersion() >= 0
                 && gameData.graveyardEntryVersion(entry.getCard().getId())
-                != entry.getTriggeringCardGraveyardEntryVersion()) {
+                != entry.sourceCardGraveyardEntryVersion()) {
             return;
         }
 
@@ -1908,9 +1907,10 @@ public class GraveyardReturnSupport {
     public void resolveFromAllGraveyards(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect effect,
                                           UUID controllerId, UUID sourceCardId) {
         List<Card> cardPool = new ArrayList<>();
-        Set<UUID> eventCardIds = effect.eventCardIdsOnly()
-                ? new HashSet<>(entry.getEventCardIds())
-                : Set.of();
+        // "Those cards" are the cards the resolving spell acted on, else the cards the trigger event was about.
+        Set<UUID> eventCardIds = !effect.eventCardIdsOnly() ? Set.of()
+                : !entry.getEventCardIds().isEmpty() ? new HashSet<>(entry.getEventCardIds())
+                : new HashSet<>(entry.triggeringCardIds());
 
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
@@ -3948,10 +3948,16 @@ public class GraveyardReturnSupport {
      * becoming a different object.
      */
     private static void keepOwnAbilityBoundToMovedSource(GameData gameData, StackEntry entry, Card movedCard) {
-        if (entry != null && entry.getTriggeringCardGraveyardEntryVersion() >= 0
-                && entry.getCard() != null && entry.getCard().getId().equals(movedCard.getId())) {
-            entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(movedCard.getId()));
+        if (entry == null || entry.getCard() == null || !entry.getCard().getId().equals(movedCard.getId())
+                || entry.sourceCardGraveyardEntryVersion() < 0) {
+            return;
         }
+        long movedVersion = gameData.graveyardEntryVersion(movedCard.getId());
+        if (movedCard.getId().equals(entry.getTriggeringCardId())
+                && entry.getTriggeringCardGraveyardEntryVersion() >= 0) {
+            entry.setTriggeringCardGraveyardEntryVersion(movedVersion);
+        }
+        entry.setSourceGraveyardEntryVersion(movedVersion);
     }
 
     /**

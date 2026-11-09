@@ -765,7 +765,7 @@ public class TriggerCollectionService {
                 controllerId,
                 card.getName() + "'s ability",
                 new ArrayList<>(List.of(effect)));
-        entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+        entry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(card));
     }
@@ -1101,7 +1101,6 @@ public class TriggerCollectionService {
                             new ArrayList<>(boundEffects)
                     );
                     entry.setTriggeringCardId(spellCard.getId());
-                    entry.setTriggeringCardGraveyardEntryVersion(sourceEntryVersion);
                     entry.setSourceGraveyardEntryVersion(sourceEntryVersion);
                     entry.setTriggeringSpell(castSpellEntry);
                     gameData.stack.add(entry);
@@ -2394,7 +2393,9 @@ public class TriggerCollectionService {
                                 discardedCard.getName() + "'s ability",
                                 new ArrayList<>(selfTriggers)
                         );
-                        selfDiscardEntry.setTriggeringCardGraveyardEntryVersion(
+                        selfDiscardEntry.setTriggeringCard(discardedCard.getId(),
+                                gameData.graveyardEntryVersion(discardedCard.getId()));
+                        selfDiscardEntry.setSourceGraveyardEntryVersion(
                                 gameData.graveyardEntryVersion(discardedCard.getId()));
                         gameData.enqueueTrigger(selfDiscardEntry);
                     }
@@ -2847,7 +2848,7 @@ public class TriggerCollectionService {
                         card.getName() + "'s ability",
                         new ArrayList<>(List.of(effect))
                 );
-                entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+                entry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                 gameData.enqueueTrigger(entry);
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
                 log.info("Game {} - {} graveyard ability triggers on dungeon completion",
@@ -5308,7 +5309,8 @@ public class TriggerCollectionService {
                     new TriggerContext.PermanentCardPutIntoGraveyard(event.card(), controllerId));
             case ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY -> triggered = dispatchWatchEffects(gameData,
                     candidate, watch, effects,
-                    new TriggerContext.CreatureCardsPutIntoGraveyardFromLibrary(controllerId, events.size()));
+                    new TriggerContext.CreatureCardsPutIntoGraveyardFromLibrary(controllerId, events.size(),
+                            events.stream().map(ZoneChangeEvent::card).toList()));
             case ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY -> triggered = dispatchWatchEffects(gameData,
                     candidate, watch, effects, new TriggerContext.CardsPutIntoGraveyardFromLibrary(controllerId,
                             events.size(), events.stream().map(ZoneChangeEvent::card).toList()));
@@ -5358,7 +5360,7 @@ public class TriggerCollectionService {
                 for (CardEffect effect : effects) {
                     StackEntry milledTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
                             card.getName() + "'s ability", new ArrayList<>(List.of(effect)));
-                    milledTrigger.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+                    milledTrigger.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                     gameData.enqueueTrigger(milledTrigger);
                     gameLogService.append(gameData, GameLog.abilityTriggers(card));
                     triggered = true;
@@ -5935,11 +5937,9 @@ public class TriggerCollectionService {
                     && queueGraveyardPermanentEntersTriggers(gameData, sourceCard, controllerId, effects,
                     entering.permanent());
             case GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, GRAVEYARD_ON_ANY_CREATURE_ENTERS_BATTLEFIELD ->
-                    triggerGraveyardCreatureEnters(gameData, sourceCard, controllerId, effects, entering,
-                            watch == ZoneChangeWatch.GRAVEYARD_ON_ALLY_CREATURE_ENTERS_BATTLEFIELD);
+                    triggerGraveyardCreatureEnters(gameData, sourceCard, controllerId, effects, entering);
             case GRAVEYARD_ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD, GRAVEYARD_ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD ->
-                    triggerGraveyardPermanentTypeEnters(gameData, sourceCard, controllerId, effects,
-                            watch == ZoneChangeWatch.GRAVEYARD_ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD);
+                    triggerGraveyardPermanentTypeEnters(gameData, sourceCard, controllerId, effects, entering);
             case GRAVEYARD_ON_CREATURE_ENTERS_FROM_GRAVEYARD_OR_CAST_FROM_GRAVEYARD ->
                     triggerGraveyardCreatureEntersFromGraveyard(gameData, sourceCard, controllerId, effects, entering);
             case ON_CREATURE_ENTERS_FROM_GRAVEYARD -> {
@@ -6220,17 +6220,16 @@ public class TriggerCollectionService {
                                                List<CardEffect> effects, Entering entering) {
         boolean triggered = false;
         for (CardEffect resolved : effects) {
+            StackEntry landfallEntry;
             if (resolved instanceof MayEffect may) {
                 gameData.queueMayAbility(card, landControllerId, may);
-                StackEntry landfallEntry = gameData.stack.getLast();
-                landfallEntry.setTriggeringCardId(card.getId());
-                landfallEntry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+                landfallEntry = gameData.stack.getLast();
             } else {
-                StackEntry landfallEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, landControllerId,
+                landfallEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, landControllerId,
                         card.getName() + "'s ability", new ArrayList<>(List.of(resolved)));
-                landfallEntry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                 gameData.stack.add(landfallEntry);
             }
+            recordGraveyardEnterAbility(gameData, landfallEntry, card, entering.permanent(), resolved);
             gameLogService.append(gameData, GameLog.abilityTriggers(card));
             triggered = true;
         }
@@ -6239,33 +6238,37 @@ public class TriggerCollectionService {
 
     /**
      * From the graveyard, "whenever a creature you control enters" (Unconventional Tactics) and "whenever a creature
-     * enters". The ability refers to this stay in the graveyard (CR 400.7).
+     * enters".
      */
     private boolean triggerGraveyardCreatureEnters(GameData gameData, Card card, UUID controllerId,
-                                                   List<CardEffect> effects, Entering entering, boolean stampVersion) {
+                                                   List<CardEffect> effects, Entering entering) {
         Permanent enteringPermanent = entering.permanent();
         boolean triggered = false;
         for (CardEffect resolved : effects) {
             if (resolved instanceof MayEffect may) {
                 gameData.queueMayAbility(card, controllerId, may);
-                StackEntry mayEntry = gameData.stack.getLast();
-                if (stampVersion) {
-                    mayEntry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
-                }
-                recordEnteringPermanent(mayEntry, enteringPermanent, may);
+                recordGraveyardEnterAbility(gameData, gameData.stack.getLast(), card, enteringPermanent, may);
             } else {
                 StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
                         card.getName() + "'s ability", new ArrayList<>(List.of(resolved)));
-                if (stampVersion) {
-                    entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
-                }
-                recordEnteringPermanent(entry, enteringPermanent, resolved);
+                recordGraveyardEnterAbility(gameData, entry, card, enteringPermanent, resolved);
                 gameData.enqueueTrigger(entry);
             }
             gameLogService.append(gameData, GameLog.abilityTriggers(card));
             triggered = true;
         }
         return triggered;
+    }
+
+    /**
+     * What every enters ability of a card in a graveyard records, whatever its effects are: the stay in the graveyard
+     * its source card is ("this card", a new object once it has left and returned, CR 400.7) and the permanent that
+     * entered.
+     */
+    private static void recordGraveyardEnterAbility(GameData gameData, StackEntry entry, Card sourceCard,
+                                                    Permanent enteringPermanent, CardEffect effect) {
+        entry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(sourceCard.getId()));
+        recordEnteringPermanent(entry, enteringPermanent, effect);
     }
 
     /**
@@ -6284,27 +6287,19 @@ public class TriggerCollectionService {
 
     /** From the graveyard, "whenever an artifact you control enters" and "an enchantment you control". */
     private boolean triggerGraveyardPermanentTypeEnters(GameData gameData, Card card, UUID controllerId,
-                                                        List<CardEffect> effects, boolean artifact) {
+                                                        List<CardEffect> effects, Entering entering) {
         boolean triggered = false;
         for (CardEffect resolved : effects) {
+            StackEntry entry;
             if (resolved instanceof MayEffect may) {
                 gameData.queueMayAbility(card, controllerId, may);
-                if (artifact) {
-                    StackEntry artifactEntry = gameData.stack.getLast();
-                    artifactEntry.setTriggeringCardId(card.getId());
-                    artifactEntry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
-                }
+                entry = gameData.stack.getLast();
             } else {
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
                         card.getName() + "'s ability", new ArrayList<>(List.of(resolved)));
-                // The trigger refers to this stay in the graveyard (CR 400.7): a later re-entry makes the card a new
-                // object, so the stale trigger's return does nothing.
-                if (!artifact) {
-                    entry.setTriggeringCardId(card.getId());
-                }
-                entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                 gameData.stack.add(entry);
             }
+            recordGraveyardEnterAbility(gameData, entry, card, entering.permanent(), resolved);
             gameLogService.append(gameData, GameLog.abilityTriggers(card));
             triggered = true;
         }
@@ -6324,8 +6319,10 @@ public class TriggerCollectionService {
             return false;
         }
         for (CardEffect effect : effects) {
-            gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, graveyardOwnerId,
-                    card.getName() + "'s ability", new ArrayList<>(List.of(effect))));
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, graveyardOwnerId,
+                    card.getName() + "'s ability", new ArrayList<>(List.of(effect)));
+            recordGraveyardEnterAbility(gameData, entry, card, enteringPermanent, effect);
+            gameData.stack.add(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(card));
         }
         return !effects.isEmpty();
@@ -12729,6 +12726,7 @@ public class TriggerCollectionService {
 
             if (resolved instanceof MayEffect may) {
                 gameData.queueMayAbility(card, controllerId, may, card.getId());
+                gameData.stack.getLast().setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
             } else {
                 StackEntry triggerEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
@@ -12738,7 +12736,7 @@ public class TriggerCollectionService {
                         new ArrayList<>(List.of(resolved))
                 );
                 // CR 400.7: the ability refers to this graveyard object, not a later one.
-                triggerEntry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+                triggerEntry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                 gameData.stack.add(triggerEntry);
             }
             triggered = true;
@@ -13267,7 +13265,6 @@ public class TriggerCollectionService {
         // CR 400.7: the trigger refers to this stay of the card in the graveyard; once the card
         // leaves and returns, it is a new object the trigger can no longer move, and "if this card
         // is in your graveyard" is false.
-        gameData.stack.getLast().setTriggeringCardGraveyardEntryVersion(sourceEntryVersion);
         gameData.stack.getLast().setSourceGraveyardEntryVersion(sourceEntryVersion);
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} graveyard trigger fires when a creature enters a graveyard",
@@ -14155,7 +14152,7 @@ public class TriggerCollectionService {
                         new ArrayList<>(List.of(effect))
                 );
                 // CR 400.7: the ability refers to this graveyard object, not a later one.
-                triggerEntry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+                triggerEntry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                 gameData.enqueueTrigger(triggerEntry);
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
                 log.info("Game {} - {} triggers from the graveyard when day/night changes",
@@ -14562,11 +14559,11 @@ public class TriggerCollectionService {
         for (CardEffect resolved : effects) {
             if (resolved instanceof MayEffect may) {
                 gameData.queueMayAbility(card, graveyardOwnerId, may);
-                recordEnteringPermanent(gameData.stack.getLast(), enteringPermanent, may);
+                recordGraveyardEnterAbility(gameData, gameData.stack.getLast(), card, enteringPermanent, may);
             } else {
                 StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, graveyardOwnerId,
                         card.getName() + "'s ability", new ArrayList<>(List.of(resolved)));
-                recordEnteringPermanent(entry, enteringPermanent, resolved);
+                recordGraveyardEnterAbility(gameData, entry, card, enteringPermanent, resolved);
                 gameData.enqueueTrigger(entry);
             }
             gameLogService.append(gameData, GameLog.abilityTriggers(card));
@@ -16619,9 +16616,9 @@ public class TriggerCollectionService {
                 var match = new TriggerMatchContext(gameData, perm, discardingPlayerId, effect);
                 triggered |= switch (read.event()) {
                     case CYCLES -> dispatch(match, watch, effect, ctx,
-                            () -> discardTriggerCollectorService.collectCycling(match, effect));
+                            () -> discardTriggerCollectorService.collectCycling(match, effect, ctx));
                     case DISCARDS_BY_OPPONENT -> dispatch(match, watch, effect, ctx,
-                            () -> discardTriggerCollectorService.collectOpponentCausedDiscard(match, effect));
+                            () -> discardTriggerCollectorService.collectOpponentCausedDiscard(match, effect, ctx));
                     default -> dispatch(match, watch, effect, ctx);
                 };
             }

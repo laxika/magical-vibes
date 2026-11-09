@@ -325,12 +325,9 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
         }
 
         UUID sourceCardId = entry.getCard().getId();
-        boolean versionBelongsToSource = entry.getTriggeringCardId() == null
-                || entry.getTriggeringCardId().equals(sourceCardId);
-        if (versionBelongsToSource
-                && entry.getTriggeringCardGraveyardEntryVersion() >= 0
+        if (entry.sourceCardGraveyardEntryVersion() >= 0
                 && gameQueryService.findCardInGraveyardById(gameData, sourceCardId) != null
-                && gameData.graveyardEntryVersion(sourceCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
+                && gameData.graveyardEntryVersion(sourceCardId) != entry.sourceCardGraveyardEntryVersion()) {
             if (!e.optional()) {
                 return;
             }

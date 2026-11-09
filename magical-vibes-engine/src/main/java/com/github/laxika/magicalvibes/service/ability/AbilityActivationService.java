@@ -2079,6 +2079,7 @@ public class AbilityActivationService {
         stackEntry.setSourceZone(Zone.GRAVEYARD);
         stackEntry.setTriggeringCardId(card.getId());
         stackEntry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+        stackEntry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
         stackEntry.setTargetFilter(ability.getTargetFilter());
         if (multiTarget) {
             configureHandAbilityTargets(stackEntry, ability, graveyardTargetIds);

@@ -31,9 +31,9 @@ public class ReturnCardFromGraveyardEffectHandler implements NormalEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ReturnCardFromGraveyardEffect) effect;
         if (e.filter() instanceof CardIsSelfPredicate
-                && entry.getTriggeringCardGraveyardEntryVersion() >= 0
+                && entry.sourceCardGraveyardEntryVersion() >= 0
                 && gameData.graveyardEntryVersion(entry.getCard().getId())
-                != entry.getTriggeringCardGraveyardEntryVersion()) {
+                != entry.sourceCardGraveyardEntryVersion()) {
             return;
         }
 

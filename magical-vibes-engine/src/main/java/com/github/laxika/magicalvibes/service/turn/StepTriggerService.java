@@ -1379,7 +1379,6 @@ public class StepTriggerService {
                                 card.getName() + "'s upkeep ability",
                                 new ArrayList<>(List.of(effect))
                         );
-                        upkeepEntry.setTriggeringCardGraveyardEntryVersion(sourceEntryVersion);
                         upkeepEntry.setSourceGraveyardEntryVersion(sourceEntryVersion);
                         gameData.stack.add(upkeepEntry);
 
@@ -5140,7 +5139,7 @@ public class StepTriggerService {
                                 new com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect()
                         ))
                 );
-                delayedEntry.setTriggeringCardGraveyardEntryVersion(pending.graveyardEntryVersion());
+                delayedEntry.setSourceGraveyardEntryVersion(pending.graveyardEntryVersion());
                 gameData.stack.add(delayedEntry);
                 gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s delayed trigger — lose " + pending.lifeLoss()

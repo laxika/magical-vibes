@@ -223,10 +223,15 @@ public enum ZoneChangeWatch {
     ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY(battlefield(
             Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN_CREATURE, ObjectRelation.YOU_OWN),
             TriggerMultiplicity.ONE_OR_MORE)),
-    /** "Whenever one or more cards are put into your graveyard from your library". */
+    /**
+     * "Whenever one or more cards are put into your graveyard from your library"; "one or more land cards" (Hedge
+     * Shredder), whose event is the lands alone.
+     */
     ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY(battlefield(
             Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN, ObjectRelation.YOU_OWN),
-            TriggerMultiplicity.ONE_OR_MORE)),
+            TriggerMultiplicity.ONE_OR_MORE),
+            battlefield(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.LAND_CARD, ObjectRelation.YOU_OWN),
+                    TriggerMultiplicity.ONE_OR_MORE)),
     /** "Whenever a creature card is put into a graveyard from a library". */
     ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY(battlefield(
             Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN_CREATURE, ObjectRelation.ANY))),

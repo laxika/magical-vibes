@@ -59,7 +59,7 @@ public class AttachOneOfControlledEquipmentToSourceEffectHandler implements Norm
         if (entry.getSourcePermanentId() != null) {
             return gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         }
-        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0) {
+        if (entry.sourceCardGraveyardEntryVersion() >= 0) {
             // A graveyard ability that did not return its card has no object to attach to: a copy of the
             // card returned by an earlier ability is a different object ("it" refers to this return).
             return null;

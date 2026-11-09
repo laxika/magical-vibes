@@ -680,13 +680,16 @@ public class StackEntry {
     @Setter private ActivatedAbility triggeringActivatedAbility;
     /**
      * The graveyard incarnation {@link #triggeringCardId} had as the ability triggered, or {@code -1} when none was
-     * recorded: a card that left the graveyard and came back is a new object (CR 400.7).
+     * recorded: a card that left the graveyard and came back is a new object (CR 400.7). The stay of the card the event
+     * was about only (the discarded, milled or dying card); the ability's own source card's stay is
+     * {@link #sourceGraveyardEntryVersion}.
      */
     @Setter private long triggeringCardGraveyardEntryVersion = -1;
     /**
-     * The graveyard incarnation the ability's source card had as the ability triggered from a graveyard, or {@code -1}
-     * when none was recorded: "if this card is in your graveyard" is false for a card that left the graveyard and came
-     * back, a new object (CR 400.7). Read through {@link #sourceCardGraveyardEntryVersion()}.
+     * The graveyard incarnation the ability's source card had as the ability triggered from a graveyard (or as an
+     * activated ability's cost put it there), or {@code -1} when none was recorded: "if this card is in your graveyard"
+     * is false, and "return / exile this card" does nothing, for a card that left the graveyard and came back, a new
+     * object (CR 400.7). Read through {@link #sourceCardGraveyardEntryVersion()}.
      */
     @Setter private long sourceGraveyardEntryVersion = -1;
     /**
@@ -2329,14 +2332,21 @@ public class StackEntry {
 
     /**
      * The graveyard incarnation of the ability's source card as the ability triggered ("this card" of "if this card is
-     * in your graveyard"), or {@code -1} when none was recorded: the one the collector recorded, else, when the source
-     * card is the triggering card ("when this dies", "when this is put into your graveyard"), the triggering card's.
+     * in your graveyard", "return this card"), or {@code -1} when none was recorded: the one the collector recorded,
+     * else, when the source card is the triggering card ("when this dies", "when this is put into your graveyard"; the
+     * physical card of a transformed source), the triggering card's.
      */
     public long sourceCardGraveyardEntryVersion() {
         if (sourceGraveyardEntryVersion >= 0) {
             return sourceGraveyardEntryVersion;
         }
-        return card != null && card.getId().equals(triggeringCardId) ? triggeringCardGraveyardEntryVersion : -1;
+        if (triggeringCardId == null) {
+            return -1;
+        }
+        boolean sourceIsTriggeringCard = card != null && card.getId().equals(triggeringCardId)
+                || sourcePermanentSnapshot != null && sourcePermanentSnapshot.getOriginalCard() != null
+                && triggeringCardId.equals(sourcePermanentSnapshot.getOriginalCard().getId());
+        return sourceIsTriggeringCard ? triggeringCardGraveyardEntryVersion : -1;
     }
 
     /**

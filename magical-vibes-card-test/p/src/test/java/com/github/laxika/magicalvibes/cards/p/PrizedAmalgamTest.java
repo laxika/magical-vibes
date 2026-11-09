@@ -136,6 +136,32 @@ class PrizedAmalgamTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Prized Amalgam");
     }
 
+    @Test
+    @DisplayName("A trigger from an earlier graveyard stay registers no return for an Amalgam that left and re-entered")
+    void triggerFromAnEarlierStayDoesNotReturnTheNewAmalgam() {
+        PrizedAmalgam amalgam = new PrizedAmalgam();
+        harness.setGraveyard(player1, List.of(amalgam, new ReassemblingSkeleton()));
+        gd.markGraveyardEntry(amalgam);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.activateGraveyardAbility(player1, 1);
+        harness.passBothPriorities();
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getCard().getName()).isEqualTo("Prized Amalgam"));
+
+        harness.setGraveyard(player1, List.of());
+        gd.markGraveyardExit(amalgam.getId());
+        harness.setGraveyard(player1, List.of(amalgam));
+        gd.markGraveyardEntry(amalgam);
+        resolveAllTriggers();
+
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Prized Amalgam");
+        harness.assertInGraveyard(player1, "Prized Amalgam");
+    }
+
     private void addFiveColorsOfMana() {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);

@@ -318,8 +318,8 @@ owner's graveyard — mill batches are checked in `GraveyardService.resolveMillP
 effects),
 `Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN, ObjectRelation.YOU_OWN)` (Devourer of Memory; fires once per
 library-to-graveyard event when one or more non-token cards actually enter the controller's graveyard —
-mill batches are checked after replacement effects and preserve the cards in the event context for
-card-specific effects such as Hedge Shredder),
+mill batches are checked after replacement effects, and the entry records the cards as its triggering cards with
+their graveyard stays; a narrower filter such as Hedge Shredder's `Triggers.LAND_CARD` makes the event those cards),
 `Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN_CREATURE, ObjectRelation.ANY)` (Dreadhound; fires once for each non-token
 creature card that actually enters any player's graveyard from a library, after replacement effects;
 checked in `GraveyardService.addCardToGraveyard`),

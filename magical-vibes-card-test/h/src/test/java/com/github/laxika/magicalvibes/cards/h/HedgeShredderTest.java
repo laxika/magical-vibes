@@ -101,6 +101,22 @@ class HedgeShredderTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(nonland);
     }
 
+    @Test
+    @DisplayName("A mill of nonland cards alone does not trigger the return")
+    void nonlandOnlyMillDoesNotTrigger() {
+        Card first = new GrizzlyBears();
+        Card second = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(first, second));
+        crewShredder();
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Hedge Shredder"));
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(first, second);
+    }
+
     @ParameterizedTest
     @ValueSource(ints = {0, 1})
     @DisplayName("The optional mill cannot be chosen with fewer than two cards")

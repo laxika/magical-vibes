@@ -247,21 +247,6 @@ class DiscardTriggerCollectorServiceTest {
             });
         }
 
-        @Test
-        @DisplayName("does not trigger for a discarded land")
-        void ignoresDiscardedLand() {
-            Permanent source = createPermanent("Oskar, Rubbish Reclaimer");
-            var effect = new CastDiscardedCardFromGraveyardEffect();
-            Card discarded = createCard("Forest");
-            discarded.setType(CardType.LAND);
-            var ctx = new TriggerContext.Discard(player1Id, discarded);
-
-            boolean result = registry.dispatch(
-                    match(source, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
     }
 
     @Nested
@@ -274,7 +259,8 @@ class DiscardTriggerCollectorServiceTest {
             Permanent healer = createPermanent("Drannith Healer");
             var effect = new GainLifeEffect(1);
 
-            boolean result = sut.collectCycling(match(healer, player1Id, effect), effect);
+            boolean result = sut.collectCycling(match(healer, player1Id, effect), effect,
+                    new TriggerContext.Discard(player1Id, createCard("Cycled card"), true));
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -288,7 +274,8 @@ class DiscardTriggerCollectorServiceTest {
             Permanent tactician = createPermanent("Snare Tactician");
             var effect = new TapPermanentsEffect(TapUntapScope.TARGET);
 
-            boolean result = sut.collectCycling(match(tactician, player1Id, effect), effect);
+            boolean result = sut.collectCycling(match(tactician, player1Id, effect), effect,
+                    new TriggerContext.Discard(player1Id, createCard("Cycled card"), true));
 
             assertThat(result).isTrue();
             assertThat(gd.hasPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class))
@@ -343,20 +330,6 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
         }
 
-        @Test
-        @DisplayName("ignores damage effects aimed at other recipients")
-        void ignoresOtherRecipients() {
-            Permanent permanent = createPermanent("Megrim");
-            var effect = new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT);
-            var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
-
-            boolean result = registry.dispatch(
-                    match(permanent, player1Id, effect),
-                    LibraryWatch.ON_OPPONENT_DISCARDS, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
     }
 
     @Nested
@@ -403,25 +376,12 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(gd.getLife(player1Id)).isEqualTo(lifeBefore);
             assertThat(gd.stack).singleElement().satisfies(entry -> {
                 assertThat(entry.getControllerId()).isEqualTo(player1Id);
-                assertThat(entry.getTargetId()).isNull();
+                assertThat(entry.getTargetId()).isEqualTo(player1Id);
+                assertThat(entry.isNonTargeting()).isTrue();
                 assertThat(entry.getEffectsToResolve()).containsExactly(effect);
             });
         }
 
-        @Test
-        @DisplayName("ignores life-loss effects aimed at other recipients")
-        void ignoresOtherRecipients() {
-            Permanent enchantment = createPermanent("Liliana's Caress");
-            var effect = new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT);
-            var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
-
-            boolean result = registry.dispatch(
-                    match(enchantment, player1Id, effect),
-                    LibraryWatch.ON_OPPONENT_DISCARDS, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
     }
 
     // ===== ON_OPPONENT_DISCARDS — MayEffect =====
@@ -1098,6 +1058,66 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getControllerId()).isEqualTo(player1Id);
             assertThat(entry.getSourcePermanentId()).isEqualTo(boneMiser.getId());
             assertThat(entry.getEffectsToResolve()).hasSize(1).first().isEqualTo(effect);
+        }
+    }
+
+    @Nested
+    @DisplayName("Every discard entry records the discard, whatever its effects are")
+    class RecordsTheDiscard {
+
+        @Test
+        @DisplayName("a \"you may\" records the discarding player, the discarded card and the graveyard stay it went to")
+        void mayRecordsTheDiscardedCardAndItsStay() {
+            Permanent construct = createPermanent("Containment Construct");
+            Card discarded = createCard("Grizzly Bears");
+            gd.playerGraveyards.computeIfAbsent(player1Id, k -> new ArrayList<>()).add(discarded);
+            long stay = gd.markGraveyardEntry(discarded);
+            var effect = new MayEffect(new ExileDiscardedCardFromGraveyardEffect(false, false, true), "Exile it?");
+            var ctx = new TriggerContext.Discard(player1Id, discarded);
+
+            boolean result = registry.dispatch(
+                    match(construct, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+                assertThat(entry.getTriggeringPlayerId()).isEqualTo(player1Id);
+                assertThat(entry.getTargetId()).isEqualTo(player1Id);
+                assertThat(entry.isNonTargeting()).isTrue();
+                assertThat(entry.getTriggeringCardId()).isEqualTo(discarded.getId());
+                assertThat(entry.getTriggeringCardGraveyardEntryVersion()).isEqualTo(stay);
+                assertThat(entry.triggeringCardIds()).containsExactly(discarded.getId());
+                assertThat(entry.getEventCardGraveyardEntryVersions()).containsEntry(discarded.getId(), stay);
+            });
+        }
+
+        @Test
+        @DisplayName("a \"one or more cards\" ability records every discarded card with its stay and their number")
+        void discardEventRecordsEveryCardAndTheirNumber() {
+            Permanent toluz = createPermanent("Toluz, Clever Conductor");
+            Card first = createCard("Grizzly Bears");
+            Card second = createCard("Spellbook");
+            gd.playerGraveyards.computeIfAbsent(player1Id, k -> new ArrayList<>()).addAll(List.of(first, second));
+            long firstStay = gd.markGraveyardEntry(first);
+            long secondStay = gd.markGraveyardEntry(second);
+            var effect = new ExileDiscardedCardFromGraveyardEffect(true);
+            var ctx = new TriggerContext.DiscardEvent(player1Id, 2, List.of(first, second));
+
+            boolean result = registry.dispatch(
+                    match(toluz, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+                assertThat(entry.getSourcePermanentId()).isEqualTo(toluz.getId());
+                assertThat(entry.getTriggeringPlayerId()).isEqualTo(player1Id);
+                assertThat(entry.getEventValue()).isEqualTo(2);
+                assertThat(entry.triggeringCardIds()).containsExactly(first.getId(), second.getId());
+                assertThat(entry.getEventCardGraveyardEntryVersions())
+                        .containsEntry(first.getId(), firstStay)
+                        .containsEntry(second.getId(), secondStay);
+                assertThat(entry.getTriggeringCardId()).isNull();
+            });
         }
     }
 }

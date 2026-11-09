@@ -443,6 +443,7 @@ public class MayAbilityHandlerService {
             entry.setTriggeringPermanentToughnessAtTrigger(ability.triggeringPermanentToughnessAtTrigger());
             entry.setTriggeringCardId(ability.triggeringCardId());
             entry.setTriggeringCardGraveyardEntryVersion(ability.triggeringCardGraveyardEntryVersion());
+            entry.setSourceGraveyardEntryVersion(ability.sourceGraveyardEntryVersion());
             if (ability.xValue() != null) {
                 entry.setXValue(ability.xValue());
             }
@@ -517,6 +518,7 @@ public class MayAbilityHandlerService {
             entry.setTriggeringPermanentToughnessAtTrigger(ability.triggeringPermanentToughnessAtTrigger());
             entry.setTriggeringCardId(ability.triggeringCardId());
             entry.setTriggeringCardGraveyardEntryVersion(ability.triggeringCardGraveyardEntryVersion());
+            entry.setSourceGraveyardEntryVersion(ability.sourceGraveyardEntryVersion());
             if (ability.xValue() != null) {
                 entry.setXValue(ability.xValue());
             }

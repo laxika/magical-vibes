@@ -35,7 +35,7 @@ public class ExileSourceCardFromGraveyardEffectHandler implements NormalEffectHa
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
         UUID cardId = entry.getCard().getId();
-        long expectedEntryVersion = entry.getTriggeringCardGraveyardEntryVersion();
+        long expectedEntryVersion = entry.sourceCardGraveyardEntryVersion();
         if (expectedEntryVersion >= 0
                 && gameData.graveyardEntryVersion(cardId) != expectedEntryVersion) {
             return;

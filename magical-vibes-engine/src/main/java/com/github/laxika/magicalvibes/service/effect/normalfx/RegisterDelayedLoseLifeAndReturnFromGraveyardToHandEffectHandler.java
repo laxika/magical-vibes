@@ -27,7 +27,7 @@ public class RegisterDelayedLoseLifeAndReturnFromGraveyardToHandEffectHandler
         var e = (RegisterDelayedLoseLifeAndReturnFromGraveyardToHandEffect) effect;
         UUID controllerId = entry.getControllerId();
         gameData.queueDelayedAction(new DelayedLoseLifeAndReturnFromGraveyard(
-                controllerId, entry.getCard(), e.lifeLoss(), entry.getTriggeringCardGraveyardEntryVersion()));
+                controllerId, entry.getCard(), e.lifeLoss(), entry.sourceCardGraveyardEntryVersion()));
 
         String playerName = gameData.playerIdToName.get(controllerId);
         log.info("Game {} - {} registers delayed lose-life-and-return at next end step for {}",

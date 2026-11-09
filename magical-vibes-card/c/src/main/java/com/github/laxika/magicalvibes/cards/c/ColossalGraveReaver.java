@@ -24,7 +24,7 @@ public class ColossalGraveReaver extends Card {
                 new MillEffect(3, MillRecipient.CONTROLLER));
         addTrigger(Triggers.attacks(),
                 new MillEffect(3, MillRecipient.CONTROLLER));
-        addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN,
+        addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN_CREATURE,
                 ObjectRelation.YOU_OWN)),
                 TriggerOptions.ONE_OR_MORE,
                 ReturnCardFromGraveyardEffect.builder()

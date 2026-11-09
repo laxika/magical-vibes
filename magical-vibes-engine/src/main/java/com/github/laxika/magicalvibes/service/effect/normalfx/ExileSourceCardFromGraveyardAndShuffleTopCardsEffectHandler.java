@@ -48,8 +48,8 @@ public class ExileSourceCardFromGraveyardAndShuffleTopCardsEffectHandler
             return;
         }
 
-        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
-                && gameData.graveyardEntryVersion(sourceCardId) != entry.getTriggeringCardGraveyardEntryVersion()) {
+        if (entry.sourceCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(sourceCardId) != entry.sourceCardGraveyardEntryVersion()) {
             return;
         }
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, sourceCardId);

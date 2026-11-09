@@ -41,8 +41,8 @@ public class PersistReturnEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
         Card card = entry.getCard();
-        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
-                && entry.getTriggeringCardGraveyardEntryVersion() != gameData.graveyardEntryVersion(card.getId())) {
+        if (entry.sourceCardGraveyardEntryVersion() >= 0
+                && entry.sourceCardGraveyardEntryVersion() != gameData.graveyardEntryVersion(card.getId())) {
             return;
         }
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());

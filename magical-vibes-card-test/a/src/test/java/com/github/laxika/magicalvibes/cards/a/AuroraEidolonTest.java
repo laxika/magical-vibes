@@ -142,4 +142,25 @@ class AuroraEidolonTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Aurora Eidolon");
         harness.assertNotInGraveyard(player1, "Aurora Eidolon");
     }
+
+    @Test
+    @DisplayName("The return trigger cannot return an Eidolon that left the graveyard and came back")
+    void returnDoesNothingForAnEidolonThatLeftAndReturned() {
+        AuroraEidolon eidolon = new AuroraEidolon();
+        harness.setGraveyard(player1, List.of(eidolon));
+        gd.markGraveyardEntry(eidolon);
+        harness.castFromHand(player1, new TransguildCourier(), "{4}");
+
+        harness.setGraveyard(player1, List.of());
+        gd.markGraveyardExit(eidolon.getId());
+        harness.setGraveyard(player1, List.of(eidolon));
+        gd.markGraveyardEntry(eidolon);
+        harness.passBothPriorities();
+        if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.assertNotInHand(player1, "Aurora Eidolon");
+        harness.assertInGraveyard(player1, "Aurora Eidolon");
+    }
 }

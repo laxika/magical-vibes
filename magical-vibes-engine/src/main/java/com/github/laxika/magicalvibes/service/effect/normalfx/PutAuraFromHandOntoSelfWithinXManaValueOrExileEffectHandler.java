@@ -42,9 +42,9 @@ public class PutAuraFromHandOntoSelfWithinXManaValueOrExileEffectHandler impleme
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         int maxManaValue = entry.getXValue();
-        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
+        if (entry.sourceCardGraveyardEntryVersion() >= 0
                 && gameData.graveyardEntryVersion(entry.getCard().getId())
-                != entry.getTriggeringCardGraveyardEntryVersion()) {
+                != entry.sourceCardGraveyardEntryVersion()) {
             // The card left the graveyard after this ability was activated, so a creature on the
             // battlefield with the same card id is a new object (CR 400.7) and is not "this creature".
             return;

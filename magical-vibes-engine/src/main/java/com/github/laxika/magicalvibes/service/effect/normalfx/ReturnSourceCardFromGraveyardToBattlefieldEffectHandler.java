@@ -58,8 +58,8 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
                 return Set.copyOf(updated);
             });
         }
-        if (entry.getTriggeringCardGraveyardEntryVersion() >= 0
-                && gameData.graveyardEntryVersion(card.getId()) != entry.getTriggeringCardGraveyardEntryVersion()) {
+        if (entry.sourceCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(card.getId()) != entry.sourceCardGraveyardEntryVersion()) {
             log.info("Game {} - {} graveyard return fizzles (card has entered a graveyard again)",
                     gameData.id, card.getName());
             return;

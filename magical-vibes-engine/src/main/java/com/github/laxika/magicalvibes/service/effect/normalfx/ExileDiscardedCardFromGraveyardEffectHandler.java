@@ -35,10 +35,10 @@ public class ExileDiscardedCardFromGraveyardEffectHandler implements NormalEffec
             return;
         }
         if (!entry.getTriggeringCards().isEmpty()) {
-            // One discard event: exile every card it discarded that is still the same graveyard object.
+            // The cards the discard was about: each one that is still the graveyard object it became (CR 400.7).
             for (UUID cardId : entry.triggeringCardIds()) {
                 exileFromGraveyard(gameData, entry, exileEffect, cardId,
-                        entry.getTargetCardGraveyardVersions().getOrDefault(cardId, -1L));
+                        entry.getEventCardGraveyardEntryVersions().getOrDefault(cardId, -1L));
             }
             return;
         }

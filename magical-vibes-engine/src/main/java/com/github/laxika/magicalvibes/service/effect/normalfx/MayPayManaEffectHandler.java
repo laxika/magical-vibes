@@ -146,7 +146,7 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
                 null,
                 null,
                 entry.getTriggeringCardGraveyardEntryVersion()
-        ));
+        ).withSourceGraveyardEntryVersion(entry.getSourceGraveyardEntryVersion()));
 
     }
 

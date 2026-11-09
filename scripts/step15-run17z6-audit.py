@@ -45,14 +45,11 @@ BIND = re.compile(r"\.set\w+\((?:effect|e|may|mayPay|marker|trigger)\.")
 # record the event whatever the effects are). Run 17z12f closed the may-pay handler (the ability is the watcher's, the
 # entering permanent recorded whatever the payload is, a targeted payload's target chosen as it goes on the stack) and the
 # creature-enters-from-graveyard default (its targeted abilities are the watcher's, through the enters target choice).
+# Run 17z12d closed the discard and milled-card handlers (deleted: the discard watches' defaults record the discard,
+# the cards-put-into-a-graveyard defaults the cards with their graveyard stays, whatever the effects are; Hedge
+# Shredder's and Colossal Grave-Reaver's "one or more land / creature cards" are trigger filters).
 OPEN = {}
 OPEN.update({
-    ("DiscardTriggerCollectorService.java", "handleDiscardMay"): "17z12d",
-    ("DiscardTriggerCollectorService.java", "handleCastDiscardedCard"): "17z12d",
-    ("DiscardTriggerCollectorService.java", "handleDamageToDiscardingPlayer"): "17z12d",
-    ("DiscardTriggerCollectorService.java", "handleExileDiscardedFromGraveyard"): "17z12d",
-    ("MiscTriggerCollectorService.java", "handleMilledLandsReturn"): "17z12d",
-    ("MiscTriggerCollectorService.java", "handleEventCardsGraveyardReturn"): "17z12d",
     ("SeekTriggerCollectorService.java", "handleSeek"): "17z12e",
     ("SpellCastTriggerCollectorService.java", "handleGenericSpellCastTrigger"): "17z12e",
     ("LandTapTriggerCollectorService.java", "handleCampLandTap"): "17z12e",

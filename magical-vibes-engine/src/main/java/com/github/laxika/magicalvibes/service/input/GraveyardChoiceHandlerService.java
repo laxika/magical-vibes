@@ -32,7 +32,6 @@ import com.github.laxika.magicalvibes.model.effect.CollectEvidenceEffect;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -2217,11 +2216,10 @@ public class GraveyardChoiceHandlerService {
             }
             triggeredEntry.setTriggeringSpell(pendingTriggeringSpell);
             triggeredEntry.setAttackingPermanentSnapshots(pendingAttackingPermanentSnapshots);
-            if (pendingCard != null && pendingEffects.stream().anyMatch(effect ->
-                    effect instanceof ReturnCardFromGraveyardEffect returnEffect
-                            && returnEffect.exileSourceFromGraveyard())) {
-                triggeredEntry.setTriggeringCardGraveyardEntryVersion(
-                        gameData.graveyardEntryVersion(pendingCard.getId()));
+            // The ability goes on the stack as its target is chosen, so a source card in a graveyard is still the
+            // stay it triggered from: "this card" of the ability (CR 400.7), whatever the effects are.
+            if (pendingCard != null && gameQueryService.findCardInGraveyardById(gameData, pendingCard.getId()) != null) {
+                triggeredEntry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(pendingCard.getId()));
             }
             triggeredEntry.setAlternateCost(pendingSourceAlternateCostAtTrigger);
             triggeredEntry.setMarkSourceOncePerTurnOnAcceptance(pendingMarkSourceOncePerTurnOnAcceptance);

@@ -36,7 +36,7 @@ public class PutSourceCardFromGraveyardIntoLibraryNFromTopEffectHandler implemen
 
         UUID cardId = entry.getCard().getId();
         Card sourceCard = gameQueryService.findCardInGraveyardById(gameData, cardId);
-        long expectedEntryVersion = entry.getTriggeringCardGraveyardEntryVersion();
+        long expectedEntryVersion = entry.sourceCardGraveyardEntryVersion();
         boolean sameIncarnation = expectedEntryVersion < 0
                 || gameData.graveyardEntryVersion(cardId) == expectedEntryVersion;
         if (sourceCard == null || !sameIncarnation) {

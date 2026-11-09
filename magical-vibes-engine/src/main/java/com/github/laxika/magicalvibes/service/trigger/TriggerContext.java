@@ -791,9 +791,16 @@ public sealed interface TriggerContext {
     /** Context for ON_ALLY_LAND_CARD_MILLED triggers (Pedantic Learning). */
     record LandCardMilled(Card landCard, UUID graveyardOwnerId) implements TriggerContext {}
 
-    /** Context for ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY triggers (Sidisi, Brood Tyrant). */
-    record CreatureCardsPutIntoGraveyardFromLibrary(UUID graveyardOwnerId, int creatureCardCount)
-            implements TriggerContext {}
+    /**
+     * Context for ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY triggers (Sidisi, Brood Tyrant; Colossal
+     * Grave-Reaver's "one of them"): the creature cards the event put there.
+     */
+    record CreatureCardsPutIntoGraveyardFromLibrary(UUID graveyardOwnerId, int creatureCardCount, List<Card> cards)
+            implements TriggerContext {
+        public CreatureCardsPutIntoGraveyardFromLibrary {
+            cards = cards == null ? List.of() : List.copyOf(cards);
+        }
+    }
 
     /** Context for ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY triggers. */
     record CardsPutIntoGraveyardFromLibrary(UUID graveyardOwnerId, int cardCount, List<Card> cards)

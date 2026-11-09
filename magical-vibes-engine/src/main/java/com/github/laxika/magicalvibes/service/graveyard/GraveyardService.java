@@ -978,7 +978,7 @@ public class GraveyardService {
                 );
                 // A trigger from an earlier graveyard entry fizzles once the card has left and re-entered
                 // the graveyard, since that is a new object (CR 400.7).
-                trigger.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+                trigger.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                 gameData.stack.add(trigger);
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(ownerId)
                         + "'s emblem triggers."));

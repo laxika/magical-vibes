@@ -2536,11 +2536,8 @@ public class ActivatedAbilityExecutionService {
             }
             stackEntry.setSacrificedCardGraveyardVersions(sacrificedVersions);
         }
-        if (ability.getEffects().stream().anyMatch(
-                com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect.class::isInstance)
-                && gameQueryService.findCardInGraveyardById(gameData, permanent.getCard().getId()) != null) {
-            stackEntry.setTriggeringCardGraveyardEntryVersion(
-                    gameData.graveyardEntryVersion(permanent.getCard().getId()));
+        if (gameQueryService.findCardInGraveyardById(gameData, permanent.getCard().getId()) != null) {
+            stackEntry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(permanent.getCard().getId()));
         }
         stackEntry.setActivatedAbilityExiledCardIds(activatedAbilityExiledCardIds == null
                 ? List.of() : List.copyOf(activatedAbilityExiledCardIds));

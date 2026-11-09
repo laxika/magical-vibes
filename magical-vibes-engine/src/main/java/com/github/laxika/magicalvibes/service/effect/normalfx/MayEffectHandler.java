@@ -342,7 +342,8 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 entry.getTriggeringPermanentToughnessAtTrigger(),
                 entry.getTriggeringCardGraveyardEntryVersion()
         ).withGrantingPermanentId(entry.getGrantingPermanentId())
-                .withTriggeringSpell(entry.getTriggeringSpellSnapshot()));
+                .withTriggeringSpell(entry.getTriggeringSpellSnapshot())
+                .withSourceGraveyardEntryVersion(entry.getSourceGraveyardEntryVersion()));
     }
 
     /**

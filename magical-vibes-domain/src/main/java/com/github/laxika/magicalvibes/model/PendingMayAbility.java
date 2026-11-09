@@ -31,8 +31,32 @@ public record PendingMayAbility(
         long triggeringCardGraveyardEntryVersion,
         Card heldCard,
         UUID grantingPermanentId,
-        StackEntry triggeringSpellSnapshot
+        StackEntry triggeringSpellSnapshot,
+        long sourceGraveyardEntryVersion
 ) {
+
+    /**
+     * Constructor recording no graveyard stay of the source card ({@code -1}). {@code sourceGraveyardEntryVersion} is
+     * the graveyard incarnation the asking ability's source card had as the ability triggered ("this card" of an
+     * ability that triggered from a graveyard), which the stack entry the accepted ability resolves as keeps
+     * ({@code StackEntry.setSourceGraveyardEntryVersion}); {@link #triggeringCardGraveyardEntryVersion} is the triggering
+     * card's own (CR 400.7).
+     */
+    public PendingMayAbility(Card sourceCard, UUID controllerId, List<CardEffect> effects, String description,
+                             UUID targetCardId, String manaCost, UUID sourcePermanentId,
+                             TapMultiplePermanentsCost tapPermanentsCost, int lifeCost, int additionalLifeCost,
+                             UUID attackedTargetId, UUID activePlayerId, UUID choicePlayerId,
+                             Permanent sourcePermanentSnapshot, UUID sourceControllerId, UUID triggeringCardId,
+                             int eventValue, UUID triggeringPermanentId, Integer sourcePowerAtTrigger,
+                             Integer xValue, Integer triggeringPermanentToughnessAtTrigger,
+                             long triggeringCardGraveyardEntryVersion, Card heldCard, UUID grantingPermanentId,
+                             StackEntry triggeringSpellSnapshot) {
+        this(sourceCard, controllerId, effects, description, targetCardId, manaCost, sourcePermanentId,
+                tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId, activePlayerId,
+                choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId, eventValue,
+                triggeringPermanentId, sourcePowerAtTrigger, xValue, triggeringPermanentToughnessAtTrigger,
+                triggeringCardGraveyardEntryVersion, heldCard, grantingPermanentId, triggeringSpellSnapshot, -1L);
+    }
 
     /**
      * Constructor for a question asked by an ability whose trigger event was about no spell. {@code
@@ -249,7 +273,7 @@ public record PendingMayAbility(
                 attackedTargetId, activePlayerId, choicePlayerId, sourcePermanentSnapshot,
                 sourceControllerId, triggeringCardId, eventValue, triggeringPermanentId,
                 sourcePowerAtTrigger, xValue, triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion,
-                heldCard, grantingPermanentId, triggeringSpellSnapshot);
+                heldCard, grantingPermanentId, triggeringSpellSnapshot, sourceGraveyardEntryVersion);
     }
 
     public PendingMayAbility withSourceControllerId(UUID updatedSourceControllerId) {
@@ -258,7 +282,7 @@ public record PendingMayAbility(
                 activePlayerId, choicePlayerId, sourcePermanentSnapshot, updatedSourceControllerId, triggeringCardId,
                 eventValue, triggeringPermanentId, sourcePowerAtTrigger, xValue,
                 triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion,
-                heldCard, grantingPermanentId, triggeringSpellSnapshot);
+                heldCard, grantingPermanentId, triggeringSpellSnapshot, sourceGraveyardEntryVersion);
     }
 
     /**
@@ -271,7 +295,20 @@ public record PendingMayAbility(
                 activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, cardId,
                 eventValue, triggeringPermanentId, sourcePowerAtTrigger, xValue,
                 triggeringPermanentToughnessAtTrigger, graveyardEntryVersion,
-                heldCard, grantingPermanentId, triggeringSpellSnapshot);
+                heldCard, grantingPermanentId, triggeringSpellSnapshot, sourceGraveyardEntryVersion);
+    }
+
+    /**
+     * This ability with {@code version} as the graveyard incarnation its source card had as the asking ability
+     * triggered ({@code -1}: none), carried from the stack entry that asked the question.
+     */
+    public PendingMayAbility withSourceGraveyardEntryVersion(long version) {
+        return new PendingMayAbility(sourceCard, controllerId, effects, description, targetCardId, manaCost,
+                sourcePermanentId, tapPermanentsCost, lifeCost, additionalLifeCost, attackedTargetId,
+                activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId,
+                eventValue, triggeringPermanentId, sourcePowerAtTrigger, xValue,
+                triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion, heldCard,
+                grantingPermanentId, triggeringSpellSnapshot, version);
     }
 
     /** This ability holding {@code card}, which the resolving ability held out of its destination. */
@@ -281,7 +318,7 @@ public record PendingMayAbility(
                 activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId,
                 eventValue, triggeringPermanentId, sourcePowerAtTrigger, xValue,
                 triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion, card,
-                grantingPermanentId, triggeringSpellSnapshot);
+                grantingPermanentId, triggeringSpellSnapshot, sourceGraveyardEntryVersion);
     }
 
     /** This ability as asked by an ability whose trigger event was about {@code spell}, which it keeps a copy of. */
@@ -291,7 +328,7 @@ public record PendingMayAbility(
                 activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId,
                 eventValue, triggeringPermanentId, sourcePowerAtTrigger, xValue,
                 triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion, heldCard,
-                grantingPermanentId, spell == null ? null : new StackEntry(spell));
+                grantingPermanentId, spell == null ? null : new StackEntry(spell), sourceGraveyardEntryVersion);
     }
 
     /** This ability as asked by a triggered ability that {@code permanentId} granted. */
@@ -301,7 +338,7 @@ public record PendingMayAbility(
                 activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId,
                 eventValue, triggeringPermanentId, sourcePowerAtTrigger, xValue,
                 triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion, heldCard, permanentId,
-                triggeringSpellSnapshot);
+                triggeringSpellSnapshot, sourceGraveyardEntryVersion);
     }
 
     public PendingMayAbility withEventValue(int updatedEventValue) {
@@ -310,7 +347,7 @@ public record PendingMayAbility(
                 activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId,
                 updatedEventValue, triggeringPermanentId, sourcePowerAtTrigger, xValue,
                 triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion,
-                heldCard, grantingPermanentId, triggeringSpellSnapshot);
+                heldCard, grantingPermanentId, triggeringSpellSnapshot, sourceGraveyardEntryVersion);
     }
 
     public PendingMayAbility withXValue(Integer updatedXValue) {
@@ -319,7 +356,7 @@ public record PendingMayAbility(
                 activePlayerId, choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringCardId,
                 eventValue, triggeringPermanentId, sourcePowerAtTrigger, updatedXValue,
                 triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion,
-                heldCard, grantingPermanentId, triggeringSpellSnapshot);
+                heldCard, grantingPermanentId, triggeringSpellSnapshot, sourceGraveyardEntryVersion);
     }
 
     /** Copies pending entry requests whose permanent has not entered the battlefield yet. */
@@ -339,6 +376,7 @@ public record PendingMayAbility(
                 sourceControllerId, triggeringCardId, eventValue, triggeringPermanentId,
                 sourcePowerAtTrigger, xValue, triggeringPermanentToughnessAtTrigger, triggeringCardGraveyardEntryVersion,
                 heldCard, grantingPermanentId,
-                triggeringSpellSnapshot == null ? null : new StackEntry(triggeringSpellSnapshot));
+                triggeringSpellSnapshot == null ? null : new StackEntry(triggeringSpellSnapshot),
+                sourceGraveyardEntryVersion);
     }
 }

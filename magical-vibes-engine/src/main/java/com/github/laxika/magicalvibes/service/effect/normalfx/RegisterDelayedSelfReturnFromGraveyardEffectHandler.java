@@ -45,8 +45,8 @@ public class RegisterDelayedSelfReturnFromGraveyardEffectHandler implements Norm
             return;
         }
 
-        long graveyardEntryVersion = entry.getTriggeringCardGraveyardEntryVersion() >= 0
-                ? entry.getTriggeringCardGraveyardEntryVersion()
+        long graveyardEntryVersion = entry.sourceCardGraveyardEntryVersion() >= 0
+                ? entry.sourceCardGraveyardEntryVersion()
                 : gameData.graveyardEntryVersion(card.getId());
         UUID upkeepPlayerId = e.atNextUpkeep() && !e.atControllersNextUpkeep() ? ownerId : entry.getControllerId();
         int counterAmount = e.counterType() == null ? 0 : Math.max(0, amountEvaluationService.evaluate(gameData,

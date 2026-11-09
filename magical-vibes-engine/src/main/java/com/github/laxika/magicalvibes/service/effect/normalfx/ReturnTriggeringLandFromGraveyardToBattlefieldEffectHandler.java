@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Returns the lands the trigger event was about (the entry's event cards, or else its triggering card) from the
+ * Returns the lands the trigger event was about (the entry's triggering cards, or else its triggering card) from the
  * graveyard to the battlefield under the ability controller's control. The controller is the graveyard owner, so a
  * land returns under its owner's control. Does nothing for a land that is no longer that graveyard object.
  */
@@ -39,11 +39,13 @@ public class ReturnTriggeringLandFromGraveyardToBattlefieldEffectHandler impleme
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ReturnTriggeringLandFromGraveyardToBattlefieldEffect) effect;
         List<Card> lands = new ArrayList<>();
-        if (!entry.getEventCardIds().isEmpty()) {
-            for (UUID cardId : entry.getEventCardIds()) {
+        if (!entry.getTriggeringCards().isEmpty()) {
+            for (UUID cardId : entry.triggeringCardIds()) {
                 Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
                 Long version = entry.getEventCardGraveyardEntryVersions().get(cardId);
-                if (card != null && (version == null || version == gameData.graveyardEntryVersion(cardId))) {
+                if (card != null && (version == null ? !cardId.equals(entry.getTriggeringCardId())
+                        || entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(cardId))
+                        : version == gameData.graveyardEntryVersion(cardId))) {
                     lands.add(card);
                 }
             }

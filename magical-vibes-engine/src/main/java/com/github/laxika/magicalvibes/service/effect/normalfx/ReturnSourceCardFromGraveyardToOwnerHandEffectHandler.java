@@ -34,13 +34,9 @@ public class ReturnSourceCardFromGraveyardToOwnerHandEffectHandler implements No
 
         UUID cardId = entry.getCard().getId();
         Card sourceCard = gameQueryService.findCardInGraveyardById(gameData, cardId);
-        // The entry's graveyard version belongs to the source only when no other card is the
-        // trigger's subject; a discard follow-up records the discarded card's version instead.
-        boolean versionBelongsToSource = entry.getTriggeringCardId() == null
-                || entry.getTriggeringCardId().equals(cardId);
-        if (sourceCard == null || (versionBelongsToSource
-                && entry.getTriggeringCardGraveyardEntryVersion() >= 0
-                && gameData.graveyardEntryVersion(cardId) != entry.getTriggeringCardGraveyardEntryVersion())) {
+        // CR 400.7: a card that left the graveyard and came back is a new object, not "this card".
+        if (sourceCard == null || (entry.sourceCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(cardId) != entry.sourceCardGraveyardEntryVersion())) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));
             log.info("Game {} - {} return-to-hand trigger fizzles (card {} not in graveyard)",
                     gameData.id, entry.getCard().getName(), cardId);

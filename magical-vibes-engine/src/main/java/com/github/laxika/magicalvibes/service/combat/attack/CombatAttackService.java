@@ -2240,7 +2240,7 @@ public class CombatAttackService {
                     );
                     // CR 400.7: a card that leaves and re-enters the graveyard before this trigger resolves is a
                     // new object, so the trigger must not act on it.
-                    attackTrigger.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+                    attackTrigger.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                     gameData.stack.add(attackTrigger);
                     gameLogService.append(gameData,
                             GameLog.builder().card(card).text("'s graveyard attack ability triggers.").build());

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -24,7 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect;
@@ -1540,79 +1538,6 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = ReturnTriggeringLandFromGraveyardToBattlefieldEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
-    private boolean handleMilledLandsReturn(TriggerMatchContext match,
-            ReturnTriggeringLandFromGraveyardToBattlefieldEffect effect, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.CardsPutIntoGraveyardFromLibrary cardsPut)) {
-            return false;
-        }
-
-        List<Card> lands = cardsPut.cards().stream()
-                .filter(card -> !card.isToken() && card.hasType(CardType.LAND))
-                .toList();
-        if (lands.isEmpty()) {
-            return false;
-        }
-
-        Card sourceCard = match.permanent().getCard();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId());
-        // "Them" are the entry's event cards, as the graveyard objects the event put there (CR 400.7).
-        entry.setEventCardIds(lands.stream().map(Card::getId).toList());
-        for (Card land : lands) {
-            entry.getEventCardGraveyardEntryVersions().put(land.getId(),
-                    match.gameData().graveyardEntryVersion(land.getId()));
-        }
-        match.gameData().enqueueTrigger(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers for lands put into the graveyard from the library",
-                match.gameData().id, sourceCard.getName());
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = ReturnCardFromGraveyardEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
-    private boolean handleEventCardsGraveyardReturn(TriggerMatchContext match,
-            ReturnCardFromGraveyardEffect effect, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.CardsPutIntoGraveyardFromLibrary cardsPut)
-                || cardsPut.cards().isEmpty()) {
-            return false;
-        }
-        if (effect.filter() != null && cardsPut.cards().stream().noneMatch(card ->
-                predicateEvaluationService.matchesCardPredicate(
-                        card, effect.filter(), null, match.gameData(), cardsPut.graveyardOwnerId()))) {
-            return false;
-        }
-
-        Card sourceCard = match.permanent().getCard();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId());
-        entry.setEventCardIds(cardsPut.cards().stream().map(Card::getId).toList());
-        for (Card card : cardsPut.cards()) {
-            entry.getEventCardGraveyardEntryVersions().put(card.getId(),
-                    match.gameData().graveyardEntryVersion(card.getId()));
-        }
-        match.gameData().enqueueTrigger(entry);
-
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers for a card put into the graveyard from the library",
-                match.gameData().id, sourceCard.getName());
-        return true;
-    }
-
     @CollectsWatchTrigger(value = CardEffect.class,
                     watch = ZoneChangeWatch.ON_ALLY_CREATURE_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
     @CollectsWatchTrigger(value = CardEffect.class,
@@ -1633,6 +1558,9 @@ public class MiscTriggerCollectorService {
         );
         if (ctx instanceof TriggerContext.CreatureCardsPutIntoGraveyardFromLibrary batch) {
             entry.setEventValue(batch.creatureCardCount());
+            recordCardsPutIntoGraveyard(gameData, entry, batch.cards());
+        } else if (ctx instanceof TriggerContext.CreatureCardPutIntoGraveyardFromLibrary cardPut) {
+            recordCardsPutIntoGraveyard(gameData, entry, List.of(cardPut.creatureCard()));
         }
         gameData.enqueueTrigger(entry);
 
@@ -1694,12 +1622,10 @@ public class MiscTriggerCollectorService {
                     null,
                     match.permanent().getId()
             );
-            if (triggeringCard != null) {
-                // "That card" is the graveyard object the card became (CR 400.7).
-                entry.setTriggeringCard(triggeringCard.getId(), gameData.graveyardEntryVersion(triggeringCard.getId()));
-            }
             if (ctx instanceof TriggerContext.CardsPutIntoGraveyardFromLibrary cardsPut) {
-                entry.setTriggeringCards(cardsPut.cards());
+                recordCardsPutIntoGraveyard(gameData, entry, cardsPut.cards());
+            } else if (triggeringCard != null) {
+                recordCardsPutIntoGraveyard(gameData, entry, List.of(triggeringCard));
             }
             gameData.enqueueTrigger(entry);
         }
@@ -3205,5 +3131,20 @@ public class MiscTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life gain (becomes prepared)", gameData.id, cardName);
         return true;
+    }
+
+    /**
+     * Records on {@code entry} the cards a put-into-a-graveyard event was about, whatever its effects are: as its
+     * triggering cards ("them", "one of them"), each with the graveyard stay it went to (a card that left the graveyard
+     * and returned is a new object, CR 400.7), and a lone card also as its triggering card ("that card").
+     */
+    static void recordCardsPutIntoGraveyard(GameData gameData, StackEntry entry, List<Card> cards) {
+        entry.setTriggeringCards(cards);
+        for (Card card : cards) {
+            entry.getEventCardGraveyardEntryVersions().put(card.getId(), gameData.graveyardEntryVersion(card.getId()));
+        }
+        if (cards.size() == 1) {
+            entry.setTriggeringCard(cards.getFirst().getId(), gameData.graveyardEntryVersion(cards.getFirst().getId()));
+        }
     }
 }
