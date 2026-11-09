@@ -33,6 +33,6 @@ public class BelakorTheDarkMaster extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.DEMON))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                DealDamageToAnyTargetEffect.fromEnteringPermanent(new SourcePower()));
+                DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower()));
     }
 }

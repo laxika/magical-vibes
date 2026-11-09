@@ -18,7 +18,7 @@ public class Immersturm extends Card {
 
     public Immersturm() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
-                new MayEffect(DealDamageToAnyTargetEffect.fromEnteringPermanent(new SourcePower()),
+                new MayEffect(DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower()),
                         "Have it deal damage to any target?", null,
                         MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));
         target(TargetFilters.creature()).addTrigger(Triggers.chaosEnsues(),

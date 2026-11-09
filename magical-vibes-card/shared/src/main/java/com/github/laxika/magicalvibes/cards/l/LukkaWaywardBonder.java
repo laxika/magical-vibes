@@ -50,7 +50,7 @@ public class LukkaWaywardBonder extends Card {
                 -7,
                 List.of(new CreateEmblemEffect(
                         new TriggeredAbility(Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL),
-                                DealDamageToAnyTargetEffect.fromEnteringPermanent(new SourcePower())),
+                                DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower())),
                         EMBLEM_TEXT)),
                 "−7: You get an emblem with \"" + EMBLEM_TEXT + "\"."
         ));

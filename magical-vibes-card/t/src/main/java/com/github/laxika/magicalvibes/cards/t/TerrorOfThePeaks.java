@@ -18,6 +18,6 @@ public class TerrorOfThePeaks extends Card {
         addStaticEffect(new IncreaseOpponentLifeCostForTargetingControlledPermanentEffect(
                 new PermanentIsSourcePermanentPredicate(), 3));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                DealDamageToAnyTargetEffect.fromEnteringPermanent(new SourcePower()));
+                DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower()));
     }
 }

@@ -73,7 +73,7 @@ public class SacrificeTargetPermanentThenDealPowerDamageToAnyTargetEffectHandler
         reflexiveContext.setEventValue(Math.max(0, result.lastKnownPower()));
         queueReflexiveAbilityEffectHandler.resolve(gameData, reflexiveContext,
                 new QueueReflexiveAbilityEffect(
-                        DealDamageToAnyTargetEffect.fromEnteringPermanent(new EventValue()), false, true));
+                        DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new EventValue()), false, true));
         log.info("Game {} - {} sacrificed a creature and queued power damage", gameData.id,
                 target.getCard().getName());
     }

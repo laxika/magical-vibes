@@ -54,7 +54,7 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
         when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player2Id);
 
         dealDamageToAnyTargetHandler.resolve(gd, entry,
-                DealDamageToAnyTargetEffect.fromEnteringPermanent(new com.github.laxika.magicalvibes.model.amount.Fixed(0)));
+                DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new com.github.laxika.magicalvibes.model.amount.Fixed(0)));
 
         verify(damagePreventionService).applyNextInstantOrSorceryDamageRedirectShield(eq(gd), argThat(damageEntry ->
                 damageEntry.getControllerId().equals(player2Id)

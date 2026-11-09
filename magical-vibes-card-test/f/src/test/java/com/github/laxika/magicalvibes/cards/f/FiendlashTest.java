@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.a.Abrade;
 import com.github.laxika.magicalvibes.cards.c.CrashOfRhinos;
 import com.github.laxika.magicalvibes.cards.c.ChandraLegacyOfFire;
+import com.github.laxika.magicalvibes.cards.d.DoomBlade;
+import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -18,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Fiendlash.class, CrashOfRhinos.class, Shock.class, ChandraLegacyOfFire.class, Abrade.class})
+@CardUsed({Fiendlash.class, CrashOfRhinos.class, Shock.class, ChandraLegacyOfFire.class, Abrade.class,
+        GiantGrowth.class, DoomBlade.class})
 class FiendlashTest extends BaseCardTest {
 
     @Test
@@ -128,6 +131,30 @@ class FiendlashTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("A creature that leaves before the trigger resolves deals its power as it last existed, not as it triggered")
+    void departedCreatureUsesItsLastKnownPowerNotItsPowerAsItTriggered() {
+        Permanent creature = addCreatureReady(player1, new CrashOfRhinos());
+        addLashReady().setAttachedTo(creature.getId());
+        harness.setHand(player1, List.of(new Shock(), new GiantGrowth(), new DoomBlade()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(13);
+        harness.castInstant(player1, 0, creature.getId());
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(7);
     }
 
     @Test

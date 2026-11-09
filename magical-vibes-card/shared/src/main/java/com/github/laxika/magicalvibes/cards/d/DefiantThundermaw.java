@@ -14,6 +14,6 @@ public class DefiantThundermaw extends Card {
     public DefiantThundermaw() {
         addTrigger(Triggers.creatureYouControlAttacks()
                         .withFilter(new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.DRAGON))),
-                DealDamageToAnyTargetEffect.fromEnteringPermanent(new Fixed(2)));
+                DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new Fixed(2)));
     }
 }

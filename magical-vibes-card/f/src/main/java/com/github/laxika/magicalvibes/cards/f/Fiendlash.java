@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsPowerDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -28,7 +29,7 @@ public class Fiendlash extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player or planeswalker"))
                 .addTrigger(Triggers.enchantedCreatureDealtDamage(),
-                        new EnchantedCreatureDealsPowerDamageToAnyTargetEffect());
+                        DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower()));
 
         addActivatedAbility(new EquipActivatedAbility("{2}{R}"));
     }

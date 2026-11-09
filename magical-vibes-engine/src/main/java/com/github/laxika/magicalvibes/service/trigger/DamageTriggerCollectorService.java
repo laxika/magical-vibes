@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCombatDamageSourceIntoHandEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
@@ -21,11 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToEachOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -33,7 +28,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermane
 import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCreatureCardInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrLoseGameEffect;
@@ -52,7 +46,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -433,19 +426,17 @@ public class DamageTriggerCollectorService {
 
         Permanent sourcePermanent = match.permanent();
         Card sourceCard = sourcePermanent.getCard();
-        // "It deals that much damage" (Wrathful Raptors / Wrathful Red Dragon): the damaged permanent is
-        // the damage source, so its last-known information feeds lifelink and other source keywords once
-        // it has left the battlefield.
-        boolean damagedPermanentDeals = trigger instanceof DealDamageToAnyTargetEffect damage
-                && damage.sourceIsTriggeringPermanent();
-        UUID damageSourceId = damagedPermanentDeals ? dc.damagedPermanent().getId() : sourcePermanent.getId();
-        Permanent damageSourceSnapshot = damagedPermanentDeals
-                ? lastKnownDamageSource(match.gameData(), dc.damagedPermanent())
-                : new Permanent(sourcePermanent);
+        // The ability is its source's (CR 113.7); the choice records the damaged permanent as the triggering
+        // permanent, with its damage keywords as it was dealt the damage, for "it deals that much damage"
+        // (Wrathful Raptors, Wrathful Red Dragon: DealDamageToAnyTargetEffect.dealtByTriggeringPermanent).
+        Permanent damaged = dc.damagedPermanent();
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 sourceCard, match.controllerId(), new ArrayList<>(List.of(trigger)), false,
                 targetFilterForTriggeredEffect(sourceCard, trigger), dc.damageDealt(),
-                damageSourceId, damageSourceSnapshot));
+                sourcePermanent.getId(), new Permanent(sourcePermanent), false, damaged.getId(), null,
+                match.controllerId(), null, null, false, null, null,
+                gameQueryService.getEffectivePower(match.gameData(), damaged), false,
+                lastKnownDamageSource(match.gameData(), damaged)).withEventValue(dc.damageDealt()));
 
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} ON_ANY_PERMANENT_DEALT_DAMAGE deal-damage-to-any-target trigger fires",
@@ -493,39 +484,6 @@ public class DamageTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} counter-placement trigger fires for {} damage",
                 match.gameData().id, sourceCard.getName(), countersPlaced.amount());
-        return true;
-    }
-
-    @CollectsDamageTrigger(value = EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect.class,
-            watch = DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE)
-    private boolean handleAnyCreatureDealtDamageToController(TriggerMatchContext match,
-            EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect trigger,
-            TriggerContext ctx) {
-        TriggerContext.AnyCreatureDealtDamage dc = (TriggerContext.AnyCreatureDealtDamage) ctx;
-        if (dc.damageDealt() <= 0) return false;
-
-        GameData gameData = match.gameData();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                dc.damageDealt(),
-                dc.damagedCreatureControllerId(),
-                match.permanent().getId(),
-                Map.of(),
-                null,
-                List.of(),
-                List.of()
-        );
-        entry.setNonTargeting(true);
-        entry.setTriggeringPermanentId(dc.damagedCreature().getId());
-        gameData.stack.add(entry);
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers for damage dealt to a creature", gameData.id,
-                match.permanent().getCard().getName());
         return true;
     }
 
@@ -594,193 +552,59 @@ public class DamageTriggerCollectorService {
         return true;
     }
 
-    @CollectsDamageTrigger(value = EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect.class,
-            watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
-    private boolean handleEnchantedCreatureDealtDamageToController(TriggerMatchContext match,
-            EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect trigger, TriggerContext ctx) {
-        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
-        if (dc.damageDealt() <= 0) return false;
-
-        GameData gameData = match.gameData();
-        Permanent aura = match.permanent();
-        Permanent enchantedCreature = dc.damagedCreature();
-
-        UUID controllerId = gameQueryService.findPermanentController(gameData, enchantedCreature.getId());
-        if (controllerId == null) return false;
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                aura.getCard(),
-                match.controllerId(),
-                aura.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                dc.damageDealt(),
-                controllerId,
-                aura.getId(),
-                Map.of(),
-                null,
-                List.of(),
-                List.of()
-        );
-        entry.setDamageSourceCard(enchantedCreature.getCard());
-        entry.setTriggeringPermanentId(enchantedCreature.getId());
-        gameData.stack.add(entry);
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(aura.getCard()));
-        log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE trigger fires",
-                gameData.id, aura.getCard().getName());
-        return true;
-    }
-
-    @CollectsDamageTrigger(value = EnchantedCreatureDealsPowerDamageToAnyTargetEffect.class,
-            watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
-    private boolean handleEnchantedCreatureDealtDamagePowerTarget(TriggerMatchContext match,
-            EnchantedCreatureDealsPowerDamageToAnyTargetEffect trigger, TriggerContext ctx) {
-        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
-        if (dc.damageDealt() <= 0) return false;
-
-        Permanent equipment = match.permanent();
-        Permanent damagedCreature = dc.damagedCreature();
-        match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                equipment.getCard(), match.controllerId(), new ArrayList<>(List.of(trigger)), false,
-                targetFilterForTriggeredEffect(equipment.getCard(), trigger), 0, equipment.getId(),
-                null, false, damagedCreature.getId(), null, match.controllerId(), null, null, false, null,
-                new Permanent(damagedCreature),
-                gameQueryService.getEffectivePower(match.gameData(), damagedCreature)));
-
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(equipment.getCard()));
-        log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE targeted power trigger fires",
-                match.gameData().id, equipment.getCard().getName());
-        return true;
-    }
-
-    @CollectsDamageTrigger(value = EnchantedCreatureDealsDamageToEachOpponentEffect.class,
-            watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
-    private boolean handleEnchantedCreatureDealtDamageToEachOpponent(TriggerMatchContext match,
-            EnchantedCreatureDealsDamageToEachOpponentEffect trigger, TriggerContext ctx) {
-        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
-        if (dc.damageDealt() <= 0) return false;
-
-        GameData gameData = match.gameData();
-        Permanent enchantedCreature = dc.damagedCreature();
-        UUID creatureControllerId = gameQueryService.findPermanentController(gameData, enchantedCreature.getId());
-        if (creatureControllerId == null) return false;
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                null,
-                match.permanent().getId());
-        entry.setEventValue(dc.damageDealt());
-        entry.setDamageSourceCard(enchantedCreature.getCard());
-        entry.setTriggeringPermanentId(enchantedCreature.getId());
-        entry.setTriggeringPermanentControllerId(creatureControllerId);
-        gameData.enqueueTrigger(entry);
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE each-opponent trigger fires",
-                gameData.id, match.permanent().getCard().getName());
-        return true;
-    }
-
-    @CollectsDamageTrigger(value = GainLifeEffect.class, watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
-    private boolean handleEnchantedCreatureDealtDamageGainLife(TriggerMatchContext match, GainLifeEffect effect,
-                                                                TriggerContext ctx) {
-        return enqueueEnchantedCreatureDealtDamageTrigger(match, effect, ctx);
-    }
-
+    /**
+     * "Whenever enchanted (equipped) creature is dealt damage, …": the ability is the Aura's or Equipment's (CR 113.7),
+     * whatever its effects are. Its entry records the event: the creature as the triggering permanent (its id,
+     * controller, power and a snapshot with the damage keywords it had, its last known information once it has left,
+     * CR 608.2h) and the damage dealt as the event value; "it" / "its controller" / "that much" read them as the
+     * ability resolves. A targeted ability's target is chosen as it goes on the stack (CR 603.3d).
+     */
     @CollectsDamageTrigger(value = CardEffect.class, watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
     private boolean handleEnchantedCreatureDealtDamageDefault(TriggerMatchContext match, CardEffect effect,
                                                                TriggerContext ctx) {
-        return enqueueEnchantedCreatureDealtDamageTrigger(match, effect, ctx);
-    }
-
-    private boolean enqueueEnchantedCreatureDealtDamageTrigger(TriggerMatchContext match, CardEffect effect,
-                                                                TriggerContext ctx) {
-        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
-        if (dc.damageDealt() <= 0) return false;
-
-        Permanent aura = match.permanent();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                aura.getCard(),
-                match.controllerId(),
-                aura.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                aura.getId());
-        entry.setEventValue(dc.damageDealt());
-        entry.setTriggeringPermanentId(dc.damagedCreature().getId());
-        entry.setTriggeringPermanentControllerId(gameQueryService.findPermanentController(
-                match.gameData(), dc.damagedCreature().getId()));
-        entry.setSourcePermanentSnapshot(new Permanent(aura));
-        entry.setNonTargeting(true);
-        match.gameData().enqueueTrigger(entry);
-
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(aura.getCard()));
-        log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE trigger fires ({} damage)",
-                match.gameData().id, aura.getCard().getName(), dc.damageDealt());
-        return true;
-    }
-
-    @CollectsDamageTrigger(value = CreateTokenEffect.class,
-            watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
-    private boolean handleEnchantedCreatureDealtDamageCreateTokens(TriggerMatchContext match,
-            CreateTokenEffect effect, TriggerContext ctx) {
         TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
         if (dc.damageDealt() <= 0) return false;
 
         GameData gameData = match.gameData();
         Permanent aura = match.permanent();
-        UUID enchantedCreatureControllerId = gameQueryService.findPermanentController(
-                gameData, dc.damagedCreature().getId());
-        if (enchantedCreatureControllerId == null) return false;
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                aura.getCard(),
-                enchantedCreatureControllerId,
-                aura.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                aura.getId()
-        );
-        entry.setEventValue(dc.damageDealt());
-        gameData.stack.add(entry);
+        Permanent creature = dc.damagedCreature();
+        Permanent lastKnown = lastKnownDamageSource(gameData, creature);
+        int power = gameQueryService.getEffectivePower(gameData, creature);
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    aura.getCard(), match.controllerId(), new ArrayList<>(List.of(effect)), false,
+                    targetFilterForTriggeredEffect(aura.getCard(), effect), 0, aura.getId(), new Permanent(aura),
+                    false, creature.getId(), null, match.controllerId(), null, null, false, null, null, power,
+                    false, lastKnown).withEventValue(dc.damageDealt()));
+        } else {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    aura.getCard(),
+                    match.controllerId(),
+                    aura.getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    aura.getId());
+            entry.setEventValue(dc.damageDealt());
+            entry.setTriggeringPermanentId(creature.getId());
+            entry.setTriggeringCardId(creature.getCard().getId());
+            entry.setTriggeringPermanentControllerId(gameQueryService.findPermanentController(
+                    gameData, creature.getId()));
+            entry.setTriggeringPermanent(lastKnown);
+            entry.setTriggeringPermanentPowerAtTrigger(power);
+            entry.setSourcePermanentSnapshot(new Permanent(aura));
+            entry.setNonTargeting(true);
+            gameData.enqueueTrigger(entry);
+        }
 
         gameLogService.append(gameData, GameLog.abilityTriggers(aura.getCard()));
-        log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE token trigger fires",
-                gameData.id, aura.getCard().getName());
+        log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE trigger fires ({} damage)",
+                gameData.id, aura.getCard().getName(), dc.damageDealt());
         return true;
     }
 
     // ── ON_CONTROLLER_DEALT_DAMAGE (Living Artifact) ───────────────────
-
-    @CollectsDamageTrigger(value = SacrificeSelfEffect.class,
-            watch = DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE)
-    private boolean handleEnchantedCreatureDealtDamageSacrificeSelf(TriggerMatchContext match,
-            SacrificeSelfEffect effect, TriggerContext ctx) {
-        TriggerContext.DamageToCreature dc = (TriggerContext.DamageToCreature) ctx;
-        if (dc.damageDealt() <= 0) return false;
-
-        Permanent aura = match.permanent();
-        match.gameData().enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                aura.getCard(),
-                match.controllerId(),
-                aura.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                aura.getId()
-        ));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(aura.getCard()));
-        log.info("Game {} - {} ON_ENCHANTED_CREATURE_DEALT_DAMAGE sacrifice trigger fires",
-                match.gameData().id, aura.getCard().getName());
-        return true;
-    }
 
     @CollectsDamageTrigger(value = CardEffect.class, watch = DamageWatch.ON_CONTROLLER_DEALT_DAMAGE)
     private boolean handleControllerDealtDamageDefault(TriggerMatchContext match,

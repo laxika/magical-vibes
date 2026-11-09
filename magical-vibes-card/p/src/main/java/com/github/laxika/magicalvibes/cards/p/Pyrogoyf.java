@@ -32,6 +32,6 @@ public class Pyrogoyf extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.LHURGOYF))),
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
-                DealDamageToAnyTargetEffect.fromEnteringPermanent(new SourcePower()));
+                DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower()));
     }
 }

@@ -809,7 +809,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER2_ID, 1, 1);
 
-            svc.handleAnyCreatureDeathDamageController(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleAnyCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
@@ -871,6 +871,24 @@ class DeathTriggerCollectorServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
+        }
+
+        @Test
+        @DisplayName("Default records the source as it triggered and the dying creature's controller whatever the effect is")
+        void defaultRecordsSourceSnapshotAndDyingController() {
+            Card watcher = createCreature("Dingus Watcher", 1, 1);
+            var effect = new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER);
+            Permanent perm = new Permanent(watcher);
+            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER2_ID, 1, 1);
+
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getTargetId()).isNull();
+            assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(PLAYER2_ID);
+            assertThat(entry.getSourcePermanentSnapshot()).isNotNull();
+            assertThat(entry.getSourcePermanentSnapshot().getId()).isEqualTo(perm.getId());
         }
 
         @Test

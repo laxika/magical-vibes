@@ -82,8 +82,12 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
                 cantBeRedirectedWhenUnpreventable, preventRegenerationWithoutDamage, false);
     }
 
-    /** The entering permanent deals the damage, with its live characteristics or last known values. */
-    public static DealDamageToAnyTargetEffect fromEnteringPermanent(DynamicAmount damage) {
+    /**
+     * The permanent the trigger event was about (the stack entry's triggering permanent: the creature that entered, was
+     * dealt damage, …) deals the damage, with its live characteristics or last known values (CR 608.2h): "it deals
+     * damage equal to its power to any target".
+     */
+    public static DealDamageToAnyTargetEffect dealtByTriggeringPermanent(DynamicAmount damage) {
         return new DealDamageToAnyTargetEffect(damage, false, false, -1, null, false, false, true);
     }
 

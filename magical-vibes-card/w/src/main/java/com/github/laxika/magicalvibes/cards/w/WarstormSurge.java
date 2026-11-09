@@ -26,6 +26,6 @@ public class WarstormSurge extends Card {
         // Whenever a creature you control enters, it deals damage equal to its power to any target.
         // The entering creature is the damage source, so its power is read at resolution.
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                DealDamageToAnyTargetEffect.fromEnteringPermanent(new SourcePower()));
+                DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower()));
     }
 }

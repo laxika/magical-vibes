@@ -40,18 +40,13 @@ BIND = re.compile(r"\.set\w+\((?:effect|e|may|mayPay|marker|trigger)\.")
 # Run 17z12: handlers that record event data only for their class, rebuild or unwrap the card's effect (the rows of
 # step 15 that hold them; effect-slot-refactor.md, run 17z12's Findings). Defaults are named too. Run 17z12b closed the
 # enter and turned-face-up collectors' handlers (they were deleted or record the entering permanent whatever the effects
-# are); the may-pay handler's "that creature" target and source bindings are row 17z12f's.
+# are); the may-pay handler's "that creature" target and source bindings are row 17z12f's. Run 17z12c closed the damage
+# and death collectors' handlers (deleted: the enchanted-creature, any-creature and any-creature-death watches' defaults
+# record the event whatever the effects are).
 OPEN = {
     ("EnterTriggerCollectorService.java", "handleEnterMayPay"): "17z12f",
 }
 OPEN.update({
-    ("DamageTriggerCollectorService.java", "handleEnchantedCreatureDealtDamageToController"): "17z12c",
-    ("DamageTriggerCollectorService.java", "handleEnchantedCreatureDealtDamagePowerTarget"): "17z12c",
-    ("DamageTriggerCollectorService.java", "handleEnchantedCreatureDealtDamageToEachOpponent"): "17z12c",
-    ("DamageTriggerCollectorService.java", "handleEnchantedCreatureDealtDamageCreateTokens"): "17z12c",
-    ("DeathTriggerCollectorService.java", "handleAnyCreatureDeathBountyReward"): "17z12c",
-    ("DeathTriggerCollectorService.java", "handleAnyCreatureDeathDamageController"): "17z12c",
-    ("DeathTriggerCollectorService.java", "handleAnyCreatureDeathDestroyEnchanted"): "17z12c",
     ("DiscardTriggerCollectorService.java", "handleDiscardMay"): "17z12d",
     ("DiscardTriggerCollectorService.java", "handleCastDiscardedCard"): "17z12d",
     ("DiscardTriggerCollectorService.java", "handleDamageToDiscardingPlayer"): "17z12d",

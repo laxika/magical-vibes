@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -28,6 +28,6 @@ public class WrathfulRedDragon extends Card {
                 "Target must not be a Dragon"
         )).addTrigger(Triggers.permanentYouControlDealtDamage()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
-                new DealDamageToAnyTargetEffect(new XValue(), false, false, -1, null, false, false, true));
+                DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new EventValue()));
     }
 }

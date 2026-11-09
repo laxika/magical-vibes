@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDamageSourceCreatureOrSpellControllerEffect;
@@ -29,6 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
@@ -156,7 +158,14 @@ class DamageTriggerCollectorServiceTest {
         assertThat(result).isTrue();
         assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
                 .isNotNull()
-                .satisfies(pending -> assertThat(pending.effects()).containsExactly(wrapped));
+                .satisfies(pending -> {
+                    assertThat(pending.effects()).containsExactly(wrapped);
+                    // The ability is the watcher's (CR 113.7); the damaged permanent is the event's.
+                    assertThat(pending.sourcePermanentId()).isEqualTo(watcher.getId());
+                    assertThat(pending.triggeringPermanentId()).isEqualTo(damaged.getId());
+                    assertThat(pending.departedPermanent().getId()).isEqualTo(damaged.getId());
+                    assertThat(pending.eventValue()).isEqualTo(2);
+                });
     }
 
     private static Card createCard(String name) {
@@ -329,7 +338,7 @@ class DamageTriggerCollectorServiceTest {
     }
 
     @Nested
-    @DisplayName("ON_ENCHANTED_CREATURE_DEALT_DAMAGE — CreateTokenEffect")
+    @DisplayName("ON_ENCHANTED_CREATURE_DEALT_DAMAGE — the default records the event whatever the effect is")
     class CreateTokensOnEnchantedCreatureDamage {
 
         @Test
@@ -372,14 +381,14 @@ class DamageTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("queues tokens for the enchanted creature's current controller and records damage")
-        void queuesTokensForEnchantedCreatureController() {
+        @DisplayName("the Aura's controller controls the ability; the entry records the creature and its controller")
+        void recordsTheEnchantedCreatureAndItsControllerForTheAurasAbility() {
             Permanent aura = createPermanent("Druid's Call");
             Permanent creature = createPermanent("Hill Giant");
-            CreateTokenEffect effect = new CreateTokenEffect(new EventValue(), "Squirrel", 1, 1,
-                    com.github.laxika.magicalvibes.model.CardColor.GREEN,
+            var effect = new CreateTokenForTriggeringPlayerEffect(new CreateTokenEffect(new EventValue(), "Squirrel",
+                    1, 1, com.github.laxika.magicalvibes.model.CardColor.GREEN,
                     java.util.List.of(com.github.laxika.magicalvibes.model.CardSubtype.SQUIRREL),
-                    java.util.Set.of(), java.util.Set.of());
+                    java.util.Set.of(), java.util.Set.of()), false, true);
             var ctx = new TriggerContext.DamageToCreature(creature, 3, player1Id);
 
             when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player2Id);
@@ -390,10 +399,14 @@ class DamageTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player2Id);
-            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(aura.getId());
-            assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
-            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(aura.getId());
+            assertThat(entry.getEventValue()).isEqualTo(3);
+            assertThat(entry.getTriggeringPermanentId()).isEqualTo(creature.getId());
+            assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
+            assertThat(entry.getTriggeringPermanentSnapshot().getId()).isEqualTo(creature.getId());
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
         }
 
         @Test

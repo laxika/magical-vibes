@@ -3993,8 +3993,10 @@ public class ConditionEvaluationService {
             aura = ctx.sourcePermanent();
         }
         if (aura == null || !aura.isAttached()) return false;
-        UUID enchantedId = ctx.triggeringPermanentId() != null
-                ? ctx.triggeringPermanentId() : aura.getAttachedTo();
+        // The creature the source was attached to as the ability triggered, not the trigger event's permanent: a
+        // death trigger's triggering permanent is the creature that died (Blade of the Bloodchief's "if equipped
+        // creature is a Vampire").
+        UUID enchantedId = aura.getAttachedTo();
         Permanent enchanted = gameQueryService.findPermanentById(gameData, enchantedId);
         if (enchanted == null && liveAura != null && liveAura.isAttached()
                 && !liveAura.getAttachedTo().equals(enchantedId)) {

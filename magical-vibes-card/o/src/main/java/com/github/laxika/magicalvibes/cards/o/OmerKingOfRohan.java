@@ -44,7 +44,7 @@ public class OmerKingOfRohan extends Card {
                 "Target must be a player"))
                 .bindEffect(targetPlayerBecomesMonarch);
 
-        var dealDamageToAnyTarget = DealDamageToAnyTargetEffect.fromEnteringPermanent(new SourcePower());
+        var dealDamageToAnyTarget = DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower());
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

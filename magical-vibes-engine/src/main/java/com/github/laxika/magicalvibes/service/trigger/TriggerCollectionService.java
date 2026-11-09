@@ -111,7 +111,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilte
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -3641,9 +3640,10 @@ public class TriggerCollectionService {
      *
      * <p>The aura is on its controller's battlefield, so scanning the damaged player's battlefield for auras
      * attached to the damage source naturally restricts the trigger to damage dealt to the aura's controller
-     * ("to you"). Called for both combat and non-combat damage dealt to a player. Queues a triggered ability
-     * running {@link EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect}, whose handler deals
-     * {@code amount} damage to the enchanted creature's controller.
+     * ("to you"). Called for both combat and non-combat damage dealt to a player. The ability is the Aura's (CR
+     * 113.7); its entry records the event whatever the effects are: the enchanted creature as the triggering permanent
+     * (its id, controller and a snapshot as it dealt the damage) and the damage as the event value, which "that much
+     * damage to that creature's controller" reads as the ability resolves.
      */
     public void checkEnchantedCreatureDealtDamageToControllerReflectTriggers(GameData gameData, UUID damagedPlayerId,
             UUID sourcePermanentId, int amount) {
@@ -3668,16 +3668,15 @@ public class TriggerCollectionService {
                     damagedPlayerId,
                     aura.getCard().getName() + "'s ability",
                     new ArrayList<>(DamageAbilityReader.printedEffects(aura.getCard(), DamageWatch.ON_ENCHANTED_CREATURE_DEALS_DAMAGE_TO_YOU)),
-                    amount,
-                    creatureControllerId,
-                    aura.getId(),
-                    Map.of(),
                     null,
-                    List.of(),
-                    List.of()
-            );
-            entry.setDamageSourceCard(enchantedCreature.getCard());
+                    aura.getId());
+            entry.setEventValue(amount);
             entry.setTriggeringPermanentId(enchantedCreature.getId());
+            entry.setTriggeringCardId(enchantedCreature.getCard().getId());
+            entry.setTriggeringPermanentControllerId(creatureControllerId);
+            entry.setTriggeringPermanent(enchantedCreature);
+            entry.setTriggeringPlayerId(damagedPlayerId);
+            entry.setSourcePermanentSnapshot(new Permanent(aura));
             entry.setNonTargeting(true);
             gameData.stack.add(entry);
 

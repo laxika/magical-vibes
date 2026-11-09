@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,7 +33,7 @@ public class BountyBoard extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANY),
+        addTrigger(Triggers.creatureDies(new PermanentHasCountersPredicate(CounterType.BOUNTY), ObjectRelation.ANY),
                 new EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect(2));
     }
 }

@@ -16,7 +16,7 @@ public class Pandemonium extends Card {
 
     public Pandemonium() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANY),
-                new MayEffect(DealDamageToAnyTargetEffect.fromEnteringPermanent(new SourcePower()),
+                new MayEffect(DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower()),
                         "Have it deal damage to any target?", null,
                         MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));
     }

@@ -33,7 +33,7 @@ public class HawkeyeTrickShot extends Card {
     }
 
     private static DealDamageToAnyTargetEffect heroDamage() {
-        return DealDamageToAnyTargetEffect.fromEnteringPermanent(new PermanentCount(
+        return DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.HERO), CountScope.CONTROLLER));
     }
 }

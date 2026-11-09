@@ -42,7 +42,7 @@ public class DragonTempest extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                DealDamageToAnyTargetEffect.fromEnteringPermanent(new PermanentCount(
+                DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new PermanentCount(
                         new PermanentHasSubtypePredicate(CardSubtype.DRAGON), CountScope.CONTROLLER)));
     }
 }
