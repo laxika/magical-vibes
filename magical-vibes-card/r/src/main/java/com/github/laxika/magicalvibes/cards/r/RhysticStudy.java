@@ -14,6 +14,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class RhysticStudy extends Card {
 
     public RhysticStudy() {
-        addTrigger(Triggers.opponentCastsSpell(), new DrawCardUnlessPaysEffect(1, 1));
+        addTrigger(Triggers.opponentCastsSpell().anySpell(), new DrawCardUnlessPaysEffect(1, 1));
     }
 }

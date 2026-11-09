@@ -26,6 +26,8 @@ class MoggManiacTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         harness.castInstant(player1, 0, harness.getPermanentId(player2, "Mogg Maniac"));
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, player1.getId());
         resolveAllTriggers();
 
         harness.assertLife(player1, 18);
@@ -43,6 +45,7 @@ class MoggManiacTest extends BaseCardTest {
 
         harness.setLife(player1, 20);
         resolveCombat();
+        harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player1, 19);

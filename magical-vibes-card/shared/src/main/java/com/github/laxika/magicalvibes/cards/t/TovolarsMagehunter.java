@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TovolarsMagehunter extends Card {
 
     public TovolarsMagehunter() {
-        addTrigger(Triggers.opponentCastsSpell(), new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.opponentCastsSpell().anySpell(),
+                new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PLAYER));
 
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new TwoOrMoreSpellsCastLastTurn()),

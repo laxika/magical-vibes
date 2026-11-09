@@ -14,8 +14,7 @@ public class Oppression extends Card {
 
     public Oppression() {
         // Whenever a player casts a spell, that player discards a card.
-        // The Triggers.playerCastsSpell() collector stamps the casting player onto the entry's
-        // targetId, so the TARGET_PLAYER discard lands on whoever cast the spell.
-        addTrigger(Triggers.playerCastsSpell(), new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER, false));
+        addTrigger(Triggers.playerCastsSpell().anySpell(),
+                new DiscardEffect(1, DiscardRecipient.TRIGGERING_PLAYER, false));
     }
 }

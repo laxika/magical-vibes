@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -116,6 +117,25 @@ class PainfulQuandaryTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(handSizeBefore);
+    }
+
+    @Test
+    @CardUsed(LeylineOfSanctity.class)
+    @DisplayName("That player isn't targeted: an opponent with hexproof still loses 5 life")
+    void opponentWithHexproofStillLosesLife() {
+        harness.addToBattlefield(player1, new PainfulQuandary());
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.castFromHand(player2, new CarapaceForger(), "{1}{G}");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 5);
     }
 
     @Test

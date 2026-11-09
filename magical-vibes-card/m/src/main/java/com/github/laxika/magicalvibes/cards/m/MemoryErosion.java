@@ -13,6 +13,7 @@ public class MemoryErosion extends Card {
 
     public MemoryErosion() {
         // Whenever an opponent casts a spell, that player mills two cards.
-        addTrigger(Triggers.opponentCastsSpell(), new MillEffect(2, MillRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.opponentCastsSpell().anySpell(),
+                new MillEffect(2, MillRecipient.TRIGGERING_PLAYER));
     }
 }

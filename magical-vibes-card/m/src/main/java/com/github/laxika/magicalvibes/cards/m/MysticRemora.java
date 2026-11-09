@@ -23,8 +23,8 @@ public class MysticRemora extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CumulativeUpkeepEffect("{1}"));
 
         // Whenever an opponent casts a noncreature spell, you may draw a card unless that player pays {4}.
-        addTrigger(Triggers.opponentCastsSpell(),
-                new DrawCardUnlessPaysEffect(1, 4,
-                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))));
+        addTrigger(Triggers.opponentCastsSpell()
+                        .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                new DrawCardUnlessPaysEffect(1, 4));
     }
 }

@@ -17,7 +17,7 @@ class LoseLifeUnlessPaysEffectHandlerTest extends AbstractPlayerInteractionHandl
             @DisplayName("Auto-applies life loss when can't pay")
             void autoAppliesLifeLossWhenCantPay() {
                 Card card = createCard("Rhystic Study");
-                LoseLifeUnlessPaysEffect effect = new LoseLifeUnlessPaysEffect(2, 1, null);
+                LoseLifeUnlessPaysEffect effect = new LoseLifeUnlessPaysEffect(2, 1);
                 StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
                 when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(true);
@@ -46,7 +46,7 @@ class LoseLifeUnlessPaysEffectHandlerTest extends AbstractPlayerInteractionHandl
             @DisplayName("No life loss when life can't change and can't pay")
             void noLifeLossWhenLifeCantChange() {
                 Card card = createCard("Rhystic Study");
-                LoseLifeUnlessPaysEffect effect = new LoseLifeUnlessPaysEffect(2, 1, null);
+                LoseLifeUnlessPaysEffect effect = new LoseLifeUnlessPaysEffect(2, 1);
                 StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
 
                 when(gameQueryService.canPlayerLoseLife(gd, player2Id)).thenReturn(false);
@@ -60,7 +60,7 @@ class LoseLifeUnlessPaysEffectHandlerTest extends AbstractPlayerInteractionHandl
             @DisplayName("Presents may ability when player can pay")
             void presentsMayAbilityWhenCanPay() {
                 Card card = createCard("Rhystic Study");
-                LoseLifeUnlessPaysEffect effect = new LoseLifeUnlessPaysEffect(2, 1, null);
+                LoseLifeUnlessPaysEffect effect = new LoseLifeUnlessPaysEffect(2, 1);
                 StackEntry entry = createEntryWithTarget(card, player1Id, List.of(effect), player2Id);
                 // Add enough mana to pay {1}
                 gd.playerManaPools.get(player2Id).add(com.github.laxika.magicalvibes.model.ManaColor.COLORLESS, 1);

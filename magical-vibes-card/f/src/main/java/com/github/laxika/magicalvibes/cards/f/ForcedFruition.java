@@ -12,6 +12,6 @@ public class ForcedFruition extends Card {
 
     public ForcedFruition() {
         // Whenever an opponent casts a spell, that player draws seven cards.
-        addTrigger(Triggers.opponentCastsSpell(), new DrawCardForTargetPlayerEffect(7));
+        addTrigger(Triggers.opponentCastsSpell().anySpell(), new DrawCardForTargetPlayerEffect(7));
     }
 }

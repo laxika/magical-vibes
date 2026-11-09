@@ -1377,49 +1377,6 @@ class SpellCastTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_OPPONENT_CASTS_SPELL — LoseLifeUnlessDiscardEffect =====
-
-    @Nested
-    @DisplayName("ON_OPPONENT_CASTS_SPELL — LoseLifeUnlessDiscardEffect")
-    class OpponentLoseLifeUnlessDiscard {
-
-        @Test
-        @DisplayName("puts triggered ability on stack with casting player as target")
-        void putsTriggeredAbilityOnStack() {
-            Permanent perm = createPermanent("Bloodchief Ascension");
-            var effect = new LoseLifeUnlessDiscardEffect(2);
-            Card spellCard = createCard("Grizzly Bears");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            var stackEntry = gd.stack.getLast();
-            assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-            assertThat(stackEntry.getDescription()).contains("Bloodchief Ascension");
-            assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
-            assertThat(stackEntry.getTargetId()).isEqualTo(player2Id);
-        }
-
-        @Test
-        @DisplayName("stack entry includes the LoseLifeUnlessDiscardEffect")
-        void stackEntryIncludesEffect() {
-            Permanent perm = createPermanent("Bloodchief Ascension");
-            var effect = new LoseLifeUnlessDiscardEffect(3);
-            Card spellCard = createCard("Grizzly Bears");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, effect, ctx);
-
-            assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
-        }
-    }
-
     // ===== ON_OPPONENT_CASTS_SPELL — CounterUnlessPaysEffect =====
 
     @Nested
@@ -1506,68 +1463,46 @@ class SpellCastTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_OPPONENT_CASTS_SPELL — LoseLifeUnlessPaysEffect =====
+    @Test
+    @DisplayName("A \"that player\" punisher cast trigger goes on the stack as written, the caster its non-targeting player")
+    void thatPlayerPunisherTriggerGoesOnTheStackAsWritten() {
+        Permanent perm = createPermanent("Painful Quandary");
+        CardEffect loseLife = new LoseLifeUnlessDiscardEffect(5);
+        CastAbility ability = castAbility(Triggers.opponentCastsSpell().anySpell(), loseLife);
+        Card spellCard = createInstant("Grizzly Bears");
+        gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, spellCard, player2Id, "Grizzly Bears",
+                new ArrayList<>()));
+        everySpellMatches();
 
-    @Nested
-    @DisplayName("ON_OPPONENT_CASTS_SPELL — LoseLifeUnlessPaysEffect")
-    class OpponentLoseLifeUnlessPays {
+        boolean result = sut.collectCastAbility(match(perm, player1Id, loseLife), ability,
+                new TriggerContext.SpellCast(spellCard, player2Id, true), false);
 
-        @Test
-        @DisplayName("puts triggered ability on stack with casting player as target")
-        void putsTriggeredAbilityOnStack() {
-            Permanent perm = createPermanent("Kambal, Consul of Allocation");
-            var effect = new LoseLifeUnlessPaysEffect(2, 1);
-            Card spellCard = createCard("Grizzly Bears");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+        assertThat(result).isTrue();
+        assertThat(gd.stack).hasSize(2);
+        StackEntry entry = gd.stack.getLast();
+        assertThat(entry.getControllerId()).isEqualTo(player1Id);
+        assertThat(entry.getTargetId()).isEqualTo(player2Id);
+        assertThat(entry.isNonTargeting()).isTrue();
+        assertThat(entry.getTriggeringCardId()).isEqualTo(spellCard.getId());
+        assertThat(entry.getEffectsToResolve()).containsExactly(loseLife);
+    }
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, effect, ctx);
+    @Test
+    @DisplayName("A filtered \"unless that player pays\" cast trigger doesn't trigger for a spell its filter refuses")
+    void filteredUnlessPaysTriggerSkipsUnmatchedSpell() {
+        Permanent perm = createPermanent("Isolation Cell");
+        CardEffect loseLife = LoseLifeUnlessPaysEffect.forTriggeringPlayer(2, 2);
+        CardPredicate creature = new CardNamedPredicate("Test Filter");
+        CastAbility ability = castAbility(Triggers.opponentCastsSpell().withFilter(creature), loseLife);
+        Card spellCard = createInstant("Shock");
+        gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, spellCard, player2Id, "Shock",
+                new ArrayList<>()));
 
-            assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            var stackEntry = gd.stack.getLast();
-            assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-            assertThat(stackEntry.getDescription()).contains("Kambal, Consul of Allocation");
-            assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
-            assertThat(stackEntry.getTargetId()).isEqualTo(player2Id);
-        }
+        boolean result = sut.collectCastAbility(match(perm, player1Id, loseLife), ability,
+                new TriggerContext.SpellCast(spellCard, player2Id, true), false);
 
-        @Test
-        @DisplayName("returns false when spell does not match spell filter")
-        void returnsFalseWhenFilterDoesNotMatch() {
-            Permanent perm = createPermanent("Kambal, Consul of Allocation");
-            CardPredicate filter = new CardNamedPredicate("Test Filter");
-            var effect = new LoseLifeUnlessPaysEffect(2, 1, filter);
-            Card spellCard = createCard("Grizzly Bears");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
-                    eq(null), any(), any())).thenReturn(false);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
-
-        @Test
-        @DisplayName("triggers when spell filter is null (no filter)")
-        void triggersWhenNoFilter() {
-            Permanent perm = createPermanent("Kambal, Consul of Allocation");
-            var effect = new LoseLifeUnlessPaysEffect(2, 1);
-            Card spellCard = createCard("Any Spell");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
-        }
+        assertThat(result).isFalse();
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Nested

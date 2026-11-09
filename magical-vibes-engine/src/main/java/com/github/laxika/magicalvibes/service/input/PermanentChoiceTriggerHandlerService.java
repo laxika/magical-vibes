@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnteringTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -1432,11 +1431,7 @@ public class PermanentChoiceTriggerHandlerService {
                     entry.rememberLastKnownPermanentCard(ett.enteringPermanentId(), enteringPermanent.getCard());
                 }
             }
-            if (ett.effects().stream().anyMatch(effect ->
-                    effect instanceof com.github.laxika.magicalvibes.model.effect.MayEffect may
-                            && may.wrapped() instanceof CreateTokenCopyOfEnteringTokenForTargetPlayerEffect)) {
-                entry.setMarkSourceOncePerTurnOnAcceptance(true);
-            }
+            entry.setMarkSourceOncePerTurnOnAcceptance(ett.markSourceOncePerTurnOnAcceptance());
             if (ett.enteringPowerAtTrigger() != null) {
                 entry.setTriggeringPermanentPowerAtTrigger(ett.enteringPowerAtTrigger());
                 entry.setTriggeringPermanentToughnessAtTrigger(ett.enteringToughnessAtTrigger());

@@ -41,21 +41,13 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfNameFoundElsewhereEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellingEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellChosenColorCount;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessDiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
-import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -147,44 +139,6 @@ public class SpellCastTriggerCollectorService {
         entry.setSourcePermanentSnapshot(new Permanent(source));
         entry.setTriggeringCardId(eventCard.getId());
         entry.setEventValue(manaValue);
-        entry.setNonTargeting(true);
-        match.gameData().stack.add(entry);
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = ReturnPermanentControlledByPlayerToHandEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
-    private boolean handleReturnLandOnSpellCast(TriggerMatchContext match,
-            ReturnPermanentControlledByPlayerToHandEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        // "that player returns a land they control" — carry the casting player on targetId so the
-        // resolution handler prompts them (not the enchantment's controller).
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)));
-        // Mana Breach doesn't target — targetId only carries the acting (casting) player.
-        entry.setTargetId(sc.castingPlayerId());
-        entry.setNonTargeting(true);
-        match.gameData().stack.add(entry);
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = DiscardEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
-    private boolean handleDiscardOnSpellCast(TriggerMatchContext match,
-            DiscardEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        // "that player discards a card" — carry the casting player on targetId so the
-        // TARGET_PLAYER discard lands on them (not the enchantment's controller). Oppression.
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)));
-        // Oppression doesn't target — targetId only carries the acting (casting) player.
-        entry.setTargetId(sc.castingPlayerId());
         entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         return true;
@@ -350,78 +304,6 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsSpellAbilityTrigger(value = LoseLifeUnlessDiscardEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
-    private boolean handleLoseLifeUnlessDiscard(TriggerMatchContext match,
-            LoseLifeUnlessDiscardEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger))
-        );
-        entry.setTargetId(sc.castingPlayerId());
-        match.gameData().stack.add(entry);
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = DealDamageToPlayersEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
-    private boolean handleDamageToCastingOpponent(TriggerMatchContext match,
-            DealDamageToPlayersEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                null,
-                match.permanent().getId()
-        );
-        entry.setTargetId(sc.castingPlayerId());
-        entry.setNonTargeting(true);
-        match.gameData().stack.add(entry);
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = DrawCardForTargetPlayerEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
-    private boolean handleCastingOpponentDraws(TriggerMatchContext match,
-            DrawCardForTargetPlayerEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger))
-        );
-        entry.setTargetId(sc.castingPlayerId());
-        entry.setNonTargeting(true);
-        match.gameData().stack.add(entry);
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = MillEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
-    private boolean handleCastingOpponentMills(TriggerMatchContext match,
-            MillEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        // "That player mills N cards" — carry the casting opponent on targetId so the
-        // TARGET_PLAYER mill lands on them (not a chosen target). Memory Erosion. The player is not
-        // targeted, so shroud and similar protection do not stop the mill.
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger))
-        );
-        entry.setTargetId(sc.castingPlayerId());
-        entry.setNonTargeting(true);
-        match.gameData().stack.add(entry);
-        return true;
-    }
-
     @CollectsSpellAbilityTrigger(value = CounterUnlessPaysEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
     private boolean handleCounterUnlessPays(TriggerMatchContext match,
             CounterUnlessPaysEffect trigger, TriggerContext ctx) {
@@ -449,77 +331,6 @@ public class SpellCastTriggerCollectorService {
                 match.permanent().getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(trigger))
         ));
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = LoseLifeUnlessPaysEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
-    private boolean handleLoseLifeUnlessPays(TriggerMatchContext match,
-            LoseLifeUnlessPaysEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (trigger.spellFilter() != null
-                && !predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
-                        match.gameData(), sc.castingPlayerId())) {
-            return false;
-        }
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                sc.castingPlayerId(),
-                match.permanent().getId()
-        );
-        entry.setNonTargeting(true);
-        match.gameData().stack.add(entry);
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = DamageUnlessPaysEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
-    private boolean handleDamageUnlessPays(TriggerMatchContext match,
-            DamageUnlessPaysEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (trigger.spellFilter() != null
-                && !predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
-                        match.gameData(), sc.castingPlayerId())) {
-            return false;
-        }
-        // "that player" = the casting opponent (target of the damage / decision maker). Carry the source
-        // permanent so the damage resolves with the correct source (prevention keys off it).
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                sc.castingPlayerId(),
-                match.permanent().getId()
-        );
-        entry.setNonTargeting(true);
-        match.gameData().stack.add(entry);
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = DrawCardUnlessPaysEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
-    private boolean handleDrawCardUnlessPays(TriggerMatchContext match,
-            DrawCardUnlessPaysEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (trigger.spellFilter() != null
-                && !predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(), null,
-                        match.gameData(), sc.castingPlayerId())) {
-            return false;
-        }
-        // Casting opponent is stamped on targetId (pay decision); controller draws if they don't pay.
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                sc.castingPlayerId(),
-                match.permanent().getId()
-        );
-        match.gameData().stack.add(entry);
         return true;
     }
 

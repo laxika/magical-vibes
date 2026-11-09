@@ -18,7 +18,10 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardIfEventValueAtLeastEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageEqualToDealtDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsPowerDamageToAnyTargetEffect;
@@ -37,7 +40,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
@@ -371,45 +373,18 @@ public class DamageTriggerCollectorService {
         UUID controllerId = gameQueryService.findPermanentController(gameData, dc.damagedCreature().getId());
         if (controllerId == null) return false;
 
-        // Check if any planeswalkers are on the battlefield
-        boolean hasPlaneswalkers = false;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf != null) {
-                for (Permanent p : bf) {
-                    if (p.getCard().hasType(CardType.PLANESWALKER)) {
-                        hasPlaneswalkers = true;
-                        break;
-                    }
-                }
-            }
-            if (hasPlaneswalkers) break;
-        }
-
-        if (!hasPlaneswalkers) {
-            // In 2-player with no planeswalkers, auto-target the opponent
-            UUID opponentId = gameQueryService.getOpponentId(gameData, controllerId);
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    dc.damagedCreature().getCard(),
-                    controllerId,
-                    dc.damagedCreature().getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(trigger)),
-                    dc.damageDealt(),
-                    dc.damagedCreature().getId()
-            );
-            entry.setTargetId(opponentId);
-            entry.setSourcePermanentSnapshot(lastKnownDamageSource(gameData, dc.damagedCreature()));
-            gameData.stack.add(entry);
-        } else {
-            // Planeswalkers present — need player choice between opponent and planeswalkers
-            TargetFilter targetFilter = targetFilterFor(dc.damagedCreature(), trigger);
-            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    dc.damagedCreature().getCard(), controllerId, new ArrayList<>(List.of(trigger)),
-                    false, targetFilter, dc.damageDealt(), dc.damagedCreature().getId(),
-                    lastKnownDamageSource(gameData, dc.damagedCreature())
-            ));
-        }
+        // "Target opponent or planeswalker" is chosen as the ability goes on the stack (CR 603.3d), among every
+        // opponent and planeswalker, even when only one is legal.
+        TargetFilter declaredFilter = targetFilterFor(dc.damagedCreature(), trigger);
+        TargetFilter targetFilter = declaredFilter != null ? declaredFilter : new AnyTargetPredicateTargetFilter(
+                new PermanentIsPlaneswalkerPredicate(),
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                "Target must be an opponent or planeswalker");
+        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                dc.damagedCreature().getCard(), controllerId, new ArrayList<>(List.of(trigger)),
+                false, targetFilter, dc.damageDealt(), dc.damagedCreature().getId(),
+                lastKnownDamageSource(gameData, dc.damagedCreature())
+        ));
 
         gameLogService.append(gameData, GameLog.abilityTriggers(dc.damagedCreature().getCard()));
         log.info("Game {} - {} ON_DEALT_DAMAGE target-opponent-or-planeswalker trigger fires",

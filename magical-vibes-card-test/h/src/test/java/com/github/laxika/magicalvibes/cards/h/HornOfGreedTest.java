@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.cards.v.VolrathsStronghold;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -45,6 +46,25 @@ class HornOfGreedTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed(LeylineOfSanctity.class)
+    @DisplayName("That player isn't targeted: an opponent with hexproof who plays a land still draws")
+    void opponentWithHexproofStillDraws() {
+        harness.addToBattlefield(player1, new HornOfGreed());
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        harness.setHand(player2, List.of(new VolrathsStronghold()));
+        harness.setLibrary(player2, List.of(new VolrathsStronghold()));
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.playLand(player2, 0);
+        harness.passBothPriorities();
+
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
     }

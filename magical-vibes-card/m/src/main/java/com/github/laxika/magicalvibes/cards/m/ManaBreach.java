@@ -12,7 +12,7 @@ public class ManaBreach extends Card {
 
     public ManaBreach() {
         // Whenever a player casts a spell, that player returns a land they control to its owner's hand.
-        addTrigger(Triggers.playerCastsSpell(),
+        addTrigger(Triggers.playerCastsSpell().anySpell(),
                 new ReturnPermanentControlledByPlayerToHandEffect(new PermanentIsLandPredicate(), "land"));
     }
 }

@@ -4,10 +4,15 @@ import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.a.AngrathTheFlameChained;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.FakeConnection;
+import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -29,6 +34,7 @@ class FrilledDeathspitterTest extends BaseCardTest {
 
         UUID deathspitterId = harness.getPermanentId(player2, "Frilled Deathspitter");
         harness.castAndResolveInstant(player1, 0, deathspitterId);
+        harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
@@ -46,6 +52,7 @@ class FrilledDeathspitterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, deathspitterId);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Frilled Deathspitter");
@@ -54,6 +61,7 @@ class FrilledDeathspitterTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, deathspitterId);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Frilled Deathspitter");
@@ -85,6 +93,67 @@ class FrilledDeathspitterTest extends BaseCardTest {
     }
 
     @Test
+    void controllerChoosesWhichOpponentIsDealtDamage() {
+        Player player3 = addThirdPlayer();
+        harness.addToBattlefield(player2, new FrilledDeathspitter());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player2, "Frilled Deathspitter"));
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPlayerIds()).containsExactlyInAnyOrder(player1.getId(), player3.getId());
+        harness.handlePermanentChosen(player2, player3.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player3, 18);
+    }
+
+    @Test
+    void controllerChoosesWhichOpponentIsDealtDamageAfterCombatDamage() {
+        Player player3 = addThirdPlayer();
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new FanaticalFirebrand());
+        Permanent blocker = harness.addToBattlefieldAndReturn(player2, new FrilledDeathspitter());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+
+        harness.resolveCombatDamage();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPlayerIds()).containsExactlyInAnyOrder(player1.getId(), player3.getId());
+        harness.handlePermanentChosen(player2, player3.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player3, 18);
+    }
+
+    private Player addThirdPlayer() {
+        UUID thirdPlayerId = UUID.randomUUID();
+        Player player3 = new Player(thirdPlayerId, "Charlie");
+        gd.playerIds.add(thirdPlayerId);
+        gd.orderedPlayerIds.add(thirdPlayerId);
+        gd.playerNames.add("Charlie");
+        gd.playerIdToName.put(thirdPlayerId, "Charlie");
+        gd.playerDecks.put(thirdPlayerId, new ArrayList<>());
+        gd.playerHands.put(thirdPlayerId, new ArrayList<>());
+        gd.playerBattlefields.put(thirdPlayerId, new ArrayList<>());
+        gd.playerGraveyards.put(thirdPlayerId, new ArrayList<>());
+        gd.playerCommandZones.put(thirdPlayerId, new ArrayList<>());
+        gd.playerManaPools.put(thirdPlayerId, new ManaPool());
+        gd.playerLifeTotals.put(thirdPlayerId, 20);
+        harness.getSessionManager().registerPlayer(new FakeConnection("conn-3"), thirdPlayerId, "Charlie");
+        return player3;
+    }
+
+    @Test
     void combatDamageTriggersEnrage() {
         Permanent attacker = harness.addToBattlefieldAndReturn(player1, new FanaticalFirebrand());
         Permanent blocker = harness.addToBattlefieldAndReturn(player2, new FrilledDeathspitter());
@@ -98,6 +167,7 @@ class FrilledDeathspitterTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.resolveCombatDamage();
+        harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
 
         harness.assertLife(player1, 18);

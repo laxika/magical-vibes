@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class PainfulQuandary extends Card {
 
     public PainfulQuandary() {
-        addTrigger(Triggers.opponentCastsSpell(), new LoseLifeUnlessDiscardEffect(5));
+        addTrigger(Triggers.opponentCastsSpell().anySpell(), new LoseLifeUnlessDiscardEffect(5));
     }
 }

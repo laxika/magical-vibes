@@ -35,6 +35,7 @@ class SunCrownedHuntersTest extends BaseCardTest {
 
         UUID huntersId = harness.getPermanentId(player2, "Sun-Crowned Hunters");
         harness.castAndResolveInstant(player1, 0, huntersId);
+        harness.handlePermanentChosen(player2, player1.getId());
 
         // ON_DEALT_DAMAGE trigger should be on the stack with target set to opponent
         assertThat(gd.stack).hasSize(1);
@@ -78,6 +79,7 @@ class SunCrownedHuntersTest extends BaseCardTest {
 
         UUID huntersId = harness.getPermanentId(player2, "Sun-Crowned Hunters");
         harness.castAndResolveInstant(player1, 0, huntersId);
+        harness.handlePermanentChosen(player2, player1.getId());
 
         assertThat(gd.stack).hasSize(1);
         StackEntry trigger = gd.stack.getFirst();
@@ -106,7 +108,9 @@ class SunCrownedHuntersTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        // Resolve combat damage — auto-pass will resolve the trigger too
+        // Resolve combat damage, choose the trigger's target, then resolve the trigger
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, player1.getId());
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         // Hunters should survive (5/4 takes 1 damage from 1/1)
@@ -140,7 +144,9 @@ class SunCrownedHuntersTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_BLOCKERS);
         harness.clearPriorityPassed();
 
-        // Resolve combat damage and enrage trigger
+        // Resolve combat damage, choose the enrage trigger's target, then resolve it
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, player1.getId());
         harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
 
         // Opponent should have taken exactly 3 damage from the enrage trigger
@@ -178,6 +184,7 @@ class SunCrownedHuntersTest extends BaseCardTest {
 
         // First Shock — 2 damage
         harness.castAndResolveInstant(player1, 0, huntersId);
+        harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities(); // Resolve first trigger (3 to opponent)
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(17);
@@ -185,6 +192,7 @@ class SunCrownedHuntersTest extends BaseCardTest {
         // Second Shock — 2 more damage (4 total on 5/4 = lethal)
         huntersId = harness.getPermanentId(player2, "Sun-Crowned Hunters");
         harness.castAndResolveInstant(player1, 0, huntersId);
+        harness.handlePermanentChosen(player2, player1.getId());
 
         // Enrage trigger should be on the stack even though Hunters died
         assertThat(gd.stack).hasSize(1);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.cards.p.PygmyRazorback;
 import com.github.laxika.magicalvibes.cards.w.WintermoonMesa;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -152,6 +153,18 @@ class RhysticStudyTest extends BaseCardTest {
         assertThat(land.isTapped()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.COLORLESS)).isZero();
+    }
+
+    @Test
+    @CardUsed(LeylineOfSanctity.class)
+    @DisplayName("That player isn't targeted: an opponent with hexproof is still asked to pay")
+    void opponentWithHexproofIsStillAskedToPay() {
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        castOpponentSpellWithManaToPay();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
     }
 
     private void castOpponentSpellWithManaToPay() {

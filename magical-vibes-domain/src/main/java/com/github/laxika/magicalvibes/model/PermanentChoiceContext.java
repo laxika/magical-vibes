@@ -1775,12 +1775,26 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  enter trigger is serviced; mirrors {@link AttackTriggerTarget}'s any-permanent target flow.
      *  {@code enteringPermanentId} is the permanent whose entry caused the trigger; it becomes the
      *  stack entry's {@code triggeringPermanentId} so an effect that acts on "that creature"
-     *  (Gruul Ragebeast's fight) can find it. {@code null} when the effect only needs the source. */
+     *  (Gruul Ragebeast's fight) can find it. {@code null} when the effect only needs the source.
+     *  {@code markSourceOncePerTurnOnAcceptance} says the ability's "do this only once each turn" (CR 603.2h) is used
+     *  up as its action is taken: the stack entry the choice makes marks its source as the action resolves. */
     record EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId,
                                UUID enteringPermanentId, UUID targetSourcePermanentId, TargetFilter targetFilter,
                                boolean sourceIsEnteringPermanent, Integer enteringPowerAtTrigger,
                                Integer enteringToughnessAtTrigger, UUID choosingPlayerId,
-                               Permanent triggeringPermanent) implements PermanentChoiceContext {
+                               Permanent triggeringPermanent, boolean markSourceOncePerTurnOnAcceptance)
+            implements PermanentChoiceContext {
+
+        public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, UUID enteringPermanentId,
+                                   UUID targetSourcePermanentId, TargetFilter targetFilter,
+                                   boolean sourceIsEnteringPermanent, Integer enteringPowerAtTrigger,
+                                   Integer enteringToughnessAtTrigger, UUID choosingPlayerId,
+                                   Permanent triggeringPermanent) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
+                    targetSourcePermanentId, targetFilter, sourceIsEnteringPermanent,
+                    enteringPowerAtTrigger, enteringToughnessAtTrigger, choosingPlayerId, triggeringPermanent, false);
+        }
 
         public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID enteringPermanentId,
@@ -1799,7 +1813,18 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public EntersTriggerTarget withTriggeringPermanent(Permanent lastKnown) {
             return new EntersTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
                     targetSourcePermanentId, targetFilter, sourceIsEnteringPermanent, enteringPowerAtTrigger,
-                    enteringToughnessAtTrigger, choosingPlayerId, lastKnown == null ? null : new Permanent(lastKnown));
+                    enteringToughnessAtTrigger, choosingPlayerId, lastKnown == null ? null : new Permanent(lastKnown),
+                    markSourceOncePerTurnOnAcceptance);
+        }
+
+        /**
+         * This choice for an ability whose "do this only once each turn" (CR 603.2h) is used up as the action is taken:
+         * the stack entry it makes marks its source as the action resolves.
+         */
+        public EntersTriggerTarget withMarkSourceOncePerTurnOnAcceptance() {
+            return new EntersTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
+                    targetSourcePermanentId, targetFilter, sourceIsEnteringPermanent, enteringPowerAtTrigger,
+                    enteringToughnessAtTrigger, choosingPlayerId, triggeringPermanent, true);
         }
 
         public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,

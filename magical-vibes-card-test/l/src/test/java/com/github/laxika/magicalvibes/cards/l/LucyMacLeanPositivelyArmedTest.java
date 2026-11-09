@@ -96,6 +96,28 @@ class LucyMacLeanPositivelyArmedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Copying an opponent's token uses up the once each turn")
+    void copyingOpponentsTokenUsesUpOnceEachTurn() {
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        addLucy(player1);
+
+        createTokens(player2);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        createTokens(player2);
+        harness.passBothPriorities();
+
+        assertThat(countTokens(player1)).isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+    }
+
+    @Test
     @DisplayName("Simultaneous tokens each offer a copy until one is accepted")
     void canDeclineFirstSimultaneousTokenAndCopySecond() {
         harness.setHand(player1, List.of());

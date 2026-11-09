@@ -12,7 +12,7 @@ public class IsolationCell extends Card {
 
     public IsolationCell() {
         // Whenever an opponent casts a creature spell, that player loses 2 life unless they pay {2}.
-        addTrigger(Triggers.opponentCastsSpell(),
-                new LoseLifeUnlessPaysEffect(2, 2, new CardTypePredicate(CardType.CREATURE)));
+        addTrigger(Triggers.opponentCastsSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                LoseLifeUnlessPaysEffect.forTriggeringPlayer(2, 2));
     }
 }

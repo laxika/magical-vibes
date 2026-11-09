@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateFoodWhenPlayingCardFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequiredEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
@@ -48,27 +47,6 @@ public class PlayedCardNameTriggerCollectorService {
     private final GameLogService gameLogService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
-
-    @CollectsSpellAbilityTrigger(value = DrawCardForTargetPlayerEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_PLAYS_LAND)
-    private boolean handleOpponentPlaysLandDraws(TriggerMatchContext match,
-            DrawCardForTargetPlayerEffect trigger, TriggerContext ctx) {
-        TriggerContext.LandPlayed lp = (TriggerContext.LandPlayed) ctx;
-        Card sourceCard = match.permanent().getCard();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                null,
-                match.permanent().getId());
-        entry.setTargetId(lp.playingPlayerId());
-        match.gameData().stack.add(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on an opponent playing a land for that player to draw",
-                match.gameData().id, sourceCard.getName());
-        return true;
-    }
 
     /**
      * Collects {@code ability}, whose land-play trigger {@code trigger} narrows the land played by a filter or by the

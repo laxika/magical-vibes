@@ -91,7 +91,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -3927,43 +3930,16 @@ public class CombatDamageService {
                 CardEffect effectToAdd = effect;
                 if (effect instanceof DealDamageToTargetPlayerOrPlaneswalkerEffect burn
                         && burn.playerRelation() == PlayerRelation.OPPONENT) {
-                    // Targeting effect — auto-target opponent when no planeswalkers, otherwise queue for choice.
-                    // Only the opponent-only wording can be auto-targeted; the plain "target player"
-                    // form has no single implied player and falls through to the generic tail.
-                    boolean hasPlaneswalkers = false;
-                    for (UUID pid : gameData.orderedPlayerIds) {
-                        List<Permanent> bf = gameData.playerBattlefields.get(pid);
-                        if (bf != null) {
-                            for (Permanent p : bf) {
-                                if (p.getCard().hasType(CardType.PLANESWALKER)) {
-                                    hasPlaneswalkers = true;
-                                    break;
-                                }
-                            }
-                        }
-                        if (hasPlaneswalkers) break;
-                    }
-                    if (!hasPlaneswalkers) {
-                        UUID opponentId = gameQueryService.getOpponentId(gameData, data.controllerId());
-                        StackEntry entry = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                data.card(),
-                                data.controllerId(),
-                                data.card().getName() + "'s ability",
-                                new ArrayList<>(List.of(effectToAdd)),
-                                data.damageDealt(),
-                                data.permanentId()
-                        );
-                        entry.setTargetId(opponentId);
-                        gameData.stack.add(entry);
-                    } else {
-                        TargetFilter targetFilter = data.card().getEffectTargetIndex(effectToAdd) >= 0
-                                ? data.card().getTargetFilter() : null;
-                        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                                data.card(), data.controllerId(), new ArrayList<>(List.of(effectToAdd)),
-                                false, targetFilter, data.damageDealt()
-                        ));
-                    }
+                    // "Target opponent or planeswalker" is chosen as the ability goes on the stack (CR 603.3d), among
+                    // every opponent and planeswalker, even when only one is legal.
+                    TargetFilter targetFilter = data.card().getEffectTargetIndex(effectToAdd) >= 0
+                            ? data.card().getTargetFilter()
+                            : new AnyTargetPredicateTargetFilter(new PermanentIsPlaneswalkerPredicate(),
+                                    new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                                    "Target must be an opponent or planeswalker");
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            data.card(), data.controllerId(), new ArrayList<>(List.of(effectToAdd)),
+                            false, targetFilter, data.damageDealt(), data.permanentId(), data.sourceSnapshot()));
                     gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
                     log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
                     continue;

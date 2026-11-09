@@ -13,7 +13,7 @@ public class SoulBarrier extends Card {
 
     public SoulBarrier() {
         // Whenever an opponent casts a creature spell, this enchantment deals 2 damage to that player unless they pay {2}.
-        addTrigger(Triggers.opponentCastsSpell(),
-                new DamageUnlessPaysEffect(2, 2, new CardTypePredicate(CardType.CREATURE)));
+        addTrigger(Triggers.opponentCastsSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
+                new DamageUnlessPaysEffect(2, 2));
     }
 }

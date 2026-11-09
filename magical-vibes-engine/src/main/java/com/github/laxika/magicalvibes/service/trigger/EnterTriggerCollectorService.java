@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnteringPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnteringTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentThenExileOtherTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -328,12 +327,7 @@ public class EnterTriggerCollectorService {
         TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
         Card sourceCard = match.permanent().getCard();
         if (isTargeting(effect)) {
-            for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
-                match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                        sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
-                        match.permanent().getId()));
-            }
-            logTriggered(match);
+            queueTokenEnterTargetChoices(match, effect, tokensEnter);
             return true;
         }
         StackEntry entry = new StackEntry(
@@ -346,11 +340,31 @@ public class EnterTriggerCollectorService {
                 match.permanent().getId());
         entry.setEventValue(tokensEnter.count());
         entry.setNonTargeting(true);
+        entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
         for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
             match.gameData().enqueueTrigger(entry.copyForNewStackObject());
         }
         logTriggered(match);
         return true;
+    }
+
+    /**
+     * Queues the target choice of a targeted "whenever a token enters" ability, once for each time it triggers, its
+     * targets chosen as it goes on the stack (CR 603.3d). When the event is one token's ("whenever a token enters",
+     * triggering for each), that token is the entry's triggering permanent, "it" for the effects that read it ("a token
+     * that's a copy of it"), and a target restricted by it ("target player other than its controller") is judged
+     * against it. The choice carries the ability's "do this only once each turn" mark (CR 603.2h) to its entry.
+     */
+    private void queueTokenEnterTargetChoices(TriggerMatchContext match, CardEffect effect,
+                                              TriggerContext.TokensEnter tokensEnter) {
+        UUID enteringTokenId = tokensEnter.permanentIds().size() == 1 ? tokensEnter.permanentIds().getFirst() : null;
+        var choice = new PermanentChoiceContext.EntersTriggerTarget(match.permanent().getCard(), match.controllerId(),
+                new ArrayList<>(List.of(effect)), match.permanent().getId(), enteringTokenId);
+        for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
+            match.gameData().queueInteraction(match.markSourceOncePerTurnOnAcceptance()
+                    ? choice.withMarkSourceOncePerTurnOnAcceptance() : choice);
+        }
+        logTriggered(match);
     }
 
     @CollectsWatchTrigger(value = CreateTokenCopyOfTargetPermanentEffect.class,
@@ -385,27 +399,6 @@ public class EnterTriggerCollectorService {
             }
             match.gameData().enqueueTrigger(entry);
         }
-        logTriggered(match);
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = CreateTokenCopyOfEnteringTokenForTargetPlayerEffect.class,
-                    watch = ZoneChangeWatch.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
-    @CollectsWatchTrigger(value = CreateTokenCopyOfEnteringTokenForTargetPlayerEffect.class,
-                    watch = ZoneChangeWatch.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD)
-    private boolean handleTokenEnterCopyForTargetPlayer(TriggerMatchContext match,
-                                                         CreateTokenCopyOfEnteringTokenForTargetPlayerEffect effect,
-                                                         TriggerContext ctx) {
-        TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
-        if (tokensEnter.permanentIds().isEmpty()) {
-            return false;
-        }
-
-        UUID enteringTokenId = tokensEnter.permanentIds().getFirst();
-        MayEffect may = new MayEffect(effect, "Have target player create a token copy?");
-        match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                match.permanent().getCard(), match.controllerId(), List.of(may),
-                match.permanent().getId(), enteringTokenId, match.permanent().getId()));
         logTriggered(match);
         return true;
     }
@@ -608,6 +601,12 @@ public class EnterTriggerCollectorService {
     private boolean handleTokenEnterMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
 
         TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
+        if (isTargeting(may)) {
+            // "You may have target player …": the target is chosen as the ability goes on the stack (CR 603.3d), and
+            // the "you may" is asked as it resolves (CR 603.5).
+            queueTokenEnterTargetChoices(match, may, tokensEnter);
+            return true;
+        }
         Card sourceCard = match.permanent().getCard();
         for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
             match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
