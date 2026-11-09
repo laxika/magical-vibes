@@ -158,6 +158,17 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
                 anyNumberWhenConditionMet, allModesWhenConditionMet, restriction);
     }
 
+    /**
+     * This modal with between {@code choicesRequired} and {@code choicesMax} modes to choose: the number its triggered
+     * ability's choice has once the trigger event set it ("choose up to X", a "choose both instead" condition judged as
+     * the ability triggers), the choice made as the ability is put on the stack (CR 700.2b).
+     */
+    public ChooseOneEffect withChoiceCount(int choicesRequired, int choicesMax) {
+        return new ChooseOneEffect(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid,
+                modesMayRepeat, choicesMaxCondition, modeCosts, modeBudget, choicesEqualModalXValue,
+                anyNumberWhenConditionMet, allModesWhenConditionMet, modeRestriction);
+    }
+
     /** "Choose one or more —" modal: at least one mode, up to every mode. */
     public static ChooseOneEffect oneOrMore(List<ChooseOneOption> options) {
         return new ChooseOneEffect(options, false, 1, options.size(), false, null);

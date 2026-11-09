@@ -1718,6 +1718,26 @@ class StepTriggerServiceTest {
         }
 
         @Test
+        @DisplayName("A beginning-of-combat modal whose \"choose more\" condition is false carries one mode on its choice")
+        void beginningOfCombatModalConditionFalseCarriesModeCountOnTheChoice() {
+            Card sourceCard = createCardWithName("Metalcraft Modal Card");
+            ChooseOneEffect modal = ChooseOneEffect.oneOrMoreWhen(List.of(
+                    new ChooseOneEffect.ChooseOneOption("Gain life", new GainLifeEffect(1)),
+                    new ChooseOneEffect.ChooseOneOption("Gain more life", new GainLifeEffect(2))),
+                    new Metalcraft());
+            sourceCard.addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), modal);
+            gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
+
+            sut.handleBeginningOfCombatTriggers(gd);
+
+            PermanentChoiceContext.TriggeredModalTrigger pending =
+                    gd.peekPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
+            assertThat(pending.effect()).isEqualTo(modal);
+            assertThat(pending.modeCount())
+                    .isEqualTo(new PermanentChoiceContext.TriggeredModalTrigger.ModeCount(1, 1));
+        }
+
+        @Test
         @DisplayName("Targeted modal beginning-of-combat trigger queues mode selection")
         void targetedModalBeginningOfCombatQueuesModeSelection() {
             Card sourceCard = createCardWithName("Ferocification");

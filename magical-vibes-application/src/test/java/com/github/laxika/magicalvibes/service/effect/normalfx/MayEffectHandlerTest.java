@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -71,6 +73,37 @@ class MayEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
         assertThat(gd.pendingMayAbilities).hasSize(1);
         assertThat(gd.pendingMayAbilities.getFirst().effects()).containsExactly(returnCard);
+    }
+
+    @Test
+    @DisplayName("Asks nothing for a graveyard-choosing effect whose choice took no card")
+    void skipsGraveyardChoosingEffectWithoutChosenCards() {
+        MayEffect mayEffect = new MayEffect(
+                new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD), "Exile?");
+        // "That player" of a combat damage trigger is the entry's non-targeting referent, not a chosen card.
+        StackEntry entry = createEntryWithTarget(createCard("Zombie Cannibal"), player1Id, List.of(mayEffect),
+                player2Id);
+        entry.setNonTargeting(true);
+
+        resolveEffect(gd, entry, mayEffect);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.resolvingMayEffectFromStack).isFalse();
+    }
+
+    @Test
+    @DisplayName("Asks for a graveyard-choosing effect whose choice took a card")
+    void asksForGraveyardChoosingEffectWithAChosenCard() {
+        ExileGraveyardCardsEffect exile =
+                new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD);
+        MayEffect mayEffect = new MayEffect(exile, "Exile?");
+        StackEntry entry = createEntry(createCard("Zombie Cannibal"), player1Id, List.of(mayEffect));
+        entry.setTargetCardIds(List.of(UUID.randomUUID()));
+
+        resolveEffect(gd, entry, mayEffect);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingMayAbilities.getFirst().effects()).containsExactly(exile);
     }
 
     @Test

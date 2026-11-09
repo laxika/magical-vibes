@@ -202,6 +202,15 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        // An effect that picks its graveyard cards as the ability goes on the stack (CR 603.3d) acts only on them, so
+        // when that choice took none it does nothing and its "you may" has no choice to offer (Rysorian Badger, Zombie
+        // Cannibal, Spellweaver Helix with no card to choose).
+        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect choosing
+                && choosing.choosesGraveyardCards()
+                && entry.getTargetCardIds().isEmpty() && entry.getTargetIds().isEmpty()) {
+            return;
+        }
+
         // Optional hand-ability targets can be omitted (e.g. Decree of Silence cycling).
         // Skip that optional effect while continuing the ability's remaining effects.
         if (targetId == null && entry.isCyclingAbility()

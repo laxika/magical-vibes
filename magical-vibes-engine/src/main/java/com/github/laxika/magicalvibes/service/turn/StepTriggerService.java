@@ -714,6 +714,7 @@ public class StepTriggerService {
                         action.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(action.tokenEffect())));
                 entry.setNonTargeting(true);
+                entry.setEventValue(action.eventValue());
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed ability triggers."));
@@ -5389,6 +5390,7 @@ public class StepTriggerService {
                             && (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)))) {
                         gameData.queueMayAbility(perm.getCard(), playerId, may, null, perm.getId());
+                        recordStepPlayer(gameData.stack.getLast(), activePlayerId);
                     } else if (effect instanceof SacrificeSelfAndReturnCardsExiledWithSourceEffect sacReturn) {
                         // Intervening-if: only trigger if N or more cards have been exiled with the
                         // source permanent (CR 603.4). Re-checked again at resolution.
@@ -5397,15 +5399,15 @@ public class StepTriggerService {
                                     gameData.id, perm.getCard().getName(), sacReturn.minCount());
                             continue;
                         }
-                        gameData.stack.add(new StackEntry(
+                        gameData.stack.add(recordStepPlayer(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 playerId,
                                 perm.getCard().getName() + "'s end step ability",
                                 new ArrayList<>(List.of(effect)),
-                                null,
+                                (UUID) null,
                                 perm.getId()
-                        ));
+                        ), activePlayerId));
                         gameLogService.append(gameData,
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                         log.info("Game {} - {} end-step sacrifice-and-return trigger pushed onto stack", gameData.id, perm.getCard().getName());
@@ -6282,7 +6284,7 @@ public class StepTriggerService {
         List<CardEffect> mayEffects = combatEffects.stream()
                 .filter(e -> e instanceof MayEffect && e.targetSpec() == TargetSpec.NONE)
                 .toList();
-        List<ChooseOneEffect> modalEffects = new ArrayList<>();
+        List<PermanentChoiceContext.TriggeredModalTrigger> modalChoices = new ArrayList<>();
         List<CardEffect> mandatoryEffects = new ArrayList<>();
         for (CardEffect effect : combatEffects) {
             if (effect instanceof ChooseOneAtRandomEffect randomChoice) {
@@ -6291,7 +6293,9 @@ public class StepTriggerService {
                 continue;
             }
             if (effect instanceof ChooseOneEffect chooseOne) {
-                modalEffects.add(limitModesToCondition(gameData, perm, controllerId, sourcePermanentId, chooseOne));
+                modalChoices.add(limitModesToCondition(gameData, perm, controllerId, sourcePermanentId,
+                        new PermanentChoiceContext.TriggeredModalTrigger(
+                                perm.getCard(), controllerId, chooseOne, sourcePermanentId)));
                 continue;
             }
             // Targets are chosen when a triggered ability is put on the stack, before the
@@ -6312,9 +6316,8 @@ public class StepTriggerService {
             }
         }
 
-        for (ChooseOneEffect effect : modalEffects) {
-            gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                    perm.getCard(), controllerId, effect, sourcePermanentId));
+        for (PermanentChoiceContext.TriggeredModalTrigger modalChoice : modalChoices) {
+            gameData.queueInteraction(modalChoice);
             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} beginning-of-combat trigger queued for mode selection",
                     gameData.id, perm.getCard().getName());
@@ -6411,22 +6414,25 @@ public class StepTriggerService {
         }
     }
 
-    private ChooseOneEffect limitModesToCondition(GameData gameData, Permanent perm, UUID controllerId,
-                                                  UUID sourcePermanentId, ChooseOneEffect modal) {
+    /**
+     * {@code choice} with the number of modes its "choose both instead" condition allows, judged as the ability triggers:
+     * only the modal's required number while the condition is false. The modal itself goes to the choice as written.
+     */
+    private PermanentChoiceContext.TriggeredModalTrigger limitModesToCondition(
+            GameData gameData, Permanent perm, UUID controllerId, UUID sourcePermanentId,
+            PermanentChoiceContext.TriggeredModalTrigger choice) {
+        ChooseOneEffect modal = choice.effect();
         if (modal.choicesMaxCondition() == null) {
-            return modal;
+            return choice;
         }
         boolean conditionMet = conditionEvaluationService.isMet(gameData, modal.choicesMaxCondition(),
                 sourcePermanentId == null
                         ? ConditionContext.forCard(perm.getCard(), controllerId)
                         : ConditionContext.forPermanent(perm, controllerId));
         if (conditionMet) {
-            return modal;
+            return choice;
         }
-        return new ChooseOneEffect(modal.options(), modal.optional(), modal.choicesRequired(),
-                modal.choicesRequired(), modal.allModesWhenOptionalCostPaid(), modal.modesMayRepeat(), null,
-                modal.modeCosts(), modal.modeBudget(), modal.choicesEqualModalXValue(),
-                modal.anyNumberWhenConditionMet()).withModeRestriction(modal.modeRestriction());
+        return choice.withModeCount(modal.choicesRequired(), modal.choicesRequired());
     }
 
     private List<CardEffect> chooseRandomEffectsAtTriggerTime(GameData gameData, UUID controllerId,

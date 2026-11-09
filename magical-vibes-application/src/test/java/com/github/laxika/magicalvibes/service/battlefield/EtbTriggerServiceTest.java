@@ -290,5 +290,29 @@ class EtbTriggerServiceTest {
         PermanentChoiceContext.TriggeredModalTrigger pending =
                 gameData.peekPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
         assertThat(pending.effect().choicesMax()).isEqualTo(2);
+        assertThat(pending.modeCount()).isNull();
+    }
+
+    @Test
+    void triggeredModalWhoseAdditionalModesConditionIsFalseCarriesOneModeOnTheChoice() {
+        Card creature = new Card();
+        creature.setName("Delirium Modal Creature");
+        creature.setType(CardType.CREATURE);
+        ChooseOneEffect modal = ChooseOneEffect.oneOrMoreWhen(List.of(
+                new ChooseOneEffect.ChooseOneOption("Draw one", new DrawCardEffect(1)),
+                new ChooseOneEffect.ChooseOneOption("Draw another", new DrawCardEffect(1))),
+                new Delirium());
+        creature.addTrigger(Triggers.enters(ObjectRelation.THIS),
+                new ChooseOneAtTriggerTimeEffect(modal));
+        gameData.playerBattlefields.get(controllerId).add(new Permanent(creature));
+        when(conditionEvaluationService.isMet(any(), any(), any())).thenReturn(false);
+
+        service.processCreatureETBEffects(gameData, controllerId, creature, null, false);
+
+        PermanentChoiceContext.TriggeredModalTrigger pending =
+                gameData.peekPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
+        assertThat(pending.effect()).isEqualTo(modal);
+        assertThat(pending.modeCount())
+                .isEqualTo(new PermanentChoiceContext.TriggeredModalTrigger.ModeCount(1, 1));
     }
 }

@@ -536,14 +536,16 @@ public class EtbTriggerService {
                         continue;
                     }
                 }
+                // The card's modal goes to the choice as written; how many modes it has, judged as the ability
+                // triggers, rides on the choice.
+                PermanentChoiceContext.TriggeredModalTrigger modalChoice =
+                        new PermanentChoiceContext.TriggeredModalTrigger(card, controllerId, choice,
+                                triggerSourcePermanentId);
                 if (minimumChoices != choice.choicesRequired() || maximumChoices != choice.choicesMax()) {
-                    choice = new ChooseOneEffect(choice.options(), choice.optional(), minimumChoices,
-                            maximumChoices, choice.allModesWhenOptionalCostPaid(), choice.modesMayRepeat(),
-                            choice.additionalModesCondition()).withModeRestriction(choice.modeRestriction());
+                    modalChoice = modalChoice.withModeCount(minimumChoices, maximumChoices);
                 }
                 for (int i = 0; i < 1 + extraTriggerCopies; i++) {
-                    gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                            card, controllerId, choice, triggerSourcePermanentId));
+                    gameData.queueInteraction(modalChoice);
                 }
             }
 

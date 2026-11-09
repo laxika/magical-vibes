@@ -970,10 +970,10 @@ class SpellCastTriggerCollectorServiceTest {
                     .map(PermanentChoiceContext.TriggeredModalTrigger.class::cast)
                     .findFirst()
                     .orElseThrow();
-            assertThat(pending.effect().options()).isEqualTo(modal.options());
-            assertThat(pending.effect().optional()).isTrue();
-            assertThat(pending.effect().choicesRequired()).isZero();
-            assertThat(pending.effect().choicesMax()).isEqualTo(2);
+            // The card's modal goes to the choice as written; the X the event set rides on the choice.
+            assertThat(pending.effect()).isEqualTo(modal);
+            assertThat(pending.modeCount())
+                    .isEqualTo(new PermanentChoiceContext.TriggeredModalTrigger.ModeCount(0, 2));
             assertThat(pending.triggeringCardId()).isEqualTo(spellCard.getId());
         }
 

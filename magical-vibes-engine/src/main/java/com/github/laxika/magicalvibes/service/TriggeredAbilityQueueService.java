@@ -998,7 +998,6 @@ public class TriggeredAbilityQueueService {
                     StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                             pending.sourceCard(), pending.controllerId(), pending.sourceCard().getName() + "'s ability",
                             pending.effects(), pending.sourcePermanentId(), List.of());
-                    entry.setNonTargeting(true);
                     entry.setAttackedTargetId(pending.attackedTargetId());
                     if (pending.xValue() != null) entry.setXValue(pending.xValue());
                     entry.setEventValue(pending.eventValue());
@@ -1311,6 +1310,10 @@ public class TriggeredAbilityQueueService {
             PermanentChoiceContext.TriggeredModalTrigger pending =
                     gameData.pollPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
             ChooseOneEffect effect = pending.effect();
+            // How many modes are chosen where the trigger event set it ("choose up to X", Riku of Many Paths).
+            if (pending.modeCount() != null) {
+                effect = effect.withChoiceCount(pending.modeCount().minimum(), pending.modeCount().maximum());
+            }
             // "That wasn't chosen during your last combat" (By Elspeth's Command): the mode the source chose last.
             boolean lastCombat = effect.modeRestriction() == ChooseOneEffect.ModeRestriction.NOT_CHOSEN_DURING_LAST_COMBAT;
             if (pending.consumeModes() || pending.modesResetEachTurn() || lastCombat) {
@@ -1761,7 +1764,8 @@ public class TriggeredAbilityQueueService {
                                 .toList();
                     }
                     validPermanentTargets = restrictToEffectPermanentRestriction(
-                            gameData, pending.effects(), validPermanentTargets);
+                            gameData, pending.controllerId(), pending.sourceCard(), pending.effects(),
+                            validPermanentTargets);
                 } else {
                     // The X a target filter reads is the X the ability goes on the stack with, as its targets
                     // are checked again as it resolves (Skyfire Kirin's "creature with that spell's mana value").
@@ -2362,8 +2366,8 @@ public class TriggeredAbilityQueueService {
      *
      * <p>Players are added by the callers — every one of them offers all of them.</p>
      */
-    private List<UUID> restrictToEffectPermanentRestriction(GameData gameData, List<CardEffect> effects,
-                                                           List<UUID> candidates) {
+    private List<UUID> restrictToEffectPermanentRestriction(GameData gameData, UUID controllerId, Card sourceCard,
+                                                           List<CardEffect> effects, List<UUID> candidates) {
         java.util.Optional<PermanentPredicate> restriction = effects.stream()
                 .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
                 .findFirst()
@@ -2371,12 +2375,15 @@ public class TriggeredAbilityQueueService {
         if (restriction.isEmpty()) {
             return candidates;
         }
+        // Judged from the ability's controller and source, as the candidates were ("target creature you control").
+        FilterContext filterContext =
+                new FilterContext(gameData, sourceCard == null ? null : sourceCard.getId(), controllerId, null, null);
         return candidates.stream()
                 .filter(id -> {
                     Permanent permanent = gameQueryService.findPermanentById(gameData, id);
                     return permanent != null
-                            && predicateEvaluationService.matchesPermanentPredicate(gameData, permanent,
-                            restriction.get());
+                            && predicateEvaluationService.matchesPermanentPredicate(permanent,
+                            restriction.get(), filterContext);
                 })
                 .toList();
     }

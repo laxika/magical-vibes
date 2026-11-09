@@ -116,6 +116,33 @@ class BladecoilSerpentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each of the three abilities reads the payment as it resolves, after the others resolved")
+    void eachAbilityReadsThePaymentAsItResolves() {
+        harness.setHand(player1, List.of(new BladecoilSerpent()));
+        harness.setLibrary(player1, List.of(new GiantGrowth(), new GiantGrowth()));
+        harness.setHand(player2, List.of(new GiantGrowth(), new GiantGrowth()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        Permanent serpent = findPermanent(player1, "Bladecoil Serpent");
+        for (int i = 0; i < 10 && !gd.stack.isEmpty(); i++) {
+            harness.passBothPriorities();
+            if (gd.interaction.activeInteraction() != null) {
+                harness.handleCardChosen(player2, 0);
+            }
+        }
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+        assertThat(serpent.getEffectivePower()).isEqualTo(6);
+        assertThat(gqs.hasKeyword(gd, serpent, Keyword.TRAMPLE)).isTrue();
+    }
+
+    @Test
     @DisplayName("Blue mana spent on X also contributes to card drawing")
     void countsManaSpentOnX() {
         harness.setHand(player1, List.of(new BladecoilSerpent()));

@@ -13,20 +13,13 @@ import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.EntryFactCondition;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.amount.ColorManaPairsSpentToCast;
-import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandIfDashCostPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -65,16 +58,6 @@ public class EtbEffectResolver {
 
     public EtbEffectResolver(ConditionEvaluationService conditionEvaluationService) {
         this.conditionEvaluationService = conditionEvaluationService;
-        // "you lose the game unless this was cast from your hand" — no-op (drop) when cast from hand,
-        // otherwise materialise into the controller losing the game.
-        register(LoseGameIfNotCastFromHandEffect.class, (ctx, effect) -> {
-            Permanent source = ctx.sourcePermanent();
-            boolean castFromHand = source != null && source.isCast() && source.getCastFromZone() != null
-                    ? source.getCastFromZone() == Zone.HAND
-                    : ctx.wasCastFromHand();
-            return castFromHand ? null : new TargetPlayerLosesGameEffect(ctx.controllerId());
-        });
-
         // Tribute's "if tribute wasn't paid" ability is an intervening-if trigger. The choice is
         // recorded on the entering permanent before this resolver runs.
         register(TributeNotPaidEffect.class, (ctx, effect) -> {
@@ -205,46 +188,7 @@ public class EtbEffectResolver {
      */
     public CardEffect resolve(EtbEffectContext ctx, CardEffect effect) {
         EtbEffectHandler handler = handlers.get(effect.getClass());
-        CardEffect resolved = handler != null ? handler.resolve(ctx, effect) : effect;
-        return resolved == null ? null : snapshotManaPairs(ctx, resolved);
-    }
-
-    /** Retains the casting payment across the independent abilities of an entering permanent. */
-    private CardEffect snapshotManaPairs(EtbEffectContext ctx, CardEffect effect) {
-        if (effect instanceof DrawCardEffect draw && draw.amount() instanceof ColorManaPairsSpentToCast) {
-            return new DrawCardEffect(snapshotManaPairs(ctx, draw.amount()),
-                    draw.castTimeXValue());
-        }
-        if (effect instanceof DiscardEffect discard && discard.amount() instanceof ColorManaPairsSpentToCast) {
-            return new DiscardEffect(snapshotManaPairs(ctx, discard.amount()), discard.recipient(),
-                    discard.random(), discard.stopAfterDiscardingType(),
-                    discard.onlyCardsDrawnThisResolution(), discard.stopAfterDiscardingPredicate());
-        }
-        if (effect instanceof BoostSelfEffect boost
-                && (boost.powerBoost() instanceof ColorManaPairsSpentToCast
-                || boost.toughnessBoost() instanceof ColorManaPairsSpentToCast)) {
-            return new BoostSelfEffect(snapshotManaPairs(ctx, boost.powerBoost()),
-                    snapshotManaPairs(ctx, boost.toughnessBoost()), boost.duration());
-        }
-        if (effect instanceof SequenceEffect sequence) {
-            var steps = sequence.steps().stream().map(child -> snapshotManaPairs(ctx, child)).toList();
-            return steps.equals(sequence.steps()) ? effect
-                    : sequence.withSteps(steps);
-        }
-        if (effect instanceof ConditionalEffect conditional) {
-            CardEffect wrapped = snapshotManaPairs(ctx, conditional.wrapped());
-            return wrapped.equals(conditional.wrapped()) ? effect
-                    : new ConditionalEffect(conditional.condition(), wrapped);
-        }
-        return effect;
-    }
-
-    /** Other dynamic values remain live and are evaluated when the ability resolves. */
-    private DynamicAmount snapshotManaPairs(EtbEffectContext ctx, DynamicAmount amount) {
-        if (amount instanceof ColorManaPairsSpentToCast pairs) {
-            return new Fixed(ctx.gameData().getSpellCastManaSpentByColor(ctx.card().getId(), pairs.color()) / 2);
-        }
-        return amount;
+        return handler != null ? handler.resolve(ctx, effect) : effect;
     }
 
     private static CardEffect selectedModeEffect(ChooseOneEffect.ChooseOneOption option) {

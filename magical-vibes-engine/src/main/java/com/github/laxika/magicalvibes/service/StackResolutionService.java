@@ -78,6 +78,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -453,6 +454,7 @@ public class StackResolutionService {
         perm.setCast(!entry.isCopy() || entry.isCastCopy());
         perm.setCastControllerId(entry.isCopy() && !entry.isCastCopy() ? null : entry.getCasterId());
         perm.setManaSpentToCast(entry.getManaSpentToCast());
+        perm.setManaSpentByColorToCast(perm.isCast() ? entry.getManaSpentByColorToCast() : Map.of());
         perm.setRevealCardFromHandCostPaid(entry.isRevealCardFromHandCostPaid());
         perm.setWaterbendCostPaid(entry.isWaterbendCostPaid());
         perm.setControlledDragonAsCast(entry.isControlledDragonAsCast());

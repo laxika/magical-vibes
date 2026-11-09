@@ -190,6 +190,11 @@ public class StackEntry {
      * stack, else from the entry's snapshot of it once it has left (CR 608.2h; Magmablood Archaic).
      */
     private Set<ManaColor> colorsSpentToCast = Set.of();
+    /**
+     * The mana of each color spent to cast this spell, recorded as it becomes cast; the permanent it resolves into keeps
+     * it ({@code Permanent.manaSpentByColorToCast}) for its own enters abilities' {@code ColorManaPairsSpentToCast}.
+     */
+    private Map<ManaColor, Integer> manaSpentByColorToCast = Map.of();
     /** Additional entry counters granted by costs paid for the spell, also retained by copies. */
     @Setter private int additionalEnterCounters;
     @Setter private Zone targetZone;
@@ -612,6 +617,13 @@ public class StackEntry {
      * information when the source left the battlefield before resolution (sacrifice costs).
      */
     @Setter private Permanent sourcePermanentSnapshot;
+    /**
+     * The Auras and Equipment attached to the source as it last existed on the battlefield (CR 608.2h), by permanent id:
+     * recorded with {@link #sourcePermanentSnapshot} as the source leaves, whatever the effects are, for "for each Aura
+     * and Equipment attached to this creature" read once it has left. Empty while the source is on the battlefield.
+     * Set through {@link #setSourceAttachmentIds}; immutable, so copies share it.
+     */
+    private List<UUID> sourceAttachmentIds = List.of();
     /** Equipment permanent ids sacrificed with the source as part of its activation cost. */
     @Setter private List<UUID> sacrificedAttachedEquipmentIds = List.of();
     /** Last-known snapshot of the permanent attached to the source Aura when its trigger fired. */
@@ -725,7 +737,8 @@ public class StackEntry {
     /**
      * The cards a "one or more cards" trigger event was about ("those cards", "the discarded cards"), as they were in
      * the event: the cards discarded (by one discard event or by the discard a resolving ability made), put into a
-     * graveyard from a library, exiled together or that left a graveyard, or the land a land-play event was about.
+     * graveyard from a library, exiled together, sought or that left a graveyard, or the land a land-play event was
+     * about.
      * Empty when the event was about no cards.
      * Set through {@link #setTriggeringCards}; immutable, so copies share it.
      */
@@ -1196,6 +1209,7 @@ public class StackEntry {
         this.manaSpentToCast = source.manaSpentToCast;
         this.creatureManaSpentToCast = source.creatureManaSpentToCast;
         this.colorsSpentToCast = source.colorsSpentToCast;
+        this.manaSpentByColorToCast = source.manaSpentByColorToCast;
         this.additionalEnterCounters = source.additionalEnterCounters;
         this.targetZone = source.targetZone;
         this.targetCardIds = source.targetCardIds.isEmpty() ? List.of() : new ArrayList<>(source.targetCardIds);
@@ -1301,6 +1315,7 @@ public class StackEntry {
         this.resolutionExiledCardIds = source.resolutionExiledCardIds;
         this.resolutionResults = source.resolutionResults;
         this.sourcePermanentSnapshot = source.sourcePermanentSnapshot;
+        this.sourceAttachmentIds = source.sourceAttachmentIds;
         this.sacrificedAttachedEquipmentIds = source.sacrificedAttachedEquipmentIds.isEmpty()
                 ? List.of() : new ArrayList<>(source.sacrificedAttachedEquipmentIds);
         this.chosenPermanentId = source.chosenPermanentId;
@@ -1645,6 +1660,7 @@ public class StackEntry {
         this.manaSpentToCast = 0;
         this.creatureManaSpentToCast = 0;
         this.colorsSpentToCast = Set.of();
+        this.manaSpentByColorToCast = Map.of();
         this.copy = false;
         this.castCopy = false;
         this.nonTargeting = false;
@@ -2254,6 +2270,16 @@ public class StackEntry {
     }
 
     /** Records {@code colors} as the colors of mana spent to cast this spell; an immutable copy is kept. */
+    /** The mana of each color spent to cast this spell ({@link #manaSpentByColorToCast}). */
+    public Map<ManaColor, Integer> getManaSpentByColorToCast() {
+        return manaSpentByColorToCast;
+    }
+
+    public void setManaSpentByColorToCast(Map<ManaColor, Integer> manaSpentByColor) {
+        this.manaSpentByColorToCast = manaSpentByColor == null || manaSpentByColor.isEmpty()
+                ? Map.of() : Map.copyOf(manaSpentByColor);
+    }
+
     public void setColorsSpentToCast(Set<ManaColor> colors) {
         this.colorsSpentToCast = colors == null || colors.isEmpty() ? Set.of() : Set.copyOf(colors);
     }
@@ -2264,6 +2290,11 @@ public class StackEntry {
      */
     public void setTriggeringSpell(StackEntry spell) {
         this.triggeringSpellSnapshot = spell == null ? null : new StackEntry(spell);
+    }
+
+    /** Records {@code attachmentIds} as the Auras and Equipment attached to the source as it left the battlefield. */
+    public void setSourceAttachmentIds(List<UUID> attachmentIds) {
+        this.sourceAttachmentIds = attachmentIds == null ? List.of() : List.copyOf(attachmentIds);
     }
 
     /** Records {@code cards} as the cards the trigger event was about, for the effects that read them as they resolve. */

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.condition.Raid;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -25,9 +26,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseGameIfNotCastFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -85,12 +85,6 @@ class EtbEffectResolverTest {
     }
 
     @Test
-    @DisplayName("LoseGameIfNotCastFromHand: dropped when cast from hand")
-    void loseGameCastFromHandDropped() {
-        assertThat(resolver.resolve(ctx(true, 0, false), new LoseGameIfNotCastFromHandEffect())).isNull();
-    }
-
-    @Test
     void resolutionOnlyConditionIsNotEvaluatedDuringEntry() {
         CardEffect effect = new ConditionalEffect(new Metalcraft(), new DrawCardEffect(1));
 
@@ -98,11 +92,15 @@ class EtbEffectResolverTest {
     }
 
     @Test
-    @DisplayName("LoseGameIfNotCastFromHand: controller loses when not cast from hand")
-    void loseGameNotFromHand() {
-        CardEffect resolved = resolver.resolve(ctx(false, 0, false), new LoseGameIfNotCastFromHandEffect());
-        assertThat(resolved).isInstanceOf(TargetPlayerLosesGameEffect.class);
-        assertThat(((TargetPlayerLosesGameEffect) resolved).playerId()).isEqualTo(controllerId);
+    @DisplayName("\"If you didn't cast it from your hand\" is an entry fact: judged as the ability triggers, as written")
+    void notCastFromHandInterveningIf() {
+        ControllerLosesGameEffect lose = new ControllerLosesGameEffect();
+        NotCondition notFromHand = new NotCondition(new CastFromZone(Zone.HAND));
+        ConditionalEffect phage = new ConditionalEffect(notFromHand, lose);
+
+        assertThat(resolver.ownEntryConditionMet(ctx(true, 0, false), notFromHand)).isFalse();
+        assertThat(resolver.ownEntryConditionMet(ctx(false, 0, false), notFromHand)).isTrue();
+        assertThat(resolver.resolve(ctx(false, 0, false), phage)).isSameAs(lose);
     }
 
     @Test

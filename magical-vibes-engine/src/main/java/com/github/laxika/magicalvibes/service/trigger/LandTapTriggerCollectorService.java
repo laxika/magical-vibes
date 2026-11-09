@@ -27,7 +27,6 @@ import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedB
 import com.github.laxika.magicalvibes.model.effect.AddManaForEachOtherLandWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetCreatureAndCreateTokenIfSharesManaColorEffect;
 import com.github.laxika.magicalvibes.model.effect.IntensifySourceCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -60,7 +59,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
-import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -89,6 +88,11 @@ public class LandTapTriggerCollectorService {
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final ObjectProvider<TriggerCollectionService> triggerCollectionServiceProvider;
 
+    /**
+     * Resolves a land-tap triggered mana ability written as a sequence at once and whole (CR 605.4a): "its controller adds
+     * green mana equal to this enchantment's intensity. Then this enchantment intensifies by 1" (Runaway Growth), "that
+     * player adds one mana of any type that land produced, and …" (Overabundance, Barbflare Gremlin, Winter's Night).
+     */
     @CollectsTapTrigger(value = SequenceEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
     private boolean handleManaAbilitySequence(TriggerMatchContext match,
             SequenceEffect sequence, TriggerContext ctx) {
@@ -101,28 +105,6 @@ public class LandTapTriggerCollectorService {
             match.gameData().intensifyCard(match.permanent().getCard(), intensify.amount());
             return true;
         }
-        if (sequence.steps().size() == 2
-                && sequence.steps().get(0) instanceof AddManaOnEnchantedLandTapEffect mana
-                && sequence.steps().get(1) instanceof PutCountersOnSelfEffect intensify) {
-            if (!handleAddManaOnEnchantedLandTap(match, mana, ctx)) {
-                return false;
-            }
-
-            var source = match.permanent();
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    source.getCard(),
-                    match.controllerId(),
-                    source.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(intensify)),
-                    null,
-                    source.getId());
-            entry.setNonTargeting(true);
-            entry.setSourcePermanentSnapshot(new Permanent(source));
-            match.gameData().enqueueTrigger(entry);
-            return true;
-        }
-
         if (!(sequence.steps().getFirst() instanceof AddOneOfEachManaTypeProducedByLandEffect mana)
                 || !manaAbilityTriggers(match, mana, (TriggerContext.LandTap) ctx)) {
             return false;
@@ -381,7 +363,6 @@ public class LandTapTriggerCollectorService {
                     null,
                     source.getId());
             entry.setSourcePermanentSnapshot(new Permanent(source));
-            entry.setTargetFilter(TargetFilters.creatureYouControl());
             entry.setAwaitingProducedManaColor(true);
             match.gameData().pendingManaAbilityTriggers.add(entry);
             return true;
@@ -398,12 +379,13 @@ public class LandTapTriggerCollectorService {
 
     /**
      * Completes an ability parked while an any-color mana choice was pending whose target is still to be chosen
-     * (C.A.M.P., parked with its target filter): its target is chosen as it goes on the stack, with {@code manaColor}
-     * as the mana the tap produced.
+     * (C.A.M.P.: an effect of it targets a permanent, so it isn't a mana ability, CR 605.1b): its target is chosen as it
+     * goes on the stack, with {@code manaColor} as the mana the tap produced.
      */
     public boolean queueResolvedProducedManaTriggerTarget(GameData gameData, StackEntry entry,
             ManaColor manaColor) {
-        if (entry.getTargetFilter() == null) {
+        if (entry.getEffectsToResolve().stream()
+                .noneMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
             return false;
         }
         queueCampTargetChoice(gameData, entry.getCard(), entry.getControllerId(),
@@ -422,12 +404,13 @@ public class LandTapTriggerCollectorService {
     private void queueCampTargetChoice(GameData gameData, Card sourceCard, UUID controllerId,
             UUID sourcePermanentId, Permanent sourcePermanentSnapshot, List<CardEffect> effects,
             Set<ManaColor> producedManaColors) {
+        // The target is the one the effects declare ("target creature you control").
         gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 sourceCard,
                 controllerId,
                 effects,
                 false,
-                TargetFilters.creatureYouControl(),
+                null,
                 0,
                 sourcePermanentId,
                 sourcePermanentSnapshot).withProducedManaColors(producedManaColors));

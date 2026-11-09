@@ -2159,10 +2159,7 @@ public class GraveyardChoiceHandlerService {
                         pendingCard,
                         controllerId,
                         description,
-                        new ArrayList<>(cardIds.isEmpty()
-                                ? com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport
-                                .withoutOptionalWrapperWhenNoCards(pendingEffects)
-                                : pendingEffects),
+                        new ArrayList<>(pendingEffects),
                         pendingXValue,
                         null,
                         pendingSourcePermanentId,
@@ -2177,10 +2174,7 @@ public class GraveyardChoiceHandlerService {
                         pendingCard,
                         controllerId,
                         description,
-                        new ArrayList<>(cardIds.isEmpty()
-                                ? com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport
-                                .withoutOptionalWrapperWhenNoCards(pendingEffects)
-                                : pendingEffects),
+                        new ArrayList<>(pendingEffects),
                         pendingXValue,
                         null,
                         null,

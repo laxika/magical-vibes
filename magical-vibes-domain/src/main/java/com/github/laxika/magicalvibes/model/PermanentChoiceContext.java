@@ -1846,13 +1846,20 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      * permanent's record excludes, and which record the chosen mode goes to, follow the modal's
      * {@link ChooseOneEffect#modeRestriction()}: {@code consumeModes} ("hasn't been chosen"),
      * {@code modesResetEachTurn} ("this turn") and {@code rememberLastChosenMode} ("during your last combat") are set
-     * from it, or by a caller for an engine-built modal.
+     * from it, or by a caller for an engine-built modal. {@code effect} is the modal as the card wrote it;
+     * {@code modeCount}, when not {@code null}, is how many modes are chosen where the trigger event set it ("choose up
+     * to X, where X is …", Riku of Many Paths; a "choose both instead" condition judged as the ability triggered),
+     * read by the choice in place of the modal's own.
      */
     record TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                  UUID sourcePermanentId, boolean modesResetEachTurn,
                                  boolean consumeModes, UUID triggeringCardId,
                                  UUID attackedTargetId, UUID triggeringPermanentId,
-                                 boolean rememberLastChosenMode) implements PermanentChoiceContext {
+                                 boolean rememberLastChosenMode, ModeCount modeCount)
+            implements PermanentChoiceContext {
+
+        /** How many modes the ability's controller chooses: from {@code minimum} to {@code maximum}. */
+        public record ModeCount(int minimum, int maximum) {}
 
         public TriggeredModalTrigger {
             ChooseOneEffect.ModeRestriction restriction = effect == null ? ChooseOneEffect.ModeRestriction.NONE
@@ -1862,6 +1869,22 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     || restriction == ChooseOneEffect.ModeRestriction.NOT_YET_CHOSEN_THIS_TURN;
             rememberLastChosenMode = rememberLastChosenMode
                     || restriction == ChooseOneEffect.ModeRestriction.NOT_CHOSEN_DURING_LAST_COMBAT;
+        }
+
+        public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                     UUID sourcePermanentId, boolean modesResetEachTurn,
+                                     boolean consumeModes, UUID triggeringCardId,
+                                     UUID attackedTargetId, UUID triggeringPermanentId,
+                                     boolean rememberLastChosenMode) {
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, consumeModes,
+                    triggeringCardId, attackedTargetId, triggeringPermanentId, rememberLastChosenMode, null);
+        }
+
+        /** This choice with from {@code minimum} to {@code maximum} modes to choose, as the trigger event set them. */
+        public TriggeredModalTrigger withModeCount(int minimum, int maximum) {
+            return new TriggeredModalTrigger(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
+                    consumeModes, triggeringCardId, attackedTargetId, triggeringPermanentId, rememberLastChosenMode,
+                    new ModeCount(minimum, maximum));
         }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,

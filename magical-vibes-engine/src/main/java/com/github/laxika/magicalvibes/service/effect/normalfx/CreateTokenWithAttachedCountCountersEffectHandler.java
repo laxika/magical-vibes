@@ -41,7 +41,10 @@ public class CreateTokenWithAttachedCountCountersEffectHandler implements Normal
             return;
         }
 
-        int counterAmount = sourceHasLeft ? entry.getEventValue()
+        // Once the creature has left, the Auras and Equipment attached to it as it last existed (CR 608.2h).
+        int counterAmount = sourceHasLeft
+                ? (int) entry.getSourceAttachmentIds().stream()
+                        .filter(id -> !id.equals(entry.getGrantingPermanentId())).count()
                 : countAttachedAurasAndEquipment(gameData, source.getId(), entry.requireGrantingPermanentId());
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(
                 gameData, entry.getControllerId(), e.tokenTemplate(), entry.getCard().getSetCode());

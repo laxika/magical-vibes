@@ -63,7 +63,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstestStrikeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
@@ -2485,26 +2484,13 @@ public class CombatDamageService {
                             attachedJudge));
                 }
 
-                // Unwrap EnchantedPermanentConditionalEffect against the enchanted creature that
-                // dealt the damage, so a granted trigger gated on the creature's characteristics
-                // (e.g. Helm of the Ghastlord's colour-conditional draw/discard) only fires on the
-                // matching branch. Null branches contribute nothing.
                 List<CardEffect> effects = new ArrayList<>();
                 for (CardEffect effect : rawEffects) {
                     if (effect instanceof com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCombatDamageSourceIntoHandEffect
                             && creature.getCard().isToken()) {
                         continue;
                     }
-                    if (effect instanceof EnchantedPermanentConditionalEffect cond) {
-                        CardEffect active = predicateEvaluationService.matchesPermanentPredicate(gameData, creature, cond.filter())
-                                ? cond.ifMatch()
-                                : cond.ifNotMatch();
-                        if (active != null) {
-                            effects.add(active);
-                        }
-                    } else {
-                        effects.add(effect);
-                    }
+                    effects.add(effect);
                 }
 
                 int previousCopies = beginCombatDamageTriggerCopies(

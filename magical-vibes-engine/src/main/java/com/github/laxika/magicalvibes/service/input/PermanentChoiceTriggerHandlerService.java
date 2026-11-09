@@ -1259,11 +1259,6 @@ public class PermanentChoiceTriggerHandlerService {
                 new ArrayList<>(att.effects()),
                 att.sourcePermanentId(),
                 targetIds);
-        if (targetIds.isEmpty() && att.effects().stream().anyMatch(effect ->
-                effect instanceof com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect bounce
-                        && bounce.targetsChosenAtTriggerTime())) {
-            entry.setNonTargeting(true);
-        }
         if (att.xValue() != null) {
             entry.setXValue(att.xValue());
         }

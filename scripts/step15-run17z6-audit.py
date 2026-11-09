@@ -48,13 +48,16 @@ BIND = re.compile(r"\.set\w+\((?:effect|e|may|mayPay|marker|trigger)\.")
 # Run 17z12d closed the discard and milled-card handlers (deleted: the discard watches' defaults record the discard,
 # the cards-put-into-a-graveyard defaults the cards with their graveyard stays, whatever the effects are; Hedge
 # Shredder's and Colossal Grave-Reaver's "one or more land / creature cards" are trigger filters).
-OPEN = {}
-OPEN.update({
-    ("SeekTriggerCollectorService.java", "handleSeek"): "17z12e",
-    ("SpellCastTriggerCollectorService.java", "handleGenericSpellCastTrigger"): "17z12e",
-    ("LandTapTriggerCollectorService.java", "handleCampLandTap"): "17z12e",
-    ("LandTapTriggerCollectorService.java", "handleManaAbilitySequence"): "17z12e",
-})
+# Run 17z12e closed the last row: the seek default records the sought cards whatever the effects are (Lurker in the
+# Deep's "during your turn" is its event condition), the "choose up to X" bound rides on the modal choice
+# (`TriggeredModalTrigger.withModeCount`) instead of a rebuilt modal, C.A.M.P.'s target is its effect's and the
+# never-written counter step of the enchanted-land mana sequence is gone. Run 17z13's independent check opened rows
+# 17z13b to 17z13e; the handlers below are theirs (the reader sites of those rows are not handlers and aren't listed).
+OPEN = {
+    ("LandTapTriggerCollectorService.java", "handleReturnTappedLandToHand"): "17z13c",
+    ("MiscTriggerCollectorService.java", "handleEnchantedPermanentTapRelicBind"): "17z13c",
+    ("DeathTriggerCollectorService.java", "handleEmblemArtifactGraveyardReturn"): "17z13b",
+}
 
 
 def method_body(text, name):

@@ -227,7 +227,7 @@ combat damage step is processed.
 | `Triggers.youInvestigate()` | `InvestigateTriggerCollectorService` | Every controller investigate event; non-targeting effects enqueue directly |
 | `Triggers.youSurveil()` | `MiscTriggerCollectorService` | Controller surveils; non-targeting effects enqueue directly |
 | `Triggers.opponentSurveils()` | `MiscTriggerCollectorService` | Opponent surveils; the surveiling player is supplied as the implicit player context and event-driven effects enqueue directly |
-| `Triggers.youSeek()` | `SeekTriggerCollectorService` | Controller seeks one or more cards; the sought cards are carried in `TriggerContext.Seek` and non-targeting effects enqueue directly |
+| `Triggers.youSeek()` | `SeekTriggerCollectorService` | Controller seeks one or more cards (no dispatch for a seek that found nothing); every entry records the seeking player as triggering player and the sought cards as triggering cards whatever the effects are, and non-targeting effects enqueue directly |
 | `Triggers.youDiscardOneOrMoreCards()` | `TriggerCollectionService.checkDiscardEventTriggers` → `DiscardTriggerCollectorService` | One trigger for a one-or-more-card discard event; the count is carried by the trigger context and stack entry |
 | `Triggers.becomesTargetOfSpell()` / `becomesTargetOfSpellOrAbility()` / `becomesTargetOfOpponentSpellOrAbility()` / `becomesTargetOfOpponentSpell()` | `TriggerCollectionService.checkBecomesTargetOfSpell*` | Spell-target |
 | `Triggers.youBecomeTargetOfSpell()` | `TriggerCollectionService.checkBecomesTargetOfSpellTriggers` (targeted player; spell path only) | Spell-target |

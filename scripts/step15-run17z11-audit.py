@@ -19,8 +19,9 @@ The labels are keyed by file and effect class, so a later read of an already cla
 flagged, and the scan doesn't read the `…CollectorService` handlers (`step15-run17z6-audit.py` lists those). Run 17z12
 found reads this scan labelled correctly but whose neighbours bind by class; see its Findings. Its rows 17z12b to 17z12f
 are in the collector services, so `step15-run17z6-audit.py` lists them (run 17z12b closed 17z12b and opened 17z12f,
-run 17z12c closed 17z12c, run 17z12f closed 17z12f, run 17z12d closed 17z12d); none of this scan's reads is in
-them.
+run 17z12c closed 17z12c, run 17z12f closed 17z12f, run 17z12d closed 17z12d, run 17z12e closed 17z12e, the last);
+none of this scan's reads is in them. Run 17z12e's `EtbTriggerService` and `StepTriggerService` modal reads keep
+their ROUTE label: the card's modal goes to the mode choice as written, the event's bounds ride on the choice.
 
 A read with no entry is `UNCLASSIFIED`, with the window heuristic's guess (BIND, REBUILD, UNWRAP or ROUTE): a new read,
 or one a later run moved, to classify. The step's "done" check wants no read in an open row and none unclassified.

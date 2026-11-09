@@ -603,10 +603,8 @@ public class SpellCastTriggerCollectorService {
                 return true;
             }
             match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                    sourceCard, match.controllerId(), new ChooseOneEffect(choice.options(), choice.optional(), 0,
-                            maximumChoices, choice.allModesWhenOptionalCostPaid(), choice.modesMayRepeat(),
-                            choice.additionalModesCondition()).withModeRestriction(choice.modeRestriction()),
-                    sourcePermanentId, spellCard.getId()));
+                    sourceCard, match.controllerId(), choice, sourcePermanentId, spellCard.getId())
+                    .withModeCount(0, maximumChoices));
         } else if (resolved.size() == 1 && resolved.getFirst() instanceof ChooseOneEffect chooseOneEffect) {
             // The mode is chosen as the ability goes on the stack (CR 603.3c); a "hasn't been chosen (this turn)"
             // modal offers only the modes its source hasn't chosen (TriggeredModalTrigger reads the restriction).

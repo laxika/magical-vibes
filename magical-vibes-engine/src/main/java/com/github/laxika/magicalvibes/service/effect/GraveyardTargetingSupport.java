@@ -55,18 +55,6 @@ import java.util.List;
 @Component
 public class GraveyardTargetingSupport {
 
-    /**
-     * Drops the "you may" wrapper around a graveyard-card-choosing effect once no card was chosen, so
-     * the trigger does not ask for a decision that cannot change anything.
-     */
-    public static List<CardEffect> withoutOptionalWrapperWhenNoCards(List<CardEffect> effects) {
-        return effects.stream()
-                .map(effect -> effect instanceof MayEffect may
-                        && may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect
-                        ? may.wrapped() : effect)
-                .toList();
-    }
-
     public Target findTarget(List<CardEffect> effects) {
         for (CardEffect effect : effects) {
             CardEffect targetEffect = unwrapTargetingWrappers(effect);

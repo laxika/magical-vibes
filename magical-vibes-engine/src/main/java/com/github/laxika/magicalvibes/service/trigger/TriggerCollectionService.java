@@ -851,6 +851,7 @@ public class TriggerCollectionService {
                 // read them from the spell's entry (or their snapshot of it) as they resolve.
                 spell.setManaSpentToCast(gameData.getSpellCastManaSpent(spellCard.getId()));
                 spell.setCreatureManaSpentToCast(gameData.getSpellCastCreatureManaSpent(spellCard.getId()));
+                spell.setManaSpentByColorToCast(gameData.spellCastManaSpentByColor.get(spellCard.getId()));
             }
         }
         gameData.recordSpellCastFromZone(castingPlayerId, castZone, spellCard);
@@ -2612,11 +2613,6 @@ public class TriggerCollectionService {
         }
     }
 
-    /** Fires triggers whenever a player seeks one or more cards. */
-    public void checkSeekTriggers(GameData gameData, UUID seekingPlayerId) {
-        checkSeekTriggers(gameData, seekingPlayerId, List.of());
-    }
-
     /** Fires triggers whenever the given player rolls one or more dice. */
     public void checkControllerRollsPlanarDieTriggers(GameData gameData, UUID rollingPlayerId) {
         checkControllerRollsPlanarDieTriggers(gameData, rollingPlayerId, 0);
@@ -2726,16 +2722,19 @@ public class TriggerCollectionService {
         }
     }
 
+    /**
+     * Fires the "whenever you seek one or more cards" abilities of {@code seekingPlayerId}'s permanents for the cards
+     * they sought: none when no card was sought (a seek that found nothing is no seek of one or more cards).
+     */
     public void checkSeekTriggers(GameData gameData, UUID seekingPlayerId, List<Card> soughtCards) {
-        if (seekingPlayerId == null) {
+        if (seekingPlayerId == null || soughtCards == null || soughtCards.isEmpty()) {
             return;
         }
         List<Permanent> battlefield = gameData.playerBattlefields.get(seekingPlayerId);
         if (battlefield == null) {
             return;
         }
-        TriggerContext context = new TriggerContext.Seek(
-                seekingPlayerId, soughtCards == null ? List.of() : soughtCards);
+        TriggerContext context = new TriggerContext.Seek(seekingPlayerId, soughtCards);
         for (Permanent permanent : List.copyOf(battlefield)) {
             dispatchWatch(gameData, permanent, seekingPlayerId, ActionWatch.ON_CONTROLLER_SEEKS, context);
         }

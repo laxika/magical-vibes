@@ -593,8 +593,7 @@ public class GraveyardTargetingService {
                     card,
                     controllerId,
                     card.getName() + "'s " + triggerLabel + " trigger",
-                    new ArrayList<>(com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport
-                            .withoutOptionalWrapperWhenNoCards(effects)),
+                    new ArrayList<>(effects),
                     defendingPlayerId,
                     sourcePermanentId);
             trigger.setNonTargeting(true);

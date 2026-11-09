@@ -28,13 +28,13 @@ public class ConjureDuplicatesOfSoughtCardsAndManifestEffectHandler implements N
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        ConjureDuplicatesOfSoughtCardsAndManifestEffect soughtEffect =
-                (ConjureDuplicatesOfSoughtCardsAndManifestEffect) effect;
-        if (soughtEffect.soughtCards().isEmpty()) {
+        // "Those cards": the cards the seek event was about, recorded as the ability triggered.
+        List<Card> soughtCards = entry.getTriggeringCards();
+        if (soughtCards.isEmpty()) {
             return;
         }
 
-        List<Card> duplicates = soughtEffect.soughtCards().stream()
+        List<Card> duplicates = soughtCards.stream()
                 .map(Card::createConjuredCopy)
                 .toList();
         UUID controllerId = entry.getControllerId();

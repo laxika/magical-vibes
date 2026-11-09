@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConjureDuplicatesOfSoughtCardsAndManifestEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,28 +21,26 @@ public class SeekTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
+    /**
+     * Puts a "whenever you seek one or more cards" ability on the stack as the card wrote it, with the seeking player as
+     * its triggering player and the cards sought as its triggering cards ("those cards"), whatever the effects are. "During
+     * your turn" is the ability's event condition, judged by the dispatcher.
+     */
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_SEEKS)
     private boolean handleSeek(TriggerMatchContext match, CardEffect effect, TriggerContext context) {
-        CardEffect queuedEffect = effect;
-        if (effect instanceof ConjureDuplicatesOfSoughtCardsAndManifestEffect) {
-            TriggerContext.Seek seek = (TriggerContext.Seek) context;
-            if (seek.soughtCards().isEmpty()
-                    || !match.controllerId().equals(match.gameData().activePlayerId)) {
-                return false;
-            }
-            queuedEffect = new ConjureDuplicatesOfSoughtCardsAndManifestEffect(seek.soughtCards());
-        }
-
+        TriggerContext.Seek seek = (TriggerContext.Seek) context;
         Card sourceCard = match.permanent().getCard();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(queuedEffect)),
+                new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId());
         entry.setNonTargeting(true);
+        entry.setTriggeringPlayerId(seek.seekingPlayerId());
+        entry.setTriggeringCards(seek.soughtCards());
         match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on seek", match.gameData().id, sourceCard.getName());

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfColorTappedForManaEffect;
@@ -365,6 +366,7 @@ class LandTapTriggerCollectorServiceTest {
         StackEntry parked = gd.pendingManaAbilityTriggers.getFirst();
         assertThat(parked.isAwaitingProducedManaColor()).isTrue();
         assertThat(parked.getEffectsToResolve()).containsExactly(effect);
+        assertThat(parked.getTargetFilter()).isNull();
 
         assertThat(sut.queueResolvedProducedManaTriggerTarget(gd, parked, ManaColor.RED)).isTrue();
 
@@ -372,6 +374,19 @@ class LandTapTriggerCollectorServiceTest {
         var targetChoice = (PermanentChoiceContext.SpellTargetTriggerAnyTarget) gd.pendingInteractions.getFirst();
         assertThat(targetChoice.effects()).containsExactly(effect);
         assertThat(targetChoice.producedManaColors()).containsExactly(ManaColor.RED);
+        // "Target creature you control" is the effect's own target, not a filter the collector adds.
+        assertThat(targetChoice.targetFilter()).isNull();
+    }
+
+    @Test
+    void parkedTriggerWhoseEffectsTargetNothingIsNotRoutedToATargetChoice() {
+        Permanent source = createPermanent("Mana Trigger Source");
+        StackEntry parked = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), player1Id,
+                "Mana Trigger Source's ability", List.of(new GainLifeEffect(1)));
+
+        assertThat(sut.queueResolvedProducedManaTriggerTarget(gd, parked, ManaColor.RED)).isFalse();
+
+        assertThat(gd.pendingInteractions).isEmpty();
     }
 
     @Nested

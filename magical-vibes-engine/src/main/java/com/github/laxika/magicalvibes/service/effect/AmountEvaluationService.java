@@ -2259,8 +2259,17 @@ public class AmountEvaluationService {
         return gameQueryService.countColorManaSymbolsAmongPermanents(gameData, ctx.controllerId(), amount.color());
     }
 
+    /**
+     * The pairs of {@code amount}'s color of mana spent to cast the source: what the permanent the spell became recorded
+     * as it resolved (read by each of its own enters abilities as it resolves, Bladecoil Serpent; its last-known
+     * information once it has left, CR 608.2h), else the payment the spell still has on the stack (an "enters with"
+     * replacement as it enters).
+     */
     private int colorManaPairsSpentToCast(
             GameData gameData, ColorManaPairsSpentToCast amount, AmountContext ctx) {
+        if (ctx.sourcePermanent() != null && ctx.sourcePermanent().hasManaSpentByColorToCast()) {
+            return ctx.sourcePermanent().getManaSpentByColorToCast(amount.color()) / 2;
+        }
         if (ctx.sourceCard() == null) return 0;
         return gameData.getSpellCastManaSpentByColor(ctx.sourceCard().getId(), amount.color()) / 2;
     }

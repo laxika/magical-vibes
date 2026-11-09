@@ -2520,6 +2520,8 @@ public class PermanentRemovalService {
                         && !watchingEntries.contains(gameData.pendingEffectResolutionEntry)) {
                     watchingEntries.add(gameData.pendingEffectResolutionEntry);
                 }
+                // The Auras and Equipment attached to it as it leaves, for every entry it is the source of (CR 608.2h).
+                List<UUID> sourceAttachmentIds = attachedAurasAndEquipment(gameData, target.getId());
                 for (StackEntry entry : watchingEntries) {
                     for (Permanent chosenCostSnapshot : entry.getChosenCostPermanentSnapshots()) {
                         if (target.getId().equals(chosenCostSnapshot.getId())) {
@@ -2555,20 +2557,7 @@ public class PermanentRemovalService {
                         Permanent sourceSnapshot = new Permanent(target);
                         sourceSnapshot.setCard(lastKnownCard);
                         entry.setSourcePermanentSnapshot(sourceSnapshot);
-                        for (CardEffect resolvingEffect : entry.getEffectsToResolve()) {
-                            if (resolvingEffect instanceof com.github.laxika.magicalvibes.model.effect.CreateTokenWithAttachedCountCountersEffect) {
-                                int[] attached = {0};
-                                gameData.forEachPermanent((attachedController, attachedPermanent) -> {
-                                    if (target.getId().equals(attachedPermanent.getAttachedTo())
-                                            && !attachedPermanent.getId().equals(entry.getGrantingPermanentId())
-                                            && (attachedPermanent.getCard().getSubtypes().contains(CardSubtype.AURA)
-                                            || attachedPermanent.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT))) {
-                                        attached[0]++;
-                                    }
-                                });
-                                entry.setEventValue(attached[0]);
-                            }
-                        }
+                        entry.setSourceAttachmentIds(sourceAttachmentIds);
                     }
                     if (target.getId().equals(entry.getTriggeringPermanentId())) {
                         entry.rememberLastKnownPermanentCard(target.getId(), lastKnownCard);
@@ -2591,6 +2580,19 @@ public class PermanentRemovalService {
             }
         }
         return Optional.empty();
+    }
+
+    /** The ids of the Auras and Equipment attached to the permanent {@code permanentId}. */
+    private static List<UUID> attachedAurasAndEquipment(GameData gameData, UUID permanentId) {
+        List<UUID> attachmentIds = new ArrayList<>();
+        gameData.forEachPermanent((attachmentController, attachment) -> {
+            if (permanentId.equals(attachment.getAttachedTo())
+                    && (attachment.getCard().getSubtypes().contains(CardSubtype.AURA)
+                    || attachment.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT))) {
+                attachmentIds.add(attachment.getId());
+            }
+        });
+        return attachmentIds;
     }
 
     /**

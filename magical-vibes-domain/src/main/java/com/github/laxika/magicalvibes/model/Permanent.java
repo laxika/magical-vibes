@@ -840,6 +840,12 @@ public class Permanent {
     @Setter private UUID castControllerId;
     /** Mana spent to cast the spell that produced this permanent, for as-enters conditions. */
     @Setter private int manaSpentToCast;
+    /**
+     * Mana of each color spent to cast the spell that produced this permanent, recorded as it resolves into this
+     * permanent; empty when it wasn't cast. Read by {@code ColorManaPairsSpentToCast} as each of its own enters
+     * abilities resolves, so one ability's resolution doesn't take the payment from the others (Bladecoil Serpent).
+     */
+    private Map<ManaColor, Integer> manaSpentByColorToCast = Map.of();
     /** Total bloodthirst granted to the spell that produced this permanent while it was on the stack
      *  (Bloodlord of Vaasgoth). Read as an as-enters replacement alongside the card's printed
      *  bloodthirst; per CR 702.54c each instance applies separately, so grants simply add up. */
@@ -1312,6 +1318,7 @@ public class Permanent {
         this.cast = source.cast;
         this.castControllerId = source.castControllerId;
         this.manaSpentToCast = source.manaSpentToCast;
+        this.manaSpentByColorToCast = source.manaSpentByColorToCast;
         this.monstrous = source.monstrous;
         this.motivatedByPlayerId = source.motivatedByPlayerId;
         this.solved = source.solved;
@@ -2848,5 +2855,20 @@ public class Permanent {
 
     public boolean isAuraEffectsIgnoredFor(UUID playerId) {
         return auraEffectsIgnoredByPlayersThisTurn.contains(playerId);
+    }
+
+    /** The mana of {@code color} spent to cast the spell that produced this permanent ({@link #manaSpentByColorToCast}). */
+    public int getManaSpentByColorToCast(ManaColor color) {
+        return manaSpentByColorToCast.getOrDefault(color, 0);
+    }
+
+    /** Whether the mana spent to cast this permanent's spell was recorded by color ({@link #manaSpentByColorToCast}). */
+    public boolean hasManaSpentByColorToCast() {
+        return !manaSpentByColorToCast.isEmpty();
+    }
+
+    public void setManaSpentByColorToCast(Map<ManaColor, Integer> manaSpentByColor) {
+        this.manaSpentByColorToCast = manaSpentByColor == null || manaSpentByColor.isEmpty()
+                ? Map.of() : Map.copyOf(manaSpentByColor);
     }
 }
