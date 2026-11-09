@@ -39,7 +39,7 @@ public class DoubleEnchantedCreatureControllerLifeEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID playerId = entry.getTargetId();
+        UUID playerId = entry.getTriggeringPermanentControllerId();
         Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (aura == null) {
             aura = entry.getSourcePermanentSnapshot();

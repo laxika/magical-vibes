@@ -32,7 +32,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, boolean random,
                             CardType stopAfterDiscardingType, boolean onlyCardsDrawnThisResolution,
                             CardPredicate stopAfterDiscardingPredicate)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, boolean random) {
         this(amount, recipient, random, null, false, null);
@@ -82,11 +82,5 @@ public record DiscardEffect(DynamicAmount amount, DiscardRecipient recipient, bo
     public TargetSpec targetSpec() {
         return recipient == DiscardRecipient.TARGET_PLAYER
                 ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return recipient == DiscardRecipient.TARGET_PLAYER || recipient == DiscardRecipient.TRIGGERING_PLAYER
-                ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

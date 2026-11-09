@@ -10,10 +10,5 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
  * @param permissionCondition condition under which the controller may play the exiled card
  */
 public record ExileRandomNonlandCardFromDamagedPlayerLibraryEffect(Condition permissionCondition)
-        implements CombatDamageTriggerContextEffect {
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
-    }
+        implements CardEffect {
 }

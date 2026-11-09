@@ -5,15 +5,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * gives its caster a poison counter when cast.
  */
 public record PerpetuallyGivePoisonCounterOnCastToRandomNonlandCardInDamagedHandEffect()
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.player());
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

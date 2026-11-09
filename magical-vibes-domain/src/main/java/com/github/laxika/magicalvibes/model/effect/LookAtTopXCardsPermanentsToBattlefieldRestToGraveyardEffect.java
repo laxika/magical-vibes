@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
- * Looks at the top X cards of the controller's library (X from the spell's X value),
+ * Looks at the top X cards of the controller's library ({@code count}: the spell's X value, or "that many" of a
+ * trigger event, e.g. the combat damage dealt, read from the stack entry as the ability resolves),
  * lets the controller choose any number of eligible cards to put onto the battlefield,
  * and puts the rest into the graveyard (or bottom of library in random order).
  *
@@ -23,28 +26,32 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *       {@code mvCapped = CardAllOfPredicate(CardSupertypePredicate(LEGENDARY), CardIsPermanentPredicate())},
  *       {@code remainingToBottomRandom = false}</li>
  *   <li>Gishath, Sun's Avatar: {@code alwaysEligible = CardAllOfPredicate(CREATURE, DINOSAUR)},
- *       {@code mvCapped = null}, {@code remainingToBottomRandom = true}</li>
+ *       {@code mvCapped = null}, {@code remainingToBottomRandom = true}, {@code count = EventValue}</li>
  * </ul>
  *
  * @param alwaysEligiblePredicate cards matching this are eligible regardless of mana value (nullable)
  * @param mvCappedEligiblePredicate cards matching this are eligible only if MV &le; X (nullable)
  * @param remainingToBottomRandom if true, remaining cards go to the bottom of library in random order;
  *                                if false, remaining cards go to the graveyard
+ * @param count                   X, the number of cards looked at ({@link XValue} by default)
  */
 public record LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect(
         CardPredicate alwaysEligiblePredicate,
         CardPredicate mvCappedEligiblePredicate,
-        boolean remainingToBottomRandom
-) implements CombatDamageTriggerContextEffect {
+        boolean remainingToBottomRandom,
+        DynamicAmount count
+) implements CardEffect {
+
+    public LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect(
+            CardPredicate alwaysEligiblePredicate,
+            CardPredicate mvCappedEligiblePredicate,
+            boolean remainingToBottomRandom) {
+        this(alwaysEligiblePredicate, mvCappedEligiblePredicate, remainingToBottomRandom, new XValue());
+    }
 
     public LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect(
             CardPredicate alwaysEligiblePredicate,
             CardPredicate mvCappedEligiblePredicate) {
         this(alwaysEligiblePredicate, mvCappedEligiblePredicate, false);
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER_WITH_DAMAGE_AMOUNT;
     }
 }

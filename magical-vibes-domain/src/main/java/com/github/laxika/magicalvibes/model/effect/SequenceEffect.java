@@ -48,8 +48,7 @@ import java.util.List;
  */
 public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean optionalTarget,
                              boolean simultaneous)
-        implements CombatDamageTriggerContextEffect,
-        EndStepPlayerTargetedEffect, CombatOpponentReferencingEffect {
+        implements EndStepPlayerTargetedEffect, CombatOpponentReferencingEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
         this(steps, 0, false);
@@ -147,34 +146,5 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
                 .filter(effect -> effect instanceof CombatOpponentReferencingEffect)
                 .map(effect -> (CombatOpponentReferencingEffect) effect)
                 .anyMatch(CombatOpponentReferencingEffect::referencesCombatOpponent);
-    }
-
-    /**
-     * On an {@code Triggers.dealsCombatDamageToPlayer()} ability the sequence resolves as one stack entry, so it
-     * must request the richest stack-entry shape any step needs. {@code DAMAGED_PLAYER} binds both
-     * the damaged player and the source (a superset of {@code SOURCE_SELF}); a step that only needs
-     * the source ("…and sacrifice this creature") still resolves correctly under it. Steps combining
-     * {@code DAMAGED_PLAYER_WITH_DAMAGE_AMOUNT} (no source) with a source-bound step are not a real
-     * card and left to the coarse priority below.
-     */
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        TriggerContext result = null;
-        for (CardEffect step : steps) {
-            if (!(step instanceof CombatDamageTriggerContextEffect contextEffect)) {
-                continue;
-            }
-            TriggerContext stepContext = contextEffect.combatDamageTriggerContext();
-            if (stepContext == null) {
-                continue;
-            }
-            if (stepContext == TriggerContext.DAMAGED_PLAYER) {
-                return TriggerContext.DAMAGED_PLAYER;
-            }
-            if (result == null || stepContext == TriggerContext.SOURCE_SELF) {
-                result = stepContext;
-            }
-        }
-        return result;
     }
 }

@@ -62,7 +62,7 @@ public class ReturnPermanentsOnCombatDamageToPlayerEffectHandler implements Norm
         }
 
         UUID defenderId = entry.getTargetId();
-        int damageDealt = e.fixedCount() > 0 ? e.fixedCount() : entry.getXValue();
+        int damageDealt = e.fixedCount() > 0 ? e.fixedCount() : entry.getEventValue();
         UUID attackerId = entry.getControllerId();
         String creatureName = entry.getCard().getName();
 

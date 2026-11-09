@@ -8,14 +8,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>As a combat-damage trigger it needs the damage-dealing permanent bound as the stack entry's
  * source, since that permanent is the one that transforms (Akki Lavarunner).
  */
-public record TransformToBackFaceEffect(boolean flip) implements CombatDamageTriggerContextEffect {
+public record TransformToBackFaceEffect(boolean flip) implements CardEffect {
 
     public TransformToBackFaceEffect() {
         this(false);
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.SOURCE_SELF;
     }
 }

@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 public record PutCountersOnSelfEffect(CounterType counterType, int count, DynamicAmount amount,
                                       boolean targetsPlayer, boolean excludeDamageSource,
                                       boolean hasExternalPermanentTarget)
-        implements CombatDamageTriggerContextEffect, EndStepPlayerTargetedEffect {
+        implements EndStepPlayerTargetedEffect {
 
     public PutCountersOnSelfEffect(CounterType counterType) {
         this(counterType, 1, null, false, false, false);
@@ -48,14 +48,5 @@ public record PutCountersOnSelfEffect(CounterType counterType, int count, Dynami
         }
         return targetsPlayer ? TargetSpec.benign(TargetPredicates.player())
                 : new TargetSpec(null, false, null, true, 1);
-    }
-
-    /**
-     * Always binds the source permanent so an {@code Triggers.dealsCombatDamageToPlayer()} ability places the
-     * counters on the damage-dealing creature itself (e.g. Lightning Reaver's charge counter).
-     */
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.SOURCE_SELF;
     }
 }

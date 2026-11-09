@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves Nafs Asp's {@code ON_DAMAGE_TO_PLAYER} trigger: reads the damaged player from the stack
- * entry's {@code targetId} (baked in as {@code DAMAGED_PLAYER}) and queues a
+ * entry's non-targeting {@code targetId} (recorded by the damage collector) and queues a
  * {@link LoseLifeAtNextDrawStepUnlessPays} delayed action, drained at that player's next draw step.
  */
 @Slf4j

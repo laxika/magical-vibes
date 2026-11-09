@@ -4628,14 +4628,14 @@ public class ChoiceHandlerService {
         if (sharedTargetMode) {
             return false;
         }
-        // A combat-damage modal's "that player" effects reuse the damaged player already
-        // carried by the trigger; choosing a mode does not choose a different player.
+        // A modal's "that player" effects reuse the player the entry already carries (a combat damage trigger's
+        // damaged player); choosing a mode with no permanent target and no player target the card declares does not
+        // choose a different player.
         if (pendingEntry != null && pendingEntry.getTargetId() != null
                 && gameData.playerIds.contains(pendingEntry.getTargetId())
-                && ctx.effect().combatDamageTriggerContext()
-                        == com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER
                 && effects.stream().noneMatch(effect -> effect.targetSpec().admits(
-                        com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT))) {
+                        com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT)
+                        || ctx.sourceCard().hasEffectTargetIndex(effect))) {
             return false;
         }
         boolean combatContextPlayerTarget = pendingEntry != null

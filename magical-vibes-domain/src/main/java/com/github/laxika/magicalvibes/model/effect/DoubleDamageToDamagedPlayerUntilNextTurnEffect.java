@@ -5,10 +5,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * trigger and to permanents that player controls until the trigger controller's next turn.
  */
 public record DoubleDamageToDamagedPlayerUntilNextTurnEffect()
-        implements CombatDamageTriggerContextEffect, DoublingEffect {
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
-    }
+        implements DoublingEffect {
 }

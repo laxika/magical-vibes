@@ -33,7 +33,7 @@ public record LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient,
                              boolean controllerGainsLifeLost,
                              PermanentPredicate exemptIfControls,
                              Condition controllerGainsLifeLostCondition,
-                             boolean recordTargetLifeLost) implements CombatDamageTriggerContextEffect {
+                             boolean recordTargetLifeLost) implements CardEffect {
 
     public LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient,
             boolean controllerGainsLifeLost, PermanentPredicate exemptIfControls,
@@ -82,10 +82,5 @@ public record LoseLifeEffect(DynamicAmount amount, LoseLifeRecipient recipient,
         return recipient == LoseLifeRecipient.TARGET_PLAYER
                 ? TargetSpec.benign(TargetPredicates.player())
                 : TargetSpec.NONE;
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return recipient == LoseLifeRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

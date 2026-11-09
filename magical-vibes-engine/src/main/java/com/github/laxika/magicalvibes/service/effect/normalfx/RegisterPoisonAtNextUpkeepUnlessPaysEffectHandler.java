@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Resolves Sabertooth Cobra's {@code ON_DAMAGE_TO_PLAYER} trigger: reads the damaged player from the
- * stack entry's {@code targetId} (baked in as {@code DAMAGED_PLAYER}) and queues a
+ * stack entry's non-targeting {@code targetId} (recorded by the damage collector) and queues a
  * {@link PoisonAtNextUpkeepUnlessPays} delayed action, drained at that player's next upkeep.
  */
 @Slf4j

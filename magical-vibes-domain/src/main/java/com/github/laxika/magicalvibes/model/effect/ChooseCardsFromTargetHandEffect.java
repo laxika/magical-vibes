@@ -35,7 +35,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                               boolean revealMatchingOnly,
                                               boolean returnsOnSourceLeavesTrigger,
                                               boolean triggeringPlayersHand)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public ChooseCardsFromTargetHandEffect {
         if (libraryPosition < 0) {
@@ -325,10 +325,5 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
     @Override
     public TargetSpec targetSpec() {
         return triggeringPlayersHand ? TargetSpec.NONE : TargetSpec.benign(TargetPredicates.player());
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

@@ -41,7 +41,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
@@ -1468,10 +1467,9 @@ public class TriggeredAbilityQueueService {
             return;
         }
 
-        UUID triggerTargetId = attackedTargetId != null && effects.stream().anyMatch(effect ->
-                effect instanceof CombatDamageTriggerContextEffect contextEffect
-                        && contextEffect.combatDamageTriggerContext()
-                        == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER)
+        // No chosen mode targets: "that player" is the attacked or damaged player the trigger was about, the entry's
+        // non-targeting target (Blizzard Specter's "that player discards a card").
+        UUID triggerTargetId = attackedTargetId != null && gameData.playerIds.contains(attackedTargetId)
                 ? attackedTargetId : null;
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -1483,6 +1481,9 @@ public class TriggeredAbilityQueueService {
                 sourcePermanentId);
         entry.setTriggeringCardId(triggeringCardId);
         entry.setTriggeringPermanentId(triggeringPermanentId);
+        if (triggerTargetId != null) {
+            entry.setNonTargeting(true);
+        }
         if (attackedTargetId != null) {
             entry.setAttackedTargetId(attackedTargetId);
             entry.setDefendingPlayerId(defendingPlayerId(gameData, attackedTargetId));

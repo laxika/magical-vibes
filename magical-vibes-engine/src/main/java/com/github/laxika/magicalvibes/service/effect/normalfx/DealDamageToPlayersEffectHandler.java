@@ -79,9 +79,9 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
                         resolveSingleTargetPlayer(gameData, entry, dealing, e);
                     }
                 }
-                case TARGET_PLAYER, ACTIVE_PLAYER, ENCHANTED_PLAYER,
-                     TRIGGERING_PLAYER, CHOSEN_PLAYER ->
+                case TARGET_PLAYER, ACTIVE_PLAYER, ENCHANTED_PLAYER, TRIGGERING_PLAYER ->
                         resolveSingleTargetPlayer(gameData, entry, dealing, e);
+                case CHOSEN_PLAYER -> resolveChosenPlayer(gameData, entry, dealing, e);
                 case ENCHANTED_PLAYER_OR_PLANESWALKER -> resolveEnchantedPlayerOrPlaneswalker(gameData, entry, dealing, e);
                 case TRIGGERING_PERMANENT_CONTROLLER -> resolveTriggeringPermanentController(gameData, entry, dealing, e);
                 case CONTROLLER -> resolveController(gameData, entry, dealing, e);
@@ -144,6 +144,28 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
             int rawDamage = amount;
             damageSupport.dealDamageToPlayer(gameData, dealing, targetId, rawDamage);
         }
+    }
+
+    /**
+     * "The chosen player": the player the source permanent chose as it entered (Stuffy Doll, Saskia the Unyielding),
+     * read from the source as the ability resolves, or as it last existed; a spell's chosen player is the one its
+     * earlier effect chose onto the entry (Backdraft).
+     */
+    private void resolveChosenPlayer(GameData gameData, StackEntry entry, StackEntry dealing,
+                                     DealDamageToPlayersEffect effect) {
+        Permanent source = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        UUID chosenPlayerId = source != null && source.getRememberedTargetPlayerId() != null
+                ? source.getRememberedTargetPlayerId() : entry.getTargetId();
+        if (chosenPlayerId == null || !gameData.playerIds.contains(chosenPlayerId)
+                || damageSupport.isDamageSourcePreventedWithLog(gameData, dealing)) {
+            return;
+        }
+        damageSupport.dealDamageToPlayer(gameData, dealing, chosenPlayerId,
+                evaluateAmount(gameData, entry, effect, chosenPlayerId));
     }
 
     private void resolveTriggeringPermanentController(GameData gameData, StackEntry entry, StackEntry dealing,

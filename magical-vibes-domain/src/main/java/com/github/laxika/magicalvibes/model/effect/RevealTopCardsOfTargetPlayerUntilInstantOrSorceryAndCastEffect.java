@@ -22,7 +22,7 @@ public record RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffect(
         boolean grantHaste,
         boolean sacrificeAtEndStep,
         boolean restStaysExiled)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffect() {
         this(new CardAnyOfPredicate(List.of(
@@ -39,10 +39,5 @@ public record RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffect(
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.harmful(TargetPredicates.player());
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

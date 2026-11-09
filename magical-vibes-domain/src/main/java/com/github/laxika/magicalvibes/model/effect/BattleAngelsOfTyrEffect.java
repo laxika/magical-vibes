@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 /**
  * Resolves Battle Angels of Tyr's combat-damage riders against the damaged player.
  */
-public record BattleAngelsOfTyrEffect() implements CardDrawingEffect, TokenCreatingEffect,
-        LifeGainEffect, CombatDamageTriggerContextEffect {
+public record BattleAngelsOfTyrEffect() implements CardDrawingEffect, TokenCreatingEffect, LifeGainEffect {
 
     @Override
     public DynamicAmount drawnCardAmount() {
@@ -38,10 +37,5 @@ public record BattleAngelsOfTyrEffect() implements CardDrawingEffect, TokenCreat
     @Override
     public DynamicAmount lifeGainAmount() {
         return new Fixed(3);
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

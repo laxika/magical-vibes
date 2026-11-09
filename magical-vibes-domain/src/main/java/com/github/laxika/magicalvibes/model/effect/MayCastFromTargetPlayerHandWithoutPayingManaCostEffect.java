@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 public record MayCastFromTargetPlayerHandWithoutPayingManaCostEffect(CardPredicate spellFilter,
                                                                     boolean targetsPlayer,
                                                                     boolean optionalLook)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public MayCastFromTargetPlayerHandWithoutPayingManaCostEffect(CardPredicate spellFilter,
                                                                   boolean targetsPlayer) {
@@ -52,10 +52,5 @@ public record MayCastFromTargetPlayerHandWithoutPayingManaCostEffect(CardPredica
     @Override
     public TargetSpec targetSpec() {
         return targetsPlayer ? TargetSpec.harmful(TargetPredicates.player()) : TargetSpec.NONE;
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return targetsPlayer ? null : TriggerContext.DAMAGED_PLAYER;
     }
 }

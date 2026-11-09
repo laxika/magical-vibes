@@ -9,7 +9,7 @@ package com.github.laxika.magicalvibes.model.effect;
  *                            read from the entry as the ability resolves ({@link #ofTriggeringCardOwner()})
  */
 public record ExileTopCardOfTriggeringPlayerLibraryEffect(boolean triggeringCardOwner)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public ExileTopCardOfTriggeringPlayerLibraryEffect() {
         this(false);
@@ -18,10 +18,5 @@ public record ExileTopCardOfTriggeringPlayerLibraryEffect(boolean triggeringCard
     /** "That card's owner exiles the top card of their library", of the card the trigger event was about. */
     public static ExileTopCardOfTriggeringPlayerLibraryEffect ofTriggeringCardOwner() {
         return new ExileTopCardOfTriggeringPlayerLibraryEffect(true);
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

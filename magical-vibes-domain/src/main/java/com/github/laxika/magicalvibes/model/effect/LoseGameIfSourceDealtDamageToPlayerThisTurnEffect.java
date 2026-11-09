@@ -8,10 +8,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * the stack with the damaged player and source permanent bound to its context.</p>
  */
 public record LoseGameIfSourceDealtDamageToPlayerThisTurnEffect(int minimumDamage)
-        implements CombatDamageTriggerContextEffect {
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
-    }
+        implements CardEffect {
 }

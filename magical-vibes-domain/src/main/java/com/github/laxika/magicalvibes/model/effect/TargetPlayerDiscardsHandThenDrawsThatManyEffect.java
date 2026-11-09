@@ -8,7 +8,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code Triggers.dealsDamageToPlayer()} trigger, where the damaged player is baked onto the stack entry.
  */
 public record TargetPlayerDiscardsHandThenDrawsThatManyEffect(int drawReduction)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public TargetPlayerDiscardsHandThenDrawsThatManyEffect() {
         this(0);
@@ -17,10 +17,5 @@ public record TargetPlayerDiscardsHandThenDrawsThatManyEffect(int drawReduction)
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.player());
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

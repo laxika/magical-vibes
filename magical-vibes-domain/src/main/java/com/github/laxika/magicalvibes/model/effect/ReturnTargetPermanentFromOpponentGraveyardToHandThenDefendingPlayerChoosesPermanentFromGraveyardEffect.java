@@ -9,16 +9,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * onto the battlefield under the ability controller's control.
  */
 public record ReturnTargetPermanentFromOpponentGraveyardToHandThenDefendingPlayerChoosesPermanentFromGraveyardEffect(
-        CardPredicate filter) implements CombatDamageTriggerContextEffect {
+        CardPredicate filter) implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.graveyardCards(
                 filter, GraveyardSearchScope.OPPONENT_GRAVEYARD));
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

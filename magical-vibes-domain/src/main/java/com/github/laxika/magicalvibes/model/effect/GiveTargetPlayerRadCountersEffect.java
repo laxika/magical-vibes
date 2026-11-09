@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 /** Gives the targeted player the evaluated number of rad counters. */
 public record GiveTargetPlayerRadCountersEffect(DynamicAmount amount)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public GiveTargetPlayerRadCountersEffect(int amount) {
         this(new com.github.laxika.magicalvibes.model.amount.Fixed(amount));
@@ -13,10 +13,5 @@ public record GiveTargetPlayerRadCountersEffect(DynamicAmount amount)
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.player());
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

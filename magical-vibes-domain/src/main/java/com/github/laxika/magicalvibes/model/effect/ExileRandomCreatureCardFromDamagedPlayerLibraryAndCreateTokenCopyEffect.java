@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 /** Exiles a random creature card from the damaged player's library and copies it as a token. */
 public record ExileRandomCreatureCardFromDamagedPlayerLibraryAndCreateTokenCopyEffect(
         CreateTokenCopyOfTargetPermanentEffect tokenCopyEffect
-) implements TokenCreatingEffect, CombatDamageTriggerContextEffect {
+) implements TokenCreatingEffect {
 
     @Override
     public DynamicAmount tokenAmount() {
@@ -27,10 +27,5 @@ public record ExileRandomCreatureCardFromDamagedPlayerLibraryAndCreateTokenCopyE
     @Override
     public int tokenToughness() {
         return 1;
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

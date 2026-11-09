@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -309,18 +308,5 @@ class ExileTopCardsToSourceEffectHandlerTest {
         handler.resolve(gd, entry(sourceCard, effect, null, null), effect);
 
         assertThat(gd.getCardsExiledByPermanent(source.getId())).hasSize(1);
-    }
-
-    @Test
-    @DisplayName("Only the opponent scope asks for a combat-damage trigger context")
-    void combatDamageTriggerContextIsScopeDependent() {
-        assertThat(new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_OPPONENT)
-                .combatDamageTriggerContext())
-                .isEqualTo(CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER);
-        assertThat(new ExileTopCardsToSourceEffect(7).combatDamageTriggerContext()).isNull();
-        assertThat(new ExileTopCardsToSourceEffect(3, false, false, LibraryScope.EACH_PLAYER)
-                .combatDamageTriggerContext()).isNull();
-        assertThat(new ExileTopCardsToSourceEffect(3, false, false, LibraryScope.TARGET_PLAYER)
-                .combatDamageTriggerContext()).isNull();
     }
 }

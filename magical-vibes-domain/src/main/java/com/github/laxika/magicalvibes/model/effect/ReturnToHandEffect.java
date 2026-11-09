@@ -33,8 +33,7 @@ import java.util.UUID;
  *       captured at activation time.</li>
  * </ul>
  */
-public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect, CastTimeXValueEffect,
-        CombatDamageTriggerContextEffect, CastTimeCreatureTypeChoiceEffect {
+public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect, CastTimeXValueEffect, CastTimeCreatureTypeChoiceEffect {
 
     private final BounceScope scope;
     private final PermanentPredicate filter;
@@ -254,10 +253,6 @@ public final class ReturnToHandEffect implements RemovalEffect, BoardWipeEffect,
         return castTimeXValue;
     }
 
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return scope == BounceScope.SELF ? TriggerContext.SOURCE_SELF : null;
-    }
 
     @Override
     public TargetSpec targetSpec() {

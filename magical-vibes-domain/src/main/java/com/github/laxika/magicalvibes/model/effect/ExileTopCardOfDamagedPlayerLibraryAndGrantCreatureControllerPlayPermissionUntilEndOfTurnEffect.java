@@ -8,7 +8,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public record ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionUntilEndOfTurnEffect(
         int count,
         boolean withoutPayingManaCost
-) implements CombatDamageTriggerContextEffect {
+) implements CardEffect {
 
     public ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionUntilEndOfTurnEffect() {
         this(1, false);
@@ -18,10 +18,5 @@ public record ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPe
         if (count <= 0) {
             throw new IllegalArgumentException("count must be positive");
         }
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

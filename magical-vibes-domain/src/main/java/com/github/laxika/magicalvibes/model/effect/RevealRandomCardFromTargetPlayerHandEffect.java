@@ -5,10 +5,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * Used by Merfolk Spy and similar combat-damage-to-player triggers.
  */
 public record RevealRandomCardFromTargetPlayerHandEffect()
-        implements CombatDamageTriggerContextEffect {
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
-    }
+        implements CardEffect {
 }

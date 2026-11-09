@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * @param recipient        who gets the poison counters
  */
 public record GivePoisonCountersEffect(DynamicAmount amount, PoisonRecipient recipient)
-        implements CardEffect, CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public GivePoisonCountersEffect(int amount, PoisonRecipient recipient) {
         this(new Fixed(amount), recipient);
@@ -25,12 +25,5 @@ public record GivePoisonCountersEffect(DynamicAmount amount, PoisonRecipient rec
         return recipient == PoisonRecipient.TARGET_PLAYER
                 ? TargetSpec.benign(TargetPredicates.player())
                 : TargetSpec.NONE;
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        // On an Triggers.dealsCombatDamageToPlayer() trigger (Pit Scorpion) the TARGET_PLAYER recipient must
-        // bind to the damaged player so the poison counter lands on them.
-        return recipient == PoisonRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

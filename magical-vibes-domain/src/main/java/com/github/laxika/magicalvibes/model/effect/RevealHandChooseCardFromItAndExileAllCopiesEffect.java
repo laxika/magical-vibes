@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  */
 public record RevealHandChooseCardFromItAndExileAllCopiesEffect(CardPredicate choosableFilter,
                                                                  boolean chooseAnyNumber)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public RevealHandChooseCardFromItAndExileAllCopiesEffect(CardPredicate choosableFilter) {
         this(choosableFilter, false);
@@ -28,10 +28,5 @@ public record RevealHandChooseCardFromItAndExileAllCopiesEffect(CardPredicate ch
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.harmful(TargetPredicates.player());
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

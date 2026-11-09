@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -156,5 +157,27 @@ class BlizzardSpecterTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(first);
         harness.assertInHand(player2, "Boreal Druid");
+    }
+
+    @Test
+    @CardUsed(LeylineOfSanctity.class)
+    @DisplayName("That player isn't targeted: a damaged player with hexproof still discards")
+    void discardModeIgnoresHexproof() {
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        harness.setHand(player2, List.of(new BorealDruid()));
+        Permanent specter = addCreatureReady(player1, new BlizzardSpecter());
+        specter.setAttacking(true);
+
+        resolveCombat();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, DISCARD_MODE);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).playerId())
+                .isEqualTo(player2.getId());
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInGraveyard(player2, "Boreal Druid");
     }
 }

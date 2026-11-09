@@ -6,10 +6,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * the exiled nonland card using mana of any type.
  */
 public record ExileTopUntilNonlandOfDamagedPlayerMayCounterOrCastEffect()
-        implements CombatDamageTriggerContextEffect {
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
-    }
+        implements CardEffect {
 }

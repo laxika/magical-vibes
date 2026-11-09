@@ -36,7 +36,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 public record MayPayManaEffect(String manaCost, DynamicAmount dynamicManaCost, CardEffect wrapped, String prompt,
                                MayPayPayer payer, CardEffect elseEffect, int lifeCost,
                                boolean sourceIsTriggeringPermanent)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     /** A payment whose generic mana amount is evaluated when the ability resolves. */
     public static MayPayManaEffect dynamic(DynamicAmount amount, CardEffect wrapped, String prompt,
@@ -80,12 +80,6 @@ public record MayPayManaEffect(String manaCost, DynamicAmount dynamicManaCost, C
         return wrapped != null && wrapped.targetsChosenByReflexiveAbility();
     }
 
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return wrapped instanceof CombatDamageTriggerContextEffect contextEffect
-                ? contextEffect.combatDamageTriggerContext()
-                : null;
-    }
 
     public MayPayManaEffect(String manaCost, CardEffect wrapped, String prompt) {
         this(manaCost, null, wrapped, prompt, MayPayPayer.CONTROLLER, null, 0, false);

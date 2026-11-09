@@ -76,6 +76,7 @@ public class EnchantedCreatureDealsDamageToEachOpponentEffectHandler implements 
             Permanent current = gameQueryService.findPermanentById(gameData, sourcePermanentId);
             if (current != null) return current;
         }
-        return entry.getAttachedPermanentSnapshot();
+        return entry.getAttachedPermanentSnapshot() != null
+                ? entry.getAttachedPermanentSnapshot() : entry.getTriggeringPermanentSnapshot();
     }
 }

@@ -6,15 +6,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * discard. Choosing X=0 means the controller declines.
  */
 public record PayXManaRevealCardsChooseOneToDiscardEffect()
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.player());
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

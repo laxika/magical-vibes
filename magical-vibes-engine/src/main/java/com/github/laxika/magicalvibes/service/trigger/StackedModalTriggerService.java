@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.HullbreakerHorrorTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RandomChoiceEffect;
@@ -456,17 +455,16 @@ public class StackedModalTriggerService {
     }
 
     /**
-     * A combat-damage modal's "that player" modes act on the damaged player the trigger already
-     * carries, so choosing such a mode chooses no target.
+     * A modal's "that player" modes act on the player the trigger event was about, which the entry already carries
+     * as its non-targeting target (a damage-to-a-player trigger's damaged player), so choosing such a mode chooses no
+     * target: a mode with no permanent target and no player target the card declares.
      */
     private static boolean usesBoundDamagedPlayer(GameData gameData, StackEntry entry,
                                                   ChooseOneEffect.ChooseOneOption mode) {
-        ChooseOneEffect modal = announcedModal(entry);
         return boundPlayerTarget(gameData, entry)
-                && modal != null
-                && modal.combatDamageTriggerContext() == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER
                 && mode.effects().stream().noneMatch(effect ->
-                effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+                effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || entry.getCard().hasEffectTargetIndex(effect));
     }
 
     private static boolean boundPlayerTarget(GameData gameData, StackEntry entry) {

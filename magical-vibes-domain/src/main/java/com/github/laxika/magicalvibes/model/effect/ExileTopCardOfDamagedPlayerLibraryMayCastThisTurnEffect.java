@@ -5,10 +5,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * permission to cast it until end of turn using mana of any type.
  */
 public record ExileTopCardOfDamagedPlayerLibraryMayCastThisTurnEffect()
-        implements CombatDamageTriggerContextEffect {
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
-    }
+        implements CardEffect {
 }

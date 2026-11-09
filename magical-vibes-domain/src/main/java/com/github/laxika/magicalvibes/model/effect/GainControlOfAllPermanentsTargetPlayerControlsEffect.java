@@ -24,7 +24,7 @@ import java.util.List;
  */
 public record GainControlOfAllPermanentsTargetPlayerControlsEffect(
         PermanentPredicate filter, ControlDuration duration, List<CardEffect> thenEffects)
-        implements CardEffect, CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public GainControlOfAllPermanentsTargetPlayerControlsEffect {
         thenEffects = List.copyOf(thenEffects);
@@ -48,10 +48,5 @@ public record GainControlOfAllPermanentsTargetPlayerControlsEffect(
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.player());
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

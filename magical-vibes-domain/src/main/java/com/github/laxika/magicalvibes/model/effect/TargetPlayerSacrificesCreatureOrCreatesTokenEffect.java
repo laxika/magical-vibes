@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * If that player cannot sacrifice a creature, the source controller creates the token template.
  */
 public record TargetPlayerSacrificesCreatureOrCreatesTokenEffect(CreateTokenEffect tokenTemplate)
-        implements TokenCreatingEffect, CombatDamageTriggerContextEffect {
+        implements TokenCreatingEffect {
 
     @Override
     public DynamicAmount tokenAmount() {
@@ -28,10 +28,5 @@ public record TargetPlayerSacrificesCreatureOrCreatesTokenEffect(CreateTokenEffe
     @Override
     public int tokenToughness() {
         return tokenTemplate.tokenToughness();
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

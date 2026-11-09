@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 public record DrawCardForTargetPlayerEffect(DynamicAmount amount, boolean requireSourceUntapped,
                                             boolean targetsPlayer, int targetGroup,
                                             boolean opponentDrawStepOnly)
-        implements CardEffect, OpponentDrawStepOnlyEffect, CombatDamageTriggerContextEffect {
+        implements CardEffect, OpponentDrawStepOnlyEffect {
 
     public DrawCardForTargetPlayerEffect(int amount) {
         this(new Fixed(amount), false, false, -1, false);
@@ -54,10 +54,5 @@ public record DrawCardForTargetPlayerEffect(DynamicAmount amount, boolean requir
     @Override
     public TargetSpec targetSpec() {
         return targetsPlayer ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return !targetsPlayer && amount instanceof EventValue ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

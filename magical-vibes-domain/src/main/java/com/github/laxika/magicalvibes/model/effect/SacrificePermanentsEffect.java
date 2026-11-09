@@ -39,7 +39,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public record SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
         SacrificeRecipient recipient, boolean countPerSacrificingPlayer, boolean recordSacrificedCount,
         boolean recordSacrificedPower, boolean simultaneousChoices)
-        implements CardEffect, CombatDamageTriggerContextEffect, EndStepPlayerTargetedEffect {
+        implements CardEffect, EndStepPlayerTargetedEffect {
 
     public SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
             SacrificeRecipient recipient, boolean countPerSacrificingPlayer,
@@ -96,14 +96,5 @@ public record SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate 
                 || recipient == SacrificeRecipient.CONTROLLER_AND_TARGET_PLAYER
                 ? TargetSpec.benign(TargetPredicates.player())
                 : TargetSpec.NONE;
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        // "Whenever this creature deals combat damage to a player, that player sacrifices ..."
-        // (Akki Underminer): the damaged player is bound as the trigger's targetId so the
-        // TARGET_PLAYER recipient resolves without a targeting pipeline. Every other recipient
-        // derives its sacrificers from the controller and needs no bound player.
-        return recipient == SacrificeRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTu
  * the condition is checked again as the ability resolves.
  */
 public record ConditionalEffect(Condition condition, CardEffect wrapped)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     /** Human-readable condition name for log messages (e.g. "metalcraft", "equipped"). */
     public String conditionName() {
@@ -53,12 +53,5 @@ public record ConditionalEffect(Condition condition, CardEffect wrapped)
     @Override
     public boolean resolvesWhenTargetIllegal() {
         return wrapped.resolvesWhenTargetIllegal();
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return wrapped instanceof CombatDamageTriggerContextEffect contextEffect
-                ? contextEffect.combatDamageTriggerContext()
-                : null;
     }
 }

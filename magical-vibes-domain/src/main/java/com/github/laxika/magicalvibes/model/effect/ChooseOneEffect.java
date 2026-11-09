@@ -29,7 +29,7 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
                               Condition choicesMaxCondition, List<Integer> modeCosts, int modeBudget,
                               boolean choicesEqualModalXValue, boolean anyNumberWhenConditionMet,
                               boolean allModesWhenConditionMet, ModeRestriction modeRestriction)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     /**
      * Which modes a triggered modal ability may choose, by the modes its source permanent chose before. The record
@@ -135,30 +135,6 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
         this(options, optional, choicesRequired, choicesMax, false, null);
     }
 
-    /**
-     * Propagates a shared combat-damage context from modal alternatives. This lets a triggered
-     * modal retain context such as the damaged player while its mode is chosen during resolution.
-     * Alternatives with different non-null contexts are deliberately left without a context;
-     * those modals need an effect-specific trigger path to disambiguate their stack entry.
-     */
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        TriggerContext context = null;
-        for (ChooseOneOption option : options) {
-            for (CardEffect effect : option.effects()) {
-                if (effect instanceof CombatDamageTriggerContextEffect contextualEffect) {
-                    TriggerContext candidate = contextualEffect.combatDamageTriggerContext();
-                    if (candidate != null) {
-                        if (context != null && context != candidate) {
-                            return null;
-                        }
-                        context = candidate;
-                    }
-                }
-            }
-        }
-        return context;
-    }
 
     /** "Choose one that hasn't been chosen —" (Demonic Pact): a triggered "choose one" whose modes are used up. */
     public static ChooseOneEffect notYetChosen(List<ChooseOneOption> options) {

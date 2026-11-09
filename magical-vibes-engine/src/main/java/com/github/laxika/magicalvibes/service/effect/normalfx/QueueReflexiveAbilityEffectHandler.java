@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -85,12 +84,13 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
                     queueEffect.useEntryTargetAsTriggeringPermanent()));
             return;
         }
-        if (queueEffect.effect() instanceof CombatDamageTriggerContextEffect contextEffect
-                && contextEffect.combatDamageTriggerContext()
-                == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER
-                && entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())) {
-            // "That player" refers to the damaged player already identified by the original trigger,
-            // so the reflexive ability does not choose a target of its own.
+        CardEffect reflexiveEffect = queueEffect.effect();
+        if (entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())
+                && reflexiveEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                && !reflexiveEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                && !entry.getCard().hasEffectTargetIndex(reflexiveEffect)) {
+            // "That player" refers to the player the original trigger carries (the player dealt damage), so a
+            // reflexive ability whose player the card declares no target for does not choose a target of its own.
             StackEntry thatPlayerEntry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     entry.getCard(),
@@ -100,6 +100,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
                     entry.getTargetId(),
                     entry.getSourcePermanentId());
             thatPlayerEntry.setNonTargeting(true);
+            thatPlayerEntry.setTriggeringPlayerId(entry.getTriggeringPlayerId());
             if (queueEffect.useEventValueAsX()) {
                 thatPlayerEntry.setEventValue(entry.getEventValue());
             }
@@ -160,6 +161,12 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
             reflexiveEntry.setEventValue(entry.getEventValue());
         }
         reflexiveEntry.setAttackedTargetId(entry.getAttackedTargetId());
+        // "That player" of an untargeted reflexive ability is the player the triggering entry carries.
+        reflexiveEntry.setTriggeringPlayerId(entry.getTriggeringPlayerId());
+        if (entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())) {
+            reflexiveEntry.setTargetId(entry.getTargetId());
+            reflexiveEntry.setNonTargeting(true);
+        }
         if (queueEffect.useEntryTargetAsTriggeringPermanent() && entry.getTargetId() != null) {
             reflexiveEntry.setTriggeringPermanentId(entry.getTargetId());
         }

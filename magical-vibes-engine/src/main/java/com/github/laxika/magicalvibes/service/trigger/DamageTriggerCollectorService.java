@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCombatDamageSourceIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect;
@@ -1469,11 +1468,9 @@ public class DamageTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 equipment.getId());
-        if (effect instanceof CombatDamageTriggerContextEffect contextEffect
-                && contextEffect.combatDamageTriggerContext()
-                == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER) {
-            entry.setTargetId(sd.damagedPlayerId());
-        }
+        // "That player" is the player dealt damage, if any: the entry's triggering player and non-targeting target.
+        entry.setTargetId(sd.damagedPlayerId());
+        entry.setTriggeringPlayerId(sd.damagedPlayerId());
         entry.setTriggeringPermanentId(sd.sourcePermanentId());
         entry.setNonTargeting(true);
         entry.setEventValue(damage);
@@ -1591,10 +1588,6 @@ public class DamageTriggerCollectorService {
         // its controller as it dealt the damage.
         triggerEntry.setTriggeringPermanentId(dc.sourcePermanentId());
         triggerEntry.setTriggeringPermanentControllerId(dc.damageSourceControllerId());
-        if (effect instanceof DealDamageToPlayersEffect toPlayers
-                && toPlayers.recipient() == DamageRecipient.CHOSEN_PLAYER) {
-            triggerEntry.setTargetId(damagedCreature.getRememberedTargetPlayerId());
-        }
         triggerEntry.setSourcePermanentSnapshot(lastKnownDamageSource(gameData, damagedCreature));
         gameData.stack.add(triggerEntry);
         gameLogService.append(gameData, GameLog.abilityTriggers(damagedCreature.getCard()));

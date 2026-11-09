@@ -42,7 +42,9 @@ public class CastCardFromGraveyardEffectHandler implements NormalEffectHandlerBe
         CastCardFromGraveyardEffect castEffect = (CastCardFromGraveyardEffect) effect;
         UUID controllerId = entry.getControllerId();
 
-        if (entry.getTargetId() != null) {
+        // A card chosen as the ability went on the stack; a player there is the trigger event's ("that player", the
+        // player dealt damage), not a chosen card.
+        if (entry.getTargetId() != null && !gameData.playerIds.contains(entry.getTargetId())) {
             Card selectedCard = gameQueryService.findCardInGraveyardById(gameData, entry.getTargetId());
             if (selectedCard == null || !isLegal(gameData, entry, castEffect, selectedCard)) {
                 gameLogService.append(gameData, GameLog.text(entry.getDescription()

@@ -10,7 +10,7 @@ package com.github.laxika.magicalvibes.model.effect;
 public record ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect(
         boolean anyManaTypeSpendable,
         boolean grantToSourceController
-) implements CombatDamageTriggerContextEffect {
+) implements CardEffect {
 
     public ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect(
             boolean anyManaTypeSpendable) {
@@ -24,10 +24,5 @@ public record ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControll
     /** The ability's controller (not the creature's) may play the card, with any type of mana. */
     public static ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect forSourceController() {
         return new ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect(true, true);
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * entry, so no player target is chosen. A {@code null} filter matches every defending creature.
  */
 public record DealDamageToDefendingPlayerCreaturesEffect(DynamicAmount damage, PermanentPredicate filter)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public DealDamageToDefendingPlayerCreaturesEffect(int damage, PermanentPredicate filter) {
         this(new Fixed(damage), filter);
@@ -22,10 +22,5 @@ public record DealDamageToDefendingPlayerCreaturesEffect(DynamicAmount damage, P
 
     public DealDamageToDefendingPlayerCreaturesEffect(int damage) {
         this(damage, null);
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

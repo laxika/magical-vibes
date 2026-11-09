@@ -1,12 +1,14 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,8 +23,9 @@ public class InvocationOfSaintTraft extends Card {
         // creature token with flying that's tapped and attacking. Exile that token at end of
         // combat."
         target(TargetFilters.creature())
-                .addTrigger(Triggers.attacks(), new CreateTokenForTriggeringPlayerEffect(
+                .addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.attacks(),
                         new CreateTokenEffect(1, "Angel", 4, 4, CardColor.WHITE,
-                                List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), true, true)));
+                                List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING), true, true)),
+                        GrantScope.ENCHANTED_CREATURE));
     }
 }

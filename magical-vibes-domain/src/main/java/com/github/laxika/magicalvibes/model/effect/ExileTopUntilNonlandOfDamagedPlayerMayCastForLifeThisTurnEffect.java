@@ -6,10 +6,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * value rather than its mana cost.
  */
 public record ExileTopUntilNonlandOfDamagedPlayerMayCastForLifeThisTurnEffect()
-        implements CombatDamageTriggerContextEffect {
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
-    }
+        implements CardEffect {
 }

@@ -9,7 +9,7 @@ import java.util.List;
  */
 public record TargetPlayerChoosesOneEffect(List<ChooseOneEffect.ChooseOneOption> options, boolean targetsPlayer,
                                            boolean villainousChoice)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public TargetPlayerChoosesOneEffect(List<ChooseOneEffect.ChooseOneOption> options) {
         this(options, false, false);
@@ -32,10 +32,5 @@ public record TargetPlayerChoosesOneEffect(List<ChooseOneEffect.ChooseOneOption>
     @Override
     public TargetSpec targetSpec() {
         return targetsPlayer ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return targetsPlayer ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

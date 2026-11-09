@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -53,6 +55,8 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
     private BattlefieldEntryService battlefieldEntryService;
     @Mock
     private ExileService exileService;
+    @Mock
+    private AmountEvaluationService amountEvaluationService;
     private LibraryRevealSupport libraryRevealSupport;
     private GameData gd;
     private UUID player1Id;
@@ -84,7 +88,10 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
         libraryRevealSupport = new LibraryRevealSupport(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
         lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler = new LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler(predicateEvaluationService, gameLogService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
+                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService),
+                amountEvaluationService);
+        lenient().when(amountEvaluationService.evaluate(any(), any(), any()))
+                .thenAnswer(invocation -> ((AmountContext) invocation.getArgument(2)).xValue());
 
     }
 

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * starting with the active player (CR 608.2f), which need not be the controller.
  */
 public record DrawCardForYouAndDamagedPlayerEffect(DynamicAmount amount)
-        implements CardDrawingEffect, CombatDamageTriggerContextEffect {
+        implements CardDrawingEffect {
 
     public DrawCardForYouAndDamagedPlayerEffect(int amount) {
         this(new Fixed(amount));
@@ -18,10 +18,5 @@ public record DrawCardForYouAndDamagedPlayerEffect(DynamicAmount amount)
     @Override
     public DynamicAmount drawnCardAmount() {
         return amount;
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

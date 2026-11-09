@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
  */
 public record RemoveCounterFromSourceThenEffect(CounterType counterType, int count, CardEffect thenEffect,
                                                 boolean onlyIfLastCounterRemoved, boolean reflexive)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public RemoveCounterFromSourceThenEffect(CounterType counterType, int count, CardEffect thenEffect,
                                              boolean onlyIfLastCounterRemoved) {
@@ -50,14 +50,5 @@ public record RemoveCounterFromSourceThenEffect(CounterType counterType, int cou
     @Override
     public TargetSpec targetSpec() {
         return new TargetSpec(null, false, null, true, 1);
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        if (thenEffect instanceof CombatDamageTriggerContextEffect contextEffect
-                && contextEffect.combatDamageTriggerContext() == TriggerContext.DAMAGED_PLAYER) {
-            return TriggerContext.DAMAGED_PLAYER;
-        }
-        return TriggerContext.SOURCE_SELF;
     }
 }

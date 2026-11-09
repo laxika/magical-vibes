@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * sacrifices the source and resolves {@code thenEffect} after the sacrifice.
  */
 public record RemoveCounterOrSacrificeSelfThenEffect(CounterType counterType, CardEffect thenEffect)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public RemoveCounterOrSacrificeSelfThenEffect {
         if (thenEffect == null) {
@@ -18,14 +18,5 @@ public record RemoveCounterOrSacrificeSelfThenEffect(CounterType counterType, Ca
     @Override
     public TargetSpec targetSpec() {
         return thenEffect.targetSpec();
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        if (thenEffect instanceof CombatDamageTriggerContextEffect contextEffect
-                && contextEffect.combatDamageTriggerContext() == TriggerContext.DAMAGED_PLAYER) {
-            return TriggerContext.DAMAGED_PLAYER;
-        }
-        return TriggerContext.SOURCE_SELF;
     }
 }

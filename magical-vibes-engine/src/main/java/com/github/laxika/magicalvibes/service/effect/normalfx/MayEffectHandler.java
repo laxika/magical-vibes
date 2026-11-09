@@ -271,8 +271,10 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         }
         boolean cannotSacrifice = e.wrapped() instanceof SacrificeEnchantedCreatureEffect
                 && !canSacrificeEnchantedPermanent(gameData, entry, choicePlayerId);
-        if (optionalAction instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect) {
-            var source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (optionalAction instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect sacrificeThen) {
+            UUID sacrificedId = sacrificeThen.sacrificesTriggeringPermanent() && entry.getTriggeringPermanentId() != null
+                    ? entry.getTriggeringPermanentId() : entry.getSourcePermanentId();
+            var source = gameQueryService.findPermanentById(gameData, sacrificedId);
             cannotSacrifice = source == null
                     || !choicePlayerId.equals(gameQueryService.findPermanentController(gameData, source.getId()))
                     || gameQueryService.cantBeSacrificed(gameData, source);

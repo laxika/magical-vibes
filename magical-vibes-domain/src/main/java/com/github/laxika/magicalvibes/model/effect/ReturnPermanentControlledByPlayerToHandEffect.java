@@ -29,7 +29,7 @@ public record ReturnPermanentControlledByPlayerToHandEffect(PermanentPredicate f
                                                             boolean actingPlayerIsController,
                                                             PermanentPredicate thenCondition,
                                                             CardEffect thenEffect)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public ReturnPermanentControlledByPlayerToHandEffect(PermanentPredicate filter, String noun) {
         this(filter, noun, false, false, null, null);
@@ -49,14 +49,5 @@ public record ReturnPermanentControlledByPlayerToHandEffect(PermanentPredicate f
     public static ReturnPermanentControlledByPlayerToHandEffect controller(PermanentPredicate filter,
                                                                             String noun) {
         return new ReturnPermanentControlledByPlayerToHandEffect(filter, noun, false, true, null, null);
-    }
-
-    /**
-     * On a damage-to-player trigger, the player whose permanents are selectable is the damaged
-     * player rather than the trigger controller.
-     */
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

@@ -14,7 +14,7 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record SkipNextEffect(SkipKind kind, SkipRecipient recipient, boolean allCombatPhasesOfNextTurn,
                              boolean thisTurnOnly)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public SkipNextEffect(SkipKind kind, SkipRecipient recipient, boolean allCombatPhasesOfNextTurn) {
         this(kind, recipient, allCombatPhasesOfNextTurn, false);
@@ -50,15 +50,5 @@ public record SkipNextEffect(SkipKind kind, SkipRecipient recipient, boolean all
         return recipient == SkipRecipient.TARGET_PLAYER
                 ? TargetSpec.benign(TargetPredicates.player())
                 : TargetSpec.NONE;
-    }
-
-    /**
-     * Only {@link SkipRecipient#DAMAGED_PLAYER} needs a combat-damage trigger context — it reads the
-     * damaged player out of the stack entry's {@code targetId}. The controller and targeted forms
-     * take the plain entry.
-     */
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return recipient == SkipRecipient.DAMAGED_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

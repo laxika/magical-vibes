@@ -21,7 +21,7 @@ import java.util.UUID;
 public record DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPermanent,
                                           boolean triggeringPermanent,
                                           UUID fixedSourcePermanentId)
-        implements CardDrawingEffect, CombatDamageTriggerContextEffect {
+        implements CardDrawingEffect {
 
     public DrawDiscardAndConniveEffect(DynamicAmount amount) {
         this(amount, false, false, null);
@@ -46,7 +46,12 @@ public record DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPe
 
     /** "It connives": the stack entry's triggering permanent connives. */
     public static DrawDiscardAndConniveEffect ofTriggeringPermanent() {
-        return new DrawDiscardAndConniveEffect(new Fixed(1), false, true);
+        return ofTriggeringPermanent(new Fixed(1));
+    }
+
+    /** "It connives X" (Mask of the Schemer): the stack entry's triggering permanent connives {@code amount}. */
+    public static DrawDiscardAndConniveEffect ofTriggeringPermanent(DynamicAmount amount) {
+        return new DrawDiscardAndConniveEffect(amount, false, true);
     }
 
     /** Binds connive to a captured permanent reference rather than a spell target. */
@@ -67,10 +72,5 @@ public record DrawDiscardAndConniveEffect(DynamicAmount amount, boolean targetPe
         return targetPermanent
                 ? TargetSpec.benign(TargetPredicates.permanent())
                 : new TargetSpec(null, false, null, true, 1);
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return targetPermanent ? null : TriggerContext.SOURCE_SELF;
     }
 }

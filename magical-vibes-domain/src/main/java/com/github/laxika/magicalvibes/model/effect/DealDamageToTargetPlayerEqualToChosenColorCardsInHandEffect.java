@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
  * number of revealed cards of the chosen color. A non-null fixed color skips the choice.
  */
 public record DealDamageToTargetPlayerEqualToChosenColorCardsInHandEffect(CardColor fixedColor)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public DealDamageToTargetPlayerEqualToChosenColorCardsInHandEffect() {
         this(null);
@@ -16,10 +16,5 @@ public record DealDamageToTargetPlayerEqualToChosenColorCardsInHandEffect(CardCo
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.player());
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

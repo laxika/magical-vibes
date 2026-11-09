@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -110,10 +109,12 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
             return;
         }
 
-        if (thenEffect instanceof CombatDamageTriggerContextEffect contextEffect
-                && contextEffect.combatDamageTriggerContext()
-                == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER
-                && entry.getTargetId() != null) {
+        // "That player" (Biting-Palm Ninja): a reflexive ability's player the card declares no target for is the
+        // player the triggering entry carries, the player dealt damage.
+        if (entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())
+                && thenEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                && !thenEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                && !entry.getCard().hasEffectTargetIndex(thenEffect)) {
             putPlayerTargetedReflexiveTriggerOnStack(gameData, entry, thenEffect, entry.getTargetId());
             return;
         }
@@ -146,6 +147,7 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
                 null);
         reflexive.setTriggeringCardId(entry.getTriggeringCardId());
         reflexive.setTriggeringSpell(entry.getTriggeringSpellSnapshot());
+        carryTriggeringPlayer(gameData, entry, reflexive);
         gameData.stack.add(reflexive);
     }
 
@@ -267,7 +269,20 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
                 targetPlayerId,
                 entry.getSourcePermanentId());
         reflexive.setNonTargeting(true);
+        reflexive.setTriggeringPlayerId(entry.getTriggeringPlayerId());
         gameData.stack.add(reflexive);
+    }
+
+    /**
+     * A reflexive ability's "that player" is the player the triggering entry carries (the player dealt damage), its
+     * non-targeting target and triggering player.
+     */
+    private static void carryTriggeringPlayer(GameData gameData, StackEntry entry, StackEntry reflexive) {
+        reflexive.setTriggeringPlayerId(entry.getTriggeringPlayerId());
+        if (entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())) {
+            reflexive.setTargetId(entry.getTargetId());
+            reflexive.setNonTargeting(true);
+        }
     }
 
     private CounterType findCounterType(Permanent source, CounterType requestedType, int count) {

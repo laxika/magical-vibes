@@ -30,7 +30,10 @@ public class ConjureDuplicateOfCombatDamageSourceIntoHandEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        // "It" is the creature that dealt the damage: the equipped creature, which the entry records as its triggering
+        // permanent as it dealt the damage, or Semblance Scanner itself.
+        Permanent source = entry.getTriggeringPermanentSnapshot() != null ? entry.getTriggeringPermanentSnapshot()
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Card sourceCard = source != null
                 ? source.getCard()
                 : entry.getSourcePermanentSnapshot() == null

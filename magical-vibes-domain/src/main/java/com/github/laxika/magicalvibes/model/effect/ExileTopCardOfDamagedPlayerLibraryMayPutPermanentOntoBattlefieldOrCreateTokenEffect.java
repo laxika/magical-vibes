@@ -10,12 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  */
 public record ExileTopCardOfDamagedPlayerLibraryMayPutPermanentOntoBattlefieldOrCreateTokenEffect(
         CreateTokenEffect fallbackToken
-) implements CombatDamageTriggerContextEffect, TokenCreatingEffect {
+) implements TokenCreatingEffect {
 
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
-    }
 
     @Override
     public DynamicAmount tokenAmount() {

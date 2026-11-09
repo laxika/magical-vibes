@@ -16,7 +16,7 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record TargetPlayerExilesFromHandEffect(int amount, boolean controllerMayPlay,
                                                boolean returnOnSourceLeave, boolean faceDown)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public TargetPlayerExilesFromHandEffect(int amount) {
         this(amount, false, false, false);
@@ -38,10 +38,5 @@ public record TargetPlayerExilesFromHandEffect(int amount, boolean controllerMay
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.player());
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

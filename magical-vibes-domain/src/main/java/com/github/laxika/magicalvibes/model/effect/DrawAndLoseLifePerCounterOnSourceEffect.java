@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.TotalCountersOnSource;
  * If they do, they lose that same amount of life.
  */
 public record DrawAndLoseLifePerCounterOnSourceEffect()
-        implements CardDrawingEffect, CombatDamageTriggerContextEffect {
+        implements CardDrawingEffect {
 
     @Override
     public DynamicAmount drawnCardAmount() {
@@ -18,10 +18,5 @@ public record DrawAndLoseLifePerCounterOnSourceEffect()
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.NONE;
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

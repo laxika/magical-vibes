@@ -24,8 +24,9 @@ class ReturnPermanentsOnCombatDamageToPlayerEffectHandlerTest extends AbstractPl
             void beginsMultiPermanentChoice() {
                 Card card = createCard("Ninja of the Deep Hours");
                 ReturnPermanentsOnCombatDamageToPlayerEffect effect = new ReturnPermanentsOnCombatDamageToPlayerEffect();
-                // controllerId=attacker, targetId=defender, xValue=damage dealt
-                StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 3, player2Id);
+                // controllerId=attacker, targetId=defender, eventValue=damage dealt
+                StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 0, player2Id);
+                entry.setEventValue(3);
 
                 Permanent perm1 = new Permanent(createCard("Grizzly Bears"));
                 Permanent perm2 = new Permanent(createCard("Hill Giant"));
@@ -43,7 +44,8 @@ class ReturnPermanentsOnCombatDamageToPlayerEffectHandlerTest extends AbstractPl
             void noDefenderPermanents() {
                 Card card = createCard("Ninja of the Deep Hours");
                 ReturnPermanentsOnCombatDamageToPlayerEffect effect = new ReturnPermanentsOnCombatDamageToPlayerEffect();
-                StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 2, player2Id);
+                StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 0, player2Id);
+                entry.setEventValue(2);
 
                 resolveEffect(gd, entry, effect);
 
@@ -58,7 +60,8 @@ class ReturnPermanentsOnCombatDamageToPlayerEffectHandlerTest extends AbstractPl
                 Card card = createCard("Scalpelexis");
                 PermanentPredicate filter = new PermanentTruePredicate();
                 ReturnPermanentsOnCombatDamageToPlayerEffect effect = new ReturnPermanentsOnCombatDamageToPlayerEffect(filter);
-                StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 2, player2Id);
+                StackEntry entry = createEntryWithXValueAndTarget(card, player1Id, List.of(effect), 0, player2Id);
+                entry.setEventValue(2);
 
                 Permanent matching = new Permanent(createCard("Grizzly Bears"));
                 Permanent nonMatching = new Permanent(createCard("Mountain"));

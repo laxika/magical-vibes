@@ -12,7 +12,7 @@ public record AllowCastMatchingCardsFromDamagedPlayerGraveyardThisTurnEffect(
         CardPredicate filter,
         boolean singleUse,
         boolean anyManaType
-) implements CombatDamageTriggerContextEffect {
+) implements CardEffect {
 
     public AllowCastMatchingCardsFromDamagedPlayerGraveyardThisTurnEffect(CardPredicate filter,
                                                                           boolean anyManaType) {
@@ -21,10 +21,5 @@ public record AllowCastMatchingCardsFromDamagedPlayerGraveyardThisTurnEffect(
 
     public AllowCastMatchingCardsFromDamagedPlayerGraveyardThisTurnEffect {
         Objects.requireNonNull(filter, "filter");
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

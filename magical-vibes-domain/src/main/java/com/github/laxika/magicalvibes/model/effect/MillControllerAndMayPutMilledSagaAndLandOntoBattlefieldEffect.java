@@ -8,12 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
  * way onto the battlefield.
  */
 public record MillControllerAndMayPutMilledSagaAndLandOntoBattlefieldEffect(DynamicAmount count)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.SOURCE_SELF;
-    }
 
     @Override
     public boolean referencesEventValue() {

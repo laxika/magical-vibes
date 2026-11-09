@@ -117,7 +117,7 @@ public class ExileDyingCreatureCardAndCreateTokenEffectHandler implements Normal
         }
         if (effect instanceof SacrificeSelfThenEffect sacrifice) {
             CardEffect inner = bindReturn(sacrifice.thenEffect(), exiledCardId);
-            return inner == sacrifice.thenEffect() ? effect : new SacrificeSelfThenEffect(inner, sacrifice.reflexive());
+            return inner == sacrifice.thenEffect() ? effect : new SacrificeSelfThenEffect(inner, sacrifice.reflexive(), sacrifice.sacrificesTriggeringPermanent());
         }
         if (effect instanceof SequenceEffect sequence) {
             List<CardEffect> steps = sequence.steps().stream().map(step -> bindReturn(step, exiledCardId)).toList();

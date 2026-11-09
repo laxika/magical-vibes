@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 public record PutCountersOnSourceEffect(int powerModifier, int toughnessModifier, int amount,
                                         int controllerDrawCount)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public PutCountersOnSourceEffect(int powerModifier, int toughnessModifier, int amount) {
         this(powerModifier, toughnessModifier, amount, 0);
@@ -20,10 +20,5 @@ public record PutCountersOnSourceEffect(int powerModifier, int toughnessModifier
     @Override
     public TargetSpec targetSpec() {
         return new TargetSpec(null, false, null, true, 1);
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.SOURCE_SELF;
     }
 }

@@ -16,8 +16,7 @@ import com.github.laxika.magicalvibes.model.amount.SourceToughness;
  * "whenever you draw" triggers see each individual draw).
  */
 public record DrawCardEffect(DynamicAmount amount, DynamicAmount castTimeXValue, boolean rememberAmount)
-        implements ManaAbilityCardDrawingEffect, CombatDamageTriggerContextEffect,
-        CastTimeXValueEffect {
+        implements ManaAbilityCardDrawingEffect, CastTimeXValueEffect {
 
     public DrawCardEffect(DynamicAmount amount, DynamicAmount castTimeXValue) {
         this(amount, castTimeXValue, false);
@@ -59,12 +58,6 @@ public record DrawCardEffect(DynamicAmount amount, DynamicAmount castTimeXValue,
         return castTimeXValue;
     }
 
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return amount instanceof SourcePower || amount instanceof SourceToughness
-                || amount instanceof DistinctCountersOnSource
-                ? TriggerContext.SOURCE_SELF : null;
-    }
 
     @Override
     public TargetSpec targetSpec() {

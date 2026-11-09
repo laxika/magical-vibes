@@ -18,7 +18,7 @@ import java.util.UUID;
  */
 public record ExploreEffect(boolean targeted, PermanentReference reference, DynamicAmount amount,
                             boolean replacementApplied, UUID permanentId, PermanentPredicate targetPredicate)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public ExploreEffect() {
         this(false, null, null, false, null, null);
@@ -70,10 +70,5 @@ public record ExploreEffect(boolean targeted, PermanentReference reference, Dyna
     @Override
     public TargetSpec targetSpec() {
         return targeted ? TargetSpec.benign(TargetPredicates.creature(), targetPredicate) : TargetSpec.NONE;
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.SOURCE_SELF;
     }
 }

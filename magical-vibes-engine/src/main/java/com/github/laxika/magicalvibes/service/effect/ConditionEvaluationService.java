@@ -3969,8 +3969,9 @@ public class ConditionEvaluationService {
     }
 
     private boolean enchantedPermanentMatches(GameData gameData, ConditionContext ctx, PermanentPredicate filter) {
-        Permanent aura = ctx.sourcePermanentId() == null
+        Permanent liveAura = ctx.sourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        Permanent aura = liveAura;
         if (ctx.triggeringPermanentId() != null && ctx.sourcePermanent() != null) {
             aura = ctx.sourcePermanent();
         }
@@ -3981,6 +3982,12 @@ public class ConditionEvaluationService {
         UUID enchantedId = ctx.triggeringPermanentId() != null
                 ? ctx.triggeringPermanentId() : aura.getAttachedTo();
         Permanent enchanted = gameQueryService.findPermanentById(gameData, enchantedId);
+        if (enchanted == null && liveAura != null && liveAura.isAttached()
+                && !liveAura.getAttachedTo().equals(enchantedId)) {
+            // The creature the ability triggered on has left; the Aura, still attached, enchants another one now
+            // ("if Breath of Fury is attached to a creature" after it was moved onto one).
+            enchanted = gameQueryService.findPermanentById(gameData, liveAura.getAttachedTo());
+        }
         if (enchanted == null) return false;
         return matchesPermanent(gameData, enchanted, filter, ctx);
     }

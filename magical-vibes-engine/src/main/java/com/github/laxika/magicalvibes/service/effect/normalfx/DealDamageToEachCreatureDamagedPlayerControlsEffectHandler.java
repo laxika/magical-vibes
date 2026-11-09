@@ -36,7 +36,7 @@ public class DealDamageToEachCreatureDamagedPlayerControlsEffectHandler implemen
         UUID damagedPlayerId = entry.getTargetId();
         if (damagedPlayerId == null) return;
 
-        int damageDealt = entry.getXValue();
+        int damageDealt = entry.getEventValue();
         int damage = e.fixedDamage() != null ? e.fixedDamage() : damageDealt;
         if (damage <= 0) return;
 

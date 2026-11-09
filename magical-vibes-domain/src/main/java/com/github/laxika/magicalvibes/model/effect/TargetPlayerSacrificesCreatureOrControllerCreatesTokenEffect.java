@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * controller creates the supplied token.
  */
 public record TargetPlayerSacrificesCreatureOrControllerCreatesTokenEffect(CreateTokenEffect token)
-        implements TokenCreatingEffect, CombatDamageTriggerContextEffect {
+        implements TokenCreatingEffect {
 
     @Override
     public DynamicAmount tokenAmount() {
@@ -33,10 +33,5 @@ public record TargetPlayerSacrificesCreatureOrControllerCreatesTokenEffect(Creat
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.player());
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

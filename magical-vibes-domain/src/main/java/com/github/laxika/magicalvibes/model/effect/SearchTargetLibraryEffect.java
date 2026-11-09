@@ -28,7 +28,7 @@ public record SearchTargetLibraryEffect(DynamicAmount count,
                                         CardPredicate filter,
                                         LibrarySearchDestination destination,
                                         boolean canFailToFind,
-                                        LibrarySearchPlayer searchPlayer) implements CombatDamageTriggerContextEffect {
+                                        LibrarySearchPlayer searchPlayer) implements CardEffect {
 
     /**
      * The destinations a target-library search knows how to reach. Anything else would fall through
@@ -75,10 +75,5 @@ public record SearchTargetLibraryEffect(DynamicAmount count,
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.player());
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

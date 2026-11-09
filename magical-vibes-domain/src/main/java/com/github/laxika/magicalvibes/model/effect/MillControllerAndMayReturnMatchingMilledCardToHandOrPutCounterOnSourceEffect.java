@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  */
 public record MillControllerAndMayReturnMatchingMilledCardToHandOrPutCounterOnSourceEffect(
         DynamicAmount count, CardPredicate filter, DynamicAmount maxCount)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public MillControllerAndMayReturnMatchingMilledCardToHandOrPutCounterOnSourceEffect(
             int count, CardPredicate filter) {
@@ -27,10 +27,5 @@ public record MillControllerAndMayReturnMatchingMilledCardToHandOrPutCounterOnSo
         if (count == null || filter == null || maxCount == null) {
             throw new NullPointerException("count, filter, and maxCount are required");
         }
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.SOURCE_SELF;
     }
 }

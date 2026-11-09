@@ -47,7 +47,7 @@ public record CreateTokenEffect(
         List<CreateTokenEffect> simultaneousTokens,
         boolean attackingUntapped,
         String manaCost
-) implements TokenCreatingEffect, CombatDamageTriggerContextEffect {
+) implements TokenCreatingEffect {
 
     public CreateTokenEffect {
         simultaneousTokens = List.copyOf(simultaneousTokens);
@@ -154,11 +154,6 @@ public record CreateTokenEffect(
                 ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return amount instanceof PermanentCount count && count.scope() == CountScope.TARGET_PLAYER
-                ? TriggerContext.DAMAGED_PLAYER : null;
-    }
 
     @Override
     public CardType tokenType() {

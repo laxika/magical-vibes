@@ -20,10 +20,8 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.EquippedCreatureDealsDamageToDefendingPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -193,7 +191,10 @@ public class CombatTriggerService {
                             // (e.g. equipment-granted Afflict) can resolve.
                             trigger.setAttackedTargetId(creature.getAttackTarget());
                             trigger.setTriggeringPermanentId(creature.getId());
-                            captureEquippedCreatureDamageSource(trigger, creature, finalCreatureControllerId, effectsForStack);
+                            // "It" and "its controller" are the creature the permanent is attached to, which the entry
+                            // records with its controller and as it last existed, whatever the effects are.
+                            trigger.setTriggeringPermanentControllerId(finalCreatureControllerId);
+                            trigger.setAttachedPermanentSnapshot(new Permanent(creature));
                             gameData.stack.add(trigger);
                             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                             log.info("Game {} - {} auto-targeted combat trigger pushed onto stack (attached to {})",
@@ -263,22 +264,18 @@ public class CombatTriggerService {
                                 log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
                                         gameData.id, perm.getCard().getName(), creature.getCard().getName());
                             } else {
-                                UUID triggeringPlayerId = effectsForStack.stream()
-                                        .anyMatch(CreateTokenForTriggeringPlayerEffect.class::isInstance)
-                                        ? finalCreatureControllerId
-                                        : null;
-                                // An attack ability granted to the enchanted creature (Invocation of Saint Traft,
-                                // Unquenchable Fury) is an ability of that creature, so the creature is its source
-                                // and its controller controls it (CR 113.7, CR 113.8).
+                                // An attack ability granted to the enchanted creature (Unquenchable Fury) is an ability
+                                // of that creature, so the creature is its source and its controller controls it
+                                // (CR 113.7, CR 113.8).
                                 boolean grantedToCreature = slot == CombatWatch.ON_ATTACK
-                                        && (triggeringPlayerId != null || !isOwnAttackTrigger(perm, slot));
+                                        && !isOwnAttackTrigger(perm, slot);
                                 StackEntry trigger = new StackEntry(
                                         StackEntryType.TRIGGERED_ABILITY,
                                         perm.getCard(),
                                         grantedToCreature ? finalCreatureControllerId : auraOwnerId,
                                         perm.getCard().getName() + "'s triggered ability",
                                         effectsForStack,
-                                        triggeringPlayerId,
+                                        null,
                                         grantedToCreature ? creature.getId() : perm.getId()
                                 );
                                 // No effect of the ability targets, so nothing on its entry is checked as a target.
@@ -397,7 +394,9 @@ public class CombatTriggerService {
                             trigger.setNonTargeting(true);
                         }
                         trigger.setTriggeringPermanentId(attacker.getId());
-                        captureEquippedCreatureDamageSource(trigger, attacker, finalControllerId, transformedEffects);
+                        // "It" and "its controller" are the attacking creature, whatever the effects are.
+                        trigger.setTriggeringPermanentControllerId(finalControllerId);
+                        trigger.setAttachedPermanentSnapshot(new Permanent(attacker));
                         gameData.stack.add(trigger);
                         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                         log.info("Game {} - {} per-blocker trigger pushed onto stack (attached to {})",
@@ -406,14 +405,6 @@ public class CombatTriggerService {
                 }
             }
         });
-    }
-
-    private static void captureEquippedCreatureDamageSource(StackEntry trigger, Permanent creature,
-                                                             UUID controllerId, List<CardEffect> effects) {
-        if (effects.stream().anyMatch(EquippedCreatureDealsDamageToDefendingPlayerEffect.class::isInstance)) {
-            trigger.setDamageSourceCard(creature.getCard());
-            trigger.setTriggeringPermanentControllerId(controllerId);
-        }
     }
 
     /**

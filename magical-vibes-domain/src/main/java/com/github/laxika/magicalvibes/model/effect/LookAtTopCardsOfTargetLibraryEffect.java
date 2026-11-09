@@ -25,7 +25,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  */
 public record LookAtTopCardsOfTargetLibraryEffect(DynamicAmount count, TargetLibraryAction action,
                                                   int graveyardCount)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public LookAtTopCardsOfTargetLibraryEffect(DynamicAmount count, TargetLibraryAction action) {
         this(count, action, 1);
@@ -50,12 +50,7 @@ public record LookAtTopCardsOfTargetLibraryEffect(DynamicAmount count, TargetLib
                     EXILE_ONE_FACE_DOWN_REST_TO_GRAVEYARD,
                     MAY_PUT_NONLAND_PERMANENT_WITH_MANA_VALUE_X_ONTO_BATTLEFIELD ->
                     TargetSpec.harmful(TargetPredicates.player());
-            default -> CombatDamageTriggerContextEffect.super.targetSpec();
+            default -> CardEffect.super.targetSpec();
         };
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

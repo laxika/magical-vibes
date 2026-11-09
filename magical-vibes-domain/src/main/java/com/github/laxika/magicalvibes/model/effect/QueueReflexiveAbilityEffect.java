@@ -19,7 +19,7 @@ public record QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTar
                                            boolean useEventValueAsX,
                                            boolean useEntryTargetAsTriggeringPermanent,
                                            UUID sourcePermanentId)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public QueueReflexiveAbilityEffect(CardEffect effect) {
         this(effect, false, false, false);
@@ -51,13 +51,5 @@ public record QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTar
     @Override
     public boolean targetsChosenByReflexiveAbility() {
         return true;
-    }
-
-    /** A combat-damage trigger needs the context of the reflexive effect it queues ("that player"). */
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return effect instanceof CombatDamageTriggerContextEffect contextEffect
-                ? contextEffect.combatDamageTriggerContext()
-                : null;
     }
 }

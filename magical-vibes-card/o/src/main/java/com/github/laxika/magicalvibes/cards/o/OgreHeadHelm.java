@@ -32,7 +32,7 @@ public class OgreHeadHelm extends Card {
         addStaticEffect(new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE,
                 GrantScope.SELF, EffectDuration.WHILE_ATTACHED));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayEffect(
-                new SacrificeSelfThenEffect(new DiscardOwnHandThenDrawEffect(new Fixed(3))),
+                SacrificeSelfThenEffect.ofTriggeringPermanent(new DiscardOwnHandThenDrawEffect(new Fixed(3))),
                 "You may sacrifice it. If you do, discard your hand, then draw three cards."));
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(

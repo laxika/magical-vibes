@@ -14,7 +14,7 @@ public record RegisterDelayedTargetPlayerSpellCastTriggerEffect(
         boolean oneShot,
         boolean sourceMustRemainOnBattlefield,
         boolean persistsUntilConsumed
-) implements CombatDamageTriggerContextEffect {
+) implements CardEffect {
 
     public RegisterDelayedTargetPlayerSpellCastTriggerEffect(
             CardPredicate spellFilter,
@@ -29,10 +29,5 @@ public record RegisterDelayedTargetPlayerSpellCastTriggerEffect(
             CardPredicate spellFilter, List<CardEffect> resolvedEffects) {
         return new RegisterDelayedTargetPlayerSpellCastTriggerEffect(
                 spellFilter, resolvedEffects, true, false, true);
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

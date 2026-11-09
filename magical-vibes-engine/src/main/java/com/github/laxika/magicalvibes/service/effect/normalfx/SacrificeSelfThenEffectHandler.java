@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfThenEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -36,11 +37,13 @@ public class SacrificeSelfThenEffectHandler implements NormalEffectHandlerBean, 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SacrificeSelfThenEffect) effect;
 
-        if (entry.getSourcePermanentId() == null) {
+        UUID sacrificedId = e.sacrificesTriggeringPermanent() && entry.getTriggeringPermanentId() != null
+                ? entry.getTriggeringPermanentId() : entry.getSourcePermanentId();
+        if (sacrificedId == null) {
             return;
         }
 
-        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent self = gameQueryService.findPermanentById(gameData, sacrificedId);
         if (self == null) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles — source no longer on the battlefield."));
             return;

@@ -76,7 +76,10 @@ public class DrawDiscardAndConniveEffectHandler implements NormalEffectHandlerBe
         Permanent lastKnownSource = source == null && sourcePermanentId != null
                 && entry.getSourcePermanentSnapshot() != null
                 && sourcePermanentId.equals(entry.getSourcePermanentSnapshot().getId())
-                ? entry.getSourcePermanentSnapshot() : null;
+                ? entry.getSourcePermanentSnapshot()
+                : source == null && sourcePermanentId != null && entry.getTriggeringPermanentSnapshot() != null
+                && sourcePermanentId.equals(entry.getTriggeringPermanentSnapshot().getId())
+                ? entry.getTriggeringPermanentSnapshot() : null;
         if (sourcePermanentId != null && discardAmount > 0) {
             gameData.pendingConnive = new PendingConnive(sourcePermanentId, discardAmount,
                     lastKnownSource, controllerId);

@@ -3,18 +3,13 @@ package com.github.laxika.magicalvibes.model.effect;
 /**
  * The target player discards a card at random, then draws a card if a card was discarded.
  *
- * <p>The target is supplied by the combat-damage trigger context when used on
- * {@code Triggers.dealsCombatDamageToPlayer()}.
+ * <p>On a {@code Triggers.dealsCombatDamageToPlayer()} ability with no declared player target it is "that
+ * player", the player dealt damage, which the collector records as the entry's non-targeting target.
  */
-public record TargetPlayerRandomDiscardThenDrawEffect() implements CombatDamageTriggerContextEffect {
+public record TargetPlayerRandomDiscardThenDrawEffect() implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.player());
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

@@ -6,10 +6,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * the all-damage-to-player trigger slot, which covers both combat and noncombat damage.
  */
 public record RevealOwnHandThenDamagedPlayerLosesGameIfSixDifferentManaValuesEffect()
-        implements CombatDamageTriggerContextEffect {
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
-    }
+        implements CardEffect {
 }

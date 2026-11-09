@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 /** Returns the source permanent to its owner's hand, then resolves the payload if it returned. */
 public record ReturnSelfToHandThenEffect(CardEffect thenEffect)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public ReturnSelfToHandThenEffect {
         if (thenEffect == null) {
@@ -15,10 +15,5 @@ public record ReturnSelfToHandThenEffect(CardEffect thenEffect)
         TargetSpec payload = thenEffect.targetSpec();
         return new TargetSpec(payload.declaredTarget(), payload.harmful(), payload.predicate(), true,
                 payload.playerTargetCount());
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

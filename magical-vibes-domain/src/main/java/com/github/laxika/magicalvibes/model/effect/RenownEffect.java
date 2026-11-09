@@ -6,10 +6,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code Triggers.dealsCombatDamageToPlayer()}; the "isn't renowned" check is part of the
  * resolution, so a second instance resolving later simply does nothing (CR 702.112c).
  */
-public record RenownEffect(int amount) implements CombatDamageTriggerContextEffect {
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.SOURCE_SELF;
-    }
+public record RenownEffect(int amount) implements CardEffect {
 }

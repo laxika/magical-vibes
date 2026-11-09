@@ -6,8 +6,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code lifeLoss} life unless they pay {@code {payAmount}} before that draw step. Used by Nafs Asp
  * (1 life / {1}).
  *
- * <p>The damaged player is baked into the firing stack entry's {@code targetId} via
- * {@link CombatDamageTriggerContextEffect.TriggerContext#DAMAGED_PLAYER}; the handler reads it and
+ * <p>The damaged player is the firing stack entry's non-targeting {@code targetId}, which the
+ * damage-to-a-player collector records; the handler reads it and
  * queues a {@code LoseLifeAtNextDrawStepUnlessPays} delayed action, drained at that player's draw
  * step in {@code StepTriggerService} as a "you may pay; if you don't, lose life" prompt. Modelling
  * the payment at the draw step (rather than any time before it) is outcome-equivalent: paying avoids
@@ -17,10 +17,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param payAmount generic mana the damaged player may pay to avoid the loss
  */
 public record RegisterLoseLifeAtNextDrawStepUnlessPaysEffect(int lifeLoss, int payAmount)
-        implements CombatDamageTriggerContextEffect {
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
-    }
+        implements CardEffect {
 }

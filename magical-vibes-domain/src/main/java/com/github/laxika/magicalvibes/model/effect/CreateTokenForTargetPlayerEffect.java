@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
  */
 public record CreateTokenForTargetPlayerEffect(CreateTokenEffect tokenEffect,
                                                PlayerRelation targetPlayerRelation,
-                                               int targetGroup) implements CombatDamageTriggerContextEffect {
+                                               int targetGroup) implements CardEffect {
 
     public CreateTokenForTargetPlayerEffect(CreateTokenEffect tokenEffect) {
         this(tokenEffect, PlayerRelation.ANY, -1);
@@ -31,10 +31,5 @@ public record CreateTokenForTargetPlayerEffect(CreateTokenEffect tokenEffect,
         return TargetSpec.benign(targetPlayerRelation == PlayerRelation.ANY
                 ? TargetPredicates.player()
                 : TargetPredicates.players(new PlayerRelationPredicate(targetPlayerRelation)));
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

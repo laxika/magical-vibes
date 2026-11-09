@@ -54,8 +54,8 @@ class InvocationOfSaintTraftTest extends BaseCardTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
-                .contains(new DelayedPermanentAction(
-                        angel.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT));
+                .anyMatch(action -> action.permanentId().equals(angel.getId())
+                        && action.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT);
 
         passThroughEndOfCombat();
 

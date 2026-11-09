@@ -145,7 +145,6 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
-import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
@@ -3529,7 +3528,8 @@ public class TriggerCollectionService {
                     source.getCard(), controllerId, List.of(interveningIf != null
                             ? new ConditionalEffect(interveningIf.condition(), bounce.withTriggerTimeTargets())
                             : bounce.withTriggerTimeTargets()),
-                    source.getId(), controllerId, damagedPlayerId, null, damageDealt));
+                    source.getId(), controllerId, damagedPlayerId, null, damageDealt)
+                    .withEventValue(damageDealt).withTriggeringPlayer(damagedPlayerId));
             return;
         }
 
@@ -3560,27 +3560,8 @@ public class TriggerCollectionService {
             return;
         }
 
-        String desc = source.getCard().getName() + "'s triggered ability";
-        StackEntry se;
-        CombatDamageTriggerContextEffect.TriggerContext triggerContext =
-                toQueue instanceof CombatDamageTriggerContextEffect contextEffect
-                        ? contextEffect.combatDamageTriggerContext()
-                        : null;
-        if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER_WITH_DAMAGE_AMOUNT) {
-            se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
-                    desc, List.of(effect), damageDealt, damagedPlayerId, null);
-        } else if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.SOURCE_SELF) {
-            se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
-                    desc, List.of(effect), null, source.getId());
-        } else if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER) {
-            se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
-                    desc, List.of(effect), damagedPlayerId, source.getId());
-        } else {
-            se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
-                    desc, List.of(effect));
-        }
-        // The damage dealt and the player dealt it are the event's ("discards that many cards", "draw that many
-        // cards"), whatever the effects are.
+        StackEntry se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
+                source.getCard().getName() + "'s triggered ability", List.of(effect), damagedPlayerId, source.getId());
         se.setEventValue(damageDealt);
         se.setTriggeringPlayerId(damagedPlayerId);
         se.setNonTargeting(true);

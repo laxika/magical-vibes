@@ -8,7 +8,7 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record TargetPlayerGainsControlOfSourceCreatureEffect(boolean targetsPlayer, CardEffect thenEffect,
                                                               ControlDuration duration)
-        implements ControlStealingEffect, CombatDamageTriggerContextEffect {
+        implements ControlStealingEffect {
 
     public TargetPlayerGainsControlOfSourceCreatureEffect() {
         this(true, null, ControlDuration.PERMANENT);
@@ -44,10 +44,6 @@ public record TargetPlayerGainsControlOfSourceCreatureEffect(boolean targetsPlay
         return targetsPlayer ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
     }
 
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return thenEffect == null ? null : TriggerContext.DAMAGED_PLAYER;
-    }
 
     @Override
     public ControlDuration controlDuration() {

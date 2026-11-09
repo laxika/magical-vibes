@@ -7,11 +7,10 @@ package com.github.laxika.magicalvibes.model.effect;
  *   <li>{@link #CONTROLLER} — the resolving controller ("you skip your next turn"; Chronatog,
  *       Meditate, Ivory Gargoyle). Read from the stack entry's {@code controllerId}; the effect
  *       targets nothing.</li>
- *   <li>{@link #DAMAGED_PLAYER} — the player a combat-damage trigger baked into the stack entry's
+ *   <li>{@link #DAMAGED_PLAYER} — the player a combat-damage trigger recorded as the stack entry's
  *       {@code targetId} ("whenever this creature deals combat damage to a player, <em>that
- *       player</em> …"; Blinding Angel). Not a target: the effect asks the combat engine for the
- *       {@link CombatDamageTriggerContextEffect.TriggerContext#DAMAGED_PLAYER} stack-entry shape
- *       instead of declaring a {@code TargetSpec}.</li>
+ *       player</em> …"; Blinding Angel). Not a target: the damage-to-a-player collector records the
+ *       player dealt damage as the entry's non-targeting {@code targetId}.</li>
  *   <li>{@link #TARGET_PLAYER} — a targeted player, also read from {@code targetId} ("target player
  *       skips …"; False Peace, Empty City Ruse, Stonehorn Dignitary, Yosei, the Morning Star). This
  *       is the only value that declares a player {@code TargetSpec}.</li>

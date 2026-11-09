@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 
 /** Exiles the top {@code count} cards of the targeted player's library. */
 public record ExileTopCardsOfTargetPlayerLibraryEffect(DynamicAmount count)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public ExileTopCardsOfTargetPlayerLibraryEffect(int count) {
         this(new Fixed(count));
@@ -14,10 +14,5 @@ public record ExileTopCardsOfTargetPlayerLibraryEffect(DynamicAmount count)
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.harmful(TargetPredicates.player());
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

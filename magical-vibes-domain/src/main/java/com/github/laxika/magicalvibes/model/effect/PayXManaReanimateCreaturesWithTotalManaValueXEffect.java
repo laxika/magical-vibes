@@ -6,10 +6,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * with total mana value X or less under the controller's control.
  */
 public record PayXManaReanimateCreaturesWithTotalManaValueXEffect()
-        implements CombatDamageTriggerContextEffect {
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
-    }
+        implements CardEffect {
 }

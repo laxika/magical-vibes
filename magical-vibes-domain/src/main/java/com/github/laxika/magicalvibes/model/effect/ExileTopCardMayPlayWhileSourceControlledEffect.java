@@ -5,10 +5,5 @@ package com.github.laxika.magicalvibes.model.effect;
  * control the source permanent.
  */
 public record ExileTopCardMayPlayWhileSourceControlledEffect()
-        implements CombatDamageTriggerContextEffect {
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.SOURCE_SELF;
-    }
+        implements CardEffect {
 }

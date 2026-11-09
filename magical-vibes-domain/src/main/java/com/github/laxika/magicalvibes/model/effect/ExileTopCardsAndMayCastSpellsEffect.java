@@ -32,7 +32,7 @@ public record ExileTopCardsAndMayCastSpellsEffect(
         Integer totalManaValueLimit,
         boolean normalCost,
         boolean playLands
-) implements CombatDamageTriggerContextEffect {
+) implements CardEffect {
 
     public ExileTopCardsAndMayCastSpellsEffect(int count, DynamicAmount dynamicCount, LibraryScope scope,
                                                boolean trackWithSource, boolean faceDown,
@@ -144,14 +144,5 @@ public record ExileTopCardsAndMayCastSpellsEffect(
                 ? TargetSpec.harmful(TargetPredicates.players(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT)))
                 : TargetSpec.NONE;
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        if (!trackWithSource) {
-            return null;
-        }
-        return scope == LibraryScope.TARGET_OPPONENT
-                ? TriggerContext.DAMAGED_PLAYER : TriggerContext.SOURCE_SELF;
     }
 }

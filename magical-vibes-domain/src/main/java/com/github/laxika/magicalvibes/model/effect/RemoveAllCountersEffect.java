@@ -10,13 +10,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * +1/+1 counters from it, and it deals that much damage to each creature and each player").
  *
  * <p>{@link CounterRemovalSubject#SOURCE} is non-targeting and is the shape that fires as an
- * {@code Triggers.dealsCombatDamageToPlayer()} ability (Ammit Eternal), hence
- * {@link CombatDamageTriggerContextEffect.TriggerContext#SOURCE_SELF}.
- * {@link CounterRemovalSubject#TARGET} targets a creature (Hapatra's Mark) and needs no combat
- * context, so it reports {@code null}.</p>
+ * {@code Triggers.dealsCombatDamageToPlayer()} ability (Ammit Eternal), acting on the entry's source.
+ * {@link CounterRemovalSubject#TARGET} targets a creature (Hapatra's Mark).</p>
  */
 public record RemoveAllCountersEffect(CounterType counterType, CounterRemovalSubject subject)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     /** "Remove all {counter} counters from this permanent" — the non-targeting source form. */
     public RemoveAllCountersEffect(CounterType counterType) {
@@ -28,10 +26,5 @@ public record RemoveAllCountersEffect(CounterType counterType, CounterRemovalSub
         return subject == CounterRemovalSubject.TARGET
                 ? TargetSpec.benign(TargetPredicates.creature())
                 : new TargetSpec(null, false, null, true, 1);
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return subject == CounterRemovalSubject.SOURCE ? TriggerContext.SOURCE_SELF : null;
     }
 }

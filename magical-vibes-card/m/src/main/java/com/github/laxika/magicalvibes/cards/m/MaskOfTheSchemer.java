@@ -13,7 +13,7 @@ public class MaskOfTheSchemer extends Card {
 
     public MaskOfTheSchemer() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new DrawDiscardAndConniveEffect(new EventValue()));
+                DrawDiscardAndConniveEffect.ofTriggeringPermanent(new EventValue()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

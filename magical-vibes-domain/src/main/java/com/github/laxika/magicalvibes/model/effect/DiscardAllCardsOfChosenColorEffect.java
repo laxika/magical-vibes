@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * the Purger).
  */
 public record DiscardAllCardsOfChosenColorEffect(boolean targetsPlayer)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public DiscardAllCardsOfChosenColorEffect() {
         this(true);
@@ -20,10 +20,5 @@ public record DiscardAllCardsOfChosenColorEffect(boolean targetsPlayer)
     @Override
     public TargetSpec targetSpec() {
         return targetsPlayer ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return targetsPlayer ? null : TriggerContext.DAMAGED_PLAYER;
     }
 }

@@ -5,15 +5,10 @@ package com.github.laxika.magicalvibes.model.effect;
  * makes its controller lose 2 life when it is cast.
  */
 public record PerpetuallyGiveSpellCastLifeLossToRandomNonlandCardInDamagedHandEffect()
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.player());
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

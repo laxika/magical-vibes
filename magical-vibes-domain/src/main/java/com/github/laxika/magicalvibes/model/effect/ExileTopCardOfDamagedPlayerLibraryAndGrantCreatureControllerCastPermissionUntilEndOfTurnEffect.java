@@ -7,14 +7,9 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerCastPermissionUntilEndOfTurnEffect(
         boolean anyManaType)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerCastPermissionUntilEndOfTurnEffect() {
         this(false);
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }

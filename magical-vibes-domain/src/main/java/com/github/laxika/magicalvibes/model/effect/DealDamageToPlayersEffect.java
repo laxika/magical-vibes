@@ -25,7 +25,7 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
                                         PermanentPredicate attachedCountFilter, boolean unpreventable,
                                         boolean recordDamageDealt, TargetFilter triggeredTargetFilter,
                                         DamageSource damageSource)
-        implements DamageDealingEffect, CombatDamageTriggerContextEffect {
+        implements DamageDealingEffect {
 
     public DealDamageToPlayersEffect {
         if (damageSource == null) {
@@ -156,14 +156,5 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
     @Override
     public boolean damagesController() {
         return recipient == DamageRecipient.CONTROLLER;
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return switch (recipient) {
-            case TARGET_PLAYER, EACH_OTHER_OPPONENT -> TriggerContext.DAMAGED_PLAYER;
-            case CHOSEN_PLAYER -> TriggerContext.CHOSEN_PLAYER;
-            default -> null;
-        };
     }
 }

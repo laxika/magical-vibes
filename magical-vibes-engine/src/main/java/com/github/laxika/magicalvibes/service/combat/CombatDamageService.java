@@ -52,11 +52,9 @@ import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentToDefendingPlayerAndCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageResolutionEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatDamageTriggerContextEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -2357,18 +2355,17 @@ public class CombatDamageService {
                 }
 
                 boolean targetsExiledCard = effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD);
-                // A sequence's stack-entry context and combat-opponent references describe its other steps; a
-                // permanent target one of its steps declares ("destroy up to one target artifact that player controls
-                // and put a +1/+1 counter on this creature") is still chosen as the ability goes on the stack.
+                // A sequence's combat-opponent references describe its other steps; a permanent target one of its
+                // steps declares ("destroy up to one target artifact that player controls and put a +1/+1 counter on
+                // this creature") is still chosen as the ability goes on the stack.
                 boolean sequenceTargetsPermanent = effect instanceof SequenceEffect
                         && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
+                // A player the card declares no target for is "that player", the player dealt damage, which the
+                // entry records; a declared player target is chosen as the ability goes on the stack (CR 603.3d).
                 if ((effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                        || targetsExiledCard)
-                        && (targetsExiledCard || sequenceTargetsPermanent
-                        || !(effect instanceof CombatDamageTriggerContextEffect contextEffect)
-                        || contextEffect.combatDamageTriggerContext() == null
-                        || creature.getCard().hasEffectTargetIndex(effect))
+                        || targetsExiledCard
+                        || (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        && creature.getCard().hasEffectTargetIndex(effect)))
                         && (sequenceTargetsPermanent
                         || !(effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()))) {
                     if (triggerCollectionService.needsSlotBySlotTargetSelection(creature.getCard())) {
@@ -2384,41 +2381,16 @@ public class CombatDamageService {
                     continue;
                 }
 
-                String desc = creature.getCard().getName() + "'s triggered ability";
-                StackEntry se;
-                // A single capability interface reports the context the fired trigger needs (which
-                // player it targets, which permanent is its source); a null context means the plain
-                // stack entry (no bound player or source). Recipient-dependent effects (discard /
-                // mill / damage to the TARGET_PLAYER) report DAMAGED_PLAYER only for that recipient
-                // and null otherwise, matching the old per-recipient guards.
-                CombatDamageTriggerContextEffect.TriggerContext triggerContext =
-                        effect instanceof CombatDamageTriggerContextEffect contextEffect
-                                ? contextEffect.combatDamageTriggerContext()
-                                : null;
-                if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER_WITH_DAMAGE_AMOUNT) {
-                    se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
-                            desc, List.of(effect), defenderId, creature.getId());
-                    se.setXValue(damageDealt);
-                } else if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.SOURCE_SELF) {
-                    se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
-                            desc, List.of(effect), null, creature.getId());
-                } else if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER) {
-                    se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
-                            desc, List.of(effect), defenderId, creature.getId());
-                } else if (triggerContext == CombatDamageTriggerContextEffect.TriggerContext.CHOSEN_PLAYER) {
-                    se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
-                            desc, List.of(effect), creature.getRememberedTargetPlayerId(), creature.getId());
-                } else {
-                    se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
-                            desc, List.of(effect), null, creature.getId());
-                }
-                if (se.getSourcePermanentId() != null) {
-                    se.setSourcePermanentSnapshot(new Permanent(creature));
-                    se.setAlternateCost(creature.isAlternateCost());
-                }
-                // The combat damage dealt is the event value: "discards that many cards" (Needle Specter),
-                // "draw that many cards" (Hunter's Insight) and the like read it as the ability resolves.
+                // "That player" and "that many" are the player dealt damage and the damage dealt, which the entry
+                // records whatever the effects are: the player as its triggering player and its non-targeting target,
+                // the damage as its event value ("discards that many cards", Needle Specter), read as it resolves.
+                StackEntry se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
+                        creature.getCard().getName() + "'s triggered ability", List.of(effect), defenderId,
+                        creature.getId());
+                se.setSourcePermanentSnapshot(new Permanent(creature));
+                se.setAlternateCost(creature.isAlternateCost());
                 se.setEventValue(damageDealt);
+                se.setTriggeringPlayerId(defenderId);
                 se.setEventDamageSource(creature, attackerId);
                 se.setGrantingPermanentId(grantingPermanents.get(candidateEffect));
                 se.setNonTargeting(true);
@@ -2435,7 +2407,10 @@ public class CombatDamageService {
                 try {
                 String desc = creature.getCard().getName() + "'s triggered ability";
                 StackEntry bounceSe = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
-                        desc, List.of(new ReturnPermanentsOnCombatDamageToPlayerEffect(new PermanentIsCreaturePredicate())), 1, defenderId, null);
+                        desc, List.of(new ReturnPermanentsOnCombatDamageToPlayerEffect(new PermanentIsCreaturePredicate(), 1)),
+                        defenderId, (UUID) null);
+                bounceSe.setEventValue(damageDealt);
+                bounceSe.setTriggeringPlayerId(defenderId);
                 bounceSe.setNonTargeting(true);
                 gameData.stack.add(bounceSe);
                 gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s damage-to-opponent bounce trigger goes on the stack."));
@@ -2592,16 +2567,6 @@ public class CombatDamageService {
                         return;
                     }
 
-                    UUID triggerTargetId = defenderId;
-                    boolean targetsEnchantedCreatureController = effects.stream()
-                            .anyMatch(effect -> effect instanceof CombatDamageTriggerContextEffect contextEffect
-                                    && contextEffect.combatDamageTriggerContext()
-                                    == CombatDamageTriggerContextEffect.TriggerContext.ENCHANTED_CREATURE_CONTROLLER
-                                    || effect instanceof CreateTokenForTriggeringPlayerEffect);
-                    if (targetsEnchantedCreatureController) {
-                        triggerTargetId = gameData.findControllerOf(creature);
-                    }
-
                     boolean needsTarget = effects.stream()
                             .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
                     if (needsTarget) {
@@ -2616,34 +2581,24 @@ public class CombatDamageService {
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                                 "'s combat damage trigger goes on the stack — choose a target."));
                     } else {
-                        UUID sourcePermanentId = perm.getId();
-                        // The Equipment itself deals the damage (Sword of War and Peace), so it keeps
-                        // its own characteristics rather than the equipped creature's infect or lifelink.
-                        boolean equipmentDealsDamage = effects.stream()
-                                .anyMatch(com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect.class::isInstance);
-                        boolean bindsToDamageDealer = !equipmentDealsDamage && effects.stream()
-                                .anyMatch(effect -> effect instanceof CombatDamageTriggerContextEffect contextEffect
-                                        && (contextEffect.combatDamageTriggerContext()
-                                        == CombatDamageTriggerContextEffect.TriggerContext.SOURCE_SELF
-                                        || contextEffect.combatDamageTriggerContext()
-                                        == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER));
-                        if (bindsToDamageDealer) {
-                            sourcePermanentId = creature.getId();
-                        }
+                        // The ability is the Aura's or Equipment's own (it deals damage itself, Sword of War and Peace);
+                        // "that player" is the player dealt damage, and "it", "that creature" and "its controller" the
+                        // creature that dealt it, which the entry records as its triggering permanent.
                         StackEntry se = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 ownerId,
                                 perm.getCard().getName() + "'s triggered ability",
                                 new ArrayList<>(effects),
-                                triggerTargetId,
-                                sourcePermanentId
+                                defenderId,
+                                perm.getId()
                         );
-                        if (creature.getId().equals(sourcePermanentId)) {
-                            se.setSourcePermanentSnapshot(new Permanent(creature));
-                        } else if (perm.getId().equals(sourcePermanentId)) {
-                            se.setSourcePermanentSnapshot(new Permanent(perm));
-                        }
+                        se.setSourcePermanentSnapshot(new Permanent(perm));
+                        se.setTriggeringPlayerId(defenderId);
+                        se.setTriggeringPermanentId(creature.getId());
+                        se.setTriggeringPermanentControllerId(attackerId);
+                        se.setTriggeringPermanent(creature);
+                        se.setEventDamageSource(creature, attackerId);
                         se.setEventValue(damageDealt);
                         se.setNonTargeting(true);
                         gameData.stack.add(se);
@@ -2682,31 +2637,22 @@ public class CombatDamageService {
             if (perm.isAttached() && defenderId.equals(perm.getAttachedTo())) {
                 List<CardEffect> effects = printedCombatEffects(perm.getCard(), CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER);
                 for (CardEffect effect : effects) {
-                    if (effect instanceof CombatDamageTriggerContextEffect contextEffect
-                            && (contextEffect.combatDamageTriggerContext()
-                            == CombatDamageTriggerContextEffect.TriggerContext.SOURCE_SELF
-                            || contextEffect.combatDamageTriggerContext()
-                            == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER)) {
-                        CombatDamageTriggerContextEffect.TriggerContext triggerContext =
-                                contextEffect.combatDamageTriggerContext();
-                        UUID targetId = triggerContext
-                                == CombatDamageTriggerContextEffect.TriggerContext.DAMAGED_PLAYER
-                                ? defenderId : null;
-                        UUID sourcePermanentId = triggerContext
-                                == CombatDamageTriggerContextEffect.TriggerContext.SOURCE_SELF
-                                ? creature.getId() : perm.getId();
-                        int previousCopies = beginCombatDamageTriggerCopies(
-                                gameData, ownerId, perm, creature, attackerId, damageDealt);
-                        try {
+                    int previousCopies = beginCombatDamageTriggerCopies(
+                            gameData, ownerId, perm, creature, attackerId, damageDealt);
+                    try {
+                        // "That creature" is the creature that dealt the damage (the entry's triggering permanent)
+                        // and "that player" the enchanted player it was dealt to.
                         StackEntry se = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 ownerId,
                                 perm.getCard().getName() + "'s triggered ability",
                                 List.of(effect),
-                                targetId,
-                                sourcePermanentId
+                                defenderId,
+                                perm.getId()
                         );
+                        se.setTriggeringPlayerId(defenderId);
+                        se.setTriggeringPermanent(creature);
                         se.setTriggeringPermanentId(creature.getId());
                         se.setTriggeringPermanentControllerId(attackerId);
                         se.setEventValue(damageDealt);
@@ -2714,9 +2660,8 @@ public class CombatDamageService {
                         gameData.stack.add(se);
                         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                                 "'s combat damage trigger goes on the stack."));
-                        } finally {
-                            gameData.restoreTriggeredAbilityCopies(previousCopies);
-                        }
+                    } finally {
+                        gameData.restoreTriggeredAbilityCopies(previousCopies);
                     }
                 }
             }
@@ -2902,41 +2847,18 @@ public class CombatDamageService {
                                 "'s combat damage trigger goes on the stack — choose a graveyard target."));
                         continue;
                     }
-                    if ((firedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                            || (firedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                            && (perm.getCard().hasEffectTargetIndex(read.effect())
-                            || perm.getCard().hasEffectTargetIndex(firedEffect))))
-                            && (!(firedEffect instanceof CombatDamageTriggerContextEffect contextEffect)
-                            || contextEffect.combatDamageTriggerContext() == null
-                            || perm.getCard().hasEffectTargetIndex(firedEffect))
-                            && !(firedEffect instanceof CombatOpponentReferencingEffect c
-                            && c.referencesCombatOpponent())) {
-                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                perm.getCard(), attackerId, List.of(firedEffect), perm.getId(), attackerId,
-                                defenderId, creature.getId()).withEventValue(triggerDamage)
-                                .withTriggeringPlayer(defenderId));
-                        read.markLimit(gameData, perm.getId());
-                        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
-                                "'s combat damage trigger goes on the stack — choose a target."));
-                        continue;
-                    }
-                    // Bind the damaged player so effects like DiscardEffect(TARGET_PLAYER) resolve
-                    // against them (Oona's Blackguard: "...that player discards a card").
-                    UUID triggerTargetId = defenderId;
-                    if (firedEffect instanceof CombatDamageTriggerContextEffect contextEffect
-                            && contextEffect.combatDamageTriggerContext()
-                            == CombatDamageTriggerContextEffect.TriggerContext.CHOSEN_PLAYER) {
-                        triggerTargetId = perm.getRememberedTargetPlayerId();
-                    }
+                    // "That player" is the player dealt damage, which the entry records as its triggering player and
+                    // non-targeting target (Oona's Blackguard: "...that player discards a card").
                     StackEntry se = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             perm.getCard(),
                             attackerId,
                             perm.getCard().getName() + "'s triggered ability",
                             List.of(firedEffect),
-                            triggerTargetId,
+                            defenderId,
                             perm.getId()
                     );
+                    se.setTriggeringPlayerId(defenderId);
                     // The combat damage dealt is this trigger's event value, so "put that many
                     // +1/+1 counters on it" (Necropolis Regent) can read it back at resolution.
                     se.setEventValue(triggerDamage);
@@ -3977,11 +3899,6 @@ public class CombatDamageService {
                 if (read.eachSource()) {
                     triggerEntry.setTriggeringPermanentId(data.sourcePermanentId());
                     triggerEntry.setTriggeringPermanentControllerId(data.sourceControllerId());
-                }
-                if (effectToAdd instanceof DealDamageToPlayersEffect toPlayers
-                        && toPlayers.recipient() == DamageRecipient.CHOSEN_PLAYER
-                        && data.sourceSnapshot() != null) {
-                    triggerEntry.setTargetId(data.sourceSnapshot().getRememberedTargetPlayerId());
                 }
                 gameData.stack.add(triggerEntry);
                 gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));

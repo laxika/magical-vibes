@@ -22,7 +22,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * {@code landCount} is a {@link DynamicAmount} so the land count can come from the spell's paid X.
  */
 public record RevealUntilLandsMillTargetPlayerEffect(DynamicAmount landCount, MillRecipient recipient)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public RevealUntilLandsMillTargetPlayerEffect(int landCount) {
         this(new Fixed(landCount), MillRecipient.TARGET_PLAYER);
@@ -41,10 +41,5 @@ public record RevealUntilLandsMillTargetPlayerEffect(DynamicAmount landCount, Mi
         return recipient == MillRecipient.TARGET_PLAYER
                 ? TargetSpec.harmful(TargetPredicates.player())
                 : TargetSpec.NONE;
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return recipient == MillRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

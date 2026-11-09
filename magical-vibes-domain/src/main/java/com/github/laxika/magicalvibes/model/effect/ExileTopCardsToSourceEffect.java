@@ -30,7 +30,7 @@ public record ExileTopCardsToSourceEffect(int count, boolean faceDown,
                                           boolean targetedOpponent, DynamicAmount dynamicCount,
                                           boolean markWithIntelCounters, boolean mayLookAtFaceDownCards,
                                           boolean exilerMayLookWhileExiled)
-        implements CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     public ExileTopCardsToSourceEffect(int count, boolean faceDown,
                                        boolean toGraveyardOnControlLoss, LibraryScope scope,
@@ -111,17 +111,5 @@ public record ExileTopCardsToSourceEffect(int count, boolean faceDown,
     public TargetSpec targetSpec() {
         return targetedOpponent || scope == LibraryScope.TARGET_PLAYER
                 ? TargetSpec.harmful(TargetPredicates.player()) : TargetSpec.NONE;
-    }
-
-    /**
-     * Only the opponent scope needs a combat-damage context: the exiling player is the damaged
-     * player and the exiled cards must be tracked with the damage-dealing permanent, so both are
-     * bound on the entry (Nightveil Specter). The other scopes derive their players without the
-     * entry's {@code targetId}, so they take the plain stack entry.
-     */
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return scope == LibraryScope.TARGET_OPPONENT && !targetedOpponent
-                ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

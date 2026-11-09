@@ -9,7 +9,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param recipient who discards their hand
  */
 public record DiscardHandEffect(DiscardRecipient recipient)
-        implements CardEffect, CombatDamageTriggerContextEffect {
+        implements CardEffect {
 
     /** Discards the controller's own hand. */
     public DiscardHandEffect() {
@@ -20,10 +20,5 @@ public record DiscardHandEffect(DiscardRecipient recipient)
     public TargetSpec targetSpec() {
         return recipient == DiscardRecipient.TARGET_PLAYER
                 ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return recipient == DiscardRecipient.TARGET_PLAYER ? TriggerContext.DAMAGED_PLAYER : null;
     }
 }

@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -20,8 +21,9 @@ public class StickyFingers extends Card {
     public StickyFingers() {
         target(TargetFilters.creature())
                 .addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.ENCHANTED_CREATURE))
-                .addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                        new CreateTokenForTriggeringPlayerEffect(CreateTokenEffect.ofTreasureToken(1)))
+                .addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(
+                        Triggers.dealsCombatDamageToPlayer(), CreateTokenEffect.ofTreasureToken(1)),
+                        GrantScope.ENCHANTED_CREATURE))
                 .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED), new DrawCardEffect());
     }
 }

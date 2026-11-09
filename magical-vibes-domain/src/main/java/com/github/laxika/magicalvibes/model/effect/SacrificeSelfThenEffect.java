@@ -14,16 +14,31 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param thenEffect the payload resolved after a successful sacrifice
  * @param reflexive whether the payload is put on the stack as a separate reflexive ability
+ * @param sacrificesTriggeringPermanent whether "it" is the permanent the trigger event was about (the stack entry's
+ *                                      triggering permanent) rather than the source, whenever the entry records one
  */
-public record SacrificeSelfThenEffect(CardEffect thenEffect, boolean reflexive)
-        implements CombatDamageTriggerContextEffect {
+public record SacrificeSelfThenEffect(CardEffect thenEffect, boolean reflexive, boolean sacrificesTriggeringPermanent)
+        implements CardEffect {
 
     public SacrificeSelfThenEffect(CardEffect thenEffect) {
         this(thenEffect, false);
     }
 
+    public SacrificeSelfThenEffect(CardEffect thenEffect, boolean reflexive) {
+        this(thenEffect, reflexive, false);
+    }
+
     public static SacrificeSelfThenEffect reflexive(CardEffect thenEffect) {
         return new SacrificeSelfThenEffect(thenEffect, true);
+    }
+
+    /**
+     * "Whenever this creature or equipped creature deals combat damage to a player, you may sacrifice it. If you do, …"
+     * (Ogre-Head Helm): sacrifices the creature that dealt the damage, the entry's triggering permanent when the
+     * Equipment's ability recorded one, else the source itself.
+     */
+    public static SacrificeSelfThenEffect ofTriggeringPermanent(CardEffect thenEffect) {
+        return new SacrificeSelfThenEffect(thenEffect, false, true);
     }
 
     public SacrificeSelfThenEffect {
@@ -41,19 +56,5 @@ public record SacrificeSelfThenEffect(CardEffect thenEffect, boolean reflexive)
         TargetSpec payload = thenEffect.targetSpec();
         return new TargetSpec(payload.declaredTarget(), payload.harmful(), payload.predicate(), true,
                 payload.playerTargetCount());
-    }
-
-    /**
-     * On an {@code Triggers.dealsCombatDamageToPlayer()} ability the sacrifice half always needs the source
-     * permanent bound, so {@code SOURCE_SELF} is the floor. A payload that also needs the damaged
-     * player ({@code DAMAGED_PLAYER}) asks for a superset of that and wins.
-     */
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        if (thenEffect instanceof CombatDamageTriggerContextEffect contextEffect
-                && contextEffect.combatDamageTriggerContext() == TriggerContext.DAMAGED_PLAYER) {
-            return TriggerContext.DAMAGED_PLAYER;
-        }
-        return TriggerContext.SOURCE_SELF;
     }
 }

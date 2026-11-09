@@ -8,14 +8,9 @@ import java.util.Objects;
  */
 public record ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionWithPerpetualCharacteristicsEffect(
         PerpetuallyGrantCardCharacteristicsEffect characteristics
-) implements CombatDamageTriggerContextEffect {
+) implements CardEffect {
 
     public ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionWithPerpetualCharacteristicsEffect {
         Objects.requireNonNull(characteristics, "characteristics");
-    }
-
-    @Override
-    public TriggerContext combatDamageTriggerContext() {
-        return TriggerContext.DAMAGED_PLAYER;
     }
 }
