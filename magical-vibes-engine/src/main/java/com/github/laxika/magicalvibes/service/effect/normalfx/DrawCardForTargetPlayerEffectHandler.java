@@ -54,14 +54,16 @@ public class DrawCardForTargetPlayerEffectHandler implements NormalEffectHandler
         // Prefer the effect's bound target group so fuse / multi-group spells only draw for this
         // half's player(s). Unbound multi-target ("any number of target players each draw…") still
         // fans over the flat list via targetsForEffect; single-target casts fall back to targetId.
-        List<UUID> targetPlayerIds = e.targetGroup() >= 0
+        List<UUID> targetPlayerIds = e.triggeringCardOwner()
+                ? Collections.singletonList(gameQueryService.findTriggeringCardOwner(gameData, entry))
+                : e.targetGroup() >= 0
                 ? entry.targetsForGroup(e.targetGroup())
                 : entry.targetsForEffect(effect);
         if (e.targetGroup() < 0 && targetPlayerIds.isEmpty() && entry.getTargetId() != null) {
             targetPlayerIds = Collections.singletonList(entry.getTargetId());
         }
         for (UUID targetPlayerId : targetPlayerIds) {
-            if (!gameData.playerIds.contains(targetPlayerId)) {
+            if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
                 continue;
             }
             List<com.github.laxika.magicalvibes.model.Card> handBeforeDraw =

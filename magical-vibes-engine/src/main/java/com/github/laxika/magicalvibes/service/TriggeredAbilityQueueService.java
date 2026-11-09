@@ -991,8 +991,8 @@ public class TriggeredAbilityQueueService {
                                 permanent, pending.controllerId()))
                         .map(Permanent::getId).toList();
                 gameData.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
-                int damage = combatBounce.fixedCount() > 0 ? combatBounce.fixedCount()
-                        : pending.xValue() == null ? 0 : pending.xValue();
+                // "Up to that many": the damage dealt, the choice's event value.
+                int damage = combatBounce.fixedCount() > 0 ? combatBounce.fixedCount() : pending.eventValue();
                 int maxCount = Math.min(damage, validIds.size());
                 if (maxCount == 0) {
                     StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,

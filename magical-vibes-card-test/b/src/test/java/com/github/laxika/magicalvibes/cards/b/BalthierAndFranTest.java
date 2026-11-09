@@ -141,4 +141,23 @@ class BalthierAndFranTest extends BaseCardTest {
     private int indexOf(Player player, Permanent permanent) {
         return gd.playerBattlefields.get(player.getId()).indexOf(permanent);
     }
+
+    @Test
+    @DisplayName("A Vehicle crewed by another creature does not trigger the ability")
+    void vehicleCrewedByAnotherCreatureDoesNotTrigger() {
+        Permanent balthier = addCreatureReady(player1, new BalthierAndFran());
+        balthier.tap();
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent vehicle = addCreatureReady(player1, new DuskLegionDreadnought());
+        harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
+            harness.activateAbility(player1, indexOf(player1, vehicle), null, null);
+            harness.passBothPriorities();
+        });
+        vehicle.untap();
+
+        declareAttackers(player1, List.of(indexOf(player1, vehicle)), 1);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Balthier and Fran"));
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
 }

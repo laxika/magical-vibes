@@ -21,6 +21,9 @@ import java.util.UUID;
  *                                           the source's once-per-turn allowance
  * @param triggersOnlyOnceEachTurn whether the ability "triggers only once each turn" ({@code
  *                                 TriggerLimit.ONCE_EACH_TURN}), which nothing can make trigger additional times
+ * @param registeringPermanentId for an ability a resolving ability registered, the permanent that was that ability's
+ *                               source and so this one's (CR 603.7e), which may have left the battlefield; {@code null}
+ *                               otherwise
  */
 public record TriggerMatchContext(
         GameData gameData,
@@ -30,8 +33,26 @@ public record TriggerMatchContext(
         Card sourceCard,
         PlanarObject sourcePlanarObject,
         boolean markSourceOncePerTurnOnAcceptance,
-        boolean triggersOnlyOnceEachTurn
+        boolean triggersOnlyOnceEachTurn,
+        UUID registeringPermanentId
 ) {
+
+    public TriggerMatchContext(GameData gameData, Permanent permanent, UUID controllerId, CardEffect rawEffect,
+            Card sourceCard, PlanarObject sourcePlanarObject, boolean markSourceOncePerTurnOnAcceptance,
+            boolean triggersOnlyOnceEachTurn) {
+        this(gameData, permanent, controllerId, rawEffect, sourceCard, sourcePlanarObject,
+                markSourceOncePerTurnOnAcceptance, triggersOnlyOnceEachTurn, null);
+    }
+
+    /**
+     * The object "a card exiled with this" names: the source permanent, else the face-up plane, else the permanent that
+     * registered the ability; {@code null} for none. A card cast or played from exile names the object it was exiled
+     * with in its event, since it has left exile by then.
+     */
+    public UUID exiledWithSourceId() {
+        return permanent != null ? permanent.getId()
+                : sourcePlanarObject != null ? sourcePlanarObject.getId() : registeringPermanentId;
+    }
 
     public TriggerMatchContext(GameData gameData, Permanent permanent, UUID controllerId, CardEffect rawEffect,
             Card sourceCard, PlanarObject sourcePlanarObject, boolean markSourceOncePerTurnOnAcceptance) {

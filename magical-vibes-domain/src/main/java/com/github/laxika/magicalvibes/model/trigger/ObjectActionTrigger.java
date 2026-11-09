@@ -147,6 +147,12 @@ public record ObjectActionTrigger(ObjectAction action, ObjectRelation object, Ca
         /** A creature stations the Spacecraft (CR 702.184a). */
         BECOMES_STATIONED,
         /**
+         * The permanent entering the battlefield causes a triggered ability to trigger: "whenever a permanent entering
+         * causes a triggered ability to trigger" (Strict Proctor). The triggered ability is the stack entry's triggering
+         * spell ("that ability", "its controller").
+         */
+        ENTERING_CAUSES_ABILITY_TO_TRIGGER,
+        /**
          * One of the Room's doors becomes unlocked: it gets that half's unlocked designation, as it enters or later
          * (CR 709.5h). Which door is the trigger's {@code door}.
          */

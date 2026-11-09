@@ -96,6 +96,7 @@ import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByWatchedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -171,7 +172,6 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
-import com.github.laxika.magicalvibes.model.effect.TemporaryGlobalTriggerEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -965,8 +965,7 @@ public class TriggerCollectionService {
         });
         dispatchFaceUpSchemes(gameData, SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, ctx, ownerId -> true);
 
-        collectTemporaryGlobalSpellCastTriggers(gameData, castingPlayerId, castZone,
-                exiledSourcePermanentId);
+        collectTemporaryGlobalSpellCastTriggers(gameData, spellCard, castingPlayerId);
 
         if (gameData.planechase != null && gameData.planechase.controllerId != null) {
             for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
@@ -3407,17 +3406,6 @@ public class TriggerCollectionService {
                     .withEventValue(damageDealt).withTriggeringPlayer(damagedPlayerId));
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                     "'s damage trigger goes on the stack — choose a target."));
-            return;
-        }
-
-        if (toQueue instanceof com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect bounce
-                && bounce.fixedCount() == 0) {
-            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                    source.getCard(), controllerId, List.of(interveningIf != null
-                            ? new ConditionalEffect(interveningIf.condition(), bounce.withTriggerTimeTargets())
-                            : bounce.withTriggerTimeTargets()),
-                    source.getId(), controllerId, damagedPlayerId, null, damageDealt)
-                    .withEventValue(damageDealt).withTriggeringPlayer(damagedPlayerId));
             return;
         }
 
@@ -9417,22 +9405,6 @@ public class TriggerCollectionService {
                 gameData.id, watcher.sourceCard().getName(), LegacySlots.label(watcher.ability()));
     }
 
-    private void enqueueTemporaryGlobalTrigger(GameData gameData,
-                                                TemporaryGlobalTriggeredAbility watcher,
-                                                List<CardEffect> effects, UUID targetPlayerId) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                watcher.sourceCard(),
-                watcher.controllerId(),
-                watcher.sourceCard().getName() + "'s ability",
-                new ArrayList<>(effects));
-        entry.setTargetId(targetPlayerId);
-        entry.setNonTargeting(true);
-        gameData.enqueueTrigger(entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
-        log.info("Game {} - {} temporary global {} trigger fires",
-                gameData.id, watcher.sourceCard().getName(), LegacySlots.label(watcher.ability()));
-    }
 
     // ── Enchanted-permanent-tap triggers ───────────────────────────────
 
@@ -9786,16 +9758,6 @@ public class TriggerCollectionService {
         }
         for (CardEffect effect : MiscAbilityReader.printedEffects(crewingCreature.getCard(),
                 MiscWatch.ON_CREWS_VEHICLE)) {
-            if (effect instanceof com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect registration) {
-                if (!gameData.hasDelayedAction(com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack.class,
-                        action -> action.sourcePermanentId().equals(crewingCreature.getId())
-                                && action.vehicleId().equals(vehicle.getId()))) {
-                    gameData.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack(
-                            controllerId, crewingCreature.getId(), vehicle.getId(), crewingCreature.getCard(),
-                            registration.effect()));
-                }
-                continue;
-            }
             if (gameQueryService.hasLostPrintedAbilities(gameData, crewingCreature)) {
                 continue;
             }
@@ -14934,28 +14896,20 @@ public class TriggerCollectionService {
                 continue;
             }
             // A cast trigger with a spell filter ("until end of turn, whenever you cast an instant or sorcery spell")
-            // is judged and put on the stack by the generic cast collector, which gives it the spell as "that spell".
+            // is judged and put on the stack by the generic cast collector, which gives it the spell as "that spell";
+            // its "a card exiled with this" (Apple of Eden, Isu Relic) names the permanent that registered it.
             SpellFilter filter = watchedSpellFilter(watcher.ability(), SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL,
                     true);
             if (filter != null) {
                 requireNoLimit(watcher.ability(), watcher.sourceCard());
                 spellCastTriggerCollectorService.collectCastAbility(
-                        new TriggerMatchContext(gameData, null, watcher.controllerId(), watcher.effect(),
-                                watcher.sourceCard(), null),
+                        registeredMatch(gameData, watcher),
                         CastAbility.of(watcher.ability(), filter),
                         new TriggerContext.SpellCast(spellCard, castingPlayerId, castZone, exiledSourcePermanentId),
                         false);
                 continue;
             }
             if (!watcher.ability().hasTrigger(SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL.trigger())) {
-                continue;
-            }
-
-            if (watcher.effect() instanceof TemporaryGlobalTriggerEffect trigger) {
-                if (trigger.matches(castZone, exiledSourcePermanentId)) {
-                    enqueueTemporaryGlobalTrigger(gameData, watcher, trigger.resolvedEffects(),
-                            trigger.targetPlayerId());
-                }
                 continue;
             }
 
@@ -14975,31 +14929,45 @@ public class TriggerCollectionService {
         }
     }
 
-    private void collectTemporaryGlobalSpellCastTriggers(GameData gameData, UUID castingPlayerId,
-                                                          Zone castZone,
-                                                          UUID exiledSourcePermanentId) {
+    /**
+     * The abilities a resolving ability registered that trigger whenever a player casts a spell: each goes on the stack
+     * as written, recording the spell as its triggering spell and the caster as its triggering player and non-targeting
+     * "that player", whatever the effects are. "Whenever they cast a spell" (Nuka-Nuke Launcher) is the filter
+     * {@link StackEntryControlledByWatchedPlayerPredicate}, judged against the player the registration recorded; this
+     * reader judges no other spell filter.
+     */
+    private void collectTemporaryGlobalSpellCastTriggers(GameData gameData, Card spellCard, UUID castingPlayerId) {
         for (TemporaryGlobalTriggeredAbility watcher
                 : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (!watcher.ability().hasTrigger(SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL.trigger())) {
+            SpellFilter filter = watchedSpellFilter(watcher.ability(), SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL,
+                    true);
+            if (filter == null && !watcher.ability().hasTrigger(SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL.trigger())) {
                 continue;
             }
-
-            if (watcher.effect() instanceof TemporaryGlobalTriggerEffect trigger) {
-                if (trigger.matches(castZone, exiledSourcePermanentId)
-                        && trigger.matchesCastingPlayer(castingPlayerId)) {
-                    enqueueTemporaryGlobalTrigger(gameData, watcher, trigger.resolvedEffects(),
-                            trigger.targetPlayerId());
+            if (filter != null) {
+                if (!filter.equals(SpellFilter.ANY.withStackEntry(new StackEntryControlledByWatchedPlayerPredicate()))) {
+                    throw new IllegalStateException("The registered any-player cast reader judges only the watched "
+                            + "player: " + watcher.ability());
                 }
-                continue;
+                if (!castingPlayerId.equals(watcher.watchedPlayerId())) {
+                    continue;
+                }
             }
+            requireNoLimit(watcher.ability(), watcher.sourceCard());
 
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     watcher.sourceCard(),
                     watcher.controllerId(),
                     watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(watcher.effect())));
+                    new ArrayList<>(watcher.ability().effects().stream().map(EffectRegistration::effect).toList()));
             entry.setTargetId(castingPlayerId);
+            entry.setTriggeringPlayerId(castingPlayerId);
+            entry.setTriggeringCardId(spellCard.getId());
+            StackEntry spellEntry = findStackEntryByCardId(gameData, spellCard.getId());
+            if (spellEntry != null) {
+                entry.setTriggeringSpell(spellEntry);
+            }
             entry.setNonTargeting(true);
             gameData.enqueueTrigger(entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
@@ -15318,22 +15286,43 @@ public class TriggerCollectionService {
                         object);
             }
         }
-        collectTemporaryControllerLandPlayTriggers(gameData, playingPlayerId, playZone, exiledSourcePermanentId);
+        collectTemporaryControllerLandPlayTriggers(gameData, playingPlayerId, landCard, playZone,
+                exiledSourcePermanentId);
     }
 
-    private void collectTemporaryControllerLandPlayTriggers(GameData gameData, UUID playingPlayerId,
+    /**
+     * The abilities a resolving ability registered that trigger whenever their controller plays a land, read as the
+     * land-play collector reads a printed one ({@code PlayedCardNameTriggerCollectorService.collectLandPlayAbility}):
+     * "a land exiled with this" (Apple of Eden, Isu Relic) names the permanent that registered the ability.
+     */
+    private void collectTemporaryControllerLandPlayTriggers(GameData gameData, UUID playingPlayerId, Card landCard,
                                                             Zone playZone, UUID exiledSourcePermanentId) {
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
-            if (!watcher.ability().hasTrigger(SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND.trigger())
-                    || !watcher.controllerId().equals(playingPlayerId)
-                    || !(watcher.effect() instanceof TemporaryGlobalTriggerEffect trigger)) {
+            if (!watcher.controllerId().equals(playingPlayerId)) {
                 continue;
             }
-            if (trigger.matches(playZone, exiledSourcePermanentId)) {
-                enqueueTemporaryGlobalTrigger(gameData, watcher, trigger.resolvedEffects(),
-                        trigger.targetPlayerId());
+            LandPlayTrigger landPlay = watchedLandPlayTrigger(watcher.ability(),
+                    SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND, true);
+            if (landPlay == null) {
+                if (!watcher.ability().hasTrigger(SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND.trigger())) {
+                    continue;
+                }
+                landPlay = (LandPlayTrigger) SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND.trigger();
             }
+            requireNoLimit(watcher.ability(), watcher.sourceCard());
+            playedCardNameTriggerCollectorService.collectLandPlayAbility(registeredMatch(gameData, watcher),
+                    watcher.ability(), landPlay,
+                    new TriggerContext.LandPlayed(playingPlayerId, landCard, playZone, exiledSourcePermanentId));
         }
+    }
+
+    /**
+     * The match context of an ability a resolving ability registered: no permanent of its own, its source card the
+     * registering card, and the permanent that registered it as its "this" (CR 603.7e).
+     */
+    private static TriggerMatchContext registeredMatch(GameData gameData, TemporaryGlobalTriggeredAbility watcher) {
+        return new TriggerMatchContext(gameData, null, watcher.controllerId(), watcher.effect(), watcher.sourceCard(),
+                null, false, false, watcher.sourcePermanentId());
     }
 
     /** The exiled voyages that see a land enter under its controller's control. */

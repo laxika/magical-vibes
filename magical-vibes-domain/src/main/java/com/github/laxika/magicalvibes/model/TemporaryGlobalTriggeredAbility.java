@@ -13,14 +13,34 @@ import java.util.UUID;
  * turn.
  * The optional watched permanent identifies a particular object for a delayed event trigger.
  *
- * @param ability the ability, one effect in a legacy slot
+ * @param ability            the ability, one effect in a legacy slot
+ * @param sourcePermanentId  the permanent that was the source of the ability that registered this one, which is this
+ *                           one's source too (CR 603.7e), recorded whatever the effects are: the "this" of "whenever you
+ *                           cast a spell or play a land from among cards exiled with this" (Apple of Eden, Isu Relic),
+ *                           judged by the trigger's {@code exiledWithThis()} filter; {@code null} when it had none
+ * @param watchedPlayerId    the player the registering ability named (its target, or the defending player of an attack
+ *                           trigger), recorded whatever the effects are: the "they" of "until the end of defending
+ *                           player's next turn, that player gets two rad counters whenever they cast a spell" (Nuka-Nuke
+ *                           Launcher), judged by the trigger's {@code StackEntryControlledByWatchedPlayerPredicate}
+ *                           filter; {@code null} when it named none
  */
 public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
                                               TargetFilter targetFilter,
                                               boolean untilEndOfNextTurn, boolean untilNextTurn,
                                               int registrationTurnNumber,
                                               UUID expirationPlayerId,
-                                              UUID watchedPermanentId) {
+                                              UUID watchedPermanentId,
+                                              UUID sourcePermanentId,
+                                              UUID watchedPlayerId) {
+
+    /** {@code ability} with no registering source permanent and no watched player. */
+    public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
+                                           TargetFilter targetFilter, boolean untilEndOfNextTurn,
+                                           boolean untilNextTurn, int registrationTurnNumber,
+                                           UUID expirationPlayerId, UUID watchedPermanentId) {
+        this(controllerId, sourceCard, ability, targetFilter, untilEndOfNextTurn, untilNextTurn,
+                registrationTurnNumber, expirationPlayerId, watchedPermanentId, null, null);
+    }
 
     public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, EffectSlot slot,
                                            CardEffect effect, TargetFilter targetFilter,

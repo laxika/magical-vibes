@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandFaceDownWithSourceAndReturnAtNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PlayFromOutsideHandTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -25,8 +24,7 @@ import java.util.List;
 public class AppleOfEdenIsuRelic extends Card {
 
     public AppleOfEdenIsuRelic() {
-        List<CardEffect> ownerDrawTrigger = List.of(
-                new DrawCardForTargetPlayerEffect(1));
+        CardEffect ownerDraws = DrawCardForTargetPlayerEffect.ofTriggeringCardOwner(1);
 
         addActivatedAbility(new ActivatedAbility(
                 true,
@@ -37,11 +35,9 @@ public class AppleOfEdenIsuRelic extends Card {
                         new ExileTargetPlayerHandFaceDownWithSourceAndReturnAtNextEndStepEffect(),
                         new AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect(null),
                         new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                                new TriggeredAbility(Triggers.youCastSpell(),
-                                new PlayFromOutsideHandTriggerEffect(ownerDrawTrigger))),
+                                new TriggeredAbility(Triggers.youCastSpell().exiledWithThis(), ownerDraws)),
                         new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
-                                new TriggeredAbility(Triggers.youPlayLand(),
-                                new PlayFromOutsideHandTriggerEffect(ownerDrawTrigger)))
+                                new TriggeredAbility(Triggers.youPlayLand().exiledWithThis(), ownerDraws))
                 ),
                 "{T}, Pay 4 life, Sacrifice Apple of Eden: Look at target opponent's hand and exile "
                         + "those cards face down. You may play those cards this turn, and mana of any "

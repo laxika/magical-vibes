@@ -56,6 +56,7 @@ public sealed interface PermanentPredicate permits
         PermanentControllerGraveyardCountAtLeastPredicate,
         PermanentControllerPoisonCountersAtLeastPredicate,
         PermanentCrewedBySourceThisTurnPredicate,
+        PermanentCrewedThisTurnBySourcePredicate,
         PermanentCounterCountAtLeastPredicate,
         PermanentDealtDamageThisTurnPredicate,
         PermanentDealtExcessDamageThisTurnPredicate,

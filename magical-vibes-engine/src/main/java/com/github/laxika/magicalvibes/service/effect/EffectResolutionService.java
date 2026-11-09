@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLandDropEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -655,11 +654,6 @@ public class EffectResolutionService {
         if (entry.getSourcePermanentId() == null
                 || !entry.isMarkSourceOncePerTurnOnAcceptance()) {
             return false;
-        }
-        if (may.wrapped() instanceof CreateTokenCopyOfChosenPermanentYouControlEffect copy) {
-            return copy.markSourceOncePerTurnOnAccept()
-                    && !copy.accepted()
-                    && gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId());
         }
         return gameData.resolvedMayAccepted == null
                 && gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId());

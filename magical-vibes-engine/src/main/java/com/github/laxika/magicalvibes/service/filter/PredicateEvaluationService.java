@@ -189,6 +189,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControllerGraveyardC
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerPoisonCountersAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCrewedBySourceThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCrewedThisTurnBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToPlayerThisCombatPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToPlayerThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtCombatDamageToSourceControllerThisTurnPredicate;
@@ -431,6 +432,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesChosenNameWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardExiledWithSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByWatchedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardEnchantedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesColorOrManaValueWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate;
@@ -2676,6 +2678,10 @@ public class PredicateEvaluationService {
                             enteredPredicate.underSourceControllersControl() ? sourceControllerId : null);
             case PermanentTurnedFaceUpThisTurnPredicate ignored ->
                     gameData != null && gameData.permanentsTurnedFaceUpThisTurn.contains(permanent.getId());
+            case PermanentCrewedThisTurnBySourcePredicate ignored -> gameData != null && filterContext != null
+                    && filterContext.sourcePermanentId() != null
+                    && gameData.creaturesThatCrewedPermanentThisTurn.getOrDefault(permanent.getId(), Set.of())
+                    .contains(filterContext.sourcePermanentId());
             case PermanentCrewedBySourceThisTurnPredicate ignored -> {
                 if (gameData != null && filterContext != null
                         && filterContext.sourcePermanentId() != null) {
@@ -5411,6 +5417,7 @@ public class PredicateEvaluationService {
             case StackEntryCouldTargetAnotherPermanentPredicate ignored -> false;
             case StackEntrySharesChosenNameWithSourcePredicate ignored -> false;
             case StackEntryIsCardExiledWithSourcePredicate ignored -> false;
+            case StackEntryControlledByWatchedPlayerPredicate ignored -> false;
             case StackEntryIsCardEnchantedBySourcePredicate ignored -> false;
             case StackEntryHasTypeShowingOnSourceTrackerPredicate ignored -> false;
             case StackEntrySharesNameWithCardExiledWithSourcePredicate ignored -> false;

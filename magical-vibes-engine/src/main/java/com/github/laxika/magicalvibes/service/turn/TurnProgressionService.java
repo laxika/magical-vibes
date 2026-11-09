@@ -44,7 +44,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedSourceDamageMultiplica
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerCubeCounter;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerGainLife;
 import com.github.laxika.magicalvibes.model.action.DelayedUnblockedAttackerPowerDamage;
-import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreaturesCombatDamage;
 import com.github.laxika.magicalvibes.model.action.DestroyChosenCreaturesIfDidNotAttackAtEndStep;
 import com.github.laxika.magicalvibes.model.action.LoseGameAtEndStep;
@@ -1256,7 +1255,6 @@ public class TurnProgressionService {
         gameData.clearDelayedActions(DelayedAttackTokenCreation.class);
         gameData.clearDelayedActions(DelayedAttackDamage.class);
         gameData.clearDelayedActions(DelayedAttackUntap.class);
-        gameData.clearDelayedActions(DelayedVehicleAttack.class);
         gameData.clearDelayedActions(DelayedControllerSpellCastTrigger.class,
                 trigger -> !trigger.untilNextTurn() && !trigger.persistsUntilConsumed());
         gameData.clearDelayedActions(DelayedUnblockedAttackerGainLife.class);

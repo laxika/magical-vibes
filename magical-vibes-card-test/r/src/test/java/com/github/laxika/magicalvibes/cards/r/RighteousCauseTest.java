@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.s.SongOfTheDryads;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -10,7 +12,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-@CardUsed({RighteousCause.class, GlorySeeker.class})
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CardUsed({RighteousCause.class, GlorySeeker.class, SongOfTheDryads.class})
 class RighteousCauseTest extends BaseCardTest {
 
     @Test
@@ -106,5 +110,21 @@ class RighteousCauseTest extends BaseCardTest {
         resolveCombat(player2);
 
         harness.assertLife(player1, 21);
+    }
+
+    @Test
+    @DisplayName("Righteous Cause that lost its abilities to Song of the Dryads gains no life")
+    void lostAbilitiesDoNotTrigger() {
+        Permanent cause = harness.addToBattlefieldAndReturn(player1, new RighteousCause());
+        Permanent song = harness.addToBattlefieldAndReturn(player2, new SongOfTheDryads());
+        song.setAttachedTo(cause.getId());
+        addCreatureReady(player2, new GlorySeeker());
+        harness.setLife(player1, 20);
+
+        declareAttackers(player2, List.of(1));
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Righteous Cause"));
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 18); // the Glory Seeker's 2 combat damage, and no life gained
     }
 }

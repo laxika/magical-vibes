@@ -17,11 +17,19 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *                               the entry's normal target resolution
  * @param opponentDrawStepOnly   whether an {@code Triggers.drawStep(ActivePlayer.ANY)} instance skips the
  *                               source controller's draw step
+ * @param triggeringCardOwner    whether the player is instead the owner of the card a "whenever you play a card" event
+ *                               was about ("its owner draws a card", Apple of Eden, Isu Relic), read from the entry as
+ *                               the ability resolves ({@link #ofTriggeringCardOwner(int)})
  */
 public record DrawCardForTargetPlayerEffect(DynamicAmount amount, boolean requireSourceUntapped,
                                             boolean targetsPlayer, int targetGroup,
-                                            boolean opponentDrawStepOnly)
+                                            boolean opponentDrawStepOnly, boolean triggeringCardOwner)
         implements CardEffect, OpponentDrawStepOnlyEffect {
+
+    public DrawCardForTargetPlayerEffect(DynamicAmount amount, boolean requireSourceUntapped,
+                                         boolean targetsPlayer, int targetGroup, boolean opponentDrawStepOnly) {
+        this(amount, requireSourceUntapped, targetsPlayer, targetGroup, opponentDrawStepOnly, false);
+    }
 
     public DrawCardForTargetPlayerEffect(int amount) {
         this(new Fixed(amount), false, false, -1, false);
@@ -45,6 +53,11 @@ public record DrawCardForTargetPlayerEffect(DynamicAmount amount, boolean requir
 
     public static DrawCardForTargetPlayerEffect forTargetGroup(DynamicAmount amount, int targetGroup) {
         return new DrawCardForTargetPlayerEffect(amount, false, true, targetGroup, false);
+    }
+
+    /** "That card's owner draws [amount]", of the card the trigger event was about; it chooses no target. */
+    public static DrawCardForTargetPlayerEffect ofTriggeringCardOwner(int amount) {
+        return new DrawCardForTargetPlayerEffect(new Fixed(amount), false, false, -1, false, true);
     }
 
     public static DrawCardForTargetPlayerEffect forOpponentDrawStep(int amount) {

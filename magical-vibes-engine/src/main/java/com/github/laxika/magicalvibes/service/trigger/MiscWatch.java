@@ -50,6 +50,9 @@ public enum MiscWatch implements TriggerWatch {
     ON_ALLY_CREATURE_CREWS_VEHICLE(Triggers.creatureYouControlCrewsVehicle(), Zone.BATTLEFIELD),
     /** "Whenever this creature saddles a Mount or crews a Vehicle during your main phase". */
     ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE(Triggers.saddlesOrCrewsDuringMainPhase(), Zone.BATTLEFIELD),
+    /** "Whenever a permanent entering causes a triggered ability to trigger" (Strict Proctor). */
+    ON_PERMANENT_ENTERING_CAUSES_ABILITY_TO_TRIGGER(Triggers.permanentEnteringCausesAbilityToTrigger(),
+            Zone.BATTLEFIELD),
     /** "Whenever a creature stations this Spacecraft". */
     ON_SELF_BECOMES_STATIONED(Triggers.becomesStationed(), Zone.BATTLEFIELD),
     /** "Whenever this Vehicle becomes crewed". */

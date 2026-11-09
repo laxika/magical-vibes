@@ -21,6 +21,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToExileEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftProteanWarEngineSpellbookEffect;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
+import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.service.effect.entryfx.FlipCoinOnEnterEffectHandler;
@@ -37,12 +39,10 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TargetedGraveyardAndPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeredAbilityCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -1553,26 +1553,37 @@ public class EtbTriggerService {
     }
 
     /**
-     * Each triggered ability a permanent entering caused is taxed like its own enters ability by abilities such as
-     * Strict Proctor's ("counter it unless its controller pays").
+     * Collects the abilities that trigger when a permanent entering causes a triggered ability to trigger ("whenever a
+     * permanent entering causes a triggered ability to trigger, counter that ability unless its controller pays {2}",
+     * Strict Proctor), once {@code triggeredAbility} is on the stack: each goes on the stack as written, after the
+     * ability that caused it, recording that ability as its triggering spell, its controller as the triggering player
+     * and its stack object as the non-targeting referent "that ability", whatever the effects are. A permanent that
+     * lost its abilities or is face down doesn't trigger.
      */
     public void queueTriggeredAbilityCounters(GameData gameData, StackEntry triggeredAbility) {
         gameData.forEachBattlefield((controllerId, battlefield) -> {
-            for (Permanent permanent : battlefield) {
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {
-                    if (!(effect instanceof TriggeredAbilityCounterEffect counterEffect)) {
-                        continue;
-                    }
-                    StackEntry counterTrigger = new StackEntry(
+            for (Permanent permanent : List.copyOf(battlefield)) {
+                List<CardEffect> effects = MiscAbilityReader.printedEffects(permanent.getCard(),
+                        MiscWatch.ON_PERMANENT_ENTERING_CAUSES_ABILITY_TO_TRIGGER);
+                if (effects.isEmpty() || permanent.isFaceDown()
+                        || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
+                    continue;
+                }
+                for (CardEffect effect : effects) {
+                    StackEntry entry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             permanent.getCard(),
                             controllerId,
                             permanent.getCard().getName() + "'s ability",
-                            List.of(new CounterUnlessPaysEffect(counterEffect.counterCost())),
+                            new ArrayList<>(List.of(effect)),
                             triggeredAbility.getTargetableId(),
                             Zone.STACK,
                             permanent.getId());
-                    gameData.stack.add(counterTrigger);
+                    entry.setNonTargeting(true);
+                    entry.setTriggeringCardId(triggeredAbility.getTargetableId());
+                    entry.setTriggeringSpell(triggeredAbility);
+                    entry.setTriggeringPlayerId(triggeredAbility.getControllerId());
+                    gameData.stack.add(entry);
                     gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
                 }
             }

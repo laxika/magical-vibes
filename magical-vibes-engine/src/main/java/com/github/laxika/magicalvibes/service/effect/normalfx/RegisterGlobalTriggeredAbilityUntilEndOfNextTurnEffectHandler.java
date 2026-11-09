@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -8,14 +7,12 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TemporaryGlobalTriggerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.UUID;
 
 /** Stores a global trigger through the end of its controller's next turn. */
@@ -35,20 +32,16 @@ public class RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffectHandler imple
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var registration = (RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect) effect;
-        CardEffect triggeredEffect = registration.triggeredEffect();
-        UUID expirationPlayerId = entry.getControllerId();
-        if (triggeredEffect instanceof TemporaryGlobalTriggerEffect temporary) {
-            UUID targetPlayerId = resolveTargetPlayerId(gameData, entry);
-            triggeredEffect = temporary.bindTo(entry.getSourcePermanentId(), targetPlayerId);
-            if (targetPlayerId != null) {
-                expirationPlayerId = targetPlayerId;
-            }
-        }
-        TriggeredAbility ability = ((TriggeredAbility) registration.grantedAbility())
-                .withEffects(List.of(new EffectRegistration(triggeredEffect)));
+        // The registration records the registering source permanent and the player the resolving ability names (its
+        // target, or the defending player of an attack trigger), whatever the ability's effects are; the ability's
+        // filters read them (CR 603.7e).
+        UUID watchedPlayerId = resolveTargetPlayerId(gameData, entry);
+        UUID expirationPlayerId = registration.untilWatchedPlayersNextTurn() && watchedPlayerId != null
+                ? watchedPlayerId : entry.getControllerId();
         gameData.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
-                entry.getControllerId(), entry.getCard(), ability, registration.targetFilter(), true, false,
-                gameData.turnNumber, expirationPlayerId, null));
+                entry.getControllerId(), entry.getCard(), (TriggeredAbility) registration.grantedAbility(),
+                registration.targetFilter(), true, false, gameData.turnNumber, expirationPlayerId, null,
+                entry.getSourcePermanentId(), watchedPlayerId));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " registers a global triggered ability until the end of their next turn."));
         log.info("Game {} - {} registers a global triggered ability until the end of their next turn",

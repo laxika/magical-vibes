@@ -72,7 +72,7 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
                     spell, spell.getControllerId(), triggeringSpellEffect.grantedKeywords(),
                     triggeringSpellEffect.additionalTypes(), triggeringSpellEffect.removedSupertypes(),
                     triggeringSpellEffect.tokenCopy(), triggeringSpellEffect.mayChooseNewTargets(),
-                    triggeringSpellEffect.grantHasteToPermanentSpell(), false,
+                    triggeringSpellEffect.grantHasteToPermanentSpell(),
                     triggeringSpellEffect.startingLoyaltyFromX(),
                     triggeringSpellEffect.permanentSpellToken(), triggeringSpellEffect.sacrificeAtEndStep(),
                     triggeringSpellEffect.additionalSubtypes(), triggeringSpellEffect.powerOverride(),

@@ -21,6 +21,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryIsLoyaltyAbilityPredicate,
         StackEntryIsModalSpellPredicate,
         StackEntryControlledByChosenPlayerPredicate,
+        StackEntryControlledByWatchedPlayerPredicate,
         StackEntryControlledByEnchantedPlayerPredicate,
         StackEntryControlledByPredicate,
         StackEntryHasAnyTargetPredicate,

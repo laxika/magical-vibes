@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class CephalidConstable extends Card {
 
     public CephalidConstable() {
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new ReturnPermanentsOnCombatDamageToPlayerEffect());
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
+                ReturnPermanentsOnCombatDamageToPlayerEffect.upToThatManyTargets());
     }
 }

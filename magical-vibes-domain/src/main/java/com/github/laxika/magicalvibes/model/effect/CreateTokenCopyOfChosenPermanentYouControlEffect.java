@@ -2,28 +2,13 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
-/** Creates a token copy of a permanent chosen from among permanents the controller controls. */
-public record CreateTokenCopyOfChosenPermanentYouControlEffect(
-        PermanentPredicate filter,
-        boolean markSourceOncePerTurnOnAccept,
-        boolean accepted
-) implements CardEffect {
+/**
+ * Creates a token copy of a permanent chosen from among permanents the controller controls. A "do this only once each
+ * turn" around it is the ability's {@code TriggerLimit.DO_ONLY_ONCE_EACH_TURN} (Calix, Guided by Fate), not the effect's.
+ */
+public record CreateTokenCopyOfChosenPermanentYouControlEffect(PermanentPredicate filter) implements CardEffect {
 
     public CreateTokenCopyOfChosenPermanentYouControlEffect() {
-        this(null, false, false);
-    }
-
-    public CreateTokenCopyOfChosenPermanentYouControlEffect(PermanentPredicate filter) {
-        this(filter, false, false);
-    }
-
-    public CreateTokenCopyOfChosenPermanentYouControlEffect(PermanentPredicate filter,
-                                                             boolean markSourceOncePerTurnOnAccept) {
-        this(filter, markSourceOncePerTurnOnAccept, false);
-    }
-
-    public CreateTokenCopyOfChosenPermanentYouControlEffect asAccepted() {
-        return new CreateTokenCopyOfChosenPermanentYouControlEffect(
-                filter, markSourceOncePerTurnOnAccept, true);
+        this(null);
     }
 }

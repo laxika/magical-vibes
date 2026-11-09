@@ -325,6 +325,6 @@ class MiscTriggerTest {
                 Triggers.becomesSaddled(), Triggers.dayBecomesNightOrNightBecomesDay(), Triggers.youFullyUnlockRoom(),
                 Triggers.doorUnlocked(), Triggers.doorUnlocked(0), Triggers.doorUnlocked(1),
                 Triggers.becomesCrewedForFirstTimeEachTurn(), Triggers.becomesSaddledForFirstTimeEachTurn(),
-                Triggers.state());
+                Triggers.permanentEnteringCausesAbilityToTrigger(), Triggers.state());
     }
 }

@@ -21,8 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraOrEquipmentTo
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenPermanentYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
@@ -1054,51 +1052,16 @@ public class MayAbilityHandlerService {
         return first;
     }
 
+    /**
+     * Uses up a "do this only once each turn" ability (CR 603.2h) as its "you may" is accepted: the ability's limit
+     * ({@code TriggerLimit.DO_ONLY_ONCE_EACH_TURN}) marked the resolving entry as its collector put it on the stack, so
+     * no effect is read for it.
+     */
     private void markOncePerTurnTriggerOnAcceptance(GameData gameData, PendingMayAbility ability) {
-        if (ability.sourcePermanentId() == null) {
-            return;
-        }
-        boolean marksOnAcceptance = gameData.pendingEffectResolutionEntry != null
-                && gameData.pendingEffectResolutionEntry.isMarkSourceOncePerTurnOnAcceptance();
-        marksOnAcceptance |= ability.effects().stream()
-                .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
-                .anyMatch(effect -> effect instanceof CopyControllerCastSpellEffect copy
-                        && copy.markSourceOncePerTurnOnAccept());
-        CardEffect acceptedEffect = null;
-        for (CardEffect effect : ability.effects()) {
-            CardEffect innerEffect = effect instanceof MayEffect may ? may.wrapped() : effect;
-            if (innerEffect instanceof CopyControllerCastSpellEffect copy
-                    && copy.markSourceOncePerTurnOnAccept()) {
-                acceptedEffect = innerEffect;
-                break;
-            }
-            if (innerEffect instanceof CreateTokenCopyOfChosenPermanentYouControlEffect copy
-                    && copy.markSourceOncePerTurnOnAccept()) {
-                acceptedEffect = copy.asAccepted();
-                replaceAcceptedMayEffect(gameData, effect, acceptedEffect);
-                break;
-            }
-        }
-        if (acceptedEffect != null) {
-            marksOnAcceptance = true;
-        }
-        if (marksOnAcceptance) {
+        if (ability.sourcePermanentId() != null && gameData.pendingEffectResolutionEntry != null
+                && gameData.pendingEffectResolutionEntry.isMarkSourceOncePerTurnOnAcceptance()) {
             gameData.oncePerTurnTriggersFiredThisTurn.add(ability.sourcePermanentId());
         }
-    }
-
-    private void replaceAcceptedMayEffect(GameData gameData, CardEffect authoredEffect,
-                                          CardEffect acceptedEffect) {
-        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-        int effectIndex = gameData.pendingEffectResolutionIndex;
-        if (pendingEntry == null || effectIndex < 0
-                || effectIndex >= pendingEntry.getEffectsToResolve().size()) {
-            return;
-        }
-        CardEffect replacement = authoredEffect instanceof MayEffect may
-                ? new MayEffect(acceptedEffect, may.prompt(), may.elseEffect(), may.choicePlayer())
-                : acceptedEffect;
-        pendingEntry.replaceEffectToResolve(effectIndex, replacement);
     }
 
     private void handleAnyPlayerMayPayChoice(GameData gameData, Player player, boolean accepted,

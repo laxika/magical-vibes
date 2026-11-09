@@ -2108,6 +2108,15 @@ public final class Triggers {
         return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.BECOMES_STATIONED, ObjectRelation.THIS);
     }
 
+    /**
+     * "Whenever a permanent entering causes a triggered ability to trigger" (Strict Proctor): the ability triggers as
+     * the enters ability goes on the stack, and that ability is the stack entry's triggering spell.
+     */
+    public static ObjectActionTrigger permanentEnteringCausesAbilityToTrigger() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.ENTERING_CAUSES_ABILITY_TO_TRIGGER,
+                ObjectRelation.ANY);
+    }
+
     /** "When you unlock [a door of this Room]" (CR 709.5h), any door: the trigger the door collector watches */
     public static ObjectActionTrigger doorUnlocked() {
         return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.DOOR_UNLOCKED, ObjectRelation.THIS);

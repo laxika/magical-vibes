@@ -897,10 +897,10 @@ public class SpellCastTriggerCollectorService {
     private boolean matchesCastSpellPredicate(TriggerMatchContext match, StackEntry spellEntry,
                                                StackEntryPredicate predicate, UUID exiledSourcePermanentId) {
         // "A card exiled with this": the card was cast from exile while exiled with the ability's source, the
-        // permanent or the face-up plane (The Matrix of Time), which the cast event names since the card has left exile.
+        // permanent, the face-up plane (The Matrix of Time) or the permanent that registered the ability (Apple of
+        // Eden, Isu Relic), which the cast event names since the card has left exile.
         if (predicate instanceof StackEntryIsCardExiledWithSourcePredicate) {
-            UUID sourceId = match.permanent() != null ? match.permanent().getId()
-                    : match.sourcePlanarObject() != null ? match.sourcePlanarObject().getId() : null;
+            UUID sourceId = match.exiledWithSourceId();
             return sourceId != null && sourceId.equals(exiledSourcePermanentId);
         }
         if (predicate instanceof StackEntryCouldTargetAnotherPermanentPredicate couldTarget) {

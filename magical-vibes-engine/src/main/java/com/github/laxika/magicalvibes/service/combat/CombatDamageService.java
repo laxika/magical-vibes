@@ -2238,15 +2238,6 @@ public class CombatDamageService {
                     continue;
                 }
 
-                if (effect instanceof ReturnPermanentsOnCombatDamageToPlayerEffect bounce
-                        && bounce.fixedCount() == 0) {
-                    gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                            creature.getCard(), attackerId, List.of(bounce.withTriggerTimeTargets()),
-                            creature.getId(), attackerId, defenderId, null, damageDealt).withEventValue(damageDealt));
-                    gameLogService.append(gameData, GameLog.abilityTriggers(creature.getCard()));
-                    continue;
-                }
-
                 // The "you may" of a combat damage trigger is decided as the ability resolves (CR 603.5),
                 // so this trigger goes on the stack and its MayEffect prompts at resolution.
                 if (effect instanceof MayEffect may) {

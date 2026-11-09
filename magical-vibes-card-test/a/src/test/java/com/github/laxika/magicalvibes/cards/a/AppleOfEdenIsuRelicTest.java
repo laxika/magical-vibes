@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -27,7 +29,7 @@ class AppleOfEdenIsuRelicTest extends BaseCardTest {
         GrizzlyBears spell = new GrizzlyBears();
         Forest land = new Forest();
         Island drawn = new Island();
-        harness.setHand(player2, List.of(spell, land));
+        harness.setHand(player2, ownedBy(player2, spell, land));
         harness.setLibrary(player2, List.of(drawn));
 
         activateApple(apple);
@@ -54,7 +56,7 @@ class AppleOfEdenIsuRelicTest extends BaseCardTest {
         Permanent apple = addApple();
         Forest land = new Forest();
         Island drawn = new Island();
-        harness.setHand(player2, List.of(land));
+        harness.setHand(player2, ownedBy(player2, land));
         harness.setLibrary(player2, List.of(drawn));
 
         activateApple(apple);
@@ -71,7 +73,7 @@ class AppleOfEdenIsuRelicTest extends BaseCardTest {
     void returnsUnplayedCardsAtNextEndStep() {
         Permanent apple = addApple();
         GrizzlyBears exiled = new GrizzlyBears();
-        harness.setHand(player2, List.of(exiled));
+        harness.setHand(player2, ownedBy(player2, exiled));
 
         activateApple(apple);
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(exiled);
@@ -89,7 +91,7 @@ class AppleOfEdenIsuRelicTest extends BaseCardTest {
         Permanent apple = addApple();
         GrizzlyBears spell = new GrizzlyBears();
         Forest land = new Forest();
-        harness.setHand(player2, List.of(spell, land));
+        harness.setHand(player2, ownedBy(player2, spell, land));
 
         activateApple(apple);
         harness.passUntil(TurnStep.END_STEP);
@@ -183,7 +185,7 @@ class AppleOfEdenIsuRelicTest extends BaseCardTest {
         Permanent apple = addApple();
         Forest first = new Forest();
         Island second = new Island();
-        harness.setHand(player2, List.of(first, second));
+        harness.setHand(player2, ownedBy(player2, first, second));
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
 
         activateApple(apple);
@@ -203,7 +205,7 @@ class AppleOfEdenIsuRelicTest extends BaseCardTest {
         Forest exiled = new Forest();
         Island topCard = new Island();
         harness.setHand(player1, List.of(ownSpell));
-        harness.setHand(player2, List.of(exiled));
+        harness.setHand(player2, ownedBy(player2, exiled));
         harness.setLibrary(player2, List.of(topCard));
 
         activateApple(apple);
@@ -227,5 +229,13 @@ class AppleOfEdenIsuRelicTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(apple),
                 null, player2.getId());
         harness.passBothPriorities();
+    }
+
+    /** {@code cards}, owned by {@code owner}, as the cards in a player's hand are (CR 400.3). */
+    private static List<Card> ownedBy(Player owner, Card... cards) {
+        for (Card card : cards) {
+            card.setOwnerId(owner.getId());
+        }
+        return List.of(cards);
     }
 }

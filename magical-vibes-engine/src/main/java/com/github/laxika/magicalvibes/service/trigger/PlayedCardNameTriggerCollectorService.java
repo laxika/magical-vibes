@@ -62,11 +62,10 @@ public class PlayedCardNameTriggerCollectorService {
                 || trigger.notPlayedFrom() != null && landPlayed.playZone() == trigger.notPlayedFrom()) {
             return false;
         }
-        // "A card exiled with this": the land was exiled with the ability's source, the permanent or the face-up plane,
-        // which the land-play event names since the land has left exile.
+        // "A card exiled with this": the land was exiled with the ability's source, the permanent, the face-up plane or
+        // the permanent that registered the ability, which the land-play event names since the land has left exile.
         if (trigger.exiledWithSource()) {
-            UUID sourceId = match.permanent() != null ? match.permanent().getId()
-                    : match.sourcePlanarObject() != null ? match.sourcePlanarObject().getId() : null;
+            UUID sourceId = match.exiledWithSourceId();
             if (sourceId == null || !sourceId.equals(landPlayed.exiledSourcePermanentId())) {
                 return false;
             }

@@ -55,8 +55,7 @@ public class CalixGuidedByFate extends Card {
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(CALIX_OR_ENCHANTED_CREATURE),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN),
                 new MayEffect(
-                        new CreateTokenCopyOfChosenPermanentYouControlEffect(
-                                NONLEGENDARY_ENCHANTMENT, true),
+                        new CreateTokenCopyOfChosenPermanentYouControlEffect(NONLEGENDARY_ENCHANTMENT),
                         "Create a token copy of a nonlegendary enchantment you control?"));
     }
 }

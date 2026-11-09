@@ -42,7 +42,7 @@ UNWRAP = re.compile(r"\.(wrapped|thenEffect|elseEffect|tokenEffect|innerEffect|r
 
 # Rows of step 15 (effect-slot-refactor.md, run 17z11's Findings).
 B, C, C2, D, E, E2, E3, F = "17z11b", "17z11c", "17z11c2", "17z11d", "17z11e", "17z11e2", "17z11e3", "17z11f"
-F4, F6 = "17z11f4", "17z11f6"
+F4, F6, F7 = "17z11f4", "17z11f6", "17z11f7"
 LEGALITY = ("CombatHelper.java", "CombatService.java", "AttackLegalityService.java", "BlockLegalityService.java")
 
 CLASSIFIED = {
@@ -101,17 +101,15 @@ CLASSIFIED = {
     # "chosen creature" is the trigger's filter; Power Pack's random target is the entry's, the class only picking the
     # random-target path (ROUTE).
     ("CombatDamageService.java", "ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffect"): "ROUTE",
-    # 17z11f6: the temporary global trigger unwraps, Balthier and Fran's crewed Vehicle, Cephalid Constable's
-    # trigger-time targets, Strict Proctor's static rebuild and the enter service's divided-assignment gate.
-    ("CombatDamageService.java", "ReturnPermanentsOnCombatDamageToPlayerEffect"): F6,
-    ("EtbTriggerService.java", "TriggeredAbilityCounterEffect"): F6,
-    ("EtbTriggerService.java", "DealDividedDamageEffect"): F6,
-    ("EtbTriggerService.java", "PreventDividedDamageEffect"): F6,
-    ("EtbTriggerService.java", "DistributeCountersAmongTargetsEffect"): F6,
-    ("EtbTriggerService.java", "SacrificeArtifactThenDealDividedDamageEffect"): F6,
-    ("TriggerCollectionService.java", "ReturnPermanentsOnCombatDamageToPlayerEffect"): F6,
-    ("TriggerCollectionService.java", "RegisterDelayedVehicleAttackEffect"): F6,
-    ("TriggerCollectionService.java", "TemporaryGlobalTriggerEffect"): F6,
+    # 17z11f6 (done; split into 17z11f6 and 17z11f7): the temporary global trigger unwraps are gone (the registration
+    # records the registering source permanent and the watched player, the filters read them), Balthier and Fran's
+    # crewed Vehicle is an attack trigger with a crewed-by filter, Cephalid Constable declares its targets, Strict
+    # Proctor's ability is a triggered ability; the may handler's "do this only once each turn" reads the entry's limit.
+    # 17z11f7 (split from 17z11f6): the enter service's divided-assignment gate.
+    ("EtbTriggerService.java", "DealDividedDamageEffect"): F7,
+    ("EtbTriggerService.java", "PreventDividedDamageEffect"): F7,
+    ("EtbTriggerService.java", "DistributeCountersAmongTargetsEffect"): F7,
+    ("EtbTriggerService.java", "SacrificeArtifactThenDealDividedDamageEffect"): F7,
     # Classified ROUTE: the class picks the path or is a trigger condition.
     ("CombatAttackService.java", "SkipNextUntapEffect"): "ROUTE",
     ("CombatAttackService.java", "ChooseOneAtTriggerTimeEffect"): "ROUTE",
@@ -119,7 +117,6 @@ CLASSIFIED = {
     ("CombatAttackService.java", "AttackCounterMoveEffect"): "ROUTE",
     ("CombatAttackService.java", "GraveyardCardChoosingEffect"): "ROUTE",
     ("CombatAttackService.java", "CastTargetInstantOrSorceryFromGraveyardEffect"): "ROUTE",
-    ("CombatAttackService.java", "RegisterDelayedVehicleAttackEffect"): "ROUTE",
     ("CombatTriggerService.java", "ChooseOneAtTriggerTimeEffect"): "ROUTE",
     ("CombatDamageService.java", "TransformGrantingPermanentEffect"): "ROUTE",
     ("CombatDamageService.java", "ConjureDuplicateOfCombatDamageSourceIntoHandEffect"): "ROUTE",
@@ -143,7 +140,7 @@ CLASSIFIED = {
     ("TriggerCollectionService.java", "AttachedCreatureBecomesCopyOfExiledCreatureEffect"): "STATIC",
     ("TriggerCollectionService.java", "DrawCardEffect"): "ROUTE",
 }
-OPEN_ROWS = {F6}
+OPEN_ROWS = {F7}
 
 # The other reads run 17z11 read by hand, all ROUTE or STATIC: a restriction, prevention or replacement, an as-enters
 # choice, a mana ability resolved at once, a modal, graveyard or target prompt picked, a skip or trigger condition.

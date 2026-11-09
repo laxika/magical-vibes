@@ -144,6 +144,5 @@ public sealed interface DelayedAction permits
         DelayedDamageDoubling,
         DelayedControllerDamageMultiplication,
         DelayedSourceDamageMultiplication,
-        DelayedVehicleAttack,
         UnattachEquipmentAtNextEndStep {
 }

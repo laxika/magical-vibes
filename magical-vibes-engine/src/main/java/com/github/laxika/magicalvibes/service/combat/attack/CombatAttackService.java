@@ -45,7 +45,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedAttackerDeclarationCon
 import com.github.laxika.magicalvibes.model.action.DelayedAttackerKeywordGrant;
 import com.github.laxika.magicalvibes.model.action.DelayedNontokenAttackTokenCreation;
 import com.github.laxika.magicalvibes.model.action.DelayedOpponentAttackerBoost;
-import com.github.laxika.magicalvibes.model.action.DelayedVehicleAttack;
 import com.github.laxika.magicalvibes.model.action.DelayedWatchedCreatureAttack;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
@@ -61,7 +60,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedVehicleAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CanOnlyAttackAloneEffect;
@@ -2534,7 +2532,12 @@ public class CombatAttackService {
                     List<CombatAbilityReader.CombatEffect> anyAttackEffects = CombatAbilityReader.read(
                             WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ANY_CREATURE_ATTACKS),
                             CombatWatch.ON_ANY_CREATURE_ATTACKS.trigger());
-                    if (anyAttackEffects.isEmpty()) continue;
+                    // A permanent that lost its abilities, or a face-down one, has no printed ability to trigger.
+                    if (anyAttackEffects.isEmpty() || perm.isFaceDown()
+                            || gameQueryService.hasLostAllAbilities(gameData, perm)
+                            || gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+                        continue;
+                    }
 
                     List<CardEffect> matchingAnyAttackEffects = new ArrayList<>();
                     FilterContext sourceContext = FilterContext.of(gameData)
@@ -2711,7 +2714,6 @@ public class CombatAttackService {
         processDelayedAttackTokenCreationTriggers(gameData, playerId, attackerIndices);
         processDelayedAttackDamageTriggers(gameData, playerId, attackerIndices);
         processDelayedAttackUntapTriggers(gameData, playerId, attackerIndices);
-        processDelayedVehicleAttackTriggers(gameData, battlefield, attackerIndices);
         processDelayedWatchedCreatureAttackTriggers(gameData, battlefield, attackerIndices);
 
         // APNAP: active player's triggers on bottom, non-active player's on top (resolves first)
@@ -3333,58 +3335,6 @@ public class CombatAttackService {
 
         gameData.clearDelayedActions(DelayedAttackUntap.class,
                 action -> action.controllerId().equals(attackingPlayerId));
-    }
-
-    private void processDelayedVehicleAttackTriggers(GameData gameData, List<Permanent> battlefield,
-                                                      List<Integer> attackerIndices) {
-        if (attackerIndices.isEmpty() || gameData.combatPhasesThisTurn != 1
-                || !gameData.hasDelayedAction(DelayedVehicleAttack.class)) {
-            return;
-        }
-
-        Set<UUID> attackingPermanentIds = attackerIndices.stream()
-                .map(battlefield::get)
-                .map(Permanent::getId)
-                .collect(Collectors.toSet());
-        List<DelayedVehicleAttack> matchingActions = gameData.getDelayedActions(DelayedVehicleAttack.class).stream()
-                .filter(action -> attackingPermanentIds.contains(action.vehicleId()))
-                .toList();
-        if (matchingActions.isEmpty()) return;
-
-        for (DelayedVehicleAttack action : matchingActions) {
-            Permanent source = gameQueryService.findPermanentById(gameData, action.sourcePermanentId());
-            Permanent vehicle = gameQueryService.findPermanentById(gameData, action.vehicleId());
-            GameQueryService.StaticBonus sourceStaticBonus = source == null
-                    ? null : gameQueryService.computeStaticBonus(gameData, source);
-            if (source == null || vehicle == null
-                    || source.isLosesAllAbilitiesUntilEndOfTurn()
-                    || sourceStaticBonus.losesAllAbilities()
-                    || sourceStaticBonus.losesAllNonManaAbilities()
-                    || MiscAbilityReader.printedEffects(source.getCard(), MiscWatch.ON_CREWS_VEHICLE).stream()
-                    .noneMatch(RegisterDelayedVehicleAttackEffect.class::isInstance)
-                    || !gameQueryService.hasEffectiveSubtype(gameData, vehicle, CardSubtype.VEHICLE)) {
-                continue;
-            }
-
-            UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
-            if (controllerId == null) continue;
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    action.sourceCard(),
-                    controllerId,
-                    action.sourceCard().getName() + "'s delayed trigger",
-                    List.of(action.effect()),
-                    null,
-                    action.sourcePermanentId());
-            entry.setNonTargeting(true);
-            gameData.stack.add(entry);
-            gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed ability triggers."));
-            log.info("Game {} - {} delayed Vehicle attack trigger fires", gameData.id,
-                    action.sourceCard().getName());
-        }
-
-        gameData.clearDelayedActions(DelayedVehicleAttack.class,
-                action -> attackingPermanentIds.contains(action.vehicleId()));
     }
 
     private void processDelayedAttackTokenCreationTriggers(GameData gameData, UUID attackingPlayerId,
