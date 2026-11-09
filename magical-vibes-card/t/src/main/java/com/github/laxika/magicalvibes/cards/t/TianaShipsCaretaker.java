@@ -15,6 +15,6 @@ public class TianaShipsCaretaker extends Card {
         // Whenever an Aura or Equipment you control is put into a graveyard from the battlefield,
         // you may return that card to its owner's hand at the beginning of the next end step.
         addTrigger(Triggers.dies(Triggers.AURA_OR_EQUIPMENT, ObjectRelation.YOU_CONTROL),
-                new RegisterDelayedReturnCardFromGraveyardToHandEffect());
+                new RegisterDelayedReturnCardFromGraveyardToHandEffect(true));
     }
 }

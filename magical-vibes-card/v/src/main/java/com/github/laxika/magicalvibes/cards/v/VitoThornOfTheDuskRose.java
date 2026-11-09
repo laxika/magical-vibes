@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,7 +25,10 @@ import java.util.List;
 public class VitoThornOfTheDuskRose extends Card {
 
     public VitoThornOfTheDuskRose() {
-        addTrigger(Triggers.youGainLife(),
+        target(new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                "Target must be an opponent"
+        )).addTrigger(Triggers.youGainLife(),
                 new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER));
 
         addActivatedAbility(new ActivatedAbility(

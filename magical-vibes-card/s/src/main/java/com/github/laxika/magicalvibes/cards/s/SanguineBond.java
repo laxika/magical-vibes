@@ -5,6 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M10", collectorNumber = "111")
@@ -21,8 +24,12 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SanguineBond extends Card {
 
     public SanguineBond() {
-        // "Whenever you gain life, target opponent loses that much life." The trigger collector
-        // snapshots the life gained onto the entry's event value; EventValue reads it at resolution.
-        addTrigger(Triggers.youGainLife(), new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER));
+        // "Whenever you gain life, target opponent loses that much life." The opponent is chosen as the ability goes
+        // on the stack; the life gained is the entry's event value, which EventValue reads as it resolves.
+        target(new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                "Target must be an opponent"
+        )).addTrigger(Triggers.youGainLife(),
+                new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER));
     }
 }

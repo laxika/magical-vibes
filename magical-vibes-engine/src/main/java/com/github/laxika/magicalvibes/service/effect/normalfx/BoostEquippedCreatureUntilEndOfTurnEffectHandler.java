@@ -45,19 +45,28 @@ public class BoostEquippedCreatureUntilEndOfTurnEffectHandler implements NormalE
 
         Permanent equipment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         // An activated ability refers to the "equipped creature" as it is when the ability resolves (CR 301.5f),
-        // so a Jitte-style ability follows the equipment if it was moved before resolution. A trigger granted by
-        // an attachment ("it gets ...") boosts the creature that triggered it, even if the attachment moved or
-        // left the battlefield before resolution.
+        // so a Jitte-style ability follows the equipment if it was moved before resolution. A trigger about the
+        // creature the attachment was on ("whenever enchanted creature attacks, it gets ...", or one the attachment
+        // grants that creature) boosts that creature, even if the attachment moved or left the battlefield before
+        // resolution: the entry's attached snapshot, when it is the ability's source or the creature the source was
+        // attached to as the ability triggered. Any other trigger ("whenever a creature enters, enchanted creature
+        // gets ...") boosts the creature the source is attached to as the ability resolves (Adventuring Gear's ruling).
         // Once the equipment has left, its last known information (CR 608.2h) is the creature it was attached
         // to when it left, which the departure refreshes on the source snapshot; the activation-time attached
         // snapshot can be stale if the equipment moved since.
         UUID attachedId;
+        Permanent attachedSnapshot = entry.getAttachedPermanentSnapshot();
+        if (attachedSnapshot != null && entry.getSourcePermanentSnapshot() != null
+                && !attachedSnapshot.getId().equals(entry.getSourcePermanentSnapshot().getAttachedTo())
+                && !attachedSnapshot.getId().equals(entry.getSourcePermanentId())) {
+            attachedSnapshot = null;
+        }
         if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY && equipment != null) {
             attachedId = equipment.getAttachedTo();
         } else if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY && entry.getSourcePermanentSnapshot() != null) {
             attachedId = entry.getSourcePermanentSnapshot().getAttachedTo();
         } else {
-            attachedId = entry.getAttachedPermanentSnapshot() != null ? entry.getAttachedPermanentSnapshot().getId()
+            attachedId = attachedSnapshot != null ? attachedSnapshot.getId()
                     : equipment != null ? equipment.getAttachedTo()
                     : entry.getSourcePermanentSnapshot() != null
                     ? entry.getSourcePermanentSnapshot().getAttachedTo() : entry.getTargetId();

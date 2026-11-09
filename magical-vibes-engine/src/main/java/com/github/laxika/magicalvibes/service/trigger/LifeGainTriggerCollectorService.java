@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostRandomCreatureCardInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -68,14 +68,16 @@ public class LifeGainTriggerCollectorService {
     }
 
     /**
-     * "Whenever you gain life, you may pay {cost}. If you do, …": the ability goes on the stack as written and asks as it
-     * resolves (CR 603.5), its target chosen as it triggers (a "you may pay" whose effect targets no player offers
-     * creatures: Cradle of Vitality's "target creature"), with the life gained as the event's value ("a +1/+1 counter
-     * for each 1 life you gained").
+     * "Whenever you gain life, …", for an effect no handler of its own collects: the ability goes on the stack as written,
+     * with the life gained as the event's value ("that much", "a +1/+1 counter for each 1 life you gained"). A target is
+     * chosen as it goes on the stack (CR 603.3d), by what the effect's target admits: a card in a graveyard; a player or a
+     * permanent through the ability's target filter ("target opponent loses that much life": Sanguine Bond), else the
+     * declared target ("target creature or player": Firesong and Sunspeaker; a "you may pay" whose effect targets no
+     * player offers creatures: Cradle of Vitality's "target creature"). A "you may" or "you may pay" is asked as the
+     * ability resolves (CR 603.5).
      */
-    @CollectsLifeTrigger(value = MayPayManaEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
-    private boolean handleLifeGainMayPay(TriggerMatchContext match,
-                                         MayPayManaEffect effect, TriggerContext ctx) {
+    @CollectsLifeTrigger(value = CardEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
+    private boolean handleLifeGainDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         Card sourceCard = match.permanent().getCard();
         int lifeGained = ((TriggerContext.LifeGain) ctx).lifeGainedAmount();
         if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {

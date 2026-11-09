@@ -122,8 +122,8 @@ class DiscardTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("Queues a turn-scoped modal discard ability for its mode choice as it triggers")
-    void queuesTurnScopedModalDiscardAbilityForItsModeChoice() {
+    @DisplayName("Puts a turn-scoped modal discard ability on the stack as written, its mode announced there")
+    void putsTurnScopedModalDiscardAbilityOnTheStackAsWritten() {
         Permanent source = createPermanent("Monument to Endurance");
         var effect = ChooseOneEffect.notYetChosenThisTurn(List.of(
                 new ChooseOneEffect.ChooseOneOption("Draw a card", new DrawCardEffect(1)),
@@ -135,11 +135,10 @@ class DiscardTriggerCollectorServiceTest {
                 match(source, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
 
         assertThat(result).isTrue();
-        assertThat(gd.stack).isEmpty();
-        var pending = gd.peekPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
-        assertThat(pending.effect()).isEqualTo(effect);
-        assertThat(pending.sourcePermanentId()).isEqualTo(source.getId());
-        assertThat(pending.modesResetEachTurn()).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(source.getId());
+        });
     }
 
     @Test
@@ -300,18 +299,19 @@ class DiscardTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("the cycling handler is no longer keyed on a wrapper")
-        void noHandlerIsKeyedOnTheCyclingEvent() {
-            Permanent healer = createPermanent("Drannith Healer");
+        @DisplayName("a \"you discard a card\" effect no handler of its own collects goes on the stack through the default")
+        void untargetedDiscardEffectGoesOnTheStackThroughTheDefault() {
+            Permanent source = createPermanent("Discard Watcher");
             var effect = new GainLifeEffect(1);
             var ctx = new TriggerContext.Discard(player1Id, createCard("Censor"), true);
 
             boolean result = registry.dispatch(
-                    match(healer, player1Id, effect),
+                    match(source, player1Id, effect),
                     LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
 
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
+            assertThat(result).isTrue();
+            assertThat(gd.stack).singleElement().satisfies(entry ->
+                    assertThat(entry.getEffectsToResolve()).containsExactly(effect));
         }
     }
 

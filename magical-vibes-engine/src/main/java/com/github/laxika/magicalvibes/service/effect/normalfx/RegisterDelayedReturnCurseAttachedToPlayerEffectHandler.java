@@ -23,17 +23,19 @@ public class RegisterDelayedReturnCurseAttachedToPlayerEffectHandler implements 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        RegisterDelayedReturnCurseAttachedToPlayerEffect delayed =
-                (RegisterDelayedReturnCurseAttachedToPlayerEffect) effect;
-        if (delayed.cardId() == null || delayed.attachedPlayerId() == null
-                || !gameData.playerIds.contains(delayed.attachedPlayerId())) {
+        // The Curse is the card the trigger event put into a graveyard, as long as it is still that object (CR 400.7);
+        // "attached to you" is the ability's controller.
+        UUID cardId = entry.getTriggeringCardId();
+        UUID attachedPlayerId = entry.getControllerId();
+        if (cardId == null || attachedPlayerId == null || !gameData.playerIds.contains(attachedPlayerId)
+                || !entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(cardId))) {
             return;
         }
 
         UUID ownerId = null;
         for (UUID playerId : gameData.orderedPlayerIds) {
             for (Card card : gameData.playerGraveyards.getOrDefault(playerId, java.util.List.of())) {
-                if (card.getId().equals(delayed.cardId())) {
+                if (card.getId().equals(cardId)) {
                     ownerId = playerId;
                     break;
                 }
@@ -44,8 +46,7 @@ public class RegisterDelayedReturnCurseAttachedToPlayerEffectHandler implements 
         }
         if (ownerId != null) {
             gameData.queueDelayedAction(new DelayedReturnCurseAttachedToPlayer(
-                    delayed.cardId(), ownerId, delayed.attachedPlayerId(),
-                    gameData.graveyardEntryVersion(delayed.cardId())));
+                    cardId, ownerId, attachedPlayerId, gameData.graveyardEntryVersion(cardId)));
         }
     }
 }

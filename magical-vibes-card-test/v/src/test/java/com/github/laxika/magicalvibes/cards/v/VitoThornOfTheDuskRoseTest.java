@@ -2,8 +2,10 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -27,7 +29,7 @@ class VitoThornOfTheDuskRoseTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.castCreature(player1, 0);
-        resolveAllTriggers();
+        resolveAllTriggersTargetingOpponent();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
@@ -43,7 +45,7 @@ class VitoThornOfTheDuskRoseTest extends BaseCardTest {
 
         harness.addMana(player1, ManaColor.BLACK, 5);
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
 
         assertThat(gqs.hasKeyword(gd, vito, Keyword.LIFELINK)).isTrue();
         assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
@@ -51,7 +53,7 @@ class VitoThornOfTheDuskRoseTest extends BaseCardTest {
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -69,7 +71,7 @@ class VitoThornOfTheDuskRoseTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.WHITE, 5);
 
         harness.castCreature(player2, 0);
-        resolveAllTriggers();
+        resolveAllTriggersTargetingOpponent();
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 23);
@@ -81,12 +83,12 @@ class VitoThornOfTheDuskRoseTest extends BaseCardTest {
         harness.addToBattlefield(player1, new VitoThornOfTheDuskRose());
         harness.addMana(player1, ManaColor.BLACK, 5);
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
 
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.castCreature(player1, 0);
-        resolveAllTriggers();
+        resolveAllTriggersTargetingOpponent();
 
         assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.LIFELINK)).isFalse();
     }
@@ -101,7 +103,7 @@ class VitoThornOfTheDuskRoseTest extends BaseCardTest {
         Permanent vito = gd.playerBattlefields.get(player1.getId()).removeFirst();
         gd.playerGraveyards.get(player1.getId()).add(vito.getCard());
 
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
     }
@@ -116,7 +118,7 @@ class VitoThornOfTheDuskRoseTest extends BaseCardTest {
         Permanent vito = gd.playerBattlefields.get(player1.getId()).removeFirst();
         gd.playerBattlefields.get(player2.getId()).add(vito);
 
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
 
         assertThat(gqs.hasKeyword(gd, bears, Keyword.LIFELINK)).isTrue();
         assertThat(gqs.hasKeyword(gd, vito, Keyword.LIFELINK)).isFalse();
@@ -129,11 +131,11 @@ class VitoThornOfTheDuskRoseTest extends BaseCardTest {
         addCreatureReady(player1, new GrizzlyBears());
         harness.addMana(player1, ManaColor.BLACK, 5);
         harness.activateAbility(player1, 0, 0, null, null);
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
 
         declareAttackers(List.of(1));
         resolveCombat();
-        resolveAllTriggers();
+        resolveAllTriggersTargetingOpponent();
 
         harness.assertLife(player1, 22);
         harness.assertLife(player2, 16);
@@ -146,14 +148,36 @@ class VitoThornOfTheDuskRoseTest extends BaseCardTest {
         harness.setHand(player1, List.of(new AngelOfMercy()));
         harness.addMana(player1, ManaColor.WHITE, 5);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
         Permanent vito = gd.playerBattlefields.get(player1.getId()).removeFirst();
         gd.playerGraveyards.get(player1.getId()).add(vito.getCard());
 
-        resolveAllTriggers();
+        resolveAllTriggersTargetingOpponent();
 
         harness.assertLife(player1, 23);
         harness.assertLife(player2, 17);
+    }
+
+    /** Passes priority, then chooses the opponent as the target of each "target opponent" ability put on the stack. */
+    private void passBothPrioritiesTargetingOpponent() {
+        harness.passBothPriorities();
+        chooseOpponentAsTarget();
+    }
+
+    /** {@link #resolveAllTriggers()}, choosing the opponent as the target of each "target opponent" ability. */
+    private void resolveAllTriggersTargetingOpponent() {
+        chooseOpponentAsTarget();
+        while (gd.status != GameStatus.FINISHED && !gd.interaction.isAwaitingInput() && !gd.stack.isEmpty()) {
+            passBothPrioritiesTargetingOpponent();
+        }
+    }
+
+    /** Answers each pending target choice that offers the opponent with the opponent (CR 603.3d). */
+    private void chooseOpponentAsTarget() {
+        while (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice choice
+                && choice.validIds().contains(player2.getId())) {
+            harness.handlePermanentChosen(player1, player2.getId());
+        }
     }
 }

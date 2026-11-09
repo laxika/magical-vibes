@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.a.AngelOfMercy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -25,9 +27,9 @@ class DefiantBloodlordTest extends BaseCardTest {
         int opponentLifeBefore = gd.getLife(player2.getId());
 
         harness.castFromHand(player1, new AngelOfMercy(), "{4}{W}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 3);
@@ -44,8 +46,8 @@ class DefiantBloodlordTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.castFromHand(player2, new AngelOfMercy(), "{4}{W}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(player1LifeBefore);
         assertThat(gd.getLife(player2.getId())).isEqualTo(player2LifeBefore + 3);
@@ -62,14 +64,14 @@ class DefiantBloodlordTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 4);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 2);
     }
@@ -81,14 +83,14 @@ class DefiantBloodlordTest extends BaseCardTest {
         harness.addToBattlefield(player1, new DefiantBloodlord());
 
         harness.castFromHand(player1, new AngelOfMercy(), "{4}{W}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
 
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);
         assertThat(gd.getLife(player2.getId())).isEqualTo(14);
@@ -101,11 +103,11 @@ class DefiantBloodlordTest extends BaseCardTest {
         harness.addToBattlefield(player1, new SoulWarden());
 
         harness.castFromHand(player1, new AngelOfMercy(), "{4}{W}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(24);
         assertThat(gd.getLife(player2.getId())).isEqualTo(16);
@@ -117,8 +119,8 @@ class DefiantBloodlordTest extends BaseCardTest {
         var bloodlord = harness.addToBattlefieldAndReturn(player1, new DefiantBloodlord());
 
         harness.castFromHand(player1, new AngelOfMercy(), "{4}{W}");
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);
         assertThat(gd.getLife(player2.getId())).isEqualTo(20);
@@ -126,9 +128,31 @@ class DefiantBloodlordTest extends BaseCardTest {
         harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveInstant(player1, 0, bloodlord.getId());
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
+    }
+
+    /** Passes priority, then chooses the opponent as the target of each "target opponent" ability put on the stack. */
+    private void passBothPrioritiesTargetingOpponent() {
+        harness.passBothPriorities();
+        chooseOpponentAsTarget();
+    }
+
+    /** {@link #resolveAllTriggers()}, choosing the opponent as the target of each "target opponent" ability. */
+    private void resolveAllTriggersTargetingOpponent() {
+        chooseOpponentAsTarget();
+        while (gd.status != GameStatus.FINISHED && !gd.interaction.isAwaitingInput() && !gd.stack.isEmpty()) {
+            passBothPrioritiesTargetingOpponent();
+        }
+    }
+
+    /** Answers each pending target choice that offers the opponent with the opponent (CR 603.3d). */
+    private void chooseOpponentAsTarget() {
+        while (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice choice
+                && choice.validIds().contains(player2.getId())) {
+            harness.handlePermanentChosen(player1, player2.getId());
+        }
     }
 }

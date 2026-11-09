@@ -54,7 +54,6 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -2004,66 +2003,6 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on life gain (put +1/+1 counters)", gameData.id, cardName);
-        return true;
-    }
-
-    /**
-     * "Deals N damage to target creature or player" (Firesong and Sunspeaker): its target is chosen as the ability goes
-     * on the stack (CR 603.3d); the trigger's spell filter was judged as it triggered.
-     */
-    @CollectsLifeTrigger(value = DealDamageToTargetCreatureOrPlayerEffect.class,
-            watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
-    private boolean handleLifeGainDamageTargetCreatureOrPlayer(TriggerMatchContext match,
-            DealDamageToTargetCreatureOrPlayerEffect effect, TriggerContext ctx) {
-        match.gameData().queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
-                match.permanent().getCard(),
-                match.controllerId(),
-                List.of(effect),
-                match.permanent().getId()
-        ));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers on life gain (damage to target creature or player)",
-                match.gameData().id, match.permanent().getCard().getName());
-        return true;
-    }
-
-    @CollectsLifeTrigger(value = LoseLifeEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
-    private boolean handleLifeGainTargetPlayerLosesLife(TriggerMatchContext match,
-            LoseLifeEffect effect, TriggerContext ctx) {
-        TriggerContext.LifeGain lg = (TriggerContext.LifeGain) ctx;
-        var gameData = match.gameData();
-        String cardName = match.permanent().getCard().getName();
-        UUID opponentId = gameQueryService.getOpponentId(gameData, match.controllerId());
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                cardName + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                opponentId,
-                match.permanent().getId());
-        // "Each opponent loses life" does not target, so hexproof/shroud cannot stop it; only an explicit
-        // "target player" recipient is a real target.
-        entry.setNonTargeting(effect.recipient() != LoseLifeRecipient.TARGET_PLAYER);
-        if (effect.recipient() == LoseLifeRecipient.TARGET_PLAYER) {
-            // "Target opponent loses that much life": a copy's new target must also be an opponent.
-            entry.setTargetFilter(new com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter(
-                    new com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate(
-                            com.github.laxika.magicalvibes.model.filter.PlayerRelation.OPPONENT),
-                    "Target must be an opponent"));
-        }
-        // Snapshot the life gained onto the entry's event value — parallel to the spell-mana-spent
-        // xValue plumbing — so the effect's EventValue amount ("equal to the life gained") reads it
-        // back at resolution.
-        if (amountEvaluationService.referencesEventValue(effect.amount())) {
-            entry.setEventValue(lg.lifeGainedAmount());
-        }
-        gameData.enqueueTrigger(entry);
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers on life gain ({} life), target opponent loses that much",
-                gameData.id, cardName, lg.lifeGainedAmount());
         return true;
     }
 

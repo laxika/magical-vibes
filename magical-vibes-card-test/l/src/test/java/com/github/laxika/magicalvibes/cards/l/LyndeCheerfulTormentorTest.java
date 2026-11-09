@@ -169,4 +169,21 @@ class LyndeCheerfulTormentorTest extends BaseCardTest {
         assertThat(curse.getAttachedTo()).isEqualTo(player2.getId());
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 2);
     }
+
+    @Test
+    @DisplayName("Registers no return for a Curse that left its graveyard and came back before the ability resolved")
+    void registersNoReturnForACurseThatReenteredTheGraveyardBeforeResolution() {
+        harness.addToBattlefield(player1, new LyndeCheerfulTormentor());
+        CurseOfClingingWebs card = new CurseOfClingingWebs();
+        Permanent curse = harness.addToBattlefieldAndReturn(player1, card);
+        curse.setAttachedTo(player2.getId());
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, curse));
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Lynde, Cheerful Tormentor"));
+
+        // The card leaves the graveyard and is put into it again: a new object (CR 400.7).
+        gd.markGraveyardEntry(card);
+        harness.passBothPriorities();
+
+        assertThat(gd.getDelayedActions(DelayedReturnCurseAttachedToPlayer.class)).isEmpty();
+    }
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HardenedScales;
+import com.github.laxika.magicalvibes.cards.i.InkwellLeviathan;
 import com.github.laxika.magicalvibes.cards.z.ZebraUnicorn;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({EmielTheBlessed.class, ControlMagic.class, GrizzlyBears.class, ZebraUnicorn.class, HardenedScales.class})
+@CardUsed({EmielTheBlessed.class, InkwellLeviathan.class, ControlMagic.class, GrizzlyBears.class, ZebraUnicorn.class, HardenedScales.class})
 class EmielTheBlessedTest extends BaseCardTest {
 
     @Test
@@ -172,5 +173,18 @@ class EmielTheBlessedTest extends BaseCardTest {
         harness.assertOnBattlefield(player2, "Zebra Unicorn");
         assertThat(findPermanent(player2, "Zebra Unicorn").getId()).isNotEqualTo(unicorn.getId());
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Puts the counter on an entering creature with shroud, which the ability doesn't target")
+    void putsCounterOnEnteringCreatureWithShroud() {
+        harness.addToBattlefield(player1, new EmielTheBlessed());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        Permanent enteringCreature = harness.enterBattlefieldAndReturn(player1, new InkwellLeviathan());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(enteringCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

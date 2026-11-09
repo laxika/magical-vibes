@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.m.Murder;
 import com.github.laxika.magicalvibes.cards.o.OneWithTheStars;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -30,9 +32,9 @@ class EnduringTenacityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 5);
 
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(23);
         assertThat(gd.getLife(player2.getId())).isEqualTo(opponentLifeBefore - 3);
@@ -47,7 +49,7 @@ class EnduringTenacityTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 3);
         harness.forceActivePlayer(player2);
         harness.castAndResolveInstant(player2, 0, enduring.getId());
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
 
         Permanent returned = findPermanent(player1, "Enduring Tenacity");
         assertThat(gqs.getEffectiveCardTypes(gd, returned)).containsExactly(CardType.ENCHANTMENT);
@@ -64,14 +66,14 @@ class EnduringTenacityTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castEnchantment(player1, 0, enduring.getId());
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
         assertThat(gqs.isCreature(gd, enduring)).isFalse();
 
         harness.setHand(player2, List.of(new Disenchant()));
         harness.addMana(player2, ManaColor.WHITE, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castAndResolveInstant(player2, 0, enduring.getId());
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
 
         harness.assertInGraveyard(player1, "Enduring Tenacity");
         harness.assertNotOnBattlefield(player1, "Enduring Tenacity");
@@ -84,15 +86,15 @@ class EnduringTenacityTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Murder()));
         harness.addMana(player2, ManaColor.BLACK, 3);
         harness.castAndResolveInstant(player2, 0, enduring.getId());
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
 
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new AngelOfMercy()));
         harness.addMana(player1, ManaColor.WHITE, 5);
         harness.castCreature(player1, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
 
         harness.assertLife(player1, 23);
         harness.assertLife(player2, 17);
@@ -107,8 +109,8 @@ class EnduringTenacityTest extends BaseCardTest {
         harness.setHand(player2, List.of(new AngelOfMercy()));
         harness.addMana(player2, ManaColor.WHITE, 5);
         harness.castCreature(player2, 0);
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
+        passBothPrioritiesTargetingOpponent();
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 23);
@@ -122,7 +124,7 @@ class EnduringTenacityTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Murder()));
         harness.addMana(player2, ManaColor.BLACK, 3);
         harness.castAndResolveInstant(player2, 0, enduring.getId());
-        harness.passBothPriorities();
+        passBothPrioritiesTargetingOpponent();
 
         Permanent returned = findPermanent(player1, "Enduring Tenacity");
         harness.setHand(player2, List.of(new Disenchant()));
@@ -132,5 +134,27 @@ class EnduringTenacityTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Enduring Tenacity");
         harness.assertNotOnBattlefield(player1, "Enduring Tenacity");
         assertThat(gd.stack).isEmpty();
+    }
+
+    /** Passes priority, then chooses the opponent as the target of each "target opponent" ability put on the stack. */
+    private void passBothPrioritiesTargetingOpponent() {
+        harness.passBothPriorities();
+        chooseOpponentAsTarget();
+    }
+
+    /** {@link #resolveAllTriggers()}, choosing the opponent as the target of each "target opponent" ability. */
+    private void resolveAllTriggersTargetingOpponent() {
+        chooseOpponentAsTarget();
+        while (gd.status != GameStatus.FINISHED && !gd.interaction.isAwaitingInput() && !gd.stack.isEmpty()) {
+            passBothPrioritiesTargetingOpponent();
+        }
+    }
+
+    /** Answers each pending target choice that offers the opponent with the opponent (CR 603.3d). */
+    private void chooseOpponentAsTarget() {
+        while (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice choice
+                && choice.validIds().contains(player2.getId())) {
+            harness.handlePermanentChosen(player1, player2.getId());
+        }
     }
 }

@@ -26,8 +26,6 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentOfDyingCreatureCo
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndReturnSourceToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ImprintDyingCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
@@ -36,13 +34,10 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermane
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCurseAttachedToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect;
@@ -57,7 +52,6 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
@@ -136,12 +130,6 @@ public class DeathTriggerCollectorService {
                 (match, effect, context) -> handleAllyCreatureMay(match, (MayEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.ALLY_CREATURE_OR_PLANESWALKER, MayEffect.class,
                 (match, effect, context) -> handleAllyCreatureOrPlaneswalkerMay(match, (MayEffect) effect, context));
-        registerCreatureDeath(CreatureDeathWatch.EQUIPPED, ReturnDyingCreatureToBattlefieldEffect.class,
-                (match, effect, context) -> handleEquippedCreatureReturn(match,
-                        (ReturnDyingCreatureToBattlefieldEffect) effect, context));
-        registerCreatureDeath(CreatureDeathWatch.EQUIPPED, ConditionalEffect.class,
-                (match, effect, context) -> handleEquippedCreatureConditional(match,
-                        (ConditionalEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.EQUIPPED, RegisterDelayedReturnDyingCreatureUnderControlEffect.class,
                 (match, effect, context) -> handleEquippedCreatureDelayedReturn(match,
                         (RegisterDelayedReturnDyingCreatureUnderControlEffect) effect, context));
@@ -212,15 +200,6 @@ public class DeathTriggerCollectorService {
         registerCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, ConditionalEffect.class,
                 (match, effect, context) -> handleAllyNontokenInterveningIfConditional(match,
                         (ConditionalEffect) effect, context));
-        registerCreatureDeath(CreatureDeathWatch.ANY_NONTOKEN, ExileTriggeringCreatureAndTrackWithSourceEffect.class,
-                (match, effect, context) -> handleAnyNontokenCreatureDeathExileAndTrack(match,
-                        (ExileTriggeringCreatureAndTrackWithSourceEffect) effect, context));
-        registerCreatureDeath(CreatureDeathWatch.ANY_NONTOKEN, ImprintDyingCreatureEffect.class,
-                (match, effect, context) -> handleImprintDyingCreature(match,
-                        (ImprintDyingCreatureEffect) effect, context));
-        registerCreatureDeath(CreatureDeathWatch.ANY_NONTOKEN, ReturnDyingCreatureToBattlefieldEffect.class,
-                (match, effect, context) -> handleReturnDyingCreatureMayPay(match,
-                        (ReturnDyingCreatureToBattlefieldEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.ANY_NONTOKEN, CardEffect.class,
                 (match, effect, context) -> handleAnyNontokenCreatureDeathDefault(match, (CardEffect) effect, context));
         registerCreatureDeath(CreatureDeathWatch.ENCHANTED_PLAYER_NONTOKEN, CardEffect.class,
@@ -291,20 +270,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = MayEffect.class,
-            watch = ZoneChangeWatch.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
-    boolean handleOwnedCreatureGraveyardMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
-        TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(), match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new MayEffect(may.wrapped(), may.prompt()))),
-                null, match.permanent().getId());
-        markDyingCard(match.gameData(), entry, death.dyingCard());
-        match.gameData().stack.add(entry);
-        return true;
-    }
-
     @CollectsWatchTrigger(value = RegisterDelayedReturnDyingCreatureUnderControlEffect.class,
             watch = ZoneChangeWatch.ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD)
     boolean handleOwnedCreatureGraveyardDelayedReturn(TriggerMatchContext match,
@@ -353,53 +318,6 @@ public class DeathTriggerCollectorService {
         TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
         match.gameData().queueMayAbility(match.permanent().getCard(), cd.dyingCreatureControllerId(), may, null,
                 match.permanent().getId());
-        return true;
-    }
-
-    boolean handleEquippedCreatureReturn(TriggerMatchContext match,
-            ReturnDyingCreatureToBattlefieldEffect effect, TriggerContext ctx) {
-        TriggerContext.EquippedCreatureDeath ecd = (TriggerContext.EquippedCreatureDeath) ctx;
-        if (ecd.dyingCard() == null) {
-            return false;
-        }
-        return queueEquippedCreatureReturn(match, effect, ecd);
-    }
-
-    /**
-     * "Return that card to the battlefield under your control if it's a Samurai card" (Oathkeeper, Takeno's Daisho):
-     * the return reads the dying card as {@link #handleEquippedCreatureReturn} gives it, and its "if" reads that
-     * card as the ability resolves. Any other conditional goes on the stack as it is.
-     */
-    boolean handleEquippedCreatureConditional(TriggerMatchContext match, ConditionalEffect conditional,
-                                              TriggerContext ctx) {
-        TriggerContext.EquippedCreatureDeath ecd = (TriggerContext.EquippedCreatureDeath) ctx;
-        if (!(conditional.wrapped() instanceof ReturnDyingCreatureToBattlefieldEffect)) {
-            return handleEquippedCreatureDeathDefault(match, conditional, ctx);
-        }
-        if (ecd.dyingCard() == null) {
-            return false;
-        }
-        return queueEquippedCreatureReturn(match, conditional, ecd);
-    }
-
-    private boolean queueEquippedCreatureReturn(TriggerMatchContext match, CardEffect effect,
-                                                TriggerContext.EquippedCreatureDeath ecd) {
-        GameData gameData = match.gameData();
-        // The effect resolves off the dying card, the entry's triggering card, and the stack entry's
-        // targetId carries the source Equipment (needed when it reattaches).
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect))
-        );
-        entry.setTargetId(match.permanent().getId());
-        markDyingCard(gameData, entry, ecd.dyingCard());
-        gameData.stack.add(entry);
-        gameLogService.append(gameData, GameLog.cardThen(match.permanent().getCard(),
-                "'s ability triggers (equipped creature died)."));
-        log.info("Game {} - {} return trigger fires (equipped creature died)", gameData.id, match.permanent().getCard().getName());
         return true;
     }
 
@@ -1315,21 +1233,6 @@ public class DeathTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = RegisterDelayedReturnCurseAttachedToPlayerEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    @CollectsWatchTrigger(value = RegisterDelayedReturnCurseAttachedToPlayerEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_NONTOKEN_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    boolean handleAllyCurseDelayedReturn(TriggerMatchContext match,
-            RegisterDelayedReturnCurseAttachedToPlayerEffect effect, TriggerContext ctx) {
-        TriggerContext.AnyPermanentGraveyard death = (TriggerContext.AnyPermanentGraveyard) ctx;
-        if (death.dyingCard() == null) {
-            return true;
-        }
-        return handleAllyPermanentGraveyardDefault(match,
-                new RegisterDelayedReturnCurseAttachedToPlayerEffect(
-                        death.dyingCard().getId(), match.controllerId()), ctx);
-    }
-
     @CollectsWatchTrigger(value = CardEffect.class,
             watch = ZoneChangeWatch.ON_ALLY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
     @CollectsWatchTrigger(value = CardEffect.class,
@@ -1973,79 +1876,6 @@ public class DeathTriggerCollectorService {
         log.info("Game {} - {} triggers (ally nontoken creature died)", match.gameData().id, match.permanent().getCard().getName());
     }
 
-    boolean handleAnyNontokenCreatureDeathExileAndTrack(TriggerMatchContext match,
-            ExileTriggeringCreatureAndTrackWithSourceEffect effect, TriggerContext ctx) {
-        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
-        if (!(match.rawEffect() instanceof MayEffect rawMay)) {
-            if (cd.dyingCard() == null
-                    || match.gameData().playerGraveyards
-                    .getOrDefault(match.controllerId(), List.of()).stream()
-                    .noneMatch(card -> card.getId().equals(cd.dyingCard().getId()))) {
-                return true;
-            }
-            return handleAnyNontokenCreatureDeathDefault(match, effect, ctx);
-        }
-        MayEffect resolvedMay = new MayEffect(effect, rawMay.prompt(), rawMay.elseEffect());
-        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(),
-                resolvedMay, null, match.permanent().getId());
-        markDyingCard(match.gameData(), match.gameData().stack.getLast(), cd.dyingCard());
-        logAnyCreatureDeath(match);
-        return true;
-    }
-
-    boolean handleImprintDyingCreature(TriggerMatchContext match,
-            ImprintDyingCreatureEffect effect, TriggerContext ctx) {
-        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
-        MayEffect rawMay = (MayEffect) match.rawEffect();
-        // CR 603.5: the ability goes on the stack and "you may exile that card" is chosen as it resolves. The
-        // source permanent is carried as the entry's (non-targeting) target: the imprint still happens if it left.
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new MayEffect(effect, rawMay.prompt()))),
-                match.permanent().getId(),
-                match.permanent().getId());
-        entry.setNonTargeting(true);
-        markDyingCard(match.gameData(), entry, cd.dyingCard());
-        match.gameData().stack.add(entry);
-        gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
-                "'s imprint ability triggers."));
-        log.info("Game {} - {} imprint triggers (nontoken creature died)", match.gameData().id, match.permanent().getCard().getName());
-        return true;
-    }
-
-    boolean handleReturnDyingCreatureMayPay(TriggerMatchContext match,
-            ReturnDyingCreatureToBattlefieldEffect effect, TriggerContext ctx) {
-        TriggerContext.CreatureDeath cd = (TriggerContext.CreatureDeath) ctx;
-        GameData gameData = match.gameData();
-        List<Card> playerGraveyard = gameData.playerGraveyards.get(match.controllerId());
-        if (playerGraveyard == null || playerGraveyard.stream().noneMatch(c -> c.getId().equals(cd.dyingCard().getId()))) {
-            return false;
-        }
-        MayPayManaEffect rawMayPay = (MayPayManaEffect) match.rawEffect();
-        // The trigger goes on the stack; the payment is offered when it resolves (CR 603.5).
-        MayPayManaEffect mayPay = new MayPayManaEffect(rawMayPay.manaCost(), rawMayPay.dynamicManaCost(),
-                effect, rawMayPay.prompt(), rawMayPay.payer(), rawMayPay.elseEffect(), rawMayPay.lifeCost(),
-                rawMayPay.sourceIsTriggeringPermanent());
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(mayPay)),
-                null,
-                match.permanent().getId()
-        );
-        markDyingCard(gameData, entry, cd.dyingCard());
-        match.gameData().stack.add(entry);
-        gameLogService.append(gameData, GameLog.cardTextCard(match.permanent().getCard(),
-                "'s ability triggers (", cd.dyingCard(), " died)."));
-        log.info("Game {} - {} return trigger fires (nontoken creature {} died)", gameData.id, match.permanent().getCard().getName(), cd.dyingCard().getName());
-        return true;
-    }
-
     boolean handleAnyNontokenCreatureDeathDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
         StackEntry entry = new StackEntry(
@@ -2206,34 +2036,6 @@ public class DeathTriggerCollectorService {
     }
 
     // ── ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD ──
-
-    @CollectsWatchTrigger(value = RegisterDelayedReturnCardFromGraveyardToHandEffect.class, watch = ZoneChangeWatch.ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD)
-    boolean handleRegisterDelayedReturn(TriggerMatchContext match,
-            RegisterDelayedReturnCardFromGraveyardToHandEffect effect, TriggerContext ctx) {
-        TriggerContext.AllyAuraOrEquipmentGraveyard aaeg = (TriggerContext.AllyAuraOrEquipmentGraveyard) ctx;
-        Card dyingCard = aaeg.dyingCard();
-        // The trigger itself is mandatory: it schedules a delayed trigger at the next end step, and the
-        // "you may return" choice is made when that delayed trigger resolves.
-        RegisterDelayedReturnCardFromGraveyardToHandEffect delayedEffect =
-                new RegisterDelayedReturnCardFromGraveyardToHandEffect(true);
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                aaeg.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(delayedEffect)),
-                null,
-                match.permanent().getId());
-        markDyingCard(match.gameData(), entry, dyingCard);
-        entry.setNonTargeting(true);
-        match.gameData().stack.add(entry);
-
-        gameLogService.append(match.gameData(), GameLog.cardTextCard(match.permanent().getCard(),
-                "'s ability triggers (", dyingCard, " was put into a graveyard from the battlefield)."));
-        log.info("Game {} - {} triggers (ally Aura/Equipment {} put into graveyard from battlefield)",
-                match.gameData().id, match.permanent().getCard().getName(), dyingCard.getName());
-        return true;
-    }
 
     /**
      * "Whenever an Aura or Equipment you control is put into a graveyard from the battlefield": "that card" is the

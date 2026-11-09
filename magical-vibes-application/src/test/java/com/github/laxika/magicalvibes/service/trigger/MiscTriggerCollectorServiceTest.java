@@ -356,6 +356,48 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
+    @DisplayName("life-gain \"target opponent loses that much life\" queues its target choice with the life gained")
+    void lifeGainTargetOpponentQueuesItsTargetChoice() {
+        TriggerCollectorRegistry.scanBean(new LifeGainTriggerCollectorService(gameLogService), registry);
+        Card card = createCard("Sanguine Bond");
+        var effect = new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER);
+        card.target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                        "Target must be an opponent"))
+                .addTrigger(Triggers.youGainLife(), effect);
+        Permanent perm = new Permanent(card);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect,
+                new TriggerContext.LifeGain(player1Id, 4));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).isEmpty();
+        var choice = gd.pollPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.effects()).containsExactly(effect);
+        assertThat(choice.sourcePermanentId()).isEqualTo(perm.getId());
+        assertThat(choice.eventValue()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("life-gain \"each opponent loses 1 life\" goes on the stack as written, with the life gained")
+    void lifeGainEachOpponentLosesLifeGoesOnTheStack() {
+        TriggerCollectorRegistry.scanBean(new LifeGainTriggerCollectorService(gameLogService), registry);
+        Permanent perm = createPermanent("Cliffhaven Vampire");
+        var effect = new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect,
+                new TriggerContext.LifeGain(player1Id, 2));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getEventValue()).isEqualTo(2);
+        });
+    }
+
+    @Test
     @DisplayName("targeted life-gain sequence queues target selection")
     void targetedLifeGainSequenceQueuesTargetSelection() {
         Card card = createCard("Spider-Man, Peter Parker");
@@ -1349,71 +1391,6 @@ class MiscTriggerCollectorServiceTest {
         assertThat(gd.stack.getLast().getEventValue()).isEqualTo(4);
     }
 
-    // ===== ON_CONTROLLER_GAINS_LIFE — LoseLifeEffect(EventValue, TARGET_PLAYER) =====
-
-    @Nested
-    @DisplayName("ON_CONTROLLER_GAINS_LIFE — LoseLifeEffect(EventValue, TARGET_PLAYER)")
-    class LifeGainOpponentLosesLife {
-
-        @Test
-        @DisplayName("puts triggered ability on stack targeting opponent with life loss equal to life gained")
-        void putsTriggeredAbilityOnStack() {
-            Permanent perm = createPermanent("Sanguine Bond");
-            var effect = new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER);
-            var ctx = new TriggerContext.LifeGain(player1Id, 4);
-
-            when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            var stackEntry = gd.stack.getLast();
-            assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-            assertThat(stackEntry.getDescription()).contains("Sanguine Bond");
-            assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
-            assertThat(stackEntry.getTargetId()).isEqualTo(player2Id);
-            assertThat(stackEntry.getSourcePermanentId()).isEqualTo(perm.getId());
-        }
-
-        @Test
-        @DisplayName("resolved effect keeps EventValue amount and snapshots life gained onto the entry")
-        void resolvedEffectHasCorrectAmount() {
-            Permanent perm = createPermanent("Sanguine Bond");
-            var effect = new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER);
-            var ctx = new TriggerContext.LifeGain(player1Id, 7);
-
-            when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
-            when(amountEvaluationService.referencesEventValue(new EventValue())).thenReturn(true);
-
-            registry.dispatch(
-                    match(perm, player1Id, effect),
-                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
-
-            var entry = gd.stack.getLast();
-            var resolved = (LoseLifeEffect) entry.getEffectsToResolve().getFirst();
-            assertThat(resolved.amount()).isEqualTo(new EventValue());
-            assertThat(entry.getEventValue()).isEqualTo(7);
-        }
-
-        @Test
-        @DisplayName("broadcasts trigger log message")
-        void broadcastsTriggerLog() {
-            Permanent perm = createPermanent("Sanguine Bond");
-            var effect = new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER);
-            var ctx = new TriggerContext.LifeGain(player1Id, 4);
-
-            when(gameQueryService.getOpponentId(gd, player1Id)).thenReturn(player2Id);
-
-            registry.dispatch(
-                    match(perm, player1Id, effect),
-                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
-
-            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
-        }
-    }
 
     // ===== ON_CONTROLLER_LOSES_LIFE — SacrificePermanentsEffect =====
 

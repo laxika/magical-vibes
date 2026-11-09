@@ -49,7 +49,11 @@ Targeting for triggered abilities happens in two layers:
      `TargetPredicates.anyTarget()` rather than re-implementing it, exactly as the collector does.
      `LifeGainTriggerAnyTarget`'s filterless branch offers the permanents its effect's declared target
      admits ("target creature or player", `DealDamageToTargetCreatureOrPlayerEffect`: creatures only;
-     an any-target effect: creatures, planeswalkers and battles); `DrawTriggerAnyTarget` is creature-only.
+     an any-target effect: creatures, planeswalkers and battles; a player-only target: none); with the
+     ability's target filter ("target opponent": Sanguine Bond's `target(PlayerPredicateTargetFilter(
+     opponent))`) it offers what the filter admits, and the stack entry keeps the filter for a copy's new
+     target. The "you gain life" collector's default handler queues it for any targeted effect that no
+     handler of its own collects; `DrawTriggerAnyTarget` is creature-only.
 
 If an effect's targeting (read from its `targetSpec()`: `admits(TargetPredicate.Kind.PERMANENT)` or
 `admits(Kind.PLAYER)`) is true, the collectors route the trigger into a pending queue. Otherwise the
@@ -99,7 +103,7 @@ cast path type-checks the target automatically; an effect that targets a permane
 | Discard-self (`DiscardTriggerAnyTarget`) | —                  | ✅ all players | ✅ the evaluated `anyTarget()` | ❌ | ❌ | ❌ | ❌ |
 | Controller-discard (`DiscardControllerTriggerTarget`) | `Options.ATTACK` | ✅ | ✅ any permanent | ✅ | ✅ | ✅ | ✅ (Zenith Seeker's creature-only grant) |
 | Spell-target (`SpellTargetTriggerAnyTarget`) | —                  | ✅ (honours `PlayerPredicateTargetFilter` / OPPONENT when `playerTargetOnly`) | ✅ via `TargetFilter`, else the evaluated `anyTarget()` | ✅ when `playerTargetOnly` | ✅ (via `PredicateEvaluationService.matchesFilters`) | ❌ | ❌ |
-| Life-gain (`LifeGainTriggerAnyTarget`) | —                  | ✅ all players | ✅ the effect's declared permanents | ❌ | ❌ | ❌ | ❌ |
+| Life-gain (`LifeGainTriggerAnyTarget`) | `Options.ATTACK` with the ability's target filter, else — | ✅ all players, or the filter's | ✅ the effect's declared permanents, or the filter's | ✅ with the filter | ✅ with the filter | ✅ with the filter | ❌ |
 | Entering-permanent any-target (`EnteringPermanentAnyTargetTrigger`) | — | ✅ all players | ✅ the evaluated `anyTarget()` | ❌ | ❌ | ❌ | ❌ |
 | Enters (`EntersTriggerTarget`)      | `Options.ATTACK`   | ✅ | ✅ any permanent  | ✅ | ✅ | ✅ | ✅ |
 | Explore (`ExploreTriggerTarget`)    | —                  | ❌            | ✅ hard-coded to opponent creatures | n/a (hard-coded) | ❌ | ❌ | ❌ |

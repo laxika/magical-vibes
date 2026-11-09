@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnteringPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEnteringTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
@@ -730,13 +729,13 @@ public class EnterTriggerCollectorService {
             entry.setTriggeringPermanentId(enteringPermanentId);
             entry.setTriggeringCardId(pe.enteringCard().getId());
             entry.setNonTargeting(!isTargeting(mayPay));
-            CardEffect payOffEffect = mayPay.wrapped() instanceof ConditionalEffect payOffConditional
-                    ? payOffConditional.wrapped() : mayPay.wrapped();
-            if (enteringPermanentId != null && payOffEffect instanceof CreateTokenCopyOfTargetPermanentEffect) {
-                // "that creature" is not a target (Flameshadow Conjuring), so the copy still happens
-                // from last known information when the entering creature has already left.
+            if (targetCardId != null) {
+                // The permanent the effect acts on is the one the event fixed ("that creature", "it": Flameshadow
+                // Conjuring's copy, Emiel the Blessed's counter, Brilliant Wings' attachment), never a target chosen
+                // for the ability, so it is referenced rather than targeted and is read from its last known
+                // information once it has left (CR 608.2h).
                 entry.setNonTargeting(true);
-                entry.rememberLastKnownPermanentCard(enteringPermanentId, pe.enteringCard());
+                entry.rememberLastKnownPermanentCard(targetCardId, pe.enteringCard());
             }
             if (match.permanent() != null) {
                 entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
@@ -1143,11 +1142,7 @@ public class EnterTriggerCollectorService {
                 entry.setTriggeringPermanentId(enteringPermanentId);
                 entry.setTriggeringPermanentIds(List.of(enteringPermanentId));
                 entry.setTriggeringCardId(enteringPermanent.getCard().getId());
-                if (!(effect instanceof com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect)) {
-                    // An attachment's "equipped/enchanted creature gets ..." refers to the creature it is attached
-                    // to, not the entering creature, so no entering-creature snapshot is bound for it.
-                    entry.setAttachedPermanentSnapshot(new Permanent(enteringPermanent));
-                }
+                entry.setAttachedPermanentSnapshot(new Permanent(enteringPermanent));
                 entry.setTriggeringPermanentControllerId(gameQueryService.findPermanentController(
                         match.gameData(), enteringPermanentId));
                 entry.setTriggeringPermanentPowerAtTrigger(

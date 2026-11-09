@@ -1984,6 +1984,9 @@ public class PermanentChoiceTriggerHandlerService {
                 lgt.sourcePermanentId()
         );
         entry.setTargetId(targetId);
+        // The filter the target was chosen with ("target opponent": Sanguine Bond), which a copy's new target must
+        // also meet and the target meets again as the ability resolves.
+        entry.setTargetFilter(lgt.sourceCard().getTargetFilter());
         if (lgt.eventValue() != null) {
             entry.setEventValue(lgt.eventValue());
         }

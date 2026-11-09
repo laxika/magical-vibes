@@ -14,7 +14,7 @@ public class Purgatory extends Card {
 
     public Purgatory() {
         // Whenever a nontoken creature is put into your graveyard from the battlefield, exile that card.
-        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANY),
+        addTrigger(Triggers.dies(Triggers.NONTOKEN_CREATURE, ObjectRelation.YOU_OWN),
                 new ExileTriggeringCreatureAndTrackWithSourceEffect());
         // At the beginning of your upkeep, you may pay {4} and 2 life. If you do, return a card
         // exiled with this enchantment to the battlefield.

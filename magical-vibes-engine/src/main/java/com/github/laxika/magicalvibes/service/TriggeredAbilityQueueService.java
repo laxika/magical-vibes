@@ -2187,8 +2187,11 @@ public class TriggeredAbilityQueueService {
                         .orElse(null);
                 FilterContext restrictionContext = new FilterContext(gameData, pending.sourceCard().getId(),
                         pending.controllerId(), null, null);
+                // A target that admits only players ("target player loses that much life") offers no permanent.
+                boolean permanentsAdmitted = pending.effects().stream()
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
                 validPermanentTargets = new ArrayList<>();
-                for (UUID pid : gameData.orderedPlayerIds) {
+                for (UUID pid : permanentsAdmitted ? gameData.orderedPlayerIds : List.<UUID>of()) {
                     List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
                     if (battlefield == null) continue;
                     for (Permanent p : battlefield) {

@@ -24,7 +24,7 @@ public class LyndeCheerfulTormentor extends Card {
                                 Triggers.NONTOKEN,
                                 new PermanentHasSubtypePredicate(CardSubtype.CURSE))),
                         ObjectRelation.YOU_OWN),
-                new RegisterDelayedReturnCurseAttachedToPlayerEffect(null, null));
+                new RegisterDelayedReturnCurseAttachedToPlayerEffect());
 
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new MayEffect(

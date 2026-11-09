@@ -10,11 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastDiscardedCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -288,18 +288,17 @@ public class DiscardTriggerCollectorService {
     }
 
     /**
-     * "Whenever you discard a card, choose one [that hasn't been chosen this turn]" (Monument to Endurance): the mode is
-     * chosen as the ability goes on the stack (CR 603.3c), among those the modal's restriction leaves.
+     * "Whenever you discard a card, …", for an untargeted effect no handler of its own collects: the ability goes on the
+     * stack as written, one object of its effect (CR 603.3); a modal one announces its mode there (CR 603.3c), among
+     * those its restriction leaves ("choose one that hasn't been chosen this turn": Monument to Endurance). A targeted
+     * effect needs a handler that chooses its target as the ability goes on the stack (CR 603.3d).
      */
-    @CollectsLibraryTrigger(value = ChooseOneEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
-    private boolean handleModalOnDiscard(TriggerMatchContext match, ChooseOneEffect modal, TriggerContext ctx) {
-        var gameData = match.gameData();
-        Card sourceCard = match.permanent().getCard();
-        gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                sourceCard, match.controllerId(), modal, match.permanent().getId()));
-        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on discard (modal)", gameData.id, sourceCard.getName());
-        return true;
+    @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
+    private boolean handleDiscardDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        if (effect.targetSpec() != TargetSpec.NONE) {
+            return false;
+        }
+        return enqueueDiscardTrigger(match, effect, effect.getClass().getSimpleName());
     }
 
     @CollectsLibraryTrigger(value = DealDamageToPlayersEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARD_EVENT)
