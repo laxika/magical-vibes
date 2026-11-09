@@ -761,7 +761,7 @@ Auras have their own trigger slots. Use this table to pick the correct one based
 | Oracle text pattern | Trigger slot | Fires when | Example |
 |---|---|---|---|
 | "At the beginning of your upkeep, ..." | `Triggers.upkeep(ActivePlayer.YOU)` | Aura controller's upkeep (aura is on their battlefield) | Call to the Kindred |
-| "At the beginning of enchanted creature's controller's upkeep, ..." | `Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER)` | Enchanted creature's controller is the active player | Necrotic Plague, Soul Bleed, Numbing Dose, Erosion (enchanted land) |
+| "At the beginning of enchanted creature's controller's upkeep, ..." | `Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER)` | Enchanted creature's controller is the active player | Soul Bleed, Numbing Dose, Erosion (enchanted land); an ability the Aura grants in quotes (Necrotic Plague's "enchanted creature has '…'") is a `GrantTriggeredAbilityEffect` of a `Triggers.upkeep(ActivePlayer.YOU)` ability instead |
 | "At the beginning of your upkeep, enchanted permanent's controller ..." | `Triggers.upkeep(ActivePlayer.YOU)` | Aura controller is the active player; enchanted permanent's controller baked in as `targetId` (`TARGET_PLAYER` recipients) | Strangling Grasp |
 | "At the beginning of enchanted player's upkeep, ..." | `Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER)` | Enchanted player is the active player (curses) | Curse of Oblivion, Curse of the Bloody Tome |
 | "At the beginning of enchanted player's draw step, ..." | `Triggers.drawStep(ActivePlayer.ENCHANTED_PLAYER)` | Enchanted player is the active player (curses) | Curse of Obsession (`MIC`) |

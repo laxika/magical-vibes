@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityS
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -77,6 +78,28 @@ public final class StepAbilityReader {
     public List<CardEffect> effects(GameData gameData, List<TriggeredAbility> abilities, ConditionContext context) {
         List<CardEffect> effects = new ArrayList<>();
         for (List<CardEffect> abilityEffects : effectsByAbility(gameData, abilities, context)) {
+            effects.addAll(abilityEffects);
+        }
+        return effects;
+    }
+
+    /**
+     * {@link #effects(GameData, List, ConditionContext)}, recording in {@code abilityByEffect} the ability each returned
+     * effect is of, by effect identity, for a reader that builds its stack entries from the effects: a granted ability
+     * names its granting permanent ({@link TriggeredAbility#grantingPermanentId()}) and its own target filter
+     * ({@link TriggeredAbility#targetFilter()}), which no card's target groups hold.
+     */
+    public List<CardEffect> effects(GameData gameData, List<TriggeredAbility> abilities, ConditionContext context,
+                                    Map<CardEffect, TriggeredAbility> abilityByEffect) {
+        List<CardEffect> effects = new ArrayList<>();
+        for (TriggeredAbility ability : abilities) {
+            List<CardEffect> abilityEffects = triggeredEffects(gameData, ability, context);
+            if (abilityEffects == null) {
+                continue;
+            }
+            for (CardEffect effect : abilityEffects) {
+                abilityByEffect.put(effect, ability);
+            }
             effects.addAll(abilityEffects);
         }
         return effects;

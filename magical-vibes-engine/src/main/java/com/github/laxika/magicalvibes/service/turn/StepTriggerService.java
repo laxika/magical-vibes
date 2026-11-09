@@ -94,7 +94,6 @@ import com.github.laxika.magicalvibes.model.action.ReturnExiledCardToHandAtNextE
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutExiledCardsIntoOwnersGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutHandOnBottomOfLibraryAndDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutUnplayedExiledCardsIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
@@ -115,7 +114,6 @@ import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Dungeon;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -150,15 +148,10 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AdditionalUpkeepStepEffect;
-import com.github.laxika.magicalvibes.model.effect.AllPermanentsUpkeepSacrificeUnlessPayEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedCreatureThenRevealUntilCreatureAndAttachSourceAuraEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedPermanentAndReattachSourceAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
@@ -168,13 +161,10 @@ import com.github.laxika.magicalvibes.model.effect.ResolveRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.UpkeepPlayerDependentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -199,11 +189,8 @@ import com.github.laxika.magicalvibes.service.effect.GrantedUpkeepEffectSupport;
 import com.github.laxika.magicalvibes.model.effect.MonarchEndStepTriggeredEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlIfSubtypesDealtCombatDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlDuration;
 import com.github.laxika.magicalvibes.model.effect.ReturnDelayedCurseAttachedToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDelayedGraveyardCardUnderControlEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnGraveyardCardsToBattlefieldUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawUpToNCardsEffect;
@@ -212,7 +199,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.model.effect.DiscardSpecificCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentDrawStepOnlyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -246,7 +232,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -271,6 +256,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.LinkedHashMap;
@@ -464,9 +450,6 @@ public class StepTriggerService {
         return stepAbilityReader.effects(gameData, abilities, context);
     }
 
-    private record GrantedUpkeepSacrifice(AllPermanentsUpkeepSacrificeUnlessPayEffect effect,
-                                          UUID sourcePermanentId) {}
-
     /**
      * Scans battlefields and graveyards for upkeep-triggered
      * abilities and pushes them onto the stack or queues may-ability prompts.
@@ -543,6 +526,30 @@ public class StepTriggerService {
         entry.setTargetId(activePlayerId);
         entry.setNonTargeting(true);
         return entry;
+    }
+
+    /**
+     * Records on {@code entry} the permanent {@code source}, an Aura or Equipment, is attached to, whatever the entry's
+     * effects: "enchanted creature" and "enchanted artifact's controller" are read as the ability resolves, and the
+     * permanent's last-known information once it has left (CR 608.2h).
+     */
+    private void recordAttachedPermanent(GameData gameData, Permanent source, StackEntry entry) {
+        Permanent attached = source.isAttached()
+                ? gameQueryService.findPermanentById(gameData, source.getAttachedTo()) : null;
+        if (attached != null) {
+            entry.setAttachedPermanentSnapshot(new Permanent(attached));
+        }
+    }
+
+    /**
+     * Records on {@code entry} the permanent that granted {@code ability}, the triggered ability the entry is of, or
+     * nothing for a printed one: "attach Shifting Shadow" and "attach Nettlevine Blight" in an Aura's granted ability
+     * read it with {@link StackEntry#requireGrantingPermanentId()}.
+     */
+    private static void recordGrantingPermanent(StackEntry entry, TriggeredAbility ability) {
+        if (ability != null && ability.grantingPermanentId() != null) {
+            entry.setGrantingPermanentId(ability.grantingPermanentId());
+        }
     }
 
     /**
@@ -1083,9 +1090,13 @@ public class StepTriggerService {
             if (upkeepEffects.stream().anyMatch(SoulEchoUpkeepEffect.class::isInstance)) {
                 perm.setEchoDamageRedirectionActive(false);
             }
-            // Continuous grants (Breath of Dreams: green creatures have Cumulative upkeep {1})
+            // Continuous grants (Breath of Dreams: green creatures have Cumulative upkeep {1}; Necrotic Plague's
+            // "enchanted creature has '…'"): the creature is the ability's source and its controller controls it
+            // (CR 113.8); an Aura's grant names the Aura and its own target filter, which the entries below read.
+            Map<CardEffect, TriggeredAbility> grantedAbilities = new IdentityHashMap<>();
             upkeepEffects.addAll(stepAbilityReader.effects(gameData,
-                    grantedUpkeepEffectSupport.grantedUpkeepAbilities(gameData, perm), upkeepContext));
+                    grantedUpkeepEffectSupport.grantedUpkeepAbilities(gameData, perm), upkeepContext,
+                    grantedAbilities));
             if (upkeepEffects.isEmpty()) continue;
 
             upkeepEffects.removeIf(e -> e instanceof RemoveCounterAndSacrificeSelfOnLastEffect vanishing
@@ -1131,12 +1142,20 @@ public class StepTriggerService {
                 int maxPlayerTargets = playerTargetEffects.stream()
                         .mapToInt(e -> e.targetSpec().playerTargetCount())
                         .max().orElse(1);
+                // A granted ability's target filter is its own (Custody Battle's "target opponent").
+                TargetFilter grantedTargetFilter = playerTargetEffects.stream()
+                        .map(grantedAbilities::get)
+                        .filter(Objects::nonNull)
+                        .map(TriggeredAbility::targetFilter)
+                        .filter(Objects::nonNull)
+                        .findFirst().orElse(null);
                 if (maxPlayerTargets >= 2) {
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger(
                             perm.getCard(), activePlayerId, new ArrayList<>(playerTargetEffects), perm.getId()));
                 } else {
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
-                            perm.getCard(), activePlayerId, new ArrayList<>(playerTargetEffects), perm.getId()));
+                            perm.getCard(), activePlayerId, new ArrayList<>(playerTargetEffects), perm.getId(),
+                            grantedTargetFilter));
                 }
                 upkeepEffects.removeIf(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         && !e.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
@@ -1194,10 +1213,13 @@ public class StepTriggerService {
                         gameData.queueInteraction(new PermanentChoiceContext.UpkeepPermanentTargetTrigger(
                                 perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect)), perm.getId()));
                     }
-                } else if (effect instanceof MayEffect may
-                        && !(may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect)) {
-                    gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null, perm.getId(),
-                            activePlayerId, new Permanent(perm));
+                } else if (effect instanceof MayEffect may) {
+                    // An Aura's or Equipment's "you may" records the permanent it is attached to, whatever its
+                    // effect: "shares a creature type with enchanted creature" (Call to the Kindred) is read as it
+                    // resolves, and the creature's last-known information once it has left (CR 608.2h).
+                    StackEntry mayEntry = gameData.queueMayAbility(perm.getCard(), activePlayerId, may, null,
+                            perm.getId(), activePlayerId, new Permanent(perm));
+                    recordAttachedPermanent(gameData, perm, mayEntry);
                 } else if (effect instanceof MayRevealSubtypeFromHandEffect mayReveal) {
                     // CR 603.5: an optional ability goes on the stack whether or not its controller can
                     // exercise the option. The reveal (and its hand check) is resolved by MayEffectHandler.
@@ -1271,12 +1293,8 @@ public class StepTriggerService {
                             perm.getId()
                     );
                     entry.setSourcePermanentSnapshot(new Permanent(perm));
-                    if (perm.isAttached()) {
-                        Permanent attached = gameQueryService.findPermanentById(gameData, perm.getAttachedTo());
-                        if (attached != null) {
-                            entry.setAttachedPermanentSnapshot(new Permanent(attached));
-                        }
-                    }
+                    recordAttachedPermanent(gameData, perm, entry);
+                    recordGrantingPermanent(entry, grantedAbilities.get(effect));
                     gameData.stack.add(entry);
                     // "since your last upkeep" ends when the upkeep begins (CR 603.2), not when this ability
                     // resolves, so the window is closed here and the snapshot keeps what it saw.
@@ -1329,12 +1347,6 @@ public class StepTriggerService {
                 }
             }
         }
-
-        // Energy Flux: "All artifacts have 'At the beginning of your upkeep, sacrifice this artifact
-        // unless you pay {N}.'" The grant is global (any controller's Energy Flux), and the granted
-        // ability fires on each artifact's controller's own upkeep — so during the active player's
-        // upkeep, push a pay-or-sacrifice trigger sourced at each artifact they control.
-        handleGrantedArtifactSacrificeTriggers(gameData, activePlayerId, battlefield);
 
         List<Card> graveyard = gameData.playerGraveyards.get(activePlayerId);
         if (graveyard != null) {
@@ -1401,20 +1413,22 @@ public class StepTriggerService {
                     continue;
                 }
 
-                // Each-upkeep payments already identify the active player; their fallback
-                // uses targetId as that context and does not choose a new player target.
-                boolean activePlayerPayment = effect instanceof ForcedCostOrElseEffect payment
-                        && payment.payerIsEnchantedController();
-                if (!activePlayerPayment && effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                // A player the card declares no target for is "that player", the player whose upkeep it is (Pillar
+                // Tombs of Aku's "that player may sacrifice a creature"), which the entry records whatever the effect
+                // is; a declared player target is chosen as the ability goes on the stack (CR 603.3d).
+                boolean thatPlayer = effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        && !perm.getCard().hasEffectTargetIndex(effect);
+                if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepAnyTargetTrigger(
                             perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId()));
-                } else if (!activePlayerPayment && effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                } else if (!thatPlayer && effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     gameData.queueInteraction(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
                             perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId(), null,
                             activePlayerId));
-                } else if (!activePlayerPayment && effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                } else if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                         && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     // "At the beginning of each upkeep, you may exile target creature card from your
                     // graveyard" (Seance): the graveyard target is chosen as the trigger is put on the
@@ -1431,7 +1445,7 @@ public class StepTriggerService {
                         gameData.queueMayAbility(perm.getCard(), playerId, may, null, perm.getId(),
                                 activePlayerId, new Permanent(perm));
                     }
-                } else if (!activePlayerPayment && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+                } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     TargetFilter targetFilter = perm.getCard().getTargetFilter();
                     UUID choosingPlayerId = effect.targetChosenByActivePlayer()
                             || targetFilter != null && targetFilter.activePlayerChoosesTarget()
@@ -1450,7 +1464,7 @@ public class StepTriggerService {
                             perm.getId()
                     );
                     entry.setActivePlayerId(activePlayerId);
-                    entry.setNonTargeting(activePlayerPayment || effect.targetSpec() == TargetSpec.NONE);
+                    entry.setNonTargeting(thatPlayer || effect.targetSpec() == TargetSpec.NONE);
                     entry.setSourcePermanentSnapshot(new Permanent(perm));
                     gameData.stack.add(entry);
                 }
@@ -1548,66 +1562,29 @@ public class StepTriggerService {
             int enchantedPermanentPowerAtTrigger = enchantedPermanent == null
                     ? 0 : gameQueryService.getEffectivePower(gameData, enchantedPermanent);
 
-            // A granted "unless you sacrifice this creature" upkeep ability is removed by a later
-            // "loses all abilities" effect on the enchanted creature (CR 613.7).
-            boolean grantedAbilityRemoved = enchantedPermanent != null
-                    && !gameQueryService.grantedAbilitySurvivesRemoval(gameData, enchantedPermanent, perm.getTimestamp());
-
             for (CardEffect effect : enchantedControllerUpkeepEffects) {
-                if (grantedAbilityRemoved && effect instanceof ForcedCostOrElseEffect granted
-                        && granted.forcedCost() instanceof SacrificePermanentCost sacrificeHost
-                        && sacrificeHost.filter() instanceof PermanentIsHostOfSourceAuraPredicate) {
-                    continue;
-                }
-                if (effect instanceof ForcedCostOrElseEffect forcedCost
-                        && (forcedCost.elseEffects().stream().anyMatch(
-                                TargetPlayerGainsControlOfEnchantedPermanentEffect.class::isInstance)
-                        || forcedCost.paidEffects().stream().anyMatch(
-                                TargetPlayerGainsControlOfEnchantedPermanentEffect.class::isInstance))) {
-                    gameData.queueInteraction(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
-                            perm.getCard(), enchantedPermanentControllerId, new ArrayList<>(List.of(effect)),
-                            perm.getId(), new PlayerPredicateTargetFilter(
-                                    new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                                    "Target must be an opponent"), enchantedPermanentControllerId));
-                    gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
-                    log.info("Game {} - {} enchanted-permanent-controller upkeep trigger awaiting opponent target",
-                            gameData.id, perm.getCard().getName());
-                    continue;
-                }
-
                 // "That player" (DealDamageToPlayersEffect's ENCHANTED_PERMANENT_CONTROLLER, LoseLifeEffect's
                 // TRIGGERING_PLAYER) reads the enchanted permanent's controller from the stack entry's targetId (set
                 // below); the sacrifice effects find their host via the source aura, so the controller as targetId is
-                // safe for them.
-                CardEffect effectForStack = effect;
-
-                // An ability the Aura grants to the creature is the creature's own: it is the source and its
-                // controller controls the trigger (CR 113.8, 603.3a).
-                boolean grantedToCreature = enchantedPermanent != null
-                        && (effect instanceof SacrificeEnchantedCreatureEffect sacrifice && sacrifice.grantedToCreature()
-                        || effect instanceof DestroyEnchantedCreatureThenRevealUntilCreatureAndAttachSourceAuraEffect destroy
-                        && destroy.grantedToCreature());
-                Permanent triggerSource = grantedToCreature ? enchantedPermanent : perm;
+                // safe for them. An ability the Aura grants the creature ("enchanted creature has '…'", Necrotic
+                // Plague) is the creature's own, read by the your-upkeep reader with the creature as its source
+                // (CR 113.8).
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
-                        triggerSource.getCard(),
-                        grantedToCreature ? enchantedPermanentControllerId : auraOwnerId,
-                        triggerSource.getCard().getName() + "'s upkeep ability",
-                        new ArrayList<>(List.of(effectForStack)),
+                        perm.getCard(),
+                        auraOwnerId,
+                        perm.getCard().getName() + "'s upkeep ability",
+                        new ArrayList<>(List.of(effect)),
                         enchantedPermanentControllerId,
-                        triggerSource.getId()
+                        perm.getId()
                 );
                 entry.setActivePlayerId(activePlayerId);
                 entry.setTriggeringPermanentPowerAtTrigger(enchantedPermanentPowerAtTrigger);
-                entry.setSourcePermanentSnapshot(new Permanent(triggerSource));
+                entry.setSourcePermanentSnapshot(new Permanent(perm));
                 if (enchantedPermanent != null) {
                     entry.setAttachedPermanentSnapshot(new Permanent(enchantedPermanent));
                 }
-                if (grantedToCreature) {
-                    entry.setTriggeringPermanentId(perm.getId());
-                } else {
-                    entry.setTriggeringPermanentControllerId(enchantedPermanentControllerId);
-                }
+                entry.setTriggeringPermanentControllerId(enchantedPermanentControllerId);
                 // "That player" is baked in as the effect's player, not chosen as a target (shroud is irrelevant).
                 entry.setNonTargeting(true);
                 gameData.stack.add(entry);
@@ -1981,74 +1958,6 @@ public class StepTriggerService {
         gameData.phasedOutPermanents.forEach((controllerId, permanents) -> permanents.forEach(permanent -> {
             permanent.expirePhaseOutPreventionAtUpkeepOf(gameData.activePlayerId);
         }));
-    }
-
-    /**
-     * Global upkeep grants give a class of permanents "At the beginning of your upkeep, sacrifice
-     * or destroy this permanent unless you pay {N}." For every
-     * {@link AllPermanentsUpkeepSacrificeUnlessPayEffect} on the battlefield (regardless of who
-     * controls it), this pushes one {@link ForcedCostOrElseEffect} pay-or-sacrifice trigger per
-     * matching permanent the active player controls, sourced at that permanent so the "pay {N}"
-     * prompt and the penalty both act on the individual permanent.
-     * Grants stack: a permanent matching two grants gets a trigger from each.
-     *
-     * @param gameData       the current game state to modify
-     * @param activePlayerId the player whose upkeep is being processed
-     * @param battlefield    the active player's battlefield
-     */
-    private void handleGrantedArtifactSacrificeTriggers(GameData gameData, UUID activePlayerId,
-                                                        List<Permanent> battlefield) {
-        List<GrantedUpkeepSacrifice> grants = new ArrayList<>();
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent perm : bf) {
-                if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
-                for (CardEffect effect : perm.getCard().getStaticEffects()) {
-                    if (effect instanceof AllPermanentsUpkeepSacrificeUnlessPayEffect grant) {
-                        grants.add(new GrantedUpkeepSacrifice(grant, perm.getId()));
-                    }
-                }
-            }
-        }
-        if (grants.isEmpty()) return;
-
-        for (Permanent perm : new ArrayList<>(battlefield)) {
-            for (GrantedUpkeepSacrifice granted : grants) {
-                AllPermanentsUpkeepSacrificeUnlessPayEffect grant = granted.effect();
-                if (grant.excludeSource() && granted.sourcePermanentId().equals(perm.getId())) {
-                    continue;
-                }
-                if (!predicateEvaluationService.matchesPermanentPredicate(gameData, perm, grant.filter())) {
-                    continue;
-                }
-                Permanent grantSource = gameQueryService.findPermanentById(gameData, granted.sourcePermanentId());
-                if (grantSource == null || !gameQueryService.grantedAbilitySurvivesRemoval(
-                        gameData, perm, grantSource.getTimestamp())) {
-                    continue;
-                }
-
-                CardEffect unpaidPenalty = grant.sacrifice()
-                        ? new SacrificeSelfEffect()
-                        : new DestroyReferencedPermanentEffect(PermanentReference.SOURCE);
-                ForcedCostOrElseEffect payOrSacrifice = new ForcedCostOrElseEffect(
-                        new PayManaCost(grant.manaCost(), null, null, false, grant.lifeAmount(), false),
-                        new ArrayList<>(List.of(unpaidPenalty)),
-                        true);
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        activePlayerId,
-                        perm.getCard().getName() + "'s upkeep ability",
-                        new ArrayList<>(List.of(payOrSacrifice)),
-                        (UUID) null,
-                        perm.getId()));
-
-                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
-                log.info("Game {} - granted upkeep payment trigger pushed for {}",
-                        gameData.id, perm.getCard().getName());
-            }
-        }
     }
 
     /**
@@ -5687,7 +5596,12 @@ public class StepTriggerService {
                     controllerEndStepEffects.addAll(durationGrantedEffects(gameData, perm, YOUR_END_STEP,
                             endStepContext));
                 }
-                controllerEndStepEffects.addAll(staticGrantedEffects(gameData, perm, YOUR_END_STEP, endStepContext));
+                // An Aura's grant ("enchanted permanent has '…'", Nettlevine Blight) names the Aura, which the
+                // entry records for "attach Nettlevine Blight".
+                Map<CardEffect, TriggeredAbility> grantedAbilities = new IdentityHashMap<>();
+                controllerEndStepEffects.addAll(stepAbilityReader.effects(gameData,
+                        grantedTriggeredAbilitySupport.grantedTriggeredAbilities(gameData, perm, null,
+                                ability -> ability.hasTrigger(YOUR_END_STEP)), endStepContext, grantedAbilities));
                 if (controllerEndStepEffects == null || controllerEndStepEffects.isEmpty()) continue;
                 if (controllerEndStepEffects.size() > 1
                         && perm.getCard().getTargetGroups().size() > 1
@@ -5795,36 +5709,6 @@ public class StepTriggerService {
                         gameLogService.append(gameData,
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                         log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
-                    } else if (effect instanceof GainControlIfSubtypesDealtCombatDamageEffect subtypeEffect) {
-                        List<com.github.laxika.magicalvibes.model.filter.PermanentPredicate> qualifyingControllers = new ArrayList<>();
-                        for (UUID opponentId : gameData.orderedPlayerIds) {
-                            int count = 0;
-                            for (var dmgEntry : gameData.combatDamageToPlayersThisTurn.entrySet()) {
-                                UUID permId = dmgEntry.getKey();
-                                if (!dmgEntry.getValue().contains(opponentId)) continue;
-                                Set<CardSubtype> subtypes = gameData.combatDamageSourceSubtypesThisTurn
-                                        .getOrDefault(permId, Set.of());
-                                if (subtypes.contains(subtypeEffect.subtype())
-                                        || gameData.combatDamageSourcesWithChangelingThisTurn.contains(permId)) {
-                                    count++;
-                                }
-                            }
-                            if (count >= subtypeEffect.threshold()) {
-                                qualifyingControllers.add(new com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate(opponentId));
-                            }
-                        }
-                        if (qualifyingControllers.isEmpty()) {
-                            log.info("Game {} - {} end-step trigger skipped (no opponent dealt combat damage by {} or more {}s)",
-                                    gameData.id, perm.getCard().getName(), subtypeEffect.threshold(),
-                                    subtypeEffect.subtype().getDisplayName());
-                            continue;
-                        }
-                        gameData.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
-                                perm.getCard(), activePlayerId,
-                                new ArrayList<>(List.of(GainControlOfTargetEffect.withTargetPredicate(
-                                        ControlDuration.PERMANENT,
-                                        new PermanentAnyOfPredicate(qualifyingControllers)))),
-                                perm.getId()));
                     } else if (effect instanceof ConditionalEffect conditional
                             && !conditional.wrapped().targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                             && (conditional.wrapped().targetSpec().admits(TargetPredicate.Kind.PERMANENT)
@@ -5877,11 +5761,8 @@ public class StepTriggerService {
                         // An Aura's or Equipment's ability records the permanent it is attached to, whatever its
                         // effects: "enchanted artifact's controller" (Gremlin Infestation) is read as it resolves,
                         // and the permanent's last-known controller once it has left.
-                        Permanent attached = perm.isAttached()
-                                ? gameQueryService.findPermanentById(gameData, perm.getAttachedTo()) : null;
-                        if (attached != null) {
-                            entry.setAttachedPermanentSnapshot(new Permanent(attached));
-                        }
+                        recordAttachedPermanent(gameData, perm, entry);
+                        recordGrantingPermanent(entry, grantedAbilities.get(effect));
                         gameData.stack.add(entry);
 
                         gameLogService.append(gameData,
@@ -5927,9 +5808,9 @@ public class StepTriggerService {
         });
 
         // Check all battlefields for auras with Triggers.endStep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER)
-        // effects. These fire during the enchanted permanent's controller's end step (e.g. Nettlevine
-        // Blight). An ability the Aura grants is controlled by the enchanted permanent's controller
-        // (CR 113.8); the Aura's own abilities (e.g. Aggression) are controlled by the Aura's controller.
+        // effects. These fire during the enchanted permanent's controller's end step and are controlled by the
+        // Aura's controller (Aggression, Lingering Death); an ability an Aura grants is the enchanted permanent's
+        // own, read by the your-end-step reader (Nettlevine Blight).
         gameData.forEachPermanent((auraOwnerId, perm) -> {
             List<CardEffect> enchantedControllerEndStepEffects = printedEffects(gameData, perm.getCard(),
                     ENCHANTED_CONTROLLER_END_STEP, Zone.BATTLEFIELD, ConditionContext.forPermanent(perm, auraOwnerId));
@@ -5940,21 +5821,15 @@ public class StepTriggerService {
             if (enchantedPermanentControllerId == null) return;
             if (!enchantedPermanentControllerId.equals(activePlayerId)) return;
 
-            Permanent enchantedPermanent = gameQueryService.findPermanentById(gameData, perm.getAttachedTo());
-            // A granted ability is removed by a later "loses all abilities" effect on the enchanted permanent.
-            boolean removed = enchantedPermanent != null
-                    && !gameQueryService.grantedAbilitySurvivesRemoval(gameData, enchantedPermanent, perm.getTimestamp());
             for (CardEffect effect : enchantedControllerEndStepEffects) {
-                if (removed && effect instanceof SacrificeEnchantedPermanentAndReattachSourceAuraEffect) continue;
-                boolean grantedAbility = effect instanceof SacrificeEnchantedPermanentAndReattachSourceAuraEffect;
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
-                        grantedAbility ? enchantedPermanentControllerId : auraOwnerId,
+                        auraOwnerId,
                         perm.getCard().getName() + "'s end step ability",
                         new ArrayList<>(List.of(effect)),
                         perm.getAttachedTo(),
-                        grantedAbility ? perm.getAttachedTo() : perm.getId()
+                        perm.getId()
                 );
                 entry.setNonTargeting(true);
                 entry.setTriggeringPermanentId(perm.getAttachedTo());

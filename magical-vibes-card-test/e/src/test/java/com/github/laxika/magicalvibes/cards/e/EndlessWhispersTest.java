@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.b.BeaconOfUnrest;
 import com.github.laxika.magicalvibes.cards.d.DevourInShadow;
 import com.github.laxika.magicalvibes.cards.d.DrossCrocodile;
+import com.github.laxika.magicalvibes.cards.n.Naturalize;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({EndlessWhispers.class, DrossCrocodile.class, DevourInShadow.class,
-        BeaconOfUnrest.class, Opalescence.class})
+        BeaconOfUnrest.class, Opalescence.class, Naturalize.class})
 class EndlessWhispersTest extends BaseCardTest {
 
     @Test
@@ -184,5 +185,23 @@ class EndlessWhispersTest extends BaseCardTest {
         while (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }
+    }
+
+    @Test
+    @DisplayName("Endless Whispers that isn't a creature doesn't have the ability it grants each creature")
+    void nonCreatureEndlessWhispersDoesNotHaveItsGrantedAbility() {
+        harness.addToBattlefield(player1, new EndlessWhispers());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+
+        harness.castAndResolveInstant(player1, 0, harness.getPermanentId(player1, "Endless Whispers"));
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getDelayedActions(DelayedGraveyardToBattlefieldUnderControl.class)).isEmpty();
+        harness.assertInGraveyard(player1, "Endless Whispers");
     }
 }

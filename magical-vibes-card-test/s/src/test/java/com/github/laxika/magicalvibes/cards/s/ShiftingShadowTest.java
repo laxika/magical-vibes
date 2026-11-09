@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ShiftingShadow.class, GrizzlyBears.class, Forest.class, SimicGuildmage.class,
+@CardUsed({ShiftingShadow.class, DressDown.class, GrizzlyBears.class, Forest.class, SimicGuildmage.class,
         DarksteelMyr.class, Naturalize.class, PaladinEnVec.class})
 class ShiftingShadowTest extends BaseCardTest {
 
@@ -222,5 +223,20 @@ class ShiftingShadowTest extends BaseCardTest {
         Permanent aura = findPermanent(player1, "Shifting Shadow");
         assertThat(aura.getAttachedTo()).isEqualTo(host.getId());
         assertThat(gqs.hasKeyword(gd, host, Keyword.HASTE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A creature that loses all abilities after the Aura attaches doesn't have its upkeep ability")
+    void creatureThatLostItsAbilitiesIsNotDestroyed() {
+        Permanent enchanted = addCreature(player2);
+        Permanent aura = attachShadow(player1, enchanted);
+        harness.addToBattlefield(player1, new DressDown());
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(enchanted);
+        assertThat(aura.getAttachedTo()).isEqualTo(enchanted.getId());
     }
 }

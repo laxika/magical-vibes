@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedCreatureThenRevealUntilCreatureAndAttachSourceAuraEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroySelfThenRevealUntilCreatureAndAttachGrantingAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -23,11 +23,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/** Resolves Shifting Shadow's destruction, reveal, and reattachment sequence. */
+/** Resolves Shifting Shadow's granted ability: destroys the creature, reveals, and attaches the Aura that granted it. */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DestroyEnchantedCreatureThenRevealUntilCreatureAndAttachSourceAuraEffectHandler
+public class DestroySelfThenRevealUntilCreatureAndAttachGrantingAuraEffectHandler
         implements NormalEffectHandlerBean, AsksDeathReplacementsFirst {
 
     private final DestructionSupport destructionSupport;
@@ -39,62 +39,37 @@ public class DestroyEnchantedCreatureThenRevealUntilCreatureAndAttachSourceAuraE
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return DestroyEnchantedCreatureThenRevealUntilCreatureAndAttachSourceAuraEffect.class;
+        return DestroySelfThenRevealUntilCreatureAndAttachGrantingAuraEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        boolean granted = ((DestroyEnchantedCreatureThenRevealUntilCreatureAndAttachSourceAuraEffect) effect)
-                .grantedToCreature();
-        Permanent aura = granted && entry.getTriggeringPermanentId() != null
-                ? gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId())
-                : findSourceAura(gameData, entry);
-        Permanent enchanted = granted
-                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
-                : findEnchantedPermanent(gameData, aura);
-        UUID enchantedControllerId = entry.getTargetId();
-        if (enchantedControllerId == null && enchanted != null) {
-            enchantedControllerId = gameQueryService.findPermanentController(gameData, enchanted.getId());
-        }
+        // "This creature" is the ability's source, "Shifting Shadow" the Aura that granted it, each as the ability
+        // resolves: one that has left is neither destroyed nor attached (the card's rulings).
+        Permanent aura = gameQueryService.findPermanentById(gameData, entry.requireGrantingPermanentId());
+        Permanent creature = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        UUID controllerId = entry.getControllerId();
 
-        if (enchanted != null) {
-            String sourceName = entry.getCard() == null ? "Shifting Shadow" : entry.getCard().getName();
-            destructionSupport.tryDestroyAndLog(gameData, enchanted, sourceName, false, false);
-        }
-        if (enchantedControllerId == null) {
-            return;
+        if (creature != null) {
+            destructionSupport.tryDestroyAndLog(gameData, creature, entry.getCard().getName(), false, false);
         }
 
         Set<UUID> battlefieldBeforeReveal = new HashSet<>();
-        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(enchantedControllerId, List.of())) {
+        for (Permanent permanent : gameData.playerBattlefields.getOrDefault(controllerId, List.of())) {
             battlefieldBeforeReveal.add(permanent.getId());
         }
 
-        StackEntry revealEntry = new StackEntry(entry);
-        revealEntry.setControllerId(enchantedControllerId);
-        revealHandler.resolve(gameData, revealEntry,
+        revealHandler.resolve(gameData, entry,
                 new RevealUntilCardPredicateRestOnBottomRandomEffect(
                         new CardTypePredicate(CardType.CREATURE), LibrarySearchDestination.BATTLEFIELD));
 
         Permanent revealedCreature = gameData.playerBattlefields
-                .getOrDefault(enchantedControllerId, List.of()).stream()
+                .getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> !battlefieldBeforeReveal.contains(permanent.getId()))
                 .findFirst()
                 .orElse(null);
         attachAura(gameData, aura, revealedCreature);
-    }
-
-    private Permanent findSourceAura(GameData gameData, StackEntry entry) {
-        Permanent source = entry.getSourcePermanentId() == null
-                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        return source != null ? source : entry.getSourcePermanentSnapshot();
-    }
-
-    private Permanent findEnchantedPermanent(GameData gameData, Permanent aura) {
-        if (aura == null || !aura.isAttached()) {
-            return null;
-        }
-        return gameQueryService.findPermanentById(gameData, aura.getAttachedTo());
     }
 
     private void attachAura(GameData gameData, Permanent aura, Permanent target) {

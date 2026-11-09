@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.AttachTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.CombatTrigger;
@@ -23,6 +24,7 @@ import com.github.laxika.magicalvibes.model.trigger.PlayerActionTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.trigger.StateTrigger;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TapTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TargetTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
@@ -65,7 +67,8 @@ import java.util.UUID;
  * @param targetFilter the restriction on the ability's target when no card's target groups hold it, or {@code null}:
  *                   an emblem's ability ("target opponent gets two poison counters") or a granted one has no card that
  *                   binds its effects to a target group, so it names its target filter itself. Only the spell-cast
- *                   collector reads it, so only an ability whose every trigger condition is a cast trigger has one.
+ *                   collector, the emblems' life-gain reader and the your-upkeep reader's player-target choice read
+ *                   it, so only an ability whose every trigger condition is one of theirs has one.
  */
 public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions options,
                                List<EffectRegistration> effects, SagaChapterTargets chapterTargets,
@@ -113,17 +116,20 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     }
 
     /**
-     * Rejects a {@link #targetFilter} on an ability with a trigger condition other than a cast trigger or "whenever you
-     * gain life": only the spell-cast collector and the emblems' life-gain reader read the ability's own target filter
-     * (the permanents' life collectors reject one as they read the ability).
+     * Rejects a {@link #targetFilter} on an ability with a trigger condition other than a cast trigger, "whenever you
+     * gain life" or "at the beginning of your upkeep": only the spell-cast collector, the emblems' life-gain reader and
+     * the your-upkeep reader's player-target choice (a granted ability's "target opponent", Custody Battle) read the
+     * ability's own target filter (the permanents' life collectors reject one as they read the ability).
      */
     private static void requireTargetFilterReader(List<TriggerCondition> conditions, TargetFilter targetFilter) {
         if (targetFilter != null && conditions.stream().map(TriggerCondition::trigger).anyMatch(trigger
                 -> !(trigger instanceof SpellTrigger spell && spell.event() == SpellTrigger.SpellEvent.CAST)
                 && !(trigger instanceof LifeTrigger life && life.event() == LifeTrigger.LifeEvent.GAINS
-                && life.player() == PlayerRelation.YOU && life.spellFilter() == null && !life.firstEachTurn()))) {
-            throw new IllegalArgumentException("Only the spell-cast collector and the emblems' life-gain reader read "
-                    + "an ability's own target filter: " + conditions);
+                && life.player() == PlayerRelation.YOU && life.spellFilter() == null && !life.firstEachTurn())
+                && !(trigger instanceof StepTrigger step && step.moment() == StepTrigger.Moment.UPKEEP
+                && step.player() == ActivePlayer.YOU))) {
+            throw new IllegalArgumentException("Only the spell-cast collector, the emblems' life-gain reader and the "
+                    + "your-upkeep reader read an ability's own target filter: " + conditions);
         }
     }
 

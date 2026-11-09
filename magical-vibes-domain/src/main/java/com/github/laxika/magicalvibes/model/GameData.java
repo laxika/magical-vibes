@@ -9161,9 +9161,9 @@ public class GameData {
                 markSourceOncePerTurnOnAcceptance, triggeringPermanentToughnessAtTrigger);
     }
 
-    /** Queues a resolution-time may ability while preserving its active-player context. */
-    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
-                                UUID sourcePermanentId, UUID activePlayerId, Permanent sourcePermanentSnapshot) {
+    /** Queues a resolution-time may ability while preserving its active-player context; returns its entry. */
+    public StackEntry queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
+                                      UUID sourcePermanentId, UUID activePlayerId, Permanent sourcePermanentSnapshot) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -9176,6 +9176,7 @@ public class GameData {
         entry.setActivePlayerId(activePlayerId);
         entry.setSourcePermanentSnapshot(sourcePermanentSnapshot);
         stack.add(entry);
+        return entry;
     }
 
     /** Queues a may ability while keeping its controller distinct from the choosing player. */

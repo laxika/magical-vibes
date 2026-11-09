@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedPermanentAndReattachSourceAuraEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +29,9 @@ public class NettlevineBlight extends Card {
         ))
                 // Enchanted permanent has "At the beginning of your end step, sacrifice this permanent
                 // and attach Nettlevine Blight to a creature or land you control."
-                .addTrigger(Triggers.endStep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
-                        new SacrificeEnchantedPermanentAndReattachSourceAuraEffect());
+                .addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(
+                        Triggers.endStep(ActivePlayer.YOU),
+                        new SacrificeEnchantedPermanentAndReattachSourceAuraEffect()),
+                        GrantScope.ENCHANTED_PERMANENT));
     }
 }

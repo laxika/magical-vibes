@@ -6,18 +6,9 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>The enchanted creature's controller sacrifices it (not the aura's controller, unless they
  * are the same). Resolution finds the aura via the stack entry's {@code sourcePermanentId},
- * then sacrifices the creature the aura is attached to.</p>
- *
- * <p>When {@code grantedToCreature} is set the ability is one the Aura gives the creature
- * ("Enchanted creature has 'At the beginning of your upkeep, sacrifice this creature'", Necrotic
- * Plague): the creature is the ability's source and its controller controls the ability, and
- * resolution sacrifices the source creature itself.</p>
- *
- * @param grantedToCreature whether the triggered ability belongs to the enchanted creature
+ * then sacrifices the creature the aura is attached to. An ability the Aura grants the creature
+ * ("enchanted creature has 'At the beginning of your upkeep, sacrifice this creature'", Necrotic
+ * Plague) is the creature's own, written with {@link SacrificeSelfEffect}.</p>
  */
-public record SacrificeEnchantedCreatureEffect(boolean grantedToCreature) implements CardEffect {
-
-    public SacrificeEnchantedCreatureEffect() {
-        this(false);
-    }
+public record SacrificeEnchantedCreatureEffect() implements CardEffect {
 }

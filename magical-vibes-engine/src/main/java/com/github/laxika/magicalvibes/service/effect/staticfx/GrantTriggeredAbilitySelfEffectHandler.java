@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -33,11 +32,16 @@ public class GrantTriggeredAbilitySelfEffectHandler implements StaticEffectHandl
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantTriggeredAbilityEffect) effect;
-        if ((grant.scope() == GrantScope.SELF || grant.scope() == GrantScope.SELF_AND_PAIRED
-                || grant.scope() == GrantScope.OWN_PERMANENTS
-                || grant.scope() == GrantScope.ALL_OWN_CREATURES
-                || grant.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF)
-                && support.matchesStaticFilter(context, context.target(), grant.filter())) {
+        // "Creatures you control have …" / "all creatures have …" include the source only while it is a creature
+        // (an enchantment such as Pendrell Mists doesn't have the ability it grants).
+        boolean applies = switch (grant.scope()) {
+            case SELF, SELF_AND_PAIRED, OWN_PERMANENTS ->
+                    support.matchesStaticFilter(context, context.target(), grant.filter());
+            case ALL_OWN_CREATURES, ALL_CREATURES_INCLUDING_SELF ->
+                    support.matchesCreatureScope(context, grant.scope(), grant.filter());
+            default -> false;
+        };
+        if (applies) {
             accumulator.addGrantedEffect(grant);
         }
     }

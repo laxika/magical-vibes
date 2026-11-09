@@ -41,7 +41,7 @@ REBUILD = re.compile(r"new (?!MayEffect\(|ArrayList|StackEntry|Permanent\()\w+Ef
 UNWRAP = re.compile(r"\.(wrapped|thenEffect|elseEffect|tokenEffect|innerEffect|resolvedEffects?|effects|choice)\(\)")
 
 # Rows of step 15 (effect-slot-refactor.md, run 17z11's Findings).
-B, C, C2, D, E, E2, F = "17z11b", "17z11c", "17z11c2", "17z11d", "17z11e", "17z11e2", "17z11f"
+B, C, C2, D, E, E2, E3, F = "17z11b", "17z11c", "17z11c2", "17z11d", "17z11e", "17z11e2", "17z11e3", "17z11f"
 LEGALITY = ("CombatHelper.java", "CombatService.java", "AttackLegalityService.java", "BlockLegalityService.java")
 
 CLASSIFIED = {
@@ -74,16 +74,14 @@ CLASSIFIED = {
     # player" and the enchanted permanent's controller are recorded whatever the effects are; the emblem's step ability
     # is found by its class (ROUTE).
     ("StepTriggerService.java", "EmblemStepTriggerEffect"): "ROUTE",
-    # 17z11e2 (split from 17z11e): the Aura grants, the payers, the rebuilds and the unwraps.
-    ("StepTriggerService.java", "LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect"): E2,
-    ("StepTriggerService.java", "ForcedCostOrElseEffect"): E2,
-    ("StepTriggerService.java", "SacrificeEnchantedCreatureEffect"): E2,
-    ("StepTriggerService.java", "DestroyEnchantedCreatureThenRevealUntilCreatureAndAttachSourceAuraEffect"): E2,
-    ("StepTriggerService.java", "AllPermanentsUpkeepSacrificeUnlessPayEffect"): E2,
-    ("StepTriggerService.java", "PutCountersOnUntapLockedPermanentsEffect"): E2,
-    ("StepTriggerService.java", "ChooseOneAtRandomEffect"): E2,
-    ("StepTriggerService.java", "GainControlIfSubtypesDealtCombatDamageEffect"): E2,
-    ("StepTriggerService.java", "SacrificeEnchantedPermanentAndReattachSourceAuraEffect"): E2,
+    # 17z11e2 (done): the Aura grants are granted abilities the your-upkeep and your-end-step readers read (the entry
+    # names the granting permanent), the each-upkeep payment's "that player" the declared-target rule, Call to the
+    # Kindred's "you may" records the enchanted creature, the Energy Flux family grants its ability, Admiral Beckett
+    # Brass's target filter is a predicate. "Choose one at random" picks its mode as the ability goes on the stack, before
+    # its targets (CR 603.3c, 700.2b), as a "choose one" does: the class picks the path (ROUTE).
+    ("StepTriggerService.java", "ChooseOneAtRandomEffect"): "ROUTE",
+    # 17z11e3 (split from 17z11e2): Giant Oyster's draw-step counters are a delayed triggered ability of the activation.
+    ("StepTriggerService.java", "PutCountersOnUntapLockedPermanentsEffect"): E3,
     # 17z11f: TriggerCollectionService's and the enter service's other bindings, and the combat damage rebuilds.
     ("CombatDamageService.java", "GainLifeEqualToControlledCreatureCombatDamageEffect"): F,
     ("CombatDamageService.java", "ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffect"): F,
@@ -145,7 +143,7 @@ CLASSIFIED = {
     ("TriggerCollectionService.java", "AttachedCreatureBecomesCopyOfExiledCreatureEffect"): "STATIC",
     ("TriggerCollectionService.java", "DrawCardEffect"): "ROUTE",
 }
-OPEN_ROWS = {E2, F}
+OPEN_ROWS = {E3, F}
 
 # The other reads run 17z11 read by hand, all ROUTE or STATIC: a restriction, prevention or replacement, an as-enters
 # choice, a mana ability resolved at once, a modal, graveyard or target prompt picked, a skip or trigger condition.

@@ -8,10 +8,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 
 /**
- * Sacrifices the enchanted permanent, then moves the source Aura onto a matching permanent
- * controlled by that permanent's controller. Placed in a triggered slot and resolved by
- * {@code SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler}. The no-argument form is
- * used by Nettlevine Blight and permits creatures or lands.
+ * Sacrifices the enchanted permanent, then moves the Aura onto a matching permanent controlled by
+ * that permanent's controller. Resolved by
+ * {@code SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler}. In an Aura's own ability
+ * (Breath of Fury) the Aura is the source; in the ability an Aura grants (Nettlevine Blight's
+ * "enchanted permanent has '…'", a {@link GrantTriggeredAbilityEffect}) the permanent is the source
+ * and the Aura its granting permanent, read from the stack entry. The no-argument form is used by
+ * Nettlevine Blight and permits creatures or lands.
  *
  * <p>The Aura never changes controller. If that player has no legal destination, the enchanted
  * permanent is still sacrificed and the now-unattached Aura is put into its owner's graveyard as a

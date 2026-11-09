@@ -48,9 +48,14 @@ public record ForcedCostOrElseEffect(
         paidEffects = paidEffects == null ? List.of() : List.copyOf(paidEffects);
     }
 
+    /**
+     * What the ability targets as it goes on the stack: the first targeted paid or else effect's spec. When "that
+     * player" pays ({@code payerIsEnchantedController}), the paid effects act for that player once they have paid
+     * (Fraying Line's "they put a rope counter on a creature they control"), so the ability targets nothing for them.
+     */
     @Override
     public TargetSpec targetSpec() {
-        for (CardEffect paidEffect : paidEffects) {
+        for (CardEffect paidEffect : payerIsEnchantedController ? List.<CardEffect>of() : paidEffects) {
             if (paidEffect.targetSpec() != TargetSpec.NONE) {
                 return paidEffect.targetSpec();
             }

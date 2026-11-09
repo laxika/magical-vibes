@@ -27,9 +27,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link SacrificeEnchantedPermanentAndReattachSourceAuraEffect} (Nettlevine Blight):
- * the enchanted permanent's controller sacrifices it, then moves the source Aura onto a matching
- * permanent they control. The Aura keeps its controller. If that player has no legal destination,
+ * Resolves {@link SacrificeEnchantedPermanentAndReattachSourceAuraEffect}: the enchanted permanent's controller
+ * sacrifices it, then moves the Aura onto a matching permanent they control. In the ability an Aura grants (Nettlevine
+ * Blight) the permanent is the ability's source and the Aura its granting permanent; in an Aura's own ability (Breath
+ * of Fury) the Aura is the source. The Aura keeps its controller. If that player has no legal destination,
  * the enchanted permanent is still sacrificed and the Aura is left unattached (removed as an SBA).
  */
 @Slf4j
@@ -54,14 +55,22 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent originalAura = entry.getSourcePermanentSnapshot();
-        if (originalAura == null) return;
-        Permanent aura = gameQueryService.findPermanentById(gameData, originalAura.getId());
+        Permanent aura;
+        UUID enchantedPermanentId;
+        if (entry.getGrantingPermanentId() != null) {
+            // The ability the Aura grants the permanent (Nettlevine Blight's "enchanted permanent has '…'"): "this
+            // permanent" is the ability's source and the Aura the permanent that granted it, as it resolves.
+            aura = gameQueryService.findPermanentById(gameData, entry.getGrantingPermanentId());
+            enchantedPermanentId = entry.getSourcePermanentId();
+        } else {
+            // The Aura's own ability (Breath of Fury): the enchanted permanent is the one the Aura was attached to
+            // when the trigger went on the stack.
+            Permanent originalAura = entry.getSourcePermanentSnapshot();
+            if (originalAura == null) return;
+            aura = gameQueryService.findPermanentById(gameData, originalAura.getId());
+            enchantedPermanentId = originalAura.getAttachedTo();
+        }
         boolean auraOnBattlefield = aura != null;
-        if (aura == null) aura = originalAura;
-        // The enchanted permanent is the one the Aura was attached to when the trigger went on the stack. A
-        // combat-damage trigger's source is the Aura itself, so the entry's source id can't be used here.
-        UUID enchantedPermanentId = originalAura.getAttachedTo();
         Permanent enchanted = gameQueryService.findPermanentById(gameData, enchantedPermanentId);
         if (enchanted == null || gameQueryService.cantBeSacrificed(gameData, enchanted)
                 || !gameQueryService.triggeredAbilityCanMoveCreatureToken(gameData, enchanted)) {

@@ -30,7 +30,20 @@ class TriggeredAbilityTest {
 
         assertThat(cast.targetFilter()).isSameAs(creature);
         assertThat(cast.withEffects(cast.effects()).targetFilter()).isSameAs(creature);
-        assertThatThrownBy(() -> new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), new DrawCardEffect(1))
+        assertThatThrownBy(() -> new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU), new DrawCardEffect(1))
+                .withTargetFilter(creature))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("own target filter");
+    }
+
+    @Test
+    void aYourUpkeepAbilityNamesItsOwnTargetFilterForTheYourUpkeepReader() {
+        TargetFilter creature = TargetFilters.creature();
+        TriggeredAbility upkeep = new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), new DrawCardEffect(1))
+                .withTargetFilter(creature);
+
+        assertThat(upkeep.targetFilter()).isSameAs(creature);
+        assertThatThrownBy(() -> new TriggeredAbility(Triggers.upkeep(ActivePlayer.ANY), new DrawCardEffect(1))
                 .withTargetFilter(creature))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("own target filter");

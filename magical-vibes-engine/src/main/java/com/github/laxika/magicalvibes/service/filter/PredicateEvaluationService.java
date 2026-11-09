@@ -184,6 +184,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuous
 import com.github.laxika.magicalvibes.model.filter.PermanentCouldProduceManaPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentCountAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControllerDealtCombatDamageBySubtypeThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerGraveyardCountAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerPoisonCountersAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCounterCountAtLeastPredicate;
@@ -2759,6 +2760,22 @@ public class PredicateEvaluationService {
                     }
                 }
                 yield matchingCount <= countPredicate.maxCount();
+            }
+            case PermanentControllerDealtCombatDamageBySubtypeThisTurnPredicate damagePredicate -> {
+                if (gameData == null) {
+                    yield false;
+                }
+                UUID targetController = gameData.findControllerOf(permanent);
+                if (targetController == null) {
+                    yield false;
+                }
+                long sources = gameData.combatDamageToPlayersThisTurn.entrySet().stream()
+                        .filter(damage -> damage.getValue().contains(targetController))
+                        .filter(damage -> gameData.combatDamageSourcesWithChangelingThisTurn.contains(damage.getKey())
+                                || gameData.combatDamageSourceSubtypesThisTurn
+                                .getOrDefault(damage.getKey(), Set.of()).contains(damagePredicate.subtype()))
+                        .count();
+                yield sources >= damagePredicate.minimumSources();
             }
             case PermanentControllerPoisonCountersAtLeastPredicate poisonPredicate -> {
                 if (gameData == null) {

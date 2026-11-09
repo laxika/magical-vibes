@@ -52,6 +52,7 @@ public sealed interface PermanentPredicate permits
         PermanentCouldProduceManaPredicate,
         PermanentControllerControlsPermanentPredicate,
         PermanentControllerControlsPermanentCountAtMostPredicate,
+        PermanentControllerDealtCombatDamageBySubtypeThisTurnPredicate,
         PermanentControllerGraveyardCountAtLeastPredicate,
         PermanentControllerPoisonCountersAtLeastPredicate,
         PermanentCrewedBySourceThisTurnPredicate,

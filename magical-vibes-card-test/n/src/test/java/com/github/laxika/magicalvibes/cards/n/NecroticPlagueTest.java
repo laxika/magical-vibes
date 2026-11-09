@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
+import com.github.laxika.magicalvibes.cards.d.DressDown;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.w.WhiteKnight;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
@@ -19,7 +20,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({NecroticPlague.class, RuneclawBear.class, WhiteKnight.class, Zephid.class, Unsummon.class, DoomBlade.class})
+@CardUsed({NecroticPlague.class, RuneclawBear.class, WhiteKnight.class, Zephid.class, Unsummon.class, DoomBlade.class,
+        DressDown.class})
 class NecroticPlagueTest extends BaseCardTest {
 
     // ===== Upkeep sacrifice trigger =====
@@ -266,4 +268,16 @@ class NecroticPlagueTest extends BaseCardTest {
         assertThat(auraPerm.getAttachedTo()).isEqualTo(target.getId());
     }
 
+    @Test
+    @DisplayName("A creature that loses all abilities after the Aura attaches doesn't have its upkeep ability")
+    void creatureThatLostItsAbilitiesIsNotSacrificed() {
+        Permanent creature = addCreatureReady(player2, new RuneclawBear());
+        castNecroticPlagueOn(player1, creature);
+        harness.addToBattlefield(player1, new DressDown());
+
+        advanceToUpkeep(player2);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(creature);
+    }
 }

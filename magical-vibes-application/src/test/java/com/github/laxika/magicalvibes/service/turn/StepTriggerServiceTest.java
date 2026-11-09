@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.turn;
 
-import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessPays;
 
@@ -37,7 +36,6 @@ import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.AllPermanentsUpkeepSacrificeUnlessPayEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -74,9 +72,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfEnchantedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEchoCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
@@ -752,28 +749,24 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Global upkeep grant can require a life payment")
-        void globalUpkeepGrantCanRequireLifePayment() {
+        @DisplayName("A granted upkeep ability's entry names the permanent that granted it")
+        void grantedUpkeepAbilityEntryNamesGrantingPermanent() {
             gd.turnNumber = 2;
-            Card grantCard = createCardWithName("Vile Consumption");
-            grantCard.addStaticEffect(new AllPermanentsUpkeepSacrificeUnlessPayEffect(new PermanentIsCreaturePredicate(), 1));
-            gd.playerBattlefields.get(player2Id).add(new Permanent(grantCard));
-
-            Card creatureCard = createCardWithName("Creature");
-            creatureCard.setType(CardType.CREATURE);
-            Permanent creature = new Permanent(creatureCard);
+            Permanent creature = new Permanent(createCardWithName("Enchanted Creature"));
             gd.playerBattlefields.get(player1Id).add(creature);
-            lenient().when(predicateEvaluationService.matchesPermanentPredicate(
-                    eq(gd), eq(creature), any(PermanentIsCreaturePredicate.class))).thenReturn(true);
+            UUID auraId = UUID.randomUUID();
+            SacrificeSelfEffect effect = new SacrificeSelfEffect();
+            when(grantedUpkeepEffectSupport.grantedUpkeepAbilities(gd, creature)).thenReturn(List.of(
+                    new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), effect).withGrantingPermanentId(auraId)));
 
             sut.handleUpkeepTriggers(gd);
 
-            assertThat(gd.stack).hasSize(1);
-            ForcedCostOrElseEffect payOrSacrifice = (ForcedCostOrElseEffect)
-                    gd.stack.getFirst().getEffectsToResolve().getFirst();
-            PayManaCost payment = (PayManaCost) payOrSacrifice.forcedCost();
-            assertThat(payment.manaCost()).isEmpty();
-            assertThat(payment.lifeAmount()).isEqualTo(1);
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+                assertThat(entry.getSourcePermanentId()).isEqualTo(creature.getId());
+                assertThat(entry.getControllerId()).isEqualTo(player1Id);
+                assertThat(entry.getGrantingPermanentId()).isEqualTo(auraId);
+            });
         }
 
         @Test
@@ -831,28 +824,24 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Enchanted creature controller chooses an opponent for a control-changing upkeep effect")
-        void enchantedCreatureControllerChoosesControlChangeOpponent() {
+        @DisplayName("A granted upkeep ability's player target is chosen with the ability's own target filter")
+        void grantedUpkeepAbilityPlayerTargetUsesItsOwnFilter() {
             gd.turnNumber = 2;
-            Card card = createCardWithName("Custody Battle");
-            card.addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),
-                    new ForcedCostOrElseEffect(
-                            new SacrificePermanentCost(new PermanentIsLandPredicate(), "Sacrifice a land"),
-                            List.of(new TargetPlayerGainsControlOfEnchantedPermanentEffect()), true));
             Permanent host = new Permanent(createCardWithName("Host Creature"));
-            Permanent aura = new Permanent(card);
-            aura.setAttachedTo(host.getId());
             gd.playerBattlefields.get(player1Id).add(host);
-            gd.playerBattlefields.get(player2Id).add(aura);
-
-            when(gameQueryService.findPermanentController(gd, host.getId())).thenReturn(player1Id);
-            when(gameQueryService.findPermanentById(gd, host.getId())).thenReturn(host);
+            when(grantedUpkeepEffectSupport.grantedUpkeepAbilities(gd, host)).thenReturn(List.of(
+                    new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), new ForcedCostOrElseEffect(
+                            new SacrificePermanentCost(new PermanentIsLandPredicate(), "Sacrifice a land"),
+                            List.of(new TargetPlayerGainsControlOfSourceCreatureEffect()), true))
+                            .withTargetFilter(new PlayerPredicateTargetFilter(
+                                    new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                                    "Target must be an opponent"))));
             when(targetLegalityService.matchesPlayerPredicate(
-                    eq(gd), eq(player1Id), eq(player2Id), any(PlayerRelationPredicate.class), eq(aura.getId()),
+                    eq(gd), eq(player1Id), eq(player2Id), any(PlayerRelationPredicate.class), eq(host.getId()),
                     isNull()))
                     .thenReturn(true);
             when(targetLegalityService.matchesPlayerPredicate(
-                    eq(gd), eq(player1Id), eq(player1Id), any(PlayerRelationPredicate.class), eq(aura.getId()),
+                    eq(gd), eq(player1Id), eq(player1Id), any(PlayerRelationPredicate.class), eq(host.getId()),
                     isNull()))
                     .thenReturn(false);
 

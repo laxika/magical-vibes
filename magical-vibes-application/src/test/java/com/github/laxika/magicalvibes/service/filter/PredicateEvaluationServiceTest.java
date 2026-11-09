@@ -83,6 +83,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByMonarchPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControllerDealtCombatDamageBySubtypeThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerPoisonCountersAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
@@ -180,6 +181,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1285,6 +1287,33 @@ class PredicateEvaluationServiceTest {
 
             gd.playerPoisonCounters.put(player2Id, 2);
             assertThat(evaluator.matchesPermanentPredicate(gd, target, predicate)).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentControllerDealtCombatDamageBySubtypeThisTurnPredicate counts the different creatures of the subtype")
+        void controllerDealtCombatDamageBySubtypeCountsDifferentSources() {
+            Permanent target = addPermanent(player2Id, createCreature("Target", 2, 2, CardColor.GREEN));
+            UUID pirateOne = UUID.randomUUID();
+            UUID pirateTwo = UUID.randomUUID();
+            UUID changeling = UUID.randomUUID();
+            UUID bear = UUID.randomUUID();
+            for (UUID source : List.of(pirateOne, pirateTwo, bear)) {
+                gd.combatDamageToPlayersThisTurn.put(source, new HashSet<>(Set.of(player2Id)));
+            }
+            gd.combatDamageSourceSubtypesThisTurn.put(pirateOne, Set.of(CardSubtype.PIRATE));
+            gd.combatDamageSourceSubtypesThisTurn.put(pirateTwo, Set.of(CardSubtype.PIRATE));
+            gd.combatDamageSourceSubtypesThisTurn.put(bear, Set.of(CardSubtype.BEAR));
+            PermanentControllerDealtCombatDamageBySubtypeThisTurnPredicate predicate =
+                    new PermanentControllerDealtCombatDamageBySubtypeThisTurnPredicate(CardSubtype.PIRATE, 3);
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, target, predicate)).isFalse();
+
+            gd.combatDamageToPlayersThisTurn.put(changeling, new HashSet<>(Set.of(player2Id)));
+            gd.combatDamageSourcesWithChangelingThisTurn.add(changeling);
+            assertThat(evaluator.matchesPermanentPredicate(gd, target, predicate)).isTrue();
+
+            Permanent ownPermanent = addPermanent(player1Id, createCreature("Own", 2, 2, CardColor.GREEN));
+            assertThat(evaluator.matchesPermanentPredicate(gd, ownPermanent, predicate)).isFalse();
         }
 
         @Test
