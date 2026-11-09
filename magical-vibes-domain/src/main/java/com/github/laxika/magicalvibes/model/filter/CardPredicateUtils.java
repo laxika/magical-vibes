@@ -190,8 +190,8 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardManaValueLessThanXPredicate) {
             return "card with mana value less than X";
         }
-        if (predicate instanceof CardManaValueEqualsXPredicate) {
-            return "card with mana value X";
+        if (predicate instanceof CardManaValueEqualsTriggeringSpellPredicate) {
+            return "card with that spell's mana value";
         }
         if (predicate instanceof CardMinManaValuePredicate p) {
             return "card with mana value " + p.minManaValue() + " or greater";

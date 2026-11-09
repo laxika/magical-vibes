@@ -22,7 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
@@ -1291,7 +1290,7 @@ class CombatDamageServiceTest {
                     "Draw a card", new DrawCardEffect());
             addAttackerWithEffect("Silent Hallcreeper", 1, 1,
                     Triggers.dealsCombatDamageToPlayer(),
-                    new ChooseModeNotYetChosenEffect(List.of(option)));
+                    ChooseOneEffect.notYetChosen(List.of(option)));
 
             combatDamageService.resolveCombatDamage(gameData);
 

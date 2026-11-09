@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.ArabaMothrider;
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.d.DeathDenied;
 import com.github.laxika.magicalvibes.cards.g.GhostLitRedeemer;
 import com.github.laxika.magicalvibes.cards.m.ManrikiGusari;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 @CardUsed({CelestialKirin.class, ArabaMothrider.class, DeathDenied.class, GhostLitRedeemer.class,
-        SakuraTribeScout.class, SpiritualVisit.class, ManrikiGusari.class})
+        SakuraTribeScout.class, SpiritualVisit.class, ManrikiGusari.class, Counterspell.class})
 class CelestialKirinTest extends BaseCardTest {
 
     @Test
@@ -140,6 +141,32 @@ class CelestialKirinTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, 2, null);
         harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Celestial Kirin");
+        harness.assertOnBattlefield(player1, "Araba Mothrider");
+    }
+
+    @Test
+    @DisplayName("An X Arcane spell countered before the ability resolves still destroys permanents with its mana value")
+    void counteredXArcaneSpellStillDestroysPermanentsWithItsManaValue() {
+        harness.addToBattlefield(player1, new CelestialKirin());
+        harness.addToBattlefield(player1, new ArabaMothrider());
+        GhostLitRedeemer first = new GhostLitRedeemer();
+        SakuraTribeScout second = new SakuraTribeScout();
+        harness.setGraveyard(player1, List.of(first, second));
+        DeathDenied deathDenied = new DeathDenied();
+        harness.setHand(player1, List.of(deathDenied));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, 2, null);
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.setHand(player2, List.of(new Counterspell()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, deathDenied.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Death Denied");
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Celestial Kirin");

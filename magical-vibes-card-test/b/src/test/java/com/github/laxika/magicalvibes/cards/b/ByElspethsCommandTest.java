@@ -129,4 +129,45 @@ class ByElspethsCommandTest extends BaseCardTest {
         card.setToughness(toughness);
         return card;
     }
+
+    @Test
+    @DisplayName("The mode chosen during your last combat is unavailable during your next turn's combat")
+    void modeChosenDuringYourLastCombatIsUnavailableDuringYourNextTurnsCombat() {
+        harness.addToBattlefield(player1, new ByElspethsCommand());
+
+        advanceToCombat(player1);
+        harness.handleListChoice(player1, TOKEN);
+        harness.passBothPriorities();
+
+        harness.forceStep(TurnStep.END_STEP);
+        harness.passUntil(TurnStep.UPKEEP);
+        advanceToCombat(player1);
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).contains(TARGET_SOLDIER, HAND_SOLDIER).doesNotContain(TOKEN);
+    }
+
+    @Test
+    @DisplayName("A mode chosen before your last combat can be chosen again")
+    void modeChosenBeforeYourLastCombatCanBeChosenAgain() {
+        harness.addToBattlefield(player1, new ByElspethsCommand());
+        harness.setHand(player1, List.of(soldier("Hand Soldier", 2, 2)));
+
+        advanceToCombat(player1);
+        harness.handleListChoice(player1, TOKEN);
+        harness.passBothPriorities();
+        advanceToCombat(player1);
+        harness.handleListChoice(player1, HAND_SOLDIER);
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        advanceToCombat(player1);
+
+        PendingInteraction.ColorChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.options()).contains(TOKEN, TARGET_SOLDIER).doesNotContain(HAND_SOLDIER);
+    }
 }

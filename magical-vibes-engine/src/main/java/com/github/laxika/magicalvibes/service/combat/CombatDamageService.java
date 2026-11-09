@@ -49,8 +49,6 @@ import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentToDefendingPlayerAndCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageResolutionEffect;
@@ -82,6 +80,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamag
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndTargetDiscardsPerPoisonCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TakeInitiativeEffect;
+import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
@@ -2235,18 +2234,13 @@ public class CombatDamageService {
                         creature.getId(), defenderId) < threshold.minimumDamage()) {
                     continue;
                 }
-                if (effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect modal) {
+                // A modal whose mode is chosen as it goes on the stack (CR 603.3c), and "choose one that hasn't been
+                // chosen" (Silent Hallcreeper) among the modes its source hasn't chosen.
+                ChooseOneEffect triggerTimeModal = TriggeredModalEffect.choiceMadeAsTriggered(effect);
+                if (triggerTimeModal != null) {
                     gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                            creature.getCard(), attackerId, modal.choice(), creature.getId(),
+                            creature.getCard(), attackerId, triggerTimeModal, creature.getId(),
                             false, false, null, defenderId));
-                    gameLogService.append(gameData, GameLog.abilityTriggers(creature.getCard()));
-                    continue;
-                }
-
-                if (effect instanceof ChooseModeNotYetChosenEffect modal) {
-                    gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                            creature.getCard(), attackerId, new ChooseOneEffect(modal.options()),
-                            creature.getId(), false, true, null));
                     gameLogService.append(gameData, GameLog.abilityTriggers(creature.getCard()));
                     continue;
                 }
@@ -2879,10 +2873,13 @@ public class CombatDamageService {
                             .mapToInt(Map.Entry::getValue)
                             .sum()
                             : damageDealt;
-                    if (firedEffect instanceof ChooseModeNotYetChosenThisTurnEffect modal) {
+                    // "Choose one that hasn't been chosen this turn" (Parapet Thrasher): the mode is chosen as the
+                    // ability goes on the stack (CR 603.3c), among the modes its source hasn't chosen this turn.
+                    ChooseOneEffect triggerTimeModal = TriggeredModalEffect.choiceMadeAsTriggered(firedEffect);
+                    if (triggerTimeModal != null) {
                         gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                                perm.getCard(), attackerId, new ChooseOneEffect(modal.options()),
-                                perm.getId(), true, false, null, defenderId));
+                                perm.getCard(), attackerId, triggerTimeModal, perm.getId(), false, false, null,
+                                defenderId));
                         read.markLimit(gameData, perm.getId());
                         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                         continue;

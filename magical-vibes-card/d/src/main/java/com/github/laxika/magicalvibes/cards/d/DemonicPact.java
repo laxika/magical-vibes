@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -24,9 +23,9 @@ public class DemonicPact extends Card {
 
     public DemonicPact() {
         // At the beginning of your upkeep, choose one that hasn't been chosen. The mode (and its
-        // targets) are picked as the trigger goes on the stack; each chosen mode is consumed, so the
+        // targets) are picked as the ability goes on the stack; each chosen mode is used up, so the
         // fourth upkeep forces whichever mode is left.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ChooseModeNotYetChosenEffect(List.of(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), ChooseOneEffect.notYetChosen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Demonic Pact deals 4 damage to any target and you gain 4 life",
                         List.of(new DealDamageToAnyTargetEffect(4), new GainLifeEffect(4))),

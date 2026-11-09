@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -37,7 +36,7 @@ public class SolKanarTheTainted extends Card {
                 anotherCreatureOrPlaneswalker,
                 "Target must be another creature or planeswalker");
 
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ChooseModeNotYetChosenEffect(List.of(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), ChooseOneEffect.notYetChosen(List.of(
                 new ChooseOneEffect.ChooseOneOption("Draw a card", new DrawCardEffect()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent loses 2 life and you gain 2 life",

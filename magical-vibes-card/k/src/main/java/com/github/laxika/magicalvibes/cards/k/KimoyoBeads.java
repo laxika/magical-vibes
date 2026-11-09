@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -23,7 +22,7 @@ public class KimoyoBeads extends Card {
     public KimoyoBeads() {
         // At the beginning of your end step, choose one that hasn't been chosen. Each mode is
         // consumed by this permanent, and the Prime Bead mode returns it as a new object.
-        addTrigger(Triggers.endStep(ActivePlayer.YOU), new ChooseModeNotYetChosenEffect(List.of(
+        addTrigger(Triggers.endStep(ActivePlayer.YOU), ChooseOneEffect.notYetChosen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "AV Bead \u2014 Draw a card.",
                         new DrawCardEffect()),

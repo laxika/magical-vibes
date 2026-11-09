@@ -185,6 +185,7 @@ public sealed interface PermanentPredicate permits
         PermanentIsTokenPredicate,
         PermanentIsTransformedPredicate,
         PermanentManaValueEqualsTriggeringPermanentPredicate,
+        PermanentManaValueEqualsTriggeringSpellPredicate,
         PermanentManaValueAtMostOwnCountersPredicate,
         PermanentManaValueAtMostSourceCountersPredicate,
         PermanentManaValueAtMostControlledCountPredicate,

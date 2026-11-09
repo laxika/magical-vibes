@@ -98,6 +98,7 @@ import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsSourceCoun
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueParityPredicate;
@@ -308,6 +309,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostSourc
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsTriggeringPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueGreaterThanSourceCardManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueLessThanSourceManaValuePredicate;
@@ -1288,6 +1290,8 @@ public class PredicateEvaluationService {
             // Only the graveyard count that has the resolving entry knows the triggering spell (AmountEvaluationService).
             case CardSharesNameWithTriggeringSpellPredicate ignored -> false;
             case CardSharesNameWithTriggeringPermanentPredicate ignored -> false;
+            // Bound to the resolving entry's triggering spell by AmountEvaluationService.bindTriggeringSpellManaValue.
+            case CardManaValueEqualsTriggeringSpellPredicate ignored -> false;
             case CardSharesNameWithLegendaryControlledPermanentPredicate ignored -> {
                 if (gameData == null || cardOwnerId == null
                         || !card.getSupertypes().contains(CardSupertype.LEGENDARY)) {
@@ -2339,6 +2343,8 @@ public class PredicateEvaluationService {
                 yield gameQueryService.getPermanentManaValue(permanent)
                         == sourcePermanent.getCounterCount(equalsSourceCounters.counterType());
             }
+            // Bound to the resolving entry's triggering spell by AmountEvaluationService.bindTriggeringSpellManaValue.
+            case PermanentManaValueEqualsTriggeringSpellPredicate ignored -> false;
             case PermanentManaValueEqualsTriggeringPermanentPredicate ignored -> {
                 UUID triggeringPermanentId = filterContext == null
                         ? null : filterContext.triggeringPermanentId();
@@ -3950,6 +3956,7 @@ public class PredicateEvaluationService {
             case PermanentMaxManaValuePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentMinManaValuePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentManaValueParityPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentManaValueEqualsTriggeringSpellPredicate ignored -> false;
             case PermanentManaValueEqualsTriggeringPermanentPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
                 UUID triggeringPermanentId = context == null ? null : context.triggeringPermanentId();

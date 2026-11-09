@@ -47,7 +47,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -905,23 +904,23 @@ class SpellCastTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("queues a turn-scoped modal spell-cast trigger")
+        @DisplayName("queues a turn-scoped modal cast ability whose restriction the mode choice reads")
         void queuesTurnScopedModalSpellCastTrigger() {
             Permanent perm = createPermanent("The Vision");
-            var filter = new CardNamedPredicate("Opt");
-            var effect = new ChooseModeNotYetChosenThisTurnOnSpellCastEffect(filter, List.of(
+            var modal = ChooseOneEffect.notYetChosenThisTurn(List.of(
                     new ChooseOneEffect.ChooseOneOption("First mode", new PutCountersOnSourceEffect(0, 0, 1)),
                     new ChooseOneEffect.ChooseOneOption("Second mode", new CreateTokenEffect("Spirit", 1, 1,
                             CardColor.WHITE, List.of(CardSubtype.SPIRIT), Set.of(), Set.of()))));
+            var effect = authored(SpellFilter.ANY, List.of(modal));
             Card spellCard = createInstant("Opt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
-                    eq(perm.getOriginalCard().getId()), any(), eq(player1Id))).thenReturn(true);
+            when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
+                    eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any()))
+                    .thenReturn(true);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), effect,
+                    ctx, true);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
@@ -930,7 +929,9 @@ class SpellCastTriggerCollectorServiceTest {
                     .map(PermanentChoiceContext.TriggeredModalTrigger.class::cast)
                     .findFirst()
                     .orElseThrow();
+            assertThat(pending.effect()).isEqualTo(modal);
             assertThat(pending.modesResetEachTurn()).isTrue();
+            assertThat(pending.consumeModes()).isFalse();
             assertThat(pending.triggeringCardId()).isEqualTo(spellCard.getId());
         }
 

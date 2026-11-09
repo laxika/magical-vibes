@@ -22,13 +22,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValueXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
-import com.github.laxika.magicalvibes.model.effect.RevealHandAndDiscardMatchingCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalPlusOnePlusOneCounterToSnowPaidCreatureSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
 import com.github.laxika.magicalvibes.model.effect.DuelistsConvocationInternationalTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateFoodWhenPlayingCardFromTopOfLibraryEffect;
@@ -263,33 +259,6 @@ public class SpellCastTriggerCollectorService {
         entry.setTriggeringSpell(spell);
         entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = ChooseModeNotYetChosenThisTurnOnSpellCastEffect.class,
-            watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
-    private boolean handleTurnScopedModalOnSpellCast(TriggerMatchContext match,
-            ChooseModeNotYetChosenThisTurnOnSpellCastEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        if (!predicateEvaluationService.matchesCardPredicate(sc.spellCard(), trigger.spellFilter(),
-                match.permanent().getOriginalCard().getId(), match.gameData(), sc.castingPlayerId())) {
-            return false;
-        }
-        if (trigger.spellEntryFilter() != null) {
-            StackEntry spellEntry = findStackEntryForCard(match.gameData(), sc.spellCard().getId());
-            if (spellEntry == null || !targetLegalityService.matchesStackEntryPredicate(
-                    match.gameData(), spellEntry, trigger.spellEntryFilter(),
-                    match.controllerId(), match.permanent())) {
-                return false;
-            }
-        }
-
-        match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                match.permanent().getCard(), match.controllerId(), new ChooseOneEffect(trigger.options()),
-                match.permanent().getId(), true, false, sc.spellCard().getId()));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers on spell cast (turn-scoped modal)",
-                match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
 
@@ -882,13 +851,11 @@ public class SpellCastTriggerCollectorService {
         // on the stack (CR 603.3d), against the spell's mana value as the ability's X.
         boolean targetRestrictedBySpellManaValue = needsPermanentTarget && readsManaValueX(
                 trigger.targetFilter() != null ? trigger.targetFilter() : boundTargetFilter(sourceCard, trigger.effects()));
-        // An effect's own filter "with that spell's mana value" (Celestial Kirin's destroy, Infernal Kirin's discard)
-        // reads it the same way, as the ability's X. Otherwise the ability's X is the spell's: "the amount of mana spent
-        // to cast that spell" (ManaSpentToCast, the mana-spent conditions) and "for each color of mana spent to cast that
-        // spell" (ColorsSpentToCast) read what the spell recorded as it became cast, as the ability resolves.
-        boolean effectRestrictedBySpellManaValue = resolved.stream()
-                .anyMatch(SpellCastTriggerCollectorService::effectFilterReadsManaValueX);
-        int abilityX = targetRestrictedBySpellManaValue || effectRestrictedBySpellManaValue
+        // Otherwise the ability's X is the spell's: an effect's own filter "with that spell's mana value" (Celestial
+        // Kirin's destroy, Infernal Kirin's discard), "the amount of mana spent to cast that spell" (ManaSpentToCast, the
+        // mana-spent conditions) and "for each color of mana spent to cast that spell" (ColorsSpentToCast) read the
+        // triggering spell as the ability resolves.
+        int abilityX = targetRestrictedBySpellManaValue
                 ? spellManaValue(match.gameData(), spellCard)
                 : spellXValue != null ? spellXValue : 0;
         // The cast event's value, recorded on every entry and choice whatever the effects are: the number of kicks for a
@@ -901,12 +868,9 @@ public class SpellCastTriggerCollectorService {
         if (optionalAbility != null) {
             resolved = optionalAbility;
         }
-        if (resolved.size() == 1 && resolved.getFirst() instanceof ChooseModeNotYetChosenEffect modeEffect) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                    sourceCard, match.controllerId(), new ChooseOneEffect(modeEffect.options()),
-                    sourcePermanentId, false, true, spellCard.getId()));
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        } else if (resolved.size() == 1 && resolved.getFirst() instanceof ChooseOneEffect chooseOneEffect) {
+        if (resolved.size() == 1 && resolved.getFirst() instanceof ChooseOneEffect chooseOneEffect) {
+            // The mode is chosen as the ability goes on the stack (CR 603.3c); a "hasn't been chosen (this turn)"
+            // modal offers only the modes its source hasn't chosen (TriggeredModalTrigger reads the restriction).
             match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                     sourceCard, match.controllerId(), chooseOneEffect, sourcePermanentId,
                     spellCard.getId()));
@@ -1100,22 +1064,6 @@ public class SpellCastTriggerCollectorService {
                     .anyMatch(SpellCastTriggerCollectorService::readsManaValueX);
             case PermanentNotPredicate not -> readsManaValueX(not.predicate());
             case null, default -> false;
-        };
-    }
-
-    /**
-     * Whether {@code effect}'s own filter (not a target's) restricts by the X the ability goes on the stack with:
-     * "destroy all permanents with that spell's mana value", "discards all cards with that spell's mana value".
-     */
-    private static boolean effectFilterReadsManaValueX(CardEffect effect) {
-        return switch (effect) {
-            case DestroyAllPermanentsEffect destroy -> readsManaValueX(destroy.filter());
-            case RevealHandAndDiscardMatchingCardsEffect discard -> readsManaValueX(discard.predicate());
-            case ConditionalEffect conditional -> effectFilterReadsManaValueX(conditional.wrapped());
-            case MayEffect may -> effectFilterReadsManaValueX(may.wrapped());
-            case SequenceEffect sequence -> sequence.steps().stream()
-                    .anyMatch(SpellCastTriggerCollectorService::effectFilterReadsManaValueX);
-            default -> false;
         };
     }
 

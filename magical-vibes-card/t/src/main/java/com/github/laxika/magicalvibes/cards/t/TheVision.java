@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnOnSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -19,9 +18,8 @@ import java.util.List;
 public class TheVision extends Card {
 
     public TheVision() {
-        addTrigger(Triggers.youCastSpell(),
-                new ChooseModeNotYetChosenThisTurnOnSpellCastEffect(
-                        new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),
+        addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
+                ChooseOneEffect.notYetChosenThisTurn(
                         List.of(
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Solar Beam — The Vision gains double strike until end of turn.",

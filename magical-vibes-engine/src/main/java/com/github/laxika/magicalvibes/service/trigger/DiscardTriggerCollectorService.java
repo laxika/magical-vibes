@@ -10,12 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastDiscardedCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -288,16 +287,18 @@ public class DiscardTriggerCollectorService {
         return true;
     }
 
-    @CollectsLibraryTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
-    private boolean handleTurnScopedModalOnDiscard(TriggerMatchContext match,
-            ChooseModeNotYetChosenThisTurnEffect trigger, TriggerContext ctx) {
+    /**
+     * "Whenever you discard a card, choose one [that hasn't been chosen this turn]" (Monument to Endurance): the mode is
+     * chosen as the ability goes on the stack (CR 603.3c), among those the modal's restriction leaves.
+     */
+    @CollectsLibraryTrigger(value = ChooseOneEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
+    private boolean handleModalOnDiscard(TriggerMatchContext match, ChooseOneEffect modal, TriggerContext ctx) {
         var gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
         gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                sourceCard, match.controllerId(), new ChooseOneEffect(trigger.options()),
-                match.permanent().getId(), true));
+                sourceCard, match.controllerId(), modal, match.permanent().getId()));
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on discard (turn-scoped modal)", gameData.id, sourceCard.getName());
+        log.info("Game {} - {} triggers on discard (modal)", gameData.id, sourceCard.getName());
         return true;
     }
 

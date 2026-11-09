@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -25,9 +24,9 @@ public class GaladrielLightOfValinor extends Card {
 
     public GaladrielLightOfValinor() {
         // Whenever another creature you control enters, choose one that hasn't been chosen this
-        // turn. The turn-scoped modal tracks each selected mode on Galadriel's permanent.
+        // turn: each mode chosen is recorded on Galadriel's permanent as the ability goes on the stack.
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new ChooseModeNotYetChosenThisTurnEffect(List.of(
+                ChooseOneEffect.notYetChosenThisTurn(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Add {G}{G}{G}.",
                                 new AwardManaEffect(ManaColor.GREEN, 3)),

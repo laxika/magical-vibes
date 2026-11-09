@@ -1312,10 +1312,14 @@ public class TriggeredAbilityQueueService {
             PermanentChoiceContext.TriggeredModalTrigger pending =
                     gameData.pollPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
             ChooseOneEffect effect = pending.effect();
-            if (pending.consumeModes() || pending.modesResetEachTurn()) {
+            // "That wasn't chosen during your last combat" (By Elspeth's Command): the mode the source chose last.
+            boolean lastCombat = effect.modeRestriction() == ChooseOneEffect.ModeRestriction.NOT_CHOSEN_DURING_LAST_COMBAT;
+            if (pending.consumeModes() || pending.modesResetEachTurn() || lastCombat) {
                 Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
                 Set<String> alreadyChosen = source == null ? Set.of()
-                        : pending.consumeModes() ? source.getChosenModeLabels() : source.getChosenModeLabelsThisTurn();
+                        : pending.consumeModes() ? source.getChosenModeLabels()
+                        : pending.modesResetEachTurn() ? source.getChosenModeLabelsThisTurn()
+                        : source.getChosenMode() == null ? Set.of() : Set.of(source.getChosenMode());
                 List<ChooseOneEffect.ChooseOneOption> remaining = effect.options().stream()
                         .filter(option -> !alreadyChosen.contains(option.label()))
                         .toList();

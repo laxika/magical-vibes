@@ -17,13 +17,45 @@ import java.util.function.Supplier;
  * {@code choicesRequired} is the minimum number of modes that must be chosen;
  * {@code choicesMax} is the maximum (inclusive). Classic "choose one" is {@code (1, 1)};
  * "choose two" is {@code (2, 2)}; "choose one or more" is {@code (1, options.size())}.
+ * <p>
+ * {@code modeRestriction} limits which modes a triggered ability may choose by what its source chose before ("choose
+ * one that hasn't been chosen", Demonic Pact; "... this turn", Galadriel, Light of Valinor; "... that wasn't chosen
+ * during your last combat", By Elspeth's Command). A triggered ability's mode is chosen as it is put on the stack
+ * (CR 603.3c, 700.2b), so the restriction is judged, and the chosen mode recorded on the source permanent, there: a
+ * mode chosen for an ability that is later countered still counts as chosen.
  */
 public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
                               boolean allModesWhenOptionalCostPaid, boolean modesMayRepeat,
                               Condition choicesMaxCondition, List<Integer> modeCosts, int modeBudget,
                               boolean choicesEqualModalXValue, boolean anyNumberWhenConditionMet,
-                              boolean allModesWhenConditionMet)
+                              boolean allModesWhenConditionMet, ModeRestriction modeRestriction)
         implements CombatDamageTriggerContextEffect {
+
+    /**
+     * Which modes a triggered modal ability may choose, by the modes its source permanent chose before. The record
+     * lives on the source permanent, so a new object (one that left and returned) starts over, and it doesn't matter
+     * who controlled the source when a mode was chosen.
+     */
+    public enum ModeRestriction {
+        /** Any mode. */
+        NONE,
+        /** "Choose one that hasn't been chosen": a mode the source chose once is never offered again. */
+        NOT_YET_CHOSEN,
+        /** "Choose one that hasn't been chosen this turn": the record is cleared as each turn begins. */
+        NOT_YET_CHOSEN_THIS_TURN,
+        /** "Choose one that wasn't chosen during your last combat": the mode the source chose last time. */
+        NOT_CHOSEN_DURING_LAST_COMBAT
+    }
+
+    public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
+                           boolean allModesWhenOptionalCostPaid, boolean modesMayRepeat,
+                           Condition choicesMaxCondition, List<Integer> modeCosts, int modeBudget,
+                           boolean choicesEqualModalXValue, boolean anyNumberWhenConditionMet,
+                           boolean allModesWhenConditionMet) {
+        this(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid, modesMayRepeat,
+                choicesMaxCondition, modeCosts, modeBudget, choicesEqualModalXValue, anyNumberWhenConditionMet,
+                allModesWhenConditionMet, ModeRestriction.NONE);
+    }
 
     public ChooseOneEffect(List<ChooseOneOption> options, boolean optional, int choicesRequired, int choicesMax,
                            boolean allModesWhenOptionalCostPaid, boolean modesMayRepeat,
@@ -52,6 +84,7 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
     }
 
     public ChooseOneEffect {
+        modeRestriction = modeRestriction == null ? ModeRestriction.NONE : modeRestriction;
         if (choicesRequired < 0) {
             throw new IllegalArgumentException("choicesRequired must be >= 0");
         }
@@ -125,6 +158,28 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
             }
         }
         return context;
+    }
+
+    /** "Choose one that hasn't been chosen —" (Demonic Pact): a triggered "choose one" whose modes are used up. */
+    public static ChooseOneEffect notYetChosen(List<ChooseOneOption> options) {
+        return new ChooseOneEffect(options).withModeRestriction(ModeRestriction.NOT_YET_CHOSEN);
+    }
+
+    /** "Choose one that hasn't been chosen this turn —" (Galadriel, Light of Valinor). */
+    public static ChooseOneEffect notYetChosenThisTurn(List<ChooseOneOption> options) {
+        return new ChooseOneEffect(options).withModeRestriction(ModeRestriction.NOT_YET_CHOSEN_THIS_TURN);
+    }
+
+    /** "Choose one that wasn't chosen during your last combat —" (By Elspeth's Command). */
+    public static ChooseOneEffect notChosenDuringLastCombat(List<ChooseOneOption> options) {
+        return new ChooseOneEffect(options).withModeRestriction(ModeRestriction.NOT_CHOSEN_DURING_LAST_COMBAT);
+    }
+
+    /** This modal with {@code restriction} on the modes its triggered ability may choose. */
+    public ChooseOneEffect withModeRestriction(ModeRestriction restriction) {
+        return new ChooseOneEffect(options, optional, choicesRequired, choicesMax, allModesWhenOptionalCostPaid,
+                modesMayRepeat, choicesMaxCondition, modeCosts, modeBudget, choicesEqualModalXValue,
+                anyNumberWhenConditionMet, allModesWhenConditionMet, restriction);
     }
 
     /** "Choose one or more —" modal: at least one mode, up to every mode. */

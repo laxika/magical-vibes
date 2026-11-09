@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -22,7 +21,7 @@ public class LitaLittleOrphanAmphibian extends Card {
 
     public LitaLittleOrphanAmphibian() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new ChooseModeNotYetChosenEffect(List.of(
+                ChooseOneEffect.notYetChosenThisTurn(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on Lita",
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),

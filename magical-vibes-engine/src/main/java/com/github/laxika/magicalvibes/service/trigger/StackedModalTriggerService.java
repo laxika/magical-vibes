@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -106,7 +107,18 @@ public class StackedModalTriggerService {
                 continue;
             }
             ChooseOneEffect modal = announcedModal(entry);
+            Set<String> alreadyChosen = alreadyChosenLabels(gameData, entry, modal);
+            if (!alreadyChosen.isEmpty() && modal.options().stream()
+                    .allMatch(mode -> alreadyChosen.contains(mode.label()))) {
+                gameData.stack.remove(entry);
+                gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                        "'s triggered ability has no modes left to choose and is removed from the stack."));
+                log.info("Game {} - {} modal trigger removed (every mode already chosen)",
+                        gameData.id, entry.getCard().getName());
+                continue;
+            }
             List<ChooseOneEffect.ChooseOneOption> legalModes = modal.options().stream()
+                    .filter(mode -> !alreadyChosen.contains(mode.label()))
                     .filter(mode -> modeTargets(gameData, entry, mode) != null)
                     .toList();
             if (legalModes.isEmpty()) {
@@ -150,6 +162,7 @@ public class StackedModalTriggerService {
             handleHullbreakerHorrorModeChosen(gameData, player, mode, ctx, entry);
             return;
         }
+        recordChosenMode(gameData, entry, announcedModal(entry), mode);
         List<UUID> validTargets = modeTargets(gameData, entry, mode);
         List<CardEffect> modeEffects = mode.effects();
         if (entry.getEffectsToResolve().getFirst() instanceof ConditionalEffect conditional) {
@@ -354,6 +367,44 @@ public class StackedModalTriggerService {
             effect = conditional.wrapped();
         }
         return effect instanceof ChooseOneEffect modal ? modal : null;
+    }
+
+    /**
+     * The labels {@code modal}'s {@link ChooseOneEffect#modeRestriction()} excludes, from the record of the entry's
+     * source permanent; none once the source has left the battlefield (a new object starts over).
+     */
+    private Set<String> alreadyChosenLabels(GameData gameData, StackEntry entry, ChooseOneEffect modal) {
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            return Set.of();
+        }
+        return switch (modal.modeRestriction()) {
+            case NONE -> Set.of();
+            case NOT_YET_CHOSEN -> Set.copyOf(source.getChosenModeLabels());
+            case NOT_YET_CHOSEN_THIS_TURN -> Set.copyOf(source.getChosenModeLabelsThisTurn());
+            case NOT_CHOSEN_DURING_LAST_COMBAT -> source.getChosenMode() == null ? Set.of()
+                    : Set.of(source.getChosenMode());
+        };
+    }
+
+    /**
+     * Records {@code mode} on the entry's source permanent as {@code modal}'s restriction reads it: it counts as chosen
+     * as the ability goes on the stack, even if the ability is countered later.
+     */
+    private void recordChosenMode(GameData gameData, StackEntry entry, ChooseOneEffect modal,
+                                  ChooseOneEffect.ChooseOneOption mode) {
+        Permanent source = modal == null || entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            return;
+        }
+        switch (modal.modeRestriction()) {
+            case NONE -> { }
+            case NOT_YET_CHOSEN -> source.getChosenModeLabels().add(mode.label());
+            case NOT_YET_CHOSEN_THIS_TURN -> source.getChosenModeLabelsThisTurn().add(mode.label());
+            case NOT_CHOSEN_DURING_LAST_COMBAT -> source.setChosenMode(mode.label());
+        }
     }
 
     private boolean interveningConditionHolds(GameData gameData, StackEntry entry) {

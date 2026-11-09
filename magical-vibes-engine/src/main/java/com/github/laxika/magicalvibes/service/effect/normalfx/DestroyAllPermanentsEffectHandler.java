@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.DestroyedPermanentCountScope;
 import com.github.laxika.magicalvibes.model.effect.EachDestroyedPermanentControllerGainsLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
@@ -63,6 +65,8 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
                 // X-relative filters ("each nonland permanent with mana value X or less") read the
                 // X paid when the spell was cast (CR 601.2b).
                 .withXValue(entry.getXValue());
+        // "With that spell's mana value" (Celestial Kirin) reads the triggering spell as the ability resolves.
+        PermanentPredicate filter = AmountEvaluationService.bindTriggeringSpellManaValue(gameData, e.filter(), entry);
 
         // "Destroy all other creatures" (Martial Coup): spare permanents this same resolution just
         // created, so the Soldier tokens made moments earlier survive the wipe.
@@ -86,7 +90,7 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
             }
             for (Permanent perm : List.copyOf(battlefield)) {
                 if (!sparedIds.contains(perm.getId())
-                        && predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
+                        && predicateEvaluationService.matchesPermanentPredicate(perm, filter, filterContext)) {
                     toDestroy.add(perm);
                     controllerByPermanentId.put(perm.getId(), targetPlayerId);
                     manaValueByPermanentId.put(perm.getId(), perm.getCard().getManaValue());
@@ -96,7 +100,7 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
             gameData.forEachBattlefield((playerId, battlefield) -> {
                 for (Permanent perm : battlefield) {
                     if (!sparedIds.contains(perm.getId())
-                            && predicateEvaluationService.matchesPermanentPredicate(perm, e.filter(), filterContext)) {
+                            && predicateEvaluationService.matchesPermanentPredicate(perm, filter, filterContext)) {
                         toDestroy.add(perm);
                         controllerByPermanentId.put(perm.getId(), playerId);
                         manaValueByPermanentId.put(perm.getId(), perm.getCard().getManaValue());

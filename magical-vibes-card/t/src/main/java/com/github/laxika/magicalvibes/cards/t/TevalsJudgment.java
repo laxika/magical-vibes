@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -23,7 +22,7 @@ public class TevalsJudgment extends Card {
     public TevalsJudgment() {
         addTrigger(new TriggerCondition(Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN)),
                 TriggerOptions.ONE_OR_MORE,
-                new ChooseModeNotYetChosenThisTurnEffect(List.of(
+                ChooseOneEffect.notYetChosenThisTurn(List.of(
                         new ChooseOneEffect.ChooseOneOption("Draw a card.", new DrawCardEffect(1)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Create a Treasure token.", CreateTokenEffect.ofTreasureToken(1)),

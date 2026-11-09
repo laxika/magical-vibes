@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreaturePermanentlyEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -30,7 +29,7 @@ public class SilentHallcreeper extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
                         "Target must be another creature you control");
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new ChooseModeNotYetChosenEffect(List.of(
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), ChooseOneEffect.notYetChosen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put two +1/+1 counters on Silent Hallcreeper",
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)),

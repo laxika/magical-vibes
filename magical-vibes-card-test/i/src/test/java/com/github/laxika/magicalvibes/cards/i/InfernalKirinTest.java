@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.a.ArabaMothrider;
+import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.d.DescendantOfKiyomaro;
 import com.github.laxika.magicalvibes.cards.g.GhostLitRedeemer;
 import com.github.laxika.magicalvibes.cards.g.GhostLitStalker;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({InfernalKirin.class, SpiritualVisit.class, GhostLitRedeemer.class,
-        GhostLitStalker.class, ArabaMothrider.class, DescendantOfKiyomaro.class, HandOfHonor.class})
+        GhostLitStalker.class, ArabaMothrider.class, DescendantOfKiyomaro.class, HandOfHonor.class, Counterspell.class})
 class InfernalKirinTest extends BaseCardTest {
 
     @Test
@@ -162,5 +163,26 @@ class InfernalKirinTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.gameLog).anySatisfy(entry -> assertThat(entry.plainText())
                 .contains("reveals their hand. It is empty."));
+    }
+
+    @Test
+    @DisplayName("A Spirit countered before the ability resolves still discards the cards with its mana value")
+    void counteredSpiritStillDiscardsCardsWithItsManaValue() {
+        addInfernalKirin();
+        GhostLitRedeemer redeemer = new GhostLitRedeemer();
+        harness.castFromHand(player1, redeemer, "{W}");
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.setHand(player2, List.of(new Counterspell(), new GhostLitStalker(), new HandOfHonor()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+
+        harness.castInstant(player2, 0, redeemer.getId());
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Ghost-Lit Redeemer");
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId()))
+                .extracting(card -> card.getName())
+                .containsExactly("Hand of Honor");
+        harness.assertInGraveyard(player2, "Ghost-Lit Stalker");
     }
 }

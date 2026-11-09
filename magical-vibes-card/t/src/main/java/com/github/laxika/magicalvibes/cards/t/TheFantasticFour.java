@@ -5,8 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnOnSpellCastEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -44,11 +43,9 @@ public class TheFantasticFour extends Card {
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(Triggers.CREATURE, new PermanentIsSourceCardPredicate())),
                         ObjectRelation.YOU_CONTROL),
-                new ChooseModeNotYetChosenThisTurnEffect(options));
-        addTrigger(Triggers.youCastSpell(),
-                new ChooseModeNotYetChosenThisTurnOnSpellCastEffect(
-                        null,
-                        new StackEntryManaValuePowerOrToughnessEqualsPredicate(4),
-                        options));
+                new ChooseOneAtTriggerTimeEffect(ChooseOneEffect.notYetChosenThisTurn(options)));
+        addTrigger(Triggers.youCastSpell()
+                        .withStackEntryFilter(new StackEntryManaValuePowerOrToughnessEqualsPredicate(4)),
+                ChooseOneEffect.notYetChosenThisTurn(options));
     }
 }

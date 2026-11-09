@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCreatureCardInHandEffect;
@@ -47,7 +46,7 @@ public class ByElspethsCommand extends Card {
                 new CardSubtypePredicate(CardSubtype.SOLDIER)));
 
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new ChooseModeNotYetChosenThisTurnEffect(List.of(
+                ChooseOneEffect.notChosenDuringLastCombat(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 TARGET_SOLDIER_MODE,
                                 List.of(

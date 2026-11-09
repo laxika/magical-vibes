@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControlledCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForAnotherOpponentPermanentEffect;
@@ -1859,11 +1858,28 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record StackedModalTriggerTarget(UUID stackEntryId, Card sourceCard, TargetFilter targetFilter)
             implements PermanentChoiceContext {}
 
+    /**
+     * A triggered modal ability whose mode is chosen as it is put on the stack (CR 603.3c). Which modes its source
+     * permanent's record excludes, and which record the chosen mode goes to, follow the modal's
+     * {@link ChooseOneEffect#modeRestriction()}: {@code consumeModes} ("hasn't been chosen"),
+     * {@code modesResetEachTurn} ("this turn") and {@code rememberLastChosenMode} ("during your last combat") are set
+     * from it, or by a caller for an engine-built modal.
+     */
     record TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                  UUID sourcePermanentId, boolean modesResetEachTurn,
                                  boolean consumeModes, UUID triggeringCardId,
                                  UUID attackedTargetId, UUID triggeringPermanentId,
                                  boolean rememberLastChosenMode) implements PermanentChoiceContext {
+
+        public TriggeredModalTrigger {
+            ChooseOneEffect.ModeRestriction restriction = effect == null ? ChooseOneEffect.ModeRestriction.NONE
+                    : effect.modeRestriction();
+            consumeModes = consumeModes || restriction == ChooseOneEffect.ModeRestriction.NOT_YET_CHOSEN;
+            modesResetEachTurn = modesResetEachTurn
+                    || restriction == ChooseOneEffect.ModeRestriction.NOT_YET_CHOSEN_THIS_TURN;
+            rememberLastChosenMode = rememberLastChosenMode
+                    || restriction == ChooseOneEffect.ModeRestriction.NOT_CHOSEN_DURING_LAST_COMBAT;
+        }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                                      UUID sourcePermanentId, boolean modesResetEachTurn,
@@ -2424,9 +2440,17 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record UpkeepModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                               UUID sourcePermanentId, boolean consumeModes) implements PermanentChoiceContext {
 
-        public UpkeepModalTrigger(Card sourceCard, UUID controllerId, ChooseModeNotYetChosenEffect effect,
-                                  UUID sourcePermanentId) {
-            this(sourceCard, controllerId, new ChooseOneEffect(effect.options()), sourcePermanentId, true);
+        /**
+         * {@code consumeModes} is set by a "choose one that hasn't been chosen" modal
+         * ({@link ChooseOneEffect.ModeRestriction#NOT_YET_CHOSEN}); the upkeep path tracks no other restriction.
+         */
+        public UpkeepModalTrigger {
+            ChooseOneEffect.ModeRestriction restriction = effect.modeRestriction();
+            if (restriction != ChooseOneEffect.ModeRestriction.NONE
+                    && restriction != ChooseOneEffect.ModeRestriction.NOT_YET_CHOSEN) {
+                throw new IllegalArgumentException("An upkeep modal trigger can't track " + restriction);
+            }
+            consumeModes = consumeModes || restriction == ChooseOneEffect.ModeRestriction.NOT_YET_CHOSEN;
         }
 
         public UpkeepModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,

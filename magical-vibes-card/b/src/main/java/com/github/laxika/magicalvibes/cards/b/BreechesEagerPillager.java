@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
@@ -23,7 +22,7 @@ public class BreechesEagerPillager extends Card {
     public BreechesEagerPillager() {
         addTrigger(Triggers.creatureYouControlAttacks()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.PIRATE)),
-                new ChooseModeNotYetChosenThisTurnEffect(List.of(
+                ChooseOneEffect.notYetChosenThisTurn(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Create a Treasure token", CreateTokenEffect.ofTreasureToken(1)),
                         new ChooseOneEffect.ChooseOneOption(

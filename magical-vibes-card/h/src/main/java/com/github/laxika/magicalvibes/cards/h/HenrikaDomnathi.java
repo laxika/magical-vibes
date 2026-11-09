@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -22,7 +21,7 @@ public class HenrikaDomnathi extends Card {
     public HenrikaDomnathi() {
         setBackFaceCard(new HenrikaInfernalSeer());
 
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ChooseModeNotYetChosenEffect(List.of(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), ChooseOneEffect.notYetChosen(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Each player sacrifices a creature of their choice",
                         new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),

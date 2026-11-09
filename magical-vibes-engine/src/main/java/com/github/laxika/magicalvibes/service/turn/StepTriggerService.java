@@ -61,8 +61,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveScreamCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardAttachedToPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -1090,20 +1088,9 @@ public class StepTriggerService {
                     && !PlayerWithMostLifeGainsControlOfSourceCreatureEffect.hasUniqueLifeLeader(gameData));
             if (upkeepEffects.isEmpty()) continue;
 
-            // "Choose one that hasn't been chosen —" (Demonic Pact): the mode is picked as the
-            // ability goes on the stack, and only then does the chosen mode's own targeting run.
-            CardEffect modal = upkeepEffects.stream()
-                    .filter(ChooseModeNotYetChosenEffect.class::isInstance)
-                    .findFirst().orElse(null);
-            if (modal != null) {
-                gameData.queueInteraction(new PermanentChoiceContext.UpkeepModalTrigger(
-                        perm.getCard(), activePlayerId, (ChooseModeNotYetChosenEffect) modal, perm.getId()));
-                upkeepEffects.remove(modal);
-                if (upkeepEffects.isEmpty()) continue;
-            }
-
             // A modal upkeep trigger ("choose one —") picks its mode as it goes on the stack, whether or
-            // not the modes need targets, so the opponent responds knowing the chosen mode.
+            // not the modes need targets, so the opponent responds knowing the chosen mode; "choose one that
+            // hasn't been chosen" (Demonic Pact) offers only the modes its source hasn't chosen yet.
             CardEffect chooseOne = upkeepEffects.stream()
                     .filter(ChooseOneEffect.class::isInstance)
                     .findFirst().orElse(null);
@@ -3271,14 +3258,11 @@ public class StepTriggerService {
             }
 
             List<CardEffect> modalEffects = triggering.stream()
-                    .filter(effect -> effect instanceof ChooseModeNotYetChosenEffect || effect instanceof ChooseOneEffect)
+                    .filter(ChooseOneEffect.class::isInstance)
                     .toList();
             for (CardEffect modalEffect : modalEffects) {
-                ChooseOneEffect modal = modalEffect instanceof ChooseOneEffect choice ? choice
-                        : new ChooseOneEffect(((ChooseModeNotYetChosenEffect) modalEffect).options());
                 gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                        perm.getCard(), activePlayerId, modal, perm.getId(), false,
-                        modalEffect instanceof ChooseModeNotYetChosenEffect));
+                        perm.getCard(), activePlayerId, (ChooseOneEffect) modalEffect, perm.getId()));
             }
 
             List<CardEffect> playerTargetEffects = triggering.stream()
@@ -5790,13 +5774,6 @@ public class StepTriggerService {
                         gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                                 perm.getCard(), activePlayerId, modal.choice(), perm.getId()));
                         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    } else if (effect instanceof ChooseModeNotYetChosenEffect chooseModeNotYetChosenEffect) {
-                        gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                                perm.getCard(), activePlayerId,
-                                new ChooseOneEffect(chooseModeNotYetChosenEffect.options()), perm.getId(), false, true));
-                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                        log.info("Game {} - {} controller end-step trigger queued for consumed mode selection",
-                                gameData.id, perm.getCard().getName());
                     } else if (effect instanceof ChooseOneEffect chooseOneEffect) {
                         gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                                 perm.getCard(), activePlayerId, chooseOneEffect, perm.getId()));
@@ -6512,22 +6489,12 @@ public class StepTriggerService {
         List<CardEffect> mayEffects = combatEffects.stream()
                 .filter(e -> e instanceof MayEffect && e.targetSpec() == TargetSpec.NONE)
                 .toList();
-        List<ChooseModeNotYetChosenEffect> consumedModalEffects = new ArrayList<>();
-        List<ChooseModeNotYetChosenThisTurnEffect> turnScopedModalEffects = new ArrayList<>();
         List<ChooseOneEffect> modalEffects = new ArrayList<>();
         List<CardEffect> mandatoryEffects = new ArrayList<>();
         for (CardEffect effect : combatEffects) {
             if (effect instanceof ChooseOneAtRandomEffect randomChoice) {
                 mandatoryEffects.addAll(chooseRandomEffectsAtTriggerTime(
                         gameData, controllerId, perm, randomChoice));
-                continue;
-            }
-            if (effect instanceof ChooseModeNotYetChosenEffect chooseMode) {
-                consumedModalEffects.add(chooseMode);
-                continue;
-            }
-            if (effect instanceof ChooseModeNotYetChosenThisTurnEffect chooseMode) {
-                turnScopedModalEffects.add(chooseMode);
                 continue;
             }
             if (effect instanceof ChooseOneEffect chooseOne) {
@@ -6550,22 +6517,6 @@ public class StepTriggerService {
             } else {
                 gameData.queueMayAbility(perm.getCard(), controllerId, may, null, sourcePermanentId);
             }
-        }
-
-        for (ChooseModeNotYetChosenEffect effect : consumedModalEffects) {
-            gameData.queueInteraction(new PermanentChoiceContext.UpkeepModalTrigger(
-                    perm.getCard(), controllerId, effect, sourcePermanentId));
-            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-            log.info("Game {} - {} beginning-of-combat trigger queued for consumed mode selection",
-                    gameData.id, perm.getCard().getName());
-        }
-
-        for (ChooseModeNotYetChosenThisTurnEffect effect : turnScopedModalEffects) {
-            gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                    perm.getCard(), controllerId, new ChooseOneEffect(effect.options()), sourcePermanentId, true));
-            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-            log.info("Game {} - {} beginning-of-combat trigger queued for turn-scoped mode selection",
-                    gameData.id, perm.getCard().getName());
         }
 
         for (ChooseOneEffect effect : modalEffects) {
@@ -6682,7 +6633,7 @@ public class StepTriggerService {
         return new ChooseOneEffect(modal.options(), modal.optional(), modal.choicesRequired(),
                 modal.choicesRequired(), modal.allModesWhenOptionalCostPaid(), modal.modesMayRepeat(), null,
                 modal.modeCosts(), modal.modeBudget(), modal.choicesEqualModalXValue(),
-                modal.anyNumberWhenConditionMet());
+                modal.anyNumberWhenConditionMet()).withModeRestriction(modal.modeRestriction());
     }
 
     private List<CardEffect> chooseRandomEffectsAtTriggerTime(GameData gameData, UUID controllerId,

@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastDiscardedCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -118,6 +119,27 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
             assertThat(entry.getSourcePermanentId()).isEqualTo(source.getId());
         });
+    }
+
+    @Test
+    @DisplayName("Queues a turn-scoped modal discard ability for its mode choice as it triggers")
+    void queuesTurnScopedModalDiscardAbilityForItsModeChoice() {
+        Permanent source = createPermanent("Monument to Endurance");
+        var effect = ChooseOneEffect.notYetChosenThisTurn(List.of(
+                new ChooseOneEffect.ChooseOneOption("Draw a card", new DrawCardEffect(1)),
+                new ChooseOneEffect.ChooseOneOption("Each opponent loses 3 life",
+                        new LoseLifeEffect(3, LoseLifeRecipient.EACH_OPPONENT))));
+        var ctx = new TriggerContext.Discard(player1Id, createCard("Discarded card"));
+
+        boolean result = registry.dispatch(
+                match(source, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).isEmpty();
+        var pending = gd.peekPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
+        assertThat(pending.effect()).isEqualTo(effect);
+        assertThat(pending.sourcePermanentId()).isEqualTo(source.getId());
+        assertThat(pending.modesResetEachTurn()).isTrue();
     }
 
     @Test

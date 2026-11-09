@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandAndDiscardMatchingCardsEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -49,10 +51,10 @@ public class RevealHandAndDiscardMatchingCardsEffectHandler implements NormalEff
         }
 
         UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
-        // "With that spell's mana value" (Infernal Kirin) is a card filter on the ability's X, which the cast
-        // collector gives it.
+        // "With that spell's mana value" (Infernal Kirin) reads the triggering spell as the ability resolves.
+        CardPredicate predicate = AmountEvaluationService.bindTriggeringSpellManaValue(gameData, e.predicate(), entry);
         List<Card> discarded = new ArrayList<>(hand.stream()
-                .filter(card -> predicateEvaluationService.matchesCardPredicate(card, e.predicate(), sourceCardId,
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(card, predicate, sourceCardId,
                         gameData, targetPlayerId, null, null, entry.getXValue()))
                 .toList());
         if (discarded.isEmpty()) {

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -17,7 +16,7 @@ public class GalaGreeters extends Card {
 
     public GalaGreeters() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new ChooseModeNotYetChosenThisTurnEffect(List.of(
+                ChooseOneEffect.notYetChosenThisTurn(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put a +1/+1 counter on this creature.",
                                 new PutCountersOnSourceEffect(1, 1, 1)),

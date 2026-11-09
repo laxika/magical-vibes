@@ -24,7 +24,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTrackedTokensAndCreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -408,7 +407,7 @@ class EnterTriggerCollectorServiceTest {
     void allyCreatureTurnScopedModalQueuesModeSelection() {
         Card source = new Card();
         source.setName("Gala Greeters");
-        addWatched(source, ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, new ChooseModeNotYetChosenThisTurnEffect(List.of(
+        addWatched(source, ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, ChooseOneEffect.notYetChosenThisTurn(List.of(
                         new ChooseOneEffect.ChooseOneOption("First mode", new GainLifeEffect(1)),
                         new ChooseOneEffect.ChooseOneOption("Second mode", new GainLifeEffect(1)))));
         Permanent sourcePermanent = new Permanent(source);

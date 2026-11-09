@@ -11,8 +11,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -201,6 +199,20 @@ public class EnterTriggerCollectorService {
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_ENTERS_TRANSFORMED)
     private boolean handleEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        // "Choose one that hasn't been chosen this turn" (Galadriel, Light of Valinor): the mode is chosen, among
+        // those the source hasn't chosen, as the ability goes on the stack (CR 603.3c), once for each instance.
+        if (effect instanceof ChooseOneEffect restrictedModal
+                && restrictedModal.modeRestriction() != ChooseOneEffect.ModeRestriction.NONE) {
+            UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
+            for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                        match.permanent().getCard(), match.controllerId(), restrictedModal,
+                        match.permanent().getId(), false, false, pe.enteringCard().getId(), null,
+                        enteringPermanentId));
+            }
+            logTriggered(match);
+            return true;
+        }
         if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                 && !effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                 && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
@@ -254,21 +266,6 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    @CollectsWatchTrigger(value = ChooseModeNotYetChosenEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    private boolean handleAllyCreatureEnterModal(TriggerMatchContext match,
-                                                   ChooseModeNotYetChosenEffect effect,
-                                                   TriggerContext ctx) {
-        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                    match.permanent().getCard(), match.controllerId(), new ChooseOneEffect(effect.options()),
-                    match.permanent().getId(), true, pe.enteringCard().getId()));
-        }
-        logTriggered(match);
-        return true;
-    }
-
     @CollectsWatchTrigger(value = ChooseOneAtTriggerTimeEffect.class,
             watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     @CollectsWatchTrigger(value = ChooseOneAtTriggerTimeEffect.class,
@@ -287,23 +284,6 @@ public class EnterTriggerCollectorService {
                     match.permanent().getCard(), match.controllerId(), effect.choice(),
                     match.permanent().getId(), false, false, pe.enteringCard().getId(), null,
                     enteringPermanentId));
-        }
-        logTriggered(match);
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    @CollectsWatchTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class,
-            watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    private boolean handleAllyCreatureEnterTurnScopedModal(TriggerMatchContext match,
-                                                   ChooseModeNotYetChosenThisTurnEffect effect,
-                                                   TriggerContext ctx) {
-        TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                    match.permanent().getCard(), match.controllerId(), new ChooseOneEffect(effect.options()),
-                    match.permanent().getId(), true, pe.enteringCard().getId()));
         }
         logTriggered(match);
         return true;

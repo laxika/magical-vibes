@@ -17,8 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequiredEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -2828,24 +2826,6 @@ public class MiscTriggerCollectorService {
      */
 
     // ── ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD ────────────────────────────
-
-    @CollectsWatchTrigger(value = ChooseModeNotYetChosenThisTurnEffect.class,
-            watch = ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
-    boolean handleTurnScopedModalOnCardsLeaveGraveyard(TriggerMatchContext match,
-            ChooseModeNotYetChosenThisTurnEffect effect, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.ControllerCardsLeaveGraveyard)) {
-            return false;
-        }
-
-        Card sourceCard = match.permanent().getCard();
-        match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                sourceCard, match.controllerId(), new ChooseOneEffect(effect.options()),
-                match.permanent().getId(), true));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on cards leaving graveyard (turn-scoped modal)",
-                match.gameData().id, sourceCard.getName());
-        return true;
-    }
 
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
     boolean handleControllerCardsLeaveGraveyard(TriggerMatchContext match,

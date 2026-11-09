@@ -288,6 +288,9 @@ import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffe
 import com.github.laxika.magicalvibes.model.effect.StationPowerModifierEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsTriggeringSpellPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -295,6 +298,14 @@ import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringP
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueEqualsTriggeringSpellPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -2424,6 +2435,78 @@ public class AmountEvaluationService {
                 .findFirst()
                 .orElse(triggeringSpellSnapshot);
         return spell == null || spell.isCastFaceDown() ? null : spell.getCard().getName();
+    }
+
+    /**
+     * {@code filter} with "that spell's mana value" ({@link CardManaValueEqualsTriggeringSpellPredicate}) read from
+     * {@code entry}'s triggering spell as the ability resolves: the live spell while it is on the stack, else the
+     * entry's snapshot of it (CR 608.2h), with the X chosen for it. No triggering spell matches no card. A filter
+     * without the predicate is returned as it is. Infernal Kirin's "discards all cards with that spell's mana value".
+     */
+    public static CardPredicate bindTriggeringSpellManaValue(GameData gameData, CardPredicate filter,
+                                                             StackEntry entry) {
+        return switch (filter) {
+            case null -> null;
+            case CardManaValueEqualsTriggeringSpellPredicate ignored -> {
+                Integer manaValue = triggeringSpellManaValue(gameData, entry);
+                yield manaValue == null ? new CardNotPredicate(new CardTruePredicate())
+                        : new CardAllOfPredicate(List.of(new CardMinManaValuePredicate(manaValue, false),
+                                new CardMaxManaValuePredicate(manaValue, false)));
+            }
+            case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
+                    .map(part -> bindTriggeringSpellManaValue(gameData, part, entry)).toList());
+            case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
+                    .map(part -> bindTriggeringSpellManaValue(gameData, part, entry)).toList());
+            case CardNotPredicate not -> new CardNotPredicate(bindTriggeringSpellManaValue(gameData, not.predicate(),
+                    entry));
+            default -> filter;
+        };
+    }
+
+    /**
+     * {@code filter} with "that spell's mana value" ({@link PermanentManaValueEqualsTriggeringSpellPredicate}) read from
+     * {@code entry}'s triggering spell as the ability resolves, as {@link #bindTriggeringSpellManaValue(GameData,
+     * CardPredicate, StackEntry)} reads it; a permanent's mana value is its own (a face-down one's 0). Celestial Kirin's
+     * "destroy all permanents with that spell's mana value".
+     */
+    public static PermanentPredicate bindTriggeringSpellManaValue(GameData gameData, PermanentPredicate filter,
+                                                                  StackEntry entry) {
+        return switch (filter) {
+            case null -> null;
+            case PermanentManaValueEqualsTriggeringSpellPredicate ignored -> {
+                Integer manaValue = triggeringSpellManaValue(gameData, entry);
+                yield manaValue == null ? new PermanentNotPredicate(new PermanentTruePredicate())
+                        : new PermanentAllOfPredicate(List.of(new PermanentMinManaValuePredicate(manaValue),
+                                new PermanentMaxManaValuePredicate(manaValue)));
+            }
+            case PermanentAllOfPredicate all -> new PermanentAllOfPredicate(all.predicates().stream()
+                    .map(part -> bindTriggeringSpellManaValue(gameData, part, entry)).toList());
+            case PermanentAnyOfPredicate any -> new PermanentAnyOfPredicate(any.predicates().stream()
+                    .map(part -> bindTriggeringSpellManaValue(gameData, part, entry)).toList());
+            case PermanentNotPredicate not -> new PermanentNotPredicate(bindTriggeringSpellManaValue(gameData,
+                    not.predicate(), entry));
+            default -> filter;
+        };
+    }
+
+    /**
+     * The mana value of {@code entry}'s triggering spell as the ability resolves: the live spell while it is on the
+     * stack, else the entry's snapshot of it (CR 608.2h), with its chosen X (CR 202.3e); {@code null} with neither.
+     */
+    private static Integer triggeringSpellManaValue(GameData gameData, StackEntry entry) {
+        if (entry == null) {
+            return null;
+        }
+        StackEntry snapshot = entry.getTriggeringSpellSnapshot();
+        UUID spellCardId = entry.getTriggeringCardId() != null ? entry.getTriggeringCardId()
+                : snapshot == null ? null : snapshot.getTargetableId();
+        StackEntry spell = spellCardId == null ? snapshot : gameData.stack.stream()
+                .filter(se -> se.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                        && se.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                        && se.getTargetableId().equals(spellCardId))
+                .findFirst()
+                .orElse(snapshot);
+        return spell == null ? null : spellManaValue(spell);
     }
 
     private int countCreatureCardsInGraveyardFromBattlefieldThisTurn(GameData gameData,

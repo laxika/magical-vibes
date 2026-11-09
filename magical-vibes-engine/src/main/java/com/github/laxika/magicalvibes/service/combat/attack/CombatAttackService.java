@@ -73,7 +73,6 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessCountA
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreaterPowerAlsoDoesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseModeNotYetChosenThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeNotChosenDuringLastCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -2097,12 +2096,15 @@ public class CombatAttackService {
                     continue;
                 }
 
+                // "Choose one that hasn't been chosen this turn" (Breeches, Eager Pillager): the mode is chosen as the
+                // ability goes on the stack (CR 603.3c), among the modes its source hasn't chosen this turn.
                 if (matchingEffects.size() == 1
-                        && matchingEffects.getFirst() instanceof ChooseModeNotYetChosenThisTurnEffect modal) {
+                        && matchingEffects.getFirst() instanceof ChooseOneEffect restrictedModal
+                        && restrictedModal.modeRestriction() != ChooseOneEffect.ModeRestriction.NONE) {
                     int previousCopies = beginAttackTriggerCopies(gameData, playerId, perm);
                     try {
                         gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                                perm.getCard(), playerId, new ChooseOneEffect(modal.options()), perm.getId(), true));
+                                perm.getCard(), playerId, restrictedModal, perm.getId()));
                         gameLogService.append(gameData,
                                 GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
                         log.info("Game {} - {} attack trigger queued for mode selection",

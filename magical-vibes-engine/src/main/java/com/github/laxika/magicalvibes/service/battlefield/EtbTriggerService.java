@@ -539,7 +539,7 @@ public class EtbTriggerService {
                 if (minimumChoices != choice.choicesRequired() || maximumChoices != choice.choicesMax()) {
                     choice = new ChooseOneEffect(choice.options(), choice.optional(), minimumChoices,
                             maximumChoices, choice.allModesWhenOptionalCostPaid(), choice.modesMayRepeat(),
-                            choice.additionalModesCondition());
+                            choice.additionalModesCondition()).withModeRestriction(choice.modeRestriction());
                 }
                 for (int i = 0; i < 1 + extraTriggerCopies; i++) {
                     gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
