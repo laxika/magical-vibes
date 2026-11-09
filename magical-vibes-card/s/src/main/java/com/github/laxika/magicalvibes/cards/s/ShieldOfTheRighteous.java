@@ -20,8 +20,8 @@ public class ShieldOfTheRighteous extends Card {
         addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
 
         // Whenever equipped creature blocks a creature, that creature doesn't untap during its
-        // controller's next untap step. SkipNextUntapEffect is a CombatOpponentReferencingEffect, so
-        // the trigger auto-targets the blocked attacker.
+        // controller's next untap step. The card declares no target, so "that creature" is the blocked
+        // attacker the stack entry records.
         addTrigger(Triggers.blocks(), new SkipNextUntapEffect(TapUntapScope.TARGET));
 
         // Equip {2}

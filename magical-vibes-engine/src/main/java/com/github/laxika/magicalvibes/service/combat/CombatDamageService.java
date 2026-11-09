@@ -52,7 +52,6 @@ import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageAssignmentToDefendingPlayerAndCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatDamageResolutionEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -2355,19 +2354,12 @@ public class CombatDamageService {
                 }
 
                 boolean targetsExiledCard = effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD);
-                // A sequence's combat-opponent references describe its other steps; a permanent target one of its
-                // steps declares ("destroy up to one target artifact that player controls and put a +1/+1 counter on
-                // this creature") is still chosen as the ability goes on the stack.
-                boolean sequenceTargetsPermanent = effect instanceof SequenceEffect
-                        && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
                 // A player the card declares no target for is "that player", the player dealt damage, which the
                 // entry records; a declared player target is chosen as the ability goes on the stack (CR 603.3d).
                 if ((effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         || targetsExiledCard
                         || (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                        && creature.getCard().hasEffectTargetIndex(effect)))
-                        && (sequenceTargetsPermanent
-                        || !(effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()))) {
+                        && creature.getCard().hasEffectTargetIndex(effect)))) {
                     if (triggerCollectionService.needsSlotBySlotTargetSelection(creature.getCard())) {
                         gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                 creature.getCard(), attackerId, List.of(effect), creature.getId(), List.of(), 0, 0).withEventValue(damageDealt));
@@ -2821,9 +2813,7 @@ public class CombatDamageService {
                     }
                     // Player recipients on this trigger slot normally mean "that player":
                     // bind the damaged player unless the card explicitly declares a target.
-                    if (!(firedEffect instanceof CombatOpponentReferencingEffect opponentReference
-                            && opponentReference.referencesCombatOpponent())
-                            && (firedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                    if ((firedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             || (firedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             && (perm.getCard().hasEffectTargetIndex(read.effect())
                             || perm.getCard().hasEffectTargetIndex(firedEffect))))) {

@@ -8,15 +8,15 @@ package com.github.laxika.magicalvibes.model.effect;
  * Placed on the {@code Triggers.blocks()} ability (for the
  * "blocks" half) and on {@code Triggers.becomesBlocked()}
  * with {@code TriggerOptions.EACH_BLOCKER} (for the "becomes
- * blocked" half, one trigger per blocker). As a {@link CombatOpponentReferencingEffect} the combat
- * opponent is carried as the trigger's non-targeting target, so the trigger can't fizzle.
+ * blocked" half, one trigger per blocker). The card declares no target, so the collector records the
+ * other creature as the trigger's non-targeting target, and the trigger can't fizzle.
  * <p>
  * Both permanents leave the battlefield for {@code GameData.phasedOutPermanents} (CR 702.26b) and
  * are removed from combat (CR 506.4), so neither deals nor receives combat damage. Having phased
  * out directly, each phases in during its controller's next untap step (CR 702.26a) even though it
  * has no phasing keyword.
  */
-public record PhaseOutSelfAndCombatOpponentEffect() implements CardEffect, CombatOpponentReferencingEffect {
+public record PhaseOutSelfAndCombatOpponentEffect() implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {

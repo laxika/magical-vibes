@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
  * spell carries onto the permanent it resolves into (CR 400.7a).
  */
 public record SetTargetColorEffect(CardColor color, boolean spellOnly, boolean chooseColor)
-        implements CardEffect, CombatOpponentReferencingEffect {
+        implements CardEffect {
 
     /** "Target spell or permanent becomes [color]" — the lace instants. */
     public SetTargetColorEffect(CardColor color) {

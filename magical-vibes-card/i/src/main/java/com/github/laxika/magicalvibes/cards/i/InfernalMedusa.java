@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -14,12 +13,11 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class InfernalMedusa extends Card {
 
     public InfernalMedusa() {
-        PermanentIsCreaturePredicate anyCreature = new PermanentIsCreaturePredicate();
-        addTrigger(Triggers.blocks(), new DestroyCombatOpponentAtEndOfCombatEffect(anyCreature, false));
+        addTrigger(Triggers.blocks(), new DestroyCombatOpponentAtEndOfCombatEffect(false));
 
         PermanentNotPredicate nonWall = new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.WALL));
-        addTrigger(Triggers.becomesBlocked(),
+        addTrigger(Triggers.becomesBlocked().withFilter(nonWall),
                 TriggerOptions.EACH_BLOCKER,
-                new DestroyCombatOpponentAtEndOfCombatEffect(nonWall, false));
+                new DestroyCombatOpponentAtEndOfCombatEffect(false));
     }
 }

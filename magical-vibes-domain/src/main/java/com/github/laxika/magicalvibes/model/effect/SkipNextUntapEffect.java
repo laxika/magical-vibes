@@ -21,11 +21,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * restriction for each opponent's next untap step so permanents arriving later are held too
  * (Pollen Lullaby, CR 611.2c).
  *
- * <p>Also a {@link CombatOpponentReferencingEffect}: when placed on the {@code Triggers.blocks()} ability of an
- * attached permanent (aura/equipment) with {@link TapUntapScope#TARGET}, {@code CombatTriggerService}
- * auto-targets the equipped/enchanted creature's combat opponent (the blocked attacker) — e.g. Shield
- * of the Righteous. On a creature's own {@code Triggers.blocks()} ability (Wall of Frost) the same auto-target
- * is applied by {@code CombatBlockService}. Other scopes ignore the referenced target.
+ * <p>With {@link TapUntapScope#TARGET} on a {@code Triggers.blocks()} ability whose card declares no target
+ * for it, the target is "that creature", the blocked attacker, which the collector records as the entry's
+ * non-targeting target: a creature's own (Wall of Frost) or an Aura's or Equipment's (Shield of the
+ * Righteous). Other scopes ignore the entry's target.
  *
  * @param scope      which permanent(s) to keep tapped through their next untap step
  * @param filter     optional predicate narrowing the scanned scopes (null = no restriction)
@@ -41,7 +40,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps,
                                   boolean matchAtUntap, boolean allPlayersAtUntap, boolean controllerStepOnly,
                                   boolean activationCost)
-        implements CardEffect, CombatOpponentReferencingEffect {
+        implements CardEffect {
 
     public SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps,
                                boolean matchAtUntap, boolean allPlayersAtUntap, boolean controllerStepOnly) {
@@ -85,11 +84,6 @@ public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter
         if (untapSteps < 1) {
             throw new IllegalArgumentException("untapSteps must be positive");
         }
-    }
-
-    @Override
-    public boolean referencesCombatOpponent() {
-        return scope == TapUntapScope.TARGET;
     }
 
     @Override

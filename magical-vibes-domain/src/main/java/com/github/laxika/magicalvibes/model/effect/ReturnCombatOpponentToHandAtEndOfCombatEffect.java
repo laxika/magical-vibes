@@ -15,7 +15,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * returned only if it is still on the battlefield then.
  */
 public record ReturnCombatOpponentToHandAtEndOfCombatEffect()
-        implements CardEffect, CombatOpponentReferencingEffect {
+        implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {

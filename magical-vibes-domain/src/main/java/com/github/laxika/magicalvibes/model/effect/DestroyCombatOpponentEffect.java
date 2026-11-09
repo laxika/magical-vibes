@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param cannotBeRegenerated whether the destruction prevents regeneration
  */
 public record DestroyCombatOpponentEffect(boolean cannotBeRegenerated)
-        implements RemovalEffect, CombatOpponentReferencingEffect {
+        implements RemovalEffect {
 
     @Override
     public TargetSpec targetSpec() {

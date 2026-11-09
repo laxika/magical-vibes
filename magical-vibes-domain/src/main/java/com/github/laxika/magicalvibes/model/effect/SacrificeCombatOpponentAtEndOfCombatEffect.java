@@ -18,7 +18,7 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record SacrificeCombatOpponentAtEndOfCombatEffect(
         CreateTokenEffect tokenForSacrificingPlayer
-) implements CardEffect, CombatOpponentReferencingEffect {
+) implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {

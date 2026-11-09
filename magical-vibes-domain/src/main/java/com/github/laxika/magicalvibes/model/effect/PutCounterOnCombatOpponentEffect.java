@@ -9,9 +9,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * creature."
  *
  * <p>The immediate sibling of {@link PutCounterOnCombatOpponentAtEndOfCombatEffect}, which instead
- * schedules the placement for end of combat. Being a {@link CombatOpponentReferencingEffect}, the
- * block pipeline bakes the combat opponent into the trigger's non-targeting {@code targetId}, so the
- * trigger can't fizzle and no card-level target filter is needed.
+ * schedules the placement for end of combat. The block collector records the creature on the other
+ * side of the block as the trigger's non-targeting {@code targetId}, so the trigger can't fizzle.
  *
  * @param counterType the type of counter to place on the combat opponent
  * @param amount      how many counters to place
@@ -23,7 +22,7 @@ public record PutCounterOnCombatOpponentEffect(
         int amount,
         CardEffect grantedStaticEffect,
         CardEffect grantedUpkeepEffect
-) implements CombatOpponentReferencingEffect {
+) implements CardEffect {
 
     public PutCounterOnCombatOpponentEffect(CounterType counterType, int amount) {
         this(counterType, amount, null, null);

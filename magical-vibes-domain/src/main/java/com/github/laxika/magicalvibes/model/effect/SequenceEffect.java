@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-
 import java.util.List;
 
 /**
@@ -48,7 +47,7 @@ import java.util.List;
  */
 public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean optionalTarget,
                              boolean simultaneous)
-        implements EndStepPlayerTargetedEffect, CombatOpponentReferencingEffect {
+        implements EndStepPlayerTargetedEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
         this(steps, 0, false);
@@ -138,13 +137,5 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
             }
         }
         return false;
-    }
-
-    @Override
-    public boolean referencesCombatOpponent() {
-        return steps.stream()
-                .filter(effect -> effect instanceof CombatOpponentReferencingEffect)
-                .map(effect -> (CombatOpponentReferencingEffect) effect)
-                .anyMatch(CombatOpponentReferencingEffect::referencesCombatOpponent);
     }
 }

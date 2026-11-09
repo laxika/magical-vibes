@@ -14,9 +14,8 @@ public class InfiniteAuthority extends Card {
     public InfiniteAuthority() {
         target(TargetFilters.creature());
         DestroyCombatOpponentAtEndOfCombatEffect destroyAndReward =
-                new DestroyCombatOpponentAtEndOfCombatEffect(
-                        new PermanentToughnessAtMostPredicate(3), false, true);
-        addTrigger(Triggers.blocks(), destroyAndReward);
-        addTrigger(Triggers.becomesBlocked(), TriggerOptions.EACH_BLOCKER, destroyAndReward);
+                new DestroyCombatOpponentAtEndOfCombatEffect(false, true);
+        addTrigger(Triggers.blocks().withFilter(new PermanentToughnessAtMostPredicate(3)), destroyAndReward);
+        addTrigger(Triggers.becomesBlocked().withFilter(new PermanentToughnessAtMostPredicate(3)), TriggerOptions.EACH_BLOCKER, destroyAndReward);
     }
 }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenCombatOpponentMatchesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,9 +20,9 @@ public class DwarvenSoldier extends Card {
         // Whenever this creature blocks or becomes blocked by one or more Orcs,
         // this creature gets +0/+2 until end of turn.
         PermanentHasSubtypePredicate orc = new PermanentHasSubtypePredicate(CardSubtype.ORC);
-        addTrigger(Triggers.blocks(),
+        addTrigger(Triggers.blocks().withFilter(orc),
                 TriggerOptions.ONE_OR_MORE,
-                new BoostSelfWhenCombatOpponentMatchesEffect(orc, 0, 2));
-        addTrigger(Triggers.becomesBlocked(), new BoostSelfWhenCombatOpponentMatchesEffect(orc, 0, 2));
+                new BoostSelfEffect(0, 2));
+        addTrigger(Triggers.becomesBlocked().withFilter(orc), new BoostSelfEffect(0, 2));
     }
 }

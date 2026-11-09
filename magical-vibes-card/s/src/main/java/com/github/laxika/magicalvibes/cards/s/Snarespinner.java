@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenCombatOpponentMatchesEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,7 +14,6 @@ public class Snarespinner extends Card {
 
     public Snarespinner() {
         // Whenever this creature blocks a creature with flying, this creature gets +2/+0 until end of turn.
-        addTrigger(Triggers.blocks(), new BoostSelfWhenCombatOpponentMatchesEffect(
-                new PermanentHasKeywordPredicate(Keyword.FLYING), 2, 0));
+        addTrigger(Triggers.blocks().withFilter(new PermanentHasKeywordPredicate(Keyword.FLYING)), new BoostSelfEffect(2, 0));
     }
 }

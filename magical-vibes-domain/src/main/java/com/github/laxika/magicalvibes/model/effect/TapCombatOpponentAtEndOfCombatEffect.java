@@ -6,7 +6,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code Triggers.endOfCombat()}: the trigger goes on
  * the stack as the end of combat step begins and reads the source's blockers as it resolves.
  */
-public record TapCombatOpponentAtEndOfCombatEffect() implements CardEffect, CombatOpponentReferencingEffect {
+public record TapCombatOpponentAtEndOfCombatEffect() implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {

@@ -41,8 +41,9 @@ class FavorOfTheWoodsTest extends BaseCardTest {
         assertThat(entry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(entry.getCard().getName()).isEqualTo("Favor of the Woods");
         assertThat(entry.getSourcePermanentId()).isEqualTo(aura.getId());
-        // Not a targeted ability — targetId is null
-        assertThat(entry.getTargetId()).isNull();
+        // Not a targeted ability: the blocked attacker is recorded as "that creature", which is no target.
+        assertThat(entry.isNonTargeting()).isTrue();
+        assertThat(entry.getTargetId()).isEqualTo(attacker.getId());
     }
 
     @Test

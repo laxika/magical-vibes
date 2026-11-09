@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 
 /** Creates the wrapped token and puts it onto the battlefield blocking the combat opponent. */
 public record CreateTokenBlockingCombatOpponentEffect(CreateTokenEffect token)
-        implements TokenCreatingEffect, CombatOpponentReferencingEffect {
+        implements TokenCreatingEffect {
 
     @Override
     public DynamicAmount tokenAmount() {

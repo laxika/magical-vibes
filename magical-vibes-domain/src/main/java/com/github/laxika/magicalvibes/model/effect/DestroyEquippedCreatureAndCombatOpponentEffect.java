@@ -6,7 +6,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * ID so moving the Equipment after the ability triggers does not change which creature is destroyed.
  */
 public record DestroyEquippedCreatureAndCombatOpponentEffect()
-        implements CardEffect, CombatOpponentReferencingEffect {
+        implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {

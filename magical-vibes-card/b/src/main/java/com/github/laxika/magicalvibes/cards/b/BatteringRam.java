@@ -26,8 +26,8 @@ public class BatteringRam extends Card {
                 new GrantKeywordEffect(Keyword.BANDING, GrantScope.SELF, GrantDuration.UNTIL_END_OF_COMBAT));
 
         // Whenever this creature becomes blocked by a Wall, destroy that Wall at end of combat.
-        addTrigger(Triggers.becomesBlocked(),
+        addTrigger(Triggers.becomesBlocked().withFilter(new PermanentHasSubtypePredicate(CardSubtype.WALL)),
                 TriggerOptions.EACH_BLOCKER,
-                new DestroyCombatOpponentAtEndOfCombatEffect(new PermanentHasSubtypePredicate(CardSubtype.WALL), false));
+                new DestroyCombatOpponentAtEndOfCombatEffect(false));
     }
 }

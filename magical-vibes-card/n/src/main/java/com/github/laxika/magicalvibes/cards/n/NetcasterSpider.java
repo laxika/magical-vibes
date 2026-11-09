@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfWhenBlockingKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M15", collectorNumber = "186")
@@ -16,6 +17,6 @@ public class NetcasterSpider extends Card {
     public NetcasterSpider() {
         // Reach keyword is auto-loaded from Scryfall.
         // Whenever this creature blocks a creature with flying, this creature gets +2/+0 until end of turn.
-        addTrigger(Triggers.blocks(), new BoostSelfWhenBlockingKeywordEffect(Keyword.FLYING, 2, 0));
+        addTrigger(Triggers.blocks().withFilter(new PermanentHasKeywordPredicate(Keyword.FLYING)), new BoostSelfEffect(2, 0));
     }
 }

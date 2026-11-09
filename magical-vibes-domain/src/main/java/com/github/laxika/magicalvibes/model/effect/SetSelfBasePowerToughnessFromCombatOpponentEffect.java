@@ -6,7 +6,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * stack entry's non-targeting target.
  */
 public record SetSelfBasePowerToughnessFromCombatOpponentEffect()
-        implements CardEffect, CombatOpponentReferencingEffect {
+        implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {

@@ -72,7 +72,7 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                                          DynamicAmount maxManaValue,
                                          Set<com.github.laxika.magicalvibes.model.CardSubtype> untapSourceIfEnteredCardHasAnySubtype,
                                          boolean hasteUntilEndOfTurn)
-        implements CardEffect, CombatOpponentReferencingEffect {
+        implements CardEffect {
 
     public PutCardToBattlefieldEffect {
         faceDownCardTypes = Set.copyOf(faceDownCardTypes);
@@ -286,11 +286,6 @@ public record PutCardToBattlefieldEffect(CardPredicate predicate, String label,
                 cloaked, returnExiledSourceIfSacrificed, returnToHandAtEndStep, predicate, enterBlocking,
                 maxManaValue, untapSourceIfEnteredCardHasAnySubtype,
                 hasteUntilEndOfTurn);
-    }
-
-    @Override
-    public boolean referencesCombatOpponent() {
-        return enterBlocking;
     }
     public PutCardToBattlefieldEffect untapSourceIfEnteredCardHasAnySubtype(
             Set<com.github.laxika.magicalvibes.model.CardSubtype> subtypes) {

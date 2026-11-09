@@ -6,12 +6,12 @@ package com.github.laxika.magicalvibes.model.effect;
  * regardless of any regeneration shields it already has or later gains. The flag is cleared
  * during turn cleanup. Harmful (protection from the source is honoured). Hurr Jackal.
  * <p>
- * Also a {@link CombatOpponentReferencingEffect}: on {@code Triggers.blocks()} /
- * {@code Triggers.becomesBlocked()} ability ({@code EACH_BLOCKER}) the combat opponent is carried as the trigger's
- * non-targeting target (Lim-Dûl's Cohort).
+ * On a {@code Triggers.blocks()} / {@code Triggers.becomesBlocked()} ({@code EACH_BLOCKER}) ability whose card declares
+ * no target for it, the target is "that creature", which the collector records as the entry's non-targeting target
+ * (Lim-Dûl's Cohort).
  */
 public record PreventTargetCreatureRegenerationThisTurnEffect(boolean sourcePermanent)
-        implements CardEffect, CombatOpponentReferencingEffect {
+        implements CardEffect {
 
     public PreventTargetCreatureRegenerationThisTurnEffect() {
         this(false);

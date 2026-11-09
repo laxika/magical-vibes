@@ -41,7 +41,7 @@ REBUILD = re.compile(r"new (?!MayEffect\(|ArrayList|StackEntry|Permanent\()\w+Ef
 UNWRAP = re.compile(r"\.(wrapped|thenEffect|elseEffect|tokenEffect|innerEffect|resolvedEffects?|effects|choice)\(\)")
 
 # Rows of step 15 (effect-slot-refactor.md, run 17z11's Findings).
-B, C, D, E, F = "17z11b", "17z11c", "17z11d", "17z11e", "17z11f"
+B, C, C2, D, E, F = "17z11b", "17z11c", "17z11c2", "17z11d", "17z11e", "17z11f"
 LEGALITY = ("CombatHelper.java", "CombatService.java", "AttackLegalityService.java", "BlockLegalityService.java")
 
 CLASSIFIED = {
@@ -67,8 +67,10 @@ CLASSIFIED = {
     ("CombatBlockService.java", "GrantKeywordEffect"): C,
     ("CombatBlockService.java", "BoostSelfWhenBlockingKeywordEffect"): C,
     ("CombatBlockService.java", "BoostSelfWhenCombatOpponentMatchesEffect"): C,
-    ("CombatBlockService.java", "BoostReferencedPermanentEffect"): C,
-    ("CombatBlockService.java", "BlockPairConditionalEffect"): C,
+    # 17z11c2 (split from 17z11c): the "a creature becomes blocked" watchers' blocked creature as the source and the
+    # attacker-and-blocker pair.
+    ("CombatBlockService.java", "BoostReferencedPermanentEffect"): C2,
+    ("CombatBlockService.java", "BlockPairConditionalEffect"): C2,
     # 17z11d: the attack collectors' declared attackers, attacked player and rebuilt modal.
     ("CombatAttackService.java", "ChooseModeNotChosenDuringLastCombatEffect"): D,
     ("CombatAttackService.java", "GrantKeywordEffect"): D,
@@ -155,7 +157,7 @@ CLASSIFIED = {
     ("TriggerCollectionService.java", "AttachedCreatureBecomesCopyOfExiledCreatureEffect"): "STATIC",
     ("TriggerCollectionService.java", "DrawCardEffect"): "ROUTE",
 }
-OPEN_ROWS = {B, C, D, E, F}
+OPEN_ROWS = {C2, D, E, F}
 
 # The other reads run 17z11 read by hand, all ROUTE or STATIC: a restriction, prevention or replacement, an as-enters
 # choice, a mana ability resolved at once, a modal, graveyard or target prompt picked, a skip or trigger condition.

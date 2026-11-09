@@ -11,7 +11,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * set; the turn engine promotes it to an active restriction at the start of that creature's
  * controller's next turn, so it lasts exactly that one turn.
  */
-public record CantAttackNextTurnCombatOpponentEffect() implements CardEffect, CombatOpponentReferencingEffect {
+public record CantAttackNextTurnCombatOpponentEffect() implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {

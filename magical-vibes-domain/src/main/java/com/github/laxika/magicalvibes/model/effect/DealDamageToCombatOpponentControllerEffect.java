@@ -9,15 +9,14 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * this creature's power" ({@code amount = new SourcePower()}).
  * <p>
  * Placed on the {@code Triggers.blocks()} ability (for the
- * "blocks" half, auto-targeting the blocked attacker). As a {@link CombatOpponentReferencingEffect}
- * the combat opponent is passed as the stack entry's non-targeting target (it can't fizzle) and, on
- * an aura/equipment, {@code CombatTriggerService} auto-targets the enchanted/equipped creature's
- * combat opponent. At resolution the source ({@code sourcePermanentId}, so {@code amount} such as
+ * "blocks" half). The collector records the creature on the other side of the block (on an Aura or
+ * Equipment, the enchanted or equipped creature's) as the stack entry's non-targeting target, so
+ * the ability can't fizzle. At resolution the source ({@code sourcePermanentId}, so {@code amount} such as
  * {@link com.github.laxika.magicalvibes.model.amount.SourcePower} reads this permanent) deals the
  * damage to the opponent's controller.
  */
 public record DealDamageToCombatOpponentControllerEffect(DynamicAmount amount)
-        implements CardEffect, CombatOpponentReferencingEffect, DamageDealingEffect {
+        implements CardEffect, DamageDealingEffect {
 
     @Override
     public TargetSpec targetSpec() {

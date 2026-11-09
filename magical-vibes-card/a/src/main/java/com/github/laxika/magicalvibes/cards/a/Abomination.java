@@ -19,9 +19,9 @@ public class Abomination extends Card {
         // destroy that creature at end of combat.
         PermanentColorInPredicate greenOrWhite =
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN, CardColor.WHITE));
-        addTrigger(Triggers.blocks(), new DestroyCombatOpponentAtEndOfCombatEffect(greenOrWhite, false));
-        addTrigger(Triggers.becomesBlocked(),
+        addTrigger(Triggers.blocks().withFilter(greenOrWhite), new DestroyCombatOpponentAtEndOfCombatEffect(false));
+        addTrigger(Triggers.becomesBlocked().withFilter(greenOrWhite),
                 TriggerOptions.EACH_BLOCKER,
-                new DestroyCombatOpponentAtEndOfCombatEffect(greenOrWhite, false));
+                new DestroyCombatOpponentAtEndOfCombatEffect(false));
     }
 }

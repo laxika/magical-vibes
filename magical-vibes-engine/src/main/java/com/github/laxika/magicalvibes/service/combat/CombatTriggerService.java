@@ -20,8 +20,6 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CombatOpponentReferencingEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
@@ -90,8 +88,8 @@ public class CombatTriggerService {
 
     /**
      * Overload that accepts the combat opponent: the creature the attached creature blocks, which a "blocks" ability's
-     * filter is judged against (Wooden Stake's "blocks … a Vampire") and which an effect that acts on "that creature"
-     * ({@link CombatOpponentReferencingEffect}) gets as the entry's non-targeting target. Without one, a "becomes
+     * filter is judged against (Wooden Stake's "blocks … a Vampire") and which the entry records as "that creature", its
+     * non-targeting target, unless the card declares a target the effect chooses. Without one, a "becomes
      * blocked" ability's filter is judged against every creature blocking it ("becomes blocked by one or more colorless
      * creatures", Hedron Blade).
      */
@@ -150,56 +148,19 @@ public class CombatTriggerService {
                     if (blockFilter != null && !matchesCombatOpponent(gameData, creature, combatOpponent, blockFilter)) {
                         continue;
                     }
-                    List<CardEffect> nonPerBlockerEffects = CombatAbilityReader.effectsOf(ability);
-                    List<CardEffect> effectsForStack = new ArrayList<>();
-                    boolean autoTargetOpponent = false;
-                    for (CardEffect effect : nonPerBlockerEffects) {
-                        if (slot != CombatWatch.ON_ATTACK
-                                && effect instanceof CombatOpponentReferencingEffect c
-                                && c.referencesCombatOpponent()) {
-                            if (combatOpponent != null
-                                    && (!(effect instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect)
-                                    || predicateEvaluationService.matchesPermanentPredicate(
-                                    gameData, combatOpponent, destroyEffect.filter()))) {
-                                effectsForStack.add(effect);
-                                autoTargetOpponent = true;
-                            }
-                        } else {
-                            effectsForStack.add(effect);
-                        }
-                    }
+                    List<CardEffect> effectsForStack = CombatAbilityReader.effectsOf(ability);
                     if (effectsForStack.isEmpty()) continue;
+                    // On a block ability the creature on the other side of the block is "that creature": a permanent
+                    // target the card declares is chosen as the ability goes on the stack (CR 603.3d), and one it
+                    // doesn't declare is that creature (CR 115.10a), which the entry records as its non-targeting
+                    // target whatever the effects are.
+                    boolean thatCreature = slot != CombatWatch.ON_ATTACK && combatOpponent != null;
 
                     int previousCopies = slot == CombatWatch.ON_ATTACK
                             ? beginAttackTriggerCopies(gameData, auraOwnerId, perm)
                             : -1;
                     try {
-                        if (autoTargetOpponent) {
-                            // Auto-targeted combat trigger — goes directly on the stack
-                            StackEntry trigger = new StackEntry(
-                                    StackEntryType.TRIGGERED_ABILITY,
-                                    perm.getCard(),
-                                    auraOwnerId,
-                                    perm.getCard().getName() + "'s triggered ability",
-                                    effectsForStack,
-                                    combatOpponent.getId(),
-                                    perm.getId()
-                            );
-                            trigger.setNonTargeting(true);
-                            trigger.setTriggeringPermanentId(creature.getId());
-                            // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
-                            // (e.g. equipment-granted Afflict) can resolve.
-                            trigger.setAttackedTargetId(creature.getAttackTarget());
-                            trigger.setTriggeringPermanentId(creature.getId());
-                            // "It" and "its controller" are the creature the permanent is attached to, which the entry
-                            // records with its controller and as it last existed, whatever the effects are.
-                            trigger.setTriggeringPermanentControllerId(finalCreatureControllerId);
-                            trigger.setAttachedPermanentSnapshot(new Permanent(creature));
-                            gameData.stack.add(trigger);
-                            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                            log.info("Game {} - {} auto-targeted combat trigger pushed onto stack (attached to {})",
-                                    gameData.id, perm.getCard().getName(), creature.getCard().getName());
-                        } else if (slot == CombatWatch.ON_ATTACK && effectsForStack.stream()
+                        if (slot == CombatWatch.ON_ATTACK && effectsForStack.stream()
                                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
                             UUID attackedTargetId = creature.getAttackTarget();
                             UUID defendingPlayerId = attackedTargetId == null ? null
@@ -213,6 +174,7 @@ public class CombatTriggerService {
                         } else {
                             // Check if any effect needs a permanent target — queue for target selection
                             boolean needsTarget = effectsForStack.stream()
+                                    .filter(e -> !thatCreature || perm.getCard().hasEffectTargetIndex(e))
                                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                             if (needsTarget) {
                                 if (perm.getCard().isAura() && perm.getCard().getTargetGroups().size() > 1
@@ -275,10 +237,11 @@ public class CombatTriggerService {
                                         grantedToCreature ? finalCreatureControllerId : auraOwnerId,
                                         perm.getCard().getName() + "'s triggered ability",
                                         effectsForStack,
-                                        null,
+                                        thatCreature ? combatOpponent.getId() : null,
                                         grantedToCreature ? creature.getId() : perm.getId()
                                 );
-                                // No effect of the ability targets, so nothing on its entry is checked as a target.
+                                // No effect of the ability targets, so nothing on its entry is checked as a target:
+                                // "that creature" is its non-targeting target.
                                 trigger.setNonTargeting(true);
                                 // "Its controller" of the enchanted or equipped creature is the triggering permanent's,
                                 // read as the ability resolves.
@@ -361,22 +324,10 @@ public class CombatTriggerService {
                         Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
 
                         List<CardEffect> transformedEffects = new ArrayList<>();
-                        boolean autoTargetBlocker = false;
                         for (CombatAbilityReader.CombatEffect read : perBlockerEffects) {
-                            if (read.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
+                            if (read.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
                                     gameData, blocker, read.filter())) {
-                                continue;
-                            }
-                            CardEffect effect = read.effect();
-                            if (effect instanceof CombatOpponentReferencingEffect c && c.referencesCombatOpponent()) {
-                                if (!(effect instanceof DestroyCombatOpponentAtEndOfCombatEffect destroyEffect)
-                                        || predicateEvaluationService.matchesPermanentPredicate(
-                                        gameData, blocker, destroyEffect.filter())) {
-                                    transformedEffects.add(effect);
-                                    autoTargetBlocker = true;
-                                }
-                            } else {
-                                transformedEffects.add(effect);
+                                transformedEffects.add(read.effect());
                             }
                         }
                         if (transformedEffects.isEmpty()) continue;
@@ -387,12 +338,11 @@ public class CombatTriggerService {
                                 ownerId,
                                 perm.getCard().getName() + "'s triggered ability",
                                 transformedEffects,
-                                autoTargetBlocker ? blocker.getId() : null,
+                                blocker.getId(),
                                 perm.getId()
                         );
-                        if (autoTargetBlocker) {
-                            trigger.setNonTargeting(true);
-                        }
+                        // "That creature" is the blocker, the entry's non-targeting target whatever the effects are.
+                        trigger.setNonTargeting(true);
                         trigger.setTriggeringPermanentId(attacker.getId());
                         // "It" and "its controller" are the attacking creature, whatever the effects are.
                         trigger.setTriggeringPermanentControllerId(finalControllerId);

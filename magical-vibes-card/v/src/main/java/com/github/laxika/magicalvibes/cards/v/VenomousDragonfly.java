@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,7 +13,7 @@ public class VenomousDragonfly extends Card {
         // Whenever this creature blocks or becomes blocked by a creature,
         // destroy that creature at end of combat.
         DestroyCombatOpponentAtEndOfCombatEffect destroyAtEndOfCombat =
-                new DestroyCombatOpponentAtEndOfCombatEffect(new PermanentIsCreaturePredicate(), false);
+                new DestroyCombatOpponentAtEndOfCombatEffect(false);
         addTrigger(Triggers.blocks(), destroyAtEndOfCombat);
         addTrigger(Triggers.becomesBlocked(), TriggerOptions.EACH_BLOCKER, destroyAtEndOfCombat);
     }

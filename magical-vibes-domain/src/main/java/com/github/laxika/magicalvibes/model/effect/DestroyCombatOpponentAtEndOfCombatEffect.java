@@ -1,35 +1,28 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-
 /**
- * Combat trigger: schedule the combat opponent (the creature this permanent blocks, or that
- * becomes blocked by this permanent) for destruction at end of combat if it matches {@code filter}.
- * Basilisk-style "Whenever this creature blocks or becomes blocked by a [filter] creature, destroy
- * that creature at end of combat." (e.g. Deathgazer's "a nonblack creature" filter).
+ * Combat trigger: schedule "that creature" — the creature the source blocks, or that becomes blocked by it — for
+ * destruction at end of combat. Basilisk-style "Whenever this creature blocks or becomes blocked by a [filter] creature,
+ * destroy that creature at end of combat" (e.g. Deathgazer's "a nonblack creature").
  * <p>
- * Placed on the {@code Triggers.blocks()} ability (for the
- * "blocks" half, auto-targeting the blocked attacker) and on
- * {@code Triggers.becomesBlocked()} ability with
- * {@code TriggerOptions.EACH_BLOCKER} (for the "becomes blocked"
- * half, one trigger per blocker). The referenced creature is passed as the stack entry's target but
- * the trigger does not target (it can't fizzle). At resolution the opponent's colour/type is checked
- * against {@code filter}; a delayed {@link com.github.laxika.magicalvibes.model.action.DelayedPermanentAction}
- * is queued only when it matches.
+ * Placed on the {@code Triggers.blocks()} ability (the "blocks" half) and on the {@code Triggers.becomesBlocked()}
+ * ability with {@code TriggerOptions.EACH_BLOCKER} (the "becomes blocked" half, one trigger per blocker); the
+ * "[filter] creature" is the trigger's filter on the creature on the other side of the block ({@code withFilter}),
+ * judged as it blocks or becomes blocked (CR 509.3f). The card declares no target for it, so the collector records the
+ * other creature as the entry's triggering permanent and non-targeting target (it can't fizzle), which the effect
+ * reads as it resolves.
  *
- * @param filter               the opponent must be a creature matching this predicate to be destroyed
- * @param cannotBeRegenerated  whether the scheduled destruction ignores regeneration shields
+ * @param cannotBeRegenerated           whether the scheduled destruction ignores regeneration shields
  * @param putCounterOnSourceIfDestroyed whether the remembered source creature gets a +1/+1
- *                                     counter at the next end step if the opponent is destroyed
+ *                                      counter at the next end step if the opponent is destroyed
  */
 public record DestroyCombatOpponentAtEndOfCombatEffect(
-        PermanentPredicate filter,
         boolean cannotBeRegenerated,
         boolean putCounterOnSourceIfDestroyed
-) implements CardEffect, CombatOpponentReferencingEffect {
+) implements CardEffect {
 
-    public DestroyCombatOpponentAtEndOfCombatEffect(PermanentPredicate filter, boolean cannotBeRegenerated) {
-        this(filter, cannotBeRegenerated, false);
+    public DestroyCombatOpponentAtEndOfCombatEffect(boolean cannotBeRegenerated) {
+        this(cannotBeRegenerated, false);
     }
 
     @Override

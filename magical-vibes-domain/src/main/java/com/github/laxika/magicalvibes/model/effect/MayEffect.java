@@ -17,7 +17,7 @@ import java.util.UUID;
  *                            the player attacked by an attack trigger
  */
 public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer, UUID choicePlayerId)
-        implements CardEffect, TriggeringPermanentSourceEffect, CombatOpponentReferencingEffect {
+        implements CardEffect, TriggeringPermanentSourceEffect {
 
     public MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer) {
         this(wrapped, prompt, elseEffect, choicePlayer, null);
@@ -60,17 +60,6 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
     public boolean resolvesWhenTargetIllegal() {
         return wrapped.resolvesWhenTargetIllegal();
     }
-
-    @Override
-    public boolean referencesCombatOpponent() {
-        return referencesCombatOpponent(wrapped) || referencesCombatOpponent(elseEffect);
-    }
-
-    private static boolean referencesCombatOpponent(CardEffect effect) {
-        return effect instanceof CombatOpponentReferencingEffect combatOpponent
-                && combatOpponent.referencesCombatOpponent();
-    }
-
 
     @Override
     public boolean sourceIsTriggeringPermanent() {

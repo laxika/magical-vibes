@@ -22,10 +22,10 @@ public class GorgonRecluse extends Card {
         // destroy that creature at end of combat.
         PermanentNotPredicate nonblack = new PermanentNotPredicate(
                 new PermanentColorInPredicate(Set.of(CardColor.BLACK)));
-        addTrigger(Triggers.blocks(), new DestroyCombatOpponentAtEndOfCombatEffect(nonblack, false));
-        addTrigger(Triggers.becomesBlocked(),
+        addTrigger(Triggers.blocks().withFilter(nonblack), new DestroyCombatOpponentAtEndOfCombatEffect(false));
+        addTrigger(Triggers.becomesBlocked().withFilter(nonblack),
                 TriggerOptions.EACH_BLOCKER,
-                new DestroyCombatOpponentAtEndOfCombatEffect(nonblack, false));
+                new DestroyCombatOpponentAtEndOfCombatEffect(false));
 
         // Madness {B}{B}
         addCastingOption(new MadnessCast("{B}{B}"));

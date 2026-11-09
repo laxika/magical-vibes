@@ -20,7 +20,7 @@ import java.util.Set;
  */
 public record GrantKeywordEffect(Set<Keyword> keywords, GrantScope scope, PermanentPredicate filter,
                                  GrantDuration duration, PermanentPredicate grantCondition)
-        implements KeywordGrantingEffect, CombatOpponentReferencingEffect {
+        implements KeywordGrantingEffect {
 
     public GrantKeywordEffect(Keyword keyword, GrantScope scope) {
         this(Set.of(keyword), scope, null, GrantDuration.END_OF_TURN, null);
@@ -53,11 +53,6 @@ public record GrantKeywordEffect(Set<Keyword> keywords, GrantScope scope, Perman
      */
     public static GrantKeywordEffect toTargetIf(Keyword keyword, PermanentPredicate grantCondition) {
         return new GrantKeywordEffect(Set.of(keyword), GrantScope.TARGET, null, GrantDuration.END_OF_TURN, grantCondition);
-    }
-
-    @Override
-    public boolean referencesCombatOpponent() {
-        return scope == GrantScope.TARGET || scope == GrantScope.TARGET_AND_SHARING_CREATURES;
     }
 
     @Override

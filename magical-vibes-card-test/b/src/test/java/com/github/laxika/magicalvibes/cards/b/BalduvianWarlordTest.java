@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.k.KjeldoranOutrider;
 import com.github.laxika.magicalvibes.cards.t.TauntingElf;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BalduvianWarlord.class, KjeldoranOutrider.class, TauntingElf.class})
+@CardUsed({BalduvianWarlord.class, BarrelingAttack.class, KjeldoranOutrider.class, TauntingElf.class})
 class BalduvianWarlordTest extends BaseCardTest {
 
     @Test
@@ -173,6 +174,34 @@ class BalduvianWarlordTest extends BaseCardTest {
                 player2, indexOf(player2, warlord), null, blocker.getId()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("declare blockers step");
+    }
+
+    @Test
+    @DisplayName("the attacker the reassigned blocker blocks gets its delayed becomes-blocked ability")
+    void reassignedBlockerTriggersDelayedBecomesBlockedAbility() {
+        Permanent warlord = addCreatureReady(player2, new BalduvianWarlord());
+        Permanent formerAttacker = addCreatureReady(player1, new KjeldoranOutrider());
+        Permanent chosenAttacker = addCreatureReady(player1, new KjeldoranOutrider());
+        Permanent blocker = addCreatureReady(player2, new KjeldoranOutrider());
+        harness.setHand(player1, List.of(new BarrelingAttack()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.forceActivePlayer(player1);
+        harness.castInstant(player1, 0, chosenAttacker.getId());
+        harness.passBothPriorities();
+
+        setUpCombat(formerAttacker, chosenAttacker, blocker);
+        assertThat(chosenAttacker.getPowerModifier()).isZero();
+
+        harness.activateAbility(player2, indexOf(player2, warlord), null, blocker.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, chosenAttacker.getId());
+
+        // The attacker was unblocked, so becoming blocked by the reassigned creature triggers Barreling Attack's
+        // "when that creature becomes blocked this turn" (CR 509.3c).
+        assertThat(blocker.getBlockingTargetIds()).containsExactly(chosenAttacker.getId());
+        harness.passBothPriorities();
+        assertThat(chosenAttacker.getPowerModifier()).isEqualTo(1);
+        assertThat(chosenAttacker.getToughnessModifier()).isEqualTo(1);
     }
 
     private void setUpCombat(Permanent formerAttacker, Permanent chosenAttacker, Permanent blocker) {

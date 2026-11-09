@@ -16,9 +16,9 @@ public class RockBasilisk extends Card {
         // Whenever this creature blocks or becomes blocked by a non-Wall creature,
         // destroy that creature at end of combat.
         PermanentNotPredicate nonWall = new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.WALL));
-        addTrigger(Triggers.blocks(), new DestroyCombatOpponentAtEndOfCombatEffect(nonWall, false));
-        addTrigger(Triggers.becomesBlocked(),
+        addTrigger(Triggers.blocks().withFilter(nonWall), new DestroyCombatOpponentAtEndOfCombatEffect(false));
+        addTrigger(Triggers.becomesBlocked().withFilter(nonWall),
                 TriggerOptions.EACH_BLOCKER,
-                new DestroyCombatOpponentAtEndOfCombatEffect(nonWall, false));
+                new DestroyCombatOpponentAtEndOfCombatEffect(false));
     }
 }

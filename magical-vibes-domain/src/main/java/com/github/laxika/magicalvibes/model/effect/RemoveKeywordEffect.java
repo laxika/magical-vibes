@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 /**
  * One-shot or continuous keyword removal for permanents selected by {@code scope}.
  *
- * <p>Also a {@link CombatOpponentReferencingEffect}: with {@link GrantScope#TARGET} on
- * {@code Triggers.blocks()} / {@code Triggers.becomesBlocked()} ability ({@code EACH_BLOCKER}) the combat opponent is carried
- * as the trigger's non-targeting target (Talruum Champion).
+ * <p>With {@link GrantScope#TARGET} on a {@code Triggers.blocks()} / {@code Triggers.becomesBlocked()} ({@code EACH_BLOCKER})
+ * ability whose card declares no target for it, the target is "that creature", the creature on the other side of the
+ * block, which the collector records as the entry's non-targeting target (Talruum Champion).
  */
 public record RemoveKeywordEffect(Keyword keyword, GrantScope scope, PermanentPredicate filter,
                                   EffectDuration duration)
-        implements CardEffect, CombatOpponentReferencingEffect {
+        implements CardEffect {
 
     public RemoveKeywordEffect(Keyword keyword, GrantScope scope) {
         this(keyword, scope, null, EffectDuration.UNTIL_END_OF_TURN);
@@ -24,11 +24,6 @@ public record RemoveKeywordEffect(Keyword keyword, GrantScope scope, PermanentPr
 
     public RemoveKeywordEffect(Keyword keyword, GrantScope scope, EffectDuration duration) {
         this(keyword, scope, null, duration);
-    }
-
-    @Override
-    public boolean referencesCombatOpponent() {
-        return scope == GrantScope.TARGET;
     }
 
     @Override

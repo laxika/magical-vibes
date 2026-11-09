@@ -5,7 +5,7 @@ public record DestroyAttachmentsOnTargetCreatureEffect(
         boolean auras,
         boolean equipment,
         TargetPredicate declaredTarget
-) implements CardEffect, CombatOpponentReferencingEffect {
+) implements CardEffect {
 
     public DestroyAttachmentsOnTargetCreatureEffect(boolean auras, boolean equipment) {
         this(auras, equipment, TargetPredicates.creature());
