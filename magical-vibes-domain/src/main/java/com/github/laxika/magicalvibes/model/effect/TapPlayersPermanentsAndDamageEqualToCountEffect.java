@@ -13,5 +13,5 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * already-tapped ones are neither tapped again nor counted.
  */
 public record TapPlayersPermanentsAndDamageEqualToCountEffect(PermanentPredicate filter)
-        implements EndStepPlayerTargetedEffect {
+        implements CardEffect {
 }

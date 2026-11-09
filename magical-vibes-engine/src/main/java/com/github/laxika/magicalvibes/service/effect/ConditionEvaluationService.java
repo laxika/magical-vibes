@@ -284,7 +284,7 @@ import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.EnchantmentPutIntoGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.LandPutIntoGraveyardFromBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ExiledCardTypeThreshold;
-import com.github.laxika.magicalvibes.model.condition.EndStepPlayerDidntCastCreatureSpell;
+import com.github.laxika.magicalvibes.model.condition.EndStepPlayerDidntCastSpell;
 import com.github.laxika.magicalvibes.model.condition.EnteredFromZone;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.condition.EquippedCreatureDidntDealCombatDamageToCreatureThisTurn;
@@ -855,10 +855,10 @@ public class ConditionEvaluationService {
                     isSourceEnchanted(gameData, ctx);
             case EnchantedByAtLeastAuras c ->
                     countAurasAttachedToSource(gameData, ctx) >= c.minimum();
-            case EndStepPlayerDidntCastCreatureSpell ignored ->
+            case EndStepPlayerDidntCastSpell c ->
                     ctx.targetId() != null
                             && gameData.getSpellsCastThisTurn(ctx.targetId()).stream()
-                                    .noneMatch(spell -> spell.hasType(CardType.CREATURE));
+                                    .noneMatch(spell -> c.spellType() == null || spell.hasType(c.spellType()));
             case ExtraTurn ignored -> gameData.currentTurnIsExtraTurn;
             case EventValueAtLeast c ->
                     (eventValue != null ? eventValue : ctx.eventValue()) >= c.minimum();

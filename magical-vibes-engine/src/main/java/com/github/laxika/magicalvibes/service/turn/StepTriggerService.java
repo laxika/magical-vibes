@@ -99,7 +99,6 @@ import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileIntoOwn
 import com.github.laxika.magicalvibes.model.effect.PutUnplayedExiledCardsIntoOwnersGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostLifeGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNextEndStep;
 import com.github.laxika.magicalvibes.model.action.TargetPlayerHandExileReturnAtNextTurnEndStep;
@@ -163,7 +162,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedPermanentAn
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.MaySkipDrawReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveRadCountersEffect;
@@ -198,9 +196,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.GrantedUpkeepEffectSupport;
-import com.github.laxika.magicalvibes.model.effect.DealDamageIfDidntCastSpellThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEndStepPlayerIfLifeAtMostEffect;
-import com.github.laxika.magicalvibes.model.effect.EndStepPlayerTargetedEffect;
 import com.github.laxika.magicalvibes.model.effect.MonarchEndStepTriggeredEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
@@ -311,6 +306,7 @@ public class StepTriggerService {
     private static final StepTrigger YOUR_UPKEEP = Triggers.upkeep(ActivePlayer.YOU);
     private static final StepTrigger EACH_UPKEEP = Triggers.upkeep(ActivePlayer.ANY);
     private static final StepTrigger OPPONENT_UPKEEP = Triggers.upkeep(ActivePlayer.OPPONENT);
+    private static final StepTrigger CHOSEN_PLAYER_UPKEEP = Triggers.upkeep(ActivePlayer.CHOSEN_PLAYER);
     private static final StepTrigger ENCHANTED_PLAYER_UPKEEP = Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER);
     private static final StepTrigger ENCHANTED_CONTROLLER_UPKEEP =
             Triggers.upkeep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER);
@@ -527,16 +523,26 @@ public class StepTriggerService {
                 }
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, source, emblem.controllerId(), description,
-                        new ArrayList<>(upkeepTrigger.effects()),
-                        opponentStep ? gameData.activePlayerId : null,
-                        (UUID) null);
-                entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                        new ArrayList<>(upkeepTrigger.effects()));
+                gameData.stack.add(recordStepPlayer(entry, gameData.activePlayerId));
                 gameLogService.append(gameData, GameLog.text(
                         description + " triggers: \"" + upkeepTrigger.reminderText() + "\""));
                 log.info("Game {} - {} {} emblem trigger pushed onto stack", gameData.id, description, step);
             }
         }
+    }
+
+    /**
+     * Records the step's event on {@code entry}, an ability that chooses no target: the player whose step it is, as
+     * the entry's active and triggering player and as its non-targeting target, "that player" (CR 115.10a). The
+     * effects read it as the ability resolves, whatever their class.
+     */
+    private static StackEntry recordStepPlayer(StackEntry entry, UUID activePlayerId) {
+        entry.setActivePlayerId(activePlayerId);
+        entry.setTriggeringPlayerId(activePlayerId);
+        entry.setTargetId(activePlayerId);
+        entry.setNonTargeting(true);
+        return entry;
     }
 
     /**
@@ -1456,29 +1462,27 @@ public class StepTriggerService {
         gameData.forEachPermanent(eachUpkeep);
         gameData.forEachFaceUpSchemeSource(eachUpkeep);
 
-        // Check all battlefields for Triggers.upkeep(ActivePlayer.OPPONENT) effects (only opponents of the active
-        // player)
+        // Triggers.upkeep(ActivePlayer.OPPONENT): "at the beginning of each opponent's upkeep", only for an opponent of
+        // the permanent's controller; Triggers.upkeep(ActivePlayer.CHOSEN_PLAYER): "at the beginning of the chosen
+        // player's upkeep", only for the player chosen as the permanent entered, whoever controls it now (The Rack's
+        // ruling). Either way "that player" is the player whose upkeep it is.
         gameData.forEachBattlefield((playerId, playerBattlefield) -> {
             for (Permanent perm : gameData.permanentsAndFaceUpSchemes(playerId)) {
                 if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                List<CardEffect> opponentUpkeepEffects = printedEffects(gameData, perm.getCard(), OPPONENT_UPKEEP,
-                        Zone.BATTLEFIELD, ConditionContext.forPermanent(perm, playerId));
-                if (opponentUpkeepEffects == null || opponentUpkeepEffects.isEmpty()) continue;
-
-                boolean hasChosenPlayer = perm.getCard().getOwnEntryEffects().stream()
-                        .anyMatch(RememberTargetPlayerEffect.class::isInstance)
-                        || perm.getCard().getStaticEffects().stream().anyMatch(
-                                com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect.class::isInstance);
-                if (playerId.equals(activePlayerId) && !hasChosenPlayer) continue;
+                ConditionContext upkeepContext = ConditionContext.forPermanent(perm, playerId)
+                        .withTargetId(activePlayerId);
+                List<CardEffect> opponentUpkeepEffects = new ArrayList<>();
+                if (!playerId.equals(activePlayerId)) {
+                    opponentUpkeepEffects.addAll(printedEffects(gameData, perm.getCard(), OPPONENT_UPKEEP,
+                            Zone.BATTLEFIELD, upkeepContext));
+                }
                 UUID chosenPlayerId = perm.getChosenPlayerIds().isEmpty()
                         ? perm.getRememberedTargetPlayerId() : perm.getChosenPlayerIds().getFirst();
-                if (hasChosenPlayer && chosenPlayerId == null) {
-                    UUID originalControllerId = gameData.stolenCreatures.getOrDefault(perm.getId(), playerId);
-                    chosenPlayerId = gameQueryService.getOpponentId(gameData, originalControllerId);
+                if (activePlayerId.equals(chosenPlayerId)) {
+                    opponentUpkeepEffects.addAll(printedEffects(gameData, perm.getCard(), CHOSEN_PLAYER_UPKEEP,
+                            Zone.BATTLEFIELD, upkeepContext));
                 }
-                if (hasChosenPlayer && !activePlayerId.equals(chosenPlayerId)) continue;
-
-                UUID upkeepPlayerId = hasChosenPlayer ? chosenPlayerId : activePlayerId;
+                if (opponentUpkeepEffects.isEmpty()) continue;
 
                 for (CardEffect effect : opponentUpkeepEffects) {
                     // Intervening-if: check condition at trigger time
@@ -1503,13 +1507,11 @@ public class StepTriggerService {
                                 playerId,
                                 perm.getCard().getName() + "'s upkeep ability",
                                 new ArrayList<>(List.of(effect)),
-                                upkeepPlayerId,
+                                (UUID) null,
                                 perm.getId()
                         );
-                        // The upkeep player is baked in as the effect's player, not chosen as a target (hexproof is irrelevant).
-                        entry.setNonTargeting(true);
                         entry.setSourcePermanentSnapshot(new Permanent(perm));
-                        gameData.stack.add(entry);
+                        gameData.stack.add(recordStepPlayer(entry, activePlayerId));
                     }
 
                     gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
@@ -3023,17 +3025,11 @@ public class StepTriggerService {
         // Check all battlefields for "at the beginning of each draw step" abilities (all players' draw steps)
         gameData.forEachPermanent((playerId, perm) -> {
             List<CardEffect> drawEffects = printedEffects(gameData, perm.getCard(), EACH_DRAW_STEP, Zone.BATTLEFIELD,
-                    ConditionContext.forPermanent(perm, playerId));
+                    ConditionContext.forPermanent(perm, playerId).withTargetId(activePlayerId));
             if (drawEffects == null || drawEffects.isEmpty()) return;
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
 
             for (CardEffect effect : drawEffects) {
-                // Intervening-if: skip trigger if the effect requires an untapped source and it's tapped
-                if (effect instanceof DrawCardForTargetPlayerEffect dcEffect
-                        && dcEffect.requireSourceUntapped() && perm.isTapped()) {
-                    continue;
-                }
-
                 // "At the beginning of each opponent's draw step" — never triggers on the controller's own draw step.
                 if (effect instanceof OpponentDrawStepOnlyEffect opponentDrawStepOnly
                         && opponentDrawStepOnly.opponentDrawStepOnly()
@@ -3041,24 +3037,18 @@ public class StepTriggerService {
                     continue;
                 }
 
-                StackEntry drawTrigger = new StackEntry(
+                // "That player" is the player whose draw step it is, whatever the effect (Howling Mine, Teferi's
+                // Puzzle Box).
+                StackEntry drawTrigger = recordStepPlayer(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         playerId,
                         perm.getCard().getName() + "'s draw step ability",
                         new ArrayList<>(List.of(effect)),
-                        activePlayerId,
+                        (UUID) null,
                         perm.getId()
-                );
-                if (effect instanceof DrawCardForTargetPlayerEffect dcEffect && !dcEffect.targetsPlayer()) {
-                    // "that player draws" refers to the active player without targeting them.
-                    drawTrigger.setNonTargeting(true);
-                }
-                // "that player" in Teferi's Puzzle Box is not a target, so shroud or hexproof on the
-                // active player does not make the trigger fizzle.
-                if (effect instanceof PutHandOnBottomOfLibraryAndDrawEffect) {
-                    drawTrigger.setNonTargeting(true);
-                }
+                ), activePlayerId);
+                drawTrigger.setSourcePermanentSnapshot(new Permanent(perm));
                 gameData.stack.add(drawTrigger);
 
                 gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s draw step ability triggers."));
@@ -5483,7 +5473,8 @@ public class StepTriggerService {
             for (Permanent perm : gameData.permanentsAndFaceUpSchemes(playerId)) {
                 if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
                 List<CardEffect> endStepEffects = new ArrayList<>();
-                ConditionContext endStepContext = ConditionContext.forPermanent(perm, playerId);
+                ConditionContext endStepContext = ConditionContext.forPermanent(perm, playerId)
+                        .withTargetId(activePlayerId);
                 // A Curse's "each end step" ability acts on the enchanted player; the curse loop below collects it.
                 if (!enchantsPlayer(gameData, perm)) {
                     endStepEffects.addAll(printedEffects(gameData, perm.getCard(), EACH_END_STEP, Zone.BATTLEFIELD,
@@ -5504,52 +5495,6 @@ public class StepTriggerService {
                             && (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                             || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)))) {
                         gameData.queueMayAbility(perm.getCard(), playerId, may, null, perm.getId());
-                    } else if (effect instanceof DealDamageIfDidntCastSpellThisTurnEffect) {
-                        // Intervening-if (CR 603.4): only trigger if the end-step player (the active
-                        // player) didn't cast a spell this turn. Bake that player into targetId so the
-                        // damage is dealt to them; re-checked at resolution. Impatience.
-                        if (gameData.getSpellsCastThisTurnCount(activePlayerId) > 0) {
-                            log.info("Game {} - {} end-step trigger skipped (active player cast a spell this turn)",
-                                    gameData.id, perm.getCard().getName());
-                            continue;
-                        }
-                        StackEntry trigger = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s end step ability",
-                                new ArrayList<>(List.of(effect)),
-                                activePlayerId,
-                                perm.getId()
-                        );
-                        trigger.setNonTargeting(true);
-                        gameData.stack.add(trigger);
-                        gameLogService.append(gameData,
-                                GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
-                        log.info("Game {} - {} end-step didn't-cast-spell trigger pushed onto stack", gameData.id, perm.getCard().getName());
-                    } else if (effect instanceof DealDamageToEndStepPlayerIfLifeAtMostEffect lifeDamage) {
-                        // Intervening-if (CR 603.4): only trigger if the end-step player (the active
-                        // player) has N or less life. Bake that player into targetId so the damage is
-                        // dealt to them; re-checked at resolution. Razor Pendulum.
-                        if (gameData.playerLifeTotals.getOrDefault(activePlayerId, 20) > lifeDamage.lifeThreshold()) {
-                            log.info("Game {} - {} end-step trigger skipped (active player above {} life)",
-                                    gameData.id, perm.getCard().getName(), lifeDamage.lifeThreshold());
-                            continue;
-                        }
-                        StackEntry trigger = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s end step ability",
-                                new ArrayList<>(List.of(effect)),
-                                activePlayerId,
-                                perm.getId()
-                        );
-                        trigger.setNonTargeting(true);
-                        gameData.stack.add(trigger);
-                        gameLogService.append(gameData,
-                                GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
-                        log.info("Game {} - {} end-step low-life trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof SacrificeSelfAndReturnCardsExiledWithSourceEffect sacReturn) {
                         // Intervening-if: only trigger if N or more cards have been exiled with the
                         // source permanent (CR 603.4). Re-checked again at resolution.
@@ -5574,18 +5519,16 @@ public class StepTriggerService {
                             && conditional.wrapped() instanceof MayEffect may) {
                         // An intervening-if "you may" (CR 603.4), e.g. Sygg, River Cutthroat: the reader judged the
                         // condition as the ability triggered; the ConditionalEffect wrapper is pushed intact so
-                        // resolution re-checks it and then prompts the optional "you may".
-                        UUID endStepTargetId = may.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER
-                                ? activePlayerId : null;
-                        gameData.stack.add(new StackEntry(
+                        // resolution re-checks it and then prompts the optional "you may" (CR 603.5).
+                        gameData.stack.add(recordStepPlayer(new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 playerId,
                                 perm.getCard().getName() + "'s end step ability",
                                 new ArrayList<>(List.of(effect)),
-                                endStepTargetId,
+                                (UUID) null,
                                 perm.getId()
-                        ));
+                        ), activePlayerId));
                         gameLogService.append(gameData,
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
                         log.info("Game {} - {} end-step conditional-may trigger pushed onto stack", gameData.id, perm.getCard().getName());
@@ -5617,23 +5560,17 @@ public class StepTriggerService {
                                     perm.getCard(), playerId, new ArrayList<>(List.of(effect)), perm.getId()));
                         }
                     } else {
-                        // EndStepPlayerTargetedEffect ("... that player ...") reads the end-step
-                        // player off targetId; every other end-step effect gets a null target id.
-                        boolean targetsEndStepPlayer = effect instanceof EndStepPlayerTargetedEffect
-                                || effect instanceof ConditionalEffect conditional
-                                && conditional.wrapped() instanceof EndStepPlayerTargetedEffect;
-                        UUID endStepTargetId = targetsEndStepPlayer ? activePlayerId : null;
+                        // "That player" is the player whose end step it is, whatever the effect.
                         StackEntry endStepEntry = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
                                 playerId,
                                 perm.getCard().getName() + "'s end step ability",
                                 new ArrayList<>(List.of(effect)),
-                                endStepTargetId,
+                                (UUID) null,
                                 perm.getId()
                         );
-                        endStepEntry.setNonTargeting(targetsEndStepPlayer);
-                        gameData.stack.add(endStepEntry);
+                        gameData.stack.add(recordStepPlayer(endStepEntry, activePlayerId));
 
                         gameLogService.append(gameData,
                                 GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
@@ -5937,17 +5874,13 @@ public class StepTriggerService {
                                 perm.getId()
                         );
                         entry.setSourcePermanentSnapshot(new Permanent(perm));
-                        if (effect instanceof DamageDealingEffect) {
-                            if (perm.isAttached()) {
-                                UUID enchantedPermanentControllerId =
-                                        gameQueryService.findPermanentController(gameData, perm.getAttachedTo());
-                                entry.setTargetId(enchantedPermanentControllerId);
-                                entry.setNonTargeting(true);
-                                Permanent attached = gameQueryService.findPermanentById(gameData, perm.getAttachedTo());
-                                if (attached != null) {
-                                    entry.setAttachedPermanentSnapshot(new Permanent(attached));
-                                }
-                            }
+                        // An Aura's or Equipment's ability records the permanent it is attached to, whatever its
+                        // effects: "enchanted artifact's controller" (Gremlin Infestation) is read as it resolves,
+                        // and the permanent's last-known controller once it has left.
+                        Permanent attached = perm.isAttached()
+                                ? gameQueryService.findPermanentById(gameData, perm.getAttachedTo()) : null;
+                        if (attached != null) {
+                            entry.setAttachedPermanentSnapshot(new Permanent(attached));
                         }
                         gameData.stack.add(entry);
 

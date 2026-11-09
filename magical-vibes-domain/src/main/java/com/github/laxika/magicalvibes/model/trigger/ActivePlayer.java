@@ -17,5 +17,11 @@ public enum ActivePlayer {
      * The controller of the permanent the source enchants: "at the beginning of the upkeep of enchanted creature's
      * controller".
      */
-    ENCHANTED_PERMANENT_CONTROLLER
+    ENCHANTED_PERMANENT_CONTROLLER,
+    /**
+     * The player the source's controller chose as it entered ("as this enters, choose an opponent"), which stays the
+     * chosen player if the source changes control: "at the beginning of the chosen player's upkeep" (The Rack). With no
+     * chosen player (the source didn't enter, or entered without the choice) the ability never triggers.
+     */
+    CHOSEN_PLAYER
 }

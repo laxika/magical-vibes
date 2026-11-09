@@ -47,7 +47,7 @@ import java.util.List;
  */
 public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean optionalTarget,
                              boolean simultaneous)
-        implements EndStepPlayerTargetedEffect {
+        implements CardEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
         this(steps, 0, false);

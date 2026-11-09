@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * The end-step player is captured by the trigger machinery rather than chosen as a target.
  */
 public record DealDamageToEndStepPlayerEffect(DynamicAmount amount)
-        implements EndStepPlayerTargetedEffect, DamageDealingEffect {
+        implements DamageDealingEffect {
 
     @Override
     public DynamicAmount damageAmount() {

@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "10E", collectorNumber = "325")
@@ -26,6 +28,10 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class HowlingMine extends Card {
 
     public HowlingMine() {
-        addTrigger(Triggers.drawStep(ActivePlayer.ANY), new DrawCardForTargetPlayerEffect(1, true));
+        // At the beginning of each player's draw step, if this artifact is untapped, that player draws an
+        // additional card.
+        addTrigger(Triggers.drawStep(ActivePlayer.ANY),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()),
+                new DrawCardForTargetPlayerEffect(1));
     }
 }

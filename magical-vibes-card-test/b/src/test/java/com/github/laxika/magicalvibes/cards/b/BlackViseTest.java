@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AvariceTotem;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.IvoryMask;
+import com.github.laxika.magicalvibes.cards.m.MizziumTransreliquat;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -16,7 +17,7 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BlackVise.class, GrizzlyBears.class, AvariceTotem.class, IvoryMask.class, Disenchant.class})
+@CardUsed({BlackVise.class, GrizzlyBears.class, AvariceTotem.class, IvoryMask.class, Disenchant.class, MizziumTransreliquat.class})
 class BlackViseTest extends BaseCardTest {
 
     private List<Card> bears(int count) {
@@ -26,7 +27,7 @@ class BlackViseTest extends BaseCardTest {
     @Test
     @DisplayName("Deals (hand size - 4) damage during the opponent's upkeep")
     void dealsScalingDamage() {
-        harness.addToBattlefield(player1, new BlackVise());
+        harness.addToBattlefieldAndReturn(player1, new BlackVise()).setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player2, bears(6)); // 6 - 4 = 2 damage
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -39,7 +40,7 @@ class BlackViseTest extends BaseCardTest {
     @Test
     @DisplayName("Deals no damage when the opponent has exactly four cards in hand")
     void noDamageWithFourCards() {
-        harness.addToBattlefield(player1, new BlackVise());
+        harness.addToBattlefieldAndReturn(player1, new BlackVise()).setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player2, bears(4)); // 4 - 4 = 0
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -52,7 +53,7 @@ class BlackViseTest extends BaseCardTest {
     @Test
     @DisplayName("Deals no damage when the opponent has fewer than four cards in hand")
     void noDamageWithFewerCards() {
-        harness.addToBattlefield(player1, new BlackVise());
+        harness.addToBattlefieldAndReturn(player1, new BlackVise()).setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player2, bears(1)); // 1 - 4 = -3, clamps to 0
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -65,7 +66,7 @@ class BlackViseTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger during the controller's own upkeep")
     void doesNotTriggerDuringOwnUpkeep() {
-        harness.addToBattlefield(player1, new BlackVise());
+        harness.addToBattlefieldAndReturn(player1, new BlackVise()).setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player1, bears(7)); // full hand, but controller is unaffected
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -78,7 +79,7 @@ class BlackViseTest extends BaseCardTest {
     @Test
     @DisplayName("Damage is recomputed from the hand size at resolution")
     void amountRecomputedAtResolution() {
-        harness.addToBattlefield(player1, new BlackVise());
+        harness.addToBattlefieldAndReturn(player1, new BlackVise()).setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player2, bears(6)); // would be 2 at trigger time
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -130,7 +131,7 @@ class BlackViseTest extends BaseCardTest {
     @Test
     @DisplayName("The upkeep ability damages the chosen player even if that player has shroud")
     void upkeepDamageDoesNotTargetTheChosenPlayer() {
-        harness.addToBattlefield(player1, new BlackVise());
+        harness.addToBattlefieldAndReturn(player1, new BlackVise()).setRememberedTargetPlayerId(player2.getId());
         harness.addToBattlefield(player2, new IvoryMask());
         harness.setHand(player2, bears(6));
 
@@ -144,7 +145,7 @@ class BlackViseTest extends BaseCardTest {
     @Test
     @DisplayName("Deals no damage when the chosen player has an empty hand")
     void noDamageWithEmptyHand() {
-        harness.addToBattlefield(player1, new BlackVise());
+        harness.addToBattlefieldAndReturn(player1, new BlackVise()).setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player2, List.of());
 
         advanceToUpkeep(player2);
@@ -156,7 +157,7 @@ class BlackViseTest extends BaseCardTest {
     @Test
     @DisplayName("Deals no damage if the hand shrinks below five cards before resolution")
     void noDamageWhenHandShrinksBeforeResolution() {
-        harness.addToBattlefield(player1, new BlackVise());
+        harness.addToBattlefieldAndReturn(player1, new BlackVise()).setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player2, bears(7));
 
         advanceToUpkeep(player2);
@@ -170,6 +171,7 @@ class BlackViseTest extends BaseCardTest {
     @DisplayName("An upkeep ability still deals damage after Black Vise is destroyed")
     void upkeepDamageSurvivesSourceRemoval() {
         var blackVise = harness.addToBattlefieldAndReturn(player1, new BlackVise());
+        blackVise.setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player2, bears(6));
         harness.setHand(player1, List.of(new Disenchant()));
 
@@ -183,4 +185,28 @@ class BlackViseTest extends BaseCardTest {
 
         harness.assertLife(player2, 18);
     }
+
+    @Test
+    @DisplayName("A permanent that becomes a copy of Black Vise has no chosen player, so its ability never triggers")
+    void copyWithoutChosenPlayerDoesNotTrigger() {
+        var blackVise = harness.addToBattlefieldAndReturn(player1, new BlackVise());
+        blackVise.setRememberedTargetPlayerId(player2.getId());
+        harness.addToBattlefield(player1, new MizziumTransreliquat());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.activateAbility(player1, 1, 1, null, blackVise.getId());
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Black Vise");
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Black Vise")).hasSize(2);
+        harness.setHand(player2, bears(6));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
+    }
+
 }

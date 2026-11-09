@@ -27,7 +27,7 @@ public class EnergyVortex extends Card {
 
         // At the beginning of the chosen player's upkeep, deal 3 damage to them unless they pay {1}
         // for each vortex counter.
-        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
+        addTrigger(Triggers.upkeep(ActivePlayer.CHOSEN_PLAYER),
                 new DamageTargetPlayerUnlessPaysPerCounterEffect(3, CounterType.VORTEX, "{1}"));
 
         addActivatedAbility(new ActivatedAbility(

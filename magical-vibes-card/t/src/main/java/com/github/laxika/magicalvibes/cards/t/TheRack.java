@@ -29,7 +29,7 @@ public class TheRack extends Card {
         // cards in their hand." Remember that player even if this artifact changes controllers.
         // X = max(0, 3 - cards in hand), floored so a full hand deals no damage.
         addStaticEffect(new ChooseOpponentOnEnterEffect());
-        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
+        addTrigger(Triggers.upkeep(ActivePlayer.CHOSEN_PLAYER),
                 new DealDamageToPlayersEffect(
                         new Max(new Fixed(0),
                                 new Sum(new Fixed(3), new Scaled(new CardsInHand(CountScope.TARGET_PLAYER), -1))),

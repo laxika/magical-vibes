@@ -23,6 +23,7 @@ class EnergyVortexTest extends BaseCardTest {
     @DisplayName("{X} ability puts X vortex counters on during the controller's upkeep")
     void abilityPutsXVortexCounters() {
         Permanent vortex = harness.addToBattlefieldAndReturn(player1, new EnergyVortex());
+        vortex.setRememberedTargetPlayerId(player2.getId());
 
         advanceToUpkeep(player1);
 
@@ -36,7 +37,7 @@ class EnergyVortexTest extends BaseCardTest {
     @Test
     @DisplayName("{X} ability cannot be activated outside the controller's upkeep")
     void abilityRestrictedToOwnUpkeep() {
-        harness.addToBattlefieldAndReturn(player1, new EnergyVortex());
+        harness.addToBattlefieldAndReturn(player1, new EnergyVortex()).setRememberedTargetPlayerId(player2.getId());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, null))
@@ -47,6 +48,7 @@ class EnergyVortexTest extends BaseCardTest {
     @DisplayName("Controller's upkeep removes all vortex counters")
     void controllerUpkeepRemovesAllCounters() {
         Permanent vortex = harness.addToBattlefieldAndReturn(player1, new EnergyVortex());
+        vortex.setRememberedTargetPlayerId(player2.getId());
         vortex.setCounterCount(CounterType.VORTEX, 4);
 
         advanceToUpkeep(player1);
@@ -59,6 +61,7 @@ class EnergyVortexTest extends BaseCardTest {
     @DisplayName("Opponent declining the per-counter payment takes 3 damage")
     void opponentDecliningTakesThreeDamage() {
         Permanent vortex = harness.addToBattlefieldAndReturn(player1, new EnergyVortex());
+        vortex.setRememberedTargetPlayerId(player2.getId());
         vortex.setCounterCount(CounterType.VORTEX, 2);
 
         advanceToUpkeep(player2);
@@ -75,6 +78,7 @@ class EnergyVortexTest extends BaseCardTest {
     @DisplayName("Opponent paying {1} per vortex counter avoids the damage")
     void opponentPayingAvoidsDamage() {
         Permanent vortex = harness.addToBattlefieldAndReturn(player1, new EnergyVortex());
+        vortex.setRememberedTargetPlayerId(player2.getId());
         vortex.setCounterCount(CounterType.VORTEX, 2);
 
         advanceToUpkeep(player2);
@@ -90,6 +94,7 @@ class EnergyVortexTest extends BaseCardTest {
     @DisplayName("Accepting without enough mana still deals the damage")
     void acceptingWithoutManaStillDealsDamage() {
         Permanent vortex = harness.addToBattlefieldAndReturn(player1, new EnergyVortex());
+        vortex.setRememberedTargetPlayerId(player2.getId());
         vortex.setCounterCount(CounterType.VORTEX, 2);
 
         advanceToUpkeep(player2);
@@ -104,7 +109,7 @@ class EnergyVortexTest extends BaseCardTest {
     @Test
     @DisplayName("With no vortex counters the opponent can pay zero to avoid damage")
     void noCountersAllowsFreePayment() {
-        harness.addToBattlefieldAndReturn(player1, new EnergyVortex());
+        harness.addToBattlefieldAndReturn(player1, new EnergyVortex()).setRememberedTargetPlayerId(player2.getId());
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
@@ -118,6 +123,7 @@ class EnergyVortexTest extends BaseCardTest {
     @DisplayName("Upkeep ability still deals damage after Energy Vortex leaves the battlefield")
     void upkeepAbilityUsesLastKnownInformationAfterVortexLeavesBattlefield() {
         Permanent vortex = harness.addToBattlefieldAndReturn(player1, new EnergyVortex());
+        vortex.setRememberedTargetPlayerId(player2.getId());
         vortex.setCounterCount(CounterType.VORTEX, 2);
         harness.setHand(player2, List.of(new Boomerang()));
 
@@ -136,7 +142,7 @@ class EnergyVortexTest extends BaseCardTest {
     @Test
     @DisplayName("Declining the free payment with zero counters still deals 3 damage")
     void decliningFreePaymentDealsDamage() {
-        harness.addToBattlefield(player1, new EnergyVortex());
+        harness.addToBattlefieldAndReturn(player1, new EnergyVortex()).setRememberedTargetPlayerId(player2.getId());
 
         advanceToUpkeep(player2);
         harness.passBothPriorities();
@@ -150,6 +156,7 @@ class EnergyVortexTest extends BaseCardTest {
     @DisplayName("Counters added in response to the removal trigger are removed when it resolves")
     void countersAddedBeforeRemovalResolvesAreRemoved() {
         Permanent vortex = harness.addToBattlefieldAndReturn(player1, new EnergyVortex());
+        vortex.setRememberedTargetPlayerId(player2.getId());
         vortex.setCounterCount(CounterType.VORTEX, 2);
 
         advanceToUpkeep(player1);
@@ -165,7 +172,7 @@ class EnergyVortexTest extends BaseCardTest {
     @Test
     @DisplayName("The counter ability cannot be activated during the opponent's upkeep")
     void abilityRestrictedDuringOpponentsUpkeep() {
-        harness.addToBattlefield(player1, new EnergyVortex());
+        harness.addToBattlefieldAndReturn(player1, new EnergyVortex()).setRememberedTargetPlayerId(player2.getId());
         advanceToUpkeep(player2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
@@ -177,6 +184,7 @@ class EnergyVortexTest extends BaseCardTest {
     @DisplayName("Changing control does not change the player chosen as Energy Vortex enters")
     void controlChangePreservesChosenPlayer() {
         Permanent vortex = harness.addToBattlefieldAndReturn(player1, new EnergyVortex());
+        vortex.setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player2, List.of(new StealEnchantment()));
         harness.forceActivePlayer(player2);
         harness.addMana(player2, ManaColor.BLUE, 2);

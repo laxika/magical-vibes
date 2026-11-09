@@ -39,7 +39,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public record SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
         SacrificeRecipient recipient, boolean countPerSacrificingPlayer, boolean recordSacrificedCount,
         boolean recordSacrificedPower, boolean simultaneousChoices)
-        implements CardEffect, EndStepPlayerTargetedEffect {
+        implements CardEffect {
 
     public SacrificePermanentsEffect(DynamicAmount count, PermanentPredicate filter,
             SacrificeRecipient recipient, boolean countPerSacrificingPlayer,

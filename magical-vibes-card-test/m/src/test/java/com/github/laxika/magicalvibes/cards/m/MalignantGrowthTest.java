@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.i.IvoryMask;
 import com.github.laxika.magicalvibes.cards.s.SpiritOfTheLabyrinth;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MalignantGrowth.class, Disenchant.class, SpiritOfTheLabyrinth.class})
+@CardUsed({MalignantGrowth.class, Disenchant.class, SpiritOfTheLabyrinth.class, IvoryMask.class})
 class MalignantGrowthTest extends BaseCardTest {
 
     private void advanceToDraw(Player activePlayer) {
@@ -200,4 +201,22 @@ class MalignantGrowthTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(growth);
     }
+
+    @Test
+    @DisplayName("\"That player\" isn't a target: a player with shroud still draws and is dealt the damage")
+    void thatPlayerWithShroudStillDrawsAndTakesDamage() {
+        Permanent growth = harness.addToBattlefieldAndReturn(player1, new MalignantGrowth());
+        growth.setCounterCount(CounterType.GROWTH, 2);
+        harness.addToBattlefield(player2, new IvoryMask());
+
+        int deckBefore = gd.playerDecks.get(player2.getId()).size();
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        advanceToDraw(player2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckBefore - 3);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+    }
+
 }

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.RandomDiscardCardsAtNextUpkeep;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -423,11 +424,12 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Triggers.drawStep(ActivePlayer.ANY) skips when source requires untapped and is tapped")
+        @DisplayName("Triggers.drawStep(ActivePlayer.ANY) with an untapped-source intervening if skips a tapped source")
         void eachDrawTriggeredSkipsWhenSourceTapped() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Howling Mine");
-            card.addTrigger(Triggers.drawStep(ActivePlayer.ANY), new DrawCardForTargetPlayerEffect(1, true));
+            card.addTrigger(Triggers.drawStep(ActivePlayer.ANY),
+                    TriggerOptions.DEFAULT.withInterveningIf(new SourceUntapped()), new DrawCardForTargetPlayerEffect(1));
             Permanent perm = new Permanent(card);
             perm.tap();
             gd.playerBattlefields.get(player1Id).add(perm);
@@ -1344,6 +1346,40 @@ class StepTriggerServiceTest {
         }
 
         @Test
+        @DisplayName("Triggers.upkeep(ActivePlayer.CHOSEN_PLAYER) fires on the chosen player's upkeep, even its controller's")
+        void chosenPlayerUpkeepFiresForTheChosenPlayer() {
+            gd.turnNumber = 2;
+            Card card = createCardWithName("Chosen Player Card");
+            card.addTrigger(Triggers.upkeep(ActivePlayer.CHOSEN_PLAYER), new GainLifeEffect(1));
+            Permanent permanent = new Permanent(card);
+            permanent.setRememberedTargetPlayerId(player1Id);
+            gd.playerBattlefields.get(player1Id).add(permanent);
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(player1Id);
+            assertThat(gd.stack.getFirst().getTriggeringPlayerId()).isEqualTo(player1Id);
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Triggers.upkeep(ActivePlayer.CHOSEN_PLAYER) doesn't fire without a chosen player or for another player")
+        void chosenPlayerUpkeepDoesNotFireWithoutTheChosenPlayer() {
+            gd.turnNumber = 2;
+            Card card = createCardWithName("Chosen Player Card");
+            card.addTrigger(Triggers.upkeep(ActivePlayer.CHOSEN_PLAYER), new GainLifeEffect(1));
+            gd.playerBattlefields.get(player2Id).add(new Permanent(card));
+            Permanent chosenOther = new Permanent(card);
+            chosenOther.setRememberedTargetPlayerId(player2Id);
+            gd.playerBattlefields.get(player2Id).add(chosenOther);
+
+            sut.handleUpkeepTriggers(gd);
+
+            assertThat(gd.stack).isEmpty();
+        }
+
+        @Test
         @DisplayName("Triggers.upkeep(ActivePlayer.OPPONENT) with DealDamageIfFewCardsInHandEffect triggers when hand size meets condition")
         void opponentUpkeepFewCardsTriggersWhenConditionMet() {
             gd.turnNumber = 2;
@@ -2009,7 +2045,7 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Triggers.endStep(ActivePlayer.ANY) EndStepPlayerTargetedEffect bakes the end-step player into targetId")
+        @DisplayName("Triggers.endStep(ActivePlayer.ANY) records the end-step player as \"that player\"")
         void endStepPlayerTargetedEffectBakesActivePlayer() {
             Card card = createCardWithName("Monsoon-like Card");
             card.addTrigger(Triggers.endStep(ActivePlayer.ANY),
@@ -2020,11 +2056,12 @@ class StepTriggerServiceTest {
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(gd.activePlayerId);
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         }
 
         @Test
-        @DisplayName("Triggers.endStep(ActivePlayer.ANY) with a plain effect gets a null targetId")
-        void endStepPlainEffectHasNoTargetId() {
+        @DisplayName("Triggers.endStep(ActivePlayer.ANY) records the end-step player whatever the effect")
+        void endStepPlainEffectRecordsEndStepPlayer() {
             Card card = createCardWithName("Plain End Step Card");
             card.addTrigger(Triggers.endStep(ActivePlayer.ANY), new GainLifeEffect(1));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
@@ -2032,7 +2069,9 @@ class StepTriggerServiceTest {
             sut.handleEndStepTriggers(gd);
 
             assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getTargetId()).isNull();
+            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(gd.activePlayerId);
+            assertThat(gd.stack.getFirst().getTriggeringPlayerId()).isEqualTo(gd.activePlayerId);
+            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         }
 
         @Test

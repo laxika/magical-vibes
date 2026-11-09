@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 public record PutCountersOnSelfEffect(CounterType counterType, int count, DynamicAmount amount,
                                       boolean targetsPlayer, boolean excludeDamageSource,
                                       boolean hasExternalPermanentTarget)
-        implements EndStepPlayerTargetedEffect {
+        implements CardEffect {
 
     public PutCountersOnSelfEffect(CounterType counterType) {
         this(counterType, 1, null, false, false, false);

@@ -269,7 +269,7 @@ public sealed interface Condition permits
         FaceDownCreatureEnteredThisTurn,
         FaceDownPermanentEnteredThisTurn,
         FirstCombatPhase,
-        EndStepPlayerDidntCastCreatureSpell,
+        EndStepPlayerDidntCastSpell,
         ExtraTurn,
         Equipped,
         SourceHasAtLeastAttachedEquipment,

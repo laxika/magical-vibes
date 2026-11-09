@@ -26,7 +26,7 @@ public class BlackVise extends Card {
 
     public BlackVise() {
         addStaticEffect(new ChooseOpponentOnEnterEffect());
-        addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
+        addTrigger(Triggers.upkeep(ActivePlayer.CHOSEN_PLAYER),
                 new DealDamageToPlayersEffect(
                         new Sum(new CardsInHand(CountScope.TARGET_PLAYER), new Fixed(-4)),
                         DamageRecipient.CHOSEN_PLAYER));

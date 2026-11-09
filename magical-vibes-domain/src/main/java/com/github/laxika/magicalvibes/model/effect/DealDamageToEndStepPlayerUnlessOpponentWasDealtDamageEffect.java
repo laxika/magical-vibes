@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * put on the stack can still prevent this damage.
  */
 public record DealDamageToEndStepPlayerUnlessOpponentWasDealtDamageEffect(int damage)
-        implements EndStepPlayerTargetedEffect, DamageDealingEffect {
+        implements DamageDealingEffect {
 
     @Override
     public DynamicAmount damageAmount() {

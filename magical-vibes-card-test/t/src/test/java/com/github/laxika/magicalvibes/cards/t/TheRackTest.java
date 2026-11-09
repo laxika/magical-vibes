@@ -20,7 +20,7 @@ class TheRackTest extends BaseCardTest {
     @Test
     @DisplayName("Chosen opponent's upkeep with empty hand deals 3 damage")
     void emptyHandDealsThree() {
-        harness.addToBattlefield(player1, new TheRack());
+        harness.addToBattlefieldAndReturn(player1, new TheRack()).setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player2, List.of());
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -33,7 +33,7 @@ class TheRackTest extends BaseCardTest {
     @Test
     @DisplayName("Chosen opponent's upkeep with one card deals 2 damage")
     void oneCardDealsTwo() {
-        harness.addToBattlefield(player1, new TheRack());
+        harness.addToBattlefieldAndReturn(player1, new TheRack()).setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player2, List.of(new GrizzlyBears()));
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -46,7 +46,7 @@ class TheRackTest extends BaseCardTest {
     @Test
     @DisplayName("Chosen opponent's upkeep with three cards deals no damage")
     void threeCardsDealsNothing() {
-        harness.addToBattlefield(player1, new TheRack());
+        harness.addToBattlefieldAndReturn(player1, new TheRack()).setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -59,7 +59,7 @@ class TheRackTest extends BaseCardTest {
     @Test
     @DisplayName("A full hand floors the damage at zero (never gains life)")
     void fullHandFlooredAtZero() {
-        harness.addToBattlefield(player1, new TheRack());
+        harness.addToBattlefieldAndReturn(player1, new TheRack()).setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player2, List.of(
                 new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears(),
                 new GrizzlyBears(), new GrizzlyBears()));
@@ -74,7 +74,7 @@ class TheRackTest extends BaseCardTest {
     @Test
     @DisplayName("Does not trigger on the controller's own upkeep")
     void doesNotTriggerOnControllerUpkeep() {
-        harness.addToBattlefield(player1, new TheRack());
+        harness.addToBattlefieldAndReturn(player1, new TheRack()).setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player1, List.of());
         int controllerLifeBefore = gd.playerLifeTotals.get(player1.getId());
 
@@ -86,7 +86,7 @@ class TheRackTest extends BaseCardTest {
 
     @Test
     void usesHandSizeAtResolution() {
-        harness.addToBattlefield(player1, new TheRack());
+        harness.addToBattlefieldAndReturn(player1, new TheRack()).setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player2, List.of(new GrizzlyBears()));
         int lifeBefore = gd.playerLifeTotals.get(player2.getId());
 
@@ -101,6 +101,7 @@ class TheRackTest extends BaseCardTest {
     @DisplayName("Still damages the chosen opponent after control changes")
     void chosenOpponentRemainsAffectedAfterControlChange() {
         var rack = harness.addToBattlefieldAndReturn(player1, new TheRack());
+        rack.setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player2, List.of(new StealArtifact()));
         harness.addMana(player2, ManaColor.BLUE, 4);
         harness.forceActivePlayer(player2);
@@ -139,7 +140,7 @@ class TheRackTest extends BaseCardTest {
     @Test
     @DisplayName("The upkeep ability damages the chosen player even if that player has shroud")
     void upkeepDamageDoesNotTargetTheChosenPlayer() {
-        harness.addToBattlefield(player1, new TheRack());
+        harness.addToBattlefieldAndReturn(player1, new TheRack()).setRememberedTargetPlayerId(player2.getId());
         harness.addToBattlefield(player2, new IvoryMask());
         harness.setHand(player2, List.of());
 
@@ -152,7 +153,7 @@ class TheRackTest extends BaseCardTest {
     @Test
     @DisplayName("Chosen opponent's upkeep with two cards deals 1 damage")
     void twoCardsDealsOne() {
-        harness.addToBattlefield(player1, new TheRack());
+        harness.addToBattlefieldAndReturn(player1, new TheRack()).setRememberedTargetPlayerId(player2.getId());
         harness.setHand(player2, List.of(new GrizzlyBears(), new GrizzlyBears()));
 
         advanceToUpkeep(player2);

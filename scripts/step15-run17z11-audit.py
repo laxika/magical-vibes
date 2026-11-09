@@ -41,7 +41,7 @@ REBUILD = re.compile(r"new (?!MayEffect\(|ArrayList|StackEntry|Permanent\()\w+Ef
 UNWRAP = re.compile(r"\.(wrapped|thenEffect|elseEffect|tokenEffect|innerEffect|resolvedEffects?|effects|choice)\(\)")
 
 # Rows of step 15 (effect-slot-refactor.md, run 17z11's Findings).
-B, C, C2, D, E, F = "17z11b", "17z11c", "17z11c2", "17z11d", "17z11e", "17z11f"
+B, C, C2, D, E, E2, F = "17z11b", "17z11c", "17z11c2", "17z11d", "17z11e", "17z11e2", "17z11f"
 LEGALITY = ("CombatHelper.java", "CombatService.java", "AttackLegalityService.java", "BlockLegalityService.java")
 
 CLASSIFIED = {
@@ -70,25 +70,20 @@ CLASSIFIED = {
     # 17z11c2 and 17z11d (done): the "a creature becomes blocked" watchers, the attacker-and-blocker pair and the attack
     # collectors' declared attackers, band, attacked player, granted controller and rebuilt modal no longer read an
     # effect's class; neither does the planar "whenever you attack" collector's GrantKeywordEffect (was 17z11f's).
-    # 17z11e: the step collectors' "that player", enchanted permanent, emblem and random-mode bindings.
-    ("StepTriggerService.java", "EmblemStepTriggerEffect"): E,
-    ("StepTriggerService.java", "LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect"): E,
-    ("StepTriggerService.java", "ForcedCostOrElseEffect"): E,
-    ("StepTriggerService.java", "RememberTargetPlayerEffect"): E,
-    ("StepTriggerService.java", "ChooseOpponentOnEnterEffect"): E,
-    ("StepTriggerService.java", "SacrificeEnchantedCreatureEffect"): E,
-    ("StepTriggerService.java", "DestroyEnchantedCreatureThenRevealUntilCreatureAndAttachSourceAuraEffect"): E,
-    ("StepTriggerService.java", "AllPermanentsUpkeepSacrificeUnlessPayEffect"): E,
-    ("StepTriggerService.java", "PutCountersOnUntapLockedPermanentsEffect"): E,
-    ("StepTriggerService.java", "DrawCardForTargetPlayerEffect"): E,
-    ("StepTriggerService.java", "PutHandOnBottomOfLibraryAndDrawEffect"): E,
-    ("StepTriggerService.java", "ChooseOneAtRandomEffect"): E,
-    ("StepTriggerService.java", "DealDamageIfDidntCastSpellThisTurnEffect"): E,
-    ("StepTriggerService.java", "DealDamageToEndStepPlayerIfLifeAtMostEffect"): E,
-    ("StepTriggerService.java", "EndStepPlayerTargetedEffect"): E,
-    ("StepTriggerService.java", "GainControlIfSubtypesDealtCombatDamageEffect"): E,
-    ("StepTriggerService.java", "DamageDealingEffect"): E,
-    ("StepTriggerService.java", "SacrificeEnchantedPermanentAndReattachSourceAuraEffect"): E,
+    # 17z11e (done): the end step's, the draw step's, the opponent's and chosen player's upkeep's and the emblems' "that
+    # player" and the enchanted permanent's controller are recorded whatever the effects are; the emblem's step ability
+    # is found by its class (ROUTE).
+    ("StepTriggerService.java", "EmblemStepTriggerEffect"): "ROUTE",
+    # 17z11e2 (split from 17z11e): the Aura grants, the payers, the rebuilds and the unwraps.
+    ("StepTriggerService.java", "LookAtTopCardsCreatureSharingTypeWithEnchantedToBattlefieldEffect"): E2,
+    ("StepTriggerService.java", "ForcedCostOrElseEffect"): E2,
+    ("StepTriggerService.java", "SacrificeEnchantedCreatureEffect"): E2,
+    ("StepTriggerService.java", "DestroyEnchantedCreatureThenRevealUntilCreatureAndAttachSourceAuraEffect"): E2,
+    ("StepTriggerService.java", "AllPermanentsUpkeepSacrificeUnlessPayEffect"): E2,
+    ("StepTriggerService.java", "PutCountersOnUntapLockedPermanentsEffect"): E2,
+    ("StepTriggerService.java", "ChooseOneAtRandomEffect"): E2,
+    ("StepTriggerService.java", "GainControlIfSubtypesDealtCombatDamageEffect"): E2,
+    ("StepTriggerService.java", "SacrificeEnchantedPermanentAndReattachSourceAuraEffect"): E2,
     # 17z11f: TriggerCollectionService's and the enter service's other bindings, and the combat damage rebuilds.
     ("CombatDamageService.java", "GainLifeEqualToControlledCreatureCombatDamageEffect"): F,
     ("CombatDamageService.java", "ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffect"): F,
@@ -150,7 +145,7 @@ CLASSIFIED = {
     ("TriggerCollectionService.java", "AttachedCreatureBecomesCopyOfExiledCreatureEffect"): "STATIC",
     ("TriggerCollectionService.java", "DrawCardEffect"): "ROUTE",
 }
-OPEN_ROWS = {E, F}
+OPEN_ROWS = {E2, F}
 
 # The other reads run 17z11 read by hand, all ROUTE or STATIC: a restriction, prevention or replacement, an as-enters
 # choice, a mana ability resolved at once, a modal, graveyard or target prompt picked, a skip or trigger condition.
@@ -216,11 +211,12 @@ REVIEWED_ROUTE = {
 
 
 # The trigger collectors' `getOpponentId` picks ("an opponent" judged as the one opponent of a two-player game): every
-# file of service/trigger/ and the step and enter services. Row 17z11e takes the step collector's fallback for a missing
-# chosen player; the combat services' defending-player picks are combat's two-player assumption, not a trigger's.
+# file of service/trigger/ and the step and enter services. Row 17z11e removed the step collector's last, the fallback
+# for a missing chosen player; the combat services' defending-player picks are combat's two-player assumption, not a
+# trigger's.
 PICK_FILES = sorted({*(S / "trigger").glob("*.java"), S / "turn/StepTriggerService.java",
                      S / "battlefield/EtbTriggerService.java"})
-PICKS = {"StepTriggerService.java": E}
+PICKS = {}
 
 
 def heuristic(lines, i):

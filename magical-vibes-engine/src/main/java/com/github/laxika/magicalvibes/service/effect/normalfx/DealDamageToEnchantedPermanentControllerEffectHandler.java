@@ -61,8 +61,12 @@ public class DealDamageToEnchantedPermanentControllerEffectHandler implements No
             return gameQueryService.findPermanentController(gameData, enchanted.getId());
         }
 
-        // The enchanted permanent is gone and the Aura was put into the graveyard as an orphan, so its
-        // snapshot no longer names what it enchanted: use the controller captured when the permanent died.
+        // The enchanted permanent is gone: its last-known controller, recorded on the entry as it left when the
+        // entry records the permanent the Aura was attached to (CR 608.2h). An orphaned Aura's death trigger has
+        // the controller captured when the permanent died as its targetId instead.
+        if (entry.getAttachedPermanentSnapshot() != null && entry.getTriggeringPermanentControllerId() != null) {
+            return entry.getTriggeringPermanentControllerId();
+        }
         UUID capturedControllerId = entry.getTargetId();
         return capturedControllerId != null && gameData.playerIds.contains(capturedControllerId)
                 ? capturedControllerId : null;
