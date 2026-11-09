@@ -42,6 +42,7 @@ UNWRAP = re.compile(r"\.(wrapped|thenEffect|elseEffect|tokenEffect|innerEffect|r
 
 # Rows of step 15 (effect-slot-refactor.md, run 17z11's Findings).
 B, C, C2, D, E, E2, E3, F = "17z11b", "17z11c", "17z11c2", "17z11d", "17z11e", "17z11e2", "17z11e3", "17z11f"
+F2, F3 = "17z11f2", "17z11f3"
 LEGALITY = ("CombatHelper.java", "CombatService.java", "AttackLegalityService.java", "BlockLegalityService.java")
 
 CLASSIFIED = {
@@ -80,37 +81,40 @@ CLASSIFIED = {
     # Brass's target filter is a predicate. "Choose one at random" picks its mode as the ability goes on the stack, before
     # its targets (CR 603.3c, 700.2b), as a "choose one" does: the class picks the path (ROUTE).
     ("StepTriggerService.java", "ChooseOneAtRandomEffect"): "ROUTE",
-    # 17z11e3 (split from 17z11e2): Giant Oyster's draw-step counters are a delayed triggered ability of the activation.
-    ("StepTriggerService.java", "PutCountersOnUntapLockedPermanentsEffect"): E3,
-    # 17z11f: TriggerCollectionService's and the enter service's other bindings, and the combat damage rebuilds.
-    ("CombatDamageService.java", "GainLifeEqualToControlledCreatureCombatDamageEffect"): F,
-    ("CombatDamageService.java", "ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffect"): F,
-    ("CombatDamageService.java", "ReturnPermanentsOnCombatDamageToPlayerEffect"): F,
-    ("EtbTriggerService.java", "TriggeredAbilityCounterEffect"): F,
-    ("EtbTriggerService.java", "DealDividedDamageEffect"): F,
-    ("EtbTriggerService.java", "PreventDividedDamageEffect"): F,
-    ("EtbTriggerService.java", "DistributeCountersAmongTargetsEffect"): F,
-    ("EtbTriggerService.java", "SacrificeArtifactThenDealDividedDamageEffect"): F,
-    ("TriggerCollectionService.java", "CounterUnlessEffect"): F,
-    ("TriggerCollectionService.java", "ExileTargetOnControllerSpellCastEffect"): F,
-    ("TriggerCollectionService.java", "CascadeEffect"): F,
-    ("TriggerCollectionService.java", "DemonstrateEffect"): F,
-    ("TriggerCollectionService.java", "RippleEffect"): F,
-    ("TriggerCollectionService.java", "TriggeringSpellReferencingEffect"): F,
-    ("TriggerCollectionService.java", "SearchBlueOrBlackCreatureToBattlefieldOnAllyCombatDamageEffect"): F,
-    ("TriggerCollectionService.java", "ReturnPermanentsOnCombatDamageToPlayerEffect"): F,
-    ("TriggerCollectionService.java", "TransformSelfWhenChosenPermanentLeavesEffect"): F,
-    ("TriggerCollectionService.java", "CounterSpellingEffect"): F,
-    ("TriggerCollectionService.java", "CounterSpellEffect"): F,
-    ("TriggerCollectionService.java", "DealDamageToTriggeringSpellControllerEffect"): F,
-    ("TriggerCollectionService.java", "RegisterDelayedVehicleAttackEffect"): F,
-    ("TriggerCollectionService.java", "DealDamageToPlayersEffect"): F,
-    ("TriggerCollectionService.java", "ClashOutcomeConditionalEffect"): F,
-    ("TriggerCollectionService.java", "PutCardToBattlefieldEffect"): F,
-    ("TriggerCollectionService.java", "LoseLifeEffect"): F,
-    ("TriggerCollectionService.java", "DealDamageToEnchantedPermanentControllerEffect"): F,
-    ("TriggerCollectionService.java", "RegisterDelayedReturnDyingCreatureUnderControlEffect"): F,
-    ("TriggerCollectionService.java", "TemporaryGlobalTriggerEffect"): F,
+    # 17z11e3 (done): Giant Oyster's draw-step counters and counter removal are delayed triggered abilities its
+    # activation creates; no printed draw-step ability is skipped or read by class.
+    # 17z11f (done; split into 17z11f, 17z11f2 and 17z11f3): every becomes-the-target entry records the spell or ability
+    # that targeted (its triggering spell and player) whatever the effects are, and an entry with no other referent whose
+    # effect acts only on a spell is aimed at "that spell or ability" (the counter-unless, counterspelling and
+    # triggering-spell reads, the ward identification, Chancellor of the Annex's opening-hand counter); Glyph Keeper's
+    # "for the first time each turn" is the trigger's limit.
+    # 17z11f2: the "when you cast this spell" collector (cascade, demonstrate, ripple, the triggering-spell marker, a
+    # granted cascade's single copy) and Venser's emblem.
+    ("TriggerCollectionService.java", "ExileTargetOnControllerSpellCastEffect"): F2,
+    ("TriggerCollectionService.java", "CascadeEffect"): F2,
+    ("TriggerCollectionService.java", "DemonstrateEffect"): F2,
+    ("TriggerCollectionService.java", "RippleEffect"): F2,
+    ("TriggerCollectionService.java", "TriggeringSpellReferencingEffect"): F2,
+    # 17z11f3: TriggerCollectionService's and the enter service's other bindings, and the combat damage rebuilds.
+    ("CombatDamageService.java", "GainLifeEqualToControlledCreatureCombatDamageEffect"): F3,
+    ("CombatDamageService.java", "ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffect"): F3,
+    ("CombatDamageService.java", "ReturnPermanentsOnCombatDamageToPlayerEffect"): F3,
+    ("EtbTriggerService.java", "TriggeredAbilityCounterEffect"): F3,
+    ("EtbTriggerService.java", "DealDividedDamageEffect"): F3,
+    ("EtbTriggerService.java", "PreventDividedDamageEffect"): F3,
+    ("EtbTriggerService.java", "DistributeCountersAmongTargetsEffect"): F3,
+    ("EtbTriggerService.java", "SacrificeArtifactThenDealDividedDamageEffect"): F3,
+    ("TriggerCollectionService.java", "SearchBlueOrBlackCreatureToBattlefieldOnAllyCombatDamageEffect"): F3,
+    ("TriggerCollectionService.java", "ReturnPermanentsOnCombatDamageToPlayerEffect"): F3,
+    ("TriggerCollectionService.java", "TransformSelfWhenChosenPermanentLeavesEffect"): F3,
+    ("TriggerCollectionService.java", "RegisterDelayedVehicleAttackEffect"): F3,
+    ("TriggerCollectionService.java", "DealDamageToPlayersEffect"): F3,
+    ("TriggerCollectionService.java", "ClashOutcomeConditionalEffect"): F3,
+    ("TriggerCollectionService.java", "PutCardToBattlefieldEffect"): F3,
+    ("TriggerCollectionService.java", "LoseLifeEffect"): F3,
+    ("TriggerCollectionService.java", "DealDamageToEnchantedPermanentControllerEffect"): F3,
+    ("TriggerCollectionService.java", "RegisterDelayedReturnDyingCreatureUnderControlEffect"): F3,
+    ("TriggerCollectionService.java", "TemporaryGlobalTriggerEffect"): F3,
     # Classified ROUTE: the class picks the path or is a trigger condition.
     ("CombatAttackService.java", "SkipNextUntapEffect"): "ROUTE",
     ("CombatAttackService.java", "ChooseOneAtTriggerTimeEffect"): "ROUTE",
@@ -133,7 +137,7 @@ CLASSIFIED = {
     ("StepTriggerService.java", "RemoveEggCounterFromExileAndReturnEffect"): "ENGINE",
     ("StepTriggerService.java", "ChooseOneEffect"): "ROUTE",
     ("TriggerCollectionService.java", "EnterBattlefieldOnDiscardEffect"): "ROUTE",
-    ("TriggerCollectionService.java", "ChooseOneAtTriggerTimeEffect"): F,
+    ("TriggerCollectionService.java", "ChooseOneAtTriggerTimeEffect"): F3,
     ("TriggerCollectionService.java", "ChooseOneEffect"): "ROUTE",
     ("TriggerCollectionService.java", "ReselectTargetAtRandomEffect"): "ROUTE",
     ("TriggerCollectionService.java", "TriggeredModalEffect"): "ROUTE",
@@ -143,7 +147,7 @@ CLASSIFIED = {
     ("TriggerCollectionService.java", "AttachedCreatureBecomesCopyOfExiledCreatureEffect"): "STATIC",
     ("TriggerCollectionService.java", "DrawCardEffect"): "ROUTE",
 }
-OPEN_ROWS = {E3, F}
+OPEN_ROWS = {F2, F3}
 
 # The other reads run 17z11 read by hand, all ROUTE or STATIC: a restriction, prevention or replacement, an as-enters
 # choice, a mana ability resolved at once, a modal, graveyard or target prompt picked, a skip or trigger condition.

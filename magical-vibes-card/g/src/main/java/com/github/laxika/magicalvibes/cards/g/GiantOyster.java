@@ -4,18 +4,19 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnUntapLockedPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCountersWhenUntapLockEndsEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedDrawStepTriggerWhileSourceTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSourceUntapsOrLeavesTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -24,34 +25,29 @@ import java.util.List;
 public class GiantOyster extends Card {
 
     public GiantOyster() {
-        // "You may choose not to untap this creature during your untap step."
         addStaticEffect(new MayNotUntapDuringUntapStepEffect());
 
-        // "{T}: For as long as this creature remains tapped, target tapped creature doesn't untap
-        // during its controller's untap step ..." — same untap lock as Rust Tick. The companion
-        // TapPermanentsEffect carries the targeting declaration; it is a no-op on the target itself,
-        // which the filter already requires to be tapped.
+        // The companion TapPermanentsEffect carries the targeting declaration; it is a no-op on the target itself,
+        // which the filter already requires to be tapped. The activation creates the two delayed triggered
+        // abilities: the draw-step counters for as long as this stays tapped, and the counter removal.
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
                 List.of(
                         new TapPermanentsEffect(TapUntapScope.TARGET),
-                        DoesntUntapEffect.targetWhileSourceTapped()
+                        DoesntUntapEffect.targetWhileSourceTapped(),
+                        new RegisterDelayedDrawStepTriggerWhileSourceTappedEffect(
+                                new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)),
+                        new RegisterDelayedSourceUntapsOrLeavesTriggerEffect(
+                                new RemoveAllCountersEffect(CounterType.MINUS_ONE_MINUS_ONE,
+                                        CounterRemovalSubject.TARGET))
                 ),
-                "{T}: For as long as Giant Oyster remains tapped, target tapped creature doesn't untap during its controller's untap step, and at the beginning of each of your draw steps, put a -1/-1 counter on that creature.",
+                "{T}: For as long as Giant Oyster remains tapped, target tapped creature doesn't untap during its controller's untap step, and at the beginning of each of your draw steps, put a -1/-1 counter on that creature. When Giant Oyster leaves the battlefield or becomes untapped, remove all -1/-1 counters from the creature.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsTappedPredicate())),
                         "Target must be a tapped creature")
         ));
-
-        // "... and at the beginning of each of your draw steps, put a -1/-1 counter on that creature."
-        addTrigger(Triggers.drawStep(ActivePlayer.YOU),
-                new PutCountersOnUntapLockedPermanentsEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));
-
-        // "When this creature leaves the battlefield or becomes untapped, remove all -1/-1 counters
-        // from the creature."
-        addStaticEffect(new RemoveCountersWhenUntapLockEndsEffect(CounterType.MINUS_ONE_MINUS_ONE));
     }
 }

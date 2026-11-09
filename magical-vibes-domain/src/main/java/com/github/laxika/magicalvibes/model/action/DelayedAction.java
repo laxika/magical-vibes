@@ -25,6 +25,8 @@ public sealed interface DelayedAction permits
         DelayedBeginningOfCombatTrigger,
         DelayedEndOfCombatTrigger,
         DelayedEndStepTrigger,
+        DelayedDrawStepTriggerWhileSourceTapped,
+        DelayedSourceUntapsOrLeavesTrigger,
         DelayedStillExiledCardsEndStepTrigger,
         DelayedEndStepIfStillInHandTrigger,
         DelayedPermanentAction,

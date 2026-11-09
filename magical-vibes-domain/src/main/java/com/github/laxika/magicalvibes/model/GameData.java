@@ -710,12 +710,6 @@ public class GameData {
     };
     /** Latest graveyard-entry identity for each card, used by effects that require continuous graveyard presence. */
     public final Map<UUID, Long> graveyardEntryVersions = new ConcurrentHashMap<>();
-    /**
-     * Player who activated each source's "for as long as this remains tapped" untap lock, keyed by the
-     * source permanent (Giant Oyster). Its delayed triggers belong to that player (CR 603.7d), so
-     * "each of your draw steps" means theirs even after the source changes control.
-     */
-    public final Map<UUID, UUID> untapLockActivatorBySource = new ConcurrentHashMap<>();
     public final Map<UUID, Long> exileEntryVersions = new ConcurrentHashMap<>();
     /** Number of times each card has entered a hand through {@link #addCardToHand}. A card that returns to hand is a new object (CR 400.7), so a delayed effect that refers to an earlier hand entry checks this version. */
     public final Map<UUID, Long> handEntryVersions = new ConcurrentHashMap<>();
@@ -9861,7 +9855,6 @@ public class GameData {
         copy.turnStartTimestamp = this.turnStartTimestamp;
         copy.graveyardEntryVersion = this.graveyardEntryVersion;
         copy.graveyardEntryVersions.putAll(this.graveyardEntryVersions);
-        copy.untapLockActivatorBySource.putAll(this.untapLockActivatorBySource);
         copy.exileEntryVersions.putAll(this.exileEntryVersions);
         copy.handEntryVersions.putAll(this.handEntryVersions);
         copy.pendingExileReturnExileVersions.putAll(this.pendingExileReturnExileVersions);

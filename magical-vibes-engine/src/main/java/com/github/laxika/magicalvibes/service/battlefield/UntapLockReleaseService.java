@@ -1,15 +1,12 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterRemovalSubject;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCountersWhenUntapLockEndsEffect;
+import com.github.laxika.magicalvibes.model.action.DelayedDrawStepTriggerWhileSourceTapped;
+import com.github.laxika.magicalvibes.model.action.DelayedSourceUntapsOrLeavesTrigger;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,15 +17,16 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Runs the {@link RemoveCountersWhenUntapLockEndsEffect} cleanup for a permanent whose
- * {@code WHILE_SOURCE_TAPPED} untap locks have just ended — Giant Oyster's "When this creature
- * leaves the battlefield or becomes untapped, remove all -1/-1 counters from the creature." The
- * lock ends at once; the counter removal goes on the stack as a triggered ability.
+ * Ends what lasts "for as long as [a permanent] remains tapped" when that permanent untaps or leaves the battlefield,
+ * and triggers the delayed "when [it] leaves the battlefield or becomes untapped" abilities it is watched by (Giant
+ * Oyster): its {@code WHILE_SOURCE_TAPPED} untap locks are released, its
+ * {@link DelayedDrawStepTriggerWhileSourceTapped}s end, and each {@link DelayedSourceUntapsOrLeavesTrigger} watching it
+ * goes on the stack, aimed at its creature without targeting it.
  *
- * <p>Called from the two events that end such a lock: the untap paths
- * ({@code TapUntapSupport.untapPermanent}, {@code MayMiscHandlerService.handleMayNotUntapChoice})
- * and the single battlefield-removal cleanup point in {@link PermanentRemovalService}. Permanents
- * without the marker are untouched, so it is cheap to call unconditionally.
+ * <p>Called from the two events that end such a duration: the untap paths
+ * ({@code TapUntapSupport.untapPermanent}, {@code MayMiscHandlerService.handleMayNotUntapChoice}) and the single
+ * battlefield-removal cleanup point in {@link PermanentRemovalService}. A permanent nothing watches is untouched, so
+ * it is cheap to call unconditionally.
  */
 @Slf4j
 @Component
@@ -36,46 +34,33 @@ import java.util.UUID;
 public class UntapLockReleaseService {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
 
     /**
-     * Releases every untap lock {@code source} holds and, if the source carries a
-     * {@link RemoveCountersWhenUntapLockEndsEffect}, removes all counters of that type from the
-     * permanents that were locked.
+     * Releases every untap lock {@code source} holds, ends its "for as long as it remains tapped" delayed triggers and
+     * puts the delayed abilities that trigger when it untaps or leaves on the stack.
      */
     public void releaseUntapLocks(GameData gameData, Permanent source) {
-        List<CounterType> counterTypes = source.getCard().getStaticEffects().stream()
-                .filter(RemoveCountersWhenUntapLockEndsEffect.class::isInstance)
-                .map(e -> ((RemoveCountersWhenUntapLockEndsEffect) e).counterType())
-                .toList();
         UUID sourceId = source.getId();
-        List<Permanent> locked = new ArrayList<>();
-        gameData.forEachPermanent((playerId, p) -> {
-            if (p.getUntapPreventedByPermanentIds().remove(sourceId)) {
-                locked.add(p);
-            }
-        });
+        gameData.forEachPermanent((playerId, p) -> p.getUntapPreventedByPermanentIds().remove(sourceId));
+        gameData.clearDelayedActions(DelayedDrawStepTriggerWhileSourceTapped.class,
+                delayed -> delayed.sourcePermanentId().equals(sourceId));
 
-        UUID activatorId = gameData.untapLockActivatorBySource.remove(sourceId);
-        if (counterTypes.isEmpty() || locked.isEmpty()) {
-            return;
-        }
-        // "When this creature leaves the battlefield or becomes untapped, remove all -1/-1 counters
-        // from the creature" is a delayed triggered ability of the lock's activator (CR 603.7d).
-        UUID controllerId = activatorId != null ? activatorId
-                : gameData.findControllerOf(source) != null ? gameData.findControllerOf(source)
-                : source.getCard().getOwnerId();
-        for (Permanent p : locked) {
-            List<CardEffect> removals = counterTypes.stream()
-                    .<CardEffect>map(counterType -> new RemoveAllCountersEffect(counterType, CounterRemovalSubject.TARGET))
-                    .toList();
-            StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
-                    source.getCard().getName() + "'s delayed ability", new ArrayList<>(removals),
-                    p.getId(), sourceId);
+        List<DelayedSourceUntapsOrLeavesTrigger> triggered = gameData.drainDelayedActions(
+                DelayedSourceUntapsOrLeavesTrigger.class, delayed -> delayed.sourcePermanentId().equals(sourceId));
+        for (DelayedSourceUntapsOrLeavesTrigger delayed : triggered) {
+            Permanent affected = gameQueryService.findPermanentById(gameData, delayed.affectedPermanentId());
+            if (affected == null) {
+                continue;
+            }
+            StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, delayed.sourceCard(),
+                    delayed.controllerId(), delayed.sourceCard().getName() + "'s delayed ability",
+                    new ArrayList<>(List.of(delayed.effect())), affected.getId(), sourceId);
             trigger.setNonTargeting(true);
             gameData.stack.add(trigger);
-            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s delayed ability triggers."));
-            log.info("Game {} - {} counter-removal trigger for {}", gameData.id,
-                    source.getCard().getName(), p.getCard().getName());
+            gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(), "'s delayed ability triggers."));
+            log.info("Game {} - {} untaps-or-leaves delayed trigger for {}", gameData.id,
+                    delayed.sourceCard().getName(), affected.getCard().getName());
         }
     }
 }

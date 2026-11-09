@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 /** Resolves damage to the controller of the spell or ability that caused a trigger. */
 @Slf4j
 @Component
@@ -26,17 +28,10 @@ public class DealDamageToTriggeringSpellControllerEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var damageEffect = (DealDamageToTriggeringSpellControllerEffect) effect;
-        var triggeringControllerId = entry.getTriggeringPermanentControllerId();
-        var triggeringCardId = entry.getTriggeringCardId();
-        if (triggeringControllerId == null && triggeringCardId != null) {
-            for (StackEntry stackEntry : gameData.stack) {
-                if (stackEntry.getTargetableId().equals(triggeringCardId)) {
-                    triggeringControllerId = stackEntry.getControllerId();
-                    break;
-                }
-            }
-        }
-
+        // "That spell or ability's controller": the entry's triggering spell or ability, as it is while it is on the
+        // stack and as it last existed there once it has left (CR 608.2h).
+        StackEntry triggering = CopySupport.triggeringSpell(gameData, entry);
+        UUID triggeringControllerId = triggering == null ? null : triggering.getControllerId();
         if (triggeringControllerId == null) {
             log.info("Game {} - Controller of triggering spell or ability is unavailable for damage", gameData.id);
             return;

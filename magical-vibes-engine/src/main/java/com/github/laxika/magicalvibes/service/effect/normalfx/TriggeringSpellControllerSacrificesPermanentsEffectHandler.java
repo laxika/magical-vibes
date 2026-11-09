@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellControllerSacrificesPermanentsEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -17,7 +16,6 @@ import org.springframework.stereotype.Component;
 public class TriggeringSpellControllerSacrificesPermanentsEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
     private final SacrificePermanentsEffectHandler sacrificePermanentsEffectHandler;
 
     @Override
@@ -28,11 +26,9 @@ public class TriggeringSpellControllerSacrificesPermanentsEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (TriggeringSpellControllerSacrificesPermanentsEffect) effect;
-        UUID sacrificingPlayerId = entry.getTriggeringPermanentControllerId();
-        if (sacrificingPlayerId == null) {
-            StackEntry triggeringEntry = gameQueryService.findStackEntryByCardId(gameData, entry.getTargetId());
-            sacrificingPlayerId = triggeringEntry == null ? null : triggeringEntry.getControllerId();
-        }
+        // "That spell or ability's controller", as it is while it is on the stack, else as it last existed there.
+        StackEntry triggeringEntry = CopySupport.triggeringSpell(gameData, entry);
+        UUID sacrificingPlayerId = triggeringEntry == null ? null : triggeringEntry.getControllerId();
         if (sacrificingPlayerId == null) {
             return;
         }

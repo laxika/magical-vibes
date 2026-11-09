@@ -29,9 +29,17 @@ public class TargetSpellControllerLosesLifeEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (TargetSpellControllerLosesLifeEffect) effect;
-        UUID targetCardId = entry.getTriggeringCardId() != null
-                ? entry.getTriggeringCardId() : entry.getTargetId();
-        if (targetCardId == null && entry.getTriggeringPermanentControllerId() == null) return;
+        if (entry.getTriggeringSpellSnapshot() != null) {
+            // A triggered ability's "that spell's controller" (Forsaken Wastes): the triggering spell as it is while it
+            // is on the stack, else as it last existed there (CR 608.2h).
+            StackEntry triggering = CopySupport.triggeringSpell(gameData, entry);
+            int amount = amountEvaluationService.evaluate(
+                    gameData, e.amount(), AmountContext.forStackEntry(entry, null));
+            lifeSupport.applyLifeLoss(gameData, triggering.getControllerId(), amount, entry.getCard().getName());
+            return;
+        }
+        UUID targetCardId = entry.getTargetId();
+        if (targetCardId == null && entry.getCounteredSpellControllerId() == null) return;
 
         for (StackEntry se : gameData.stack) {
             if (targetCardId != null && targetCardId.equals(se.getTargetableId())) {
@@ -41,10 +49,7 @@ public class TargetSpellControllerLosesLifeEffectHandler implements NormalEffect
                 return;
             }
         }
-        UUID targetingSpellControllerId = entry.getTriggeringPermanentControllerId();
-        if (targetingSpellControllerId == null) {
-            targetingSpellControllerId = entry.getCounteredSpellControllerId();
-        }
+        UUID targetingSpellControllerId = entry.getCounteredSpellControllerId();
         if (targetingSpellControllerId != null) {
             int amount = amountEvaluationService.evaluate(
                     gameData, e.amount(), AmountContext.forStackEntry(entry, null));

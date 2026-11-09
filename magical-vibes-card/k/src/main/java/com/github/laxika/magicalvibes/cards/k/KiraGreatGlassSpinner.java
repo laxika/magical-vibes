@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BOK", collectorNumber = "40")
@@ -16,13 +18,10 @@ public class KiraGreatGlassSpinner extends Card {
     public KiraGreatGlassSpinner() {
         // Flying is auto-loaded from Scryfall.
 
-        // Creatures you control have "Whenever this creature becomes the target of a spell or ability
-        // for the first time each turn, counter that spell or ability." ALL_OWN_CREATURES includes Kira
-        // itself. The "first time each turn" gating and targeting the triggering object are handled in
-        // TriggerCollectionService for any counterspelling effect in this slot (as for Glyph Keeper).
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfSpellOrAbility(),
-                new CounterSpellEffect()),
+                        TriggerOptions.DEFAULT.withLimit(TriggerLimit.FIRST_TIME_EACH_TURN),
+                        new CounterSpellEffect()),
                 GrantScope.ALL_OWN_CREATURES));
     }
 }

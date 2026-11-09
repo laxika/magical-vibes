@@ -804,9 +804,10 @@ effect's own `damagedPermanentFilter` does the narrowing in `DamageTriggerCollec
 predicate and `source()` scope while the trigger is put on the stack, then stores the selected card ID
 on the triggered entry for the normal return handler. An empty selection models an optional return.
 
-For `Triggers.becomesTargetOfSpellOrAbility()`, effects implementing `TriggeringSpellReferencingEffect`
-also carry the triggering spell or activated ability as an internal `STACK` reference. The source
-permanent id remains available so an Aura effect can re-derive its host at resolution.
+Every becomes-the-target entry records the spell or ability that targeted as its triggering spell and its
+controller as its triggering player, whatever the effects are; an entry with no other referent whose effect acts
+only on a spell ("counter that spell or ability") is aimed at that object on the stack without targeting it. The
+source permanent id remains available so an Aura effect can re-derive its host at resolution.
 
 "Whenever this permanent becomes the target of a spell [or ability] you control" is
 `Triggers.becomesTargetOfYourSpell()` / `Triggers.becomesTargetOfYourSpellOrAbility()` (valiant, with

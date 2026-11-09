@@ -211,6 +211,30 @@ class GiantOysterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An Oyster untapped before its ability resolves removes the counters when it next untaps")
+    void oysterUntappedBeforeResolutionStillRemovesCountersWhenItNextUntaps() {
+        Permanent oyster = addOyster(player1);
+        Permanent creature = addMinotaur(player2, true);
+        creature.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+        harness.activateAbility(player1, 0, null, creature.getId());
+        harness.inMutationScope(oyster::untap);
+        harness.passBothPriorities();
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isEqualTo(1);
+
+        oyster.tap();
+        advanceToNextTurn(player1);
+        assertThat(creature.isTapped()).isFalse();
+        advanceToNextTurnWithMayChoice(player2, true);
+        assertThat(oyster.isTapped()).isFalse();
+
+        harness.passBothPriorities();
+        assertThat(creature.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
+    }
+
+    @Test
     @DisplayName("Giant Oyster leaving the battlefield removes all -1/-1 counters from the locked creature")
     void oysterLeavingBattlefieldRemovesCounters() {
         Permanent oyster = addOyster(player1);

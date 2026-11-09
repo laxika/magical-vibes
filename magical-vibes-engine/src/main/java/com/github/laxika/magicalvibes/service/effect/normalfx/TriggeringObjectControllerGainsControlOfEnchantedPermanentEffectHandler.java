@@ -33,15 +33,9 @@ public class TriggeringObjectControllerGainsControlOfEnchantedPermanentEffectHan
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (TriggeringObjectControllerGainsControlOfEnchantedPermanentEffect) effect;
         Permanent enchantedPermanent = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
-        UUID newControllerId = entry.getTriggeringPermanentControllerId();
-        StackEntry triggeringObject = gameData.stack.stream()
-                .filter(stackEntry -> !stackEntry.isCopy()
-                        && stackEntry.getCard() != null
-                        && stackEntry.getCard().getId().equals(entry.getTriggeringCardId()))
-                .findFirst().orElse(null);
-        if (triggeringObject != null) {
-            newControllerId = triggeringObject.getControllerId();
-        }
+        // "That spell or ability's controller", as it is while it is on the stack, else as it last existed there.
+        StackEntry triggeringObject = CopySupport.triggeringSpell(gameData, entry);
+        UUID newControllerId = triggeringObject == null ? null : triggeringObject.getControllerId();
         if (enchantedPermanent == null || newControllerId == null) return;
 
         creatureControlService.applyControlEffect(gameData, newControllerId, enchantedPermanent,

@@ -161,12 +161,14 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
 
     /**
      * Rejects "for the first time each turn" ({@link TriggerLimit#FIRST_TIME_EACH_TURN}) on an ability with a trigger
-     * other than a zone change or a combat event: only the token-creation and land-to-graveyard collectors of the
-     * trigger pipeline and the "whenever you attack" collector read it.
+     * other than a zone change, a combat event or "this becomes the target of a spell or ability": only the
+     * token-creation and land-to-graveyard collectors of the trigger pipeline, the "whenever you attack" collector and
+     * the "becomes the target of a spell or ability" collector read it.
      */
     private static void requireFirstTimeReader(List<TriggerCondition> conditions, TriggerOptions options) {
         if (options.limit() == TriggerLimit.FIRST_TIME_EACH_TURN && conditions.stream().map(TriggerCondition::trigger)
-                .anyMatch(trigger -> !(trigger instanceof ZoneChangeTrigger) && !(trigger instanceof CombatTrigger))) {
+                .anyMatch(trigger -> !(trigger instanceof ZoneChangeTrigger) && !(trigger instanceof CombatTrigger)
+                        && !trigger.equals(Triggers.becomesTargetOfSpellOrAbility()))) {
             throw new IllegalArgumentException("No collector of " + conditions + " reads " + options.limit());
         }
     }

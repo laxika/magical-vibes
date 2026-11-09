@@ -27,8 +27,10 @@ public enum TriggerLimit {
      * doesn't trigger that turn: Akim, the Soaring Wind's "whenever you create one or more tokens for the first time
      * each turn", Crawling Sensation's "whenever one or more land cards are put into your graveyard from anywhere for
      * the first time each turn", Desert Were-Worm's "whenever you attack with creatures with total power 12 or greater
-     * for the first time each turn" (its total power the event condition). Only the token-creation, land-to-graveyard
-     * and "whenever you attack" collectors know it; the trigger pipeline leaves it to them.
+     * for the first time each turn" (its total power the event condition), Glyph Keeper's "whenever this creature
+     * becomes the target of a spell or ability for the first time each turn" (every targeting of the permanent counts).
+     * Only the token-creation, land-to-graveyard, "whenever you attack" and "becomes the target of a spell or ability"
+     * collectors know it; the trigger pipeline leaves it to them.
      */
     FIRST_TIME_EACH_TURN
 }

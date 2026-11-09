@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.action.DelayedDrawStepTriggerWhileSourceTapped;
 import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DelayedGraveyardToBattlefieldSelfReturn;
@@ -214,7 +215,6 @@ import com.github.laxika.magicalvibes.model.effect.SoulEchoUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.MayRevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOrRemoveCounterIfBlockedSinceLastUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnUntapLockedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreatedPermanentsAtEndStepUnlessConditionEffect;
@@ -2741,6 +2741,32 @@ public class StepTriggerService {
         return false;
     }
 
+    /**
+     * Puts on the stack the delayed "for as long as [source] remains tapped, at the beginning of each of your draw
+     * steps" abilities of the active player (Giant Oyster's, its activator's: CR 603.7e), each aimed at its permanent
+     * without targeting it. One whose source has untapped or left the battlefield, or whose permanent has left it,
+     * has ended and is removed.
+     */
+    private void collectDelayedDrawStepTriggersWhileSourceTapped(GameData gameData, UUID activePlayerId) {
+        for (DelayedDrawStepTriggerWhileSourceTapped delayed
+                : gameData.getDelayedActions(DelayedDrawStepTriggerWhileSourceTapped.class)) {
+            Permanent source = gameQueryService.findPermanentById(gameData, delayed.sourcePermanentId());
+            Permanent affected = gameQueryService.findPermanentById(gameData, delayed.affectedPermanentId());
+            if (source == null || affected == null || source.getUntapSequence() != delayed.sourceUntapSequence()) {
+                gameData.clearDelayedActions(DelayedDrawStepTriggerWhileSourceTapped.class, delayed::equals);
+                continue;
+            }
+            if (!activePlayerId.equals(delayed.controllerId())) continue;
+            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, delayed.sourceCard(),
+                    delayed.controllerId(), delayed.sourceCard().getName() + "'s delayed ability",
+                    new ArrayList<>(List.of(delayed.effect())), affected.getId(), source.getId());
+            triggerEntry.setNonTargeting(true);
+            triggerEntry.setSourcePermanentSnapshot(new Permanent(source));
+            gameData.stack.add(triggerEntry);
+            gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(), "'s delayed ability triggers."));
+        }
+    }
+
     public boolean playersSkipUpkeepStepApplies(GameData gameData) {
         boolean globalSkip = gameData.anyPermanentMatches(permanent ->
                 gameQueryService.getActiveStaticEffects(gameData, permanent).stream()
@@ -2805,10 +2831,6 @@ public class StepTriggerService {
                 if (drawEffects == null || drawEffects.isEmpty()) continue;
 
                 for (CardEffect effect : drawEffects) {
-                    if (effect instanceof PutCountersOnUntapLockedPermanentsEffect) {
-                        // A delayed trigger of the lock's activator, collected below.
-                        continue;
-                    }
                     if (effect instanceof MayEffect may && may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                         // A targeted "you may" draw-step trigger chooses its target as it goes on the
                         // stack (CR 603.3d); only the may decision waits for resolution.
@@ -2839,37 +2861,7 @@ public class StepTriggerService {
             processNextUpkeepPermanentTarget(gameData);
         }
 
-        // Giant Oyster: "at the beginning of each of your draw steps, put a -1/-1 counter on that
-        // creature" is a delayed trigger of the player who activated the lock (CR 603.7d), so it
-        // follows that player's draw steps even if the Oyster changes control.
-        gameData.forEachPermanent((sourceControllerId, perm) -> {
-            if (perm.isFaceDown()) return;
-            for (CardEffect effect : printedEffects(gameData, perm.getCard(), YOUR_DRAW_STEP, Zone.BATTLEFIELD,
-                    ConditionContext.forPermanent(perm, sourceControllerId))) {
-                if (!(effect instanceof PutCountersOnUntapLockedPermanentsEffect)) continue;
-                UUID activatorId = gameData.untapLockActivatorBySource.getOrDefault(perm.getId(), sourceControllerId);
-                if (!activePlayerId.equals(activatorId)) continue;
-                List<UUID> lockedPermanentIds = new ArrayList<>();
-                gameData.forEachPermanent((playerId, permanent) -> {
-                    if (permanent.getUntapPreventedByPermanentIds().contains(perm.getId())) {
-                        lockedPermanentIds.add(permanent.getId());
-                    }
-                });
-                if (lockedPermanentIds.isEmpty()) continue;
-                StackEntry triggerEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        activatorId,
-                        perm.getCard().getName() + "'s draw step ability",
-                        new ArrayList<>(List.of(effect)),
-                        activatorId,
-                        perm.getId());
-                triggerEntry.setEventCardIds(lockedPermanentIds);
-                triggerEntry.setSourcePermanentSnapshot(new Permanent(perm));
-                gameData.stack.add(triggerEntry);
-                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s draw step ability triggers."));
-            }
-        });
+        collectDelayedDrawStepTriggersWhileSourceTapped(gameData, activePlayerId);
 
         // Auras: "at the beginning of the draw step of enchanted permanent's controller" fires on the enchanted
         // permanent's
