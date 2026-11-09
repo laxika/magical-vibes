@@ -4,14 +4,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceAndAllowPlayEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayedCardExiledWithSourceDrawAndTransformTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -39,12 +40,13 @@ public class ProwlStoicStrategist extends Card {
                 .addTrigger(Triggers.attacks(),
                         new ExileTargetPermanentAndTrackWithSourceAndAllowPlayEffect());
 
-        addTrigger(Triggers.playerCastsSpell(),
-                new PlayedCardExiledWithSourceDrawAndTransformTriggerEffect());
-        addTrigger(Triggers.youPlayLand(),
-                new PlayedCardExiledWithSourceDrawAndTransformTriggerEffect());
-        addTrigger(Triggers.opponentPlaysLand(),
-                new PlayedCardExiledWithSourceDrawAndTransformTriggerEffect());
+        // Whenever a player plays a card exiled with Prowl, you draw a card and convert Prowl.
+        addTrigger(Triggers.playerCastsSpell().exiledWithThis(),
+                new DrawCardEffect(1), new TransformToBackFaceEffect());
+        addTrigger(Triggers.youPlayLand().exiledWithThis(),
+                new DrawCardEffect(1), new TransformToBackFaceEffect());
+        addTrigger(Triggers.opponentPlaysLand().exiledWithThis(),
+                new DrawCardEffect(1), new TransformToBackFaceEffect());
     }
 
     @Override

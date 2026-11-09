@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.m;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "LEA", collectorNumber = "163")
@@ -19,6 +20,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class Manabarbs extends Card {
 
     public Manabarbs() {
-        addTrigger(Triggers.playerTapsLandForMana(), new DealDamageOnLandTapEffect(1));
+        // Whenever a player taps a land for mana, Manabarbs deals 1 damage to that player.
+        addTrigger(Triggers.playerTapsLandForMana(),
+                new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER));
     }
 }

@@ -2346,6 +2346,19 @@ public class AmountEvaluationService {
         return null;
     }
 
+    /**
+     * The name of the card a "whenever you play a card" event was about, read as the ability resolves: the triggering
+     * spell (live while it is on the stack, else as it last existed there, CR 608.2h; a face-down spell has none), else
+     * the land played ({@code StackEntry.triggeringSpellOrCard()}); {@code null} when there is neither.
+     */
+    public static String triggeringCardName(GameData gameData, StackEntry entry) {
+        if (entry.getTriggeringSpellSnapshot() != null) {
+            return triggeringSpellName(gameData, entry.getTriggeringCardId(), entry.getTriggeringSpellSnapshot());
+        }
+        Card played = entry.triggeringSpellOrCard();
+        return played == null ? null : played.getName();
+    }
+
     private static String triggeringSpellName(GameData gameData, UUID triggeringCardId,
                                               StackEntry triggeringSpellSnapshot) {
         UUID spellCardId = triggeringCardId != null ? triggeringCardId

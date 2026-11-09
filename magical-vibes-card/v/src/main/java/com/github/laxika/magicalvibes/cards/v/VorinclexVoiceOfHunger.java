@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "NPH", collectorNumber = "127")
@@ -20,6 +21,8 @@ public class VorinclexVoiceOfHunger extends Card {
     public VorinclexVoiceOfHunger() {
         // Trample is auto-loaded from Scryfall
         addTrigger(Triggers.playerTapsLandForMana(), new AddOneOfEachManaTypeProducedByLandEffect(true));
-        addTrigger(Triggers.playerTapsLandForMana(), new OpponentTappedLandDoesntUntapEffect());
+        // Whenever an opponent taps a land for mana, that land doesn't untap during its controller's next untap
+        // step.
+        addTrigger(Triggers.opponentTapsLandForMana(), new SkipNextUntapEffect(TapUntapScope.TRIGGERING));
     }
 }

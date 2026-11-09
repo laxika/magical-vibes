@@ -22,7 +22,7 @@ public class EtherealForager extends Card {
 
         addCastingCost(new DelveCost());
         addTrigger(Triggers.attacks(), new MayEffect(
-                new PutCardExiledWithSourceIntoHandEffect(null, instantOrSorcery, true),
+                new PutCardExiledWithSourceIntoHandEffect(instantOrSorcery, true),
                 "Return an instant or sorcery card exiled with Ethereal Forager to its owner's hand?"));
     }
 }

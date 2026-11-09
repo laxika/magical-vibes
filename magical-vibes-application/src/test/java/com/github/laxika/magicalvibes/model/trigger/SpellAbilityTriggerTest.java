@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.trigger;
 
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardExiledWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -139,6 +140,22 @@ class SpellAbilityTriggerTest {
         assertThat(unfiltered.unfiltered()).isSameAs(unfiltered);
         assertThatThrownBy(() -> Triggers.youPlayLand().withFilter(null)).isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() -> Triggers.youPlayLand().playedFrom(Zone.EXILE).notPlayedFrom(Zone.HAND))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void aCardExiledWithThisIsPlayedFromExileWhileExiledWithTheSource() {
+        LandPlayTrigger land = Triggers.opponentPlaysLand().exiledWithThis();
+        SpellTrigger spell = Triggers.playerCastsSpell().exiledWithThis();
+
+        assertThat(land.exiledWithSource()).isTrue();
+        assertThat(land.playedFrom()).isEqualTo(Zone.EXILE);
+        assertThat(land.filtered()).isTrue();
+        assertThat(land.unfiltered()).isEqualTo(Triggers.opponentPlaysLand());
+        assertThat(spell.filter().castFrom()).isEqualTo(Zone.EXILE);
+        assertThat(spell.filter().stackEntry()).isEqualTo(new StackEntryIsCardExiledWithSourcePredicate());
+        assertThat(spell.unfiltered()).isEqualTo(Triggers.playerCastsSpell());
+        assertThatThrownBy(() -> Triggers.youPlayLand().exiledWithThis().playedFrom(Zone.GRAVEYARD))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

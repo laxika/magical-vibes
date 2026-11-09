@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.model.trigger;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardExiledWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 
 import java.util.Objects;
@@ -157,6 +158,15 @@ public record SpellTrigger(SpellEvent event, PlayerRelation player, SpellFilter 
     /** This trigger for a spell cast from {@code zone} only: "whenever you cast a spell from your graveyard". */
     public SpellTrigger castFrom(Zone zone) {
         return filtered(filter -> filter.withCastFrom(zone));
+    }
+
+    /**
+     * This trigger for a spell cast from exile while it was exiled with the ability's source only ("whenever a player
+     * plays a card exiled with this creature"): the permanent or the face-up plane the cast collector reads from the
+     * cast event, since the card has left exile by then.
+     */
+    public SpellTrigger exiledWithThis() {
+        return castFrom(Zone.EXILE).withStackEntryFilter(new StackEntryIsCardExiledWithSourcePredicate());
     }
 
     /**

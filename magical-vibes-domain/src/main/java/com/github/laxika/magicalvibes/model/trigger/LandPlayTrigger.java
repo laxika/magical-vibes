@@ -18,9 +18,12 @@ import java.util.Objects;
  *                      {@code null} for any
  * @param notPlayedFrom a zone the land must not have been played from ("a land from anywhere other than your hand"),
  *                      or {@code null} for none
+ * @param exiledWithSource whether the land must have been played from exile while exiled with the ability's source
+ *                         ("whenever a player plays a card exiled with this creature"): the permanent or the face-up
+ *                         plane the land-play collector reads from the event, since the land has left exile by then
  */
-public record LandPlayTrigger(ObjectRelation relation, CardPredicate filter, Zone playedFrom, Zone notPlayedFrom)
-        implements Trigger {
+public record LandPlayTrigger(ObjectRelation relation, CardPredicate filter, Zone playedFrom, Zone notPlayedFrom,
+                              boolean exiledWithSource) implements Trigger {
 
     public LandPlayTrigger {
         Objects.requireNonNull(relation, "relation");
@@ -28,6 +31,13 @@ public record LandPlayTrigger(ObjectRelation relation, CardPredicate filter, Zon
             throw new IllegalArgumentException("A land-play trigger names the zone the land is played from or one it "
                     + "isn't");
         }
+        if (exiledWithSource && playedFrom != Zone.EXILE) {
+            throw new IllegalArgumentException("A land exiled with the source is played from exile");
+        }
+    }
+
+    public LandPlayTrigger(ObjectRelation relation, CardPredicate filter, Zone playedFrom, Zone notPlayedFrom) {
+        this(relation, filter, playedFrom, notPlayedFrom, false);
     }
 
     public LandPlayTrigger(ObjectRelation relation) {
@@ -36,12 +46,14 @@ public record LandPlayTrigger(ObjectRelation relation, CardPredicate filter, Zon
 
     /** This trigger for a land played that matches {@code filter} only. */
     public LandPlayTrigger withFilter(CardPredicate filter) {
-        return new LandPlayTrigger(relation, Objects.requireNonNull(filter, "filter"), playedFrom, notPlayedFrom);
+        return new LandPlayTrigger(relation, Objects.requireNonNull(filter, "filter"), playedFrom, notPlayedFrom,
+                exiledWithSource);
     }
 
     /** This trigger for a land played from {@code zone} only: "whenever you play a land from exile". */
     public LandPlayTrigger playedFrom(Zone zone) {
-        return new LandPlayTrigger(relation, filter, Objects.requireNonNull(zone, "zone"), notPlayedFrom);
+        return new LandPlayTrigger(relation, filter, Objects.requireNonNull(zone, "zone"), notPlayedFrom,
+                exiledWithSource);
     }
 
     /**
@@ -49,12 +61,24 @@ public record LandPlayTrigger(ObjectRelation relation, CardPredicate filter, Zon
      * your hand".
      */
     public LandPlayTrigger notPlayedFrom(Zone zone) {
-        return new LandPlayTrigger(relation, filter, playedFrom, Objects.requireNonNull(zone, "zone"));
+        return new LandPlayTrigger(relation, filter, playedFrom, Objects.requireNonNull(zone, "zone"),
+                exiledWithSource);
     }
 
-    /** Whether this trigger narrows the land played: by a filter or by the zone it is played from. */
+    /**
+     * This trigger for a land played from exile while it was exiled with the ability's source only: "whenever you play
+     * a card exiled with this creature", "whenever you play a land from among cards exiled with The Matrix of Time".
+     */
+    public LandPlayTrigger exiledWithThis() {
+        return new LandPlayTrigger(relation, filter, Zone.EXILE, notPlayedFrom, true);
+    }
+
+    /**
+     * Whether this trigger narrows the land played: by a filter, by the zone it is played from, or by the source it was
+     * exiled with.
+     */
     public boolean filtered() {
-        return filter != null || playedFrom != null || notPlayedFrom != null;
+        return filter != null || playedFrom != null || notPlayedFrom != null || exiledWithSource;
     }
 
     /**

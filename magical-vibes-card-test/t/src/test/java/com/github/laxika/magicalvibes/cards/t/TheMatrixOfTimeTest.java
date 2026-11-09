@@ -31,6 +31,29 @@ class TheMatrixOfTimeTest extends BaseCardTest {
     }
 
     @Test
+    void playingAnOpponentsTrackedLandMakesItsOwnerLoseLife() {
+        Card ownTop = new Forest();
+        ownTop.setOwnerId(player1.getId());
+        Card opposingLand = new Forest();
+        opposingLand.setOwnerId(player2.getId());
+        Card nextOpposingTop = new Forest();
+        nextOpposingTop.setOwnerId(player2.getId());
+        harness.setLibrary(player1, List.of(ownTop));
+        harness.setLibrary(player2, List.of(opposingLand, nextOpposingTop));
+        revealMatrix();
+
+        int ownLife = gd.getLife(player1.getId());
+        int opposingLife = gd.getLife(player2.getId());
+        harness.castFromExile(player1, opposingLand.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(ownLife);
+        assertThat(gd.getLife(player2.getId())).isEqualTo(opposingLife - 3);
+        assertThat(gd.findExiledCard(nextOpposingTop.getId())).isNotNull();
+        assertThat(gd.findExiledCard(nextOpposingTop.getId()).sourcePermanentId()).isNull();
+    }
+
+    @Test
     void planeswalkingToTheMatrixExilesAndTracksEachTopCard() {
         Card ownTop = new Forest();
         ownTop.setOwnerId(player1.getId());

@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardToSourceAndMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayedCardExiledWithSourceTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,10 +28,9 @@ public class VoltaicVisionary extends Card {
                 "{T}: This creature deals 2 damage to you. Exile the top card of your library. You may play that card this turn. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
-        addTrigger(Triggers.youCastSpell(),
-                new PlayedCardExiledWithSourceTriggerEffect());
-        addTrigger(Triggers.youPlayLand(),
-                new PlayedCardExiledWithSourceTriggerEffect());
+        // When you play a card exiled with this creature, transform this creature.
+        addTrigger(Triggers.youCastSpell().exiledWithThis(), new TransformSelfEffect());
+        addTrigger(Triggers.youPlayLand().exiledWithThis(), new TransformSelfEffect());
     }
 
     @Override

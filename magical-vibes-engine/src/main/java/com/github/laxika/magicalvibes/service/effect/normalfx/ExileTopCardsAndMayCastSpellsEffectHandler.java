@@ -190,7 +190,7 @@ public class ExileTopCardsAndMayCastSpellsEffectHandler implements NormalEffectH
                                              LibraryScope scope, UUID controllerId) {
         return switch (scope) {
             case CONTROLLER -> List.of(controllerId);
-            case TARGET_PLAYER, TARGET_OPPONENT -> entry.getTargetId() != null
+            case TARGET_PLAYER, TARGET_OPPONENT, TRIGGERING_PLAYER -> entry.getTargetId() != null
                     && gameData.orderedPlayerIds.contains(entry.getTargetId())
                     ? List.of(entry.getTargetId()) : List.of();
             case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);

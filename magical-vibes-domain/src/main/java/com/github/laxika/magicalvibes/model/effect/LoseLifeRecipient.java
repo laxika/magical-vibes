@@ -28,6 +28,9 @@ package com.github.laxika.magicalvibes.model.effect;
  *       left the battlefield, or the controller the entry recorded for a source that was never a permanent: "its
  *       controller loses that much life" of an enchanted creature that dealt damage (Visions of Brutality). The
  *       effect chooses no target.</li>
+ *   <li>{@link #TRIGGERING_CARD_OWNER} — the owner of the card a "whenever you play a card" event was about (the
+ *       triggering spell's card, or the land played): "that card's owner loses 3 life" (The Matrix of Time). The
+ *       effect chooses no target.</li>
  *   <li>{@link #DEFENDING_PLAYER} — the player being attacked by the source (or the controller of
  *       the attacked planeswalker), captured as the trigger's {@code attackedTargetId}; used by
  *       combat triggers such as "whenever this creature becomes blocked, defending player loses N
@@ -52,6 +55,7 @@ public enum LoseLifeRecipient {
     TARGET_PERMANENT_CONTROLLER,
     DYING_CREATURE_CONTROLLER,
     TRIGGERING_PERMANENT_CONTROLLER,
+    TRIGGERING_CARD_OWNER,
     DEFENDING_PLAYER,
     OTHER_CHOSEN_PLAYER,
     /** The player whose upkeep is currently resolving; supplied by the trigger entry. */

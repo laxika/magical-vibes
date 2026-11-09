@@ -12,6 +12,9 @@ package com.github.laxika.magicalvibes.model.effect;
  *       {@code targetId} when a combat-damage trigger bound the damaged player (Nightveil
  *       Specter), or from {@code attackedTargetId} for an attack trigger (Robber of the Rich);
  *       otherwise the sole opponent in a two-player game (Grimoire Thief).</li>
+ *   <li>{@link #TRIGGERING_PLAYER} — the player the trigger event was about exiles, without targeting: read from
+ *       the stack entry's non-targeting {@code targetId}, the "that player" the cast and land-play collectors set to
+ *       the player who played the card ("when they do, exile the top card of their library", Share the Spoils).</li>
  *   <li>{@link #EACH_PLAYER} — every player exiles, in {@code orderedPlayerIds} order
  *       (Knowledge Pool).</li>
  *   <li>{@link #EACH_OPPONENT} — every player except the effect's controller exiles, in
@@ -28,6 +31,7 @@ public enum LibraryScope {
     CONTROLLER,
     TARGET_PLAYER,
     TARGET_OPPONENT,
+    TRIGGERING_PLAYER,
     EACH_PLAYER,
     EACH_OPPONENT
 }

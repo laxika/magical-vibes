@@ -296,6 +296,34 @@ class TapTriggerTest {
     }
 
     @Test
+    void aLandTapAbilityIsReadWithItsTappingPlayerAndItsLandFilter() {
+        PermanentPredicate mountain = new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN);
+        TapTrigger opponentTapsMountain = Triggers.opponentTapsLandForMana().withFilter(mountain);
+        Card sanctimony = new Card();
+        sanctimony.addTrigger(opponentTapsMountain, GAIN);
+        Card scald = new Card();
+        scald.addTrigger(Triggers.playerTapsLandForMana().withFilter(MERFOLK), DRAW);
+        Card mixed = new Card();
+        mixed.addTrigger(List.of(Triggers.playerTapsLandForMana(), Triggers.opponentTapsLandForMana()), DRAW);
+
+        assertThat(Triggers.opponentTapsLandForMana().watchKey()).isEqualTo(Triggers.playerTapsLandForMana());
+        assertThat(opponentTapsMountain.watchKey()).isEqualTo(Triggers.playerTapsLandForMana());
+        assertThat(Triggers.opponentTapsLandForMana().opponentTapsLand()).isTrue();
+        assertThat(Triggers.playerTapsLandForMana().opponentTapsLand()).isFalse();
+        assertThat(TapAbilityReader.readPrinted(sanctimony, TapWatch.ON_ANY_PLAYER_TAPS_LAND))
+                .extracting(TapAbilityReader.TapEffect::effect, TapAbilityReader.TapEffect::filter,
+                        TapAbilityReader.TapEffect::opponentTaps)
+                .containsExactly(tuple(GAIN, mountain, true));
+        assertThat(TapAbilityReader.readPrinted(scald, TapWatch.ON_ANY_PLAYER_TAPS_LAND))
+                .extracting(TapAbilityReader.TapEffect::filter, TapAbilityReader.TapEffect::opponentTaps)
+                .containsExactly(tuple(MERFOLK, false));
+        assertThatThrownBy(() -> TapAbilityReader.printedEffects(sanctimony, TapWatch.ON_ANY_PLAYER_TAPS_LAND))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> TapAbilityReader.readPrinted(mixed, TapWatch.ON_ANY_PLAYER_TAPS_LAND))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
     void grantedAbilitiesAreFoundByTheWatchedTriggerAndReadAsPrinted() {
         TriggeredAbility granted = new TriggeredAbility(Triggers.becomesTapped(), DRAW);
         Permanent permanent = new Permanent(new Card());
@@ -311,7 +339,7 @@ class TapTriggerTest {
 
     private static List<TapTrigger> allFactories() {
         return Stream.of(Triggers.tappedForMana(), Triggers.playerTapsLandForMana(),
-                Triggers.playerTapsPermanentForMana(), Triggers.youTapCreatureForMana(),
+                Triggers.opponentTapsLandForMana(), Triggers.playerTapsPermanentForMana(), Triggers.youTapCreatureForMana(),
                 Triggers.youTapNonlandPermanentForMana(), Triggers.youTapArtifactTokenForMana(),
                 Triggers.enchantedPermanentBecomesTapped(), Triggers.becomesTapped(),
                 Triggers.becomesTappedForFirstTimeDuringYourTurn(),

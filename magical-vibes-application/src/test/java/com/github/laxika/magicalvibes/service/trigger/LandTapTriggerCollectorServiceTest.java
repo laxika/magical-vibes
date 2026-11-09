@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeWhenOpponentTapsLandOfSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfColorTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandTappedForManaEffect;
@@ -31,12 +30,14 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetCreatureAndCreateTokenIfSharesManaColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
-import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
+import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -114,16 +115,16 @@ class LandTapTriggerCollectorServiceTest {
     void landTapLifeGainWaitsOnTheStack() {
         Permanent source = createPermanent("Sanctimony");
         Permanent mountain = createLandPermanent("Mountain", ManaColor.RED);
-        var effect = new GainLifeWhenOpponentTapsLandOfSubtypeEffect(CardSubtype.MOUNTAIN, 1);
+        var effect = new MayEffect(new GainLifeEffect(1), "Gain 1 life?");
         gd.playerLifeTotals.put(player1Id, 20);
-        when(gameQueryService.findPermanentById(gd, mountain.getId())).thenReturn(mountain);
-        when(gameQueryService.effectiveBasicLandTypes(gd, mountain)).thenReturn(Set.of(CardSubtype.MOUNTAIN));
 
         registry.dispatch(match(source, player1Id, effect), TapWatch.ON_ANY_PLAYER_TAPS_LAND,
                 effect, new TriggerContext.LandTap(player2Id, mountain.getId()));
 
         assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(20);
         assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+        assertThat(gd.stack.getFirst().getTriggeringPermanentId()).isEqualTo(mountain.getId());
     }
 
     @Mock
@@ -275,19 +276,20 @@ class LandTapTriggerCollectorServiceTest {
     }
 
     @Nested
-    @DisplayName("ON_ANY_PLAYER_TAPS_LAND — DealDamageOnLandTapEffect")
-    class DealDamageOnLandTap {
+    @DisplayName("ON_ANY_PLAYER_TAPS_LAND — an effect with no handler of its own")
+    class LandTapAbilityOnTheStack {
 
         @Test
-        @DisplayName("Queues damage to the player who tapped the land")
+        @DisplayName("Queues the card's damage with the tapping player as \"that player\" and the land as \"that land\"")
         void queuesDamageToTappingPlayer() {
             Permanent manabarbs = createPermanent("Manabarbs");
-            var effect = new DealDamageOnLandTapEffect(1);
+            UUID tappedLandId = UUID.randomUUID();
+            var effect = new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER);
 
             boolean result = registry.dispatch(
                     match(manabarbs, player1Id, effect),
                     TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect,
-                    new TriggerContext.LandTap(player2Id, UUID.randomUUID()));
+                    new TriggerContext.LandTap(player2Id, tappedLandId));
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -297,9 +299,9 @@ class LandTapTriggerCollectorServiceTest {
             assertThat(entry.getSourcePermanentId()).isEqualTo(manabarbs.getId());
             assertThat(entry.getSourcePermanentSnapshot().getId()).isEqualTo(manabarbs.getId());
             assertThat(entry.isNonTargeting()).isTrue();
-            assertThat(entry.getEffectsToResolve()).containsExactly(
-                    new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER));
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
             assertThat(entry.getTriggeringPlayerId()).isEqualTo(player2Id);
+            assertThat(entry.getTriggeringPermanentId()).isEqualTo(tappedLandId);
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
 
@@ -307,7 +309,7 @@ class LandTapTriggerCollectorServiceTest {
         @DisplayName("Also queues damage when the source controller taps a land")
         void queuesDamageToController() {
             Permanent manabarbs = createPermanent("Manabarbs");
-            var effect = new DealDamageOnLandTapEffect(1);
+            var effect = new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER);
 
             boolean result = registry.dispatch(
                     match(manabarbs, player1Id, effect),
@@ -320,22 +322,22 @@ class LandTapTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("Does not queue damage when the tapped land fails the filter")
-        void ignoresLandThatFailsFilter() {
-            Permanent burningEarth = createPermanent("Burning Earth");
-            Permanent tappedLand = createLandPermanent("Snow-Covered Island", ManaColor.BLUE);
-            var filter = new PermanentHasSupertypePredicate(CardSupertype.SNOW);
-            var effect = new DealDamageOnLandTapEffect(1, filter);
-            when(gameQueryService.findPermanentById(gd, tappedLand.getId())).thenReturn(tappedLand);
-            when(predicateEvaluationService.matchesPermanentPredicate(gd, tappedLand, filter)).thenReturn(false);
+        @DisplayName("Queues \"that land doesn't untap\" for the land as it resolves, not at once")
+        void queuesSkipUntapOfTheTappedLand() {
+            Permanent vorinclex = createPermanent("Vorinclex, Voice of Hunger");
+            Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
+            var effect = new SkipNextUntapEffect(TapUntapScope.TRIGGERING);
 
             boolean result = registry.dispatch(
-                    match(burningEarth, player1Id, effect),
+                    match(vorinclex, player1Id, effect),
                     TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect,
-                    new TriggerContext.LandTap(player2Id, tappedLand.getId()));
+                    new TriggerContext.LandTap(player2Id, forest.getId()));
 
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
+            assertThat(result).isTrue();
+            assertThat(forest.getSkipUntapCount()).isZero();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
+            assertThat(gd.stack.getFirst().getTriggeringPermanentId()).isEqualTo(forest.getId());
         }
     }
 
@@ -644,7 +646,7 @@ class LandTapTriggerCollectorServiceTest {
             Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
             var effect = SequenceEffect.of(
                     new AddOneOfEachManaTypeProducedByLandEffect(false),
-                    new DealDamageOnLandTapEffect(1));
+                    new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER));
             var ctx = new TriggerContext.LandTap(player2Id, forest.getId());
 
             when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
@@ -670,7 +672,7 @@ class LandTapTriggerCollectorServiceTest {
             Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
             var sequence = SequenceEffect.of(
                     new AddOneOfEachManaTypeProducedByLandEffect(false),
-                    new DealDamageOnLandTapEffect(1));
+                    new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER).dealtByTriggeringPermanent());
             var ability = new TriggeredAbility(Triggers.playerTapsLandForMana(),
                     TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()), sequence);
             CardEffect effect = TapAbilityReader.read(ability, TapWatch.ON_ANY_PLAYER_TAPS_LAND.trigger())
@@ -688,14 +690,17 @@ class LandTapTriggerCollectorServiceTest {
             assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.GREEN)).isEqualTo(1);
             assertThat(gd.stack).isEmpty();
             verify(dealDamageHandler).resolve(
-                    eq(gd), any(StackEntry.class), eq(new DealDamageToPlayersEffect(
-                            1, DamageRecipient.TRIGGERING_PLAYER)));
+                    eq(gd), org.mockito.ArgumentMatchers.argThat(entry -> forest.getId().equals(
+                            entry.getTriggeringPermanentId())
+                            && entry.getTriggeringPermanentSnapshot().getId().equals(forest.getId())),
+                    eq(new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER)
+                            .dealtByTriggeringPermanent()));
         }
 
         @Test
         @DisplayName("an ability that uses the stack keeps its intervening \"if\" for the check as it resolves")
         void nonManaAbilityKeepsItsInterveningIf() {
-            var damage = new DealDamageOnLandTapEffect(1);
+            var damage = new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER);
             var ability = new TriggeredAbility(Triggers.playerTapsLandForMana(),
                     TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()), damage);
 
@@ -905,66 +910,6 @@ class LandTapTriggerCollectorServiceTest {
 
             assertThat(result).isFalse();
             assertThat(gd.playerManaPools.get(player2Id).get(ManaColor.COLORLESS)).isZero();
-        }
-    }
-
-    // ===== ON_ANY_PLAYER_TAPS_LAND — OpponentTappedLandDoesntUntapEffect =====
-
-    @Nested
-    @DisplayName("ON_ANY_PLAYER_TAPS_LAND — OpponentTappedLandDoesntUntapEffect")
-    class OpponentLandDoesntUntap {
-
-        @Test
-        @DisplayName("increments skipUntapCount on opponent's tapped land")
-        void incrementsSkipUntapCount() {
-            Permanent triggerPerm = createPermanent("Vorinclex, Voice of Hunger");
-            Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
-            var effect = new OpponentTappedLandDoesntUntapEffect();
-            var ctx = new TriggerContext.LandTap(player2Id, forest.getId());
-
-            when(gameQueryService.findPermanentById(gd, forest.getId())).thenReturn(forest);
-
-            assertThat(forest.getSkipUntapCount()).isZero();
-
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(forest.getSkipUntapCount()).isEqualTo(1);
-            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
-        }
-
-        @Test
-        @DisplayName("returns false when controller taps their own land")
-        void returnsFalseForOwnLand() {
-            Permanent triggerPerm = createPermanent("Vorinclex, Voice of Hunger");
-            UUID tappedLandId = UUID.randomUUID();
-            var effect = new OpponentTappedLandDoesntUntapEffect();
-            var ctx = new TriggerContext.LandTap(player1Id, tappedLandId);
-
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
-
-            assertThat(result).isFalse();
-        }
-
-        @Test
-        @DisplayName("returns false when tapped land is gone")
-        void returnsFalseWhenLandGone() {
-            Permanent triggerPerm = createPermanent("Vorinclex, Voice of Hunger");
-            UUID missingLandId = UUID.randomUUID();
-            var effect = new OpponentTappedLandDoesntUntapEffect();
-            var ctx = new TriggerContext.LandTap(player2Id, missingLandId);
-
-            when(gameQueryService.findPermanentById(gd, missingLandId)).thenReturn(null);
-
-            boolean result = registry.dispatch(
-                    match(triggerPerm, player1Id, effect),
-                    TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
-
-            assertThat(result).isFalse();
         }
     }
 

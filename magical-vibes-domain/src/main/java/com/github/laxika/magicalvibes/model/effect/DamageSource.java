@@ -16,5 +16,11 @@ public enum DamageSource {
      * {@code StackEntry.getEventDamageSource()}, which the damage collectors record; an ability reaching the stack
      * without it fails as it resolves.
      */
-    EVENT_DAMAGE_SOURCE
+    EVENT_DAMAGE_SOURCE,
+    /**
+     * The permanent the trigger event was about ("then that land deals 1 damage to that player", Barbflare Gremlin), as
+     * it is now or as it last existed on the battlefield (CR 608.2h). Read from {@code StackEntry.getTriggeringPermanentId()}
+     * and, once it has left, {@code StackEntry.getTriggeringPermanentSnapshot()}; with neither, no damage is dealt.
+     */
+    TRIGGERING_PERMANENT
 }

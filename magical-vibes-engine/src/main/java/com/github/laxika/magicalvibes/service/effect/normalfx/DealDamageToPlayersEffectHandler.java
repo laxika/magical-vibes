@@ -27,7 +27,9 @@ import org.springframework.stereotype.Component;
  * opponent-source damage-reduction shields keep applying (the source stays the caster). With
  * {@code DamageSource.EVENT_DAMAGE_SOURCE} the damage is dealt through
  * {@link DamageSupport#entryDealtByEventDamageSource}, whose source is the permanent that dealt the trigger event's
- * damage; the recipients and the amount are still read from the resolving entry.
+ * damage; with {@code DamageSource.TRIGGERING_PERMANENT} through {@link DamageSupport#entryDealtByTriggeringPermanent},
+ * whose source is the permanent the trigger event was about; the recipients and the amount are still read from the
+ * resolving entry.
  */
 @Component
 @RequiredArgsConstructor
@@ -51,9 +53,14 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         // The entry the damage is dealt through: the resolving one, or one whose source is the permanent that dealt
         // the trigger event's damage ("that Archer deals that much damage"); the recipients are always read from the
         // resolving entry.
-        StackEntry dealing = e.damageSource() == DamageSource.EVENT_DAMAGE_SOURCE
-                ? damageSupport.entryDealtByEventDamageSource(gameData, entry)
-                : entry;
+        StackEntry dealing = switch (e.damageSource()) {
+            case EVENT_DAMAGE_SOURCE -> damageSupport.entryDealtByEventDamageSource(gameData, entry);
+            case TRIGGERING_PERMANENT -> damageSupport.entryDealtByTriggeringPermanent(gameData, entry);
+            case ABILITY_SOURCE -> entry;
+        };
+        if (dealing == null) {
+            return;
+        }
         UUID damageSourceId = dealing.getSourcePermanentId() != null
                 ? dealing.getSourcePermanentId() : dealing.getCard().getId();
         int damageBefore = gameData.damageDealtThisTurnBySource.getOrDefault(damageSourceId, 0);

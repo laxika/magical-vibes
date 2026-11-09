@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.GainLifeWhenOpponentTapsLandOfSubtypeEffect;
-import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "8ED", collectorNumber = "42")
@@ -13,7 +15,8 @@ public class Sanctimony extends Card {
 
     public Sanctimony() {
         // Whenever an opponent taps a Mountain for mana, you may gain 1 life.
-        addTrigger(Triggers.playerTapsLandForMana(),
-                new GainLifeWhenOpponentTapsLandOfSubtypeEffect(CardSubtype.MOUNTAIN, 1));
+        addTrigger(Triggers.opponentTapsLandForMana().withFilter(
+                        new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN)),
+                new MayEffect(new GainLifeEffect(1), "Gain 1 life?"));
     }
 }

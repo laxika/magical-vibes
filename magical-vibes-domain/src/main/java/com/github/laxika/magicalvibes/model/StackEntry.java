@@ -699,7 +699,8 @@ public class StackEntry {
     /**
      * The cards a "one or more cards" trigger event was about ("those cards", "the discarded cards"), as they were in
      * the event: the cards discarded (by one discard event or by the discard a resolving ability made), put into a
-     * graveyard from a library, exiled together or that left a graveyard. Empty when the event was about no cards.
+     * graveyard from a library, exiled together or that left a graveyard, or the land a land-play event was about.
+     * Empty when the event was about no cards.
      * Set through {@link #setTriggeringCards}; immutable, so copies share it.
      */
     private List<Card> triggeringCards = List.of();
@@ -2218,6 +2219,18 @@ public class StackEntry {
     /** Records {@code cards} as the cards the trigger event was about, for the effects that read them as they resolve. */
     public void setTriggeringCards(List<Card> cards) {
         this.triggeringCards = cards == null ? List.of() : List.copyOf(cards);
+    }
+
+    /**
+     * The card a "whenever [a player] plays a card" event was about: the triggering spell's card as it was on the stack
+     * when the ability triggered, else the first of {@link #getTriggeringCards()} (the land played); {@code null} when
+     * the entry records neither.
+     */
+    public Card triggeringSpellOrCard() {
+        if (triggeringSpellSnapshot != null) {
+            return triggeringSpellSnapshot.getCard();
+        }
+        return triggeringCards.isEmpty() ? null : triggeringCards.getFirst();
     }
 
     /** The ids of {@link #getTriggeringCards()}, in event order. */

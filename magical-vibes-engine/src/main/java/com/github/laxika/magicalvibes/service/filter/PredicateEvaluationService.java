@@ -70,6 +70,7 @@ import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePr
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAllCardNamesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenNamePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithCardExiledWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardInStartingDeckPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasXInManaCostPredicate;
@@ -678,6 +679,16 @@ public class PredicateEvaluationService {
                 Permanent source = findPermanentByOriginalCardId(gameData, sourceCardId);
                 String chosenName = source == null ? null : source.getChosenName();
                 yield chosenName != null && card.hasName(chosenName);
+            }
+            case CardSharesNameWithCardExiledWithSourcePredicate ignored -> {
+                if (gameData == null || sourceCardId == null) {
+                    yield false;
+                }
+                Permanent source = sourcePermanentId == null
+                        ? findPermanentByOriginalCardId(gameData, sourceCardId)
+                        : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                yield source != null && gameData.getCardsExiledByPermanent(source.getId()).stream()
+                        .anyMatch(exiled -> card.getName() != null && card.getName().equals(exiled.getName()));
             }
             case CardHasSourceChosenColorPredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {

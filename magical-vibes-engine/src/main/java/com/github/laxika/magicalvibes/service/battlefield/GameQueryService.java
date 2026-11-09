@@ -1088,6 +1088,17 @@ public class GameQueryService {
     }
 
     /**
+     * The owner of the card a "whenever you play a card" event was about ("that card's owner"): the triggering spell's
+     * card, else the land played ({@code StackEntry.triggeringSpellOrCard()}). A card's owner never changes.
+     *
+     * @return the player, or {@code null} when the entry records no such card or it has no recorded owner
+     */
+    public UUID findTriggeringCardOwner(GameData gameData, StackEntry entry) {
+        Card played = entry.triggeringSpellOrCard();
+        return played == null ? null : gameData.ownerOf(played);
+    }
+
+    /**
      * The controller of the object a triggered ability's event was about, as the ability resolves ("that source's
      * controller", "its controller"): the current controller of the entry's triggering permanent while it is on the
      * battlefield, otherwise its last known controller (CR 608.2h), which is the controller the entry recorded when it

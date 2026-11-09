@@ -132,7 +132,7 @@ public class ExileTopCardsToSourceEffectHandler implements NormalEffectHandlerBe
                                       UUID controllerId) {
         return switch (scope) {
             case CONTROLLER -> List.of(controllerId);
-            case TARGET_PLAYER -> entry.getTargetId() != null
+            case TARGET_PLAYER, TRIGGERING_PLAYER -> entry.getTargetId() != null
                     && gameData.orderedPlayerIds.contains(entry.getTargetId())
                     ? List.of(entry.getTargetId()) : List.of();
             case EACH_PLAYER -> List.copyOf(gameData.orderedPlayerIds);

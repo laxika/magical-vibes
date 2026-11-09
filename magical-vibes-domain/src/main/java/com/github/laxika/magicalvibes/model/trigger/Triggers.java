@@ -1662,9 +1662,20 @@ public final class Triggers {
         return new TapTrigger(TapTrigger.TapEvent.TAPPED_FOR_MANA, ObjectRelation.THIS);
     }
 
-    /** "Whenever a player taps a land for mana"; the effect narrows the player and the land */
+    /**
+     * "Whenever a player taps a land for mana"; {@code withFilter} narrows the land ("an Island", "a nonbasic land"),
+     * and the land-tap mana effects still narrow the player and the land by their own fields
+     */
     public static TapTrigger playerTapsLandForMana() {
         return new TapTrigger(TapTrigger.TapEvent.TAPPED_FOR_MANA, ObjectRelation.ANY, LAND);
+    }
+
+    /**
+     * "Whenever an opponent taps a land for mana"; {@code withFilter} narrows the land ("a Mountain"). Read by the
+     * collector of {@link #playerTapsLandForMana()}, which judges the tapping player.
+     */
+    public static TapTrigger opponentTapsLandForMana() {
+        return new TapTrigger(TapTrigger.TapEvent.TAPPED_FOR_MANA, ObjectRelation.OPPONENT_CONTROLS, LAND);
     }
 
     /** "Whenever a player taps a permanent for mana" */

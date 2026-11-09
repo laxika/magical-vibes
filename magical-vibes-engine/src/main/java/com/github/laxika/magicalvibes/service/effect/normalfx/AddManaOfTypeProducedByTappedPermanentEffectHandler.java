@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddManaOfTypeProducedByTappedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -37,13 +38,17 @@ public class AddManaOfTypeProducedByTappedPermanentEffectHandler implements Norm
             return;
         }
 
-        ManaPool pool = gameData.playerManaPools.get(entry.getControllerId());
+        // "That player adds": the player who tapped the permanent, the entry's triggering player when it names one
+        // (Overabundance's and Barbflare Gremlin's abilities, controlled by their source's controller), else the
+        // entry's controller (the tapping player, for the abilities that add mana to their controller).
+        UUID recipientId = entry.getTriggeringPlayerId() != null ? entry.getTriggeringPlayerId() : entry.getControllerId();
+        ManaPool pool = gameData.playerManaPools.get(recipientId);
         if (pool == null) {
             return;
         }
 
         pool.add(manaColor);
-        String playerName = gameData.playerIdToName.get(entry.getControllerId());
+        String playerName = gameData.playerIdToName.get(recipientId);
         gameLogService.append(gameData, GameLog.text(playerName + " adds 1 " + manaColor.getCode() + "."));
         log.info("Game {} - {} adds 1 {}", gameData.id, playerName, manaColor);
     }

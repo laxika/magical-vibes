@@ -54,6 +54,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasSourceChosenNamePredicate) {
             return "card with the chosen name";
         }
+        if (predicate instanceof CardSharesNameWithCardExiledWithSourcePredicate) {
+            return "card with the same name as a card exiled with this permanent";
+        }
         if (predicate instanceof CardKeywordPredicate p) {
             return "card with " + p.keyword().name().toLowerCase().replace('_', ' ');
         }

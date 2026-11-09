@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfTriggeringPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import java.util.List;
 import java.util.UUID;
@@ -19,6 +20,7 @@ public class ExileTopCardOfTriggeringPlayerLibraryEffectHandler implements Norma
 
     private final ExileService exileService;
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -27,7 +29,8 @@ public class ExileTopCardOfTriggeringPlayerLibraryEffectHandler implements Norma
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID playerId = entry.getTargetId();
+        UUID playerId = ((ExileTopCardOfTriggeringPlayerLibraryEffect) effect).triggeringCardOwner()
+                ? gameQueryService.findTriggeringCardOwner(gameData, entry) : entry.getTargetId();
         if (playerId == null || !gameData.playerIds.contains(playerId)) {
             return;
         }

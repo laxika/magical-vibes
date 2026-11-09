@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -42,7 +43,10 @@ public class PutCardExiledWithSourceIntoHandEffectHandler implements NormalEffec
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         PutCardExiledWithSourceIntoHandEffect returnEffect = (PutCardExiledWithSourceIntoHandEffect) effect;
-        String requiredName = returnEffect.requiredName();
+        // "One of those cards with that name": the name of the card the trigger event was about, read now.
+        String requiredName = returnEffect.sameNameAsTriggeringCard()
+                ? AmountEvaluationService.triggeringCardName(gameData, entry) : null;
+        if (returnEffect.sameNameAsTriggeringCard() && requiredName == null) return;
         var filter = returnEffect.filter();
         UUID controllerId = entry.getControllerId();
         UUID sourcePermanentId = resolveSourcePermanentId(gameData, entry);

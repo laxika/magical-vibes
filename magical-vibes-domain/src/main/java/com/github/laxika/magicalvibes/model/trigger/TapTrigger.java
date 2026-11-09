@@ -67,8 +67,19 @@ public record TapTrigger(TapEvent event, ObjectRelation relation, PermanentPredi
     }
 
     /**
+     * Whether this is "whenever an opponent taps a land for mana": read by the collector of "whenever a player taps a
+     * land for mana" ({@link #watchKey()}), which judges the tapping player. Only a permanent's controller activates its
+     * mana abilities (CR 602.2), so the player who tapped the land controls it.
+     */
+    public boolean opponentTapsLand() {
+        return event == TapEvent.TAPPED_FOR_MANA && relation == ObjectRelation.OPPONENT_CONTROLS
+                && Triggers.LAND.equals(filter);
+    }
+
+    /**
      * The trigger the {@code TapWatch} collectors read this one's abilities by: without its {@link #qualifier}, and,
-     * for a {@link #narrowed()} trigger, "a permanent you control becomes tapped" (its {@link #filter} dropped too).
+     * for a {@link #narrowed()} trigger, "a permanent you control becomes tapped" (its {@link #filter} dropped too),
+     * and for {@link #opponentTapsLand()} "a player taps a land for mana".
      * That collector judges "this permanent", the type and "for the first time during your turn" from the ability
      * ({@code TapAbilityReader}).
      */
@@ -76,6 +87,9 @@ public record TapTrigger(TapEvent event, ObjectRelation relation, PermanentPredi
     public Trigger watchKey() {
         if (narrowed()) {
             return new TapTrigger(TapEvent.BECOMES_TAPPED, ObjectRelation.YOU_CONTROL);
+        }
+        if (opponentTapsLand()) {
+            return new TapTrigger(TapEvent.TAPPED_FOR_MANA, ObjectRelation.ANY, Triggers.LAND);
         }
         return qualifier == null ? this : new TapTrigger(event, relation, filter);
     }

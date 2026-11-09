@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTappedLandToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +30,7 @@ class TriggerCollectorRegistryTest {
         @DisplayName("Returns false when no handler is registered")
         void returnsFalseWhenNoHandler() {
             var match = new TriggerMatchContext(null, null, UUID.randomUUID(), null);
-            var effect = new DealDamageOnLandTapEffect(1);
+            var effect = new ReturnTappedLandToHandEffect();
             var ctx = new TriggerContext.LandTap(UUID.randomUUID(), UUID.randomUUID());
 
             boolean result = registry.dispatch(match, TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
@@ -42,11 +42,11 @@ class TriggerCollectorRegistryTest {
         @DisplayName("Dispatches to exact match handler")
         void dispatchesToExactMatch() {
             boolean[] called = {false};
-            registry.register(TapWatch.ON_ANY_PLAYER_TAPS_LAND, DealDamageOnLandTapEffect.class,
+            registry.register(TapWatch.ON_ANY_PLAYER_TAPS_LAND, ReturnTappedLandToHandEffect.class,
                     (match, inner, context) -> { called[0] = true; return true; });
 
             var match = new TriggerMatchContext(null, null, UUID.randomUUID(), null);
-            var effect = new DealDamageOnLandTapEffect(1);
+            var effect = new ReturnTappedLandToHandEffect();
             var ctx = new TriggerContext.LandTap(UUID.randomUUID(), UUID.randomUUID());
 
             boolean result = registry.dispatch(match, TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect, ctx);
@@ -107,7 +107,7 @@ class TriggerCollectorRegistryTest {
                     (match, inner, context) -> { defaultCalled[0] = true; return true; });
 
             var match = new TriggerMatchContext(null, null, UUID.randomUUID(), null);
-            var effect = new DealDamageOnLandTapEffect(1);
+            var effect = new ReturnTappedLandToHandEffect();
             var ctx = new TriggerContext.DamageToCreature(null, 2, UUID.randomUUID());
 
             boolean result = registry.dispatch(match, DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
@@ -120,11 +120,11 @@ class TriggerCollectorRegistryTest {
         @DisplayName("Does not dispatch to handler in wrong slot")
         void doesNotDispatchToWrongSlot() {
             boolean[] called = {false};
-            registry.register(TapWatch.ON_ANY_PLAYER_TAPS_LAND, DealDamageOnLandTapEffect.class,
+            registry.register(TapWatch.ON_ANY_PLAYER_TAPS_LAND, ReturnTappedLandToHandEffect.class,
                     (match, inner, context) -> { called[0] = true; return true; });
 
             var match = new TriggerMatchContext(null, null, UUID.randomUUID(), null);
-            var effect = new DealDamageOnLandTapEffect(1);
+            var effect = new ReturnTappedLandToHandEffect();
             var ctx = new TriggerContext.LandTap(UUID.randomUUID(), UUID.randomUUID());
 
             // Wrong slot

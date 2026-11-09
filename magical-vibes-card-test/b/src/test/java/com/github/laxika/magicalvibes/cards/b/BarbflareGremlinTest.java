@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.a.AncientSpring;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.r.ReliquaryTower;
 import com.github.laxika.magicalvibes.cards.s.SimicGrowthChamber;
@@ -13,8 +14,26 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BarbflareGremlin.class, Forest.class, SimicGrowthChamber.class, ReliquaryTower.class})
+@CardUsed({BarbflareGremlin.class, Forest.class, SimicGrowthChamber.class, ReliquaryTower.class, AncientSpring.class})
 class BarbflareGremlinTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A land sacrificed for its mana still deals the damage, as it last existed")
+    void landSacrificedForItsManaStillDealsTheDamage() {
+        Permanent gremlin = addCreatureReady(player1, new BarbflareGremlin());
+        gremlin.tap();
+        Permanent spring = harness.addToBattlefieldAndReturn(player2, new AncientSpring());
+        harness.setLife(player2, 20);
+
+        harness.activateAbility(player2, 0, 1, null, null);
+        harness.handleListChoice(player2, "WHITE");
+
+        var manaPool = gd.playerManaPools.get(player2.getId());
+        assertThat(manaPool.get(ManaColor.WHITE) + manaPool.get(ManaColor.BLACK)).isEqualTo(3);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
+        assertThat(gd.damageDealtThisTurnBySource.getOrDefault(spring.getId(), 0)).isEqualTo(1);
+        assertThat(gd.damageDealtThisTurnBySource.getOrDefault(gremlin.getId(), 0)).isZero();
+    }
 
     @Test
     @DisplayName("A tapped Barbflare Gremlin doubles land mana and deals damage")

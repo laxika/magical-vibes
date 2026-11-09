@@ -17,8 +17,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
  * player that match the predicate, and {@code amount} is ignored.
  *
  * @param unpreventable whether the damage can't be prevented
- * @param damageSource  which object deals the damage: the ability's source, or the permanent that dealt the damage
- *                      the trigger event was about ({@link #dealtByEventDamageSource()}); never {@code null}
+ * @param damageSource  which object deals the damage: the ability's source, the permanent that dealt the damage
+ *                      the trigger event was about ({@link #dealtByEventDamageSource()}), or the permanent the trigger
+ *                      event was about ({@link #dealtByTriggeringPermanent()}); never {@code null}
  */
 public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient recipient,
                                         PermanentPredicate attachedCountFilter, boolean unpreventable,
@@ -70,6 +71,15 @@ public record DealDamageToPlayersEffect(DynamicAmount amount, DamageRecipient re
     public DealDamageToPlayersEffect dealtByEventDamageSource() {
         return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable,
                 recordDamageDealt, triggeredTargetFilter, DamageSource.EVENT_DAMAGE_SOURCE);
+    }
+
+    /**
+     * The permanent the trigger event was about deals this damage instead of the ability's source
+     * ({@link DamageSource#TRIGGERING_PERMANENT}): "then that land deals 1 damage to that player" (Barbflare Gremlin).
+     */
+    public DealDamageToPlayersEffect dealtByTriggeringPermanent() {
+        return new DealDamageToPlayersEffect(amount, recipient, attachedCountFilter, unpreventable,
+                recordDamageDealt, triggeredTargetFilter, DamageSource.TRIGGERING_PERMANENT);
     }
 
     public DealDamageToPlayersEffect(int damage, DamageRecipient recipient) {

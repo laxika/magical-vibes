@@ -73,7 +73,7 @@ public class ExileBottomCardsToSourceEffectHandler implements NormalEffectHandle
             case EACH_OPPONENT -> gameData.orderedPlayerIds.stream()
                     .filter(playerId -> !playerId.equals(controllerId))
                     .toList();
-            case TARGET_PLAYER, TARGET_OPPONENT -> List.of();
+            case TARGET_PLAYER, TARGET_OPPONENT, TRIGGERING_PLAYER -> List.of();
         };
     }
 

@@ -38,11 +38,9 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.action.DelayedChooseOpponentGainsControlOfSource;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageOnLandTapEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeWhenOpponentTapsLandOfSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentTappedLandDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTappedLandToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
@@ -125,16 +123,15 @@ public class LandTapTriggerCollectorService {
 
         if (sequence.steps().size() != 2
                 || !(sequence.steps().get(0) instanceof AddOneOfEachManaTypeProducedByLandEffect mana)
-                || !(sequence.steps().get(1) instanceof DealDamageOnLandTapEffect damage)) {
+                || !(sequence.steps().get(1) instanceof DealDamageToPlayersEffect damage)) {
             return false;
         }
+        // "That player adds one mana of any type that land produced, and this / that land deals 1 damage to them"
+        // (Overabundance, Barbflare Gremlin): a triggered mana ability (CR 605.1b), which resolves at once (CR 605.4a);
+        // the damage is the card's own effect, resolved through this entry.
         TriggerContext.LandTap landTap = (TriggerContext.LandTap) ctx;
-        StackEntry entry = createLandTapDamageEntry(
-                match, damage, landTap.tappingPlayerId(), landTap.tappedLandId(), damage.tappedLandDeals());
-        if (entry == null) {
-            handleAddOneOfEachManaType(match, mana, ctx);
-            return true;
-        }
+        StackEntry entry = landTapEntry(match, damage, landTap);
+        entry.setTriggeringPermanent(tappedLandAsItLastExisted(match.gameData(), landTap.tappedLandId()));
         if (landTap.producedColors().size() > 1) {
             List<ManaColor> choices = landTap.producedColors().stream().sorted().toList();
             ChoiceContext.FixedManaColorThenEffectsChoice followUp =
@@ -153,8 +150,70 @@ public class LandTapTriggerCollectorService {
             return true;
         }
         handleAddOneOfEachManaType(match, mana, ctx);
-        dealDamageHandlerProvider.getObject().resolve(match.gameData(), entry, damage.triggeredEffect());
+        dealDamageHandlerProvider.getObject().resolve(match.gameData(), entry, damage);
         return true;
+    }
+
+    /**
+     * Collects a land-tap ability whose effect no handler of its own reads: the ability goes on the stack as the card
+     * wrote it (it can't add mana, so it isn't a mana ability, CR 605.1b, and uses the stack), with the player who
+     * tapped the land as its non-targeting "that player" and triggering player, and the land as its triggering
+     * permanent ("that land"), both read as it resolves. The trigger's filters were judged by the caller: "whenever a
+     * player taps a land for mana, this deals 1 damage to that player" (Manabarbs, Tember City), "… an Island …"
+     * (Scald), "whenever an opponent taps a Mountain for mana, you may gain 1 life" (Sanctimony), "that land doesn't
+     * untap" (Vorinclex, Voice of Hunger).
+     */
+    @CollectsTapTrigger(value = CardEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
+    private boolean handleLandTapAbility(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        TriggerContext.LandTap landTap = (TriggerContext.LandTap) ctx;
+        StackEntry entry = landTapEntry(match, effect, landTap);
+        var gameData = match.gameData();
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(entry.getCard()));
+        log.info("Game {} - {} triggers on land tap by {}", gameData.id,
+                entry.getCard().getName(), gameData.playerIdToName.get(landTap.tappingPlayerId()));
+        return true;
+    }
+
+    /**
+     * The entry of the land-tap ability of {@code match}'s source with {@code effect}: the tapping player as its
+     * non-targeting "that player" and triggering player, the tapped land as its triggering permanent, and the source
+     * (a permanent, or a face-up plane) as it was when the ability triggered.
+     */
+    private StackEntry landTapEntry(TriggerMatchContext match, CardEffect effect, TriggerContext.LandTap landTap) {
+        Card sourceCard = match.sourceCard() != null ? match.sourceCard() : match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                landTap.tappingPlayerId(),
+                match.permanent() == null ? null : match.permanent().getId());
+        entry.setNonTargeting(true);
+        entry.setTriggeringPlayerId(landTap.tappingPlayerId());
+        entry.setTriggeringPermanentId(landTap.tappedLandId());
+        if (match.permanent() != null) {
+            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        }
+        if (match.sourcePlanarObject() != null) {
+            entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
+        }
+        return entry;
+    }
+
+    /**
+     * The tapped land as it is on the battlefield, or as it last existed there once its mana ability made it leave
+     * (Gemstone Mine's last use), for "that land deals 1 damage" (CR 608.2h); {@code null} when neither is known.
+     */
+    private Permanent tappedLandAsItLastExisted(GameData gameData, UUID tappedLandId) {
+        Permanent tappedLand = gameQueryService.findPermanentById(gameData, tappedLandId);
+        if (tappedLand != null) {
+            return tappedLand;
+        }
+        return gameData.departedPermanentSnapshots.values().stream()
+                .filter(snapshot -> snapshot.getId().equals(tappedLandId))
+                .findFirst().orElse(null);
     }
 
     @CollectsTapTrigger(value = RemoveCounterFromSourceEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
@@ -178,94 +237,6 @@ public class LandTapTriggerCollectorService {
         entry.setNonTargeting(true);
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        return true;
-    }
-
-    @CollectsTapTrigger(value = DealDamageOnLandTapEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
-    private boolean handleDealDamageOnLandTap(TriggerMatchContext match,
-            DealDamageOnLandTapEffect trigger, TriggerContext ctx) {
-        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
-        StackEntry entry = createLandTapDamageEntry(
-                match, trigger, lt.tappingPlayerId(), lt.tappedLandId());
-        if (entry == null) {
-            return false;
-        }
-        var gameData = match.gameData();
-        gameData.enqueueTrigger(entry);
-        Card sourceCard = match.sourceCard() != null ? match.sourceCard() : match.permanent().getCard();
-        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on land tap by {}", gameData.id,
-                sourceCard.getName(), gameData.playerIdToName.get(lt.tappingPlayerId()));
-        return true;
-    }
-
-    private StackEntry createLandTapDamageEntry(TriggerMatchContext match,
-            DealDamageOnLandTapEffect trigger, UUID tappingPlayerId, UUID tappedLandId) {
-        return createLandTapDamageEntry(match, trigger, tappingPlayerId, tappedLandId, false);
-    }
-
-    private StackEntry createLandTapDamageEntry(TriggerMatchContext match,
-            DealDamageOnLandTapEffect trigger, UUID tappingPlayerId, UUID tappedLandId,
-            boolean tappedLandDealsDamage) {
-        var gameData = match.gameData();
-        if (trigger.landFilter() != null) {
-            Permanent tappedLand = gameQueryService.findPermanentById(gameData, tappedLandId);
-            if (tappedLand == null
-                    || !predicateEvaluationService.matchesPermanentPredicate(gameData, tappedLand, trigger.landFilter())) {
-                return null;
-            }
-        }
-        Card sourceCard = match.sourceCard() != null ? match.sourceCard() : match.permanent().getCard();
-        UUID sourcePermanentId = match.permanent() == null ? null : match.permanent().getId();
-        Permanent damageSource = match.permanent();
-        if (tappedLandDealsDamage) {
-            damageSource = gameQueryService.findPermanentById(gameData, tappedLandId);
-            if (damageSource == null) return null;
-            sourceCard = damageSource.getCard();
-            sourcePermanentId = damageSource.getId();
-        }
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                tappedLandDealsDamage ? tappingPlayerId : match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(trigger.triggeredEffect())),
-                tappingPlayerId,
-                sourcePermanentId);
-        entry.setNonTargeting(true);
-        entry.setTriggeringPlayerId(tappingPlayerId);
-        entry.setTriggeringPermanentId(tappedLandId);
-        if (damageSource != null) {
-            entry.setSourcePermanentSnapshot(new Permanent(damageSource));
-        }
-        if (match.sourcePlanarObject() != null) {
-            entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
-        }
-        return entry;
-    }
-
-    @CollectsTapTrigger(value = GainLifeWhenOpponentTapsLandOfSubtypeEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
-    private boolean handleGainLifeWhenOpponentTapsSubtypeLand(TriggerMatchContext match,
-            GainLifeWhenOpponentTapsLandOfSubtypeEffect trigger, TriggerContext ctx) {
-        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
-        // Only opponents' land taps
-        if (match.controllerId().equals(lt.tappingPlayerId())) return false;
-
-        Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
-        if (tappedLand == null) return false;
-        if (!gameQueryService.effectiveBasicLandTypes(match.gameData(), tappedLand)
-                .contains(trigger.subtype())) return false;
-
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(), match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger.triggeredEffect())),
-                null, match.permanent().getId());
-        entry.setNonTargeting(true);
-        entry.setTriggeringPlayerId(lt.tappingPlayerId());
-        entry.setTriggeringPermanentId(tappedLand.getId());
-        match.gameData().enqueueTrigger(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
 
@@ -937,33 +908,6 @@ public class LandTapTriggerCollectorService {
         // The delayed trigger is created by the mana ability itself, which does not use the stack.
         match.gameData().queueDelayedAction(new DelayedChooseOpponentGainsControlOfSource(
                 match.controllerId(), match.permanent().getId(), match.permanent().getCard()));
-        return true;
-    }
-
-    @CollectsTapTrigger(value = OpponentTappedLandDoesntUntapEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
-    private boolean handleOpponentLandDoesntUntap(TriggerMatchContext match,
-            OpponentTappedLandDoesntUntapEffect trigger, TriggerContext ctx) {
-        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
-        // Only triggers for opponents' lands
-        if (match.controllerId().equals(lt.tappingPlayerId())) return false;
-
-        var gameData = match.gameData();
-        Permanent tappedLand = gameQueryService.findPermanentById(gameData, lt.tappedLandId());
-        if (tappedLand == null) return false;
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger.triggeredEffect())),
-                null,
-                match.permanent().getId());
-        entry.setTriggeringPermanentId(tappedLand.getId());
-        entry.setTriggeringPlayerId(lt.tappingPlayerId());
-        entry.setNonTargeting(true);
-        gameData.enqueueTrigger(entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
 

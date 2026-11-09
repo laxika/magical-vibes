@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
-import com.github.laxika.magicalvibes.model.effect.PlayedCardExiledWithSourceTriggerEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,10 +18,11 @@ public class ShareTheSpoils extends Card {
                 new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.EACH_PLAYER));
         addStaticEffect(AllowCastFromCardsExiledWithSourceEffect.activePlayerOneCardPerTurnWithAnyMana());
 
-        PlayedCardExiledWithSourceTriggerEffect exileTopCard = new PlayedCardExiledWithSourceTriggerEffect(
-                new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TARGET_PLAYER));
-        addTrigger(Triggers.playerCastsSpell(), exileTopCard);
-        addTrigger(Triggers.youPlayLand(), exileTopCard);
-        addTrigger(Triggers.opponentPlaysLand(), exileTopCard);
+        // When they do, exile the top card of their library.
+        ExileTopCardsToSourceEffect exileTopCard =
+                new ExileTopCardsToSourceEffect(1, false, false, LibraryScope.TRIGGERING_PLAYER);
+        addTrigger(Triggers.playerCastsSpell().exiledWithThis(), exileTopCard);
+        addTrigger(Triggers.youPlayLand().exiledWithThis(), exileTopCard);
+        addTrigger(Triggers.opponentPlaysLand().exiledWithThis(), exileTopCard);
     }
 }

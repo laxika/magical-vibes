@@ -753,6 +753,31 @@ public class DamageSupport {
         return damageEntry;
     }
 
+    /**
+     * The entry {@code entry}'s damage is dealt through when the permanent its trigger event was about deals it
+     * ({@code DamageSource.TRIGGERING_PERMANENT}, "then that land deals 1 damage to that player"): that permanent is its
+     * source and its controller the source's controller, as for {@link #entryDealtByEventDamageSource}. A permanent
+     * that has left the battlefield deals it as it last existed there (CR 608.2h), the entry's triggering permanent
+     * snapshot.
+     *
+     * @return the entry, or {@code null} when the entry names no triggering permanent it can find or remember
+     */
+    public StackEntry entryDealtByTriggeringPermanent(GameData gameData, StackEntry entry) {
+        UUID permanentId = entry.getTriggeringPermanentId();
+        Permanent live = permanentId == null ? null : gameQueryService.findPermanentById(gameData, permanentId);
+        Permanent dealer = live != null ? live : entry.getTriggeringPermanentSnapshot();
+        if (dealer == null) {
+            return null;
+        }
+        UUID controllerId = gameQueryService.findTriggeringPermanentController(gameData, entry);
+        StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, dealer.getCard(), controllerId,
+                entry.getDescription(), List.of(), entry.getTargetId(), dealer.getId());
+        damageEntry.setDamageSourceCard(dealer.getCard());
+        damageEntry.setDamageSourceControllerId(controllerId);
+        damageEntry.setSourcePermanentSnapshot(new Permanent(dealer));
+        return damageEntry;
+    }
+
     public boolean isDamageSourcePreventedWithLog(GameData gameData, StackEntry entry) {
         Card source = entry.getEffectiveDamageSourceCard();
         if (gameQueryService.isDamageFromStackEntryPrevented(gameData, entry)) {
