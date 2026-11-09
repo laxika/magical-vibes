@@ -22,7 +22,7 @@ public class UltronArtificialMalevolence extends Card {
         addTrigger(Triggers.enters(Triggers.NONTOKEN_ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new MayPayManaEffect(
                         "{2}",
-                        new CreateTokenCopyOfTargetPermanentEffect().withAnimationIfNotCreature(
+                        new CreateTokenCopyOfTargetPermanentEffect().ofTriggeringPermanent().withAnimationIfNotCreature(
                                 new AnimatePermanentsEffect(2, 2,
                                         List.of(CardSubtype.ROBOT, CardSubtype.VILLAIN), Set.of(), null,
                                         Set.of(CardType.CREATURE), GrantScope.TARGET, EffectDuration.PERMANENT)),

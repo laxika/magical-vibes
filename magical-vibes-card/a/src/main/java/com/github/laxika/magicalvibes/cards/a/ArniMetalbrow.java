@@ -22,8 +22,7 @@ public class ArniMetalbrow extends Card {
         MayPayManaEffect ability = new MayPayManaEffect(
                 "{1}{R}",
                 new PutCreatureFromHandWithManaValueLessThanTriggeringPermanentEffect(),
-                "Put a creature card from your hand onto the battlefield tapped and attacking?",
-                true
+                "Put a creature card from your hand onto the battlefield tapped and attacking?"
         );
         addTrigger(Triggers.creatureYouControlAttacks(), ability);
         addTrigger(Triggers.enters(

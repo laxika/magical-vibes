@@ -72,8 +72,7 @@ public class ReturnTargetCardsFromGraveyardToHandEffectHandler implements Normal
                         "Pay " + manaCost + " to prevent " + entry.getCard().getName() + "'s effect?",
                         MayPayPayer.ANY_PLAYER,
                         e.withoutAnyPlayerPaysX(),
-                        0,
-                        false));
+                        0));
                 mayPayManaEffectHandler.resolve(gameData, entry, entry.getEffectsToResolve().get(effectIndex));
                 return;
             }

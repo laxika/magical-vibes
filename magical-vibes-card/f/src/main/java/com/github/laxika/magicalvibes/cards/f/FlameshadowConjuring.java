@@ -18,7 +18,7 @@ public class FlameshadowConjuring extends Card {
         addTrigger(Triggers.enters(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new MayPayManaEffect(
                 "{R}",
-                new CreateTokenCopyOfTargetPermanentEffect(true, true),
+                new CreateTokenCopyOfTargetPermanentEffect(true, true).ofTriggeringPermanent(),
                 "Pay {R} to create a hasty token copy of that creature (exiled at the beginning of the next end step)?"
         ));
     }

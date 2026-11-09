@@ -16,8 +16,9 @@ public class FlayerOfTheHatebound extends Card {
     public FlayerOfTheHatebound() {
         // Undying is auto-loaded as a keyword from Scryfall; its return mechanic is handled by the engine.
         // Whenever this creature or another creature enters from your graveyard, that creature deals
-        // damage equal to its power to any target. The entering creature is the damage source.
+        // damage equal to its power to any target. Flayer is the ability's source, the entering creature the
+        // damage's.
         addTrigger(Triggers.entersFrom(Zone.GRAVEYARD, Triggers.CREATURE, ObjectRelation.ANY),
-                new DealDamageToAnyTargetEffect(new SourcePower()));
+                DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower()));
     }
 }

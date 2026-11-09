@@ -30,7 +30,7 @@ public class RikuOfTwoReflections extends Card {
         addTrigger(Triggers.enters(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new MayPayManaEffect(
                 "{G}{U}",
-                new CreateTokenCopyOfTargetPermanentEffect(),
+                new CreateTokenCopyOfTargetPermanentEffect().ofTriggeringPermanent(),
                 "Pay {G}{U} to create a token that's a copy of that creature?"
         ));
     }

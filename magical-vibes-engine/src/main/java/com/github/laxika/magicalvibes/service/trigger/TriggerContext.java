@@ -471,12 +471,10 @@ public sealed interface TriggerContext {
      *                              ally/any-creature scans)
      * @param perEffectTriggerCount how many copies of each triggered ability to enqueue
      *                              (e.g. Naban doubling on the any-creature scan)
-     * @param mayPayTargetCardId    the card id preserved on a {@code MayPayManaEffect} stack entry
-     *                              so the wrapped effect can reference the entering permanent
-     *                              (e.g. Mirrorworks); {@code null} when unused
+     * @param enteringPermanentId   the permanent that entered, when the scan knows it ({@code null} otherwise)
      */
     record PermanentEnters(Card enteringCard, UUID enteringControllerId, UUID defaultTargetPlayerId,
-                           int perEffectTriggerCount, UUID mayPayTargetCardId) implements TriggerContext {}
+                           int perEffectTriggerCount, UUID enteringPermanentId) implements TriggerContext {}
 
     /** Context for triggers watching a permanent being turned face up. */
     record PermanentTurnsFaceUp(Permanent turnedPermanent, UUID controllerId) implements TriggerContext {}

@@ -2073,43 +2073,6 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleEnteringPermanentAnyTarget(GameData gameData, UUID targetId,
-                                                 PermanentChoiceContext.EnteringPermanentAnyTargetTrigger efg) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                efg.sourceCard(),
-                efg.controllerId(),
-                efg.sourceCard().getName() + "'s ability",
-                new ArrayList<>(efg.effects()),
-                null,
-                efg.sourcePermanentId());
-        entry.setTargetId(targetId);
-        entry.setChosenPermanentId(efg.chosenPermanentId());
-        entry.setChosenPermanentPowerAtLastKnown(efg.chosenPermanentPowerAtTrigger());
-        Permanent damageSource = gameQueryService.findPermanentById(gameData, efg.sourcePermanentId());
-        if (damageSource != null) {
-            entry.setSourcePermanentSnapshot(new Permanent(damageSource));
-        }
-        pushTriggeredEntry(gameData, entry);
-
-        String targetName = getTargetDisplayName(gameData, targetId);
-        
-        gameLogService.append(gameData, GameLog.builder().card(efg.sourceCard()).text("'s triggered ability targets " + targetName + ".").build());
-        log.info("Game {} - {} enters-from-graveyard trigger targets {}", gameData.id, efg.sourceCard().getName(), targetName);
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.EnteringPermanentAnyTargetTrigger.class)) {
-            triggerCollectionService.processNextEnteringPermanentAnyTarget(gameData);
-            return;
-        }
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handleETBSpellTargetTrigger(GameData gameData, UUID cardId, PermanentChoiceContext.ETBSpellTargetTrigger etbStt) {
         Permanent targetPermanent = gameQueryService.findPermanentById(gameData, cardId);
         String targetName = targetPermanent == null ? "" : targetPermanent.getCard().getName();

@@ -14,8 +14,7 @@ public class Electropotence extends Card {
     public Electropotence() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), new MayPayManaEffect(
                 "{2}{R}",
-                new DealDamageToAnyTargetEffect(new SourcePower()),
-                "Pay {2}{R} to have that creature deal damage equal to its power to any target?",
-                true));
+                DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower()),
+                "Pay {2}{R} to have that creature deal damage equal to its power to any target?"));
     }
 }

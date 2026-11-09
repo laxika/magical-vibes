@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.b.BelovedChaplain;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantScorpion;
 import com.github.laxika.magicalvibes.cards.h.HagraCrocodile;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.p.Panharmonicon;
+import com.github.laxika.magicalvibes.cards.v.VampireNighthawk;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Electropotence.class, HillGiant.class, GrizzlyBears.class, GiantScorpion.class,
-        HagraCrocodile.class, Panharmonicon.class})
+        HagraCrocodile.class, Panharmonicon.class, LightningBolt.class, VampireNighthawk.class, BelovedChaplain.class})
 class ElectropotenceTest extends BaseCardTest {
 
     private void resolveUntilInputOrEmpty() {
@@ -151,6 +154,52 @@ class ElectropotenceTest extends BaseCardTest {
         resolveUntilInputOrEmpty();
         harness.handleMayAbilityChosen(player1, true);
         harness.assertLife(player2, 14);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @DisplayName("A creature that left before the ability resolves deals damage equal to its last-known power, with its lifelink")
+    void departedCreatureStillDealsItsDamage() {
+        harness.addToBattlefield(player1, new Electropotence());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.setHand(player1, List.of(new VampireNighthawk(), new LightningBolt()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        resolveUntilInputOrEmpty();
+        harness.handlePermanentChosen(player1, player2.getId());
+        Permanent nighthawk = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(p -> p.getCard() instanceof VampireNighthawk).findFirst().orElseThrow();
+        harness.castInstant(player1, 0, nighthawk.getId());
+        resolveUntilInputOrEmpty();
+
+        harness.assertInGraveyard(player1, "Vampire Nighthawk");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    @DisplayName("Electropotence is the ability's source: a creature with protection from creatures stays a legal target")
+    void protectionFromCreaturesTargetStaysLegalButTheDamageIsPrevented() {
+        harness.addToBattlefield(player1, new Electropotence());
+        Permanent chaplain = harness.addToBattlefieldAndReturn(player2, new BelovedChaplain());
+        harness.setHand(player1, List.of(new HillGiant()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        harness.castCreature(player1, 0);
+        resolveUntilInputOrEmpty();
+        harness.handlePermanentChosen(player1, chaplain.getId());
+        resolveUntilInputOrEmpty();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(chaplain.getMarkedDamage()).isZero();
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 }

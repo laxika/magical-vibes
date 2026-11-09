@@ -38,7 +38,7 @@ public class InallaArchmageRitualist extends Card {
                 "{1}",
                 new ConditionalEffect(
                         new AnyOf(List.of(new SourceIsOnBattlefield(), new SourceCardInCommandZone())),
-                        new CreateTokenCopyOfTargetPermanentEffect(true, true)),
+                        new CreateTokenCopyOfTargetPermanentEffect(true, true).ofTriggeringPermanent()),
                 "Pay {1} to create a token that's a copy of that Wizard?");
         CardEffect wizardTrigger = copyWizard;
 

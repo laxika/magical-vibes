@@ -11920,10 +11920,6 @@ public class TriggerCollectionService {
                 card), watch.trigger(), watch.zone());
     }
 
-    public void processNextEnteringPermanentAnyTarget(GameData gameData) {
-        triggeredAbilityQueueService.processNextEnteringPermanentAnyTarget(gameData);
-    }
-
     public void processNextSagaChapterTarget(GameData gameData) {
         triggeredAbilityQueueService.processNextSagaChapterTarget(gameData);
     }
@@ -15703,7 +15699,7 @@ public class TriggerCollectionService {
                                      CardEffect effect, TriggerLimit limit, TriggerContext.PermanentEnters ctx) {
         boolean limited = limit == TriggerLimit.ONCE_EACH_TURN || limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
         var effectCtx = limited ? new TriggerContext.PermanentEnters(ctx.enteringCard(), ctx.enteringControllerId(),
-                ctx.defaultTargetPlayerId(), 1, ctx.mayPayTargetCardId()) : ctx;
+                ctx.defaultTargetPlayerId(), 1, ctx.enteringPermanentId()) : ctx;
         var match = new TriggerMatchContext(gameData, perm, controllerId, effect,
                 perm != null ? perm.getCard() : null, null, limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN, limited);
         return dispatch(match, watch, effect, effectCtx);

@@ -23,7 +23,7 @@ public class BrilliantWings extends Card {
 
         // Whenever a creature you control enters, you may pay {1}. If you do, attach this Aura to it.
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MayPayManaEffect("{1}", new AttachSourceAuraToTargetCreatureEffect(),
+                new MayPayManaEffect("{1}", AttachSourceAuraToTargetCreatureEffect.ofTriggeringPermanent(),
                         "Pay {1} to attach Brilliant Wings to that creature?"));
     }
 }

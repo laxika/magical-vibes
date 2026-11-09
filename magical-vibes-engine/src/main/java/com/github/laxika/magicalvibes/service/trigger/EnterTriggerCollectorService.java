@@ -68,7 +68,7 @@ public class EnterTriggerCollectorService {
                 || may.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
             // "You may have target player …": the target is chosen as the ability goes on the stack (CR 603.3d).
             return handleEnterMay(match, may, new TriggerContext.PermanentEnters(pe.enteringCard(),
-                    pe.enteringControllerId(), null, pe.perEffectTriggerCount(), pe.mayPayTargetCardId()));
+                    pe.enteringControllerId(), null, pe.perEffectTriggerCount(), pe.enteringPermanentId()));
         }
         return enqueueAnyPermanentEnter(match, effect, pe);
     }
@@ -137,11 +137,11 @@ public class EnterTriggerCollectorService {
                     pe.defaultTargetPlayerId() != null ? pe.defaultTargetPlayerId() : pe.enteringControllerId(),
                     match.permanent().getId());
             entry.setNonTargeting(true);
-            entry.setTriggeringPermanentId(pe.mayPayTargetCardId());
+            entry.setTriggeringPermanentId(pe.enteringPermanentId());
             entry.setTriggeringPermanentControllerId(pe.enteringControllerId());
             entry.setTriggeringCardId(pe.enteringCard().getId());
-            recordEnteringPermanent(match.gameData(), entry, pe.enteringCard(), pe.mayPayTargetCardId() == null
-                    ? null : gameQueryService.findPermanentById(match.gameData(), pe.mayPayTargetCardId()),
+            recordEnteringPermanent(match.gameData(), entry, pe.enteringCard(), pe.enteringPermanentId() == null
+                    ? null : gameQueryService.findPermanentById(match.gameData(), pe.enteringPermanentId()),
                     pe.enteringControllerId());
             match.gameData().stack.add(entry);
         }
@@ -384,10 +384,12 @@ public class EnterTriggerCollectorService {
             logTriggered(match);
             return true;
         }
-        Card sourceCard = match.permanent().getCard();
+        // "That creature deals damage equal to its power to any target" (Flayer of the Hatebound): the ability is the
+        // watcher's, its target judged against it (CR 113.7); the effect reads the entry's triggering permanent.
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.EnteringPermanentAnyTargetTrigger(
-                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), enteringPermanentId));
+            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(match.permanent().getCard(),
+                    match.controllerId(), new ArrayList<>(List.of(effect)), match.permanent().getId(),
+                    enteringPermanentId));
         }
         logTriggered(match);
         return true;
@@ -532,6 +534,12 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
+    /**
+     * "You may pay {N}. If you do, …" on an enter trigger. The ability is the watcher's (CR 113.7), whatever its payload
+     * does: "that creature" is the entering permanent the entry records ({@link #recordEnteringPermanent}), read as the
+     * ability resolves. A payload with a target gets it chosen as the ability goes on the stack (CR 603.3d); the payment
+     * is decided as it resolves (CR 603.5).
+     */
     @CollectsWatchTrigger(value = MayPayManaEffect.class,
                     watch = ZoneChangeWatch.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
     @CollectsWatchTrigger(value = MayPayManaEffect.class,
@@ -547,40 +555,9 @@ public class EnterTriggerCollectorService {
     private boolean handleEnterMayPay(TriggerMatchContext match, MayPayManaEffect mayPay, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         Card sourceCard = match.permanent() != null ? match.permanent().getCard() : match.sourceCard();
-        if (mayPay.sourceIsTriggeringPermanent()) {
-            UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
-            if (enteringPermanentId == null) {
-                return true;
-            }
-            if (mayPay.targetSpec() != TargetSpec.NONE) {
-                for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-                    match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                            sourceCard, match.controllerId(), new ArrayList<>(List.of(mayPay)),
-                            enteringPermanentId, enteringPermanentId));
-                }
-            } else {
-                match.gameData().queueMayAbility(sourceCard, match.controllerId(), mayPay,
-                        pe.mayPayTargetCardId(), enteringPermanentId, 0);
-                // "That creature" is the entering permanent, read as the ability resolves (CR 608.2h).
-                recordEnteringPermanent(match.gameData(), match.gameData().stack.getLast(), pe.enteringCard(),
-                        gameQueryService.findPermanentById(match.gameData(), enteringPermanentId),
-                        pe.enteringControllerId());
-            }
-            logTriggered(match);
-            log.info("Game {} - {} triggers for {} entering (may pay mana)",
-                    match.gameData().id, sourceCard.getName(), pe.enteringCard().getName());
-            return true;
-        }
-        UUID targetCardId = mayPay.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                ? pe.mayPayTargetCardId()
-                : null;
         UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
-        Permanent enteringPermanent = enteringPermanentId == null ? null
-                : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
-        if (match.permanent() != null && mayPay.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                && !mayPay.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
-            // The player target is chosen as the trigger goes on the stack (CR 603.3d); the payment is
-            // decided on resolution (CR 603.5).
+        if (match.permanent() != null && (mayPay.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                || mayPay.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
                 match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
                         sourceCard, match.controllerId(), new ArrayList<>(List.of(mayPay)),
@@ -589,22 +566,16 @@ public class EnterTriggerCollectorService {
             logTriggered(match);
             return true;
         }
+        Permanent enteringPermanent = enteringPermanentId == null ? null
+                : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             UUID sourcePermanentId = match.permanent() == null ? null : match.permanent().getId();
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard,
                     match.controllerId(), sourceCard.getName() + "'s ability", List.of(mayPay),
-                    targetCardId, sourcePermanentId);
+                    null, sourcePermanentId);
             recordEnteringPermanent(match.gameData(), entry, pe.enteringCard(), enteringPermanent,
                     pe.enteringControllerId());
             entry.setNonTargeting(!isTargeting(mayPay));
-            if (targetCardId != null) {
-                // The permanent the effect acts on is the one the event fixed ("that creature", "it": Flameshadow
-                // Conjuring's copy, Emiel the Blessed's counter, Brilliant Wings' attachment), never a target chosen
-                // for the ability, so it is referenced rather than targeted and is read from its last known
-                // information once it has left (CR 608.2h).
-                entry.setNonTargeting(true);
-                entry.rememberLastKnownPermanentCard(targetCardId, pe.enteringCard());
-            }
             if (match.permanent() != null) {
                 entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             }

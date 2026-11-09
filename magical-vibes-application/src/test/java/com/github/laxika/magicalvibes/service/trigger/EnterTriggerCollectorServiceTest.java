@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Emblem;
@@ -823,6 +825,73 @@ class EnterTriggerCollectorServiceTest {
 
         assertWrittenOnTheEntering(authored, enteringPermanent);
         assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(sourcePermanent.getId());
+    }
+
+    @Test
+    @DisplayName("A \"you may pay\" copy of the entering creature goes on the stack as written, the creature recorded")
+    void allyCreatureMayPayCopyRecordsTheEnteringPermanent() {
+        MayPayManaEffect authored = new MayPayManaEffect("{2}",
+                new CreateTokenCopyOfTargetPermanentEffect().ofTriggeringPermanent(), "Pay {2}?");
+        Card source = new Card();
+        source.setName("Copier");
+        addWatched(source, ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, authored);
+        Permanent sourcePermanent = new Permanent(source);
+        gd.playerBattlefields.get(player1Id).add(sourcePermanent);
+        Card entering = enteringCreature(2, 2);
+        Permanent enteringPermanent = new Permanent(entering);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
+
+        enter(player1Id, entering);
+
+        assertWrittenOnTheEntering(authored, enteringPermanent);
+        assertThat(gd.stack.getFirst().getTargetId()).isNull();
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(sourcePermanent.getId());
+    }
+
+    @Test
+    @DisplayName("A \"you may pay\" ability whose payload targets queues its target choice with the watcher as source")
+    void allyCreatureMayPayTargetedQueuesChoiceWithTheWatcherAsSource() {
+        MayPayManaEffect authored = new MayPayManaEffect("{2}{R}",
+                DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower()), "Pay {2}{R}?");
+        Card source = new Card();
+        source.setName("Electro");
+        addWatched(source, ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, authored);
+        Permanent sourcePermanent = new Permanent(source);
+        gd.playerBattlefields.get(player1Id).add(sourcePermanent);
+        Card entering = enteringCreature(3, 3);
+        Permanent enteringPermanent = new Permanent(entering);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
+
+        enter(player1Id, entering);
+
+        assertThat(gd.stack).isEmpty();
+        var pending = gd.peekPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
+        assertThat(pending.effects()).containsExactly(authored);
+        assertThat(pending.sourcePermanentId()).isEqualTo(sourcePermanent.getId());
+        assertThat(pending.enteringPermanentId()).isEqualTo(enteringPermanent.getId());
+    }
+
+    @Test
+    @DisplayName("A targeted ability on a creature entering from a graveyard is the watcher's, queued with its target choice")
+    void creatureFromGraveyardTargetedAbilityIsTheWatchers() {
+        DealDamageToAnyTargetEffect authored = DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower());
+        Card source = new Card();
+        source.setName("Flayer");
+        addWatched(source, ZoneChangeWatch.ON_CREATURE_ENTERS_FROM_GRAVEYARD, authored);
+        Permanent sourcePermanent = new Permanent(source);
+        gd.playerBattlefields.get(player1Id).add(sourcePermanent);
+        Card entering = enteringCreature(2, 2);
+        Permanent enteringPermanent = new Permanent(entering);
+        enteringPermanent.setEnteredFromGraveyardOwnerId(player1Id);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
+
+        enter(player1Id, entering);
+
+        assertThat(gd.stack).isEmpty();
+        var pending = gd.peekPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class);
+        assertThat(pending.effects()).containsExactly(authored);
+        assertThat(pending.sourcePermanentId()).isEqualTo(sourcePermanent.getId());
+        assertThat(pending.enteringPermanentId()).isEqualTo(enteringPermanent.getId());
     }
 
     @Test

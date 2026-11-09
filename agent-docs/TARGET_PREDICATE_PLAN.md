@@ -997,7 +997,7 @@ will be enumerated in one place and rejected in another:
 |---|---|
 | `TriggeredAbilityQueueService.processNextDiscardTrigger` (~:445) | `DiscardTriggerAnyTarget` target list |
 | `TriggeredAbilityQueueService.processNextSpellTargetTrigger` (~:490) | `SpellTargetTriggerAnyTarget`, the filterless branch |
-| `TriggeredAbilityQueueService` (~:630) | `EnteringPermanentAnyTargetTrigger` target list |
+| `TriggeredAbilityQueueService` (~:630) | `EnteringPermanentAnyTargetTrigger` target list (gone: effect-slot-refactor.md step 15, run 17z12f; Flayer of the Hatebound chooses through `EntersTriggerTarget`) |
 | `SpellCastingService` (~:1786) | cast-time validation of each divided-damage **assignment** target — would throw on a battle before resolution ever ran |
 | `DamageTargetValidators.validateDealDividedDamage` (~:66) | the `@ValidatesTarget` escape hatch for `DealDividedDamageEffect`; message reads "Target must be a creature, planeswalker, or player" |
 

@@ -2980,27 +2980,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** An enters-the-battlefield trigger that needs an "any target" choice and whose effect resolves
-     *  against the permanent that just entered rather than the triggering permanent — e.g. "that creature
-     *  deals damage equal to its power to any target". The {@code sourcePermanentId} points at the
-     *  permanent that entered (the damage source); {@code sourceCard} is the permanent whose ability
-     *  triggered (Flayer of the Hatebound, Warstorm Surge). */
-    record EnteringPermanentAnyTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                              UUID sourcePermanentId, UUID chosenPermanentId,
-                                              Integer chosenPermanentPowerAtTrigger)
-            implements PermanentChoiceContext {
-        public EnteringPermanentAnyTargetTrigger(Card sourceCard, UUID controllerId,
-                                                  List<CardEffect> effects, UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, null, null);
-        }
-
-        public EnteringPermanentAnyTargetTrigger(Card sourceCard, UUID controllerId,
-                                                  List<CardEffect> effects, UUID sourcePermanentId,
-                                                  UUID chosenPermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, chosenPermanentId, null);
-        }
-    }
-
     /**
      * ETB trigger that needs to target a spell on the stack (e.g. Naru Meha's copy ability).
      * {@code includeAbilities} is true when the card's stack filter includes

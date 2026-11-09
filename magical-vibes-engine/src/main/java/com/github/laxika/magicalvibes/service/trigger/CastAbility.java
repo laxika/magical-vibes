@@ -87,7 +87,7 @@ public record CastAbility(SpellFilter filter, List<CardEffect> effects, Conditio
     private static boolean isPlainManaPayment(MayPayManaEffect pay) {
         return pay.manaCost() != null && pay.dynamicManaCost() == null && pay.wrapped() != null
                 && pay.payer() == MayPayPayer.CONTROLLER
-                && pay.elseEffect() == null && pay.lifeCost() == 0 && !pay.sourceIsTriggeringPermanent();
+                && pay.elseEffect() == null && pay.lifeCost() == 0;
     }
 
     private static boolean isPlainMay(MayEffect may) {

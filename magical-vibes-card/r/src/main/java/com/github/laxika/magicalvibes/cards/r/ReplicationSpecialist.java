@@ -13,7 +13,7 @@ public class ReplicationSpecialist extends Card {
     public ReplicationSpecialist() {
         addTrigger(Triggers.enters(Triggers.NONTOKEN_ARTIFACT, ObjectRelation.YOU_CONTROL), new MayPayManaEffect(
                 "{1}{U}",
-                new CreateTokenCopyOfTargetPermanentEffect(),
+                new CreateTokenCopyOfTargetPermanentEffect().ofTriggeringPermanent(),
                 "Pay {1}{U} to create a token that's a copy of that artifact?"
         ));
     }

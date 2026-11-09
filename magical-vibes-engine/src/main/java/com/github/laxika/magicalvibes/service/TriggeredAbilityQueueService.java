@@ -2352,30 +2352,6 @@ public class TriggeredAbilityQueueService {
         }
     }
 
-    public void processNextEnteringPermanentAnyTarget(GameData gameData) {
-        while (gameData.hasPendingInteraction(PermanentChoiceContext.EnteringPermanentAnyTargetTrigger.class)) {
-            PermanentChoiceContext.EnteringPermanentAnyTargetTrigger pending =
-                    gameData.peekPendingInteraction(PermanentChoiceContext.EnteringPermanentAnyTargetTrigger.class);
-
-            List<UUID> validPermanentTargets =
-                    anyTargetPermanents(gameData, pending.controllerId(), pending.sourceCard());
-            List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
-
-            // There are always valid targets (at least the players).
-            gameData.pollPendingInteraction(PermanentChoiceContext.EnteringPermanentAnyTargetTrigger.class);
-            gameData.interaction.setPermanentChoiceContext(pending);
-            playerInputService.beginAnyTargetChoice(gameData, pending.controllerId(),
-                    validPermanentTargets, validPlayerTargets,
-                    pending.sourceCard().getName() + "'s ability - Choose any target.");
-
-            gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
-                    "'s triggered ability - choose any target."));
-            log.info("Game {} - {} enters-from-graveyard trigger awaiting target selection",
-                    gameData.id, pending.sourceCard().getName());
-            return;
-        }
-    }
-
     /**
      * Every permanent on every battlefield that CR 115.4 admits as the permanent half of "any
      * target". The restriction is <em>evaluated</em> from the declared

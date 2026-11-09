@@ -1164,8 +1164,6 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleDrawTrigger(gameData, permanentId, dt);
         } else if (context instanceof PermanentChoiceContext.DrawTriggerPermanentTarget dpt) {
             triggerHandler.handleDrawTriggerPermanentTarget(gameData, permanentId, dpt);
-        } else if (context instanceof PermanentChoiceContext.EnteringPermanentAnyTargetTrigger efg) {
-            triggerHandler.handleEnteringPermanentAnyTarget(gameData, permanentId, efg);
         } else if (context instanceof PermanentChoiceContext.ETBSpellTargetTrigger etbStt) {
             triggerHandler.handleETBSpellTargetTrigger(gameData, permanentId, etbStt);
         } else if (context instanceof PermanentChoiceContext.ETBTokenTargetTrigger etbTtt) {

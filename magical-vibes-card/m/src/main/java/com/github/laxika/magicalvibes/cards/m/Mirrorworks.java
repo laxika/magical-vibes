@@ -16,7 +16,7 @@ public class Mirrorworks extends Card {
         addTrigger(Triggers.enters(Triggers.NONTOKEN_ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new MayPayManaEffect(
                 "{2}",
-                new CreateTokenCopyOfTargetPermanentEffect(),
+                new CreateTokenCopyOfTargetPermanentEffect().ofTriggeringPermanent(),
                 "Pay {2} to create a token that's a copy of that artifact?"
         ));
     }

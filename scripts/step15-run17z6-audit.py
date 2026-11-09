@@ -42,10 +42,10 @@ BIND = re.compile(r"\.set\w+\((?:effect|e|may|mayPay|marker|trigger)\.")
 # enter and turned-face-up collectors' handlers (they were deleted or record the entering permanent whatever the effects
 # are); the may-pay handler's "that creature" target and source bindings are row 17z12f's. Run 17z12c closed the damage
 # and death collectors' handlers (deleted: the enchanted-creature, any-creature and any-creature-death watches' defaults
-# record the event whatever the effects are).
-OPEN = {
-    ("EnterTriggerCollectorService.java", "handleEnterMayPay"): "17z12f",
-}
+# record the event whatever the effects are). Run 17z12f closed the may-pay handler (the ability is the watcher's, the
+# entering permanent recorded whatever the payload is, a targeted payload's target chosen as it goes on the stack) and the
+# creature-enters-from-graveyard default (its targeted abilities are the watcher's, through the enters target choice).
+OPEN = {}
 OPEN.update({
     ("DiscardTriggerCollectorService.java", "handleDiscardMay"): "17z12d",
     ("DiscardTriggerCollectorService.java", "handleCastDiscardedCard"): "17z12d",

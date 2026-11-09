@@ -243,11 +243,6 @@ public class AutoPassService {
             triggerCollectionService.processNextDrawTriggerTarget(gameData);
         }
 
-        // Process any pending enters-from-graveyard targeted triggers
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.EnteringPermanentAnyTargetTrigger.class)) {
-            triggerCollectionService.processNextEnteringPermanentAnyTarget(gameData);
-        }
-
         // Process any pending saga chapter targeted triggers
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
             triggerCollectionService.processNextSagaChapterTarget(gameData);

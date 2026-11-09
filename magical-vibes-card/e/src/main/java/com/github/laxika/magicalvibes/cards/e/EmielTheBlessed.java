@@ -5,14 +5,14 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.amount.FixedIfTargetMatches;
+import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -46,8 +46,8 @@ public class EmielTheBlessed extends Card {
         // "Put two counters instead" for a Unicorn is a single placement of two counters, not two placements.
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), new MayPayManaEffect(
                 "{G/W}",
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE,
-                        new FixedIfTargetMatches(new PermanentHasSubtypePredicate(CardSubtype.UNICORN), 2, 1)),
+                PutCounterOnTargetPermanentEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE,
+                        new FixedIfCondition(new TriggeringPermanentHasSubtype(CardSubtype.UNICORN), 2, 1)),
                 "Pay {G/W} to put a +1/+1 counter on the entering creature?"
         ));
     }

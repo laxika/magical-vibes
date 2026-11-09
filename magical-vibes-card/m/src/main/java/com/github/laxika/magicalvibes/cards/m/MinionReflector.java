@@ -34,7 +34,7 @@ public class MinionReflector extends Card {
                         false, List.of(new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),
                                 new SacrificeSelfEffect())),
                         List.of(), false, false,
-                        new Fixed(1), false, Set.of()),
+                        new Fixed(1), false, Set.of()).ofTriggeringPermanent(),
                 "Pay {2} to create a token that's a copy of that creature (with haste, sacrificed at end step)?"
         ));
     }
