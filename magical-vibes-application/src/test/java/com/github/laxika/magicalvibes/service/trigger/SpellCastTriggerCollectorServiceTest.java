@@ -41,11 +41,13 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.ManaSpentToCast;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastBeforeTriggeringSpellThisTurn;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
+import com.github.laxika.magicalvibes.model.amount.TriggeringSpellModeCount;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
@@ -933,6 +935,69 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(pending.modesResetEachTurn()).isTrue();
             assertThat(pending.consumeModes()).isFalse();
             assertThat(pending.triggeringCardId()).isEqualTo(spellCard.getId());
+        }
+
+        @Test
+        @DisplayName("queues an \"up to X\" modal cast ability with X read from the triggering spell")
+        void queuesUpToXModalWithMaximumFromTriggeringSpell() {
+            Permanent perm = createPermanent("Riku of Many Paths");
+            var modal = new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption("First mode", new PutCountersOnSourceEffect(0, 0, 1)),
+                    new ChooseOneEffect.ChooseOneOption("Second mode", new PutCountersOnSourceEffect(1, 1, 1)),
+                    new ChooseOneEffect.ChooseOneOption("Third mode", new CreateTokenEffect("Spirit", 1, 1,
+                            CardColor.WHITE, List.of(CardSubtype.SPIRIT), Set.of(), Set.of()))), true, 0, 3);
+            var effect = authored(SpellFilter.ANY,
+                    List.of(new ChooseOneAtTriggerTimeEffect(modal, new TriggeringSpellModeCount())));
+            Card spellCard = createInstant("Opt");
+            StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
+            spellOnStack.setModalModeCount(2);
+            gd.stack.add(spellOnStack);
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            everySpellMatches();
+            when(amountEvaluationService.evaluate(eq(gd), eq(new TriggeringSpellModeCount()),
+                    argThat(amount -> amount.stackEntry() != null
+                            && spellCard.getId().equals(amount.stackEntry().getTriggeringCardId())
+                            && amount.stackEntry().getTriggeringSpellSnapshot() != null
+                            && Integer.valueOf(2).equals(
+                                    amount.stackEntry().getTriggeringSpellSnapshot().getModalModeCount()))))
+                    .thenReturn(2);
+
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), effect, ctx, true);
+
+            assertThat(result).isTrue();
+            var pending = gd.pendingInteractions.stream()
+                    .filter(PermanentChoiceContext.TriggeredModalTrigger.class::isInstance)
+                    .map(PermanentChoiceContext.TriggeredModalTrigger.class::cast)
+                    .findFirst()
+                    .orElseThrow();
+            assertThat(pending.effect().options()).isEqualTo(modal.options());
+            assertThat(pending.effect().optional()).isTrue();
+            assertThat(pending.effect().choicesRequired()).isZero();
+            assertThat(pending.effect().choicesMax()).isEqualTo(2);
+            assertThat(pending.triggeringCardId()).isEqualTo(spellCard.getId());
+        }
+
+        @Test
+        @DisplayName("queues no mode choice for an \"up to X\" modal cast ability whose X is 0")
+        void upToZeroModalQueuesNoModeChoice() {
+            Permanent perm = createPermanent("Riku of Many Paths");
+            var modal = new ChooseOneEffect(List.of(
+                    new ChooseOneEffect.ChooseOneOption("First mode", new PutCountersOnSourceEffect(0, 0, 1)),
+                    new ChooseOneEffect.ChooseOneOption("Second mode", new PutCountersOnSourceEffect(1, 1, 1))),
+                    true, 0, 2);
+            var effect = authored(SpellFilter.ANY,
+                    List.of(new ChooseOneAtTriggerTimeEffect(modal, new TriggeringSpellModeCount())));
+            Card spellCard = createInstant("Opt");
+            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            everySpellMatches();
+            when(amountEvaluationService.evaluate(eq(gd), eq(new TriggeringSpellModeCount()), any())).thenReturn(0);
+
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect), effect, ctx, true);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.pendingInteractions)
+                    .noneMatch(PermanentChoiceContext.TriggeredModalTrigger.class::isInstance);
         }
 
         @Test

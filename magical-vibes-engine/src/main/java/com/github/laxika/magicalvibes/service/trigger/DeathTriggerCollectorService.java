@@ -40,7 +40,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGr
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardAttachedToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
@@ -411,25 +410,6 @@ public class DeathTriggerCollectorService {
     boolean handleReturnSourceTransformedAttachedToTargetPlayer(TriggerMatchContext match,
             ReturnSourceTransformedFromGraveyardAttachedToTargetPlayerEffect effect, TriggerContext ctx) {
         addEnchantedPermanentDeathEntry(match, ctx, effect);
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect.class,
-            watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
-    boolean handlePutLesserManaValueCreatureAndReturnAura(TriggerMatchContext match,
-            PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect effect,
-            TriggerContext ctx) {
-        TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
-        if (!epd.wasCreature()) {
-            return false;
-        }
-        MayEffect may = new MayEffect(effect,
-                "put a creature card with lesser mana value from your hand or command zone onto the battlefield?");
-        StackEntry entry = addEnchantedPermanentDeathEntryReturning(match, ctx, may, null, null);
-        if (entry != null && epd.dyingCreatureCardId() != null) {
-            // "Lesser mana value" than the creature as it last existed on the battlefield (CR 603.10a).
-            entry.setDyingPermanentManaValue(epd.dyingCreatureManaValue());
-        }
         return true;
     }
 

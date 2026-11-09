@@ -115,6 +115,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryIsMulticoloredPredi
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsFirstSpellOfKindThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsNthSpellCastThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryKickedPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryIsModalSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryHasOneTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCouldTargetAnotherPermanentPredicate;
@@ -5924,6 +5925,9 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryKickedPredicate) {
             return stackEntry.wasKicked();
+        }
+        if (predicate instanceof StackEntryIsModalSpellPredicate) {
+            return stackEntry.getModalModeCount() != null;
         }
         if (predicate instanceof StackEntryTargetsYourPermanentPredicate) {
             return targetsAPermanentControlledBy(gameData, stackEntry, controllerId);

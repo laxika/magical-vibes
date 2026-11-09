@@ -19,6 +19,7 @@ public sealed interface StackEntryPredicate permits
         StackEntryIsMulticoloredPredicate,
         StackEntryIsCardEnchantedBySourcePredicate,
         StackEntryIsLoyaltyAbilityPredicate,
+        StackEntryIsModalSpellPredicate,
         StackEntryControlledByChosenPlayerPredicate,
         StackEntryControlledByEnchantedPlayerPredicate,
         StackEntryControlledByPredicate,

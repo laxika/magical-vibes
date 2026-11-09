@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyar
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongTriggeringCards;
 import com.github.laxika.magicalvibes.model.amount.TriggeringCardManaValue;
 import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentManaValue;
+import com.github.laxika.magicalvibes.model.amount.TriggeringSpellModeCount;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongPermanentsSacrificedThisTurn;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongSpellsCastThisTurn;
@@ -685,6 +686,13 @@ public class AmountEvaluationService {
                     ctx.stackEntry() == null ? 0 : countCardTypesAmongCards(ctx.stackEntry().getTriggeringCards());
             case TriggeringCardManaValue ignored -> triggeringCardManaValue(gameData, ctx.stackEntry());
             case TriggeringPermanentManaValue ignored -> triggeringPermanentManaValue(gameData, ctx.stackEntry());
+            // "The number of times you chose a mode for that spell": the triggering spell on the stack, else as it last
+            // existed there (CR 608.2h).
+            case TriggeringSpellModeCount ignored -> {
+                StackEntry spell = ctx.stackEntry() == null || ctx.stackEntry().getTriggeringCardId() == null ? null
+                        : triggeringSpell(gameData, ctx.stackEntry());
+                yield spell == null || spell.getModalModeCount() == null ? 0 : spell.getModalModeCount();
+            }
             case AurasAttachedToTriggeringPermanent auras -> {
                 var attachments = ctx.stackEntry() == null ? null : ctx.stackEntry().getTriggeringAttachments();
                 yield attachments == null ? 0 : auras.controlledByYou()
@@ -2848,14 +2856,22 @@ public class AmountEvaluationService {
      * records neither.
      */
     private static int triggeringSpellColorsSpent(GameData gameData, StackEntry entry) {
+        StackEntry spell = triggeringSpell(gameData, entry);
+        return spell == null ? 0 : spell.getColorsSpentToCast().size();
+    }
+
+    /**
+     * The spell {@code entry}'s trigger event was about, by its triggering card id: the spell on the stack, else the
+     * entry's snapshot of it as it last existed there (CR 608.2h); {@code null} when neither is found.
+     */
+    private static StackEntry triggeringSpell(GameData gameData, StackEntry entry) {
         UUID triggeringCardId = entry.getTriggeringCardId();
-        StackEntry spell = gameData.stack.stream()
+        return gameData.stack.stream()
                 .filter(stackEntry -> stackEntry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
                         && stackEntry.getEntryType() != StackEntryType.ACTIVATED_ABILITY)
                 .filter(stackEntry -> triggeringCardId.equals(stackEntry.getTargetableId()))
                 .findFirst()
                 .orElse(entry.getTriggeringSpellSnapshot());
-        return spell == null ? 0 : spell.getColorsSpentToCast().size();
     }
 
     private Card findTriggeringSpell(GameData gameData, AmountContext ctx) {

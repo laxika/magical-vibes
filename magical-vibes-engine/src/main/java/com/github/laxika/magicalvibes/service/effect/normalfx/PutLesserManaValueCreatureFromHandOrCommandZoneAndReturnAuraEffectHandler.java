@@ -3,11 +3,14 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentManaValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +23,7 @@ public class PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffectH
         implements NormalEffectHandlerBean {
 
     private final PutCardFromHandOrGraveyardOntoBattlefieldSupport support;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -28,8 +32,11 @@ public class PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffectH
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Integer dyingManaValue = entry.getDyingPermanentManaValue();
-        if (dyingManaValue == null || dyingManaValue <= 0) {
+        // "Lesser mana value" than the enchanted creature: the entry's triggering permanent, as it last existed on the
+        // battlefield (CR 608.2h).
+        int dyingManaValue = amountEvaluationService.evaluate(gameData, new TriggeringPermanentManaValue(),
+                AmountContext.forStackEntry(entry, null));
+        if (dyingManaValue <= 0) {
             return;
         }
 

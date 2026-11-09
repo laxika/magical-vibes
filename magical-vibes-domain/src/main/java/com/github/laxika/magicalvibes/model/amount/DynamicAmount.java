@@ -17,6 +17,7 @@ public sealed interface DynamicAmount permits
         CardTypesAmongTriggeringCards,
         TriggeringCardManaValue,
         TriggeringPermanentManaValue,
+        TriggeringSpellModeCount,
         LifeLostWhenTriggeringPermanentEntered,
         ArtifactsPutIntoGraveyardFromBattlefieldThisTurn,
         PermanentsPutIntoGraveyardFromBattlefieldThisTurn,

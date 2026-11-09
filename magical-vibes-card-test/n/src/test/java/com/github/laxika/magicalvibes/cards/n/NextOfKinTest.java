@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.j.JayemdaeTome;
+import com.github.laxika.magicalvibes.cards.m.MarchOfTheMachines;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +21,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({NextOfKin.class, DoomBlade.class, HillGiant.class, GrizzlyBears.class})
+@CardUsed({NextOfKin.class, DoomBlade.class, HillGiant.class, GrizzlyBears.class,
+        MarchOfTheMachines.class, JayemdaeTome.class})
 class NextOfKinTest extends BaseCardTest {
 
     @Test
@@ -186,6 +189,24 @@ class NextOfKinTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Next of Kin");
         assertThat(findPermanent(player1, "Next of Kin").getAttachedTo())
                 .isEqualTo(findPermanent(player1, "Grizzly Bears").getId());
+    }
+
+    @Test
+    @DisplayName("triggers when an animated artifact dies, offering a creature with lesser mana value than it had")
+    void triggersWhenAnimatedArtifactCreatureDies() {
+        harness.addToBattlefield(player1, new MarchOfTheMachines());
+        Permanent tome = addCreatureReady(player1, new JayemdaeTome());
+        Card replacement = new GrizzlyBears();
+        castAura(tome, new NextOfKin());
+
+        destroyDyingCreature(tome.getId(), replacement);
+
+        harness.handleMayAbilityChosen(player1, true);
+        PendingInteraction.PutCardFromHandOrGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PutCardFromHandOrGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(replacement.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(replacement.getId()));
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
     }
 
     private void castAura(Permanent creature, NextOfKin aura) {

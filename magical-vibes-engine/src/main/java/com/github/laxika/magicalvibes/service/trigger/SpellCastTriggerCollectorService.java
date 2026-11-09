@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValueXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalPlusOnePlusOneCounterToSnowPaidCreatureSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
 import com.github.laxika.magicalvibes.model.effect.DuelistsConvocationInternationalTriggerEffect;
@@ -51,7 +52,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.MillRecipient;
-import com.github.laxika.magicalvibes.model.effect.ModalSpellCastTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -81,6 +81,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryCouldTargetAnotherP
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -868,7 +869,30 @@ public class SpellCastTriggerCollectorService {
         if (optionalAbility != null) {
             resolved = optionalAbility;
         }
-        if (resolved.size() == 1 && resolved.getFirst() instanceof ChooseOneEffect chooseOneEffect) {
+        if (resolved.size() == 1 && resolved.getFirst() instanceof ChooseOneAtTriggerTimeEffect atTriggerTime
+                && atTriggerTime.maximumChoices() != null) {
+            // "Choose up to X" (Riku of Many Paths): X is read as the ability goes on the stack, where its modes are
+            // chosen (CR 603.3c), from the triggering spell; with no mode to choose, the ability is removed (CR 700.2b).
+            StackEntry ability = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
+                    abilityDescription(sourceCard), resolved);
+            ability.setTriggeringCardId(spellCard.getId());
+            ability.setTriggeringSpell(triggeringSpell);
+            ChooseOneEffect choice = atTriggerTime.choice();
+            int maximumChoices = Math.min(choice.choicesMax(), Math.max(0, amountEvaluationService.evaluate(
+                    match.gameData(), atTriggerTime.maximumChoices(),
+                    AmountContext.forStackEntry(ability, match.permanent()))));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+            if (maximumChoices == 0) {
+                gameLogService.append(match.gameData(), GameLog.cardThen(sourceCard,
+                        "'s triggered ability has no modes to choose."));
+                return true;
+            }
+            match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                    sourceCard, match.controllerId(), new ChooseOneEffect(choice.options(), choice.optional(), 0,
+                            maximumChoices, choice.allModesWhenOptionalCostPaid(), choice.modesMayRepeat(),
+                            choice.additionalModesCondition()).withModeRestriction(choice.modeRestriction()),
+                    sourcePermanentId, spellCard.getId()));
+        } else if (resolved.size() == 1 && resolved.getFirst() instanceof ChooseOneEffect chooseOneEffect) {
             // The mode is chosen as the ability goes on the stack (CR 603.3c); a "hasn't been chosen (this turn)"
             // modal offers only the modes its source hasn't chosen (TriggeredModalTrigger reads the restriction).
             match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
@@ -1274,25 +1298,6 @@ public class SpellCastTriggerCollectorService {
      */
     private static TargetSpec triggerTargetSpec(CardEffect effect) {
         return effect instanceof MayPayManaEffect ? TargetSpec.NONE : effect.targetSpec();
-    }
-
-    @CollectsSpellAbilityTrigger(value = ModalSpellCastTriggerEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
-    private boolean handleModalSpellCastTrigger(TriggerMatchContext match,
-            ModalSpellCastTriggerEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast spellCast = (TriggerContext.SpellCast) ctx;
-        StackEntry triggeringSpell = findStackEntryForCard(match.gameData(), spellCast.spellCard().getId());
-        if (triggeringSpell == null || triggeringSpell.getModalModeCount() == null
-                || triggeringSpell.getModalModeCount() <= 0) {
-            return false;
-        }
-
-        int choices = Math.min(triggeringSpell.getModalModeCount(), trigger.options().size());
-        ChooseOneEffect modalChoice = new ChooseOneEffect(trigger.options(), true, 0, choices);
-        match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                match.permanent().getCard(), match.controllerId(), modalChoice,
-                match.permanent().getId()));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        return true;
     }
 
     private StackEntry findStackEntryForCard(com.github.laxika.magicalvibes.model.GameData gameData, UUID cardId) {
