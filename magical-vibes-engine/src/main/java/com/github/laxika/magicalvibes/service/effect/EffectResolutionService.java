@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
+import com.github.laxika.magicalvibes.model.condition.TriggeringCardManaValueIsUncrossedChosenDigit;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TriggeringSpellMatches;
@@ -210,11 +211,15 @@ public class EffectResolutionService {
                     conditionContext = conditionContext.withTargetId(conditionTargets.getFirst());
                 }
             }
-            // "If that creature was a Villain" reads the card that triggered the ability.
-            if (conditionContext.triggeringCard() == null && entry.getTriggeringCardId() != null
-                    && readsTriggeringCard(effect)) {
-                conditionContext = conditionContext.withTriggeringCard(
-                        gameQueryService.findCardById(gameData, entry.getTriggeringCardId()));
+            // "If that creature was a Villain" reads the card that triggered the ability; "if it shares a mana value" the
+            // land a land-play event was about, which the entry keeps as its triggering card.
+            if (conditionContext.triggeringCard() == null && readsTriggeringCard(effect)) {
+                Card triggeringCard = entry.getTriggeringCardId() != null
+                        ? gameQueryService.findCardById(gameData, entry.getTriggeringCardId())
+                        : entry.triggeringSpellOrCard();
+                if (triggeringCard != null) {
+                    conditionContext = conditionContext.withTriggeringCard(triggeringCard);
+                }
             }
 
             // "If that land is a Forest": a triggering permanent that has left the battlefield is read as it last
@@ -661,10 +666,14 @@ public class EffectResolutionService {
     }
 
     /** Uses departure controller information for a creature referenced by a nontargeting trigger. */
-    /** Whether {@code effect} is an "if" on the triggering card ({@link TriggeringCardMatches}), or a "you may" around one. */
+    /**
+     * Whether {@code effect} is an "if" on the triggering card ({@link TriggeringCardMatches},
+     * {@link TriggeringCardManaValueIsUncrossedChosenDigit}), or a "you may" around one.
+     */
     private static boolean readsTriggeringCard(CardEffect effect) {
         return switch (effect) {
             case ConditionalEffect conditional -> conditional.condition() instanceof TriggeringCardMatches
+                    || conditional.condition() instanceof TriggeringCardManaValueIsUncrossedChosenDigit
                     || readsTriggeringCard(conditional.wrapped());
             case MayEffect may -> readsTriggeringCard(may.wrapped());
             default -> false;

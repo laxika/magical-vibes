@@ -22,6 +22,6 @@ public class MageHunter extends Card {
         addTrigger(Triggers.opponentCastsSpell().withFilter(instantOrSorcery),
                 new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PLAYER));
         addTrigger(Triggers.opponentCopiesSpell().withFilter(instantOrSorcery),
-                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
+                new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PLAYER));
     }
 }

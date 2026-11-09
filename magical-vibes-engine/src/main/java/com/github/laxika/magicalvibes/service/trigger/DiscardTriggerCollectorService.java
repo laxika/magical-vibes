@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastDiscardedCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
@@ -288,17 +287,40 @@ public class DiscardTriggerCollectorService {
     }
 
     /**
-     * "Whenever you discard a card, …", for an untargeted effect no handler of its own collects: the ability goes on the
-     * stack as written, one object of its effect (CR 603.3); a modal one announces its mode there (CR 603.3c), among
-     * those its restriction leaves ("choose one that hasn't been chosen this turn": Monument to Endurance). A targeted
-     * effect needs a handler that chooses its target as the ability goes on the stack (CR 603.3d).
+     * "Whenever you discard a card, …" and "whenever an opponent discards a card, …", for an untargeted effect no handler
+     * of its own collects: the ability goes on the stack as written, one object of its effect (CR 603.3); a modal one
+     * announces its mode there (CR 603.3c), among those its restriction leaves ("choose one that hasn't been chosen this
+     * turn": Monument to Endurance). The entry records the discard: the discarding player as its triggering player and
+     * the discarded card as its triggering card ("they choose another player … a duplicate of that card", Gutmorn,
+     * Pactbound Servant). A targeted effect needs a handler that chooses its target as the ability goes on the stack
+     * (CR 603.3d).
      */
     @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
+    @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_OPPONENT_DISCARDS)
     private boolean handleDiscardDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         if (effect.targetSpec() != TargetSpec.NONE) {
             return false;
         }
-        return enqueueDiscardTrigger(match, effect, effect.getClass().getSimpleName());
+        TriggerContext.Discard discard = (TriggerContext.Discard) ctx;
+        var gameData = match.gameData();
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(effect)),
+                null,
+                match.permanent().getId());
+        entry.setTriggeringPlayerId(discard.discardingPlayerId());
+        if (discard.discardedCard() != null) {
+            entry.setTriggeringCards(List.of(discard.discardedCard()));
+        }
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on discard ({})", gameData.id, sourceCard.getName(),
+                effect.getClass().getSimpleName());
+        return true;
     }
 
     @CollectsLibraryTrigger(value = DealDamageToPlayersEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARD_EVENT)
@@ -517,39 +539,6 @@ public class DiscardTriggerCollectorService {
                 match.permanent().getId()));
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on cycle/discard (scry {})", gameData.id, sourceCard.getName(), trigger.count());
-        return true;
-    }
-
-    @CollectsLibraryTrigger(value = ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffect.class,
-            watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
-    @CollectsLibraryTrigger(value = ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffect.class,
-            watch = LibraryWatch.ON_OPPONENT_DISCARDS)
-    private boolean handleGutmornOnDiscard(TriggerMatchContext match,
-            ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffect trigger, TriggerContext ctx) {
-        TriggerContext.Discard discard = (TriggerContext.Discard) ctx;
-        if (!match.controllerId().equals(match.gameData().activePlayerId)
-                || discard.discardedCard() == null) {
-            return false;
-        }
-
-        Card sourceCard = match.permanent().getCard();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                null,
-                match.permanent().getId());
-        // The player who discarded is retained in targetId for the resolution-time choice. The
-        // chosen recipient is not a rules target and is selected only when the ability resolves.
-        entry.setTargetId(discard.discardingPlayerId());
-        entry.setNonTargeting(true);
-        entry.setDiscardedCardSnapshot(discard.discardedCard().createCardCopy());
-        match.gameData().enqueueTrigger(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on discard to conjure a duplicate",
-                match.gameData().id, sourceCard.getName());
         return true;
     }
 

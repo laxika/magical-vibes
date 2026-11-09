@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
 import com.github.laxika.magicalvibes.cards.e.ErraticPortal;
 import com.github.laxika.magicalvibes.cards.m.Memnite;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.w.WalkingBallista;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -10,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,7 +21,7 @@ import java.util.stream.IntStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({DuelistsConvocationInternational.class, DarksteelCitadel.class, Counterspell.class,
-        ErraticPortal.class, Memnite.class, WalkingBallista.class})
+        ErraticPortal.class, Memnite.class, WalkingBallista.class, BonecrusherGiant.class, Shock.class})
 class DuelistsConvocationInternationalTest extends BaseCardTest {
 
     @Test
@@ -171,6 +174,46 @@ class DuelistsConvocationInternationalTest extends BaseCardTest {
 
         assertThat(source.getCrossedNumberDigitPositions()).containsExactly(4);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("A spell cast as an Adventure has the Adventure's mana value")
+    void adventureSpellUsesTheAdventuresManaValue() {
+        Permanent source = addCard();
+        source.setChosenNumberDigits(List.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9));
+        DarksteelCitadel drawnCard = new DarksteelCitadel();
+        harness.setLibrary(player1, List.of(drawnCard));
+        harness.setHand(player1, List.of(new BonecrusherGiant()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAdventure(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(source.getCrossedNumberDigitPositions()).containsExactly(2);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("A digit crossed out before the ability resolves stops it: the \"if\" is checked again")
+    void digitCrossedOutBeforeResolutionStopsTheAbility() {
+        Permanent source = addCard();
+        source.setChosenNumberDigits(List.of(1, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+        DarksteelCitadel firstDraw = new DarksteelCitadel();
+        DarksteelCitadel secondDraw = new DarksteelCitadel();
+        harness.setLibrary(player1, List.of(firstDraw, secondDraw));
+        harness.setHand(player1, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(source.getCrossedNumberDigitPositions()).containsExactly(0);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstDraw);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(secondDraw);
     }
 
     private Permanent addCard() {

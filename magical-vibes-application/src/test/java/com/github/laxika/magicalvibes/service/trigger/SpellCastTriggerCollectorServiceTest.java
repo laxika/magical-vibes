@@ -1093,13 +1093,16 @@ class SpellCastTriggerCollectorServiceTest {
             source.target(TargetFilters.creatureYouControl()).addTrigger(Triggers.youCopySpell().anySpell(), setPower);
             Permanent perm = new Permanent(source);
 
-            boolean result = collectCopy(perm, SpellFilter.ANY, copyOf(createInstant("Lightning Bolt"), player1Id),
-                    player1Id, setPower);
+            StackEntry copiedSpell = copyOf(createInstant("Lightning Bolt"), player1Id);
+
+            boolean result = collectCopy(perm, SpellFilter.ANY, copiedSpell, player1Id, setPower);
 
             assertThat(result).isTrue();
             assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
-                    .satisfies(queued -> assertThat(queued.targetFilter())
-                            .isSameAs(source.getTargetGroups().getFirst().getFilter()));
+                    .satisfies(queued -> {
+                        assertThat(queued.targetFilter()).isSameAs(source.getTargetGroups().getFirst().getFilter());
+                        assertThat(queued.triggeringCardId()).isEqualTo(copiedSpell.getCard().getId());
+                    });
             assertThat(gd.stack).isEmpty();
         }
 
@@ -1121,17 +1124,20 @@ class SpellCastTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("puts triggered ability on stack for a matching copied spell controlled by an opponent")
+        @DisplayName("puts the ability on the stack with the copier as \"that player\" and the copy as the triggering spell")
         void putsTriggeredAbilityOnStackForOpponentCopy() {
             Permanent perm = createPermanent("Mage Hunter");
+            StackEntry copiedSpell = copyOf(createInstant("Lightning Bolt"), player2Id);
 
-            boolean result = collectCopy(perm, SpellFilter.ANY, copyOf(createInstant("Lightning Bolt"), player2Id),
-                    player2Id, new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
+            boolean result = collectCopy(perm, SpellFilter.ANY, copiedSpell,
+                    player2Id, new LoseLifeEffect(1, LoseLifeRecipient.TRIGGERING_PLAYER));
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getTargetId()).isEqualTo(player2Id);
             assertThat(gd.stack.getLast().isNonTargeting()).isTrue();
+            assertThat(gd.stack.getLast().getTriggeringCardId()).isEqualTo(copiedSpell.getCard().getId());
+            assertThat(gd.stack.getLast().getTriggeringSpellSnapshot().getCard()).isSameAs(copiedSpell.getCard());
         }
     }
 

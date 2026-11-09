@@ -35,8 +35,9 @@ public class ConjureDuplicateOfDiscardedCardIntoChosenPlayerHandEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID discardingPlayerId = entry.getTargetId();
-        Card discardedCard = entry.getDiscardedCardSnapshot();
+        // "They" and "that card": the discarding player and the card discarded, as the discard event recorded them.
+        UUID discardingPlayerId = entry.getTriggeringPlayerId();
+        Card discardedCard = entry.getTriggeringCards().isEmpty() ? null : entry.getTriggeringCards().getFirst();
         if (discardingPlayerId == null || discardedCard == null
                 || !gameData.playerIds.contains(discardingPlayerId)) {
             return;

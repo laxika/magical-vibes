@@ -433,6 +433,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSuspected;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
+import com.github.laxika.magicalvibes.model.condition.SourceLibraryPlayPermissionUsedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceToughnessAtLeast;
@@ -475,6 +476,7 @@ import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
+import com.github.laxika.magicalvibes.model.condition.TriggeringCardManaValueIsUncrossedChosenDigit;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerAtLeast;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentSharesCreatureTypeWithSource;
@@ -2020,6 +2022,16 @@ public class ConditionEvaluationService {
                 yield source != null && triggeringPermanent != null
                         && gameQueryService.shareCreatureType(gameData, triggeringPermanent, source);
             }
+            // "If it shares a mana value with one or more uncrossed digits": the triggering spell as it is on the stack
+            // (X the number chosen for it, CR 202.3e; 0 cast face down), else the triggering card (the land played).
+            case TriggeringCardManaValueIsUncrossedChosenDigit ignored -> {
+                Permanent source = sourcePermanent(gameData, ctx);
+                Integer manaValue = ctx.triggeringSpell() != null
+                        ? (ctx.triggeringSpell().isCastFaceDown() ? 0 : ctx.triggeringSpell().getSpellManaValue())
+                        : ctx.triggeringCard() != null ? ctx.triggeringCard().getManaValue() : null;
+                yield source != null && manaValue != null
+                        && source.uncrossedChosenNumberDigitPosition(manaValue) >= 0;
+            }
             case TriggeringCardMatches c -> ctx.triggeringCard() != null
                     && predicateEvaluationService.matchesCardPredicate(ctx.triggeringCard(), c.predicate(),
                     ctx.sourceCard() == null ? null : ctx.sourceCard().getId(), gameData, ctx.controllerId(),
@@ -2137,6 +2149,8 @@ public class ConditionEvaluationService {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.isTapped();
             }
+            case SourceLibraryPlayPermissionUsedThisTurn ignored -> ctx.sourcePermanentId() != null
+                    && gameData.oncePerTurnLibraryPlayPermissionsUsedThisTurn.contains(ctx.sourcePermanentId());
             case SourceIsAttached ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);
                 yield source != null && source.isAttached();

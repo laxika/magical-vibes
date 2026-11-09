@@ -31,8 +31,8 @@ public class CopyCopiedSpellForTargetPlayerEffectHandler implements NormalEffect
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var copyEffect = (CopyCopiedSpellForTargetPlayerEffect) effect;
-        StackEntry spellSnapshot = copyEffect.spellSnapshot();
+        // "That spell": the triggering spell as it is on the stack, else as it last existed there (CR 608.2h).
+        StackEntry spellSnapshot = CopySupport.triggeringSpell(gameData, entry);
         UUID targetPlayerId = entry.getTargetId();
         if (spellSnapshot == null || targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
             return;

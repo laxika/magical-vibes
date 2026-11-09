@@ -384,6 +384,19 @@ public class Permanent {
     private final Set<UUID> auraEffectsIgnoredByPlayersThisTurn = new HashSet<>();
     /** Players who have paid to ignore this Damping Engine's restriction this turn. */
     private final Set<UUID> dampingEngineIgnoredByPlayersThisTurn = new HashSet<>();
+    /**
+     * The position of the first digit Duelists' Convocation International wrote down that equals {@code digit} and
+     * isn't crossed out, or -1 when there is none.
+     */
+    public int uncrossedChosenNumberDigitPosition(int digit) {
+        for (int position = 0; position < chosenNumberDigits.size(); position++) {
+            if (!crossedNumberDigitPositions.contains(position) && chosenNumberDigits.get(position) == digit) {
+                return position;
+            }
+        }
+        return -1;
+    }
+
     public boolean isDampingEngineEffectIgnoredThisTurn() {
         return !dampingEngineIgnoredByPlayersThisTurn.isEmpty();
     }

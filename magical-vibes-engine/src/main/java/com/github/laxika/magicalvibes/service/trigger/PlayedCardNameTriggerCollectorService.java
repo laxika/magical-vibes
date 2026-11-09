@@ -12,11 +12,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateFoodWhenPlayingCardFromTopOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SourcePermanentSnapshotRequiredEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCardTypeWithImprintedCardPredicate;
@@ -81,11 +78,18 @@ public class PlayedCardNameTriggerCollectorService {
                 sourceCardId, match.gameData(), match.controllerId())) {
             return false;
         }
+        // The event condition ("when you do") is judged only now, the intervening "if" now and again as the ability
+        // resolves (CR 603.4), each with the land played as the triggering card ("if it shares a mana value").
+        ConditionContext context = (match.permanent() != null
+                ? ConditionContext.forPermanent(match.permanent(), match.controllerId())
+                : ConditionContext.forCard(sourceCard, match.controllerId()))
+                .withTriggeringCard(landPlayed.landCard());
+        Condition eventCondition = ability.options().eventCondition();
+        if (eventCondition != null && !conditionEvaluationService.isMet(match.gameData(), eventCondition, context)) {
+            return false;
+        }
         Condition interveningIf = ability.options().interveningIf();
-        if (interveningIf != null && !conditionEvaluationService.isMet(match.gameData(), interveningIf,
-                match.permanent() != null
-                        ? ConditionContext.forPermanent(match.permanent(), match.controllerId())
-                        : ConditionContext.forCard(sourceCard, match.controllerId()))) {
+        if (interveningIf != null && !conditionEvaluationService.isMet(match.gameData(), interveningIf, context)) {
             return false;
         }
         boolean recheckFilter = filter instanceof CardSharesCardTypeWithImprintedCardPredicate imprint
@@ -118,57 +122,30 @@ public class PlayedCardNameTriggerCollectorService {
         return enqueueLandPlayTrigger(match, effects, landPlayed.playingPlayerId(), landPlayed.landCard());
     }
 
-    @CollectsSpellAbilityTrigger(value = CreateFoodWhenPlayingCardFromTopOfLibraryEffect.class,
-            watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND)
-    private boolean handleFoodWhenPlayingLandFromLibraryTop(TriggerMatchContext match,
-            CreateFoodWhenPlayingCardFromTopOfLibraryEffect trigger, TriggerContext ctx) {
-        TriggerContext.LandPlayed landPlayed = (TriggerContext.LandPlayed) ctx;
-        if (landPlayed.playZone() != Zone.LIBRARY
-                || !predicateEvaluationService.matchesCardPredicate(landPlayed.landCard(), trigger.filter(),
-                match.permanent().getOriginalCard().getId(), match.gameData(), match.controllerId())
-                || !match.gameData().oncePerTurnLibraryPlayPermissionsUsedThisTurn
-                .contains(match.permanent().getId())) {
-            return false;
-        }
-
-        Card sourceCard = match.permanent().getCard();
-        match.gameData().enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(CreateTokenEffect.ofFoodToken(1))),
-                null,
-                match.permanent().getId()));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        return true;
-    }
-
     /**
      * Default for {@link SpellAbilityWatch#ON_CONTROLLER_PLAYS_LAND}: put bare effects on the stack
-     * (e.g. Juju Bubble's {@code SacrificeSelfEffect}). The class-keyed handlers above take precedence
-     * via exact-class registration.
+     * (e.g. Juju Bubble's {@code SacrificeSelfEffect}), with the land played as the triggering card.
      */
     @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND)
     @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_ANOTHER_LAND)
     private boolean handleControllerPlaysLandDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
-        return enqueueLandPlayTrigger(match, effect, ((TriggerContext.LandPlayed) ctx).playingPlayerId());
+        return enqueueLandPlayTrigger(match, effect, (TriggerContext.LandPlayed) ctx);
     }
 
     /**
      * Default for {@link SpellAbilityWatch#ON_OPPONENT_PLAYS_LAND}: put bare effects on the stack
-     * (e.g. Dirtcowl Wurm's {@code PutCountersOnSourceEffect}).
+     * (e.g. Dirtcowl Wurm's {@code PutCountersOnSourceEffect}), with the land played as the triggering card.
      */
     @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_PLAYS_LAND)
     private boolean handleOpponentPlaysLandDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
-        return enqueueLandPlayTrigger(match, effect, ((TriggerContext.LandPlayed) ctx).playingPlayerId());
+        return enqueueLandPlayTrigger(match, effect, (TriggerContext.LandPlayed) ctx);
     }
 
     private boolean enqueueLandPlayTrigger(TriggerMatchContext match, CardEffect effect,
-            UUID playingPlayerId) {
-        return enqueueLandPlayTrigger(match, List.of(effect), playingPlayerId);
+            TriggerContext.LandPlayed landPlayed) {
+        return enqueueLandPlayTrigger(match, List.of(effect), landPlayed.playingPlayerId(), landPlayed.landCard());
     }
 
     /**
@@ -181,10 +158,6 @@ public class PlayedCardNameTriggerCollectorService {
                 .filter(index -> index >= 0 && index < sourceCard.getTargetGroups().size())
                 .mapToObj(index -> sourceCard.getTargetGroups().get(index).getFilter())
                 .findFirst().orElse(null);
-    }
-
-    private boolean enqueueLandPlayTrigger(TriggerMatchContext match, List<CardEffect> effects, UUID playingPlayerId) {
-        return enqueueLandPlayTrigger(match, effects, playingPlayerId, null);
     }
 
     private boolean enqueueLandPlayTrigger(TriggerMatchContext match, List<CardEffect> effects,

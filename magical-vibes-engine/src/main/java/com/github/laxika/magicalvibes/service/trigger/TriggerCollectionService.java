@@ -16882,8 +16882,8 @@ public class TriggerCollectionService {
     /**
      * Collects the "whenever you discard a card" abilities of {@code perm}, which its controller discarded
      * {@code discardedCard} under: each ability's filter, own event ("you cycle a card", "an opponent's spell or
-     * ability causes you to discard a card") and "for the first time each turn" are judged from the ability, then its
-     * limit, around its effects' dispatch. "You cycle a card" and "an opponent causes you to discard" put the effect on
+     * ability causes you to discard a card"), "for the first time each turn", event condition (CR 603.2: "during your
+     * turn") and intervening "if" (CR 603.4) are judged from the ability, then its limit, around its effects' dispatch. "You cycle a card" and "an opponent causes you to discard" put the effect on
      * the stack as the handlers of their old wrappers did.
      */
     private boolean collectControllerDiscardAbilities(GameData gameData, Permanent perm, UUID discardingPlayerId,
@@ -16900,6 +16900,7 @@ public class TriggerCollectionService {
             }
             if (!discardedCardMatches(gameData, first, discardedCard, characteristicsKnown, discardingPlayerId)
                     || !controllerDiscardEventMatches(gameData, first, discardingPlayerId, cycled)
+                    || !watchJudge(gameData, perm, discardingPlayerId, ctx).triggers(ability)
                     || first.limitReached(gameData, perm.getId())) {
                 continue;
             }
@@ -17135,6 +17136,10 @@ public class TriggerCollectionService {
                                              boolean throughDispatch) {
         ConditionContext context = perm != null ? ConditionContext.forPermanent(perm, controllerId)
                 : ConditionContext.forCard(sourceCard, controllerId);
+        // A land-play ability's options read the land played as the triggering card ("if it shares a mana value").
+        if (ctx instanceof TriggerContext.LandPlayed landPlayed) {
+            context = context.withTriggeringCard(landPlayed.landCard());
+        }
         List<CardEffect> effects = triggeredEffects(gameData, ability, context, transform);
         if (effects == null) {
             return false;

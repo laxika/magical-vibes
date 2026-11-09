@@ -181,6 +181,24 @@ class CoolButRudeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Below level 2 the Class doesn't have the discard ability, so a discard doesn't trigger it")
+    void levelOneDiscardDoesNotTriggerTheLevelTwoAbility() {
+        castCoolButRude();
+        Card discarded = new GrizzlyBears();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(1));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(discarded);
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Cool but Rude"));
+    }
+
+    @Test
     void levelThreeStillDiscardsWhenLibraryIsEmpty() {
         Permanent rude = castCoolButRude();
         levelUp(rude, 0);
