@@ -23,7 +23,7 @@ class VerdurousGearhulkTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Map<UUID, Integer> assignments = Map.of(first.getId(), 1, second.getId(), 3);
-        gd.pendingETBDamageAssignments = assignments;
+        harness.declareDivision(assignments);
 
         castGearhulk();
         harness.passBothPriorities();
@@ -41,7 +41,7 @@ class VerdurousGearhulkTest extends BaseCardTest {
     void cannotTargetOpponentCreature() {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Map<UUID, Integer> assignments = Map.of(opponentCreature.getId(), 4);
-        gd.pendingETBDamageAssignments = assignments;
+        harness.declareDivision(assignments);
 
         castGearhulk();
         harness.passBothPriorities();
@@ -59,7 +59,7 @@ class VerdurousGearhulkTest extends BaseCardTest {
     void losesCountersAssignedToCreatureThatLeaves() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Map<UUID, Integer> assignments = Map.of(target.getId(), 4);
-        gd.pendingETBDamageAssignments = assignments;
+        harness.declareDivision(assignments);
 
         castGearhulk();
         harness.passBothPriorities();

@@ -45,12 +45,12 @@ class VastwoodHydraTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new DeadlyRecluse());
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new RumblingBaloth());
 
-        gd.pendingETBDamageAssignments = Map.of(bears.getId(), 2, giant.getId(), 1);
-
         killHydra(hydra);
 
         harness.passBothPriorities(); // death trigger resolves → "you may" prompt
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleXValueChosen(player1, 2);
+        harness.handleXValueChosen(player1, 1);
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(giant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -63,8 +63,6 @@ class VastwoodHydraTest extends BaseCardTest {
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         hydra.tap();
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new DeadlyRecluse());
-
-        gd.pendingETBDamageAssignments = Map.of(bears.getId(), 3);
 
         killHydra(hydra);
 
@@ -83,12 +81,11 @@ class VastwoodHydraTest extends BaseCardTest {
         Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new DeadlyRecluse());
         Permanent oppGiant = harness.addToBattlefieldAndReturn(player2, new RumblingBaloth());
 
-        gd.pendingETBDamageAssignments = Map.of(ownBears.getId(), 3);
-
         killHydra(hydra);
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleXValueChosen(player1, 3);
 
         assertThat(ownBears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(oppGiant.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -133,12 +130,11 @@ class VastwoodHydraTest extends BaseCardTest {
         hydra.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         hydra.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 3);
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new DeadlyRecluse());
-        gd.pendingETBDamageAssignments = Map.of(creature.getId(), 2);
-
         harness.runStateBasedActions();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(hydra);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
+        harness.handleXValueChosen(player1, 2);
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }

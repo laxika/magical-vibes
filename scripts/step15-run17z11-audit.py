@@ -42,7 +42,7 @@ UNWRAP = re.compile(r"\.(wrapped|thenEffect|elseEffect|tokenEffect|innerEffect|r
 
 # Rows of step 15 (effect-slot-refactor.md, run 17z11's Findings).
 B, C, C2, D, E, E2, E3, F = "17z11b", "17z11c", "17z11c2", "17z11d", "17z11e", "17z11e2", "17z11e3", "17z11f"
-F4, F6, F7 = "17z11f4", "17z11f6", "17z11f7"
+F4, F6 = "17z11f4", "17z11f6"
 LEGALITY = ("CombatHelper.java", "CombatService.java", "AttackLegalityService.java", "BlockLegalityService.java")
 
 CLASSIFIED = {
@@ -105,11 +105,10 @@ CLASSIFIED = {
     # records the registering source permanent and the watched player, the filters read them), Balthier and Fran's
     # crewed Vehicle is an attack trigger with a crewed-by filter, Cephalid Constable declares its targets, Strict
     # Proctor's ability is a triggered ability; the may handler's "do this only once each turn" reads the entry's limit.
-    # 17z11f7 (split from 17z11f6): the enter service's divided-assignment gate.
-    ("EtbTriggerService.java", "DealDividedDamageEffect"): F7,
-    ("EtbTriggerService.java", "PreventDividedDamageEffect"): F7,
-    ("EtbTriggerService.java", "DistributeCountersAmongTargetsEffect"): F7,
-    ("EtbTriggerService.java", "SacrificeArtifactThenDealDividedDamageEffect"): F7,
+    # 17z11f7 (done): the enter service's divided-assignment gate is gone: a divided triggered ability announces its
+    # targets and division as it is put on the stack (StackedDividedDamageTriggerService, or the declared target group's
+    # choice), nothing staged in pendingETBDamageAssignments is taken over; Kuldotha Flamefiend's sacrifice form is
+    # announced there too. A registered ability's "the exiled card" is the registration's linked exiled card.
     # Classified ROUTE: the class picks the path or is a trigger condition.
     ("CombatAttackService.java", "SkipNextUntapEffect"): "ROUTE",
     ("CombatAttackService.java", "ChooseOneAtTriggerTimeEffect"): "ROUTE",
@@ -140,7 +139,7 @@ CLASSIFIED = {
     ("TriggerCollectionService.java", "AttachedCreatureBecomesCopyOfExiledCreatureEffect"): "STATIC",
     ("TriggerCollectionService.java", "DrawCardEffect"): "ROUTE",
 }
-OPEN_ROWS = {F7}
+OPEN_ROWS = set()
 
 # The other reads run 17z11 read by hand, all ROUTE or STATIC: a restriction, prevention or replacement, an as-enters
 # choice, a mana ability resolved at once, a modal, graveyard or target prompt picked, a skip or trigger condition.

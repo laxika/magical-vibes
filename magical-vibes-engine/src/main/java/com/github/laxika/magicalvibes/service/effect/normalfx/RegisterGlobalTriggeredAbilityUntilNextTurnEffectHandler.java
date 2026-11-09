@@ -37,9 +37,12 @@ public class RegisterGlobalTriggeredAbilityUntilNextTurnEffectHandler implements
         TriggeredAbility ability = (TriggeredAbility) registration.grantedAbility();
         UUID watchedPermanentId = ability.hasWatchedTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker())
                 ? entry.getSourcePermanentId() : null;
+        // The registration records the registering source permanent and the card its source exiled with its linked
+        // ability, whatever the ability's effects are (CR 603.7c, 603.7e).
         gameData.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
                 entry.getControllerId(), entry.getCard(), ability,
-                null, false, true, gameData.turnNumber, null, watchedPermanentId));
+                null, false, true, gameData.turnNumber, null, watchedPermanentId, entry.getSourcePermanentId(), null,
+                RegisterGlobalTriggeredAbilityUntilEndOfTurnEffectHandler.linkedExiledCardId(gameData, entry)));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " registers a global triggered ability until their next turn."));
         log.info("Game {} - {} registers a global {} trigger until their next turn",

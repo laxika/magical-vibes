@@ -539,6 +539,12 @@ trigger's prompt (`DeclaredEtbTargets`); an explicit empty list declares zero ta
 called without targets leaves the prompt to the test, as it does any prompt none of the declared
 targets fits. A cast that only a raw `GameService` overload covers goes through
 `harness.castDeclaringEtbTargets(...)`, which hands the call the targets the engine should get.
+A divided triggered ability ("N damage divided as you choose among …", a counter distribution, divided
+prevention) announces its targets and division as it is put on the stack, never from anything staged
+before it triggered; a test declares them with `harness.declareDivision(Map.of(target, amount, …))`, which
+answers the ability's target choice and per-target amounts once they open (`DeclaredDivisions`, one
+declaration per announced division, an empty map choosing no target). A card whose divided ability has a
+declared target group takes its targets from the cast helper's target list as above.
 
 A land with a targeted ETB still declares its `target(...)` filter like any
 other card — for a "player or planeswalker" effect use a `PermanentPredicateTargetFilter(new

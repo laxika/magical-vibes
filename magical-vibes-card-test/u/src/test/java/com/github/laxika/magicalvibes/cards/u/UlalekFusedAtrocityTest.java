@@ -257,7 +257,7 @@ class UlalekFusedAtrocityTest extends BaseCardTest {
         harness.setHand(player1, List.of(new InfernoTitan(), new EldraziDevastator()));
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 14);
-        gd.pendingETBDamageAssignments = Map.of(pyromancer.getId(), 1, player2.getId(), 2);
+        harness.declareDivision(Map.of(pyromancer.getId(), 1, player2.getId(), 2));
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();

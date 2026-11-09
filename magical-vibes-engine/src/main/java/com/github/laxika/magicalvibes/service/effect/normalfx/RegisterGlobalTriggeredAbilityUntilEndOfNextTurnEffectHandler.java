@@ -32,16 +32,17 @@ public class RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffectHandler imple
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var registration = (RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect) effect;
-        // The registration records the registering source permanent and the player the resolving ability names (its
-        // target, or the defending player of an attack trigger), whatever the ability's effects are; the ability's
-        // filters read them (CR 603.7e).
+        // The registration records the registering source permanent, the player the resolving ability names (its
+        // target, or the defending player of an attack trigger) and the card its source exiled with its linked
+        // ability, whatever the ability's effects are; the ability's filters and effects read them (CR 603.7c, 603.7e).
         UUID watchedPlayerId = resolveTargetPlayerId(gameData, entry);
         UUID expirationPlayerId = registration.untilWatchedPlayersNextTurn() && watchedPlayerId != null
                 ? watchedPlayerId : entry.getControllerId();
         gameData.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
                 entry.getControllerId(), entry.getCard(), (TriggeredAbility) registration.grantedAbility(),
                 registration.targetFilter(), true, false, gameData.turnNumber, expirationPlayerId, null,
-                entry.getSourcePermanentId(), watchedPlayerId));
+                entry.getSourcePermanentId(), watchedPlayerId,
+                RegisterGlobalTriggeredAbilityUntilEndOfTurnEffectHandler.linkedExiledCardId(gameData, entry)));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " registers a global triggered ability until the end of their next turn."));
         log.info("Game {} - {} registers a global triggered ability until the end of their next turn",

@@ -210,14 +210,21 @@ final class DeclaredEtbTargets {
         answerOpenPrompts();
     }
 
-    /** Answers every open ETB target prompt of a card whose targets were declared at cast. */
-    void answerOpenPrompts() {
+    /**
+     * Answers every open ETB target prompt of a card whose targets were declared at cast.
+     *
+     * @return whether a prompt was answered
+     */
+    boolean answerOpenPrompts() {
+        boolean answeredAny = false;
         for (int answered = 0; answered < ANSWER_LIMIT && !declarations.isEmpty(); answered++) {
             declarations.removeIf(declaration -> !declaration.used && !isOnStackOrBattlefield(declaration.cardId));
             if (!gameData.interaction.isAwaitingInput() || !answerActivePrompt()) {
-                return;
+                return answeredAny;
             }
+            answeredAny = true;
         }
+        return answeredAny;
     }
 
     private boolean answerActivePrompt() {

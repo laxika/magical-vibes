@@ -36,8 +36,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param removeAtNextEndStep   when {@code true}, every counter placed creates a delayed trigger
  *                              to remove a counter of the same type from that creature at the
  *                              beginning of the next end step.
- * @param etbAssignments        when {@code true}, read the target-to-counter mapping from the ETB
- *                              assignment buffer.
+ * @param etbAssignments        when {@code true}, a triggered ability's distribution: the target-to-counter
+ *                              mapping its controller announced as it was put on the stack (CR 601.2d,
+ *                              603.3d), on the stack entry.
  * @param targetRestriction     optional permanent predicate narrowing the legal targets.
  * @param allowsNoTargets       whether the chosen distribution may contain no targets.
  * @param separateInstructions whether each assigned counter is a separate placement instruction.

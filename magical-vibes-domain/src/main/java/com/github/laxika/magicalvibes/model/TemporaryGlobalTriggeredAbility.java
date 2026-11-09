@@ -23,6 +23,11 @@ import java.util.UUID;
  *                           player's next turn, that player gets two rad counters whenever they cast a spell" (Nuka-Nuke
  *                           Launcher), judged by the trigger's {@code StackEntryControlledByWatchedPlayerPredicate}
  *                           filter; {@code null} when it named none
+ * @param linkedExiledCardId the card the registering ability's source had exiled with its linked ability as the
+ *                           ability registered (CR 603.7c), recorded whatever the effects are: Surge to Victory's "the
+ *                           exiled card", which the collector puts on the entry as its linked exiled card, so casting
+ *                           the same spell again and exiling another card can't redirect it; {@code null} when it had
+ *                           exiled none
  */
 public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
                                               TargetFilter targetFilter,
@@ -31,7 +36,19 @@ public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard
                                               UUID expirationPlayerId,
                                               UUID watchedPermanentId,
                                               UUID sourcePermanentId,
-                                              UUID watchedPlayerId) {
+                                              UUID watchedPlayerId,
+                                              UUID linkedExiledCardId) {
+
+    /** {@code ability} with no linked exiled card. */
+    public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,
+                                           TargetFilter targetFilter, boolean untilEndOfNextTurn,
+                                           boolean untilNextTurn, int registrationTurnNumber,
+                                           UUID expirationPlayerId, UUID watchedPermanentId,
+                                           UUID sourcePermanentId, UUID watchedPlayerId) {
+        this(controllerId, sourceCard, ability, targetFilter, untilEndOfNextTurn, untilNextTurn,
+                registrationTurnNumber, expirationPlayerId, watchedPermanentId, sourcePermanentId, watchedPlayerId,
+                null);
+    }
 
     /** {@code ability} with no registering source permanent and no watched player. */
     public TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard, TriggeredAbility ability,

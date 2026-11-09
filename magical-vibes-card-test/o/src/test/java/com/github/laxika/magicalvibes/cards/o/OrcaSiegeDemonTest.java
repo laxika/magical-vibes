@@ -37,7 +37,7 @@ class OrcaSiegeDemonTest extends BaseCardTest {
         Permanent orca = addCreatureReady(player1, new OrcaSiegeDemon());
         orca.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         harness.setLife(player2, 20);
-        gd.pendingETBDamageAssignments = Map.of(player2.getId(), 6);
+        harness.declareDivision(Map.of(player2.getId(), 6));
 
         destroyWithMurder(player1, orca.getId());
 
@@ -50,7 +50,7 @@ class OrcaSiegeDemonTest extends BaseCardTest {
         Permanent orca = addCreatureReady(player1, new OrcaSiegeDemon());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setLife(player2, 20);
-        gd.pendingETBDamageAssignments = Map.of(bears.getId(), 3, player2.getId(), 2);
+        harness.declareDivision(Map.of(bears.getId(), 3, player2.getId(), 2));
 
         destroyWithMurder(player1, orca.getId());
 

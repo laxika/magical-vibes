@@ -39,7 +39,7 @@ class GangOfDevilsTest extends BaseCardTest {
         harness.addToBattlefield(player2, new MoorlandInquisitor());
         UUID bearsId = harness.getPermanentId(player2, "Moorland Inquisitor");
 
-        gd.pendingETBDamageAssignments = Map.of(bearsId, 3);
+        harness.declareDivision(Map.of(bearsId, 3));
 
         killGangOfDevils();
 
@@ -52,7 +52,7 @@ class GangOfDevilsTest extends BaseCardTest {
     void deathDeals3DamageToPlayer() {
         harness.setLife(player2, 20);
 
-        gd.pendingETBDamageAssignments = Map.of(player2.getId(), 3);
+        harness.declareDivision(Map.of(player2.getId(), 3));
 
         killGangOfDevils();
 
@@ -67,10 +67,10 @@ class GangOfDevilsTest extends BaseCardTest {
         harness.addToBattlefield(player2, new MoorlandInquisitor());
         UUID bearsId = harness.getPermanentId(player2, "Moorland Inquisitor");
 
-        gd.pendingETBDamageAssignments = Map.of(
+        harness.declareDivision(Map.of(
                 bearsId, 1,
                 player1.getId(), 1,
-                player2.getId(), 1);
+                player2.getId(), 1));
 
         killGangOfDevils();
 
@@ -130,7 +130,7 @@ class GangOfDevilsTest extends BaseCardTest {
         harness.addToBattlefield(player2, new MoorlandInquisitor());
         UUID creatureId = harness.getPermanentId(player2, "Moorland Inquisitor");
         harness.setLife(player2, 20);
-        gd.pendingETBDamageAssignments = Map.of(creatureId, 2, player2.getId(), 1);
+        harness.declareDivision(Map.of(creatureId, 2, player2.getId(), 1));
 
         killGangOfDevils();
 

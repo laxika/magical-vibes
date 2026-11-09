@@ -46,7 +46,7 @@ class GrandOssuaryTest extends BaseCardTest {
         dying.tap();
         Permanent firstTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent secondTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.pendingETBDamageAssignments = Map.of(firstTarget.getId(), 1, secondTarget.getId(), 2);
+        harness.declareDivision(Map.of(firstTarget.getId(), 1, secondTarget.getId(), 2));
 
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 1);
@@ -63,7 +63,7 @@ class GrandOssuaryTest extends BaseCardTest {
         Permanent dying = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         dying.tap();
         Permanent recipient = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.pendingETBDamageAssignments = Map.of(recipient.getId(), 3);
+        harness.declareDivision(Map.of(recipient.getId(), 3));
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -82,7 +82,7 @@ class GrandOssuaryTest extends BaseCardTest {
         dying.tap();
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent recipient = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        gd.pendingETBDamageAssignments = Map.of(recipient.getId(), 5);
+        harness.declareDivision(Map.of(recipient.getId(), 5));
         harness.setHand(player1, List.of(new Assassinate()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);

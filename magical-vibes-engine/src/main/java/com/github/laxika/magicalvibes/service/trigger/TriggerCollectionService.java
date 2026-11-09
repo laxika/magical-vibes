@@ -9388,6 +9388,7 @@ public class TriggerCollectionService {
                 new ArrayList<>(List.of(effect)));
         entry.setTargetId(targetId);
         entry.setEventValue(eventValue);
+        entry.setLinkedExiledCardId(watcher.linkedExiledCardId());
         if (triggeringPermanentId != null) {
             entry.setTriggeringPermanentId(triggeringPermanentId);
         }
@@ -13398,7 +13399,7 @@ public class TriggerCollectionService {
 
     private void collectCreatureDeathTriggerWatchers(GameData gameData, Permanent dyingPermanent) {
         for (CreatureDeathTriggerWatcher watcher : List.copyOf(gameData.creatureDeathTriggerWatchers)) {
-            if (watcher.sourcePermanentId() != null && watcher.sourcePermanentId().equals(dyingPermanent.getId())) {
+            if (watcher.onlyOthers() && dyingPermanent.getId().equals(watcher.sourcePermanentId())) {
                 continue;
             }
             StackEntry entry = new StackEntry(

@@ -385,8 +385,12 @@ public class CopySupport {
         copy.setCopy(true);
         if (source.getEntryType() == StackEntryType.ACTIVATED_ABILITY
                 || source.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
-            // A copy of an ability is another instance of it, about the same trigger event (CR 707.10).
+            // A copy of an ability is another instance of it, about the same trigger event (CR 707.10), with the
+            // division its original announced, also no target at all.
             copy.copyTriggerEventFrom(source);
+            if (source.isDivisionAnnounced()) {
+                copy.announceDamageAssignments(damageAssignments);
+            }
         }
         copy.setSourcePermanentSnapshot(source.getSourcePermanentSnapshot() == null
                 ? null : new com.github.laxika.magicalvibes.model.Permanent(source.getSourcePermanentSnapshot()));

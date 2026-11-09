@@ -20,7 +20,7 @@ class ArmamentDragonTest extends BaseCardTest {
     @DisplayName("ETB can put all three +1/+1 counters on one creature you control")
     void distributesAllCountersToOneCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.pendingETBDamageAssignments = Map.of(target.getId(), 3);
+        harness.declareDivision(Map.of(target.getId(), 3));
 
         castArmamentDragon();
         harness.passBothPriorities();
@@ -36,7 +36,7 @@ class ArmamentDragonTest extends BaseCardTest {
     void distributesCountersAmongTwoCreatures() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.pendingETBDamageAssignments = Map.of(first.getId(), 1, second.getId(), 2);
+        harness.declareDivision(Map.of(first.getId(), 1, second.getId(), 2));
 
         castArmamentDragon();
         harness.passBothPriorities();
@@ -54,7 +54,7 @@ class ArmamentDragonTest extends BaseCardTest {
     void cannotTargetOpponentCreature() {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        gd.pendingETBDamageAssignments = Map.of(ownCreature.getId(), 3);
+        harness.declareDivision(Map.of(ownCreature.getId(), 3));
 
         castArmamentDragon();
         harness.passBothPriorities();

@@ -52,7 +52,7 @@ class YannikScavengingSentinelTest extends BaseCardTest {
         harness.addToBattlefield(player1, new YotianSoldier());
         Permanent firstTarget = harness.addToBattlefieldAndReturn(player1, new YotianSoldier());
         Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new YotianSoldier());
-        gd.pendingETBDamageAssignments = Map.of(firstTarget.getId(), 1, secondTarget.getId(), 1);
+        harness.declareDivision(Map.of(firstTarget.getId(), 1, secondTarget.getId(), 1));
 
         harness.enterBattlefieldAndReturn(player1, new YannikScavengingSentinel());
         resolvePartnerWithNoSearch();
@@ -127,7 +127,7 @@ class YannikScavengingSentinelTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         Permanent yannik = harness.enterBattlefieldAndReturn(player1, new YannikScavengingSentinel());
-        gd.pendingETBDamageAssignments = Map.of(yannik.getId(), 5);
+        harness.declareDivision(Map.of(yannik.getId(), 5));
         resolvePartnerWithNoSearch();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, yannik.getId());
@@ -142,7 +142,7 @@ class YannikScavengingSentinelTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent otherTarget = harness.addToBattlefieldAndReturn(player2, new YotianSoldier());
         Permanent yannik = harness.enterBattlefieldAndReturn(player1, new YannikScavengingSentinel());
-        gd.pendingETBDamageAssignments = Map.of(yannik.getId(), 1, otherTarget.getId(), 1);
+        harness.declareDivision(Map.of(yannik.getId(), 1, otherTarget.getId(), 1));
         resolvePartnerWithNoSearch();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, yannik.getId());

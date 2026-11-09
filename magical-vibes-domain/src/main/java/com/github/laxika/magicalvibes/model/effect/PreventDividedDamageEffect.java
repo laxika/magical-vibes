@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * choose." (Remedy).
  *
  * <p>The reverse of {@link DealDividedDamageEffect} CHOSEN mode: the controller announces per-target
- * amounts (summing to {@code amount}) that ride on {@code StackEntry.damageAssignments}, or on the
- * pending ETB assignments for an enter-the-battlefield trigger. The handler adds a "next X damage"
- * prevention shield to each target (creatures and/or players). Each target needs at least 1, so
- * {@code amount} is the effective cap on the number of targets. The shields expire at end of turn
- * (cleared in turn cleanup like every prevention shield).
+ * amounts (summing to {@code amount}) that ride on {@code StackEntry.damageAssignments}; a triggered
+ * ability ({@code etbAssignments}) announces them as it is put on the stack (CR 601.2d, 603.3d). The
+ * handler adds a "next X damage" prevention shield to each target (creatures and/or players). Each
+ * target needs at least 1, so {@code amount} is the effective cap on the number of targets. The
+ * shields expire at end of turn (cleared in turn cleanup like every prevention shield).
  */
 public record PreventDividedDamageEffect(DynamicAmount amount, boolean etbAssignments) implements CardEffect {
 

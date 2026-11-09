@@ -155,7 +155,7 @@ class KirolAttentiveFirstYearTest extends BaseCardTest {
         Permanent kirol = addCreatureReady(player1, new KirolAttentiveFirstYear());
         Permanent first = addCreatureReady(player1, new GrizzlyBears());
         Permanent second = addCreatureReady(player1, new GrizzlyBears());
-        gd.pendingETBDamageAssignments = Map.of(first.getId(), 1, second.getId(), 3);
+        harness.declareDivision(Map.of(first.getId(), 1, second.getId(), 3));
         harness.setHand(player1, List.of(new VerdurousGearhulk()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);

@@ -32,7 +32,7 @@ class InfernoTitanTest extends BaseCardTest {
             harness.addToBattlefield(player2, new RuneclawBear());
             UUID bearsId = harness.getPermanentId(player2, "Runeclaw Bear");
 
-            gd.pendingETBDamageAssignments = Map.of(bearsId, 3);
+            harness.declareDivision(Map.of(bearsId, 3));
 
             castInfernoTitan();
             harness.passBothPriorities(); // resolve creature spell
@@ -47,7 +47,7 @@ class InfernoTitanTest extends BaseCardTest {
         void etbDeals3DamageToPlayer() {
             harness.setLife(player2, 20);
 
-            gd.pendingETBDamageAssignments = Map.of(player2.getId(), 3);
+            harness.declareDivision(Map.of(player2.getId(), 3));
 
             castInfernoTitan();
             harness.passBothPriorities(); // resolve creature spell
@@ -63,7 +63,7 @@ class InfernoTitanTest extends BaseCardTest {
             harness.addToBattlefield(player2, new RuneclawBear());
             UUID bearsId = harness.getPermanentId(player2, "Runeclaw Bear");
 
-            gd.pendingETBDamageAssignments = Map.of(bearsId, 1, player2.getId(), 2);
+            harness.declareDivision(Map.of(bearsId, 1, player2.getId(), 2));
 
             castInfernoTitan();
             harness.passBothPriorities(); // resolve creature spell
@@ -85,11 +85,11 @@ class InfernoTitanTest extends BaseCardTest {
             harness.addToBattlefield(player2, new RuneclawBear());
             UUID bearsId = harness.getPermanentId(player2, "Runeclaw Bear");
 
-            gd.pendingETBDamageAssignments = Map.of(
+            harness.declareDivision(Map.of(
                     bearsId, 1,
                     player1.getId(), 1,
                     player2.getId(), 1
-            );
+            ));
 
             castInfernoTitan();
             harness.passBothPriorities(); // resolve creature spell
@@ -107,7 +107,7 @@ class InfernoTitanTest extends BaseCardTest {
         @DisplayName("ETB preserves the surviving target's assigned damage when another target leaves")
         void etbDoesNotRedistributeDamageFromMissingTarget() {
             Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
-            gd.pendingETBDamageAssignments = Map.of(bear.getId(), 2, player2.getId(), 1);
+            harness.declareDivision(Map.of(bear.getId(), 2, player2.getId(), 1));
             castInfernoTitan();
             harness.passBothPriorities();
 
@@ -124,7 +124,7 @@ class InfernoTitanTest extends BaseCardTest {
         @CardUsed({InfernoTitan.class, Unsummon.class})
         @DisplayName("ETB still deals damage after Inferno Titan leaves the battlefield")
         void etbSurvivesSourceLeaving() {
-            gd.pendingETBDamageAssignments = Map.of(player2.getId(), 3);
+            harness.declareDivision(Map.of(player2.getId(), 3));
             castInfernoTitan();
             harness.passBothPriorities();
             UUID titanId = harness.getPermanentId(player1, "Inferno Titan");
@@ -173,7 +173,7 @@ class InfernoTitanTest extends BaseCardTest {
 
             addCreatureReady(player1, new InfernoTitan());
 
-            gd.pendingETBDamageAssignments = Map.of(player2.getId(), 3);
+            harness.declareDivision(Map.of(player2.getId(), 3));
 
             declareAttackers(List.of(0));
             harness.passBothPriorities(); // resolves trigger + auto-passes through combat
@@ -192,7 +192,7 @@ class InfernoTitanTest extends BaseCardTest {
 
             addCreatureReady(player1, new InfernoTitan());
 
-            gd.pendingETBDamageAssignments = Map.of(bearsId, 2, player2.getId(), 1);
+            harness.declareDivision(Map.of(bearsId, 2, player2.getId(), 1));
 
             declareAttackers(List.of(0));
             harness.passBothPriorities(); // resolves trigger + auto-passes through combat
@@ -209,11 +209,11 @@ class InfernoTitanTest extends BaseCardTest {
     @DisplayName("Attack trigger retains the damage division announced when it triggered")
     void attackRetainsAnnouncedDivision() {
         addCreatureReady(player1, new InfernoTitan());
-        gd.pendingETBDamageAssignments = Map.of(player2.getId(), 3);
+        harness.declareDivision(Map.of(player2.getId(), 3));
         declareAttackers(List.of(0));
 
         // Another ability's pending choice must not replace this trigger's announced division.
-        gd.pendingETBDamageAssignments = Map.of(player1.getId(), 3);
+        harness.declareDivision(Map.of(player1.getId(), 3));
         harness.passBothPriorities();
 
         harness.assertLife(player1, 20);

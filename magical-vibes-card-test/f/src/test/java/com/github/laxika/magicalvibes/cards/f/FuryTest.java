@@ -26,7 +26,7 @@ class FuryTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
         planeswalker.setCounterCount(CounterType.LOYALTY, 5);
-        gd.pendingETBDamageAssignments = Map.of(creature.getId(), 1, planeswalker.getId(), 3);
+        harness.declareDivision(Map.of(creature.getId(), 1, planeswalker.getId(), 3));
 
         harness.setHand(player1, List.of(new Fury()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -45,7 +45,7 @@ class FuryTest extends BaseCardTest {
     void evokeExilesRedCardAndSacrificesSelf() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Card redCard = new Fury();
-        gd.pendingETBDamageAssignments = Map.of(target.getId(), 4);
+        harness.declareDivision(Map.of(target.getId(), 4));
         harness.setHand(player1, List.of(new Fury(), redCard));
 
         harness.castDeclaringEtbTargets(player1, 0, null, List.of(target.getId()), (targetId, targetIds) ->

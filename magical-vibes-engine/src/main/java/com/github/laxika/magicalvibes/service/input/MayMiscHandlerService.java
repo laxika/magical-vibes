@@ -461,57 +461,6 @@ public class MayMiscHandlerService {
         throw new IllegalStateException("Unsupported draw replacement kind: " + effect.kind());
     }
 
-    public void handleMaySacrificeArtifactForDividedDamage(GameData gameData, Player player,
-                                                            boolean accepted, PendingMayAbility ability) {
-        if (accepted) {
-            UUID controllerId = ability.controllerId();
-            List<UUID> validArtifactIds = new ArrayList<>();
-            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-            if (battlefield != null) {
-                for (Permanent p : battlefield) {
-                    if (gameQueryService.isArtifact(p)) {
-                        validArtifactIds.add(p.getId());
-                    }
-                }
-            }
-
-            if (validArtifactIds.isEmpty()) {
-                String logEntry = player.getUsername() + " has no artifacts to sacrifice.";
-                gameLogService.append(gameData, GameLog.text(logEntry));
-                log.info("Game {} - {} has no artifacts to sacrifice for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
-
-                gameData.pendingETBDamageAssignments = Map.of();
-                playerInputService.processNextMayAbility(gameData);
-                if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-                }
-                return;
-            }
-
-            Map<UUID, Integer> damageAssignments = gameData.pendingETBDamageAssignments;
-            gameData.interaction.setPermanentChoiceContext(
-                    new PermanentChoiceContext.SacrificeArtifactForDividedDamage(
-                            controllerId, ability.sourceCard(), damageAssignments));
-            playerInputService.beginPermanentChoice(gameData, controllerId, validArtifactIds,
-                    ability.sourceCard().getName() + " — Choose an artifact to sacrifice.");
-
-            String logEntry = player.getUsername() + " accepts — choosing an artifact to sacrifice.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
-            log.info("Game {} - {} accepts sacrifice for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
-        } else {
-            gameData.pendingETBDamageAssignments = Map.of();
-
-            
-            gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " declines to sacrifice an artifact for " , ability.sourceCard(), "."));
-            log.info("Game {} - {} declines sacrifice for {}", gameData.id, player.getUsername(), ability.sourceCard().getName());
-
-            playerInputService.processNextMayAbility(gameData);
-            if (gameData.pendingMayAbilities.isEmpty() && !gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-        }
-    }
-
     public void handleSurveilMayGraveyardChoice(GameData gameData, Player player, boolean accepted) {
         UUID controllerId = player.getId();
         List<Card> deck = gameData.playerDecks.get(controllerId);

@@ -2622,8 +2622,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         damageSupport.dealDividedDamageToAnyTargets(
                 gameData, sadd.sourceCard(), sadd.controllerId(), sadd.damageAssignments());
 
-        gameData.pendingETBDamageAssignments = Map.of();
-
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

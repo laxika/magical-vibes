@@ -50,7 +50,7 @@ class BroodlordTest extends BaseCardTest {
     void distributesCountersAmongOtherOwnCreatures() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.pendingETBDamageAssignments = Map.of(first.getId(), 1, second.getId(), 2);
+        harness.declareDivision(Map.of(first.getId(), 1, second.getId(), 2));
 
         castBroodlord(3);
         harness.passBothPriorities();
@@ -123,7 +123,7 @@ class BroodlordTest extends BaseCardTest {
     void ravenousAndTelepathyTriggerIndependently() {
         Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        gd.pendingETBDamageAssignments = Map.of(other.getId(), 5);
+        harness.declareDivision(Map.of(other.getId(), 5));
 
         castBroodlord(5);
         harness.passBothPriorities();
@@ -137,7 +137,7 @@ class BroodlordTest extends BaseCardTest {
     void ravenousDrawsWhenTelepathyTargetLeaves() {
         Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
-        gd.pendingETBDamageAssignments = Map.of(other.getId(), 5);
+        harness.declareDivision(Map.of(other.getId(), 5));
 
         castBroodlord(5);
         harness.passBothPriorities();
@@ -154,7 +154,7 @@ class BroodlordTest extends BaseCardTest {
     void lostTargetDoesNotChangeAnnouncedDistribution() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.pendingETBDamageAssignments = Map.of(first.getId(), 1, second.getId(), 2);
+        harness.declareDivision(Map.of(first.getId(), 1, second.getId(), 2));
 
         castBroodlord(3);
         harness.passBothPriorities();

@@ -21,7 +21,7 @@ class GlintWeaverTest extends BaseCardTest {
     @DisplayName("ETB distributes counters before gaining life from the greatest toughness")
     void distributesCountersThenGainsLife() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.pendingETBDamageAssignments = Map.of(target.getId(), 3);
+        harness.declareDivision(Map.of(target.getId(), 3));
         harness.setLife(player1, 20);
 
         castGlintWeaver();
@@ -36,7 +36,7 @@ class GlintWeaverTest extends BaseCardTest {
     void lifeGainExcludesOpponentsCreatures() {
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent opponentTarget = harness.addToBattlefieldAndReturn(player2, new HillGiant());
-        gd.pendingETBDamageAssignments = Map.of(opponentTarget.getId(), 3);
+        harness.declareDivision(Map.of(opponentTarget.getId(), 3));
         harness.setLife(player1, 20);
 
         castGlintWeaver();
@@ -63,7 +63,7 @@ class GlintWeaverTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GlintWeaver());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GlintWeaver());
         Permanent third = harness.addToBattlefieldAndReturn(player2, new GlintWeaver());
-        gd.pendingETBDamageAssignments = Map.of(first.getId(), 1, second.getId(), 1, third.getId(), 1);
+        harness.declareDivision(Map.of(first.getId(), 1, second.getId(), 1, third.getId(), 1));
         harness.setLife(player1, 20);
 
         castGlintWeaver();
@@ -80,7 +80,7 @@ class GlintWeaverTest extends BaseCardTest {
     void distributesTwoAndOneCounters() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GlintWeaver());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GlintWeaver());
-        gd.pendingETBDamageAssignments = Map.of(first.getId(), 2, second.getId(), 1);
+        harness.declareDivision(Map.of(first.getId(), 2, second.getId(), 1));
         harness.setLife(player1, 20);
 
         castGlintWeaver();
@@ -95,7 +95,7 @@ class GlintWeaverTest extends BaseCardTest {
     @DisplayName("No life is gained when every target leaves before resolution")
     void allTargetsLeavingPreventsLifeGain() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GlintWeaver());
-        gd.pendingETBDamageAssignments = Map.of(target.getId(), 3);
+        harness.declareDivision(Map.of(target.getId(), 3));
         harness.setLife(player1, 20);
         castGlintWeaver();
         harness.passBothPriorities();
@@ -112,7 +112,7 @@ class GlintWeaverTest extends BaseCardTest {
     void partialResolutionPreservesDistribution() {
         Permanent surviving = harness.addToBattlefieldAndReturn(player1, new GlintWeaver());
         Permanent departing = harness.addToBattlefieldAndReturn(player2, new GlintWeaver());
-        gd.pendingETBDamageAssignments = Map.of(surviving.getId(), 1, departing.getId(), 2);
+        harness.declareDivision(Map.of(surviving.getId(), 1, departing.getId(), 2));
         harness.setLife(player1, 20);
         castGlintWeaver();
         harness.passBothPriorities();

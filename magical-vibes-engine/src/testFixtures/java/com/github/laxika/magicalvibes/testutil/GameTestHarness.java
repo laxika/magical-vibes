@@ -197,6 +197,7 @@ public class GameTestHarness {
     private final LifeSupport lifeSupport;
     private final UntapStepService untapStepService;
     private final DeclaredEtbTargets declaredEtbTargets;
+    private final DeclaredDivisions declaredDivisions;
     private final ShadowTriggerRecorder shadowRecorder;
 
     public GameTestHarness() {
@@ -260,6 +261,7 @@ public class GameTestHarness {
         this.gameData.playersAutoOrderingTriggers.add(player2.getId());
         this.declaredEtbTargets = new DeclaredEtbTargets(gameData, gameService, targetLegalityService,
                 GameTestEngineContext.get().getBean(ETBTokenTargetService.class), List.of(player1, player2));
+        this.declaredDivisions = new DeclaredDivisions(gameData, gameService, List.of(player1, player2));
         this.shadowRecorder = ShadowTriggerRecorder.attach(gameData);
     }
 
@@ -561,6 +563,28 @@ public class GameTestHarness {
                 player, card, permanentFace, targetId, targetIds, xValue, kicked);
         cast.accept(targets.targetId(), targets.targetIds());
         declaredEtbTargets.declare(card, targets);
+        answerDeclaredPrompts();
+    }
+
+    /**
+     * Declares the targets and division of the next divided triggered ability, as a shorthand for answering its
+     * prompts: the harness answers them with {@code division} once they open, as the ability is put on the stack
+     * (CR 601.2d, 603.3d). Each declaration answers one ability's division, in declaration order; an empty map chooses
+     * no target. An ability whose card declares target groups chooses its targets through the cast helper's target
+     * list; its division is answered from here.
+     */
+    public void declareDivision(Map<UUID, Integer> division) {
+        declaredDivisions.declare(division);
+        answerDeclaredPrompts();
+    }
+
+    /** Answers the open prompts of the declared ETB targets and divisions until neither has one to answer. */
+    private void answerDeclaredPrompts() {
+        boolean answered = true;
+        while (answered) {
+            boolean answeredTargets = declaredEtbTargets.answerOpenPrompts();
+            answered = declaredDivisions.answerOpenPrompts() || answeredTargets;
+        }
     }
 
     private Card handCard(Player player, int cardIndex) {
@@ -2108,17 +2132,17 @@ public class GameTestHarness {
 
     public void handlePermanentChosen(Player player, UUID permanentId) {
         gameService.handleInteractionAnswer(gameData, player, new InteractionAnswer.PermanentChosen(permanentId));
-        declaredEtbTargets.answerOpenPrompts();
+        answerDeclaredPrompts();
     }
 
     public void handleMultiplePermanentsChosen(Player player, List<UUID> permanentIds) {
         gameService.handleInteractionAnswer(gameData, player, new InteractionAnswer.PermanentsChosen(permanentIds));
-        declaredEtbTargets.answerOpenPrompts();
+        answerDeclaredPrompts();
     }
 
     public void handleMultipleCardsChosen(Player player, List<UUID> cardIds) {
         gameService.handleInteractionAnswer(gameData, player, new InteractionAnswer.CardsChosen(cardIds));
-        declaredEtbTargets.answerOpenPrompts();
+        answerDeclaredPrompts();
     }
 
     public UUID getPermanentId(Player player, String cardName) {
@@ -2132,8 +2156,9 @@ public class GameTestHarness {
     }
 
     public void passPriority(Player player) {
+        answerDeclaredDivisionsBeforePassing();
         gameService.passPriority(gameData, player);
-        declaredEtbTargets.answerOpenPrompts();
+        answerDeclaredPrompts();
     }
 
     /**
@@ -2145,8 +2170,19 @@ public class GameTestHarness {
      * couples the test to incidental auto-pass behavior.</p>
      */
     public void passBothPriorities() {
+        answerDeclaredDivisionsBeforePassing();
         passBothPrioritiesOnce();
-        declaredEtbTargets.answerOpenPrompts();
+        answerDeclaredPrompts();
+    }
+
+    /**
+     * Answers a declared division whose prompt opened since the last harness answer (an attack or a spell cast
+     * through a helper that answers nothing), so the pass that follows passes priority.
+     */
+    private void answerDeclaredDivisionsBeforePassing() {
+        if (declaredDivisions.answerOpenPrompts()) {
+            answerDeclaredPrompts();
+        }
     }
 
     private void passBothPrioritiesOnce() {
@@ -2353,12 +2389,12 @@ public class GameTestHarness {
                 ? new InteractionAnswer.LibraryCardChosen(cardIndex)
                 : new InteractionAnswer.CardIndexChosen(cardIndex);
         gameService.handleInteractionAnswer(gameData, player, answer);
-        declaredEtbTargets.answerOpenPrompts();
+        answerDeclaredPrompts();
     }
 
     public void handleGraveyardCardChosen(Player player, int cardIndex) {
         gameService.handleInteractionAnswer(gameData, player, new InteractionAnswer.GraveyardCardChosen(cardIndex));
-        declaredEtbTargets.answerOpenPrompts();
+        answerDeclaredPrompts();
     }
 
     /**
@@ -2378,17 +2414,17 @@ public class GameTestHarness {
 
     public void handleListChoice(Player player, String choiceName) {
         gameService.handleInteractionAnswer(gameData, player, new InteractionAnswer.ListChoiceMade(choiceName));
-        declaredEtbTargets.answerOpenPrompts();
+        answerDeclaredPrompts();
     }
 
     public void handleMayAbilityChosen(Player player, boolean accepted) {
         gameService.handleInteractionAnswer(gameData, player, new InteractionAnswer.MayAbilityChosen(accepted));
-        declaredEtbTargets.answerOpenPrompts();
+        answerDeclaredPrompts();
     }
 
     public void handleXValueChosen(Player player, int chosenValue) {
         gameService.handleInteractionAnswer(gameData, player, new InteractionAnswer.NumberChosen(chosenValue));
-        declaredEtbTargets.answerOpenPrompts();
+        answerDeclaredPrompts();
     }
 
     public void paySearchTax(Player player) {

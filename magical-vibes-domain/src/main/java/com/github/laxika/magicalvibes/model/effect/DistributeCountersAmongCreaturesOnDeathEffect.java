@@ -13,8 +13,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * CR 603.3d): {@code StackedDividedDamageTriggerService} evaluates {@code total} against the stack
  * entry (so {@code CountersOnTriggeringPermanent} and {@code TriggeringPermanentPower} read the dying
  * creature as it last existed), asks the controller for one or more targets and the amount on each,
- * and records the division on the entry. A division staged in {@code pendingETBDamageAssignments}
- * is taken over instead of asking, once it is checked. Resolution places the announced counters on
+ * and records the division on the entry. Resolution places the announced counters on
  * the recipients that are still legal targets (CR 608.2b). A "you may" is a {@link MayEffect} around
  * this effect on the card (CR 603.5).
  *

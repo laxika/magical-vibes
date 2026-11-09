@@ -30,7 +30,7 @@ class JuganTheRisingStarTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
 
-        gd.pendingETBDamageAssignments = Map.of(bears.getId(), 3, giant.getId(), 2);
+        harness.declareDivision(Map.of(bears.getId(), 3, giant.getId(), 2));
 
         killJugan(jugan);
 
@@ -49,7 +49,7 @@ class JuganTheRisingStarTest extends BaseCardTest {
         Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
         Permanent oppGiant = harness.addToBattlefieldAndReturn(player2, new DeathcurseOgre());
 
-        gd.pendingETBDamageAssignments = Map.of(ownBears.getId(), 1, oppGiant.getId(), 4);
+        harness.declareDivision(Map.of(ownBears.getId(), 1, oppGiant.getId(), 4));
 
         killJugan(jugan);
 
@@ -68,7 +68,7 @@ class JuganTheRisingStarTest extends BaseCardTest {
         jugan.tap();
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
 
-        gd.pendingETBDamageAssignments = Map.of(bears.getId(), 5);
+        harness.declareDivision(Map.of(bears.getId(), 5));
 
         killJugan(jugan);
 
@@ -113,7 +113,7 @@ class JuganTheRisingStarTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
         Permanent shroudedBudoka = harness.addToBattlefieldAndReturn(player1, new HumbleBudoka());
 
-        gd.pendingETBDamageAssignments = Map.of(bears.getId(), 3, shroudedBudoka.getId(), 2);
+        harness.declareDivision(Map.of(bears.getId(), 3, shroudedBudoka.getId(), 2));
 
         assertThatThrownBy(() -> {
             killJugan(jugan);
@@ -131,11 +131,11 @@ class JuganTheRisingStarTest extends BaseCardTest {
         Permanent jugan = addCreatureReady(player1, new JuganTheRisingStar());
         Permanent originalRecipient = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
         Permanent otherRecipient = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
-        gd.pendingETBDamageAssignments = Map.of(originalRecipient.getId(), 5);
+        harness.declareDivision(Map.of(originalRecipient.getId(), 5));
 
         killJugan(jugan);
 
-        gd.pendingETBDamageAssignments = Map.of(otherRecipient.getId(), 5);
+        harness.declareDivision(Map.of(otherRecipient.getId(), 5));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -148,7 +148,8 @@ class JuganTheRisingStarTest extends BaseCardTest {
     void deathDistributionRejectsTooManyCounters() {
         Permanent jugan = addCreatureReady(player1, new JuganTheRisingStar());
         Permanent recipient = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
-        gd.pendingETBDamageAssignments = Map.of(recipient.getId(), 6);
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
+        harness.declareDivision(Map.of(recipient.getId(), 6, other.getId(), 1));
 
         assertThatThrownBy(() -> {
             killJugan(jugan);
@@ -163,7 +164,8 @@ class JuganTheRisingStarTest extends BaseCardTest {
     void deathDistributionRejectsTooFewCounters() {
         Permanent jugan = addCreatureReady(player1, new JuganTheRisingStar());
         Permanent recipient = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
-        gd.pendingETBDamageAssignments = Map.of(recipient.getId(), 4);
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new DeathcurseOgre());
+        harness.declareDivision(Map.of(recipient.getId(), 1, other.getId(), 3));
 
         assertThatThrownBy(() -> {
             killJugan(jugan);

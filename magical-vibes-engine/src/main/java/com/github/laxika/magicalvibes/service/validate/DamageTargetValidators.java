@@ -53,7 +53,8 @@ public class DamageTargetValidators {
     @ValidatesTarget(DealDividedDamageEffect.class)
     public void validateDealDividedDamage(TargetValidationContext ctx, DealDividedDamageEffect effect) {
         if (effect.etbAssignments()) {
-            // Targets come from GameData.pendingETBDamageAssignments, outside the targeting pipeline.
+            // A triggered ability announces its targets with its division as it is put on the stack, outside the
+            // targeting pipeline.
             return;
         }
         if (ctx.targetId() == null) {

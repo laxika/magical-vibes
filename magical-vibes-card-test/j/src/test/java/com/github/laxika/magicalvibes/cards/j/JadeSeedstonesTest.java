@@ -25,7 +25,7 @@ class JadeSeedstonesTest extends BaseCardTest {
     void distributesCountersAmongControlledCreatures() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new PanickedAltisaur());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new PanickedAltisaur());
-        gd.pendingETBDamageAssignments = Map.of(first.getId(), 1, second.getId(), 2);
+        harness.declareDivision(Map.of(first.getId(), 1, second.getId(), 2));
 
         castSeedstones();
         harness.handlePermanentChosen(player1, first.getId());
@@ -62,7 +62,7 @@ class JadeSeedstonesTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new PanickedAltisaur());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new PanickedAltisaur());
         Permanent third = harness.addToBattlefieldAndReturn(player1, new PanickedAltisaur());
-        gd.pendingETBDamageAssignments = Map.of(first.getId(), 1, second.getId(), 1, third.getId(), 1);
+        harness.declareDivision(Map.of(first.getId(), 1, second.getId(), 1, third.getId(), 1));
 
         castSeedstones();
         harness.handlePermanentChosen(player1, first.getId());
@@ -80,7 +80,7 @@ class JadeSeedstonesTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new PanickedAltisaur());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new PanickedAltisaur());
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new PanickedAltisaur());
-        gd.pendingETBDamageAssignments = Map.of(first.getId(), 3);
+        harness.declareDivision(Map.of(first.getId(), 3));
 
         castSeedstones();
         PendingInteraction.PermanentChoice choice =

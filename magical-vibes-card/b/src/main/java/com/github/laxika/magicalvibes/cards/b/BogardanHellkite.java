@@ -6,8 +6,17 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "M10", collectorNumber = "127")
 @CardRegistration(set = "DRB", collectorNumber = "2")
@@ -24,7 +33,13 @@ public class BogardanHellkite extends Card {
         // When Bogardan Hellkite enters the battlefield, it deals 5 damage
         // divided as you choose among any number of targets.
         // (Each target must receive at least 1, so max 5 targets.)
-        target(0, 5).addTrigger(Triggers.enters(ObjectRelation.THIS),
+        target(new AnyTargetPredicateTargetFilter(
+                new PermanentAnyOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(),
+                        new PermanentIsPlaneswalkerPredicate(),
+                        new PermanentIsBattlePredicate())),
+                new PlayerRelationPredicate(PlayerRelation.ANY),
+                "Target must be any target"), 0, 5).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new DealDividedDamageEffect(new Fixed(5), null, DivisionMode.CHOSEN,
                         new PermanentTruePredicate(), 5, true, false, true));
     }

@@ -65,7 +65,7 @@ class RhinoTerribleTramplerTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new WeldingJar());
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        gd.pendingETBDamageAssignments = Map.of(first.getId(), 1, second.getId(), 2);
+        harness.declareDivision(Map.of(first.getId(), 1, second.getId(), 2));
 
         harness.enterBattlefieldAndReturn(player1, new RhinoTerribleTrampler());
 

@@ -43,13 +43,7 @@ public class PreventDividedDamageEffectHandler implements NormalEffectHandlerBea
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         PreventDividedDamageEffect prevention = (PreventDividedDamageEffect) effect;
-        Map<UUID, Integer> assignments;
-        if (prevention.etbAssignments() && entry.getDamageAssignments().isEmpty()) {
-            assignments = gameData.pendingETBDamageAssignments;
-            gameData.pendingETBDamageAssignments = Map.of();
-        } else {
-            assignments = entry.getDamageAssignments();
-        }
+        Map<UUID, Integer> assignments = entry.getDamageAssignments();
         if (assignments == null || assignments.isEmpty()) return;
 
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());

@@ -930,19 +930,8 @@ public class ETBTokenTargetService {
             int total = amountEvaluationService.evaluate(gameData, counterDistribution.total(),
                     new AmountContext(pending.controllerId(), source, null, pending.xValue(),
                             pending.eventValue(), false, null, pending.repeatedAdditionalCosts(), null));
-            Map<UUID, Integer> presetAssignments = gameData.pendingETBDamageAssignments;
-            boolean validPreset = presetAssignments != null
-                    && !presetAssignments.isEmpty()
-                    && distributionTargets.containsAll(presetAssignments.keySet())
-                    && presetAssignments.values().stream().allMatch(amount -> amount != null && amount > 0)
-                    && (counterDistribution.allowsPartialDistribution()
-                    ? presetAssignments.values().stream().mapToInt(Integer::intValue).sum() <= total
-                    : presetAssignments.values().stream().mapToInt(Integer::intValue).sum() == total);
             if (total <= 0) {
                 counterAssignments = Map.of();
-            } else if (validPreset) {
-                counterAssignments = Map.copyOf(presetAssignments);
-                gameData.pendingETBDamageAssignments = Map.of();
             } else {
                 playerInputService.beginCounterDistributionAssignmentChoice(
                         gameData,

@@ -6,7 +6,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * <ul>
  *   <li>{@code CHOSEN} — the controller announces the division as the spell/ability is put on
  *       the stack (CR 601.2b). Per-target amounts are read from {@code StackEntry.damageAssignments}
- *       (or {@code GameData.pendingETBDamageAssignments} when {@code etbAssignments} is set).</li>
+ *       (a triggered ability with {@code etbAssignments} announces them as it is put on the stack, CR 603.3d).</li>
  *   <li>{@code EVEN} — the total is divided evenly (rounded down) among the targets at resolution
  *       ({@code floor(total / targetCount)} each). Reads {@code StackEntry.targetIds}. Fireball.</li>
  *   <li>{@code ORDERED} — fixed per-target amounts assigned by target order (the i-th target

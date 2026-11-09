@@ -34,22 +34,18 @@ public class SacrificeArtifactThenDealDividedDamageEffectHandler implements Norm
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        
-
         UUID controllerId = entry.getControllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
 
-        // CR 608.2b: if every divided-damage target is now illegal, the ability doesn't resolve,
-        // so no artifact is sacrificed.
-        Map<UUID, Integer> stagedAssignments = entry.getDamageAssignments().isEmpty()
-                ? gameData.pendingETBDamageAssignments
-                : entry.getDamageAssignments();
-        if (!stagedAssignments.isEmpty() && stagedAssignments.keySet().stream()
+        // The targets and division were announced as the ability was put on the stack (CR 601.2d, 603.3d); with
+        // targets that are all illegal now it doesn't resolve, so no artifact is sacrificed (CR 608.2b). With no
+        // targets chosen it resolves, and an artifact may be sacrificed for no damage.
+        Map<UUID, Integer> damageAssignments = entry.getDamageAssignments();
+        if (!damageAssignments.isEmpty() && damageAssignments.keySet().stream()
                 .noneMatch(targetId -> gameData.playerIds.contains(targetId)
                         || gameQueryService.findPermanentById(gameData, targetId) != null)) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     "'s ability has no legal targets and doesn't resolve."));
-            gameData.pendingETBDamageAssignments = Map.of();
             return;
         }
 
@@ -68,12 +64,9 @@ public class SacrificeArtifactThenDealDividedDamageEffectHandler implements Norm
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no artifacts to sacrifice for {}",
                     gameData.id, playerName, entry.getCard().getName());
-            gameData.pendingETBDamageAssignments = Map.of();
             return;
         }
 
-        Map<UUID, Integer> damageAssignments = stagedAssignments;
-        gameData.pendingETBDamageAssignments = Map.of();
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.SacrificeArtifactForDividedDamage(
                         controllerId, entry.getCard(), damageAssignments));
@@ -84,6 +77,5 @@ public class SacrificeArtifactThenDealDividedDamageEffectHandler implements Norm
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} choosing artifact to sacrifice for divided damage",
                 gameData.id, playerName);
-    
     }
 }

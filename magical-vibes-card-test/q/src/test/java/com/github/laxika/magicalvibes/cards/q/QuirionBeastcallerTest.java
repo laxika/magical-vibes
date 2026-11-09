@@ -60,7 +60,7 @@ class QuirionBeastcallerTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
 
-        gd.pendingETBDamageAssignments = Map.of(bears.getId(), 2, giant.getId(), 1);
+        harness.declareDivision(Map.of(bears.getId(), 2, giant.getId(), 1));
 
         killBeastcaller(beastcaller);
 
@@ -115,7 +115,7 @@ class QuirionBeastcallerTest extends BaseCardTest {
         Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponentGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
-        gd.pendingETBDamageAssignments = Map.of(ownBears.getId(), 3);
+        harness.declareDivision(Map.of(ownBears.getId(), 3));
 
         killBeastcaller(beastcaller);
 
@@ -184,7 +184,7 @@ class QuirionBeastcallerTest extends BaseCardTest {
         beastcaller.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         beastcaller.tap();
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        gd.pendingETBDamageAssignments = Map.of(bears.getId(), 3);
+        harness.declareDivision(Map.of(bears.getId(), 3));
 
         killBeastcaller(beastcaller);
         harness.passBothPriorities();
@@ -201,7 +201,7 @@ class QuirionBeastcallerTest extends BaseCardTest {
         beastcaller.tap();
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
-        gd.pendingETBDamageAssignments = Map.of(bears.getId(), 2, giant.getId(), 1);
+        harness.declareDivision(Map.of(bears.getId(), 2, giant.getId(), 1));
 
         killBeastcaller(beastcaller);
         bears.getPersistentGrantedKeywords().add(Keyword.SHROUD);

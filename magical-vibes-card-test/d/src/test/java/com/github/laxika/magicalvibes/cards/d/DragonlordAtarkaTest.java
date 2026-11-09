@@ -30,7 +30,7 @@ class DragonlordAtarkaTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
         planeswalker.setCounterCount(CounterType.LOYALTY, 5);
-        gd.pendingETBDamageAssignments = Map.of(creature.getId(), 1, planeswalker.getId(), 4);
+        harness.declareDivision(Map.of(creature.getId(), 1, planeswalker.getId(), 4));
 
         castDragonlordAtarka(List.of(creature.getId(), planeswalker.getId()));
 
@@ -84,7 +84,8 @@ class DragonlordAtarkaTest extends BaseCardTest {
     void remainingTargetReceivesOnlyItsOriginalAssignment() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new ColossodonYearling());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new SarkhanUnbroken());
-        gd.pendingETBDamageAssignments = Map.of(creature.getId(), 2, planeswalker.getId(), 3);
+        planeswalker.setCounterCount(CounterType.LOYALTY, 5);
+        harness.declareDivision(Map.of(creature.getId(), 2, planeswalker.getId(), 3));
         prepareToCast();
         harness.castCreature(player1, 0, List.of(creature.getId(), planeswalker.getId()));
         harness.passBothPriorities();

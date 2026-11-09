@@ -1068,22 +1068,6 @@ public class EtbTriggerService {
         // Put non-special effects on the stack as before
         if (!otherEffects.isEmpty() && !combinesGraveyardCardExileWithOtherEffects) {
             List<UUID> activeTargetIds = targetsForActiveEtbGroups(card, otherEffects, targetIds);
-            Map<UUID, Integer> dividedAssignments = otherEffects.stream().anyMatch(effect ->
-                    effect instanceof com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect divided
-                            && divided.etbAssignments()
-                            || effect instanceof com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect prevention
-                            && prevention.etbAssignments()
-                            || effect instanceof com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect distribution
-                            && distribution.etbAssignments()
-                            || effect instanceof com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect
-                            || effect instanceof com.github.laxika.magicalvibes.model.effect.MayEffect may
-                            && may.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect)
-                    ? new java.util.LinkedHashMap<>(gameData.pendingETBDamageAssignments) : Map.of();
-            if (!dividedAssignments.isEmpty() && activeTargetIds.isEmpty()
-                    && otherEffects.stream().noneMatch(
-                    com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect.class::isInstance)) {
-                activeTargetIds = List.copyOf(dividedAssignments.keySet());
-            }
             boolean hasTarget = targetId != null || !activeTargetIds.isEmpty();
 
             // An ETB ability with no target supplied by the entering event chooses its targets as it
@@ -1175,27 +1159,7 @@ public class EtbTriggerService {
                     log.info("Game {} - {} ETB trigger queued for target selection",
                             gameData.id, card.getName());
                 }
-            } else if (extraTriggerCopies == 0 && dividedAssignments.isEmpty() && activeTargetIds.size() > 1
-                    && otherEffects.size() == 1
-                    && otherEffects.getFirst() instanceof com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect divided
-                    && divided.mode() == com.github.laxika.magicalvibes.model.effect.DivisionMode.CHOSEN
-                    && divided.etbAssignments() && divided.targetRestriction() != null) {
-                // CR 601.2d / CR 603.3d: the division of damage among several chosen targets is announced
-                // as the ability is put on the stack, before anyone can respond. The multi-target trigger
-                // flow asks for each target's share and then pushes the entry carrying that division.
-                UUID sourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
-                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId,
-                        new ArrayList<>(activeTargetIds), card.getTargetGroups().size(), 0,
-                        List.of(activeTargetIds.size()), xValue,
-                        repeatedAdditionalCosts == null ? List.of() : List.copyOf(repeatedAdditionalCosts)));
-                gameLogService.append(gameData,
-                        GameLog.cardThen(card, "'s enter-the-battlefield ability triggers — divide its damage."));
-                log.info("Game {} - {} ETB trigger queued for damage division", gameData.id, card.getName());
             } else if (!etbNeedsTarget || hasTarget) {
-                if (!dividedAssignments.isEmpty()) {
-                    gameData.pendingETBDamageAssignments = Map.of();
-                }
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 UUID sourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
 
@@ -1210,10 +1174,10 @@ public class EtbTriggerService {
                         xValue,
                         targetId,
                         sourcePermanentId,
-                        dividedAssignments,
+                        Map.of(),
                         null,
                         List.of(),
-                        dividedAssignments.isEmpty() ? activeTargetIds : new ArrayList<>(dividedAssignments.keySet())
+                        activeTargetIds
                 );
                 if (repeatedAdditionalCosts != null && !repeatedAdditionalCosts.isEmpty()) {
                     etbEntry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
@@ -1276,10 +1240,10 @@ public class EtbTriggerService {
                             xValue,
                             targetId,
                             sourcePermanentId,
-                            dividedAssignments,
+                            Map.of(),
                             null,
                             List.of(),
-                            dividedAssignments.isEmpty() ? activeTargetIds : new ArrayList<>(dividedAssignments.keySet())
+                            activeTargetIds
                     );
                     if (repeatedAdditionalCosts != null && !repeatedAdditionalCosts.isEmpty()) {
                         extraEtbEntry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));

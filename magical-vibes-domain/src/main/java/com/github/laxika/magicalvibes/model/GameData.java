@@ -4309,7 +4309,13 @@ public class GameData {
     /** Controller of the triggered ability currently resolving, or {@code null} otherwise. */
     public UUID currentlyResolvingTriggeredAbilityControllerId;
 
-    /** Damage assignments provided at cast time for an ETB divided-damage effect (e.g. Kuldotha Flamefiend). */
+    /**
+     * Scratch of the resolution-time divisions a handler asks for one target at a time (the counters of
+     * {@code DistributeCountersAmongControlledCreaturesEffect}, {@code MoveCountersFromSourceToOtherCreaturesEffect},
+     * a restricted {@code DealDividedDamageEffect} resolving with targets but no division). A triggered ability's
+     * division is never staged here: it is announced as the ability is put on the stack (CR 603.3d) and kept on its
+     * entry.
+     */
     public Map<UUID, Integer> pendingETBDamageAssignments = Map.of();
 
     // Combat damage assignment state

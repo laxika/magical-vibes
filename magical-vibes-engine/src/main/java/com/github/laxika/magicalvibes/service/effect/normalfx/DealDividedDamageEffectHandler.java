@@ -25,8 +25,8 @@ import org.springframework.stereotype.Component;
 /**
  * Resolves {@link DealDividedDamageEffect} for every {@link com.github.laxika.magicalvibes.model.effect.DivisionMode}.
  *
- * <p>CHOSEN reads the controller-announced per-target amounts from {@code StackEntry.damageAssignments}
- * (or {@code GameData.pendingETBDamageAssignments} for the ETB path); EVEN splits the total evenly
+ * <p>CHOSEN reads the controller-announced per-target amounts from {@code StackEntry.damageAssignments}, which a
+ * triggered ability announced as it was put on the stack (CR 601.2d, 603.3d); EVEN splits the total evenly
  * across {@code StackEntry.targetIds}; ORDERED assigns the effect's fixed amounts by target order.
  * All three then run the same per-target damage loop that routes through {@link DamageSupport} so
  * prevention, protection and damage-multiplier shields keep working per target.
@@ -63,15 +63,11 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
                         dealToAssignments(gameData, entry, e, entry.getDamageAssignments());
                         return;
                     }
+                    // An ability with no target restriction announced its division as it was put on the stack (CR
+                    // 603.3d); with none announced it has no target and deals no damage.
                     if (e.targetRestriction() != null) {
                         resolveResolutionTimeAssignments(gameData, entry, e);
-                        return;
                     }
-                    Map<UUID, Integer> assignments = gameData.pendingETBDamageAssignments;
-                    gameData.pendingETBDamageAssignments = Map.of();
-                    // dealDividedDamageToAnyTargets already calls checkWinCondition internally.
-                    damageSupport.dealDividedDamageToAnyTargets(
-                            gameData, entry.getCard(), entry.getControllerId(), assignments);
                     return;
                 }
                 Map<UUID, Integer> assignments = entry.getDamageAssignments();

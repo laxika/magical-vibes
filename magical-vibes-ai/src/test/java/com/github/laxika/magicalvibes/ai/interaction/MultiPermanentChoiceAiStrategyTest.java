@@ -288,7 +288,7 @@ class MultiPermanentChoiceAiStrategyTest {
         return new PendingInteraction.MultiPermanentChoice(
                 aiPlayerId, validIds, List.of(), maxCount,
                 new MultiPermanentChoiceContext.StackedDividedDamageTargets(
-                        UUID.randomUUID(), new Card(), aiPlayerId, 3, false, counterType),
+                        UUID.randomUUID(), new Card(), aiPlayerId, 3, false, counterType, false),
                 "Choose targets.");
     }
 

@@ -17,7 +17,7 @@ class GandalfSparkStarterTest extends BaseCardTest {
     @Test
     void entersAndDealsThreeDamageToOneTarget() {
         harness.setLife(player2, 20);
-        gd.pendingETBDamageAssignments = Map.of(player2.getId(), 3);
+        harness.declareDivision(Map.of(player2.getId(), 3));
 
         castGandalf();
         harness.passBothPriorities();
@@ -30,7 +30,7 @@ class GandalfSparkStarterTest extends BaseCardTest {
     void dividesThreeDamageAmongTwoTargets() {
         harness.setLife(player2, 20);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new IronHillsStalwart());
-        gd.pendingETBDamageAssignments = Map.of(creature.getId(), 1, player2.getId(), 2);
+        harness.declareDivision(Map.of(creature.getId(), 1, player2.getId(), 2));
 
         castGandalf();
         harness.passBothPriorities();
@@ -45,11 +45,11 @@ class GandalfSparkStarterTest extends BaseCardTest {
         harness.setLife(player2, 20);
         Permanent firstCreature = harness.addToBattlefieldAndReturn(player2, new IronHillsStalwart());
         Permanent secondCreature = harness.addToBattlefieldAndReturn(player2, new IronHillsStalwart());
-        gd.pendingETBDamageAssignments = Map.of(
+        harness.declareDivision(Map.of(
                 firstCreature.getId(), 1,
                 secondCreature.getId(), 1,
                 player2.getId(), 1
-        );
+        ));
 
         castGandalf();
         harness.passBothPriorities();
@@ -85,7 +85,7 @@ class GandalfSparkStarterTest extends BaseCardTest {
     void retainsOriginalDivisionWhenOneTargetLeavesBattlefield() {
         harness.setLife(player2, 20);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new IronHillsStalwart());
-        gd.pendingETBDamageAssignments = Map.of(creature.getId(), 2, player2.getId(), 1);
+        harness.declareDivision(Map.of(creature.getId(), 2, player2.getId(), 1));
 
         castGandalf();
         harness.passBothPriorities();
@@ -100,7 +100,7 @@ class GandalfSparkStarterTest extends BaseCardTest {
     @Test
     void abilityStillDealsDamageAfterGandalfLeavesBattlefield() {
         harness.setLife(player2, 20);
-        gd.pendingETBDamageAssignments = Map.of(player2.getId(), 3);
+        harness.declareDivision(Map.of(player2.getId(), 3));
 
         castGandalf();
         harness.passBothPriorities();

@@ -33,7 +33,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         // Set damage assignments before casting
-        gd.pendingETBDamageAssignments = Map.of(bearsId, 4);
+        harness.declareDivision(Map.of(bearsId, 4));
 
         harness.setHand(player1, List.of(new KuldothaFlamefiend()));
         harness.addMana(player1, ManaColor.RED, 6);
@@ -69,7 +69,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
-        gd.pendingETBDamageAssignments = Map.of(bearsId, 4);
+        harness.declareDivision(Map.of(bearsId, 4));
 
         harness.setHand(player1, List.of(new KuldothaFlamefiend()));
         harness.addMana(player1, ManaColor.RED, 6);
@@ -96,7 +96,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
-        gd.pendingETBDamageAssignments = Map.of(bearsId, 4);
+        harness.declareDivision(Map.of(bearsId, 4));
 
         harness.setHand(player1, List.of(new KuldothaFlamefiend()));
         harness.addMana(player1, ManaColor.RED, 6);
@@ -129,7 +129,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID target2Id = harness.getPermanentId(player2, "Grizzly Bears");
 
-        gd.pendingETBDamageAssignments = Map.of(target1Id, 2, target2Id, 2);
+        harness.declareDivision(Map.of(target1Id, 2, target2Id, 2));
 
         harness.setHand(player1, List.of(new KuldothaFlamefiend()));
         harness.addMana(player1, ManaColor.RED, 6);
@@ -154,7 +154,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         UUID ornithopterId = harness.getPermanentId(player1, "Ornithopter");
 
         // Target player2 directly
-        gd.pendingETBDamageAssignments = Map.of(player2.getId(), 4);
+        harness.declareDivision(Map.of(player2.getId(), 4));
 
         harness.setHand(player1, List.of(new KuldothaFlamefiend()));
         harness.addMana(player1, ManaColor.RED, 6);
@@ -180,7 +180,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         // Split: 2 to creature, 2 to player
-        gd.pendingETBDamageAssignments = Map.of(bearsId, 2, player2.getId(), 2);
+        harness.declareDivision(Map.of(bearsId, 2, player2.getId(), 2));
 
         harness.setHand(player1, List.of(new KuldothaFlamefiend()));
         harness.addMana(player1, ManaColor.RED, 6);
@@ -208,7 +208,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
         Permanent removedTarget = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
-        gd.pendingETBDamageAssignments = Map.of(bearsId, 2, removedTarget.getId(), 2);
+        harness.declareDivision(Map.of(bearsId, 2, removedTarget.getId(), 2));
 
         harness.setHand(player1, List.of(new KuldothaFlamefiend()));
         harness.addMana(player1, ManaColor.RED, 6);
@@ -236,7 +236,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         UUID ornithopterId = harness.getPermanentId(player1, "Ornithopter");
 
         // Empty damage assignments
-        gd.pendingETBDamageAssignments = Map.of();
+        harness.declareDivision(Map.of());
 
         harness.setHand(player1, List.of(new KuldothaFlamefiend()));
         harness.addMana(player1, ManaColor.RED, 6);
@@ -263,9 +263,9 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         Permanent firstArtifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
         Permanent secondArtifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
 
-        gd.pendingETBDamageAssignments = Map.of(player2.getId(), 4);
+        harness.declareDivision(Map.of(player2.getId(), 4));
         harness.enterBattlefieldAndReturn(player1, new KuldothaFlamefiend());
-        gd.pendingETBDamageAssignments = Map.of(player1.getId(), 4);
+        harness.declareDivision(Map.of(player1.getId(), 4));
         harness.enterBattlefieldAndReturn(player1, new KuldothaFlamefiend());
 
         resolveAllTriggers();
@@ -285,7 +285,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.addToBattlefield(player1, new Ornithopter());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        gd.pendingETBDamageAssignments = Map.of(target.getId(), 4);
+        harness.declareDivision(Map.of(target.getId(), 4));
         harness.setHand(player1, List.of(new KuldothaFlamefiend()));
         harness.addMana(player1, ManaColor.RED, 6);
         harness.castCreature(player1, 0);
@@ -304,7 +304,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
-        gd.pendingETBDamageAssignments = Map.of(player2.getId(), 4);
+        harness.declareDivision(Map.of(player2.getId(), 4));
         harness.setHand(player1, List.of(new KuldothaFlamefiend()));
         harness.addMana(player1, ManaColor.RED, 6);
         harness.castCreature(player1, 0);
@@ -324,6 +324,36 @@ class KuldothaFlamefiendTest extends BaseCardTest {
     }
 
     @Test
+    void targetsAndDivisionAreAnnouncedAsTheAbilityGoesOnTheStack() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new KuldothaFlamefiend()));
+        harness.addMana(player1, ManaColor.RED, 6);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId(), player2.getId()));
+        harness.handleListChoice(player1, "2");
+        harness.handleListChoice(player1, "2");
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getDamageAssignments())
+                .containsExactlyInAnyOrderEntriesOf(Map.of(bears.getId(), 2, player2.getId(), 2));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, artifact.getId());
+
+        harness.assertInGraveyard(player1, "Ornithopter");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        harness.assertLife(player2, 18);
+    }
+
+    @Test
     void multipleArtifacts_playerChoosesWhichToSacrifice() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -336,7 +366,7 @@ class KuldothaFlamefiendTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
 
-        gd.pendingETBDamageAssignments = Map.of(bearsId, 4);
+        harness.declareDivision(Map.of(bearsId, 4));
 
         harness.setHand(player1, List.of(new KuldothaFlamefiend()));
         harness.addMana(player1, ManaColor.RED, 6);

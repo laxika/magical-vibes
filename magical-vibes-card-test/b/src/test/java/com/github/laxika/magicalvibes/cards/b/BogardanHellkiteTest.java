@@ -15,11 +15,14 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({BogardanHellkite.class, RuneclawBear.class, GarrukWildspeaker.class, Unsummon.class})
 class BogardanHellkiteTest extends BaseCardTest {
+
+    private Map<UUID, Integer> division;
 
     @Test
     @DisplayName("Bogardan Hellkite can be cast during an opponent's turn because it has flash")
@@ -55,7 +58,7 @@ class BogardanHellkiteTest extends BaseCardTest {
         void etbDealsDamageToPlaneswalker() {
             Permanent garruk = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
             garruk.setCounterCount(CounterType.LOYALTY, 3);
-            gd.pendingETBDamageAssignments = Map.of(garruk.getId(), 2, player2.getId(), 3);
+            divide(Map.of(garruk.getId(), 2, player2.getId(), 3));
 
             castBogardanHellkite();
             harness.passBothPriorities();
@@ -67,10 +70,27 @@ class BogardanHellkiteTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("ETB can target a planeswalker chosen from its target prompt")
+        void etbTargetPromptOffersPlaneswalkers() {
+            Permanent garruk = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
+            garruk.setCounterCount(CounterType.LOYALTY, 3);
+
+            castBogardanHellkite();
+            harness.passBothPriorities();
+            harness.handleMultiplePermanentsChosen(player1, List.of(garruk.getId(), player2.getId()));
+            harness.handleListChoice(player1, "2");
+            harness.handleListChoice(player1, "3");
+            harness.passBothPriorities();
+
+            assertThat(garruk.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
+            harness.assertLife(player2, 17);
+        }
+
+        @Test
         @DisplayName("Damage assigned to a removed target is lost rather than redistributed")
         void etbDoesNotRedistributeDamageWhenTargetLeaves() {
             Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
-            gd.pendingETBDamageAssignments = Map.of(bear.getId(), 2, player2.getId(), 3);
+            divide(Map.of(bear.getId(), 2, player2.getId(), 3));
             castBogardanHellkite();
             harness.passBothPriorities();
 
@@ -87,7 +107,7 @@ class BogardanHellkiteTest extends BaseCardTest {
         @Test
         @DisplayName("ETB damage still happens when Hellkite leaves before resolution")
         void etbResolvesAfterSourceLeaves() {
-            gd.pendingETBDamageAssignments = Map.of(player2.getId(), 5);
+            divide(Map.of(player2.getId(), 5));
             castBogardanHellkite();
             harness.passBothPriorities();
 
@@ -106,7 +126,7 @@ class BogardanHellkiteTest extends BaseCardTest {
         void etbDeals5DamageToSinglePlayer() {
             harness.setLife(player2, 20);
 
-            gd.pendingETBDamageAssignments = Map.of(player2.getId(), 5);
+            divide(Map.of(player2.getId(), 5));
 
             castBogardanHellkite();
             harness.passBothPriorities(); // resolve creature spell
@@ -120,7 +140,7 @@ class BogardanHellkiteTest extends BaseCardTest {
         void etbDeals5DamageToSingleCreature() {
             Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
 
-            gd.pendingETBDamageAssignments = Map.of(bear.getId(), 5);
+            divide(Map.of(bear.getId(), 5));
 
             castBogardanHellkite();
             harness.passBothPriorities(); // resolve creature spell
@@ -135,7 +155,7 @@ class BogardanHellkiteTest extends BaseCardTest {
             harness.setLife(player2, 20);
             Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
 
-            gd.pendingETBDamageAssignments = Map.of(bear.getId(), 2, player2.getId(), 3);
+            divide(Map.of(bear.getId(), 2, player2.getId(), 3));
 
             castBogardanHellkite();
             harness.passBothPriorities(); // resolve creature spell
@@ -155,11 +175,11 @@ class BogardanHellkiteTest extends BaseCardTest {
             harness.setLife(player2, 20);
             Permanent bear = harness.addToBattlefieldAndReturn(player2, new RuneclawBear());
 
-            gd.pendingETBDamageAssignments = Map.of(
+            divide(Map.of(
                     bear.getId(), 1,
                     player1.getId(), 2,
                     player2.getId(), 2
-            );
+            ));
 
             castBogardanHellkite();
             harness.passBothPriorities(); // resolve creature spell
@@ -182,13 +202,13 @@ class BogardanHellkiteTest extends BaseCardTest {
                     harness.addToBattlefieldAndReturn(player2, new RuneclawBear())
             );
 
-            gd.pendingETBDamageAssignments = Map.of(
+            divide(Map.of(
                     targets.get(0).getId(), 1,
                     targets.get(1).getId(), 1,
                     targets.get(2).getId(), 1,
                     targets.get(3).getId(), 1,
                     targets.get(4).getId(), 1
-            );
+            ));
 
             castBogardanHellkite();
             harness.passBothPriorities(); // resolve creature spell
@@ -204,7 +224,7 @@ class BogardanHellkiteTest extends BaseCardTest {
         void etbWithNoDamageAssignments() {
             harness.setLife(player2, 20);
 
-            gd.pendingETBDamageAssignments = Map.of();
+            divide(Map.of());
 
             castBogardanHellkite();
             harness.passBothPriorities(); // resolve creature spell
@@ -214,7 +234,18 @@ class BogardanHellkiteTest extends BaseCardTest {
         }
     }
 
+    private void divide(Map<UUID, Integer> declared) {
+        division = declared;
+        harness.declareDivision(declared);
+    }
+
     private void castBogardanHellkite() {
-        harness.castFromHand(player1, new BogardanHellkite(), "{6}{R}{R}");
+        if (division == null) {
+            harness.castFromHand(player1, new BogardanHellkite(), "{6}{R}{R}");
+            return;
+        }
+        harness.setHand(player1, List.of(new BogardanHellkite()));
+        harness.addMana(player1, ManaColor.RED, 8);
+        harness.castCreature(player1, 0, List.copyOf(division.keySet()));
     }
 }

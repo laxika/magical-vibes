@@ -407,7 +407,7 @@ public final class EffectResolution {
     /**
      * An effect whose per-target integer amounts are announced by the controller (CR 601.2d) and
      * carried on {@code StackEntry.damageAssignments}: divided damage (CHOSEN mode reading the
-     * standard targeting buffer, not the ETB {@code pendingETBDamageAssignments} path), divided
+     * standard targeting buffer, not a triggered ability's {@code etbAssignments} division), divided
      * prevention (Remedy) or a chosen counter distribution (Spoils of War).
      *
      * <p>Its targets live in that assignment map rather than in the stack entry's single

@@ -23,7 +23,7 @@ class AngelOfSalvationTest extends BaseCardTest {
     @Test
     void etbPreventionIsDividedBetweenPlayerAndCreature() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new BladeOfTheSixthPride());
-        gd.pendingETBDamageAssignments = Map.of(player2.getId(), 2, creature.getId(), 3);
+        harness.declareDivision(Map.of(player2.getId(), 2, creature.getId(), 3));
 
         harness.castFromHand(player1, new AngelOfSalvation(), "{6}{W}{W}");
         harness.passBothPriorities();
@@ -42,7 +42,7 @@ class AngelOfSalvationTest extends BaseCardTest {
     @Test
     void etbPreventionDoesNotProtectUnassignedTargets() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new BladeOfTheSixthPride());
-        gd.pendingETBDamageAssignments = Map.of(player2.getId(), 5);
+        harness.declareDivision(Map.of(player2.getId(), 5));
 
         harness.castFromHand(player1, new AngelOfSalvation(), "{6}{W}{W}");
         harness.passBothPriorities();
@@ -58,8 +58,6 @@ class AngelOfSalvationTest extends BaseCardTest {
 
     @Test
     void etbAsksForTargetsAndDivisionWhenNoneWasSupplied() {
-        gd.pendingETBDamageAssignments = Map.of();
-
         harness.castFromHand(player1, new AngelOfSalvation(), "{6}{W}{W}");
         harness.passBothPriorities();
 
@@ -105,7 +103,7 @@ class AngelOfSalvationTest extends BaseCardTest {
 
     @Test
     void preventionIsConsumedAcrossSuccessiveDamageEvents() {
-        gd.pendingETBDamageAssignments = Map.of(player2.getId(), 5);
+        harness.declareDivision(Map.of(player2.getId(), 5));
         harness.castFromHand(player1, new AngelOfSalvation(), "{6}{W}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -122,11 +120,11 @@ class AngelOfSalvationTest extends BaseCardTest {
 
     @Test
     void overlappingAngelTriggersKeepTheirOwnDivisions() {
-        gd.pendingETBDamageAssignments = Map.of(player1.getId(), 5);
+        harness.declareDivision(Map.of(player1.getId(), 5));
         harness.castFromHand(player1, new AngelOfSalvation(), "{6}{W}{W}");
         harness.passBothPriorities();
 
-        gd.pendingETBDamageAssignments = Map.of(player2.getId(), 5);
+        harness.declareDivision(Map.of(player2.getId(), 5));
         harness.castFromHand(player1, new AngelOfSalvation(), "{6}{W}{W}");
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -145,7 +143,7 @@ class AngelOfSalvationTest extends BaseCardTest {
     void targetThatBecomesIllegalGetsNoPrevention() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new BladeOfTheSixthPride());
         harness.addToBattlefield(player2, new VeilstoneAmulet());
-        gd.pendingETBDamageAssignments = Map.of(creature.getId(), 3, player2.getId(), 2);
+        harness.declareDivision(Map.of(creature.getId(), 3, player2.getId(), 2));
         harness.castFromHand(player1, new AngelOfSalvation(), "{6}{W}{W}");
         harness.passBothPriorities();
 

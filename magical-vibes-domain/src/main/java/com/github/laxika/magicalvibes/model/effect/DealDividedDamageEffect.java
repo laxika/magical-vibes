@@ -19,8 +19,8 @@ import java.util.List;
  * <ul>
  *   <li>{@code CHOSEN} — controller-announced division. Per-target amounts come from
  *       {@code StackEntry.damageAssignments} (Ignite Disorder, Fight with Fire kicked, Hail of
- *       Arrows, Huatli's −X), or from {@code GameData.pendingETBDamageAssignments} when
- *       {@link #etbAssignments} is set (Inferno Titan, Bogardan Hellkite ETB).</li>
+ *       Arrows, Huatli's −X); a triggered ability with {@link #etbAssignments} announces them as it is
+ *       put on the stack (Inferno Titan, Bogardan Hellkite ETB; CR 603.3d).</li>
  *   <li>{@code EVEN} — {@code floor(totalDamage / targetCount)} to each target (Fireball).</li>
  *   <li>{@code ORDERED} — fixed {@link #orderedAmounts} assigned by target order (Cone of Flame,
  *       Arc Trail).</li>
@@ -37,12 +37,13 @@ import java.util.List;
  * @param canTargetPlayers  whether players may be targeted (creatures and/or players).
  * @param canTargetPlaneswalkers whether planeswalkers may be targeted when players are not legal.
  * @param damagedCreaturesCantBlock    if {@code true}, creatures dealt damage this way can't block this turn.
- * @param etbAssignments    if {@code true} (CHOSEN only), assignments come from
- *                          {@code GameData.pendingETBDamageAssignments}; a null target restriction
- *                          uses the non-targeting ETB path (a trigger put on the stack without a
- *                          staged division has its controller announce targets and division
- *                          before priority, via {@code StackedDividedDamageTriggerService}), while
- *                          a non-null restriction keeps the declared targets and prompts for
+ * @param etbAssignments    if {@code true} (CHOSEN only), a triggered ability's division, announced
+ *                          as it is put on the stack (CR 603.3d): with a null target restriction
+ *                          its controller announces the targets and division before priority, via
+ *                          {@code StackedDividedDamageTriggerService}; with a restriction the
+ *                          targets are the card's declared target group, divided as the enter
+ *                          ability's targets are chosen ({@code ETBTokenTargetService}), and an
+ *                          ability that reached the stack with targets but no division prompts for
  *                          amounts at resolution.
  * @param tapDamagedCreatures if {@code true}, each creature dealt damage this way is tapped.
  * @param damagedPlayersCantCastNoncreatureSpells if {@code true}, each player dealt damage this way
@@ -255,8 +256,8 @@ public record DealDividedDamageEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        // Non-targeting ETB divided damage collects its targets through the pending assignment
-        // buffer. Resolution-time divided damage with a restriction still declares its targets.
+        // An unrestricted triggered ability's targets are announced with its division as it is put on the
+        // stack (StackedDividedDamageTriggerService). One with a restriction declares its targets.
         if (etbAssignments && targetRestriction == null) {
             return TargetSpec.NONE;
         }

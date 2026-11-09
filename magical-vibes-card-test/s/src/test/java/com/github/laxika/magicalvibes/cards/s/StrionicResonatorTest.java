@@ -183,8 +183,8 @@ class StrionicResonatorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new BogardanHellkite()));
         harness.addMana(player1, ManaColor.RED, 8);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        gd.pendingETBDamageAssignments = Map.of(player1.getId(), 2, player2.getId(), 3);
-        harness.castCreature(player1, 0);
+        harness.declareDivision(Map.of(player1.getId(), 2, player2.getId(), 3));
+        harness.castCreature(player1, 0, List.of(player1.getId(), player2.getId()));
         harness.passBothPriorities();
 
         UUID triggerId = gd.stack.getLast().getTargetableId();

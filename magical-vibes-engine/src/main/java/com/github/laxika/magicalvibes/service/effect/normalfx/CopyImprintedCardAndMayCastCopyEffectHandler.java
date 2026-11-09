@@ -47,10 +47,12 @@ public class CopyImprintedCardAndMayCastCopyEffectHandler implements NormalEffec
         // imprint pointer alive in that case (same fallback as the token-copy handler).
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         List<Card> imprintedCards = new ArrayList<>();
-        if (copyEffect.boundImprintedCardId() != null) {
-            var bound = gameData.findExiledCard(copyEffect.boundImprintedCardId());
-            if (bound != null) {
-                imprintedCards.add(bound.card());
+        if (entry.getLinkedExiledCardId() != null) {
+            // The card the source's linked ability exiled as this ability triggered, recorded on the entry (a delayed
+            // ability a spell registered: Surge to Victory's "the exiled card", CR 603.7c).
+            var linked = gameData.findExiledCard(entry.getLinkedExiledCardId());
+            if (linked != null) {
+                imprintedCards.add(linked.card());
             }
         } else if (copyEffect.copyOtherExiledCard()) {
             // "Copy the other": every card exiled with the source besides the first one with the name of the cast card,

@@ -32,7 +32,7 @@ class UreniTheSongUnendingTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new GarrukWildspeaker());
         planeswalker.setCounterCount(CounterType.LOYALTY, 5);
-        gd.pendingETBDamageAssignments = Map.of(creature.getId(), 1, planeswalker.getId(), 2);
+        harness.declareDivision(Map.of(creature.getId(), 1, planeswalker.getId(), 2));
 
         castUreni(List.of(creature.getId(), planeswalker.getId()));
 
@@ -56,7 +56,7 @@ class UreniTheSongUnendingTest extends BaseCardTest {
     void etbDamageDoesNotIncreaseWithLaterLand() {
         harness.addToBattlefield(player1, new Forest());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        gd.pendingETBDamageAssignments = Map.of(creature.getId(), 1);
+        harness.declareDivision(Map.of(creature.getId(), 1));
         prepareToCast();
         harness.castCreature(player1, 0, List.of(creature.getId()));
         harness.passBothPriorities();
@@ -73,7 +73,7 @@ class UreniTheSongUnendingTest extends BaseCardTest {
     void etbDamageDoesNotDecreaseWithLaterLandLoss() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        gd.pendingETBDamageAssignments = Map.of(creature.getId(), 1);
+        harness.declareDivision(Map.of(creature.getId(), 1));
         prepareToCast();
         harness.castCreature(player1, 0, List.of(creature.getId()));
         harness.passBothPriorities();
@@ -92,7 +92,7 @@ class UreniTheSongUnendingTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
         Permanent remaining = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent departed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        gd.pendingETBDamageAssignments = Map.of(remaining.getId(), 1, departed.getId(), 1);
+        harness.declareDivision(Map.of(remaining.getId(), 1, departed.getId(), 1));
         prepareToCast();
         harness.castCreature(player1, 0, List.of(remaining.getId(), departed.getId()));
         harness.passBothPriorities();

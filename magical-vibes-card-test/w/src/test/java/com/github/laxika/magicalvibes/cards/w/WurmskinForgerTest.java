@@ -10,6 +10,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -17,11 +18,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({WurmskinForger.class, YotianSoldier.class, WeldingJar.class})
 class WurmskinForgerTest extends BaseCardTest {
 
+    private Map<UUID, Integer> division = Map.of();
+
     @Test
     @DisplayName("ETB can put all three counters on one target creature")
     void distributesAllCountersToOneCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new YotianSoldier());
-        gd.pendingETBDamageAssignments = Map.of(target.getId(), 3);
+        divide(Map.of(target.getId(), 3));
 
         castWurmskinForger();
         harness.passBothPriorities();
@@ -36,7 +39,7 @@ class WurmskinForgerTest extends BaseCardTest {
     void distributesCountersAmongTwoCreatures() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new YotianSoldier());
         Permanent second = harness.addToBattlefieldAndReturn(player2, new YotianSoldier());
-        gd.pendingETBDamageAssignments = Map.of(first.getId(), 1, second.getId(), 2);
+        divide(Map.of(first.getId(), 1, second.getId(), 2));
 
         castWurmskinForger();
         harness.passBothPriorities();
@@ -53,10 +56,10 @@ class WurmskinForgerTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new YotianSoldier());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new YotianSoldier());
         Permanent third = harness.addToBattlefieldAndReturn(player2, new YotianSoldier());
-        gd.pendingETBDamageAssignments = Map.of(
+        divide(Map.of(
                 first.getId(), 1,
                 second.getId(), 1,
-                third.getId(), 1);
+                third.getId(), 1));
 
         castWurmskinForger();
         harness.passBothPriorities();
@@ -85,7 +88,7 @@ class WurmskinForgerTest extends BaseCardTest {
     void skipsTargetThatLeftBattlefield() {
         Permanent staying = harness.addToBattlefieldAndReturn(player1, new YotianSoldier());
         Permanent leaving = harness.addToBattlefieldAndReturn(player1, new YotianSoldier());
-        gd.pendingETBDamageAssignments = Map.of(staying.getId(), 2, leaving.getId(), 1);
+        divide(Map.of(staying.getId(), 2, leaving.getId(), 1));
 
         castWurmskinForger();
         harness.passBothPriorities();
@@ -103,7 +106,7 @@ class WurmskinForgerTest extends BaseCardTest {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new YotianSoldier());
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new YotianSoldier());
         Permanent noncreature = harness.addToBattlefieldAndReturn(player1, new WeldingJar());
-        gd.pendingETBDamageAssignments = Map.of(ownCreature.getId(), 3);
+        divide(Map.of(ownCreature.getId(), 3));
 
         castWurmskinForger();
         harness.passBothPriorities();
@@ -176,8 +179,13 @@ class WurmskinForgerTest extends BaseCardTest {
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
+    private void divide(Map<UUID, Integer> declared) {
+        division = declared;
+        harness.declareDivision(declared);
+    }
+
     private void chooseAssignments() {
-        var targets = java.util.List.copyOf(gd.pendingETBDamageAssignments.keySet());
+        var targets = java.util.List.copyOf(division.keySet());
         for (var target : targets) {
             harness.handlePermanentChosen(player1, target);
         }

@@ -138,6 +138,12 @@ public class StackEntry {
     @Setter private UUID sourcePermanentControllerId;
     @Setter private com.github.laxika.magicalvibes.model.planar.PlanarObject sourcePlanarObject;
     private Map<UUID, Integer> damageAssignments;
+    /**
+     * Whether this triggered ability announced its targets and division after it was put on the stack, before any
+     * player received priority (CR 601.2d, 603.3d), also when it chose no target ("any number of targets" may be none):
+     * set by {@link #announceDamageAssignments}, so the division isn't asked again.
+     */
+    private boolean divisionAnnounced;
     @Getter(AccessLevel.NONE)
     private final Map<UUID, Card> lastKnownPermanentCards = new HashMap<>();
     /** Results of {@code DeterminedOnce} amounts already evaluated during this resolution (CR 608.2h). */
@@ -1169,6 +1175,7 @@ public class StackEntry {
         this.sourcePermanentId = source.sourcePermanentId;
         this.resolutionSourcePermanentId = source.resolutionSourcePermanentId;
         this.damageAssignments = source.damageAssignments.isEmpty() ? Map.of() : new LinkedHashMap<>(source.damageAssignments);
+        this.divisionAnnounced = source.divisionAnnounced;
         this.lastKnownPermanentCards.putAll(source.lastKnownPermanentCards);
         this.battlefieldChosenTargetCardIds.addAll(source.battlefieldChosenTargetCardIds);
         this.lastKnownPermanentPowers.putAll(source.lastKnownPermanentPowers);
@@ -1990,6 +1997,7 @@ public class StackEntry {
         this.targetIds = assignmentTargetIds(this.damageAssignments);
         this.targetIdsFromAssignments = !this.targetIds.isEmpty();
         this.illegalTargetIndices.clear();
+        this.divisionAnnounced = true;
     }
 
     public void setDeclaredTargetIds(List<UUID> targetIds) {

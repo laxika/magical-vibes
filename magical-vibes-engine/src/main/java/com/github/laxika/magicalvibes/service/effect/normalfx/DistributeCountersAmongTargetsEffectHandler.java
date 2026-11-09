@@ -48,13 +48,7 @@ public class DistributeCountersAmongTargetsEffectHandler implements NormalEffect
         var e = (DistributeCountersAmongTargetsEffect) effect;
 
         if (e.etbAssignments()) {
-            if (!entry.getDamageAssignments().isEmpty()) {
-                applyAssignments(gameData, entry, e, entry.getDamageAssignments());
-                return;
-            }
-            Map<UUID, Integer> assignments = gameData.pendingETBDamageAssignments;
-            gameData.pendingETBDamageAssignments = Map.of();
-            applyAssignments(gameData, entry, e, assignments);
+            applyAssignments(gameData, entry, e, entry.getDamageAssignments());
             return;
         }
 

@@ -927,8 +927,8 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.isEmpty()) {
             throw new IllegalStateException("At least one target creature must be selected");
         }
-        if (context instanceof MultiPermanentChoiceContext.StackedDividedDamageTargets
-                && permanentIds.isEmpty()) {
+        if (context instanceof MultiPermanentChoiceContext.StackedDividedDamageTargets stacked
+                && !stacked.allowsNoTargets() && permanentIds.isEmpty()) {
             throw new IllegalStateException("At least one target must be selected");
         }
         if (context instanceof MultiPermanentChoiceContext.ChooseUpToThreeNonlandPermanentsThenOpponentChoosesOne ctx

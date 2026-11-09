@@ -103,7 +103,7 @@ class DragonHunterTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
-        gd.pendingETBDamageAssignments = Map.of(dragonHunter.getId(), 5);
+        harness.declareDivision(Map.of(dragonHunter.getId(), 5));
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0, List.of(dragonHunter.getId())))
                 .isInstanceOf(IllegalStateException.class)
