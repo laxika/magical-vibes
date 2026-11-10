@@ -28,10 +28,24 @@ DONE = {
     # Run 17z14c2 (scripts/step15-run17z14c2-cards.py): the damage and becomes-the-target collectors read each ability
     # whole.
     "MyriadConstruct", "TeysaEnvoyOfGhosts", "RayneAcademyChancellor",
+    # Run 17z14e (scripts/step15-run17z14e-cards.py): the attack collectors read each ability whole.
+    "KarazikarTheEyeTyrant", "OathOfKaya", "TenuredOilcaster",
 }
 # Run 17z14b: read against their Oracle text; their abilities on the listed trigger print apart (Class levels,
 # vanishing beside its own ability, two cast abilities).
-SEPARATE = {"AdvancedFloralInvocations", "GourmandsTalent", "RegenerationsRestored", "JeskaiAscendancy"}
+SEPARATE = {
+    "AdvancedFloralInvocations", "GourmandsTalent", "RegenerationsRestored", "JeskaiAscendancy",
+    # Run 17z14e: the cards with two or more abilities on one attack trigger, read against their Oracle text. Exalted
+    # beside "whenever a creature you control attacks alone, ..." (CR 702.83a), firebending beside "whenever this
+    # attacks, ...", "myriad, myriad" and two printed attack abilities are separate abilities. Catch of the Day's
+    # three abilities and Typhoid Mary's two are written with event conditions that exclude each other (the choice
+    # made as it entered; "if you discarded a card this turn, you choose one instead"), so one triggers at a time;
+    # Lulu's two calls are two specialized faces' abilities, one for each face.
+    "AngelicBenediction", "BattlegraceAngel", "FinestHour", "RafiqOfTheMany", "SovereignsOfLostAlara",
+    "AzulaOnTheHunt", "AzulaRuthlessFirebender", "BoilingRockRioter", "ScurryOfSquirrels",
+    "AureliaTheLawAbove", "ChampionsFromBeyond", "ReapersTalisman",
+    "CatchOfTheDay", "TyphoidMaryFractured", "LuluForgetfulHollyphant",
+}
 STEP = re.compile(r"Triggers\.(upkeep|drawStep|endStep|beginningOfCombat|precombatMainPhase|postcombatMainPhase"
                   r"|secondMainPhase|endOfCombat)\b")
 

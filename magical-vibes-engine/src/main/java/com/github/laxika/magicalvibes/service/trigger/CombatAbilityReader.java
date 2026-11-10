@@ -109,11 +109,6 @@ public final class CombatAbilityReader {
             return new CombatEffect(effect, ability, filter, simultaneousWithPrevious);
         }
 
-        /** This effect in the form {@link #effectAsJudged()} gives, for a collector that judged the ability's options. */
-        public CombatEffect asJudged() {
-            return withEffect(effectAsJudged());
-        }
-
         /**
          * Whether the ability's limit keeps it from triggering for {@code sourceId} now: "triggers only once each
          * turn" and "this ability triggers only once" as {@link TriggeredAbility#limitKey()} marked them, "do this
@@ -189,7 +184,7 @@ public final class CombatAbilityReader {
     /**
      * {@link #effects(List, Trigger)}, recording in {@code grantingPermanents} the granting permanent of each effect
      * whose ability names one ({@link TriggeredAbility#grantingPermanentId()}), for a collector that builds its stack
-     * entries from the effects ({@link #grantingPermanentOf}).
+     * entries from the effects.
      */
     public static List<CardEffect> effects(List<TriggeredAbility> abilities, Trigger watched,
                                            Map<CardEffect, UUID> grantingPermanents) {
@@ -218,29 +213,6 @@ public final class CombatAbilityReader {
             }
         }
         return grantingPermanents;
-    }
-
-    /**
-     * The granting permanent of the triggered ability whose effects {@code effects} are, from {@code grantingPermanents}
-     * ({@link #grantingPermanents}), or {@code null} when none of them was granted by a permanent that names it.
-     *
-     * @throws IllegalStateException when the effects come from abilities two permanents granted, which are two objects on
-     *                               the stack (CR 603.3), not one
-     */
-    public static UUID grantingPermanentOf(List<CardEffect> effects, Map<CardEffect, UUID> grantingPermanents) {
-        UUID grantingPermanentId = null;
-        for (CardEffect effect : effects) {
-            UUID granting = grantingPermanents.get(effect);
-            if (granting == null) {
-                continue;
-            }
-            if (grantingPermanentId != null && !grantingPermanentId.equals(granting)) {
-                throw new IllegalStateException("One stack entry holds the abilities of two granting permanents: "
-                        + effects);
-            }
-            grantingPermanentId = granting;
-        }
-        return grantingPermanentId;
     }
 
     /**
@@ -303,34 +275,21 @@ public final class CombatAbilityReader {
         return groups;
     }
 
-    /**
-     * Takes out of {@code bundled}, the effects a collector put on the stack as one object, those of every ability of
-     * {@code printed} after the first, each ability's effects as an object of its own (CR 603.3), in order. The first
-     * ability's effects stay in {@code bundled}. {@code bundledForm} gives the form in which the collector bundled a
-     * printed effect (the effect itself, or the effect without a wrapper the collector judged).
-     */
-    public static List<List<CardEffect>> splitLaterAbilities(List<CombatEffect> printed, List<CardEffect> bundled,
-                                                             java.util.function.UnaryOperator<CardEffect> bundledForm) {
-        List<List<CardEffect>> separate = new ArrayList<>();
-        List<List<CombatEffect>> abilities = byAbility(printed);
-        for (List<CombatEffect> ability : abilities.subList(Math.min(1, abilities.size()), abilities.size())) {
-            List<CardEffect> abilityEffects = new ArrayList<>();
-            for (CombatEffect effect : ability) {
-                CardEffect form = bundledForm.apply(effect.effect());
-                if (bundled.remove(form)) {
-                    abilityEffects.add(form);
-                }
-            }
-            if (!abilityEffects.isEmpty()) {
-                separate.add(abilityEffects);
-            }
-        }
-        return separate;
-    }
-
     /** The effects of {@code effects}, in order. */
     public static List<CardEffect> effectsOf(List<CombatEffect> effects) {
         return effects.stream().map(CombatEffect::effect).toList();
+    }
+
+    /**
+     * The effects of one ability's reads in the form its collector puts them on the stack once it judged the ability's
+     * options ({@link CombatEffect#effectAsJudged()}), in order: the effects of one stack object (CR 603.3).
+     */
+    public static List<CardEffect> effectsAsJudged(List<CombatEffect> ability) {
+        List<CardEffect> effects = new ArrayList<>(ability.size());
+        for (CombatEffect effect : ability) {
+            effects.add(effect.effectAsJudged());
+        }
+        return effects;
     }
 
     /** The registrations of {@code effects}, in order. */

@@ -274,10 +274,9 @@ class CombatTriggerTest {
         // Two equal abilities are still two (CR 603.3): the abilities are told apart by identity.
         assertThat(CombatAbilityReader.byAbility(blocks)).extracting(CombatAbilityReader::effectsOf)
                 .containsExactly(List.of(DRAW, GAIN), List.of(DRAW));
-        List<CardEffect> bundled = new ArrayList<>(List.of(DRAW, GAIN, DRAW));
-        assertThat(CombatAbilityReader.splitLaterAbilities(blocks, bundled, effect -> effect))
-                .containsExactly(List.of(DRAW));
-        assertThat(bundled).containsExactly(GAIN, DRAW);
+        assertThat(CombatAbilityReader.readByAbility(WatchedAbilities.printed(card, CombatWatch.ON_BLOCK),
+                Triggers.blocks())).extracting(CombatAbilityReader::effectsAsJudged)
+                .containsExactly(List.of(DRAW, GAIN), List.of(DRAW));
         assertThat(CombatAbilityReader.registrationsOf(CombatAbilityReader.read(
                 WatchedAbilities.printed(card, CombatWatch.ON_BECOMES_BLOCKED), Triggers.becomesBlocked())))
                 .containsExactly(new EffectRegistration(draw), new EffectRegistration(life, true));

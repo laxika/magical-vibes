@@ -30,8 +30,7 @@ public class KarazikarTheEyeTyrant extends Card {
                 )),
                 "Target must be a creature the attacked player controls"))
                 .addTrigger(Triggers.youAttackPlayer(),
-                        new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.youAttackPlayer(),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
                         new GoadTargetCreatureUntilNextTurnEffect());
 
         addTrigger(Triggers.opponentAttacksAnotherOpponent(),

@@ -63,6 +63,16 @@ class TenuredOilcasterTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The attack ability is one stack object")
+    void attackAbilityIsOneStackObject() {
+        addCreatureReady(player1, new TenuredOilcaster());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
     @DisplayName("Blocking makes each player mill a card")
     void blockTriggerMillsOneCardEach() {
         addCreatureReady(player1, new GrizzlyBears());

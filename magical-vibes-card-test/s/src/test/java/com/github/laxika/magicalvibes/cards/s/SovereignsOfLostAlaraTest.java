@@ -32,6 +32,7 @@ class SovereignsOfLostAlaraTest extends BaseCardTest {
         resolveUntilMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        resolveAllTriggers();
 
         Permanent aura = findPermanent(player1, "Mark of the Vampire");
         assertThat(aura).isNotNull();
@@ -52,6 +53,7 @@ class SovereignsOfLostAlaraTest extends BaseCardTest {
 
         resolveUntilMayPrompt();
         harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Mark of the Vampire")).isEmpty();
         // Exalted +1/+1 still applies to the lone attacker.
@@ -103,6 +105,7 @@ class SovereignsOfLostAlaraTest extends BaseCardTest {
         declareAttackers(player1, List.of(1));
         resolveUntilMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(aura);
@@ -120,6 +123,7 @@ class SovereignsOfLostAlaraTest extends BaseCardTest {
         resolveUntilMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(0));
+        resolveAllTriggers();
 
         assertThat(findPermanent(player1, "Mark of the Vampire").getAttachedTo()).isEqualTo(attacker.getId());
         assertThat(gqs.getEffectivePower(gd, attacker)).isEqualTo(7);
@@ -138,6 +142,7 @@ class SovereignsOfLostAlaraTest extends BaseCardTest {
         resolveUntilMayPrompt();
         harness.handleMayAbilityChosen(player1, true);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.LibraryCardChosen(-1));
+        resolveAllTriggers();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(aura);
         assertThat(findPermanents(player1, "Mark of the Vampire")).isEmpty();

@@ -35,7 +35,6 @@ public class OathOfKaya extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), dealDamageToAnyTarget, new GainLifeEffect(3));
 
         addTrigger(Triggers.opponentAttacksYourPlaneswalker(),
-                new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER));
-        addTrigger(Triggers.opponentAttacksYourPlaneswalker(), new GainLifeEffect(2));
+                new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER), new GainLifeEffect(2));
     }
 }

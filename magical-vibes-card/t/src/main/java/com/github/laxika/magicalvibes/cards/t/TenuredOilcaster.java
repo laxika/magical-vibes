@@ -19,7 +19,6 @@ public class TenuredOilcaster extends Card {
         addStaticEffect(new ConditionalEffect(
                 new OpponentGraveyardAtLeast(8),
                 new StaticBoostEffect(3, 0, GrantScope.SELF)));
-        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), new MillEffect(1, MillRecipient.CONTROLLER));
-        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), new MillEffect(1, MillRecipient.EACH_OPPONENT));
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), new MillEffect(1, MillRecipient.EACH_PLAYER));
     }
 }

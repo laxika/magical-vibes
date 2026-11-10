@@ -71,6 +71,7 @@ class PutrefyingRotboarTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         castHandCreature(player2);
+        resolveAllTriggers();
 
         harness.assertLife(player2, 16);
     }
