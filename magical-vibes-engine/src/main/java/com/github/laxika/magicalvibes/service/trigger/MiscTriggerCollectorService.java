@@ -7,13 +7,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.KayaSpiritsJusticeEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -25,7 +22,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -36,10 +32,12 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
- * Trigger collectors for sacrifice, enchanted-permanent-tap, life-loss, and life-gain events.
+ * Trigger collectors for sacrifice, graveyard, enchanted-permanent-tap and other watches' events, and the shared
+ * record of a player, counter or control event ({@link #queueEventAbility}).
  */
 @Slf4j
 @Service
@@ -49,7 +47,6 @@ public class MiscTriggerCollectorService {
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
     private final DrawService drawService;
-    private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final ETBTokenTargetService etbTokenTargetService;
     private PermanentRemovalService permanentRemovalService;
@@ -59,7 +56,6 @@ public class MiscTriggerCollectorService {
                                        @Lazy GraveyardService graveyardService,
                                        GameQueryService gameQueryService,
                                        @Lazy DrawService drawService,
-                                       AmountEvaluationService amountEvaluationService,
                                        ConditionEvaluationService conditionEvaluationService,
                                        @Lazy ETBTokenTargetService etbTokenTargetService,
                                        @Lazy PermanentRemovalService permanentRemovalService,
@@ -68,7 +64,6 @@ public class MiscTriggerCollectorService {
         this.graveyardService = graveyardService;
         this.gameQueryService = gameQueryService;
         this.drawService = drawService;
-        this.amountEvaluationService = amountEvaluationService;
         this.conditionEvaluationService = conditionEvaluationService;
         this.etbTokenTargetService = etbTokenTargetService;
         this.permanentRemovalService = permanentRemovalService;
@@ -425,7 +420,9 @@ public class MiscTriggerCollectorService {
      * tapped permanent and its controller whatever its effects are ("destroy it", "its controller loses 2 life", "that
      * player mills three cards", read as the ability resolves, else from its last known information), the controller as
      * the non-targeting "that player" and the Aura as it was. A targeted ability's target is chosen as it goes on the
-     * stack (CR 603.3d), the choice carrying the same record.
+     * stack (CR 603.3d), the choice carrying the same record. A "choose one" (Relic Bind) goes on the stack the same
+     * way, its mode and that mode's target announced there before a player gets priority (CR 603.3c,
+     * {@link StackedModalTriggerService}); its modes choose their own targets, so it names no "that player".
      */
     @CollectsTapTrigger(value = CardEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapDefault(TriggerMatchContext match, CardEffect effect,
@@ -446,7 +443,7 @@ public class MiscTriggerCollectorService {
                     match.controllerId(),
                     sourceCard.getName() + "'s triggered ability",
                     new ArrayList<>(List.of(effect)),
-                    ept.tappedPermanentControllerId(),
+                    effect instanceof ChooseOneEffect ? null : ept.tappedPermanentControllerId(),
                     match.permanent().getId());
             entry.setNonTargeting(true);
             entry.setTriggeringPermanentId(ept.tappedPermanent().getId());
@@ -461,136 +458,222 @@ public class MiscTriggerCollectorService {
     }
 
     /**
-     * "Whenever enchanted artifact becomes tapped, choose one —" (Relic Bind): the card's modal goes to the mode choice as
-     * written, its mode and that mode's target chosen as the ability is put on the stack (CR 603.3c), with the tapped
-     * permanent as the ability's triggering permanent.
+     * What a player, counter or control event an ability triggered on records on its stack entry (or target choice),
+     * whatever the ability's effects are: the player the event was about ({@code triggeringPlayerId}), the other player
+     * an ability that chooses no target names as its non-targeting "that player" ({@code thatPlayerId}, {@code null} for
+     * an event of the ability's controller), the event's count ("that much", "that many": {@code eventValue}, or
+     * {@code null} for an event with none), the permanent it was about with its controller as it happened, and the card
+     * it was about.
      */
-    @CollectsTapTrigger(value = ChooseOneEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
-    private boolean handleEnchantedPermanentTapModal(TriggerMatchContext match,
-            ChooseOneEffect modal, TriggerContext ctx) {
-        TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
-        match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                match.permanent().getCard(), match.controllerId(), modal, match.permanent().getId(),
-                false, false, null, null, ept.tappedPermanent().getId()));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers on enchanted permanent tap (modal)",
-                match.gameData().id, match.permanent().getCard().getName());
-        return true;
-    }
+    record EventRecord(UUID triggeringPlayerId, UUID thatPlayerId, Integer eventValue, Permanent triggeringPermanent,
+                       UUID triggeringPermanentControllerId, UUID triggeringCardId) {
 
-    @CollectsActionTrigger(value = CreateTokenEffect.class, watch = ActionWatch.ON_OPPONENT_PAYS_TAX)
-    private boolean handleOpponentTaxPayment(TriggerMatchContext match,
-            CreateTokenEffect effect, TriggerContext ctx) {
-        TriggerContext.TaxPayment taxPayment = (TriggerContext.TaxPayment) ctx;
-        var gameData = match.gameData();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId());
-        if (amountEvaluationService.referencesEventValue(effect.amount())) {
-            entry.setEventValue(taxPayment.manaPaid());
+        /** The event of {@code playerId}, the ability's controller, with no count. */
+        static EventRecord of(UUID playerId) {
+            return new EventRecord(playerId, null, null, null, null, null);
         }
-        entry.setNonTargeting(true);
-        gameData.enqueueTrigger(entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers when an opponent pays a tax ({})", gameData.id,
-                match.permanent().getCard().getName(), taxPayment.manaPaid());
-        return true;
-    }
 
-    @CollectsSpellAbilityTrigger(value = PutCountersOnSelfEffect.class, watch = SpellAbilityWatch.ON_SELF_MANA_ABILITY_RESOLVES)
-    private boolean handleManaAbilityResolutionPutCountersOnSelf(TriggerMatchContext match,
-            PutCountersOnSelfEffect effect, TriggerContext ctx) {
-        TriggerContext.ManaAbilityResolved manaAbility = (TriggerContext.ManaAbilityResolved) ctx;
-        var gameData = match.gameData();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId());
-        if (amountEvaluationService.referencesEventValue(effect.amount())) {
-            entry.setEventValue(manaAbility.manaProduced());
+        /** This record with {@code value} as the event's count. */
+        EventRecord withEventValue(int value) {
+            return new EventRecord(triggeringPlayerId, thatPlayerId, value, triggeringPermanent,
+                    triggeringPermanentControllerId, triggeringCardId);
         }
-        entry.setNonTargeting(true);
-        gameData.enqueueTrigger(entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        return true;
+
+        /** This record naming {@code permanent}, controlled by {@code controllerId} as the event happened. */
+        EventRecord withPermanent(Permanent permanent, UUID controllerId) {
+            return new EventRecord(triggeringPlayerId, thatPlayerId, eventValue, permanent, controllerId,
+                    triggeringCardId);
+        }
     }
 
-    @CollectsMiscTrigger(value = CreateTokenEffect.class,
-            watch = MiscWatch.ON_OPPONENT_GAINS_CONTROL_OF_YOUR_PERMANENT)
-    private boolean handleOpponentGainsControlCreateToken(TriggerMatchContext match,
-            CreateTokenEffect effect, TriggerContext ctx) {
-        var gameData = match.gameData();
-        Card sourceCard = match.permanent().getCard();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId());
-        entry.setNonTargeting(true);
-        gameData.enqueueTrigger(entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers when an opponent gains control of a permanent",
-                gameData.id, sourceCard.getName());
-        return true;
-    }
-
-    @CollectsCounterTrigger(value = BoostSelfEffect.class, watch = CounterWatch.ON_CONTROLLER_GETS_ENERGY)
-    private boolean handleEnergyGainBoostSelf(TriggerMatchContext match,
-            BoostSelfEffect effect, TriggerContext ctx) {
-        var gameData = match.gameData();
-        Card sourceCard = match.permanent().getCard();
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()));
-        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on energy gain (self-boost)",
-                gameData.id, sourceCard.getName());
-        return true;
-    }
-
-    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_CONTROLLER_GETS_ENERGY)
-    private boolean handleEnergyGainDefault(TriggerMatchContext match,
-            CardEffect effect, TriggerContext ctx) {
-        var gameData = match.gameData();
-        Card sourceCard = match.permanent().getCard();
-        List<CardEffect> effects = new ArrayList<>(List.of(effect));
-        boolean needsTarget = effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD);
-        if (needsTarget) {
-            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                    sourceCard, match.controllerId(), effects,
-                    "energy gain", match.permanent().getId()));
+    /**
+     * Puts {@code effect}, an ability of {@code match}'s permanent a player, counter or control event triggered, on the
+     * stack as written with {@code event} recorded whatever the effect is (CR 603.3), together with the source as it
+     * was (CR 608.2h) and the "do this only once each turn" mark (CR 603.2h). A permanent or player target is chosen as
+     * it goes on the stack (CR 603.3d) through the any-target choice, which carries the same record into the entry it
+     * makes, with the target filter the card declares for it (the opponents for a "target opponent"); a graveyard
+     * target through the graveyard choice, carrying the source and the triggering permanent. A "you may" is the effect,
+     * asked as it resolves (CR 603.5).
+     */
+    private boolean queueEventAbility(TriggerMatchContext match, CardEffect effect, EventRecord event,
+                                      String description) {
+        GameData gameData = match.gameData();
+        Permanent source = match.permanent();
+        Card sourceCard = source.getCard();
+        UUID triggeringPermanentId = event.triggeringPermanent() == null ? null : event.triggeringPermanent().getId();
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            var choice = new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
+                    !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT),
+                    DamageTriggerCollectorService.targetFilterForTriggeredEffect(sourceCard, effect), 0,
+                    source.getId(), new Permanent(source),
+                    DamageTriggerCollectorService.hasOptionalTarget(sourceCard, effect), triggeringPermanentId, null,
+                    match.controllerId(), null, null, false, event.triggeringCardId(), null, null,
+                    match.markSourceOncePerTurnOnAcceptance(), null, Set.of(), event.triggeringPlayerId())
+                    .withTriggeringPermanentController(event.triggeringPermanentControllerId());
+            gameData.queueInteraction(event.eventValue() == null ? choice : choice.withEventValue(event.eventValue()));
+        } else if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), null, 0, 0, 0, null, false,
+                    triggeringPermanentId, source.getId(), match.markSourceOncePerTurnOnAcceptance()));
         } else {
-            gameData.enqueueTrigger(new StackEntry(
+            StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     sourceCard,
                     match.controllerId(),
                     sourceCard.getName() + "'s ability",
-                    effects,
-                    null,
-                    match.permanent().getId()));
+                    new ArrayList<>(List.of(effect)),
+                    event.thatPlayerId(),
+                    source.getId());
+            entry.setNonTargeting(true);
+            entry.setTriggeringPlayerId(event.triggeringPlayerId());
+            if (event.eventValue() != null) {
+                entry.setEventValue(event.eventValue());
+            }
+            entry.setTriggeringPermanentId(triggeringPermanentId);
+            entry.setTriggeringPermanentControllerId(event.triggeringPermanentControllerId());
+            if (event.triggeringCardId() != null) {
+                entry.setTriggeringCardId(event.triggeringCardId());
+            }
+            entry.setSourcePermanentSnapshot(new Permanent(source));
+            entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+            gameData.enqueueTrigger(entry);
         }
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on energy gain", gameData.id, sourceCard.getName());
+        log.info("Game {} - {} triggers on {}", gameData.id, sourceCard.getName(), description);
         return true;
+    }
+
+    /**
+     * "Whenever you collect evidence", "whenever you investigate (for the first time each turn)" and "whenever you
+     * foretell a card" (Surveillance Monitor's Thopter, Erdwal Illuminator's Clue, Dream Devourer's boost): the ability
+     * goes on the stack as written, recording the acting player and, for a foretell, the card foretold
+     * ({@link #queueEventAbility}).
+     */
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_COLLECTS_EVIDENCE)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_INVESTIGATES)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_INVESTIGATES_EACH_TIME)
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_FORETELLS)
+    private boolean handlePlayerActionDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        return switch (ctx) {
+            case TriggerContext.CollectEvidence evidence -> queueEventAbility(match, effect,
+                    EventRecord.of(evidence.collectingPlayerId()), "collect evidence");
+            case TriggerContext.Investigate investigate -> queueEventAbility(match, effect,
+                    EventRecord.of(investigate.investigatingPlayerId()), "investigate");
+            case TriggerContext.Foretell foretell -> queueEventAbility(match, effect,
+                    new EventRecord(foretell.foretellingPlayerId(), null, null, null, null,
+                            foretell.foretoldCard().getId()), "foretell");
+            default -> throw new IllegalStateException("No player action default reads " + ctx);
+        };
+    }
+
+    /**
+     * "Whenever an opponent pays a tax from a spell or permanent you control, create a number of Treasure tokens equal
+     * to the amount of mana they paid" (Tax Taker): the paying opponent is the triggering player and the non-targeting
+     * "that player", the mana paid the event value, whatever the effects are ({@link #queueEventAbility}).
+     */
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_OPPONENT_PAYS_TAX)
+    private boolean handleOpponentTaxPaymentDefault(TriggerMatchContext match, CardEffect effect,
+                                                    TriggerContext ctx) {
+        TriggerContext.TaxPayment tax = (TriggerContext.TaxPayment) ctx;
+        return queueEventAbility(match, effect, new EventRecord(tax.payingPlayerId(), tax.payingPlayerId(),
+                tax.manaPaid(), null, null, null), "an opponent paying a tax");
+    }
+
+    /**
+     * "Whenever you get one or more {E}" (Territorial Gorger, Fabrication Module's target, Brotherhood Scribe's
+     * intervening "if"): the player and the energy gained ("that much") recorded whatever the effects are
+     * ({@link #queueEventAbility}).
+     */
+    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_CONTROLLER_GETS_ENERGY)
+    private boolean handleEnergyGainDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        TriggerContext.EnergyGain energy = (TriggerContext.EnergyGain) ctx;
+        return queueEventAbility(match, effect,
+                EventRecord.of(energy.gainingPlayerId()).withEventValue(energy.energyGainedAmount()), "energy gain");
+    }
+
+    /**
+     * "Whenever you put one or more counters on a permanent or player, … deals that much damage to target …" (All Will
+     * Be One): the placing player and the number of counters put ("that much"), recorded whatever the effects are
+     * ({@link #queueEventAbility}).
+     */
+    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER)
+    private boolean handleCountersPlacedDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        TriggerContext.CountersPlaced placed = (TriggerContext.CountersPlaced) ctx;
+        return queueEventAbility(match, effect,
+                EventRecord.of(placed.placingPlayerId()).withEventValue(placed.amount()), "counters being put");
+    }
+
+    /**
+     * "Whenever you put a lore counter on a Saga you control, put a +1/+1 counter on up to one other target creature"
+     * (Sigurd, Jarl of Ravensthorpe, whose target group says "up to one other"): the placing player and the Saga as
+     * the triggering permanent, recorded whatever the effects are ({@link #queueEventAbility}).
+     */
+    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_YOU_PUT_LORE_COUNTERS_ON_SAGA)
+    private boolean handleLoreCounterPlacedDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        TriggerContext.LoreCounterPlaced lore = (TriggerContext.LoreCounterPlaced) ctx;
+        return queueEventAbility(match, effect,
+                EventRecord.of(lore.placingPlayerId()).withPermanent(lore.saga(), lore.placingPlayerId()),
+                "a lore counter being put on a Saga");
+    }
+
+    /**
+     * "Whenever one or more loyalty counters are removed from this, it deals that much damage to target opponent or
+     * planeswalker" (Chandra, Fire Artisan) and "whenever one or more counters are removed from a permanent you
+     * control" (Cloudsculpt Armorer's seek): the permanent the counters were removed from with its controller and the
+     * number removed ("that much"), recorded whatever the effects are ({@link #queueEventAbility}).
+     */
+    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_SELF_LOYALTY_COUNTERS_REMOVED)
+    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT)
+    private boolean handleCountersRemovedDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        Permanent permanent;
+        int amount;
+        switch (ctx) {
+            case TriggerContext.LoyaltyCountersRemoved loyalty -> {
+                permanent = loyalty.permanent();
+                amount = loyalty.amount();
+            }
+            case TriggerContext.CountersRemovedFromPermanent removed -> {
+                permanent = removed.permanent();
+                amount = removed.amount();
+            }
+            default -> throw new IllegalStateException("No counter-removal default reads " + ctx);
+        }
+        if (amount <= 0 || match.permanent() == null) {
+            return false;
+        }
+        return queueEventAbility(match, effect, EventRecord.of(match.controllerId()).withEventValue(amount)
+                .withPermanent(permanent, match.controllerId()), "counters being removed");
+    }
+
+    /**
+     * "Whenever an opponent gains control of a permanent from you, you create a Treasure token" (Zidane, Tantalus
+     * Thief): the permanent with its new controller, who is the triggering player and the non-targeting "that player",
+     * recorded whatever the effects are ({@link #queueEventAbility}).
+     */
+    @CollectsMiscTrigger(value = CardEffect.class, watch = MiscWatch.ON_OPPONENT_GAINS_CONTROL_OF_YOUR_PERMANENT)
+    private boolean handleOpponentGainsControlDefault(TriggerMatchContext match, CardEffect effect,
+                                                      TriggerContext ctx) {
+        TriggerContext.PermanentControlChanged change = (TriggerContext.PermanentControlChanged) ctx;
+        return queueEventAbility(match, effect, new EventRecord(change.newControllerId(), change.newControllerId(),
+                        null, change.changedPermanent(), change.newControllerId(), null),
+                "an opponent gaining control of a permanent");
+    }
+
+    /**
+     * "Whenever a mana ability of this creature resolves, put a number of +1/+1 counters on it equal to the amount of
+     * mana this creature produced" (Tyvar the Bellicose's grant): the activating player and the mana produced (the event
+     * value), recorded whatever the effects are ({@link #queueEventAbility}); its "triggers only once each turn" is the
+     * reader's limit.
+     */
+    @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_SELF_MANA_ABILITY_RESOLVES)
+    private boolean handleManaAbilityResolvedDefault(TriggerMatchContext match, CardEffect effect,
+                                                     TriggerContext ctx) {
+        TriggerContext.ManaAbilityResolved mana = (TriggerContext.ManaAbilityResolved) ctx;
+        return queueEventAbility(match, effect,
+                EventRecord.of(mana.activatingPlayerId()).withEventValue(mana.manaProduced()),
+                "a mana ability resolving");
     }
 
     @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_CONTROLLER_PROLIFERATES)
@@ -1001,25 +1084,6 @@ public class MiscTriggerCollectorService {
 
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on nonland cards being milled",
-                gameData.id, sourceCard.getName());
-        return true;
-    }
-
-    @CollectsActionTrigger(value = BoostSelfEffect.class, watch = ActionWatch.ON_CONTROLLER_FORETELLS)
-    private boolean handleForetellBoostSelf(TriggerMatchContext match,
-            BoostSelfEffect effect, TriggerContext ctx) {
-        var gameData = match.gameData();
-        Card sourceCard = match.permanent().getCard();
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()));
-        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on foretell (self-boost)",
                 gameData.id, sourceCard.getName());
         return true;
     }

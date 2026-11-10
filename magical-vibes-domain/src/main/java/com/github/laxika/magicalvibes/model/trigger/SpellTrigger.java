@@ -14,16 +14,16 @@ import java.util.function.UnaryOperator;
  * <p>
  * A cast trigger with a {@link SpellFilter} ("whenever you cast a creature spell", built with {@link #withFilter},
  * {@link #anySpell} and the other filter methods) is collected by the generic spell-cast collector, which reads the
- * ability itself: the filter, the ability's options and its effects. A cast trigger without one is still collected by
- * its effect's class, as the abilities whose effect binds the spell or its caster are, until step 15 of
- * effect-slot-refactor.md makes them event references. A copy trigger with a filter ("whenever you copy an instant or
+ * ability itself: the filter, the ability's options and its effects. A cast trigger without one is read as
+ * {@link SpellFilter#ANY} by the same collector, whatever its effects are. A copy trigger with a filter ("whenever you copy an instant or
  * sorcery spell") is collected by the spell-copy collector, which reads it the same way; its filter can say only what
  * the copied spell and its stack object must be. A {@link SpellEvent#CAUSES_CARD_ADVANTAGE} trigger has no filter: its
  * reader puts the ability on the stack as written once the spell finished resolving.
  *
  * @param event  what happens to the spell
  * @param player the player who casts or copies the spell, counters it, or controls the countered spell
- * @param filter what a cast or copied spell must be, or {@code null} for a trigger its effect's class collects; only
+ * @param filter what a cast or copied spell must be, or {@code null} for any spell (a cast trigger) or a trigger its
+ *               watch's handlers collect; only
  *               a {@link SpellEvent#CAST} or {@link SpellEvent#COPIED} trigger has one
  */
 public record SpellTrigger(SpellEvent event, PlayerRelation player, SpellFilter filter) implements Trigger {

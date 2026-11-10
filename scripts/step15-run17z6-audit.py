@@ -77,6 +77,10 @@ BIND = re.compile(r"\.set\w+\((?:effect|e|may|mayPay|marker|trigger)\.")
 # graveyard, sacrifice, milled and exiled handlers left were that audit's row 17z13e5b, which run 17z13e5b deleted (34
 # handlers, 36 registrations of `DeathTriggerCollectorService` and `MiscTriggerCollectorService`): each of those
 # watches has one default recording the permanent that left or the cards put into a graveyard whatever the effects are.
+# Run 17z13e7 deleted the last 16 not ROUTE (row 17z13e7: the collect-evidence, first-investigation, foretell, tax,
+# energy, loyalty-, lore-, put- and removed-counter, control-change, mana-ability and cast watches' and Relic Bind's
+# modal route): each of those watches has one default (`MiscTriggerCollectorService.queueEventAbility`'s record) and an
+# unfiltered cast ability is read as "any spell" by the generic cast collector; only the reviewed ROUTE below is left.
 OPEN = {}
 
 

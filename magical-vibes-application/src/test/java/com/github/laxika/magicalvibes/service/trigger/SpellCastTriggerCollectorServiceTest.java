@@ -1141,8 +1141,6 @@ class SpellCastTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_CONTROLLER_CASTS_SPELL — BoostEquippedCreatureUntilEndOfTurnEffect =====
-
     @Nested
     @DisplayName("ON_CONTROLLER_CASTS_SPELL — BoostEquippedCreatureUntilEndOfTurnEffect")
     class ControllerBoostEquippedOnSpellCast {
@@ -1155,9 +1153,9 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createInstant("Lightning Bolt");
             var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL, effect, ctx);
+            everySpellMatches();
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect),
+                    castAbility(Triggers.youCastSpell().anySpell(), effect), ctx, false);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1383,8 +1381,6 @@ class SpellCastTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_OPPONENT_CASTS_SPELL — CounterUnlessPaysEffect =====
-
     @Nested
     @DisplayName("ON_OPPONENT_CASTS_SPELL — CounterUnlessPaysEffect")
     class OpponentCounterUnlessPays {
@@ -1397,9 +1393,9 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, effect, ctx);
+            everySpellMatches();
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect),
+                    castAbility(Triggers.opponentCastsSpell().anySpell(), effect), ctx, false);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1419,15 +1415,13 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, effect, ctx);
+            everySpellMatches();
+            sut.collectCastAbility(match(perm, player1Id, effect),
+                    castAbility(Triggers.opponentCastsSpell().anySpell(), effect), ctx, false);
 
             assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         }
     }
-
-    // ===== ON_OPPONENT_CASTS_SPELL — RevealTopCardCreatureToBattlefieldOrMayBottomEffect =====
 
     @Nested
     @DisplayName("ON_OPPONENT_CASTS_SPELL — RevealTopCardCreatureToBattlefieldOrMayBottomEffect")
@@ -1441,9 +1435,9 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, effect, ctx);
+            everySpellMatches();
+            boolean result = sut.collectCastAbility(match(perm, player1Id, effect),
+                    castAbility(Triggers.opponentCastsSpell().anySpell(), effect), ctx, false);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1461,9 +1455,9 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
 
-            registry.dispatch(
-                    match(perm, player1Id, effect),
-                    SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, effect, ctx);
+            everySpellMatches();
+            sut.collectCastAbility(match(perm, player1Id, effect),
+                    castAbility(Triggers.opponentCastsSpell().anySpell(), effect), ctx, false);
 
             assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         }

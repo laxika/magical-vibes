@@ -2017,8 +2017,8 @@ public class TriggerCollectionService {
     /**
      * Collects {@code ability}, a "whenever an opponent casts a spell" ability of the suspended card {@code card}, for
      * the cast {@code context}: its options are judged as it triggers, and its intervening "if" ("if this card is
-     * suspended") stays around each effect and is checked again as it resolves (CR 603.4). An effect with a handler of
-     * its own goes to it; any other goes on the stack as it is, the spell's caster as "that player" (the entry's
+     * suspended") stays around each effect and is checked again as it resolves (CR 603.4). Each effect goes on the stack
+     * as it is, the spell's caster as "that player" (the entry's
      * non-targeting target, who decides Pardic Dragon's "that player may put a time counter on it") and the spell as its
      * triggering card.
      */
@@ -2030,10 +2030,6 @@ public class TriggerCollectionService {
             return;
         }
         for (CardEffect effect : effects) {
-            if (registry.dispatch(new TriggerMatchContext(gameData, null, ownerId, effect, card, null),
-                    SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL, effect, context)) {
-                continue;
-            }
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, ownerId,
                     card.getName() + "'s ability", new ArrayList<>(List.of(effect)));
             entry.setTargetId(context.castingPlayerId());
@@ -16781,9 +16777,28 @@ public class TriggerCollectionService {
     }
 
     /**
+     * The filter the generic cast or copy collector reads {@code ability} with on {@code watch}: its trigger's filter
+     * ({@link #watchedSpellFilter}), or {@link SpellFilter#ANY} for a cast trigger without one ("whenever an opponent
+     * casts a spell": any spell, as the emblem reader reads it), so the collector records the spell, its caster and the
+     * cast event's value whatever the effects are; {@code null} when neither applies.
+     */
+    private static SpellFilter collectedSpellFilter(TriggeredAbility ability, SpellAbilityWatch watch,
+                                                    boolean anyZone) {
+        SpellFilter filter = watchedSpellFilter(ability, watch, anyZone);
+        if (filter == null && watch.trigger() instanceof SpellTrigger spell
+                && spell.event() == SpellTrigger.SpellEvent.CAST
+                && (anyZone ? ability.hasWatchedTrigger(watch.trigger())
+                        : ability.hasWatchedTrigger(watch.trigger(), watch.zone()))) {
+            return SpellFilter.ANY;
+        }
+        return filter;
+    }
+
+    /**
      * Dispatches the abilities a spell or land-play watch on the battlefield reads on {@code perm}, its own and those
-     * other permanents grant it, in order: an ability whose trigger has a spell filter goes to the spell-cast or
-     * spell-copy collector, and one whose land-play trigger has a filter or a zone to the land-play collector, which
+     * other permanents grant it, in order: a cast ability (with a spell filter or none, "any spell") and a copy ability with
+     * a spell filter go to the spell-cast or spell-copy collector, and one whose land-play trigger has a filter or a
+     * zone to the land-play collector, which
      * read its filters, options and effects; any other with the watch's trigger is collected by
      * {@link #collectUnfilteredAbility}, its effects by the watch's handlers. The printed abilities' spell filters and
      * effects are read through the permanent's text changes (CR 612).
@@ -16806,7 +16821,7 @@ public class TriggerCollectionService {
             staticBonusCurrent = false;
             List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
             for (TriggeredAbility ability : printed) {
-                SpellFilter filter = watchedSpellFilter(ability, watch, false);
+                SpellFilter filter = collectedSpellFilter(ability, watch, false);
                 if (filter != null) {
                     filter = TextChangeTransformer.transformSpellFilter(filter, perm.getTextReplacements(),
                             globalWordChange);
@@ -16836,7 +16851,7 @@ public class TriggerCollectionService {
                 staticBonusCurrent ? staticBonus : null,
                 candidate -> readsItself(candidate, watch, true)
                         || candidate.hasWatchedTrigger(watch.trigger()))) {
-            SpellFilter filter = watchedSpellFilter(ability, watch, true);
+            SpellFilter filter = collectedSpellFilter(ability, watch, true);
             if (filter != null) {
                 triggered |= collectSpellAbility(gameData, perm, card, controllerId, watch, ctx, ability, filter,
                         null, true);
@@ -16883,7 +16898,7 @@ public class TriggerCollectionService {
     private void dispatchCardSpellAbilities(GameData gameData, Card card, UUID controllerId, SpellAbilityWatch watch,
                                             TriggerContext ctx, PlanarObject planarObject) {
         for (TriggeredAbility ability : card.getTriggeredAbilities()) {
-            SpellFilter filter = watchedSpellFilter(ability, watch, false);
+            SpellFilter filter = collectedSpellFilter(ability, watch, false);
             if (filter != null) {
                 collectSpellAbility(gameData, null, card, controllerId, watch, ctx, ability, filter,
                         planarObject == null ? null : planarObject.copy(), false);

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCombatDamageSourceIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -150,24 +149,6 @@ public class DamageTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(watcher.getCard()));
         log.info("Game {} - {} triggers after a creature dealt damage to an enchanted planeswalker",
                 match.gameData().id, watcher.getCard().getName());
-        return true;
-    }
-
-    @CollectsCounterTrigger(value = DealDamageToAnyTargetEffect.class,
-            watch = CounterWatch.ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER)
-    private boolean handleCountersPlaced(TriggerMatchContext match,
-            DealDamageToAnyTargetEffect trigger, TriggerContext ctx) {
-        TriggerContext.CountersPlaced countersPlaced = (TriggerContext.CountersPlaced) ctx;
-        if (countersPlaced.amount() <= 0) return false;
-
-        // "That much damage" (All Will Be One) is the entry's event value: the counters put, carried by the choice.
-        Card sourceCard = match.permanent().getCard();
-        match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                sourceCard, match.controllerId(), new ArrayList<>(List.of(trigger)), false,
-                sourceCard.getTargetFilter(), countersPlaced.amount(), match.permanent().getId()));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} counter-placement trigger fires for {} damage",
-                match.gameData().id, sourceCard.getName(), countersPlaced.amount());
         return true;
     }
 
@@ -952,7 +933,7 @@ public class DamageTriggerCollectorService {
      * its permanent half (the planeswalkers) as its target predicate restricts it: the choice reads no relation of its
      * own.
      */
-    private TargetFilter targetFilterForTriggeredEffect(Card card, CardEffect effect) {
+    static TargetFilter targetFilterForTriggeredEffect(Card card, CardEffect effect) {
         int targetIndex = card.getEffectTargetIndex(effect);
         if (targetIndex >= 0 && targetIndex < card.getTargetGroups().size()) {
             return card.getTargetGroups().get(targetIndex).getFilter();
@@ -975,7 +956,7 @@ public class DamageTriggerCollectorService {
                 opponent, "Target must be an opponent or planeswalker");
     }
 
-    private boolean hasOptionalTarget(Card card, CardEffect effect) {
+    static boolean hasOptionalTarget(Card card, CardEffect effect) {
         int targetIndex = card.getEffectTargetIndex(effect);
         return targetIndex >= 0 && targetIndex < card.getTargetGroups().size()
                 && card.getTargetGroups().get(targetIndex).getMinTargets() == 0;

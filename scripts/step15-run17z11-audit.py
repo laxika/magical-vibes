@@ -27,8 +27,8 @@ Run 17z13 found two of the step collector's reviewed ROUTE reads recording by cl
 branch, which merged the permanent's upkeep effects into one bare entry, and Haphazard Bombardment's end-step branch,
 which judged its intervening "if" by its effect's class); run 17z13e removed both branches and their labels, and row
 17z13e8 re-reads the step and draw readers' class-keyed branches against what their defaults record
-(`step15-run17z13e-audit.py` lists them). Runs 17z13e2, 17z13e3, 17z13e9, 17z13e4, 17z13e5 and 17z13e5b touched no
-step or draw reader; run 17z13e5b removed the collector's `ReturnTriggeringPermanentToBattlefieldEffect` read (the
+(`step15-run17z13e-audit.py` lists them). Runs 17z13e2, 17z13e3, 17z13e9, 17z13e4, 17z13e5, 17z13e5b and 17z13e7 touched
+no step or draw reader; run 17z13e5b removed the collector's `ReturnTriggeringPermanentToBattlefieldEffect` read (the
 "creature exiled from the battlefield" collector dispatched only that effect for the source's own exile: every effect
 of the ability triggers, a "creature other than this" its filter).
 

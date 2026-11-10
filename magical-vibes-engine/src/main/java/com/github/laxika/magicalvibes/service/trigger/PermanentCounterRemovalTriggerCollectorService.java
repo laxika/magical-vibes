@@ -4,38 +4,20 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.SeekEffect;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
-/** Collects triggers caused by counters being removed from a permanent the watcher controls. */
+/**
+ * Collects the triggers of a permanent's own +1/+1 or time counters being removed; "whenever one or more counters are
+ * removed from a permanent you control" is {@link MiscTriggerCollectorService}'s.
+ */
 @Service
 @RequiredArgsConstructor
 public class PermanentCounterRemovalTriggerCollectorService {
-
-    @CollectsCounterTrigger(value = SeekEffect.class, watch = CounterWatch.ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT)
-    private boolean handleCountersRemoved(TriggerMatchContext match, SeekEffect effect, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.CountersRemovedFromPermanent removed)
-                || removed.amount() <= 0 || match.permanent() == null) {
-            return false;
-        }
-
-        GameData gameData = match.gameData();
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()));
-        return true;
-    }
 
     @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTER_REMOVED)
     private boolean handleSelfPlusOnePlusOneCounterRemoved(TriggerMatchContext match, CardEffect effect,

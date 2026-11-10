@@ -99,7 +99,13 @@ ROWS = [
 # the `DEATH` and `LEGACY_BLOCK` patterns find nothing and the "CreatureDeathWatch." and "Legacy." rows are empty.
 # Row 17z13e5 (run 17z13e5): the enter watches' "you may", "you may pay", modal, graveyard-target and Portcullis handlers
 # are gone into their watches' defaults (`EnterTriggerCollectorService`), the command-zone watch has the default too.
-DONE_ROWS = {"17z13e2", "17z13e3", "17z13e4", "17z13e5", "17z13e5b", "17z13e6", "17z13e9"}
+# Row 17z13e7 (run 17z13e7): the collect-evidence, investigate, foretell, tax, energy, loyalty-, lore-, put- and
+# removed-counter, control-change and mana-ability watches have one default each on one shared record
+# (`MiscTriggerCollectorService.queueEventAbility`), the battlefield and exile cast readers collect an unfiltered cast
+# ability as "any spell" through the generic cast collector (the spell-cast watches have no handler), and Relic Bind's
+# "choose one" goes through the enchanted-tap default, its mode announced from the stack. What is left of the
+# class-keyed registrations is the `HAND` ROUTE above.
+DONE_ROWS = {"17z13e2", "17z13e3", "17z13e4", "17z13e5", "17z13e5b", "17z13e6", "17z13e7", "17z13e9"}
 
 # The reader branches keyed by an effect's class (file, effect class) -> verdict. Row 17z13e's three (the your-upkeep
 # `SurveilEffect`, the your-draw-step `MayEffect` and Haphazard Bombardment's branches) are gone; the rest are row

@@ -18,8 +18,8 @@ import java.util.List;
  * effects that read the event.
  * <p>
  * Every collector of these watches reads the abilities themselves, so the legacy
- * view gives none of them and {@link #effectsOf} and {@link #registrationsOf} throw. A cast or copy ability with a spell
- * filter and a land-play ability with a land filter or zone go to the spell-cast, spell-copy and land-play collectors,
+ * view gives none of them and {@link #effectsOf} and {@link #registrationsOf} throw. A cast ability (a battlefield or
+ * exile one without a spell filter as "any spell"), a copy ability with a spell filter and a land-play ability with a land filter or zone go to the spell-cast, spell-copy and land-play collectors,
  * which judge the filters, the options and the effects as one stack object; any other ability's options are judged by
  * its reader (its limit, event condition and intervening "if"), and its effects are handed to the watch's
  * {@link CollectsSpellAbilityTrigger} handlers, the intervening "if" wrapped around each for the check as it resolves

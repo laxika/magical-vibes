@@ -29,15 +29,10 @@ import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetin
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
-import com.github.laxika.magicalvibes.model.effect.CounterSpellIfNameFoundElsewhereEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellingEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
@@ -80,8 +75,8 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 
 /**
- * Trigger collectors for spell-cast events (ON_ANY_PLAYER_CASTS_SPELL,
- * ON_CONTROLLER_CASTS_SPELL, ON_OPPONENT_CASTS_SPELL).
+ * The generic spell-cast, spell-copy and card-advantage collectors: a cast ability, filtered or "any spell", is judged
+ * and put on the stack recording the spell, its caster and the cast event's value whatever its effects are.
  */
 @Slf4j
 @Service
@@ -95,27 +90,6 @@ public class SpellCastTriggerCollectorService {
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final ValidTargetService validTargetService;
-
-    // ── ON_ANY_PLAYER_CASTS_SPELL ──────────────────────────────────────
-
-    @CollectsSpellAbilityTrigger(value = CounterSpellIfNameFoundElsewhereEffect.class, watch = SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL)
-    private boolean handleCounterIfNameFoundElsewhere(TriggerMatchContext match,
-            CounterSpellIfNameFoundElsewhereEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        // Bazaar of Wonders: the name check is part of the effect, so it happens on resolution.
-        // The cast spell is stamped as the trigger's target (auto-chosen, not player-selected).
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                sc.spellCard().getId(),
-                Zone.STACK));
-        return true;
-    }
-
-    // ── ON_CONTROLLER_CASTS_SPELL ──────────────────────────────────────
 
     /**
      * Collects a "whenever [a player] casts a [quality] spell" ability: judges its spell filter and intervening "if"
@@ -171,26 +145,6 @@ public class SpellCastTriggerCollectorService {
         return true;
     }
 
-    @CollectsSpellAbilityTrigger(value = BoostEquippedCreatureUntilEndOfTurnEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_CASTS_SPELL)
-    private boolean handleBoostEquippedOnSpellCast(TriggerMatchContext match,
-            BoostEquippedCreatureUntilEndOfTurnEffect trigger, TriggerContext ctx) {
-        // "Whenever you cast a spell, equipped creature gets +X/+Y until end of turn" (Leering Emblem).
-        // Carry the source permanent id so the handler can find the equipment and its equipped creature
-        // (the effect fizzles at resolution if the Equipment is no longer attached).
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                null,
-                match.permanent().getId()
-        ));
-        log.info("Game {} - {} spell-cast equipped-boost trigger queued",
-                match.gameData().id, match.permanent().getCard().getName());
-        return true;
-    }
-
     private int kickedCount(StackEntry spellEntry) {
         boolean nonKickerAdditionalCost = spellEntry.getCard().getStaticEffects().stream()
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.KickerEffect kicker
@@ -204,62 +158,6 @@ public class SpellCastTriggerCollectorService {
                 .sum();
         return count + repeatedMultikickerCount;
     }
-
-
-
-    // ── ON_OPPONENT_CASTS_SPELL ────────────────────────────────────────
-
-    @CollectsSpellAbilityTrigger(value = PutCountersOnSourceEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
-    private boolean handleOpponentSpellCastPutCountersOnSource(TriggerMatchContext match,
-            PutCountersOnSourceEffect trigger, TriggerContext ctx) {
-        // "Whenever an opponent casts a spell, put a counter on this creature" (Ammit Eternal, -1/-1).
-        // Mandatory — carry the source permanent id so the counter effect knows which permanent to
-        // modify.
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                null,
-                match.permanent().getId()
-        ));
-        log.info("Game {} - {} opponent-spell-cast put-counters trigger queued",
-                match.gameData().id, match.permanent().getCard().getName());
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = CounterUnlessPaysEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
-    private boolean handleCounterUnlessPays(TriggerMatchContext match,
-            CounterUnlessPaysEffect trigger, TriggerContext ctx) {
-        TriggerContext.SpellCast sc = (TriggerContext.SpellCast) ctx;
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
-                sc.spellCard().getId(),
-                Zone.STACK
-        );
-        match.gameData().stack.add(entry);
-        return true;
-    }
-
-    @CollectsSpellAbilityTrigger(value = RevealTopCardCreatureToBattlefieldOrMayBottomEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_CASTS_SPELL)
-    private boolean handleRevealTopCardCreatureToBattlefield(TriggerMatchContext match,
-            RevealTopCardCreatureToBattlefieldOrMayBottomEffect trigger, TriggerContext ctx) {
-        match.gameData().stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(trigger))
-        ));
-        return true;
-    }
-
-    // ── Shared helpers ─────────────────────────────────────────────────
 
     /**
      * Collects a "whenever [a player] copies a [quality] spell" ability: judges the copied spell and its stack object
@@ -765,7 +663,6 @@ public class SpellCastTriggerCollectorService {
         }
         return true;
     }
-
 
     /**
      * The stack description of an ability of {@code sourceCard}: an emblem's ability (its source is the emblem's card,

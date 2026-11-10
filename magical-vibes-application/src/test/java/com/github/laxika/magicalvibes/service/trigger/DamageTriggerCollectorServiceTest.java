@@ -1049,22 +1049,6 @@ class DamageTriggerCollectorServiceTest {
     class DamageEffectsReadTheEntry {
 
         @Test
-        @DisplayName("Counters put: the authored damage goes to the target choice with the counters as its event value")
-        void countersPlacedCarriesTheCountAsTheEventValue() {
-            Permanent watcher = createPermanent("All Will Be One");
-            var damage = new DealDamageToAnyTargetEffect(new EventValue());
-            var ctx = new TriggerContext.CountersPlaced(player1Id, 4);
-
-            boolean result = registry.dispatch(match(watcher, player1Id, damage),
-                    CounterWatch.ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER, damage, ctx);
-
-            assertThat(result).isTrue();
-            var pending = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
-            assertThat(pending.effects()).containsExactly(damage);
-            assertThat(pending.spellManaSpentX()).isEqualTo(4);
-        }
-
-        @Test
         @DisplayName("Opponent source damage: the \"you may\" goes on the stack unchanged, the source its triggering permanent")
         void opponentSourceDamageMayRecordsTheSource() {
             Permanent watcher = createPermanent("Flameblade Angel");
