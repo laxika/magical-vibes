@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MadnessCast;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerIsController;
 import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -11,7 +13,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ArchfiendOfSpite extends Card {
 
     public ArchfiendOfSpite() {
-        addTrigger(Triggers.dealtDamage(), TriggerOptions.EACH_SOURCE,
+        addTrigger(Triggers.dealtDamage(),
+                TriggerOptions.EACH_SOURCE.withEventCondition(new NotCondition(new TargetPlayerIsController())),
                 new DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect());
         addCastingOption(new MadnessCast("{3}{B}{B}"));
     }

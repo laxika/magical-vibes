@@ -65,7 +65,9 @@ BIND = re.compile(r"\.set\w+\((?:effect|e|may|mayPay|marker|trigger)\.")
 # tap-for-mana, untap-step and library watches' class-keyed handlers (rows 17z13e2 and 17z13e6): each watch has one
 # default, so this scan lists none of them. Run 17z13e3 deleted the damage-to-a-player watches' class-keyed handlers
 # (row 17z13e3; 18 of `DamageTriggerCollectorService` and 7 of `MiscTriggerCollectorService`): two defaults record
-# the damage event whatever the effects are; the permanent-damage and combat handlers left are row 17z13e9's.
+# the damage event whatever the effects are; the permanent-damage and combat handlers left are row 17z13e9's. Run
+# 17z13e9 deleted those (11 of `DamageTriggerCollectorService`): the permanent-damage watches have one default each
+# and the combat damage step's dealt-damage reader goes through the dealt-damage one.
 OPEN = {}
 
 

@@ -8407,30 +8407,45 @@ public class TriggerCollectionService {
         UUID controllerId = gameQueryService.findPermanentController(gameData, damagedCreature.getId());
         if (controllerId == null) return;
 
-        var ctx = new TriggerContext.DamageToCreature(damagedCreature, damageDealt, damageSourceControllerId,
-                sourceCard, sourcePermanentId);
+        collectDealtDamageAbilities(gameData, DamageAbilityReader.read(abilities, watched), watch, damagedCreature,
+                controllerId, new TriggerContext.DamageToCreature(damagedCreature, damageDealt,
+                        damageSourceControllerId, sourceCard, sourcePermanentId));
+    }
 
-        // "Once for each source" (CR 603.2c): this damage has one source, so the ability triggers once.
-        for (DamageAbilityReader.DamageEffect read : DamageAbilityReader.read(abilities, watched)) {
+    /**
+     * Puts the "whenever this is dealt damage" abilities {@code reads} of {@code damaged} (controlled by
+     * {@code controllerId}) on the stack for the damage {@code ctx} names, through {@code watch}'s default: for
+     * noncombat damage as it is dealt, and for the combat damage step's (which reads the abilities as the damage is
+     * dealt and puts them on the stack once its creatures have died) with the permanent's last known information. The
+     * ability's "do this only once each turn" limit, intervening "if" and event condition are judged as it triggers
+     * (CR 603.4), with the damage as the event's value, the source as the triggering permanent and its controller as
+     * "that player" (Archfiend of Spite's "a source an opponent controls"). Damage of 0 isn't dealt (CR 120.8).
+     */
+    public void collectDealtDamageAbilities(GameData gameData, List<DamageAbilityReader.DamageEffect> reads,
+                                            DamageWatch watch, Permanent damaged, UUID controllerId,
+                                            TriggerContext.DamageToCreature ctx) {
+        if (ctx.damageDealt() <= 0 || controllerId == null) return;
+        ConditionContext conditionContext = ConditionContext.forPermanent(damaged, controllerId)
+                .withTargetId(ctx.damageSourceControllerId())
+                .withTriggeringPermanentId(ctx.sourcePermanentId());
+        // "Once for each source" (CR 603.2c): each damage event the collector is given has one source, or is the
+        // combat damage step's to this permanent.
+        for (DamageAbilityReader.DamageEffect read : reads) {
             if (read.filter() != null) {
-                throw new IllegalStateException("The collector of " + watched + " judges no filter: "
-                        + read.ability());
+                throw new IllegalStateException("The collector of " + watch + " judges no filter: " + read.ability());
             }
-            if (read.limitReached(gameData, damagedCreature.getId())) continue;
-            // The ability's intervening "if" and event condition, with the damage dealt (CR 603.4).
+            if (read.limitReached(gameData, damaged.getId())) continue;
             if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
-                    ConditionContext.forPermanent(damagedCreature, controllerId), damageDealt)) {
+                    conditionContext, ctx.damageDealt())) {
                 continue;
             }
 
-            var match = new TriggerMatchContext(gameData, damagedCreature, controllerId, read.effect());
+            var match = new TriggerMatchContext(gameData, damaged, controllerId, read.effect());
             if (dispatch(match, watch, read.effect(), ctx)) {
-                read.markLimit(gameData, damagedCreature.getId());
+                read.markLimit(gameData, damaged.getId());
             }
         }
     }
-
-    // ── Enchanted-creature-dealt-damage triggers ───────────────────────
 
     public void checkEnchantedCreatureDealtDamageTriggers(GameData gameData, Permanent damagedCreature, int damageDealt) {
         if (damageDealt <= 0) return;
@@ -9044,6 +9059,8 @@ public class TriggerCollectionService {
         DamageWatch watch = DamageWatch.ON_ANY_PERMANENT_DEALT_DAMAGE;
         Trigger watched = watch.trigger();
         gameData.forEachPermanent((playerId, perm) -> {
+            // "A permanent you control" (the trigger's relation): the damaged permanent's controller is the watcher's.
+            if (!playerId.equals(damagedPermanentControllerId)) return;
             // "Whenever a [filtered] permanent you control is dealt damage": the filter is on the damaged permanent.
             Predicate<PermanentPredicate> onDamaged = filter ->
                     damageFilterMatches(gameData, perm, playerId, filter, damagedPermanent);
@@ -17335,9 +17352,16 @@ public class TriggerCollectionService {
         }
     }
 
+    /**
+     * "Whenever a source you control deals noncombat damage to a creature": the watchers are the source's controller's
+     * permanents, the damaged permanent a creature. Each ability's intervening "if" and event condition are
+     * judged as the damage is dealt (CR 603.4), with the damage as the event's value and the creature as the
+     * triggering permanent (Taii Wakeen's "equal to that creature's toughness").
+     */
     public void checkAllySourceDealtNoncombatDamageToCreatureTriggers(
             GameData gameData, UUID sourceControllerId, Permanent damagedCreature, int damageDealt) {
-        if (sourceControllerId == null || damagedCreature == null || damageDealt <= 0) return;
+        if (sourceControllerId == null || damagedCreature == null || damageDealt <= 0
+                || !gameQueryService.isCreature(gameData, damagedCreature)) return;
         List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
         if (battlefield == null) return;
 
@@ -17346,7 +17370,8 @@ public class TriggerCollectionService {
         for (Permanent watcher : List.copyOf(battlefield)) {
             for (CardEffect effect : DamageAbilityReader.printedEffects(watcher.getCard(),
                     DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE, conditionEvaluationService.judge(
-                            gameData, ConditionContext.forPermanent(watcher, sourceControllerId)))) {
+                            gameData, ConditionContext.forPermanent(watcher, sourceControllerId)
+                                    .withTriggeringPermanentId(damagedCreature.getId()), damageDealt))) {
                 dispatch(new TriggerMatchContext(gameData, watcher, sourceControllerId, effect),
                         DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_CREATURE, effect, context);
             }

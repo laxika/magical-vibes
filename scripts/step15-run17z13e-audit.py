@@ -84,10 +84,13 @@ ROWS = [
     ("MiscWatch.", "17z13e7"), ("TapWatch.ON_ENCHANTED_PERMANENT_TAPPED", "17z13e7"),
 ]
 
-# The rows done since run 17z13e (runs 17z13e2's and 17z13e3's Findings): their watches have one default each and no
-# class-keyed handler; `--summary` reports what is left on their watches, which must be none. Row 17z13e3's watches are
-# the damage-to-a-player ones above; what was left of its family is row 17z13e9's.
-DONE_ROWS = {"17z13e2", "17z13e3", "17z13e6"}
+# The rows done since run 17z13e (runs 17z13e2's, 17z13e3's and 17z13e9's Findings): their watches have one default
+# each and no class-keyed handler; `--summary` reports what is left on their watches, which must be none. Row 17z13e3's
+# watches are the damage-to-a-player ones above; what was left of its family, the permanent-damage and combat watches,
+# is row 17z13e9's (run 17z13e9: "whenever this is dealt damage", "a permanent you control is dealt damage", "a source
+# you control deals noncombat damage to a creature", "a creature is dealt damage" and the self-combat modal; the
+# combat damage step's dealt-damage reader goes through the same default).
+DONE_ROWS = {"17z13e2", "17z13e3", "17z13e6", "17z13e9"}
 
 # The reader branches keyed by an effect's class (file, effect class) -> verdict. Row 17z13e's three (the your-upkeep
 # `SurveilEffect`, the your-draw-step `MayEffect` and Haphazard Bombardment's branches) are gone; the rest are row

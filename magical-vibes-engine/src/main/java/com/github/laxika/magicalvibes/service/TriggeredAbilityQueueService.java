@@ -1977,6 +1977,9 @@ public class TriggeredAbilityQueueService {
                 targetId,
                 pending.sourcePermanentId());
         entry.setTriggeringPermanentId(pending.triggeringPermanentId());
+        if (pending.triggeringPermanentControllerId() != null) {
+            entry.setTriggeringPermanentControllerId(pending.triggeringPermanentControllerId());
+        }
         entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
         entry.setTriggeringPermanent(pending.departedPermanent());
         entry.setProducedManaColors(pending.producedManaColors());
@@ -2178,6 +2181,11 @@ public class TriggeredAbilityQueueService {
         }
         entry.setSourcePermanentSnapshot(pending.sourcePermanentSnapshot());
         entry.setSourcePlanarObject(pending.planarSource());
+        // The event's permanent and its controller, as the choice recorded them (a damage trigger's source).
+        entry.setTriggeringPermanentId(pending.triggeringPermanentId());
+        if (pending.triggeringPermanentControllerId() != null) {
+            entry.setTriggeringPermanentControllerId(pending.triggeringPermanentControllerId());
+        }
         entry.setTriggeringPermanent(pending.departedPermanent());
         entry.setProducedManaColors(pending.producedManaColors());
         entry.setTriggeringPlayerId(pending.triggeringPlayerId());

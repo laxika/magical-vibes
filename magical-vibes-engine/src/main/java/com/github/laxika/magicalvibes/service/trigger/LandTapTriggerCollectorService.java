@@ -280,7 +280,8 @@ public class LandTapTriggerCollectorService {
                 producedManaColors == null ? Set.of() : producedManaColors,
                 entry.getTriggeringPlayerId(),
                 null,
-                false));
+                false,
+                entry.getTriggeringPermanentControllerId()));
         gameLogService.append(gameData, GameLog.abilityTriggers(entry.getCard()));
         if (!gameData.interaction.isAwaitingInput()) {
             triggerCollectionServiceProvider.getObject().processNextSpellTargetTrigger(gameData);

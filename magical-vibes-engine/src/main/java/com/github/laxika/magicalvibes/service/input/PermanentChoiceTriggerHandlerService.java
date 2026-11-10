@@ -219,6 +219,9 @@ public class PermanentChoiceTriggerHandlerService {
         }
         entry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
         entry.setTriggeringPermanentId(stt.triggeringPermanentId());
+        if (stt.triggeringPermanentControllerId() != null) {
+            entry.setTriggeringPermanentControllerId(stt.triggeringPermanentControllerId());
+        }
         entry.setTriggeringPlayerId(stt.triggeringPlayerId());
         Permanent triggeringPermanent = stt.triggeringPermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, stt.triggeringPermanentId());

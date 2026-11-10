@@ -2,12 +2,15 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.Abrade;
 import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
+import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GhituJourneymage;
 import com.github.laxika.magicalvibes.cards.m.MarketGnome;
 import com.github.laxika.magicalvibes.cards.m.MineshaftSpider;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RoamingThrone.class, GhituJourneymage.class, ElvishVisionary.class, Abrade.class, MineshaftSpider.class, MarketGnome.class, RatchetFieldMedic.class})
+@CardUsed({RoamingThrone.class, GhituJourneymage.class, ElvishVisionary.class, Abrade.class, MineshaftSpider.class, MarketGnome.class, RatchetFieldMedic.class, RipjawRaptor.class, Shock.class,
+        FugitiveWizard.class})
 class RoamingThroneTest extends BaseCardTest {
 
     @Test
@@ -181,5 +185,42 @@ class RoamingThroneTest extends BaseCardTest {
 
         assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Ratchet, Field Medic"))
                 .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Roaming Throne doubles a chosen-type creature's \"whenever this is dealt damage\" for noncombat damage")
+    void doublesDealtDamageTriggerForNoncombatDamage() {
+        addThrone(CardSubtype.DINOSAUR);
+        Permanent raptor = harness.addToBattlefieldAndReturn(player1, new RipjawRaptor());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, raptor.getId());
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Ripjaw Raptor")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Roaming Throne doubles a chosen-type creature's \"whenever this is dealt damage\" for combat damage")
+    void doublesDealtDamageTriggerForCombatDamage() {
+        Permanent throne = harness.addToBattlefieldAndReturn(player2, new RoamingThrone());
+        throne.setChosenSubtype(CardSubtype.DINOSAUR);
+        Permanent raptor = harness.addToBattlefieldAndReturn(player2, new RipjawRaptor());
+        Permanent attacker = harness.addToBattlefieldAndReturn(player1, new FugitiveWizard());
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+        raptor.setSummoningSick(false);
+        raptor.setBlocking(true);
+        raptor.addBlockingTarget(gd.playerBattlefields.get(player1.getId()).indexOf(attacker));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of());
+        harness.passBothPriorities();
+
+        // Combat damage, and the two triggers resolving: a card each.
+        harness.assertInGraveyard(player1, "Fugitive Wizard");
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
     }
 }

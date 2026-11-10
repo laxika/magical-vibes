@@ -55,9 +55,7 @@ import com.github.laxika.magicalvibes.model.effect.CombatDamageResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerAssignsCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -75,7 +73,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamag
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TakeInitiativeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.DamagePortion;
@@ -85,10 +82,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
-import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -3746,10 +3739,17 @@ public class CombatDamageService {
                             source.getCard(), source.getId(), sourceControllerId,
                             effects, combatDamageReceivedEffects));
                 } else {
+                    // The combat damage dealt to this permanent at once is one event (CR 603.2c); one dealt by
+                    // several sources names no single "that source".
+                    boolean sameSource = source.getId().equals(previous.sourcePermanentId());
+                    boolean sameController = java.util.Objects.equals(sourceControllerId,
+                            previous.sourceControllerId());
                     triggersByDamagedPermanent.put(targetId, new DealtDamageTriggerData(
                             previous.card(), previous.permanentId(), previous.controllerId(),
                             previous.damageDealt() + damageAmount, previous.sourceSnapshot(),
-                            previous.sourceCard(), previous.sourcePermanentId(), previous.sourceControllerId(),
+                            sameSource ? previous.sourceCard() : null,
+                            sameSource ? previous.sourcePermanentId() : null,
+                            sameController ? previous.sourceControllerId() : null,
                             previous.dealtDamageEffects(), previous.combatDamageReceivedEffects()));
                 }
             }
@@ -3758,101 +3758,20 @@ public class CombatDamageService {
         return sourceSpecificTriggers;
     }
 
+    /**
+     * The combat damage step's "whenever this is dealt damage" abilities, read as the damage was dealt, go on the stack
+     * through the watch's default as noncombat damage's do ({@code TriggerCollectionService.collectDealtDamageAbilities}),
+     * with the damaged permanent as it was dealt the damage: it may have died since.
+     */
     private void processDealtDamageTriggers(GameData gameData, List<DealtDamageTriggerData> triggerData) {
         for (DealtDamageTriggerData data : triggerData) {
-            for (DamageAbilityReader.DamageEffect read : data.dealtDamageEffects()) {
-                if (read.filter() != null) {
-                    throw new IllegalStateException("The dealt-damage collector judges no filter: " + read.ability());
-                }
-                if (read.limitReached(gameData, data.sourceSnapshot().getId())) continue;
-                // The ability's intervening "if" and event condition, read from the damaged permanent with the
-                // damage dealt (CR 603.4).
-                if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
-                        ConditionContext.forPermanent(data.sourceSnapshot(), data.controllerId()),
-                        data.damageDealt())) {
-                    continue;
-                }
-                read.markLimit(gameData, data.sourceSnapshot().getId());
-                CardEffect effect = read.effect();
-                CardEffect effectToAdd = effect;
-                if (effect instanceof DealDamageToTargetPlayerOrPlaneswalkerEffect burn
-                        && burn.playerRelation() == PlayerRelation.OPPONENT) {
-                    // "Target opponent or planeswalker" is chosen as the ability goes on the stack (CR 603.3d), among
-                    // every opponent and planeswalker, even when only one is legal.
-                    TargetFilter targetFilter = data.card().getEffectTargetIndex(effectToAdd) >= 0
-                            ? data.card().getTargetFilter()
-                            : new AnyTargetPredicateTargetFilter(new PermanentIsPlaneswalkerPredicate(),
-                                    new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                                    "Target must be an opponent or planeswalker");
-                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            data.card(), data.controllerId(), new ArrayList<>(List.of(effectToAdd)),
-                            false, targetFilter, data.damageDealt(), data.permanentId(), data.sourceSnapshot()));
-                    gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
-                    log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
-                    continue;
-                } else if (effect instanceof DealDamageToAnyTargetEffect damageEffect) {
-                    // "It deals that much damage to any target" (Spitemare): the damage amount
-                    // snapshots into the trigger event value, and the controller chooses any target
-                    // when serviced.
-                    if (data.damageDealt() > 0) {
-                        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                                data.card(), data.controllerId(), new ArrayList<>(List.of(effect)),
-                                false, damageEffect.triggeredTargetFilter(), data.damageDealt(), data.permanentId(),
-                                data.sourceSnapshot()));
-                    }
-                    gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
-                    log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
-                    continue;
-                }
-
-                if (effectToAdd.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        || effectToAdd.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                    TargetFilter targetFilter = dealtDamageTargetFilter(data.card(), effect);
-                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            data.card(), data.controllerId(), new ArrayList<>(List.of(effectToAdd)),
-                            !effectToAdd.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                                    || targetFilter instanceof PlayerPredicateTargetFilter,
-                            targetFilter, data.damageDealt(), data.permanentId()));
-                    gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
-                    log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger awaits target",
-                            gameData.id, data.card().getName());
-                    continue;
-                }
-
-                // The combat damage dealt snapshots onto eventValue so "it deals that much damage"
-                // effects can read it with an EventValue amount (Stuffy Doll).
-                StackEntry triggerEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        data.card(),
-                        data.controllerId(),
-                        data.card().getName() + "'s ability",
-                        new ArrayList<>(List.of(effectToAdd)),
-                        null,
-                        data.permanentId()
-                );
-                triggerEntry.setEventValue(data.damageDealt());
-                triggerEntry.setSourcePermanentSnapshot(data.sourceSnapshot());
-                // "Whenever a source deals damage to this" triggers once for each source (CR 603.2c), so "that
-                // source" and "that source's controller" are that source as it dealt the damage.
-                if (read.eachSource()) {
-                    triggerEntry.setTriggeringPermanentId(data.sourcePermanentId());
-                    triggerEntry.setTriggeringPermanentControllerId(data.sourceControllerId());
-                }
-                gameData.stack.add(triggerEntry);
-                gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
-                log.info("Game {} - {} ON_DEALT_DAMAGE combat trigger fires", gameData.id, data.card().getName());
-            }
+            if (data.dealtDamageEffects().isEmpty()) continue;
+            triggerCollectionService.collectDealtDamageAbilities(gameData, data.dealtDamageEffects(),
+                    DamageWatch.ON_DEALT_DAMAGE, data.sourceSnapshot(), data.controllerId(),
+                    new TriggerContext.DamageToCreature(data.sourceSnapshot(), data.damageDealt(),
+                            data.sourceControllerId(), data.sourceCard(), data.sourcePermanentId(),
+                            data.sourceSnapshot()));
         }
-    }
-
-    /** The filter of the target slot this trigger effect was declared with, not merely the card's first one. */
-    private TargetFilter dealtDamageTargetFilter(Card card, CardEffect effect) {
-        int targetIndex = card.getEffectTargetIndex(effect);
-        if (targetIndex < 0) return null;
-        if (targetIndex < card.getTargetGroups().size()) {
-            return card.getTargetGroups().get(targetIndex).getFilter();
-        }
-        return card.getTargetFilter();
     }
 
     private void processCombatDamageReceivedTriggers(GameData gameData,

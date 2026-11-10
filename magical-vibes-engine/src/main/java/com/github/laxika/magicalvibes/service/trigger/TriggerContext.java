@@ -313,10 +313,20 @@ public sealed interface TriggerContext {
             implements TriggerContext {}
 
     /**
-     * Context for dealt-damage-to-creature triggers (ON_DEALT_DAMAGE).
+     * Context for dealt-damage-to-creature triggers (ON_DEALT_DAMAGE): the permanent dealt damage, the damage, the
+     * source's controller as it dealt it, the source (its card, and its permanent if it was one) and
+     * {@code damagedLastKnown}, the damaged permanent as it was dealt the damage with the damage keywords it had, which
+     * the combat damage step takes before its creatures die; {@code null} has the collector take it from the
+     * permanent, which is still on the battlefield.
      */
     record DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId,
-                            Card sourceCard, UUID sourcePermanentId) implements TriggerContext {
+                            Card sourceCard, UUID sourcePermanentId, Permanent damagedLastKnown)
+            implements TriggerContext {
+        public DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId,
+                                Card sourceCard, UUID sourcePermanentId) {
+            this(damagedCreature, damageDealt, damageSourceControllerId, sourceCard, sourcePermanentId, null);
+        }
+
         public DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId) {
             this(damagedCreature, damageDealt, damageSourceControllerId, null, null);
         }

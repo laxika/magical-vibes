@@ -480,6 +480,7 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringCardMatches;
 import com.github.laxika.magicalvibes.model.condition.TriggeringCardManaValueIsUncrossedChosenDigit;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasSubtype;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerAtLeast;
+import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentToughnessEqualsEventValue;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentSharesCreatureTypeWithSource;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanEachOtherCreature;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGreaterThanSourcePower;
@@ -2015,6 +2016,13 @@ public class ConditionEvaluationService {
                         ? gameQueryService.getEffectivePower(gameData, triggeringPermanent)
                         : ctx.triggeringPermanentPowerAtTrigger();
                 yield power != null && power >= c.threshold();
+            }
+            case TriggeringPermanentToughnessEqualsEventValue ignored -> {
+                Permanent triggeringPermanent = ctx.triggeringPermanentId() == null
+                        ? null : gameQueryService.findPermanentById(gameData, ctx.triggeringPermanentId());
+                yield triggeringPermanent != null
+                        && gameQueryService.getEffectiveToughness(gameData, triggeringPermanent)
+                        == (eventValue != null ? eventValue : ctx.eventValue());
             }
             case TriggeringPermanentSharesCreatureTypeWithSource ignored -> {
                 Permanent source = sourcePermanent(gameData, ctx);

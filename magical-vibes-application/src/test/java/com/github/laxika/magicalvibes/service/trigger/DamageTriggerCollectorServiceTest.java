@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDamageSourceCreatureOrSpellControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -127,8 +126,6 @@ class DamageTriggerCollectorServiceTest {
         registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(sut, registry);
     }
-
-    // ===== Helpers =====
 
     @Test
     void playerCombatDamageEquipmentTriggerUsesEquipmentController() {
@@ -301,21 +298,46 @@ class DamageTriggerCollectorServiceTest {
     class AnyCreatureDealtDamageConditional {
 
         @Test
-        @DisplayName("queues the effect at the damaged creature once the collector judged the filter")
-        void queuesEffectAtTheDamagedCreature() {
+        @DisplayName("records the damaged creature, its controller and the damage whatever the effect is")
+        void recordsTheDamagedCreature() {
             Permanent watcher = createPermanent("Rite of Passage");
             Permanent damaged = createPermanent("Hill Giant");
-            var wrapped = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE);
-            var ctx = new TriggerContext.AnyCreatureDealtDamage(damaged, player1Id, 2);
+            var effect = new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING,
+                    CounterType.PLUS_ONE_PLUS_ONE);
+            var ctx = new TriggerContext.AnyCreatureDealtDamage(damaged, player2Id, 2);
 
             boolean result = registry.dispatch(
-                    match(watcher, player1Id, wrapped), DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE, wrapped, ctx);
+                    match(watcher, player1Id, effect), DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE, effect, ctx);
 
             assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(damaged.getId());
-            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(wrapped);
-            assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+                assertThat(entry.getTargetId()).isEqualTo(damaged.getId());
+                assertThat(entry.isNonTargeting()).isTrue();
+                assertThat(entry.getTriggeringPermanentId()).isEqualTo(damaged.getId());
+                assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
+                assertThat(entry.getEventValue()).isEqualTo(2);
+            });
+        }
+
+        @Test
+        @DisplayName("routes a targeted effect, \"you may\" or not, to its target choice")
+        void routesATargetedEffectToItsChoice() {
+            Permanent watcher = createPermanent("Watcher");
+            Permanent damaged = createPermanent("Hill Giant");
+            var effect = new DestroyTargetPermanentEffect();
+            var ctx = new TriggerContext.AnyCreatureDealtDamage(damaged, player2Id, 2);
+
+            assertThat(registry.dispatch(match(watcher, player1Id, effect),
+                    DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE, effect, ctx)).isTrue();
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
+                    .satisfies(pending -> {
+                        assertThat(pending.triggeringPermanentId()).isEqualTo(damaged.getId());
+                        assertThat(pending.triggeringPermanentControllerId()).isEqualTo(player2Id);
+                        assertThat(pending.eventValue()).isEqualTo(2);
+                    });
         }
 
         @Test
@@ -468,8 +490,6 @@ class DamageTriggerCollectorServiceTest {
             var ctx = new TriggerContext.DamageToCreature(damagedCreature, 3, player2Id, source.getCard(),
                     source.getId());
 
-            when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
-
             boolean result = registry.dispatch(
                     match(damagedCreature, player1Id, effect),
                     DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
@@ -492,8 +512,6 @@ class DamageTriggerCollectorServiceTest {
             var effect = new DealDamageToDamageSourceCreatureOrSpellControllerEffect();
             var ctx = new TriggerContext.DamageToCreature(damagedCreature, 2, player2Id, createCard("Shock"), null);
 
-            when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
-
             registry.dispatch(match(damagedCreature, player1Id, effect), DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
 
             assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -505,39 +523,42 @@ class DamageTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("Archfiend of Spite triggers for a source an opponent controls")
-        void archfiendTriggersForAnOpponentsSource() {
-            Permanent archfiend = createPermanent("Archfiend of Spite");
+        @DisplayName("A targeted ability's choice carries the damage, the source and its controller, and the snapshot")
+        void targetChoiceCarriesTheRecord() {
+            Card damagedCard = createCard("Boros Reckoner");
+            var effect = new DealDamageToAnyTargetEffect(new XValue());
+            damagedCard.addTrigger(Triggers.dealtDamage(), effect);
+            Permanent damagedCreature = new Permanent(damagedCard);
             Permanent source = createPermanent("Grizzly Bears");
-            var effect = new DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect();
-            var ctx = new TriggerContext.DamageToCreature(archfiend, 2, player2Id, source.getCard(), source.getId());
+            var ctx = new TriggerContext.DamageToCreature(damagedCreature, 3, player2Id, source.getCard(),
+                    source.getId());
 
-            when(gameQueryService.findPermanentController(gd, archfiend.getId())).thenReturn(player1Id);
+            assertThat(registry.dispatch(match(damagedCreature, player1Id, effect), DamageWatch.ON_DEALT_DAMAGE,
+                    effect, ctx)).isTrue();
 
-            boolean result = registry.dispatch(match(archfiend, player1Id, effect), DamageWatch.ON_DEALT_DAMAGE,
-                    effect, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.stack).singleElement().satisfies(entry -> {
-                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
-                assertThat(entry.getTriggeringPermanentId()).isEqualTo(source.getId());
-                assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
-            });
+            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
+                    .satisfies(pending -> {
+                        assertThat(pending.effects()).containsExactly(effect);
+                        assertThat(pending.spellManaSpentX()).isEqualTo(3);
+                        assertThat(pending.eventValue()).isEqualTo(3);
+                        assertThat(pending.triggeringPermanentId()).isEqualTo(source.getId());
+                        assertThat(pending.triggeringPermanentControllerId()).isEqualTo(player2Id);
+                        assertThat(pending.sourcePermanentSnapshot().getId()).isEqualTo(damagedCreature.getId());
+                    });
         }
 
         @Test
-        @DisplayName("Archfiend of Spite doesn't trigger for a source its controller controls")
-        void archfiendDoesNotTriggerForItsControllersSource() {
-            Permanent archfiend = createPermanent("Archfiend of Spite");
-            Permanent source = createPermanent("Grizzly Bears");
-            var effect = new DamageSourceControllerLosesLifeUnlessSacrificesPermanentsEffect();
-            var ctx = new TriggerContext.DamageToCreature(archfiend, 2, player1Id, source.getCard(), source.getId());
+        @DisplayName("The combat damage step's last known information is the source snapshot")
+        void combatLastKnownInformationIsTheSourceSnapshot() {
+            Permanent damagedCreature = createPermanent("Stuffy Doll");
+            Permanent lastKnown = new Permanent(damagedCreature);
+            var effect = com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.triggering();
+            var ctx = new TriggerContext.DamageToCreature(damagedCreature, 2, player2Id, null, null, lastKnown);
 
-            boolean result = registry.dispatch(match(archfiend, player1Id, effect), DamageWatch.ON_DEALT_DAMAGE,
-                    effect, ctx);
+            registry.dispatch(match(damagedCreature, player1Id, effect), DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
 
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
+            assertThat(gd.stack).singleElement()
+                    .satisfies(entry -> assertThat(entry.getSourcePermanentSnapshot()).isSameAs(lastKnown));
         }
     }
 
@@ -865,7 +886,6 @@ class DamageTriggerCollectorServiceTest {
             var effect = new ConditionalEffect(condition, new DrawCardEffect());
             var ctx = new TriggerContext.DamageToCreature(damagedCreature, 3, player2Id);
 
-            when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
             boolean result = registry.dispatch(
                     match(damagedCreature, player1Id, effect), DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
 
@@ -905,8 +925,6 @@ class DamageTriggerCollectorServiceTest {
 
     }
 
-    // ===== ON_DEALT_DAMAGE — default handler =====
-
     @Nested
     @DisplayName("ON_DEALT_DAMAGE — default handler")
     class DealtDamageDefault {
@@ -923,8 +941,6 @@ class DamageTriggerCollectorServiceTest {
             Permanent damagedCreature = new Permanent(damagedCard);
             var ctx = new TriggerContext.DamageToCreature(damagedCreature, 3, player2Id);
 
-            when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
-
             boolean result = registry.dispatch(
                     match(damagedCreature, player1Id, effect),
                     DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
@@ -938,18 +954,17 @@ class DamageTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("does not add to stack when controller is null")
-        void doesNotAddWhenControllerNull() {
+        @DisplayName("records nothing for no damage (CR 120.8)")
+        void recordsNothingForNoDamage() {
             Permanent damagedCreature = createPermanent("Grizzly Bears");
             var effect = com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.triggering();
-            var ctx = new TriggerContext.DamageToCreature(damagedCreature, 2, player2Id);
+            var ctx = new TriggerContext.DamageToCreature(damagedCreature, 0, player2Id);
 
-            when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(null);
-
-            registry.dispatch(
+            boolean result = registry.dispatch(
                     match(damagedCreature, player1Id, effect),
                     DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
 
+            assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
         }
 
@@ -959,8 +974,6 @@ class DamageTriggerCollectorServiceTest {
             Permanent damagedCreature = createPermanent("Custom Creature");
             var effect = com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.triggering();
             var ctx = new TriggerContext.DamageToCreature(damagedCreature, 2, player2Id);
-
-            when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
 
             boolean result = registry.dispatch(
                     match(damagedCreature, player1Id, effect),
@@ -985,8 +998,6 @@ class DamageTriggerCollectorServiceTest {
                     .addTrigger(Triggers.dealtDamage(), effect);
             Permanent damagedCreature = new Permanent(sourceCard);
             var ctx = new TriggerContext.DamageToCreature(damagedCreature, 2, player2Id);
-
-            when(gameQueryService.findPermanentController(gd, damagedCreature.getId())).thenReturn(player1Id);
 
             boolean result = registry.dispatch(
                     match(damagedCreature, player1Id, effect),
