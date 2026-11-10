@@ -30,15 +30,17 @@ public class SummonShiva extends Card {
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
         ));
 
-        addTrigger(Triggers.chapter(1), new TapPermanentsEffect(TapUntapScope.TARGET));
-        addTrigger(Triggers.chapter(1), new PutCounterOnTargetPermanentEffect(CounterType.STUN));
+        addTrigger(Triggers.chapter(1),
+                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new PutCounterOnTargetPermanentEffect(CounterType.STUN));
         setSagaChapterTargetFilter(1, Set.of(
                 new PermanentPredicateTargetFilter(opponentCreature, "Must target a creature an opponent controls")
         ));
         setSagaChapterTargetRequired(1);
 
-        addTrigger(Triggers.chapter(2), new TapPermanentsEffect(TapUntapScope.TARGET));
-        addTrigger(Triggers.chapter(2), new PutCounterOnTargetPermanentEffect(CounterType.STUN));
+        addTrigger(Triggers.chapter(2),
+                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new PutCounterOnTargetPermanentEffect(CounterType.STUN));
         setSagaChapterTargetFilter(2, Set.of(
                 new PermanentPredicateTargetFilter(opponentCreature, "Must target a creature an opponent controls")
         ));

@@ -28,12 +28,13 @@ public class TheEleventhHour extends Card {
         addTrigger(Triggers.chapter(1), new SearchLibraryEffect(
                 new CardSubtypePredicate(CardSubtype.DOCTOR), LibrarySearchDestination.HAND));
 
-        addTrigger(Triggers.chapter(2), CreateTokenEffect.ofFoodToken(1));
-        addTrigger(Triggers.chapter(2), new CreateTokenEffect(
-                1, "Human", 1, 1, CardColor.WHITE, List.of(CardSubtype.HUMAN), Set.of(), Set.of(),
-                List.of(
-                        StaticAbility.of(new ReduceCastCostForMatchingSpellsEffect(
-                        new CardSubtypePredicate(CardSubtype.DOCTOR), 1, CostModificationScope.SELF)))));
+        addTrigger(Triggers.chapter(2),
+                CreateTokenEffect.ofFoodToken(1),
+                new CreateTokenEffect(
+                        1, "Human", 1, 1, CardColor.WHITE, List.of(CardSubtype.HUMAN), Set.of(), Set.of(),
+                        List.of(
+                                StaticAbility.of(new ReduceCastCostForMatchingSpellsEffect(
+                                new CardSubtypePredicate(CardSubtype.DOCTOR), 1, CostModificationScope.SELF)))));
 
         addTrigger(Triggers.chapter(3), CreateTokenCopyOfTargetPermanentEffect.withNameAndCreatureSubtypeOverride(
                 "Prisoner Zero", List.of(CardSubtype.ALIEN), Set.of(CardSupertype.LEGENDARY)));

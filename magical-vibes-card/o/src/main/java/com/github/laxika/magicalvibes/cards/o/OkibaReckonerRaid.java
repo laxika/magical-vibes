@@ -15,10 +15,8 @@ public class OkibaReckonerRaid extends Card {
     public OkibaReckonerRaid() {
         setBackFaceCard(new NezumiRoadCaptain());
 
-        addTrigger(Triggers.chapter(1), new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.chapter(1), new GainLifeEffect(1));
-        addTrigger(Triggers.chapter(2), new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.chapter(2), new GainLifeEffect(1));
+        addTrigger(Triggers.chapter(1), new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(1));
+        addTrigger(Triggers.chapter(2), new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT), new GainLifeEffect(1));
         addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect(true));
     }
 

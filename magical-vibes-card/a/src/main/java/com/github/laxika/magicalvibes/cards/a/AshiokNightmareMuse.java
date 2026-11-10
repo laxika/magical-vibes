@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandTh
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
@@ -31,7 +32,7 @@ public class AshiokNightmareMuse extends Card {
                 List.of(CardSubtype.NIGHTMARE), Set.of(), Set.of(), false, false,
                 List.of(
                         new TriggeredAbility(Triggers.attacks(), nightmareTrigger),
-                        new TriggeredAbility(Triggers.blocks(), nightmareTrigger)),
+                        new TriggeredAbility(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, nightmareTrigger)),
                 List.of(), false, false, false, 0, Set.of());
 
         addActivatedAbility(new ActivatedAbility(

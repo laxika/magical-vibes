@@ -41,14 +41,15 @@ public class InventiveIteration extends Card {
         var artifactInGraveyard = new GraveyardCardThreshold(1, new CardTypePredicate(CardType.ARTIFACT));
         // "If you can't, draw a card" is decided before the return, so the draw comes first and the
         // two branches stay mutually exclusive.
-        addTrigger(Triggers.chapter(2), new ConditionalEffect(new NotCondition(artifactInGraveyard),
-                new DrawCardEffect()));
-        addTrigger(Triggers.chapter(2), new ConditionalEffect(artifactInGraveyard,
-                ReturnCardFromGraveyardEffect.builder()
-                        .destination(GraveyardChoiceDestination.HAND)
-                        .filter(new CardTypePredicate(CardType.ARTIFACT))
-                        .mandatory(true)
-                        .build()));
+        addTrigger(Triggers.chapter(2),
+                new ConditionalEffect(new NotCondition(artifactInGraveyard),
+                        new DrawCardEffect()),
+                new ConditionalEffect(artifactInGraveyard,
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.HAND)
+                                .filter(new CardTypePredicate(CardType.ARTIFACT))
+                                .mandatory(true)
+                                .build()));
 
         addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect(true));
     }

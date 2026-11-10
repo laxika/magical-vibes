@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class Vebulid extends Card {
                 "Put a +1/+1 counter on Vebulid?"));
 
         // When this creature attacks or blocks, destroy it at end of combat.
-        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), new DestroySelfAtEndOfCombatEffect());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE,
+                new DestroySelfAtEndOfCombatEffect());
     }
 }

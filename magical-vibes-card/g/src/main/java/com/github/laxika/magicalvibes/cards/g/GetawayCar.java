@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCrewedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,7 +26,7 @@ public class GetawayCar extends Card {
                 "Target must be a creature that crewed this Vehicle this turn");
         target(targetFilter, 0, 1)
                 .addTrigger(Triggers.attacks(), ReturnToHandEffect.target())
-                .addTrigger(Triggers.blocks(), ReturnToHandEffect.target());
+                .addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, ReturnToHandEffect.target());
 
         addActivatedAbility(new ActivatedAbility(
                 false,

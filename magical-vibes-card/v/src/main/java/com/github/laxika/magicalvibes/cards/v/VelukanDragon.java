@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,6 +21,6 @@ public class VelukanDragon extends Card {
                 new BoostSelfEffect(4, 0),
                 new BoostSelfEffect(5, 0)
         ));
-        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), roll);
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE, roll);
     }
 }

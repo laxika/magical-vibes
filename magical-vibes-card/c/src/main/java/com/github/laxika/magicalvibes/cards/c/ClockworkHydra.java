@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -40,7 +41,7 @@ public class ClockworkHydra extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a creature, planeswalker, battle, or player"))
                 .addTrigger(Triggers.attacks(), attackOrBlockEffect);
-        addTrigger(Triggers.blocks(), attackOrBlockEffect);
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, attackOrBlockEffect);
 
         addActivatedAbility(new ActivatedAbility(true, null,
                 List.of(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),

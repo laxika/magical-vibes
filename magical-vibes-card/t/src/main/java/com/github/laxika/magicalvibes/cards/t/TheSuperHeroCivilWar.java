@@ -27,8 +27,8 @@ public class TheSuperHeroCivilWar extends Card {
         setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 2, 6)));
 
-        addTrigger(Triggers.chapter(2), new BoostAllOwnCreaturesEffect(1, 1));
         addTrigger(Triggers.chapter(2),
+                new BoostAllOwnCreaturesEffect(1, 1),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES));
 
         addTrigger(Triggers.chapter(3), new FightTargetsEffect());

@@ -34,8 +34,8 @@ public class SummonKnightsOfRound extends Card {
         addTrigger(Triggers.chapter(2), KNIGHTS);
         addTrigger(Triggers.chapter(3), KNIGHTS);
         addTrigger(Triggers.chapter(4), KNIGHTS);
-        addTrigger(Triggers.chapter(5), new BoostAllOwnCreaturesEffect(2, 2, OTHER_CREATURES));
         addTrigger(Triggers.chapter(5),
+                new BoostAllOwnCreaturesEffect(2, 2, OTHER_CREATURES),
                 new PutCounterOnEachControlledPermanentEffect(CounterType.INDESTRUCTIBLE, 1, OTHER_CREATURES));
     }
 }

@@ -22,8 +22,9 @@ public class ThePrincessTakesFlight extends Card {
         addTrigger(Triggers.chapter(1), new ExileTargetPermanentAndTrackWithSourceEffect());
         setSagaChapterTargetFilter(1, Set.of(TargetFilters.creature()));
 
-        addTrigger(Triggers.chapter(2), new BoostTargetCreatureEffect(2, 2));
-        addTrigger(Triggers.chapter(2), new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+        addTrigger(Triggers.chapter(2),
+                new BoostTargetCreatureEffect(2, 2),
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
         setSagaChapterTargetGroups(2, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creatureYouControl(), 1, 1)));
 

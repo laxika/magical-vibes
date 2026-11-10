@@ -35,9 +35,10 @@ public class IfritWardenOfInferno extends Card {
     }
 
     private void addBrimstoneEffects(int chapter) {
-        addTrigger(Triggers.chapter(chapter), new AwardManaEffect(ManaColor.RED, 4));
-        addTrigger(Triggers.chapter(chapter), new ConditionalEffect(
-                new SourceCounterThreshold(3, CounterType.LORE),
-                new ExileSelfAndReturnTransformedEffect()));
+        addTrigger(Triggers.chapter(chapter),
+                new AwardManaEffect(ManaColor.RED, 4),
+                new ConditionalEffect(
+                        new SourceCounterThreshold(3, CounterType.LORE),
+                        new ExileSelfAndReturnTransformedEffect()));
     }
 }

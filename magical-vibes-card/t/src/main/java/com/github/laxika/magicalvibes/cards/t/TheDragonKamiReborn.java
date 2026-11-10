@@ -14,11 +14,11 @@ public class TheDragonKamiReborn extends Card {
     public TheDragonKamiReborn() {
         setBackFaceCard(new DragonKamisEgg());
 
-        addTrigger(Triggers.chapter(1), new GainLifeEffect(2));
         addTrigger(Triggers.chapter(1),
+                new GainLifeEffect(2),
                 new ExileOneFromTopCardsFaceDownWithHatchingCounterEffect(3));
-        addTrigger(Triggers.chapter(2), new GainLifeEffect(2));
         addTrigger(Triggers.chapter(2),
+                new GainLifeEffect(2),
                 new ExileOneFromTopCardsFaceDownWithHatchingCounterEffect(3));
         addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect(true));
     }

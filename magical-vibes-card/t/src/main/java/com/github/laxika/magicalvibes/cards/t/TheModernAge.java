@@ -15,10 +15,8 @@ public class TheModernAge extends Card {
     public TheModernAge() {
         setBackFaceCard(new VectorGlider());
 
-        addTrigger(Triggers.chapter(1), new DrawCardEffect());
-        addTrigger(Triggers.chapter(1), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
-        addTrigger(Triggers.chapter(2), new DrawCardEffect());
-        addTrigger(Triggers.chapter(2), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addTrigger(Triggers.chapter(1), new DrawCardEffect(), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
+        addTrigger(Triggers.chapter(2), new DrawCardEffect(), new DiscardEffect(1, DiscardRecipient.CONTROLLER));
         addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect(true));
     }
 

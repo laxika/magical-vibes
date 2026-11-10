@@ -32,8 +32,9 @@ public class DownDownToGoblinTown extends Card {
     }
 
     private void addLifeDrainChapter(int chapter) {
-        addTrigger(Triggers.chapter(chapter), new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
-        addTrigger(Triggers.chapter(chapter), new GainLifeEffect(1));
+        addTrigger(Triggers.chapter(chapter),
+                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
+                new GainLifeEffect(1));
         setSagaChapterTargetFilter(chapter, Set.of(opponentTargetFilter()));
     }
 

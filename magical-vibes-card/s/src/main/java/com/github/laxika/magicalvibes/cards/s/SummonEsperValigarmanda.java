@@ -31,8 +31,7 @@ public class SummonEsperValigarmanda extends Card {
 
         for (int chapter : Set.of(2, 3, 4)) {
             addTrigger(Triggers.chapter(chapter),
-                    new AwardManaEffect(ManaColor.RED, new CountersOnSource(CounterType.LORE)));
-            addTrigger(Triggers.chapter(chapter),
+                    new AwardManaEffect(ManaColor.RED, new CountersOnSource(CounterType.LORE)),
                     new MayCastInstantOrSorceryCardsExiledWithSourceEffect(false, true, false));
         }
     }

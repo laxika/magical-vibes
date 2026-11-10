@@ -32,8 +32,9 @@ public class TheTriumphOfAnax extends Card {
     }
 
     private void addChapterPowerAndTrample(int chapter) {
-        addTrigger(Triggers.chapter(chapter), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
-        addTrigger(Triggers.chapter(chapter), new BoostTargetCreatureEffect(
-                new CountersOnSource(CounterType.LORE), new Fixed(0)));
+        addTrigger(Triggers.chapter(chapter),
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
+                new BoostTargetCreatureEffect(
+                        new CountersOnSource(CounterType.LORE), new Fixed(0)));
     }
 }

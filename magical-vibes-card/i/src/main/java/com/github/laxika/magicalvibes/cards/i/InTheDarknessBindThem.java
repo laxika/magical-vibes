@@ -27,23 +27,18 @@ public class InTheDarknessBindThem extends Card {
     public InTheDarknessBindThem() {
         var wraith = new CreateTokenEffect(1, "Wraith", 3, 3, CardColor.BLACK,
                 List.of(CardSubtype.WRAITH), Set.of(Keyword.MENACE), Set.of());
-        addTrigger(Triggers.chapter(1), wraith);
-        addTrigger(Triggers.chapter(1), new RingTemptsYouEffect());
-        addTrigger(Triggers.chapter(2), wraith);
-        addTrigger(Triggers.chapter(2), new RingTemptsYouEffect());
-        addTrigger(Triggers.chapter(3), wraith);
-        addTrigger(Triggers.chapter(3), new RingTemptsYouEffect());
+        addTrigger(Triggers.chapter(1), wraith, new RingTemptsYouEffect());
+        addTrigger(Triggers.chapter(2), wraith, new RingTemptsYouEffect());
+        addTrigger(Triggers.chapter(3), wraith, new RingTemptsYouEffect());
 
         var target = TargetFilters.creatureAnOpponentControls();
         target(target, 0, 99)
                 .addTrigger(Triggers.chapter(4),
                         GainControlOfTargetEffect.withTargetPredicate(
-                                ControlDuration.END_OF_TURN, target.predicate()))
-                .addTrigger(Triggers.chapter(4),
-                        new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS))
-                .addTrigger(Triggers.chapter(4),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
-                .addTrigger(Triggers.chapter(4), new RingTemptsYouEffect());
+                                ControlDuration.END_OF_TURN, target.predicate()),
+                        new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS),
+                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                        new RingTemptsYouEffect());
         setSagaChapterTargetFilter(4, Set.of(target));
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
     }

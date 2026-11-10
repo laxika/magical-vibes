@@ -37,8 +37,8 @@ public class ThreeBlindMice extends Card {
                         new PermanentIsTokenPredicate(), "Target must be a token you control")));
         setSagaChapterTargetRequired(3);
 
-        addTrigger(Triggers.chapter(4), new BoostAllOwnCreaturesEffect(1, 1));
         addTrigger(Triggers.chapter(4),
+                new BoostAllOwnCreaturesEffect(1, 1),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES));
     }
 }

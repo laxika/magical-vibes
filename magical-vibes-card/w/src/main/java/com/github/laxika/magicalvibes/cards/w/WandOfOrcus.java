@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,7 +23,7 @@ import java.util.Set;
 public class WandOfOrcus extends Card {
 
     public WandOfOrcus() {
-        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), deathtouchGrant());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE, deathtouchGrant());
         addTrigger(Triggers.equippedCreatureDealsCombatDamageToPlayer(),
                 new CreateTokenEffect(new EventValue(), "Zombie", 2, 2, CardColor.BLACK,
                         List.of(CardSubtype.ZOMBIE), Set.of(), Set.of()));

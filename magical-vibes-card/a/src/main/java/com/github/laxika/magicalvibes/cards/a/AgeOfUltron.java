@@ -47,9 +47,10 @@ public class AgeOfUltron extends Card {
 
         PermanentAllOfPredicate artifactCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(), new PermanentIsCreaturePredicate()));
-        addTrigger(Triggers.chapter(3), new PutCounterOnEachControlledPermanentEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, 1, artifactCreature));
-        addTrigger(Triggers.chapter(3), new GrantKeywordEffect(
-                Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES, artifactCreature));
+        addTrigger(Triggers.chapter(3),
+                new PutCounterOnEachControlledPermanentEffect(
+                        CounterType.PLUS_ONE_PLUS_ONE, 1, artifactCreature),
+                new GrantKeywordEffect(
+                        Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES, artifactCreature));
     }
 }

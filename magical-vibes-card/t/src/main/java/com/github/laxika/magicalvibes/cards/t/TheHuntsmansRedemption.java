@@ -44,8 +44,8 @@ public class TheHuntsmansRedemption extends Card {
                         "a creature", false, false),
                 "Sacrifice a creature?"));
 
-        addTrigger(Triggers.chapter(3), new BoostTargetCreatureEffect(2, 2));
         addTrigger(Triggers.chapter(3),
+                new BoostTargetCreatureEffect(2, 2),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
         setSagaChapterTargetGroups(3, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 2)));

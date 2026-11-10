@@ -26,26 +26,29 @@ public class TheMendingOfDominaria extends Card {
 
     public TheMendingOfDominaria() {
         // Chapter I: Mill two cards, then you may return a creature card from your graveyard to your hand
-        addTrigger(Triggers.chapter(1), new MillEffect(2, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.chapter(1), ReturnCardFromGraveyardEffect.builder()
-                .destination(GraveyardChoiceDestination.HAND)
-                .filter(new CardTypePredicate(CardType.CREATURE))
-                .build());
+        addTrigger(Triggers.chapter(1),
+                new MillEffect(2, MillRecipient.CONTROLLER),
+                ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.HAND)
+                        .filter(new CardTypePredicate(CardType.CREATURE))
+                        .build());
 
         // Chapter II: Same as chapter I
-        addTrigger(Triggers.chapter(2), new MillEffect(2, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.chapter(2), ReturnCardFromGraveyardEffect.builder()
-                .destination(GraveyardChoiceDestination.HAND)
-                .filter(new CardTypePredicate(CardType.CREATURE))
-                .build());
+        addTrigger(Triggers.chapter(2),
+                new MillEffect(2, MillRecipient.CONTROLLER),
+                ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.HAND)
+                        .filter(new CardTypePredicate(CardType.CREATURE))
+                        .build());
 
         // Chapter III: Return all land cards from your graveyard to the battlefield,
         // then shuffle your graveyard into your library
-        addTrigger(Triggers.chapter(3), ReturnCardFromGraveyardEffect.builder()
-                .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                .filter(new CardTypePredicate(CardType.LAND))
-                .returnAll(true)
-                .build());
-        addTrigger(Triggers.chapter(3), new ShuffleGraveyardIntoLibraryEffect(false));
+        addTrigger(Triggers.chapter(3),
+                ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                        .filter(new CardTypePredicate(CardType.LAND))
+                        .returnAll(true)
+                        .build(),
+                new ShuffleGraveyardIntoLibraryEffect(false));
     }
 }

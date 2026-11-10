@@ -29,16 +29,17 @@ import java.util.List;
 public class HaraldUnitesTheElves extends Card {
 
     public HaraldUnitesTheElves() {
-        addTrigger(Triggers.chapter(1), new MillEffect(3, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.chapter(1), new MayEffect(
-                ReturnCardFromGraveyardEffect.builder()
-                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                        .filter(new CardAnyOfPredicate(List.of(
-                                new CardSubtypePredicate(CardSubtype.ELF),
-                                new CardSubtypePredicate(CardSubtype.TYVAR)
-                        )))
-                        .build(),
-                "Put an Elf or Tyvar card onto the battlefield?"));
+        addTrigger(Triggers.chapter(1),
+                new MillEffect(3, MillRecipient.CONTROLLER),
+                new MayEffect(
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                                .filter(new CardAnyOfPredicate(List.of(
+                                        new CardSubtypePredicate(CardSubtype.ELF),
+                                        new CardSubtypePredicate(CardSubtype.TYVAR)
+                                )))
+                                .build(),
+                        "Put an Elf or Tyvar card onto the battlefield?"));
 
         addTrigger(Triggers.chapter(2), new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1,

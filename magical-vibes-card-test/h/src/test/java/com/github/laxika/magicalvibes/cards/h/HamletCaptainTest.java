@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.t.ThinkTwice;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -133,6 +134,25 @@ class HamletCaptainTest extends BaseCardTest {
         assertThat(captain.getToughnessModifier()).isZero();
         assertThat(attacker.getPowerModifier()).isZero();
         assertThat(attacker.getToughnessModifier()).isZero();
+    }
+
+    @Test
+    @CardUsed({HighGround.class})
+    @DisplayName("Blocking two creatures triggers once")
+    void blockingTwoCreaturesTriggersOnce() {
+        addCreatureReady(player2, new HamletCaptain());
+        Permanent human = addCreatureReady(player2, new HamletCaptain());
+        harness.addToBattlefield(player2, new HighGround());
+        addCreatureReady(player1, new WalkingCorpse()).setAttacking(true);
+        addCreatureReady(player1, new WalkingCorpse()).setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(human.getPowerModifier()).isEqualTo(1);
+        assertThat(human.getToughnessModifier()).isEqualTo(1);
     }
 
     @Test

@@ -40,9 +40,9 @@ public class TheCrueltyOfGix extends Card {
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                         "Target must be an opponent")));
 
-        addTrigger(Triggers.chapter(2), new SearchLibraryEffect(
-                null, LibrarySearchDestination.HAND));
         addTrigger(Triggers.chapter(2),
+                new SearchLibraryEffect(
+                        null, LibrarySearchDestination.HAND),
                 new LoseLifeEffect(3, LoseLifeRecipient.CONTROLLER));
 
         addTrigger(Triggers.chapter(3), ReturnCardFromGraveyardEffect.builder()

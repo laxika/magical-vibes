@@ -28,8 +28,7 @@ import java.util.List;
 public class LeavesFromTheVine extends Card {
 
     public LeavesFromTheVine() {
-        addTrigger(Triggers.chapter(1), new MillEffect(3, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.chapter(1), foodToken());
+        addTrigger(Triggers.chapter(1), new MillEffect(3, MillRecipient.CONTROLLER), foodToken());
 
         addTrigger(Triggers.chapter(2),
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));

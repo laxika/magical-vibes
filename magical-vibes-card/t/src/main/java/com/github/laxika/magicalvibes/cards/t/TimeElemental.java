@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,7 +21,8 @@ public class TimeElemental extends Card {
 
     public TimeElemental() {
         // When this creature attacks or blocks, at end of combat, sacrifice it and it deals 5 damage to you.
-        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), new SacrificeAtEndOfCombatEffect(5));
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE,
+                new SacrificeAtEndOfCombatEffect(5));
 
         // {2}{U}{U}, {T}: Return target permanent that isn't enchanted to its owner's hand.
         addActivatedAbility(new ActivatedAbility(

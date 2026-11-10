@@ -42,20 +42,22 @@ public class EsperTerra extends Card {
         addCopyChapter(2);
         addCopyChapter(3);
 
-        addTrigger(Triggers.chapter(4), new AwardManaEffect(ManaColor.WHITE, 2));
-        addTrigger(Triggers.chapter(4), new AwardManaEffect(ManaColor.BLUE, 2));
-        addTrigger(Triggers.chapter(4), new AwardManaEffect(ManaColor.BLACK, 2));
-        addTrigger(Triggers.chapter(4), new AwardManaEffect(ManaColor.RED, 2));
-        addTrigger(Triggers.chapter(4), new AwardManaEffect(ManaColor.GREEN, 2));
-        addTrigger(Triggers.chapter(4), new ExileSelfAndReturnTransformedEffect());
+        addTrigger(Triggers.chapter(4),
+                new AwardManaEffect(ManaColor.WHITE, 2),
+                new AwardManaEffect(ManaColor.BLUE, 2),
+                new AwardManaEffect(ManaColor.BLACK, 2),
+                new AwardManaEffect(ManaColor.RED, 2),
+                new AwardManaEffect(ManaColor.GREEN, 2),
+                new ExileSelfAndReturnTransformedEffect());
     }
 
     private void addCopyChapter(int chapter) {
-        addTrigger(Triggers.chapter(chapter), copyEnchantmentEffect());
-        addTrigger(Triggers.chapter(chapter), new ChooseNumberForCreatedPermanentEffect(
-                0, 3, new PermanentHasSubtypePredicate(CardSubtype.SAGA)));
-        addTrigger(Triggers.chapter(chapter), new PutCountersOnCreatedPermanentsEffect(
-                CounterType.LORE, new ChosenNumberOnCreatedPermanent()));
+        addTrigger(Triggers.chapter(chapter),
+                copyEnchantmentEffect(),
+                new ChooseNumberForCreatedPermanentEffect(
+                        0, 3, new PermanentHasSubtypePredicate(CardSubtype.SAGA)),
+                new PutCountersOnCreatedPermanentsEffect(
+                        CounterType.LORE, new ChosenNumberOnCreatedPermanent()));
         setSagaChapterTargetGroups(chapter, List.of(new SagaChapterTargetGroup(
                 new PermanentPredicateTargetFilter(
                         NONLEGENDARY_ENCHANTMENT_YOU_CONTROL,

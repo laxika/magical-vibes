@@ -40,15 +40,17 @@ public class TheTrueScriptures extends Card {
                 List.of(new SagaChapterTargetGroup(chapterOneTarget, 0, 99)));
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
 
-        addTrigger(Triggers.chapter(2), new DiscardEffect(3, DiscardRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.chapter(2), new MillEffect(3, MillRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.chapter(2),
+                new DiscardEffect(3, DiscardRecipient.EACH_OPPONENT),
+                new MillEffect(3, MillRecipient.EACH_OPPONENT));
 
-        addTrigger(Triggers.chapter(3), ReturnCardFromGraveyardEffect.builder()
-                .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                .filter(new CardTypePredicate(CardType.CREATURE))
-                .source(GraveyardSearchScope.ALL_GRAVEYARDS)
-                .returnAll(true)
-                .build());
-        addTrigger(Triggers.chapter(3), new ExileSelfAndReturnFrontEffect());
+        addTrigger(Triggers.chapter(3),
+                ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                        .filter(new CardTypePredicate(CardType.CREATURE))
+                        .source(GraveyardSearchScope.ALL_GRAVEYARDS)
+                        .returnAll(true)
+                        .build(),
+                new ExileSelfAndReturnFrontEffect());
     }
 }

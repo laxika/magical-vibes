@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -18,6 +19,6 @@ public class RottingGiant extends Card {
                 new ExileCardFromGraveyardCost((CardType) null),
                 List.of(new SacrificeSelfEffect()),
                 true);
-        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), sacrificeUnlessExile);
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE, sacrificeUnlessExile);
     }
 }

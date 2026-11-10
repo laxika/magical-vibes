@@ -58,8 +58,8 @@ public class WelcomeToJurassicPark extends Card {
                 List.of(CardSubtype.DINOSAUR), Set.of(Keyword.TRAMPLE), Set.of(Keyword.HASTE)));
 
         addTrigger(Triggers.chapter(3),
-                new DestroyAllPermanentsEffect(new PermanentHasSubtypePredicate(CardSubtype.WALL)));
-        addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect(true));
+                new DestroyAllPermanentsEffect(new PermanentHasSubtypePredicate(CardSubtype.WALL)),
+                new ExileSelfAndReturnTransformedEffect(true));
     }
 
     @Override

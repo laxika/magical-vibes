@@ -28,13 +28,13 @@ public class KumanoFacesKakkazan extends Card {
         setBackFaceCard(new EtchingOfKumano());
 
         addTrigger(Triggers.chapter(1),
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.chapter(1), new DealDamageToEachMatchingPermanentEffect(
-                1,
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsPlaneswalkerPredicate(),
-                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
-                EachPermanentScope.ALL_PLAYERS));
+                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+                new DealDamageToEachMatchingPermanentEffect(
+                        1,
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsPlaneswalkerPredicate(),
+                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
+                        EachPermanentScope.ALL_PLAYERS));
         addTrigger(Triggers.chapter(2), new RegisterDelayedControllerSpellCastTriggerEffect(
                 new CardTypePredicate(CardType.CREATURE),
                 List.of(new GrantAdditionalCountersToCastSpellEffect(new Fixed(1))),

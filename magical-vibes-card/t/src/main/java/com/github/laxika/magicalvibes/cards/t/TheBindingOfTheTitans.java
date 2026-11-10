@@ -26,8 +26,8 @@ public class TheBindingOfTheTitans extends Card {
                 new MillEffect(3, MillRecipient.EACH_OPPONENT)));
         addTrigger(Triggers.chapter(2),
                 ExileGraveyardCardsEffect.targetedFromAnyGraveyardWithEventValue(
-                        2, new CardTypePredicate(CardType.CREATURE)));
-        addTrigger(Triggers.chapter(2), new GainLifeEffect(new EventValue()));
+                        2, new CardTypePredicate(CardType.CREATURE)),
+                new GainLifeEffect(new EventValue()));
         addTrigger(Triggers.chapter(3), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)
                 .filter(new CardAnyOfPredicate(List.of(

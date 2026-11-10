@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DIS", collectorNumber = "19")
@@ -10,6 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class StoicEphemera extends Card {
 
     public StoicEphemera() {
-        addTrigger(Triggers.blocks(), new SacrificeAtEndOfCombatEffect());
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, new SacrificeAtEndOfCombatEffect());
     }
 }

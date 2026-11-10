@@ -19,10 +19,11 @@ import java.util.Set;
 public class TheRavensWarning extends Card {
 
     public TheRavensWarning() {
-        addTrigger(Triggers.chapter(1), new CreateTokenEffect(
-                1, "Bird", 1, 1, CardColor.BLUE,
-                List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()));
-        addTrigger(Triggers.chapter(1), new GainLifeEffect(2));
+        addTrigger(Triggers.chapter(1),
+                new CreateTokenEffect(
+                        1, "Bird", 1, 1, CardColor.BLUE,
+                        List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()),
+                new GainLifeEffect(2));
 
         addTrigger(Triggers.chapter(2), new RegisterDelayedCombatDamageLookAtHandAndDrawEffect(
                 new PermanentHasKeywordPredicate(Keyword.FLYING)));

@@ -9,13 +9,14 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SCG", collectorNumber = "1")
 public class AgelessSentinels extends Card {
 
     public AgelessSentinels() {
-        addTrigger(Triggers.blocks(), SequenceEffect.of(
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, SequenceEffect.of(
                 BecomeCreatureTypeWithBasePowerToughnessEffect.replacingSubtype(
                         CardSubtype.BIRD, null, CardSubtype.WALL),
                 new BecomeCreatureTypeWithBasePowerToughnessEffect(

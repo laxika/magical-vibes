@@ -27,8 +27,8 @@ public class SummonEsperMaduin extends Card {
         addTrigger(Triggers.chapter(1),
                 new RevealTopCardMatchingToHandEffect(new CardIsPermanentPredicate()));
         addTrigger(Triggers.chapter(2), new AwardManaEffect(ManaColor.GREEN, 2));
-        addTrigger(Triggers.chapter(3), new BoostAllOwnCreaturesEffect(2, 2, OTHER_CREATURES));
         addTrigger(Triggers.chapter(3),
+                new BoostAllOwnCreaturesEffect(2, 2, OTHER_CREATURES),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, OTHER_CREATURES));
     }
 }

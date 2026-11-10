@@ -37,8 +37,8 @@ public class NightmaresAndDaydreams extends Card {
         addMillChapter(3);
 
         AnyGraveyardAtLeast twentyCards = new AnyGraveyardAtLeast(20);
-        addTrigger(Triggers.chapter(4), new ConditionalEffect(twentyCards, new DrawCardEffect(3)));
         addTrigger(Triggers.chapter(4),
+                new ConditionalEffect(twentyCards, new DrawCardEffect(3)),
                 new ConditionalEffect(new NotCondition(twentyCards), new DrawCardEffect(1)));
     }
 

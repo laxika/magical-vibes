@@ -36,14 +36,14 @@ public class SummonIxion extends Card {
                         "Must target a creature an opponent controls")));
 
         addTrigger(Triggers.chapter(2),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
-        addTrigger(Triggers.chapter(2), new GainLifeEffect(2));
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                new GainLifeEffect(2));
         setSagaChapterTargetGroups(2, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creatureYouControl(), 0, 2)));
 
         addTrigger(Triggers.chapter(3),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
-        addTrigger(Triggers.chapter(3), new GainLifeEffect(2));
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                new GainLifeEffect(2));
         setSagaChapterTargetGroups(3, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creatureYouControl(), 0, 2)));
     }

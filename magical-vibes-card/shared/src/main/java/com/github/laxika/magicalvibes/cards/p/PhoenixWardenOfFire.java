@@ -18,7 +18,7 @@ public class PhoenixWardenOfFire extends Card {
                 new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
         addTrigger(Triggers.chapter(3),
                 ReturnTargetCardsFromGraveyardToBattlefieldEffect.withinTotalManaValue(
-                        new CardTypePredicate(CardType.CREATURE), 6));
-        addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect());
+                        new CardTypePredicate(CardType.CREATURE), 6),
+                new ExileSelfAndReturnTransformedEffect());
     }
 }

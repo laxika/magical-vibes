@@ -32,8 +32,8 @@ public class OathOfEorl extends Card {
                 Set.of(Keyword.TRAMPLE, Keyword.HASTE), Set.of()));
 
         addTrigger(Triggers.chapter(3),
-                new PutCounterOnTargetPermanentEffect(CounterType.INDESTRUCTIBLE));
-        addTrigger(Triggers.chapter(3), new BecomeMonarchEffect());
+                new PutCounterOnTargetPermanentEffect(CounterType.INDESTRUCTIBLE),
+                new BecomeMonarchEffect());
         setSagaChapterTargetGroups(3, List.of(
                 new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(
                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN),

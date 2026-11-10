@@ -30,10 +30,11 @@ public class SummonKujata extends Card {
         setSagaChapterTargetGroups(2, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 3)));
 
-        addTrigger(Triggers.chapter(3), new DiscardCardThenEffect(
-                null,
-                new DealDamageToPlayersEffect(new LastDiscardedCardManaValue(), DamageRecipient.EACH_OPPONENT),
-                "a card"));
-        addTrigger(Triggers.chapter(3), new DrawCardEffect(2));
+        addTrigger(Triggers.chapter(3),
+                new DiscardCardThenEffect(
+                        null,
+                        new DealDamageToPlayersEffect(new LastDiscardedCardManaValue(), DamageRecipient.EACH_OPPONENT),
+                        "a card"),
+                new DrawCardEffect(2));
     }
 }

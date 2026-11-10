@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.c.CanyonLurkers;
+import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.w.WetlandSambar;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -32,6 +33,23 @@ class HordeAmbusherTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Horde Ambusher").isFaceDown()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @CardUsed({HighGround.class})
+    void blockingTwoCreaturesTriggersOnce() {
+        addCreatureReady(player2, new HordeAmbusher());
+        harness.addToBattlefield(player2, new HighGround());
+        addCreatureReady(player1, new WetlandSambar()).setAttacking(true);
+        addCreatureReady(player1, new WetlandSambar()).setAttacking(true);
+        harness.setLife(player2, 20);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(19);
     }
 
     @Test

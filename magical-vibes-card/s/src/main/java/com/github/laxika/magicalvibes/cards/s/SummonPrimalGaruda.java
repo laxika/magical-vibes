@@ -44,8 +44,8 @@ public class SummonPrimalGaruda extends Card {
         ));
         setSagaChapterTargetRequired(1);
 
-        addTrigger(Triggers.chapter(2), new BoostTargetCreatureEffect(1, 0, anotherCreatureYouControl));
         addTrigger(Triggers.chapter(2),
+                new BoostTargetCreatureEffect(1, 0, anotherCreatureYouControl),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, anotherCreatureYouControl));
         setSagaChapterTargetFilter(2, Set.of(
                 new PermanentPredicateTargetFilter(
@@ -54,8 +54,8 @@ public class SummonPrimalGaruda extends Card {
         ));
         setSagaChapterTargetRequired(2);
 
-        addTrigger(Triggers.chapter(3), new BoostTargetCreatureEffect(1, 0, anotherCreatureYouControl));
         addTrigger(Triggers.chapter(3),
+                new BoostTargetCreatureEffect(1, 0, anotherCreatureYouControl),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, anotherCreatureYouControl));
         setSagaChapterTargetFilter(3, Set.of(
                 new PermanentPredicateTargetFilter(

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AnyPlayerMayExileCardFromGraveyardAndAssignNoCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.List;
 public class CarrionRats extends Card {
 
     public CarrionRats() {
-        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE,
                 new AnyPlayerMayExileCardFromGraveyardAndAssignNoCombatDamageEffect());
     }
 }

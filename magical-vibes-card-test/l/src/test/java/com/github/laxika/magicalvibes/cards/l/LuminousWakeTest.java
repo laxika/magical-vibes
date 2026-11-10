@@ -101,6 +101,22 @@ class LuminousWakeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Blocking multiple creatures triggers once")
+    void blockingMultipleCreaturesTriggersOnce() {
+        harness.setLife(player2, 20);
+        Permanent blocker = addCreatureReady(player2, new AvatarOfHope());
+        addReadyCreature(player1).setAttacking(true);
+        addReadyCreature(player1).setAttacking(true);
+        attachWake(player2, blocker);
+
+        declareBlockers(List.of(new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
+
+        assertThat(gd.stack).hasSize(1);
+        resolveAllTriggers();
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(24);
+    }
+
+    @Test
     @DisplayName("Blocking multiple creatures gains life only once")
     void blockingMultipleCreaturesGainsLifeOnce() {
         harness.setLife(player2, 20);

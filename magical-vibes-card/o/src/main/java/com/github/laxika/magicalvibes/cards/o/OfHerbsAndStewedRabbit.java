@@ -33,14 +33,13 @@ public class OfHerbsAndStewedRabbit extends Card {
     public OfHerbsAndStewedRabbit() {
         // Chapter I: Put a +1/+1 counter on up to one target creature, then create a Food token.
         addTrigger(Triggers.chapter(1),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
-        addTrigger(Triggers.chapter(1), CreateTokenEffect.ofFoodToken(1));
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                CreateTokenEffect.ofFoodToken(1));
         setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 1)));
 
         // Chapter II: Draw a card, then create a Food token.
-        addTrigger(Triggers.chapter(2), new DrawCardEffect());
-        addTrigger(Triggers.chapter(2), CreateTokenEffect.ofFoodToken(1));
+        addTrigger(Triggers.chapter(2), new DrawCardEffect(), CreateTokenEffect.ofFoodToken(1));
 
         // Chapter III: Create one 1/1 white Halfling for each Food you control.
         PermanentCount foodsYouControl = new PermanentCount(

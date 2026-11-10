@@ -33,8 +33,8 @@ public class TheWeatherseedTreaty extends Card {
                 List.of(CardSubtype.SAPROLING), Set.of(), Set.of()));
 
         BasicLandTypesAmongControlledLands domain = new BasicLandTypesAmongControlledLands();
-        addTrigger(Triggers.chapter(3), new BoostTargetCreatureEffect(domain, domain));
         addTrigger(Triggers.chapter(3),
+                new BoostTargetCreatureEffect(domain, domain),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
         setSagaChapterTargetFilter(3, Set.of(TargetFilters.creatureYouControl()));
     }

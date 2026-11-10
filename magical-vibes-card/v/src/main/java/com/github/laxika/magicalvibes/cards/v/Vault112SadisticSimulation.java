@@ -19,17 +19,17 @@ import java.util.List;
 public class Vault112SadisticSimulation extends Card {
 
     public Vault112SadisticSimulation() {
-        addTrigger(Triggers.chapter(1), new TapPermanentsEffect(TapUntapScope.TARGET));
         addTrigger(Triggers.chapter(1),
-                new PutCounterOnTargetPermanentEffect(CounterType.STUN, 1));
-        addTrigger(Triggers.chapter(1), new EnergyCountersEffect(2));
+                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new PutCounterOnTargetPermanentEffect(CounterType.STUN, 1),
+                new EnergyCountersEffect(2));
         setSagaChapterTargetGroups(1,
                 List.of(new SagaChapterTargetGroup(TargetFilters.creature(), 0, 1)));
 
-        addTrigger(Triggers.chapter(2), new TapPermanentsEffect(TapUntapScope.TARGET));
         addTrigger(Triggers.chapter(2),
-                new PutCounterOnTargetPermanentEffect(CounterType.STUN, 1));
-        addTrigger(Triggers.chapter(2), new EnergyCountersEffect(2));
+                new TapPermanentsEffect(TapUntapScope.TARGET),
+                new PutCounterOnTargetPermanentEffect(CounterType.STUN, 1),
+                new EnergyCountersEffect(2));
         setSagaChapterTargetGroups(2,
                 List.of(new SagaChapterTargetGroup(TargetFilters.creature(), 0, 1)));
 

@@ -24,7 +24,7 @@ public class WildwoodTracker extends Card {
         )));
         var boost = new BoostSelfEffect(1, 1);
         addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
-                TriggerOptions.DEFAULT.withInterveningIf(anotherNonHumanCreature),
+                TriggerOptions.ONE_OR_MORE.withInterveningIf(anotherNonHumanCreature),
                 boost);
     }
 }

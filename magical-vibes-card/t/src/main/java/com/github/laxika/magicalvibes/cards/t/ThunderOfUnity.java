@@ -16,8 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ThunderOfUnity extends Card {
 
     public ThunderOfUnity() {
-        addTrigger(Triggers.chapter(1), new DrawCardEffect(2));
-        addTrigger(Triggers.chapter(1), new LoseLifeEffect(2));
+        addTrigger(Triggers.chapter(1), new DrawCardEffect(2), new LoseLifeEffect(2));
 
         var creatureEntryDrain = new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                 new TriggeredAbility(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),

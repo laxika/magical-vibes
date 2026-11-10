@@ -36,8 +36,9 @@ public class OriginOfTheHulk extends Card {
         setSagaChapterTargetRequired(2);
 
         // Chapter III: Target creature you control gets +3/+3 and gains trample until end of turn.
-        addTrigger(Triggers.chapter(3), new BoostTargetCreatureEffect(3, 3));
-        addTrigger(Triggers.chapter(3), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+        addTrigger(Triggers.chapter(3),
+                new BoostTargetCreatureEffect(3, 3),
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
         setSagaChapterTargetFilter(3, Set.of(TargetFilters.creatureYouControl()));
         setSagaChapterTargetRequired(3);
     }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AttachAurasToSourceEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.List;
 public class BrunaLightOfAlabaster extends Card {
 
     public BrunaLightOfAlabaster() {
-        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), new AttachAurasToSourceEffect());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE,
+                new AttachAurasToSourceEffect());
     }
 }

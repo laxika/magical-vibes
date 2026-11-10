@@ -33,8 +33,9 @@ public class PhyrexianScriptures extends Card {
     public PhyrexianScriptures() {
         // Chapter I: Put a +1/+1 counter on up to one target creature.
         // That creature becomes an artifact in addition to its other types (permanently).
-        addTrigger(Triggers.chapter(1), new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
-        addTrigger(Triggers.chapter(1), new AddCardTypeToTargetPermanentEffect(CardType.ARTIFACT, true));
+        addTrigger(Triggers.chapter(1),
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                new AddCardTypeToTargetPermanentEffect(CardType.ARTIFACT, true));
 
         // Chapter II: Destroy all nonartifact creatures
         addTrigger(Triggers.chapter(2), new DestroyAllPermanentsEffect(

@@ -25,12 +25,14 @@ public class ChainersTorment extends Card {
 
     public ChainersTorment() {
         // Chapter I: deal 2 damage to each opponent, gain 2 life
-        addTrigger(Triggers.chapter(1), new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.chapter(1), new GainLifeEffect(2));
+        addTrigger(Triggers.chapter(1),
+                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT),
+                new GainLifeEffect(2));
 
         // Chapter II: same as chapter I
-        addTrigger(Triggers.chapter(2), new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.chapter(2), new GainLifeEffect(2));
+        addTrigger(Triggers.chapter(2),
+                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT),
+                new GainLifeEffect(2));
 
         // Chapter III: create X/X black Nightmare Horror token, it deals X damage to you
         addTrigger(Triggers.chapter(3), new CreateTokenFromHalfLifeTotalAndDealDamageEffect(

@@ -23,10 +23,11 @@ public class KangDynasty extends Card {
 
     public KangDynasty() {
         for (int chapter : List.of(1, 2)) {
-            addTrigger(Triggers.chapter(chapter), new TapPermanentsEffect(TapUntapScope.TARGET));
-            addTrigger(Triggers.chapter(chapter), new GoadTargetCreatureUntilNextTurnEffect());
-            addTrigger(Triggers.chapter(chapter), new RegisterDelayedWatchedCreaturesCombatDamageEffect(
-                    List.of(new DrawCardEffect()), true));
+            addTrigger(Triggers.chapter(chapter),
+                    new TapPermanentsEffect(TapUntapScope.TARGET),
+                    new GoadTargetCreatureUntilNextTurnEffect(),
+                    new RegisterDelayedWatchedCreaturesCombatDamageEffect(
+                            List.of(new DrawCardEffect()), true));
             setSagaChapterTargetGroups(chapter, List.of(
                     new SagaChapterTargetGroup(TargetFilters.creatureAnOpponentControls(), 0, 99)));
         }
@@ -34,8 +35,8 @@ public class KangDynasty extends Card {
 
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
         addTrigger(Triggers.chapter(3),
-                new BoostTargetCreatureEffect(cardsInHand, cardsInHand));
-        addTrigger(Triggers.chapter(3), new MakeCreatureUnblockableEffect());
+                new BoostTargetCreatureEffect(cardsInHand, cardsInHand),
+                new MakeCreatureUnblockableEffect());
         setSagaChapterTargetGroups(3, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creatureYouControl(), 1, 1)));
     }

@@ -42,10 +42,10 @@ public class SongOfFreyalise extends Card {
         // Chapter III: Put a +1/+1 counter on each creature you control.
         // Those creatures gain vigilance, trample, and indestructible until end of turn.
         addTrigger(Triggers.chapter(3),
-                new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
-        addTrigger(Triggers.chapter(3), new GrantKeywordEffect(
-                Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE),
-                GrantScope.OWN_CREATURES
-        ));
+                new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()),
+                new GrantKeywordEffect(
+                        Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE),
+                        GrantScope.OWN_CREATURES
+                ));
     }
 }

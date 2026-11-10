@@ -24,10 +24,8 @@ public class HeavenSent extends Card {
 
         AnOpponentLifeAtMost opponentAtZero = new AnOpponentLifeAtMost(0);
         addTrigger(Triggers.chapter(3),
-                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.chapter(3),
-                new ConditionalEffect(opponentAtZero, new DrawCardEffect(7)));
-        addTrigger(Triggers.chapter(3),
+                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT),
+                new ConditionalEffect(opponentAtZero, new DrawCardEffect(7)),
                 new ConditionalEffect(new NotCondition(opponentAtZero),
                         SequenceEffect.of(
                                 new ExileSelfEffect(),

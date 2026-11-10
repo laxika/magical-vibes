@@ -54,7 +54,6 @@ public class TheTricksterGodsHeist extends Card {
                         "Target must be a nonbasic, noncreature permanent"), 1, 1)
         ));
 
-        addTrigger(Triggers.chapter(3), new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER));
-        addTrigger(Triggers.chapter(3), new GainLifeEffect(3));
+        addTrigger(Triggers.chapter(3), new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER), new GainLifeEffect(3));
     }
 }

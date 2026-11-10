@@ -14,9 +14,10 @@ public class DayOfTheMoon extends Card {
 
     public DayOfTheMoon() {
         for (int chapter : new int[]{1, 2, 3}) {
-            addTrigger(Triggers.chapter(chapter), new ChooseCardNameAtResolutionEffect(CardType.CREATURE));
-            addTrigger(Triggers.chapter(chapter), new GoadCreaturesUntilNextTurnSnapshotEffect(
-                    new PermanentHasSourceChosenNamePredicate(true)));
+            addTrigger(Triggers.chapter(chapter),
+                    new ChooseCardNameAtResolutionEffect(CardType.CREATURE),
+                    new GoadCreaturesUntilNextTurnSnapshotEffect(
+                            new PermanentHasSourceChosenNamePredicate(true)));
         }
     }
 }

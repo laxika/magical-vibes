@@ -23,9 +23,10 @@ public class TeachingsOfTheKirin extends Card {
     public TeachingsOfTheKirin() {
         setBackFaceCard(new KirinTouchedOrochi());
 
-        addTrigger(Triggers.chapter(1), new MillEffect(3, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.chapter(1), new CreateTokenEffect(
-                "Spirit", 1, 1, null, List.of(CardSubtype.SPIRIT), Set.of(), Set.of()));
+        addTrigger(Triggers.chapter(1),
+                new MillEffect(3, MillRecipient.CONTROLLER),
+                new CreateTokenEffect(
+                        "Spirit", 1, 1, null, List.of(CardSubtype.SPIRIT), Set.of(), Set.of()));
         addTrigger(Triggers.chapter(2),
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
         setSagaChapterTargetGroups(2,

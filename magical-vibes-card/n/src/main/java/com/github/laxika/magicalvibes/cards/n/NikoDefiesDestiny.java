@@ -21,8 +21,7 @@ public class NikoDefiesDestiny extends Card {
         addTrigger(Triggers.chapter(1),
                 new GainLifeEffect(new Scaled(new ForetoldCardsInExile(CountScope.CONTROLLER), 2)));
         addTrigger(Triggers.chapter(2),
-                new AwardRestrictedManaEffect(ManaColor.WHITE, 1, new ManaRestriction.ForetellSpells()));
-        addTrigger(Triggers.chapter(2),
+                new AwardRestrictedManaEffect(ManaColor.WHITE, 1, new ManaRestriction.ForetellSpells()),
                 new AwardRestrictedManaEffect(ManaColor.BLUE, 1, new ManaRestriction.ForetellSpells()));
         addTrigger(Triggers.chapter(3), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.HAND)

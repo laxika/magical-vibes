@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealTargetPlayerLibraryUnti
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "C20", collectorNumber = "36")
@@ -17,6 +18,6 @@ public class NascentMetamorph extends Card {
                 "Target must be an opponent");
         var revealAndCopy = new RevealTargetPlayerLibraryUntilCreatureAndBecomeCopyUntilEndOfTurnEffect();
         target(opponent).addTrigger(Triggers.attacks(), revealAndCopy);
-        addTrigger(Triggers.blocks(), revealAndCopy);
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, revealAndCopy);
     }
 }

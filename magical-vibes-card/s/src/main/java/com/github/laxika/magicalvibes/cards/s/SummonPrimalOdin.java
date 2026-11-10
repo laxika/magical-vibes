@@ -44,7 +44,6 @@ public class SummonPrimalOdin extends Card {
                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(), new TargetPlayerLosesGameEffect(null)),
                 EffectDuration.PERMANENT, false, GrantScope.SELF));
 
-        addTrigger(Triggers.chapter(3), new DrawCardEffect(2));
-        addTrigger(Triggers.chapter(3), new LoseLifeEffect(2, LoseLifeRecipient.EACH_PLAYER));
+        addTrigger(Triggers.chapter(3), new DrawCardEffect(2), new LoseLifeEffect(2, LoseLifeRecipient.EACH_PLAYER));
     }
 }

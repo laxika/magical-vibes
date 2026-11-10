@@ -33,12 +33,9 @@ public class OriginOfSpiderMan extends Card {
                 List.of(CardSubtype.SPIDER), Set.of(Keyword.REACH), Set.of()));
 
         addTrigger(Triggers.chapter(2),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
-        addTrigger(Triggers.chapter(2),
-                new SetTargetPermanentSupertypeEffect(CardSupertype.LEGENDARY, true));
-        addTrigger(Triggers.chapter(2),
-                new GrantSubtypeToTargetCreatureEffect(CardSubtype.SPIDER));
-        addTrigger(Triggers.chapter(2),
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                new SetTargetPermanentSupertypeEffect(CardSupertype.LEGENDARY, true),
+                new GrantSubtypeToTargetCreatureEffect(CardSubtype.SPIDER),
                 new GrantSubtypeToTargetCreatureEffect(CardSubtype.HERO));
         setSagaChapterTargetFilter(2, Set.of(TargetFilters.creatureYouControl()));
         setSagaChapterTargetRequired(2);

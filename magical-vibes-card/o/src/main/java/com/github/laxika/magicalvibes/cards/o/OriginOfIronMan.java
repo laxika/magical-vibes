@@ -24,8 +24,9 @@ public class OriginOfIronMan extends Card {
     public OriginOfIronMan() {
         // Chapter I: Tap up to one target creature. It doesn't untap during its controller's
         // untap step for as long as this Saga remains on the battlefield.
-        addTrigger(Triggers.chapter(1), new TapPermanentsEffect(TapUntapScope.TARGET));
-        addTrigger(Triggers.chapter(1), DoesntUntapEffect.targetWhileSourceOnBattlefield());
+        addTrigger(Triggers.chapter(1),
+                new TapPermanentsEffect(TapUntapScope.TARGET),
+                DoesntUntapEffect.targetWhileSourceOnBattlefield());
         setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 1)));
 

@@ -27,9 +27,9 @@ import java.util.List;
 public class KingNarfisBetrayal extends Card {
 
     public KingNarfisBetrayal() {
-        addTrigger(Triggers.chapter(1), new MillEffect(4, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.chapter(1), new MillEffect(4, MillRecipient.EACH_OPPONENT));
         addTrigger(Triggers.chapter(1),
+                new MillEffect(4, MillRecipient.CONTROLLER),
+                new MillEffect(4, MillRecipient.EACH_OPPONENT),
                 new ExileUpToOneMatchingCardFromEachGraveyardWithSourceEffect(
                         new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),

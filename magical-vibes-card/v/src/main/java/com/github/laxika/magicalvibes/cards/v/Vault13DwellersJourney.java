@@ -38,8 +38,7 @@ public class Vault13DwellersJourney extends Card {
         setSagaChapterTargetGroups(1,
                 List.of(new SagaChapterTargetGroup(chapterOneTarget, 0, 99)));
 
-        addTrigger(Triggers.chapter(2), new GainLifeEffect(2));
-        addTrigger(Triggers.chapter(2), new ScryEffect(2));
+        addTrigger(Triggers.chapter(2), new GainLifeEffect(2), new ScryEffect(2));
 
         addTrigger(Triggers.chapter(3),
                 new ReturnTwoExiledCardsWithSourceToBattlefieldAndBottomRestEffect());

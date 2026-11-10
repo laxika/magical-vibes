@@ -24,16 +24,16 @@ import java.util.Set;
 public class TheWarInHeaven extends Card {
 
     public TheWarInHeaven() {
-        addTrigger(Triggers.chapter(1), new DrawCardEffect(3));
-        addTrigger(Triggers.chapter(1), new LoseLifeEffect(3, LoseLifeRecipient.CONTROLLER));
+        addTrigger(Triggers.chapter(1), new DrawCardEffect(3), new LoseLifeEffect(3, LoseLifeRecipient.CONTROLLER));
 
         addTrigger(Triggers.chapter(2), new MillEffect(3, MillRecipient.CONTROLLER));
 
-        addTrigger(Triggers.chapter(3), new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
-                new CardTypePredicate(CardType.CREATURE), 3, false, false, null, 8,
-                null, null, CounterType.NECRODERMIS, 1));
-        addTrigger(Triggers.chapter(3), new AnimateReturnedPermanentsEffect(
-                new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
-                        Set.of(CardType.ARTIFACT), GrantScope.TARGET, EffectDuration.PERMANENT, null)));
+        addTrigger(Triggers.chapter(3),
+                new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
+                        new CardTypePredicate(CardType.CREATURE), 3, false, false, null, 8,
+                        null, null, CounterType.NECRODERMIS, 1),
+                new AnimateReturnedPermanentsEffect(
+                        new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
+                                Set.of(CardType.ARTIFACT), GrantScope.TARGET, EffectDuration.PERMANENT, null)));
     }
 }

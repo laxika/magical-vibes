@@ -36,6 +36,23 @@ DONE = {
     "ArmMountedAnchor", "BumiUnleashed", "BusterSword", "NivMizzetGuildpact", "SwordOfBodyAndMind",
     "SwordOfFeastAndFamine", "SwordOfForgeAndFrontier", "SwordOfSinewAndSteel", "SwordOfWarAndPeace",
     "SwordOfWealthAndPower", "VengefulPharaoh",
+    # Run 17z14h (scripts/step15-run17z14h-cards.py): a Saga's chapter is one chapter ability (CR 715.2b), so one
+    # addTrigger of all its effects.
+    "AgeOfUltron", "ArniSlaysTheTroll", "BahamutWardenOfLight", "BefriendingTheMoths", "BraskasFinalAeon",
+    "ChainersTorment", "DayOfTheMoon", "DownDownToGoblinTown", "DownInTheValley", "EsperTerra",
+    "HaraldUnitesTheElves", "HeavenSent", "IfritWardenOfInferno", "InTheDarknessBindThem", "InventiveIteration",
+    "KangDynasty", "KingNarfisBetrayal", "KioraBestsTheSeaGod", "KumanoFacesKakkazan", "LeavesFromTheVine",
+    "LoveSongOfNightAndDay", "NightmaresAndDaydreams", "NikoDefiesDestiny", "OathOfEorl", "OfHerbsAndStewedRabbit",
+    "OkibaReckonerRaid", "OriginOfCaptainAmerica", "OriginOfIronMan", "OriginOfSpiderMan", "OriginOfTheHulk",
+    "PhoenixWardenOfFire", "PhyrexianScriptures", "ShivaWardenOfIce", "SongOfERendil", "SongOfFreyalise",
+    "SummonEsperMaduin", "SummonEsperValigarmanda", "SummonIxion", "SummonKnightsOfRound", "SummonKujata",
+    "SummonPrimalGaruda", "SummonPrimalOdin", "SummonShiva", "SummonTitan", "SummonValefor", "TalesOfMasterSeshiro",
+    "TeachingsOfTheKirin", "TheBindingOfTheTitans", "TheCrueltyOfGix", "TheCurseOfFenric", "TheDragonKamiReborn",
+    "TheElderDragonWar", "TheEleventhHour", "TheHuntsmansRedemption", "TheMendingOfDominaria", "TheModernAge",
+    "ThePrincessTakesFlight", "TheRavensWarning", "TheShatteredStatesEra", "TheSuperHeroCivilWar",
+    "TheTricksterGodsHeist", "TheTriumphOfAnax", "TheTrueScriptures", "TheWarInHeaven", "TheWeatherseedTreaty",
+    "ThreeBlindMice", "ThunderOfUnity", "TimeOfIce", "UrzaAssemblesTheTitans", "Vault112SadisticSimulation",
+    "Vault13DwellersJourney", "Vault87ForcedEvolution", "WelcomeToJurassicPark", "WorldWarHulk",
 }
 # Run 17z14b: read against their Oracle text; their abilities on the listed trigger print apart (Class levels,
 # vanishing beside its own ability, two cast abilities).
@@ -60,6 +77,41 @@ SEPARATE = {
     # whose event conditions exclude each other, so one triggers at a time and it is one object either way; merging
     # them needs one return effect whose destination is a condition, which no effect has.
     "KaraiFutureOfTheFoot",
+    # Run 17z14h: evoke's "when this permanent enters, if its evoke cost was paid, its controller sacrifices it"
+    # (CR 702.74a) beside the card's own enters ability or abilities (the five Incarnations of two "if {C}{C} was spent
+    # to cast it" abilities print each on a line of its own).
+    "Aethersnipe", "Briarhorn", "Catharsis", "Cloudthresher", "Dawnfluke", "Deceit", "Emptiness", "Endurance",
+    "Faultgrinder", "FoundationBreaker", "Fury", "Glarewielder", "Grief", "Infestation", "IngotChewer",
+    "InnerFlameAcolyte", "Mournwhelk", "Mulldrifter", "Shriekmaw", "Solitude", "SoulOfMigration", "Subtlety",
+    "Vibrance", "Wavesifter", "Wispmare", "Wistfulness",
+    # Run 17z14h: a keyword's enters or dies ability beside the card's own: offspring (CR 702.175a), squad
+    # (CR 702.157a), ravenous (CR 702.156a), gift (CR 702.174b), For Mirrodin! (CR 702.163a), blitz's "when this
+    # creature dies, draw a card" and haste-and-sacrifice (CR 702.152a), partner with, and "sacrifice it unless it
+    # escaped" beside "whenever this enters or attacks".
+    "BushyBodyguard", "FinchFormation", "FountainportCharmer", "IntrepidRabbit", "SplashLasher",
+    "ThornplateIntimidator", "ThundertrapTrainer", "PowderGanger", "SicarianInfiltrator", "SpaceMarineDevastator",
+    "WastelandRaider", "Broodlord", "Exocrine", "Mawloc", "Ravener", "Sporocyst", "Zoanthrope", "Kitnap",
+    "Scrapshooter", "StarforgedSword", "HexgoldSledge", "GirderGoons", "NightClubber", "RiveteersProvocateur",
+    "RiveteersRequisitioner", "WorkshopWarchief", "YannikScavengingSentinel", "KroxaTitanOfDeathsHunger",
+    "UroTitanOfNaturesWrath",
+    # Run 17z14h: "cascade, cascade" is an ability for each instance (CR 702.85a: "cascade" is one triggered
+    # ability; Apex Devastator's reminder text: "multiple instances of cascade each trigger separately").
+    "ApexDevastator", "CallForthTheTempest", "MaelstromWanderer",
+    # Run 17z14h: two (Bladecoil Serpent: three) printed abilities, each "when this enters, ..." or "when this dies,
+    # ..." on a line of its own: the Battlemages' and Archangel of Wrath's two kicked abilities, the Hedge-Mages' two
+    # "if you control two or more ..." abilities, the "sacrifice it unless {C} was spent to cast it" creatures, the
+    # "return a ... creature you control to its owner's hand" creatures, the "exile ... until this leaves the
+    # battlefield" enchantments with a second enters ability, Linvala's two intervening "if"s, Nucklavee, Palace
+    # Jailer, Relentless Dead, Sigardian Evangel.
+    "AnaBattlemage", "NightscapeBattlemage", "StormscapeBattlemage", "SunscapeBattlemage", "ThornscapeBattlemage",
+    "ThunderscapeBattlemage", "ArchangelOfWrath", "DuergarHedgeMage", "GwyllionHedgeMage", "HagHedgeMage",
+    "NoggleHedgeMage", "SelkieHedgeMage", "AzoriusHerald", "CourtHussar", "CryptChampion", "PatagiaViper",
+    "Plaxmanta", "SquealingDevil", "MarshCrocodile", "RazingSnidd", "SawtoothLoon", "Sparkcaster", "Stonecloaker",
+    "CelebrateTheMountainKing", "LassoedByTheLaw", "PrisonRealm", "PullOfTheMistMoon", "StaticNet",
+    "BladecoilSerpent", "LinvalaThePreserver", "Nucklavee", "PalaceJailer", "RelentlessDead", "SigardianEvangel",
+    # Run 17z14h: not two abilities of one card on one trigger. Gale's five calls are one for each specialized face
+    # (as Lulu's); Jessie Zane's second enters call is the ability the conjured Ambush Viper perpetually gains.
+    "GaleConduitOfTheArcane", "JessieZaneFangbringer",
 }
 STEP = re.compile(r"Triggers\.(upkeep|drawStep|endStep|beginningOfCombat|precombatMainPhase|postcombatMainPhase"
                   r"|secondMainPhase|endOfCombat)\b")

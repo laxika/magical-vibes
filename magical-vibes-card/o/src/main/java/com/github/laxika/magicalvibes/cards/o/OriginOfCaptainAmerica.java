@@ -28,9 +28,9 @@ public class OriginOfCaptainAmerica extends Card {
         // Chapter I: Put a +1/+1 counter on target creature you control. It gains first strike
         // and vigilance until end of turn.
         addTrigger(Triggers.chapter(1),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE));
-        addTrigger(Triggers.chapter(1), new GrantKeywordEffect(
-                Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE), GrantScope.TARGET));
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                new GrantKeywordEffect(
+                        Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE), GrantScope.TARGET));
         setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creatureYouControl(), 1, 1)));
 
@@ -42,8 +42,8 @@ public class OriginOfCaptainAmerica extends Card {
                 sturdyShield.withTokenEffects(List.of(StaticAbility.of(new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE)))));
 
         // Chapter III: Tap up to one target creature and put a stun counter on it.
-        addTrigger(Triggers.chapter(3), new TapPermanentsEffect(TapUntapScope.TARGET));
         addTrigger(Triggers.chapter(3),
+                new TapPermanentsEffect(TapUntapScope.TARGET),
                 new PutCounterOnTargetPermanentEffect(CounterType.STUN));
         setSagaChapterTargetGroups(3, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 1)));

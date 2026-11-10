@@ -23,10 +23,8 @@ public class TheShatteredStatesEra extends Card {
 
         target(TargetFilters.creature())
                 .addTrigger(Triggers.chapter(1),
-                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN))
-                .addTrigger(Triggers.chapter(1),
-                        new UntapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.chapter(1),
+                        new GainControlOfTargetEffect(ControlDuration.END_OF_TURN),
+                        new UntapPermanentsEffect(TapUntapScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
         addTrigger(Triggers.chapter(2), new BoostAllOwnCreaturesEffect(1, 0));
         addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect(true));

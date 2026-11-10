@@ -35,8 +35,7 @@ public class LoveSongOfNightAndDay extends Card {
         addStaticEffect(new ReadAheadEffect(false));
 
         // Chapter I: You and target opponent each draw two cards.
-        addTrigger(Triggers.chapter(1), new DrawCardEffect(2));
-        addTrigger(Triggers.chapter(1), new DrawCardForTargetPlayerEffect(2, false, true));
+        addTrigger(Triggers.chapter(1), new DrawCardEffect(2), new DrawCardForTargetPlayerEffect(2, false, true));
         setSagaChapterTargetFilter(1, Set.of(
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

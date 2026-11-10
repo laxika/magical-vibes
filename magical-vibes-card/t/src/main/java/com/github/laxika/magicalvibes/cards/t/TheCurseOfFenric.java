@@ -49,8 +49,8 @@ public class TheCurseOfFenric extends Card {
             new PermanentNamedPredicate("Fenric")));
 
     public TheCurseOfFenric() {
-        addTrigger(Triggers.chapter(1), new DestroyEachTargetPermanentEffect());
         addTrigger(Triggers.chapter(1),
+                new DestroyEachTargetPermanentEffect(),
                 new CreateTokenForEachDestroyedPermanentControllerEffect(
                         new CreateTokenEffect("Mutant", 3, 3, CardColor.GREEN,
                                 List.of(CardSubtype.MUTANT),
@@ -60,16 +60,11 @@ public class TheCurseOfFenric extends Card {
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
 
         addTrigger(Triggers.chapter(2),
-                new SetTargetPermanentNameEffect("Fenric"));
-        addTrigger(Triggers.chapter(2),
-                new SetCardTypesEffect(Set.of(CardType.CREATURE), GrantScope.TARGET));
-        addTrigger(Triggers.chapter(2),
-                new GrantSubtypeEffect(CardSubtype.HORROR, GrantScope.TARGET, true));
-        addTrigger(Triggers.chapter(2),
-                new SetTargetPermanentSupertypeEffect(CardSupertype.LEGENDARY, true));
-        addTrigger(Triggers.chapter(2),
-                new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT));
-        addTrigger(Triggers.chapter(2),
+                new SetTargetPermanentNameEffect("Fenric"),
+                new SetCardTypesEffect(Set.of(CardType.CREATURE), GrantScope.TARGET),
+                new GrantSubtypeEffect(CardSubtype.HORROR, GrantScope.TARGET, true),
+                new SetTargetPermanentSupertypeEffect(CardSupertype.LEGENDARY, true),
+                new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.PERMANENT),
                 new SetBasePowerToughnessEffect(6, 6, GrantScope.TARGET, EffectDuration.PERMANENT));
         setSagaChapterTargetGroups(2,
                 List.of(new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(

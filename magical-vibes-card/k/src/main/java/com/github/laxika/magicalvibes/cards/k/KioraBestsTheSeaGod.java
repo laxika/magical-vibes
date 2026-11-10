@@ -35,8 +35,7 @@ public class KioraBestsTheSeaGod extends Card {
 
         PermanentPredicate nonland = new PermanentNotPredicate(new PermanentIsLandPredicate());
         addTrigger(Triggers.chapter(2),
-                new TapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, nonland));
-        addTrigger(Triggers.chapter(2),
+                new TapPermanentsEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, nonland),
                 new SkipNextUntapEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, nonland));
         setSagaChapterTargetFilter(2, Set.of(
                 new PlayerPredicateTargetFilter(
@@ -46,8 +45,8 @@ public class KioraBestsTheSeaGod extends Card {
         PermanentPredicate opponentPermanent = new PermanentNotPredicate(
                 new PermanentControlledBySourceControllerPredicate());
         addTrigger(Triggers.chapter(3),
-                new GainControlOfTargetEffect(ControlDuration.PERMANENT));
-        addTrigger(Triggers.chapter(3), new UntapPermanentsEffect(TapUntapScope.TARGET));
+                new GainControlOfTargetEffect(ControlDuration.PERMANENT),
+                new UntapPermanentsEffect(TapUntapScope.TARGET));
         setSagaChapterTargetFilter(3, Set.of(
                 new PermanentPredicateTargetFilter(
                         opponentPermanent, "Must target a permanent an opponent controls")));

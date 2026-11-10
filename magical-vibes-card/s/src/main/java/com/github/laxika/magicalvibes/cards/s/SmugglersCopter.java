@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,7 +23,7 @@ import java.util.List;
 public class SmugglersCopter extends Card {
 
     public SmugglersCopter() {
-        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE,
                 new MayEffect(
                                 SequenceEffect.of(
                                         new DrawCardEffect(1),

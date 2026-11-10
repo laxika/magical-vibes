@@ -21,8 +21,9 @@ public class SummonValefor extends Card {
                 new EachOpponentChoosesGreatestManaValueCreatureToReturnToHandEffect());
 
         for (int chapter : Set.of(2, 3, 4)) {
-            addTrigger(Triggers.chapter(chapter), new TapPermanentsEffect(TapUntapScope.TARGET));
-            addTrigger(Triggers.chapter(chapter), new PutCounterOnTargetPermanentEffect(CounterType.STUN));
+            addTrigger(Triggers.chapter(chapter),
+                    new TapPermanentsEffect(TapUntapScope.TARGET),
+                    new PutCounterOnTargetPermanentEffect(CounterType.STUN));
             setSagaChapterTargetFilter(chapter, Set.of(TargetFilters.creature()));
         }
     }

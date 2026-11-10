@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,7 +24,8 @@ public class LibertyPrimeRecharged extends Card {
     public LibertyPrimeRecharged() {
         var sacrificeUnlessPayEnergy = new ForcedCostOrElseEffect(
                 new PayEnergyCost(2), List.of(new SacrificeSelfEffect()), true);
-        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), sacrificeUnlessPayEnergy);
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE,
+                sacrificeUnlessPayEnergy);
 
         addActivatedAbility(new ActivatedAbility(
                 true,

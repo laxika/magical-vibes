@@ -24,8 +24,7 @@ import java.util.Set;
 public class SongOfERendil extends Card {
 
     public SongOfERendil() {
-        addTrigger(Triggers.chapter(1), new ScryEffect(2));
-        addTrigger(Triggers.chapter(1), new DrawCardEffect(2));
+        addTrigger(Triggers.chapter(1), new ScryEffect(2), new DrawCardEffect(2));
 
         addTrigger(Triggers.chapter(2), CreateTokenEffect.ofTreasureToken(1).withSimultaneousTokens(List.of(
                 new CreateTokenEffect(

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,7 +23,8 @@ public class MorkrutNecropod extends Card {
         // Menace is auto-loaded from Scryfall.
 
         // Whenever this creature attacks or blocks, sacrifice another creature or land.
-        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), sacrificeAnotherCreatureOrLand());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE,
+                sacrificeAnotherCreatureOrLand());
     }
 
     private SacrificePermanentsEffect sacrificeAnotherCreatureOrLand() {

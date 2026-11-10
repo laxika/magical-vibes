@@ -29,11 +29,12 @@ public class UrzaAssemblesTheTitans extends Card {
 
         addStaticEffect(new ReadAheadEffect(false));
 
-        addTrigger(Triggers.chapter(1), new ScryEffect(4));
-        addTrigger(Triggers.chapter(1), new MayEffect(
-                new RevealTopCardMatchingToHandEffect(planeswalker),
-                "Reveal the top card of your library?"
-        ));
+        addTrigger(Triggers.chapter(1),
+                new ScryEffect(4),
+                new MayEffect(
+                        new RevealTopCardMatchingToHandEffect(planeswalker),
+                        "Reveal the top card of your library?"
+                ));
 
         addTrigger(Triggers.chapter(2), new MayEffect(
                 new PutCardToBattlefieldEffect(planeswalkerWithManaValueAtMostSix, "planeswalker"),

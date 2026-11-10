@@ -24,12 +24,13 @@ public class ShivaWardenOfIce extends Card {
         addTrigger(Triggers.chapter(2), new MakeCreatureUnblockableEffect());
         setSagaChapterTargetFilter(2, Set.of(TargetFilters.creature()));
 
-        addTrigger(Triggers.chapter(3), new TapPermanentsEffect(
-                TapUntapScope.ALL_PERMANENTS,
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsLandPredicate(),
-                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
-                ))));
-        addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect());
+        addTrigger(Triggers.chapter(3),
+                new TapPermanentsEffect(
+                        TapUntapScope.ALL_PERMANENTS,
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsLandPredicate(),
+                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())
+                        ))),
+                new ExileSelfAndReturnTransformedEffect());
     }
 }

@@ -109,6 +109,20 @@ class ChainersTormentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chapter I is one stack object of both its effects")
+    void chapterIIsOneStackObject() {
+        harness.setHand(player1, List.of(new ChainersTorment()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castEnchantment(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getEffectsToResolve()).hasSize(2));
+    }
+
+    @Test
     @DisplayName("Chapter I resolving deals 2 damage to opponent and gains 2 life")
     void chapterIResolvesDamageAndLife() {
         harness.setHand(player1, List.of(new ChainersTorment()));

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBlockedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,7 +25,7 @@ import java.util.List;
 public class DefiantVanguard extends Card {
 
     public DefiantVanguard() {
-        addTrigger(Triggers.blocks(), new DelayedEndOfCombatEffect(
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, new DelayedEndOfCombatEffect(
                 new DestroyAllPermanentsEffect(new PermanentAnyOfPredicate(List.of(
                         new PermanentIsSourcePermanentPredicate(),
                         new PermanentBlockedBySourceThisTurnPredicate())))));

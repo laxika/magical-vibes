@@ -36,8 +36,9 @@ public class WorldWarHulk extends Card {
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3));
         setSagaChapterTargetFilter(2, Set.of(TargetFilters.creatureYouControl()));
 
-        addTrigger(Triggers.chapter(3), new DoubleTargetCreaturePowerToughnessEffect());
-        addTrigger(Triggers.chapter(3), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+        addTrigger(Triggers.chapter(3),
+                new DoubleTargetCreaturePowerToughnessEffect(),
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
         setSagaChapterTargetFilter(3, Set.of(TargetFilters.creatureYouControl()));
     }
 }

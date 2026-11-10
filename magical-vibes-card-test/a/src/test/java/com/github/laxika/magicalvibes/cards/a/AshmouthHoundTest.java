@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.d.DarkthicketWolf;
+import com.github.laxika.magicalvibes.cards.h.HighGround;
 import com.github.laxika.magicalvibes.cards.l.Lumberknot;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -40,6 +41,26 @@ class AshmouthHoundTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Darkthicket Wolf");
         Permanent damagedAttacker = findPermanent(player1, "Darkthicket Wolf");
         assertThat(damagedAttacker.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({HighGround.class})
+    @DisplayName("Blocking two creatures triggers for each of them")
+    void blockingTwoCreaturesTriggersForEach() {
+        addCreatureReady(player2, new AshmouthHound());
+        harness.addToBattlefield(player2, new HighGround());
+        Permanent first = addCreatureReady(player1, new DarkthicketWolf());
+        Permanent second = addCreatureReady(player1, new DarkthicketWolf());
+        first.setAttacking(true);
+        second.setAttacking(true);
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0), new BlockerAssignment(0, 1)));
+
+        assertThat(gd.stack).hasSize(2);
+        resolveAllTriggers();
+        assertThat(first.getMarkedDamage()).isEqualTo(1);
+        assertThat(second.getMarkedDamage()).isEqualTo(1);
     }
 
     @Test

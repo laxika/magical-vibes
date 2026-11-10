@@ -28,10 +28,11 @@ public class TheElderDragonWar extends Card {
     public TheElderDragonWar() {
         addStaticEffect(new ReadAheadEffect(false));
 
-        addTrigger(Triggers.chapter(1), new DealDamageToEachMatchingPermanentEffect(
-                2, new PermanentIsCreaturePredicate(), EachPermanentScope.ALL_PLAYERS));
-        addTrigger(Triggers.chapter(1), new DealDamageToPlayersEffect(
-                2, DamageRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.chapter(1),
+                new DealDamageToEachMatchingPermanentEffect(
+                        2, new PermanentIsCreaturePredicate(), EachPermanentScope.ALL_PLAYERS),
+                new DealDamageToPlayersEffect(
+                        2, DamageRecipient.EACH_OPPONENT));
 
         addTrigger(Triggers.chapter(2), new DiscardAnyNumberThenEffect(
                 new CardTruePredicate(), new DrawCardEffect(new EventValue()), "cards"));

@@ -28,13 +28,14 @@ public class ArniSlaysTheTroll extends Card {
                 new SagaChapterTargetGroup(TargetFilters.creatureAnOpponentControls(), 0, 1)
         ));
 
-        addTrigger(Triggers.chapter(2), new AwardManaEffect(ManaColor.RED));
-        addTrigger(Triggers.chapter(2), PutCounterOnTargetPermanentEffect.withTargetRestriction(
-                CounterType.PLUS_ONE_PLUS_ONE, 2,
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentControlledBySourceControllerPredicate()
-                ))));
+        addTrigger(Triggers.chapter(2),
+                new AwardManaEffect(ManaColor.RED),
+                PutCounterOnTargetPermanentEffect.withTargetRestriction(
+                        CounterType.PLUS_ONE_PLUS_ONE, 2,
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentControlledBySourceControllerPredicate()
+                        ))));
 
         addTrigger(Triggers.chapter(3),
                 new GainLifeEffect(new GreatestPowerAmongControlled()));

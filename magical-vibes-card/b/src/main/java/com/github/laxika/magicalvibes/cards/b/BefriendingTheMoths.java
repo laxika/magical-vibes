@@ -25,8 +25,9 @@ public class BefriendingTheMoths extends Card {
     }
 
     private void addChapterEffects(int chapter) {
-        addTrigger(Triggers.chapter(chapter), new BoostTargetCreatureEffect(1, 1));
-        addTrigger(Triggers.chapter(chapter), new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+        addTrigger(Triggers.chapter(chapter),
+                new BoostTargetCreatureEffect(1, 1),
+                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
         setSagaChapterTargetGroups(chapter, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creatureYouControl(), 1, 1)));
     }

@@ -18,6 +18,6 @@ public class BurningSunCavalry extends Card {
         ControlsPermanent controlsDinosaur = new ControlsPermanent(
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR));
         addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
-                TriggerOptions.DEFAULT.withEventCondition(controlsDinosaur), new BoostSelfEffect(1, 1));
+                TriggerOptions.ONE_OR_MORE.withEventCondition(controlsDinosaur), new BoostSelfEffect(1, 1));
     }
 }

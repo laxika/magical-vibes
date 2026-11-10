@@ -48,8 +48,8 @@ public class SummonTitan extends Card {
         ));
         PermanentCount yourLands = new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER);
         addTrigger(Triggers.chapter(3),
-                new BoostTargetCreatureEffect(yourLands, yourLands, anotherCreatureYouControl));
-        addTrigger(Triggers.chapter(3), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+                new BoostTargetCreatureEffect(yourLands, yourLands, anotherCreatureYouControl),
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
         setSagaChapterTargetFilter(3, Set.of(
                 new PermanentPredicateTargetFilter(anotherCreatureYouControl,
                         "Must target another creature you control")));

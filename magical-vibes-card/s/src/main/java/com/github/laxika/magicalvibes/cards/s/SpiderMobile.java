@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,7 +23,7 @@ public class SpiderMobile extends Card {
     public SpiderMobile() {
         PermanentCount spidersYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.SPIDER), CountScope.CONTROLLER);
-        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()),
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE,
                 new BoostSelfEffect(spidersYouControl, spidersYouControl));
 
         addActivatedAbility(new ActivatedAbility(

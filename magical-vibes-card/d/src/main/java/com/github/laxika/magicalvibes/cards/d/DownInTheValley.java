@@ -42,8 +42,8 @@ public class DownInTheValley extends Card {
     }
 
     private void addBuffChapter(int chapter) {
-        addTrigger(Triggers.chapter(chapter), new BoostAllOwnCreaturesEffect(1, 0, ELVES));
         addTrigger(Triggers.chapter(chapter),
+                new BoostAllOwnCreaturesEffect(1, 0, ELVES),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES, ELVES));
     }
 }

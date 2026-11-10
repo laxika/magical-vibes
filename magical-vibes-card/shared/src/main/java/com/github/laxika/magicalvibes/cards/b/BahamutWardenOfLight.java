@@ -25,15 +25,13 @@ public class BahamutWardenOfLight extends Card {
 
     public BahamutWardenOfLight() {
         addTrigger(Triggers.chapter(1),
-                new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES));
-        addTrigger(Triggers.chapter(1),
+                new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES));
         addTrigger(Triggers.chapter(2),
-                new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES));
-        addTrigger(Triggers.chapter(2),
+                new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES),
                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES));
         addTrigger(Triggers.chapter(3),
-                new DestroyTargetPermanentEffect(new PermanentTruePredicate()));
-        addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect());
+                new DestroyTargetPermanentEffect(new PermanentTruePredicate()),
+                new ExileSelfAndReturnTransformedEffect());
     }
 }

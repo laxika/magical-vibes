@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,7 +25,7 @@ import java.util.List;
 public class TakenumaBleeder extends Card {
 
     public TakenumaBleeder() {
-        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), bleedUnlessDemon());
+        addTrigger(List.of(Triggers.attacks(), Triggers.blocks()), TriggerOptions.ONE_OR_MORE, bleedUnlessDemon());
     }
 
     private ConditionalEffect bleedUnlessDemon() {
