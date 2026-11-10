@@ -23,12 +23,26 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param targetPredicate optional additional restriction on the target permanent
  * @param maintainTargetPredicate when true, the target predicate is also maintained for the
  *                           duration of the control effect (e.g. Old Man of the Sea's power check)
+ * @param ofTriggeringPermanent when true, the permanent is no target but "that permanent" the trigger event was about,
+ *                           the stack entry's triggering permanent (Treasure Nabber's "gain control of that artifact")
  */
 public record GainControlOfTargetEffect(ControlDuration duration, CardSubtype grantedSubtype,
                                         boolean tapWhenControlLost,
                                         PermanentPredicate targetPredicate, boolean opponentChoosesTarget,
-                                        boolean maintainTargetPredicate)
+                                        boolean maintainTargetPredicate, boolean ofTriggeringPermanent)
         implements ControlStealingEffect {
+
+    public GainControlOfTargetEffect(ControlDuration duration, CardSubtype grantedSubtype,
+                                     boolean tapWhenControlLost, PermanentPredicate targetPredicate,
+                                     boolean opponentChoosesTarget, boolean maintainTargetPredicate) {
+        this(duration, grantedSubtype, tapWhenControlLost, targetPredicate, opponentChoosesTarget,
+                maintainTargetPredicate, false);
+    }
+
+    /** "Gain control of that permanent" for the given duration: the trigger event's permanent, no target. */
+    public static GainControlOfTargetEffect ofTriggeringPermanent(ControlDuration duration) {
+        return new GainControlOfTargetEffect(duration, null, false, null, false, false, true);
+    }
 
     public GainControlOfTargetEffect(ControlDuration duration) {
         this(duration, null, false, null, false, false);
@@ -67,6 +81,6 @@ public record GainControlOfTargetEffect(ControlDuration duration, CardSubtype gr
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.permanent(), targetPredicate);
+        return ofTriggeringPermanent ? TargetSpec.NONE : TargetSpec.benign(TargetPredicates.permanent(), targetPredicate);
     }
 }

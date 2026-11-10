@@ -20,7 +20,7 @@ public class VerdantHaven extends Card {
         // Whenever enchanted land is tapped for mana, its controller adds an additional one mana of any color.
         target(TargetFilters.land())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(2))
-                .addTrigger(Triggers.playerTapsLandForMana(),
+                .addTrigger(Triggers.enchantedLandTappedForMana(),
                         new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect()));
     }
 }

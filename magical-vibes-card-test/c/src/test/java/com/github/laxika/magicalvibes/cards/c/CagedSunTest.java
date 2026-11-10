@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GemstoneMine;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.s.ShimmeringGrotto;
 import com.github.laxika.magicalvibes.cards.w.WoodlandCemetery;
+import com.github.laxika.magicalvibes.model.CounterType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +24,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CagedSun.class, Forest.class, Mountain.class, ShimmeringGrotto.class, WoodlandCemetery.class})
+@CardUsed({CagedSun.class, Forest.class, GemstoneMine.class, Mountain.class, ShimmeringGrotto.class, WoodlandCemetery.class})
 class CagedSunTest extends BaseCardTest {
 
     private static Card createCreature(String name, int power, int toughness, CardColor color) {
@@ -297,5 +299,20 @@ class CagedSunTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Gemstone Mine's last use producing the chosen color still adds one extra mana")
+    void departedLandsManaGetsBonus() {
+        Permanent sun = harness.addToBattlefieldAndReturn(player1, new CagedSun());
+        sun.setChosenColor(CardColor.GREEN);
+        Permanent mine = harness.addToBattlefieldAndReturn(player1, new GemstoneMine());
+        mine.setCounterCount(CounterType.MINING, 1);
+
+        harness.activateAbility(player1, 1, null, null);
+        harness.handleListChoice(player1, "GREEN");
+
+        harness.assertNotOnBattlefield(player1, "Gemstone Mine");
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
     }
 }

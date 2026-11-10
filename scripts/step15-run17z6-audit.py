@@ -61,7 +61,9 @@ BIND = re.compile(r"\.set\w+\((?:effect|e|may|mayPay|marker|trigger)\.")
 # reader branches and handlers to scope first; none is listed here. Run 17z13e scoped them with
 # `step15-run17z13e-audit.py`, which compares what each handler records with its watch's default (this scan's labels
 # only see what a handler does to the effect): the life and enchanted-permanent-tapped handlers are gone, and the
-# handlers left are that audit's rows 17z13e2 to 17z13e7, listed there by watch.
+# handlers left are that audit's rows 17z13e2 to 17z13e7, listed there by watch. Run 17z13e2 deleted the
+# tap-for-mana, untap-step and library watches' class-keyed handlers (rows 17z13e2 and 17z13e6): each watch has one
+# default, so this scan lists none of them.
 OPEN = {}
 
 

@@ -1688,8 +1688,7 @@ public final class Triggers {
     }
 
     /**
-     * "Whenever a player taps a land for mana"; {@code withFilter} narrows the land ("an Island", "a nonbasic land"),
-     * and the land-tap mana effects still narrow the player and the land by their own fields
+     * "Whenever a player taps a land for mana"; {@code withFilter} narrows the land ("an Island", "a nonbasic land")
      */
     public static TapTrigger playerTapsLandForMana() {
         return new TapTrigger(TapTrigger.TapEvent.TAPPED_FOR_MANA, ObjectRelation.ANY, LAND);
@@ -1703,9 +1702,41 @@ public final class Triggers {
         return new TapTrigger(TapTrigger.TapEvent.TAPPED_FOR_MANA, ObjectRelation.OPPONENT_CONTROLS, LAND);
     }
 
+    /**
+     * "Whenever you tap a land for mana"; {@code withFilter} narrows the land ("a Swamp"). Read by the collector of
+     * {@link #playerTapsLandForMana()}, which judges the tapping player.
+     */
+    public static TapTrigger youTapLandForMana() {
+        return new TapTrigger(TapTrigger.TapEvent.TAPPED_FOR_MANA, ObjectRelation.YOU_CONTROL, LAND);
+    }
+
+    /**
+     * "Whenever enchanted land is tapped for mana", also fortified. Read by the collector of
+     * {@link #playerTapsLandForMana()}, which judges that the land is the one the source is attached to.
+     */
+    public static TapTrigger enchantedLandTappedForMana() {
+        return new TapTrigger(TapTrigger.TapEvent.TAPPED_FOR_MANA, ObjectRelation.ENCHANTED, LAND);
+    }
+
+    /**
+     * "Whenever you tap this land for mana". Read by the collector of {@link #playerTapsLandForMana()}, which judges
+     * that the land is the source.
+     */
+    public static TapTrigger youTapThisLandForMana() {
+        return new TapTrigger(TapTrigger.TapEvent.TAPPED_FOR_MANA, ObjectRelation.THIS, LAND);
+    }
+
     /** "Whenever a player taps a permanent for mana" */
     public static TapTrigger playerTapsPermanentForMana() {
         return new TapTrigger(TapTrigger.TapEvent.TAPPED_FOR_MANA, ObjectRelation.ANY);
+    }
+
+    /**
+     * "Whenever an opponent taps a permanent for mana"; {@code withFilter} narrows the permanent ("an artifact"). Read by
+     * the collector of {@link #playerTapsPermanentForMana()}, which judges the tapping player.
+     */
+    public static TapTrigger opponentTapsPermanentForMana() {
+        return new TapTrigger(TapTrigger.TapEvent.TAPPED_FOR_MANA, ObjectRelation.OPPONENT_CONTROLS);
     }
 
     /** "Whenever you tap a creature for mana" */

@@ -251,10 +251,12 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void resolveAllPermanents(GameData gameData, StackEntry entry, TapPermanentsEffect e) {
+        // "That player" of a filter is the entry's triggering player ("tap all lands that player controls": War's Toll).
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
-                .withDefendingPlayerId(defendingPlayerId(gameData, entry));
+                .withDefendingPlayerId(defendingPlayerId(gameData, entry))
+                .withTriggeringPlayerId(entry.getTriggeringPlayerId());
 
         final int[] count = {0};
         gameData.forEachPermanent((playerId, p) -> {

@@ -18,6 +18,6 @@ public class CagedSun extends Card {
     public CagedSun() {
         addStaticEffect(new ChooseColorOnEnterEffect());
         addStaticEffect(new BoostCreaturesOfChosenColorEffect(1, 1));
-        addTrigger(Triggers.playerTapsLandForMana(), new AddExtraManaOfChosenColorOnLandTapEffect());
+        addTrigger(Triggers.youTapLandForMana(), new AddExtraManaOfChosenColorOnLandTapEffect());
     }
 }

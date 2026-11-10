@@ -14,7 +14,7 @@ public class DawnsReflection extends Card {
 
     public DawnsReflection() {
         target(TargetFilters.land())
-                .addTrigger(Triggers.playerTapsLandForMana(),
+                .addTrigger(Triggers.enchantedLandTappedForMana(),
                         new AddManaOnEnchantedLandTapEffect(
                                 new AwardManaOfColorsEffect(ManaColor.COLORS, 2)));
     }

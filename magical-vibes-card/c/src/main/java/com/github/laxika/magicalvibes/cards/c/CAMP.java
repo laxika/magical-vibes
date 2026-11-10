@@ -20,7 +20,7 @@ import java.util.List;
 public class CAMP extends Card {
 
     public CAMP() {
-        addTrigger(Triggers.playerTapsLandForMana(),
+        addTrigger(Triggers.enchantedLandTappedForMana(),
                 new PutCounterOnTargetCreatureAndCreateTokenIfSharesManaColorEffect(junkToken()));
 
         addActivatedAbility(new ActivatedAbility(

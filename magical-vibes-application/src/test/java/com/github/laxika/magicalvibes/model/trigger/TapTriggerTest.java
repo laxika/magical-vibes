@@ -308,19 +308,48 @@ class TapTriggerTest {
 
         assertThat(Triggers.opponentTapsLandForMana().watchKey()).isEqualTo(Triggers.playerTapsLandForMana());
         assertThat(opponentTapsMountain.watchKey()).isEqualTo(Triggers.playerTapsLandForMana());
-        assertThat(Triggers.opponentTapsLandForMana().opponentTapsLand()).isTrue();
-        assertThat(Triggers.playerTapsLandForMana().opponentTapsLand()).isFalse();
+        assertThat(Triggers.opponentTapsLandForMana().judgedTapRelation()).isTrue();
+        assertThat(Triggers.playerTapsLandForMana().judgedTapRelation()).isFalse();
         assertThat(TapAbilityReader.readPrinted(sanctimony, TapWatch.ON_ANY_PLAYER_TAPS_LAND))
                 .extracting(TapAbilityReader.TapEffect::effect, TapAbilityReader.TapEffect::filter,
-                        TapAbilityReader.TapEffect::opponentTaps)
-                .containsExactly(tuple(GAIN, mountain, true));
+                        TapAbilityReader.TapEffect::tapRelation)
+                .containsExactly(tuple(GAIN, mountain, ObjectRelation.OPPONENT_CONTROLS));
         assertThat(TapAbilityReader.readPrinted(scald, TapWatch.ON_ANY_PLAYER_TAPS_LAND))
-                .extracting(TapAbilityReader.TapEffect::filter, TapAbilityReader.TapEffect::opponentTaps)
-                .containsExactly(tuple(MERFOLK, false));
+                .extracting(TapAbilityReader.TapEffect::filter, TapAbilityReader.TapEffect::tapRelation)
+                .containsExactly(tuple(MERFOLK, ObjectRelation.ANY));
         assertThatThrownBy(() -> TapAbilityReader.printedEffects(sanctimony, TapWatch.ON_ANY_PLAYER_TAPS_LAND))
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> TapAbilityReader.readPrinted(mixed, TapWatch.ON_ANY_PLAYER_TAPS_LAND))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void theTapForManaRelationsAreReadByThePlayerTapsWatchesWithTheirRelation() {
+        Card firecat = new Card();
+        firecat.addTrigger(Triggers.youTapLandForMana(), GAIN);
+        Card wildGrowth = new Card();
+        wildGrowth.addTrigger(Triggers.enchantedLandTappedForMana(), GAIN);
+        Card orchard = new Card();
+        orchard.addTrigger(Triggers.youTapThisLandForMana(), GAIN);
+        Card nabber = new Card();
+        nabber.addTrigger(Triggers.opponentTapsPermanentForMana().withFilter(MERFOLK), GAIN);
+
+        assertThat(List.of(Triggers.youTapLandForMana(), Triggers.enchantedLandTappedForMana(),
+                Triggers.youTapThisLandForMana()))
+                .allSatisfy(trigger -> assertThat(trigger.watchKey()).isEqualTo(Triggers.playerTapsLandForMana()));
+        assertThat(Triggers.opponentTapsPermanentForMana().watchKey())
+                .isEqualTo(Triggers.playerTapsPermanentForMana());
+        assertThat(Triggers.youTapCreatureForMana().judgedTapRelation()).isFalse();
+        assertThat(Triggers.tappedForMana().judgedTapRelation()).isFalse();
+        assertThat(List.of(firecat, wildGrowth, orchard).stream()
+                .flatMap(card -> TapAbilityReader.readPrinted(card, TapWatch.ON_ANY_PLAYER_TAPS_LAND).stream())
+                .map(TapAbilityReader.TapEffect::tapRelation))
+                .containsExactly(ObjectRelation.YOU_CONTROL, ObjectRelation.ENCHANTED, ObjectRelation.THIS);
+        assertThat(TapAbilityReader.readPrinted(nabber, TapWatch.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA))
+                .extracting(TapAbilityReader.TapEffect::filter, TapAbilityReader.TapEffect::tapRelation)
+                .containsExactly(tuple(MERFOLK, ObjectRelation.OPPONENT_CONTROLS));
+        assertThatThrownBy(() -> TapAbilityReader.printedEffects(nabber,
+                TapWatch.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA)).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

@@ -20,7 +20,7 @@ public class VorinclexVoiceOfHunger extends Card {
 
     public VorinclexVoiceOfHunger() {
         // Trample is auto-loaded from Scryfall
-        addTrigger(Triggers.playerTapsLandForMana(), new AddOneOfEachManaTypeProducedByLandEffect(true));
+        addTrigger(Triggers.youTapLandForMana(), new AddOneOfEachManaTypeProducedByLandEffect());
         // Whenever an opponent taps a land for mana, that land doesn't untap during its controller's next untap
         // step.
         addTrigger(Triggers.opponentTapsLandForMana(), new SkipNextUntapEffect(TapUntapScope.TRIGGERING));

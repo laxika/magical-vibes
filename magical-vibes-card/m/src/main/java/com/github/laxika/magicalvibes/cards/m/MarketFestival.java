@@ -12,7 +12,7 @@ public class MarketFestival extends Card {
 
     public MarketFestival() {
         target(TargetFilters.land())
-                .addTrigger(Triggers.playerTapsLandForMana(),
+                .addTrigger(Triggers.enchantedLandTappedForMana(),
                         new AddManaOnEnchantedLandTapEffect(
                                 new AwardAnyColorManaEffect(2, true)));
     }

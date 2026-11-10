@@ -5,10 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaWhenTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -22,7 +23,7 @@ public class GauntletOfMight extends Card {
     public GauntletOfMight() {
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentColorInPredicate(Set.of(CardColor.RED))));
-        addTrigger(Triggers.playerTapsLandForMana(),
-                new AddManaWhenLandOfSubtypeTappedForManaEffect(CardSubtype.MOUNTAIN, ManaColor.RED));
+        addTrigger(Triggers.playerTapsLandForMana().withFilter(new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN)),
+                AddManaWhenTappedForManaEffect.ofItsController(ManaColor.RED));
     }
 }

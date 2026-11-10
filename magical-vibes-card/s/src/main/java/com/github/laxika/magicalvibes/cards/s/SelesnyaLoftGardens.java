@@ -18,6 +18,6 @@ public class SelesnyaLoftGardens extends Card {
         addStaticEffect(new DoubleCountersOnAllPermanentsEffect());
         addTrigger(Triggers.chaosEnsues(),
                 new GrantStaticEffectToPlayerUntilEndOfTurnEffect(
-                        new AddOneOfEachManaTypeProducedByLandEffect(true)));
+                        new AddOneOfEachManaTypeProducedByLandEffect()));
     }
 }

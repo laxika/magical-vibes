@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithS
 import com.github.laxika.magicalvibes.model.effect.ExileBottomCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BRO", collectorNumber = "82")
@@ -14,7 +16,8 @@ public class TheTemporalAnchor extends Card {
 
     public TheTemporalAnchor() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ScryEffect(2));
-        addTrigger(Triggers.youScry(), new ExileBottomCardsToSourceEffect(new EventValue()));
+        addTrigger(Triggers.youScry(), TriggerOptions.DEFAULT.withEventCondition(new EventValueAtLeast(1)),
+                new ExileBottomCardsToSourceEffect(new EventValue()));
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(
                 false, null, false, true, 0, null, false, false, false));
     }

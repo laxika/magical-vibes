@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SasayasEssence extends Card {
 
     public SasayasEssence() {
-        addTrigger(Triggers.playerTapsLandForMana(),
+        addTrigger(Triggers.youTapLandForMana(),
                 new AddManaForEachOtherLandWithSameNameEffect());
     }
 }

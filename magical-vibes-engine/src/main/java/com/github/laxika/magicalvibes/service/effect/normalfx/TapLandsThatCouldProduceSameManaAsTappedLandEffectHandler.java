@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -39,12 +38,10 @@ public class TapLandsThatCouldProduceSameManaAsTappedLandEffectHandler implement
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID playerId = entry.getTargetId();
+        // "That land" as it is, or as it last existed once its mana ability made it leave (Gemstone Mine's last use).
         Permanent triggeringLand = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
         if (triggeringLand == null) {
-            Card lastKnownLand = entry.lastKnownPermanentCard(entry.getTriggeringPermanentId());
-            if (lastKnownLand != null) {
-                triggeringLand = new Permanent(lastKnownLand);
-            }
+            triggeringLand = entry.getTriggeringPermanentSnapshot();
         }
         if (playerId == null || triggeringLand == null) {
             return;

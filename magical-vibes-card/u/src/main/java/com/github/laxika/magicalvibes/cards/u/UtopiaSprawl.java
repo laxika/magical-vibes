@@ -24,7 +24,7 @@ public class UtopiaSprawl extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentHasSubtypePredicate(CardSubtype.FOREST),
                 "Target must be a Forest"
-        )).addTrigger(Triggers.playerTapsLandForMana(),
+        )).addTrigger(Triggers.enchantedLandTappedForMana(),
                 new AddManaOnEnchantedLandTapEffect(new AwardChosenColorManaEffect()));
     }
 }

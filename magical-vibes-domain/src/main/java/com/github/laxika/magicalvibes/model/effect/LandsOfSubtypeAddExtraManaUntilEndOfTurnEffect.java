@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
  *
  * <p>Recorded in {@code GameData.extraManaOnLandSubtypeTapThisTurn} and applied by
  * {@code TriggerCollectionService.checkLandTapTriggers}; cleared by {@code TurnCleanupService}.
- * For the permanent, static version use {@link AddManaWhenLandOfSubtypeTappedForManaEffect}.
+ * For the permanent, static version use {@link AddManaWhenTappedForManaEffect} on a trigger narrowed to the subtype.
  */
 public record LandsOfSubtypeAddExtraManaUntilEndOfTurnEffect(CardSubtype subtype, ManaColor color)
         implements CardEffect {

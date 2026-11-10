@@ -21,7 +21,7 @@ public class RunawayGrowth extends Card {
 
         // Whenever enchanted land is tapped for mana, its controller adds green mana equal to this
         // enchantment's intensity. Then this enchantment intensifies by 1.
-        target(TargetFilters.land()).addTrigger(Triggers.playerTapsLandForMana(), SequenceEffect.of(
+        target(TargetFilters.land()).addTrigger(Triggers.enchantedLandTappedForMana(), SequenceEffect.of(
                 new AddManaOnEnchantedLandTapEffect(new AwardManaEffect(ManaColor.GREEN, new SourceIntensity())),
                 new IntensifySourceCardEffect(1)));
     }

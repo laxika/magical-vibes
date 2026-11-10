@@ -11,7 +11,7 @@ public class TheFertileLandsOfSaulvinia extends Card {
 
     public TheFertileLandsOfSaulvinia() {
         addTrigger(Triggers.playerTapsLandForMana(),
-                new AddOneOfEachManaTypeProducedByLandEffect(false));
+                new AddOneOfEachManaTypeProducedByLandEffect());
         addTrigger(Triggers.chaosEnsues(),
                 new RevealPlanarCardsUntilPlaneAndTriggerChaosEffect());
     }

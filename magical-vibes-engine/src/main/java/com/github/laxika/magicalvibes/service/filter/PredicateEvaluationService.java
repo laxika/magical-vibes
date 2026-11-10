@@ -233,6 +233,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasNoNonKeywordAbili
 import com.github.laxika.magicalvibes.model.filter.PermanentHasNonManaActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasProtectionFromColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentSharesNameWithImprintedCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenNamePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
@@ -3014,6 +3015,8 @@ public class PredicateEvaluationService {
                                 .getOrDefault(permanent.getId(), java.util.Set.of())
                                 .contains(sourcePermanent.getId());
             }
+            case PermanentSharesNameWithImprintedCardPredicate ignored ->
+                    sharesNameWithImprintedCard(gameData, permanent, sourceCardId, filterContext);
             case PermanentHasSameNameAsSourcePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
@@ -3682,6 +3685,8 @@ public class PredicateEvaluationService {
                         .getOrDefault(permanent.getId(), java.util.Set.of())
                         .contains(sourceControllerId);
             }
+            case PermanentSharesNameWithImprintedCardPredicate ignored -> context != null
+                    && sharesNameWithImprintedCard(context.gameData(), permanent, context.sourceCardId(), context);
             case PermanentHasSameNameAsSourcePredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
                 UUID sourceCardId = context == null ? null : context.sourceCardId();
@@ -5572,6 +5577,21 @@ public class PredicateEvaluationService {
     private boolean requiresCreature(PermanentPredicate predicate) {
         if (predicate instanceof PermanentIsCreaturePredicate) return true;
         return false;
+    }
+
+    /**
+     * Whether {@code permanent} has the same name as the card imprinted on the source (by its current card id) while that
+     * card is still in exile ("a land with the same name as the exiled card": Extraplanar Lens).
+     */
+    private boolean sharesNameWithImprintedCard(GameData gameData, Permanent permanent, UUID sourceCardId,
+                                                FilterContext filterContext) {
+        if (gameData == null || sourceCardId == null) {
+            return false;
+        }
+        Permanent source = findPermanentByCurrentCardId(gameData, sourceCardId);
+        Card imprinted = source == null ? null : gameData.getImprintedCard(source.getCard());
+        return imprinted != null && gameData.findExiledCard(imprinted.getId()) != null
+                && namesMatch(effectiveName(permanent, filterContext), imprinted.getName());
     }
 
     /**

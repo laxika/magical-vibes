@@ -13,7 +13,7 @@ public class SavageFirecat extends Card {
 
     public SavageFirecat() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(7)));
-        addTrigger(Triggers.playerTapsLandForMana(),
+        addTrigger(Triggers.youTapLandForMana(),
                 new RemoveCounterFromSourceEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

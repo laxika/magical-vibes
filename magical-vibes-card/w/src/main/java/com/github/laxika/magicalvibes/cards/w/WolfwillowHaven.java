@@ -24,7 +24,7 @@ public class WolfwillowHaven extends Card {
 
     public WolfwillowHaven() {
         target(TargetFilters.land())
-                .addTrigger(Triggers.playerTapsLandForMana(),
+                .addTrigger(Triggers.enchantedLandTappedForMana(),
                         new AddManaOnEnchantedLandTapEffect(new AwardManaEffect(ManaColor.GREEN)));
 
         addActivatedAbility(new ActivatedAbility(

@@ -13,6 +13,6 @@ public class HeartbeatOfSpring extends Card {
 
     public HeartbeatOfSpring() {
         // Symmetric: any player who taps a land for mana adds one extra mana of a type it produced.
-        addTrigger(Triggers.playerTapsLandForMana(), new AddOneOfEachManaTypeProducedByLandEffect(false));
+        addTrigger(Triggers.playerTapsLandForMana(), new AddOneOfEachManaTypeProducedByLandEffect());
     }
 }

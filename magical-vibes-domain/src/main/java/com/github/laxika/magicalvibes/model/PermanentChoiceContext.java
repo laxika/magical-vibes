@@ -1949,12 +1949,35 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  flying until end of turn." The controller chooses the target when the discard trigger is
      *  serviced; mirrors {@link EntersTriggerTarget}'s any-permanent target flow. */
     record DiscardControllerTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                           UUID sourcePermanentId, int discardedCount)
+                                           UUID sourcePermanentId, int discardedCount, UUID discardingPlayerId,
+                                           List<Card> discardedCards, java.util.Map<UUID, Long> discardedCardStays)
             implements PermanentChoiceContext {
+
+        public DiscardControllerTriggerTarget {
+            discardedCards = discardedCards == null ? List.of() : List.copyOf(discardedCards);
+            discardedCardStays = discardedCardStays == null ? java.util.Map.of() : java.util.Map.copyOf(discardedCardStays);
+        }
+
+        public DiscardControllerTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                               UUID sourcePermanentId, int discardedCount) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, discardedCount, null, List.of(),
+                    java.util.Map.of());
+        }
 
         public DiscardControllerTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                                UUID sourcePermanentId) {
             this(sourceCard, controllerId, effects, sourcePermanentId, 0);
+        }
+
+        /**
+         * This choice carrying the discard its ability triggered on, which the stack entry it makes records as the
+         * discard collectors' entries do: the discarding (or cycling) player, the cards discarded and the graveyard stay
+         * each went to.
+         */
+        public DiscardControllerTriggerTarget withDiscard(UUID playerId, List<Card> cards,
+                                                          java.util.Map<UUID, Long> stays) {
+            return new DiscardControllerTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId,
+                    discardedCount, playerId, cards, stays);
         }
     }
 

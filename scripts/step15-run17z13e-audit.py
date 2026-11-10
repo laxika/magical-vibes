@@ -79,6 +79,10 @@ ROWS = [
     ("MiscWatch.", "17z13e7"), ("TapWatch.ON_ENCHANTED_PERMANENT_TAPPED", "17z13e7"),
 ]
 
+# The rows done since run 17z13e (run 17z13e2's Findings): their watches have one default each and no class-keyed
+# handler; `--summary` reports what is left on their watches, which must be none.
+DONE_ROWS = {"17z13e2", "17z13e6"}
+
 # The reader branches keyed by an effect's class (file, effect class) -> verdict. Row 17z13e's three (the your-upkeep
 # `SurveilEffect`, the your-draw-step `MayEffect` and Haphazard Bombardment's branches) are gone; the rest are row
 # 17z13e8's to read.
@@ -242,7 +246,9 @@ def main():
         for verdict, count in sorted(readers.items()):
             print(f"reader {verdict}: {count}")
         for row, count in sorted(by_row.items()):
-            print(f"open in row {row}: {count}")
+            print(f"{'LEFT in done' if row in DONE_ROWS else 'open in'} row {row}: {count}")
+        for row in sorted(DONE_ROWS - set(by_row)):
+            print(f"done row {row}: 0 class-keyed handlers left")
         print("class-keyed handlers:", sum(summary.values()))
     else:
         print("\n".join(lines))

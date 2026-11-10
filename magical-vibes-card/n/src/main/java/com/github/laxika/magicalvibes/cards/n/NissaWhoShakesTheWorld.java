@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaWhenTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -41,8 +42,8 @@ public class NissaWhoShakesTheWorld extends Card {
     private static final String EMBLEM_TEXT = "Lands you control have indestructible.";
 
     public NissaWhoShakesTheWorld() {
-        addTrigger(Triggers.playerTapsLandForMana(),
-                new AddManaWhenLandOfSubtypeTappedForManaEffect(CardSubtype.FOREST, ManaColor.GREEN, true));
+        addTrigger(Triggers.youTapLandForMana().withFilter(new PermanentHasSubtypePredicate(CardSubtype.FOREST)),
+                new AddManaWhenTappedForManaEffect(ManaColor.GREEN));
 
         ControlledPermanentPredicateTargetFilter noncreatureLandYouControl =
                 new ControlledPermanentPredicateTargetFilter(

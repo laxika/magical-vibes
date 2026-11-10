@@ -15,7 +15,7 @@ public class Overabundance extends Card {
         // Whenever a player taps a land for mana, that player adds one mana of any type that land produced,
         // and Overabundance deals 1 damage to them.
         addTrigger(Triggers.playerTapsLandForMana(), SequenceEffect.of(
-                new AddOneOfEachManaTypeProducedByLandEffect(false),
+                new AddOneOfEachManaTypeProducedByLandEffect(),
                 new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER)));
     }
 }

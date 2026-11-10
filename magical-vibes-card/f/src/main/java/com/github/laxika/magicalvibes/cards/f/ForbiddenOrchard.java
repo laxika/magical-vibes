@@ -30,7 +30,7 @@ public class ForbiddenOrchard extends Card {
 
         // Whenever you tap this land for mana, target opponent creates a 1/1 colorless
         // Spirit creature token.
-        addTrigger(Triggers.playerTapsLandForMana(), new CreateTokenForTargetPlayerEffect(
+        addTrigger(Triggers.youTapThisLandForMana(), new CreateTokenForTargetPlayerEffect(
                 new CreateTokenEffect("Spirit", 1, 1, null,
                         List.of(CardSubtype.SPIRIT), Set.of(), Set.of()),
                 PlayerRelation.OPPONENT

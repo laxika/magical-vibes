@@ -502,6 +502,42 @@ class MiscTriggerCollectorServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
+        assertThat(gd.stack.getLast().getTriggeringPlayerId()).isEqualTo(player1Id);
+        assertThat(gd.stack.getLast().getSourcePermanentSnapshot().getId()).isEqualTo(perm.getId());
+    }
+
+    @Test
+    @DisplayName("an opponent's surveil records that player as the non-targeting target of a player effect")
+    void opponentSurveilRecordsThatPlayer() {
+        Permanent perm = createPermanent("River Song");
+        var effect = new DealDamageToPlayersEffect(1, DamageRecipient.TARGET_PLAYER);
+        var ctx = new TriggerContext.Surveil(player2Id, true);
+
+        boolean result = registry.dispatch(
+                match(perm, player1Id, effect), LibraryWatch.ON_OPPONENT_SURVEILS, effect, ctx);
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getTargetId()).isEqualTo(player2Id);
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getTriggeringPlayerId()).isEqualTo(player2Id);
+        });
+    }
+
+    @Test
+    @DisplayName("\"whenever you untap one or more permanents during your untap step\" records that many whatever the effect")
+    void untapStepDefaultRecordsTheCount() {
+        Permanent perm = createPermanent("The Millennium Calendar");
+        var effect = new DrawCardEffect(1);
+
+        boolean result = registry.dispatch(match(perm, player1Id, effect),
+                TapWatch.ON_CONTROLLER_UNTAPS_DURING_UNTAP_STEP, effect, new TriggerContext.UntapStep(3));
+
+        assertThat(result).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getEventValue()).isEqualTo(3);
+        });
     }
 
     @Test

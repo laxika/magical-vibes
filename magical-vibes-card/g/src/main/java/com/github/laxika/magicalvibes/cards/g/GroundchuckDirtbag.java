@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandTappedForManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaWhenTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TMT", collectorNumber = "115")
@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class GroundchuckDirtbag extends Card {
 
     public GroundchuckDirtbag() {
-        addTrigger(Triggers.playerTapsLandForMana(),
-                new AddManaWhenLandTappedForManaEffect(ManaColor.GREEN));
+        addTrigger(Triggers.youTapLandForMana(),
+                new AddManaWhenTappedForManaEffect(ManaColor.GREEN));
     }
 }

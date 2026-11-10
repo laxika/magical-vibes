@@ -32,7 +32,7 @@ public class WildGrowth extends Card {
 
     public WildGrowth() {
         target(TargetFilters.land())
-                .addTrigger(Triggers.playerTapsLandForMana(),
+                .addTrigger(Triggers.enchantedLandTappedForMana(),
                         new AddManaOnEnchantedLandTapEffect(new AwardManaEffect(ManaColor.GREEN, 1)));
     }
 }

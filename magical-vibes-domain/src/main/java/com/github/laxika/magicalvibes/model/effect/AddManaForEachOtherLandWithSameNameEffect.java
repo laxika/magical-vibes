@@ -8,4 +8,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * one at a time when it produced several.
  */
 public record AddManaForEachOtherLandWithSameNameEffect() implements TriggeredManaAbilityEffect {
+
+    @Override
+    public boolean readsProducedMana() {
+        return true;
+    }
 }

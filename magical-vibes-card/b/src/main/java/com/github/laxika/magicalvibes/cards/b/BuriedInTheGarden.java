@@ -22,7 +22,7 @@ public class BuriedInTheGarden extends Card {
 
     public BuriedInTheGarden() {
         target(TargetFilters.land())
-                .addTrigger(Triggers.playerTapsLandForMana(),
+                .addTrigger(Triggers.enchantedLandTappedForMana(),
                         new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect()));
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

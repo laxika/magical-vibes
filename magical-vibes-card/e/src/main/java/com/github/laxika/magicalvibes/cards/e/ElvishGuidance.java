@@ -17,7 +17,7 @@ public class ElvishGuidance extends Card {
 
     public ElvishGuidance() {
         target(TargetFilters.land())
-                .addTrigger(Triggers.playerTapsLandForMana(),
+                .addTrigger(Triggers.enchantedLandTappedForMana(),
                         new AddManaOnEnchantedLandTapEffect(new AwardManaEffect(
                                 ManaColor.GREEN,
                                 new PermanentCount(

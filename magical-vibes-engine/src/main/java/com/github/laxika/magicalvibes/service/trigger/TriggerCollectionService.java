@@ -4763,10 +4763,13 @@ public class TriggerCollectionService {
         gameData.forEachBattlefield((playerId, battlefield) -> {
             for (Permanent perm : List.copyOf(battlefield)) {
                 if (gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
+                // "That player" of an intervening "if" ("if it's not that player's turn": Price of Glory) is the
+                // player who tapped the land, the entry's non-targeting target as it resolves.
                 for (TapAbilityReader.TapEffect read : TapAbilityReader.readPrintedAsJudged(perm.getCard(),
                         TapWatch.ON_ANY_PLAYER_TAPS_LAND, conditionEvaluationService.judge(gameData,
-                                ConditionContext.forPermanent(perm, playerId)))) {
-                    if (!landTapMatches(gameData, read, perm.getCard(), playerId, tappingPlayerId, tappedLandId)) {
+                                ConditionContext.forPermanent(perm, playerId).withTargetId(tappingPlayerId)))) {
+                    if (!tapForManaMatches(gameData, read, perm, perm.getCard(), playerId, tappingPlayerId,
+                            tappedLandId)) {
                         continue;
                     }
                     CardEffect effect = read.effect();
@@ -4783,9 +4786,10 @@ public class TriggerCollectionService {
             for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
                 for (TapAbilityReader.TapEffect read : TapAbilityReader.readPrintedAsJudged(object.getCard(),
                         TapWatch.ON_ANY_PLAYER_TAPS_LAND, conditionEvaluationService.judge(gameData,
-                                ConditionContext.forCard(object.getCard(), planarControllerId)))) {
-                    if (!landTapMatches(gameData, read, object.getCard(), planarControllerId, tappingPlayerId,
-                            tappedLandId)) {
+                                ConditionContext.forCard(object.getCard(), planarControllerId)
+                                        .withTargetId(tappingPlayerId)))) {
+                    if (!tapForManaMatches(gameData, read, null, object.getCard(), planarControllerId,
+                            tappingPlayerId, tappedLandId)) {
                         continue;
                     }
                     CardEffect effect = read.effect();
@@ -4798,10 +4802,13 @@ public class TriggerCollectionService {
             }
         }
 
+        // A player's "until end of turn, whenever you tap a land for mana, add one mana of any type that land
+        // produced" (Selesnya Loft Gardens' chaos), granted as a floating effect: "you" is the affected player.
         synchronized (gameData.floatingEffects) {
             for (FloatingContinuousEffect floating : List.copyOf(gameData.floatingEffects)) {
                 if (!(floating.effect() instanceof AddOneOfEachManaTypeProducedByLandEffect effect)
-                        || floating.affectedPlayerId() == null) {
+                        || floating.affectedPlayerId() == null
+                        || !floating.affectedPlayerId().equals(tappingPlayerId)) {
                     continue;
                 }
                 TriggerMatchContext match = new TriggerMatchContext(
@@ -4820,23 +4827,32 @@ public class TriggerCollectionService {
     }
 
     /**
-     * Whether the land tap matches {@code read}'s trigger conditions the land-tap collector judges, as the land is
-     * tapped: "an opponent taps a land" (the tapping player, who controls the land, CR 602.2, is not the ability's
-     * controller) and the filter on the tapped land ("an Island", "a nonbasic land"), judged on the land on the
-     * battlefield with the ability's source as the filter's source. A land that left the battlefield as its mana ability
-     * resolved (Gemstone Mine's last use) matches no filter: the objects that exist immediately after the event are
-     * checked (CR 603.10), as the effects that carried the filter judged it.
+     * Whether the tap for mana matches {@code read}'s trigger conditions the tap-for-mana collectors judge, as the
+     * permanent is tapped: the tap relation ({@link TapAbilityReader.TapEffect#tapRelation()}: "you tap" and "an
+     * opponent taps", the tapping player against the ability's controller;
+     * "enchanted land", the permanent {@code source} is attached to; "this land", {@code source} itself) and the filter
+     * on the tapped permanent ("an Island", "a nonbasic land", "an artifact"), judged on the permanent on the
+     * battlefield with the ability's source as the filter's source. A permanent that left the battlefield as its mana
+     * ability resolved (Gemstone Mine's last use) matches no filter: the objects that exist immediately after the event
+     * are checked (CR 603.10), as the effects that carried the filter judged it.
      */
-    private boolean landTapMatches(GameData gameData, TapAbilityReader.TapEffect read, Card sourceCard,
-                                   UUID controllerId, UUID tappingPlayerId, UUID tappedLandId) {
-        if (read.opponentTaps() && controllerId.equals(tappingPlayerId)) {
+    private boolean tapForManaMatches(GameData gameData, TapAbilityReader.TapEffect read, Permanent source,
+                                      Card sourceCard, UUID controllerId, UUID tappingPlayerId, UUID tappedId) {
+        boolean relationMatches = switch (read.tapRelation()) {
+            case YOU_CONTROL -> controllerId.equals(tappingPlayerId);
+            case OPPONENT_CONTROLS -> !controllerId.equals(tappingPlayerId);
+            case ENCHANTED -> source != null && source.isAttached() && tappedId.equals(source.getAttachedTo());
+            case THIS -> source != null && source.getId().equals(tappedId);
+            default -> true;
+        };
+        if (!relationMatches) {
             return false;
         }
         if (read.filter() == null) {
             return true;
         }
-        Permanent tappedLand = gameQueryService.findPermanentById(gameData, tappedLandId);
-        return tappedLand != null && predicateEvaluationService.matchesPermanentPredicate(tappedLand, read.filter(),
+        Permanent tapped = gameQueryService.findPermanentById(gameData, tappedId);
+        return tapped != null && predicateEvaluationService.matchesPermanentPredicate(tapped, read.filter(),
                 FilterContext.of(gameData).withSourceCardId(sourceCard.getId()).withSourceControllerId(controllerId));
     }
 
@@ -16059,12 +16075,19 @@ public class TriggerCollectionService {
             return dispatchLibraryWatch(gameData, perm, controllerId, libraryWatch, ctx);
         }
         if (watch instanceof TapWatch tapWatch) {
-            // The watches dispatched here ("a player taps a permanent for mana", the untap step) judge no filter,
-            // first-time event, "one or more" or limit.
+            // The watches dispatched here ("a player taps a permanent for mana", the untap step) judge no first-time
+            // event, "one or more" or limit; "a player taps a permanent for mana" judges the tap relation and the
+            // filter ("an opponent taps an artifact": Treasure Nabber).
             Trigger watched = tapWatch.trigger();
             TriggerJudge judge = watchJudge(gameData, perm, controllerId, ctx);
-            return dispatchRegistrations(gameData, perm, controllerId, watch, ctx,
-                    TapAbilityReader.printedRegistrations(perm.getCard(), tapWatch, judge),
+            List<EffectRegistration> printed = ctx instanceof TriggerContext.PermanentTapForMana tap
+                    ? TapAbilityReader.readPrintedAsJudged(perm.getCard(), tapWatch, judge).stream()
+                            .filter(read -> tapForManaMatches(gameData, read, perm, perm.getCard(), controllerId,
+                                    tap.tappingPlayerId(), tap.tappedPermanentId()))
+                            .map(read -> new EffectRegistration(read.effect(), read.simultaneousWithPrevious()))
+                            .toList()
+                    : TapAbilityReader.printedRegistrations(perm.getCard(), tapWatch, judge);
+            return dispatchRegistrations(gameData, perm, controllerId, watch, ctx, printed,
                     staticBonus -> TapAbilityReader.effects(judge.filter(grantedTriggeredAbilitySupport
                             .grantedTriggeredAbilities(gameData, perm, staticBonus,
                                     ability -> ability.hasWatchedTrigger(watched))), watched));
@@ -16122,6 +16145,10 @@ public class TriggerCollectionService {
                     context.withTargetId(lifeLoss.losingPlayerId()), lifeLoss.lifeLostAmount());
             case TriggerContext.LifePayment lifePayment -> conditionEvaluationService.judge(gameData,
                     context.withTargetId(lifePayment.payingPlayerId()), lifePayment.lifePaidAmount());
+            // "Whenever you choose to put one or more cards on the bottom of your library while scrying" (The Temporal
+            // Anchor): the number of cards put on the bottom is the event's value, which an event condition reads.
+            case TriggerContext.Scry scry -> conditionEvaluationService.judge(gameData,
+                    context.withTargetId(scry.scryingPlayerId()), scry.bottomedCardCount());
             case null, default -> conditionEvaluationService.judge(gameData, context);
         };
     }

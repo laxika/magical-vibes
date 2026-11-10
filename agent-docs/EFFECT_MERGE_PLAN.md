@@ -1690,7 +1690,7 @@ Independent, all LOW. Do as many as land cleanly; note any that don't.
 |---|---|---|
 | `BoostEquippedCreatureUntilEndOfTurnEffect(DynamicAmount, DynamicAmount, Set<Keyword>)` | `BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect` | 11 + 3 |
 | `AwardManaOfColorsAmongControlledEffect(PermanentPredicate, boolean oneOfEach)` | `AwardOneManaOfEachColorAmongControlledEffect` | 1 + 1 |
-| `AddManaWhenLandOfSubtypeTappedForManaEffect(+ ManaRestriction)` | `AddRestrictedManaWhenLandOfSubtypeTappedForManaEffect` | 2 + 1 |
+| `AddManaWhenLandOfSubtypeTappedForManaEffect(+ ManaRestriction)` | **Done differently** (step 15, run 17z13e2): the subtype is the trigger's filter, the fixed-color form is `AddManaWhenTappedForManaEffect`, the restricted one `AddRestrictedManaWhenLandTappedForManaEffect` | — |
 | `AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly)` + the trigger's `withFilter` | `AddProducedManaWhenLandOfSubtypeTappedEffect`, `AddProducedManaWhenSnowLandTappedEffect` (and `TappedSnowLandDoesntUntapEffect`): **Gone** (effect-slot-refactor.md step 15, run 17z4b) | 1 + 1 |
 | `PlayWithHandRevealedEffect(boolean controllerOnly)` | `PlayWithHandsRevealedEffect`, `PlayWithOwnHandRevealedEffect` (+ delete the `PubliclyRevealedHandEffect` interface) | 1 + 1 |
 | `PayXManaThenEffect(String manaCost, CardEffect payload)` | `PayXManaGainXLifeEffect`, `PayXManaCreateXTokensEffect` | 1 + 1 |

@@ -20,7 +20,7 @@ public class BarbflareGremlin extends Card {
         addTrigger(Triggers.playerTapsLandForMana(),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()),
                 SequenceEffect.of(
-                        new AddOneOfEachManaTypeProducedByLandEffect(false),
+                        new AddOneOfEachManaTypeProducedByLandEffect(),
                         new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER)
                                 .dealtByTriggeringPermanent()));
     }

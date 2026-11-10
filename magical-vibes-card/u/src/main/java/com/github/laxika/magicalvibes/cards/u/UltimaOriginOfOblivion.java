@@ -33,7 +33,7 @@ public class UltimaOriginOfOblivion extends Card {
                                 ManaAbilities.tapFor(ManaColor.COLORLESS), GrantScope.ALL_LANDS)),
                         true));
 
-        addTrigger(Triggers.playerTapsLandForMana(),
+        addTrigger(Triggers.youTapLandForMana(),
                 new AddManaWhenLandOfColorTappedForManaEffect(ManaColor.COLORLESS));
     }
 }

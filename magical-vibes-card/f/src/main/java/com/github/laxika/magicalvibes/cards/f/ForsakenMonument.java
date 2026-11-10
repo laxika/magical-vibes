@@ -19,7 +19,7 @@ public class ForsakenMonument extends Card {
     public ForsakenMonument() {
         addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES,
                 new PermanentIsColorlessPredicate()));
-        addTrigger(Triggers.playerTapsLandForMana(),
+        addTrigger(Triggers.youTapLandForMana(),
                 new AddManaOfTypeProducedByTappedPermanentEffect(ManaColor.COLORLESS));
         addTrigger(Triggers.youTapNonlandPermanentForMana(),
                 new AddManaOfTypeProducedByTappedPermanentEffect(ManaColor.COLORLESS));

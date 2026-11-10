@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AddManaWhenCreatureTappedForManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaWhenTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
@@ -24,7 +24,7 @@ public class LeylineOfAbundance extends Card {
                 "Begin the game with Leyline of Abundance on the battlefield?"
         ));
         addTrigger(Triggers.youTapCreatureForMana(),
-                new AddManaWhenCreatureTappedForManaEffect(ManaColor.GREEN));
+                new AddManaWhenTappedForManaEffect(ManaColor.GREEN));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{6}{G}{G}",

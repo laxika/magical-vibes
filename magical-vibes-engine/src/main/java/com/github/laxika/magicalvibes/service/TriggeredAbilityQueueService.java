@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.DiscardTriggerCollectorService;
 import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -1570,14 +1571,20 @@ public class TriggeredAbilityQueueService {
             if (result.validTargets().isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
                 if (optionalTarget) {
-                    gameData.stack.add(new StackEntry(
+                    StackEntry untargeted = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             pending.sourceCard(),
                             pending.controllerId(),
                             pending.sourceCard().getName() + "'s ability",
                             new ArrayList<>(pending.effects()),
                             null,
-                            pending.sourcePermanentId()));
+                            pending.sourcePermanentId());
+                    if (pending.discardedCount() > 0) {
+                        untargeted.setEventValue(pending.discardedCount());
+                    }
+                    gameData.stack.add(DiscardTriggerCollectorService.recordDiscard(untargeted,
+                            pending.discardingPlayerId(), pending.discardedCards(), pending.discardedCardStays(),
+                            false));
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                             "'s discard trigger triggers without a target."));
                     log.info("Game {} - {} discard trigger pushed without a target",

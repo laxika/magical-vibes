@@ -21,8 +21,7 @@ public class GauntletOfPower extends Card {
         addStaticEffect(new ChooseColorOnEnterEffect());
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
                 new PermanentHasSourceChosenColorPredicate()));
-        addTrigger(Triggers.playerTapsLandForMana(),
-                new AddExtraManaOfChosenColorOnLandTapEffect(false,
-                        new PermanentHasSupertypePredicate(CardSupertype.BASIC)));
+        addTrigger(Triggers.playerTapsLandForMana().withFilter(new PermanentHasSupertypePredicate(CardSupertype.BASIC)),
+                AddExtraManaOfChosenColorOnLandTapEffect.ofItsController());
     }
 }

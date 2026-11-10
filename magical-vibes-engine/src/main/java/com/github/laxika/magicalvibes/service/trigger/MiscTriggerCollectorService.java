@@ -190,9 +190,13 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTapTrigger(value = PutCountersOnSelfEffect.class, watch = TapWatch.ON_CONTROLLER_UNTAPS_DURING_UNTAP_STEP)
-    private boolean handleUntapStepPutCountersOnSelf(TriggerMatchContext match,
-                                                       PutCountersOnSelfEffect effect, TriggerContext ctx) {
+    /**
+     * "Whenever you untap one or more permanents during your untap step, …" (The Millennium Calendar's "put that many
+     * time counters"): the ability goes on the stack as written, once for the untap step, with the number of
+     * permanents untapped as its event value ("that many") and the source as it was, whatever its effects are.
+     */
+    @CollectsTapTrigger(value = CardEffect.class, watch = TapWatch.ON_CONTROLLER_UNTAPS_DURING_UNTAP_STEP)
+    private boolean handleUntapStepDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
         TriggerContext.UntapStep untapStep = (TriggerContext.UntapStep) ctx;
         GameData gameData = match.gameData();
         Card card = match.permanent().getCard();
@@ -204,9 +208,8 @@ public class MiscTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId());
-        if (amountEvaluationService.referencesEventValue(effect.amount())) {
-            entry.setEventValue(untapStep.untappedPermanentCount());
-        }
+        entry.setEventValue(untapStep.untappedPermanentCount());
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(card));
         log.info("Game {} - {} triggers on untap step", gameData.id, card.getName());
@@ -1610,33 +1613,13 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsLibraryTrigger(value = PutCountersOnSelfEffect.class, watch = LibraryWatch.ON_CONTROLLER_SURVEILS)
-    @CollectsLibraryTrigger(value = PutCountersOnSelfEffect.class, watch = LibraryWatch.ON_OPPONENT_SURVEILS)
-    private boolean handleSurveilPutCountersOnSelf(TriggerMatchContext match,
-            PutCountersOnSelfEffect effect, TriggerContext ctx) {
-        var gameData = match.gameData();
-        String cardName = match.permanent().getCard().getName();
-        UUID surveilingPlayerId = ((TriggerContext.Surveil) ctx).surveilingPlayerId();
-        boolean opponentSurveil = !match.controllerId().equals(surveilingPlayerId);
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                cardName + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                opponentSurveil ? surveilingPlayerId : null,
-                match.permanent().getId());
-        if (opponentSurveil) {
-            entry.setNonTargeting(true);
-        }
-        gameData.enqueueTrigger(entry);
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers on surveil (put counter on self)", gameData.id, cardName);
-        return true;
-    }
-
+    /**
+     * "Whenever you surveil, …" and "whenever an opponent surveils, …": the ability goes on the stack as written, its
+     * entry recording the surveilling player as its triggering player (and, for an opponent's surveil, its non-targeting
+     * "that player": River Song's "to that player"), the source as it was and the "do this only once each turn" mark,
+     * whatever its effects are. A permanent or player target of "whenever you surveil" is chosen as it goes on the stack
+     * (CR 603.3d), the choice carrying the player.
+     */
     @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_CONTROLLER_SURVEILS)
     @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_OPPONENT_SURVEILS)
     private boolean handleSurveilDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
@@ -1644,6 +1627,20 @@ public class MiscTriggerCollectorService {
         Permanent source = match.permanent();
         UUID surveilingPlayerId = ((TriggerContext.Surveil) ctx).surveilingPlayerId();
         boolean opponentSurveil = !match.controllerId().equals(surveilingPlayerId);
+        if (!opponentSurveil && (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
+            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    source.getCard(),
+                    match.controllerId(),
+                    new ArrayList<>(List.of(effect)),
+                    !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT),
+                    null,
+                    0,
+                    source.getId(),
+                    new Permanent(source)).withTriggeringPlayer(surveilingPlayerId));
+            gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
+            return true;
+        }
 
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -1656,6 +1653,8 @@ public class MiscTriggerCollectorService {
         if (opponentSurveil) {
             entry.setNonTargeting(true);
         }
+        entry.setTriggeringPlayerId(surveilingPlayerId);
+        entry.setSourcePermanentSnapshot(new Permanent(source));
         entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
         gameData.enqueueTrigger(entry);
 

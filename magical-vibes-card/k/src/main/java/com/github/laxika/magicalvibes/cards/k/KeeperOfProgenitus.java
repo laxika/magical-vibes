@@ -17,6 +17,6 @@ public class KeeperOfProgenitus extends Card {
         // that player adds one mana of any type that land produced.
         addTrigger(Triggers.playerTapsLandForMana().withFilter(new PermanentHasAnySubtypePredicate(
                         Set.of(CardSubtype.MOUNTAIN, CardSubtype.FOREST, CardSubtype.PLAINS))),
-                new AddOneOfEachManaTypeProducedByLandEffect(false));
+                new AddOneOfEachManaTypeProducedByLandEffect());
     }
 }

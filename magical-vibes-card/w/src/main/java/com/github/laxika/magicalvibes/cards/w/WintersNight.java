@@ -18,7 +18,7 @@ public class WintersNight extends Card {
         // Whenever a player taps a snow land for mana, that player adds one mana of any type that land produced.
         // That land doesn't untap during its controller's next untap step.
         addTrigger(Triggers.playerTapsLandForMana().withFilter(new PermanentHasSupertypePredicate(CardSupertype.SNOW)),
-                SequenceEffect.of(new AddOneOfEachManaTypeProducedByLandEffect(false),
+                SequenceEffect.of(new AddOneOfEachManaTypeProducedByLandEffect(),
                         new SkipNextUntapEffect(TapUntapScope.TRIGGERING)));
     }
 }

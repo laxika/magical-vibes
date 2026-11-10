@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ManaWeb extends Card {
 
     public ManaWeb() {
-        addTrigger(Triggers.playerTapsLandForMana(),
+        addTrigger(Triggers.opponentTapsLandForMana(),
                 new TapLandsThatCouldProduceSameManaAsTappedLandEffect());
     }
 }

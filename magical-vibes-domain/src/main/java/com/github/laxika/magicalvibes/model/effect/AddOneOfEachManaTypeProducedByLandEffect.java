@@ -8,37 +8,28 @@ package com.github.laxika.magicalvibes.model.effect;
  * Hunger's rulings). Mana Flare, Heartbeat of Spring, Mirari's Wake, Keeper of Progenitus, Winter's Night and similar
  * "mana doubling" abilities.
  *
- * <p>Which lands count ("a basic land", "a snow land", "a Mountain, Forest, or Plains") is the trigger's
- * {@code withFilter}, judged as the land is tapped.
+ * <p>Which lands count and who must tap them ("a basic land", "you tap a land", "a land with the same name as the
+ * exiled card"), and Regal Behemoth's "while you're the monarch", are the trigger, its {@code withFilter} and its event
+ * condition, judged as the land is tapped.
  *
- * @param controllerOnly           when {@code true} the ability triggers only for lands the source's controller taps
- *                                 ("whenever you tap a land for mana": Vorinclex, Mirari's Wake); when {@code false}
- *                                 it is symmetric (Mana Flare)
- * @param matchesImprintedCardName when {@code true}, only lands whose names match the card imprinted on the source
- *                                 trigger (Extraplanar Lens)
- * @param monarchOnly              when {@code true}, the source's controller must be the monarch when the land is
- *                                 tapped (Regal Behemoth)
- * @param anyColor                 when {@code true}, the mana is "one mana of any color" instead of a type the land
- *                                 produced (Regal Behemoth): the player chooses one of the five colors (CR 106.1a),
- *                                 never colorless, whatever the land produced
+ * @param anyColor when {@code true}, the mana is "one mana of any color" instead of a type the land produced (Regal
+ *                 Behemoth): the player chooses one of the five colors (CR 106.1a), never colorless, whatever the land
+ *                 produced
  */
-public record AddOneOfEachManaTypeProducedByLandEffect(
-        boolean controllerOnly,
-        boolean matchesImprintedCardName,
-        boolean monarchOnly,
-        boolean anyColor
-) implements TriggeredManaAbilityEffect {
+public record AddOneOfEachManaTypeProducedByLandEffect(boolean anyColor) implements TriggeredManaAbilityEffect {
 
-    public AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly) {
-        this(controllerOnly, false, false, false);
-    }
-
-    public AddOneOfEachManaTypeProducedByLandEffect(boolean controllerOnly, boolean matchesImprintedCardName) {
-        this(controllerOnly, matchesImprintedCardName, false, false);
+    /** "That player adds one mana of any type that land produced". */
+    public AddOneOfEachManaTypeProducedByLandEffect() {
+        this(false);
     }
 
     /** "Add an additional one mana of any color" (Regal Behemoth). */
-    public static AddOneOfEachManaTypeProducedByLandEffect anyColor(boolean controllerOnly, boolean monarchOnly) {
-        return new AddOneOfEachManaTypeProducedByLandEffect(controllerOnly, false, monarchOnly, true);
+    public static AddOneOfEachManaTypeProducedByLandEffect ofAnyColor() {
+        return new AddOneOfEachManaTypeProducedByLandEffect(true);
+    }
+
+    @Override
+    public boolean readsProducedMana() {
+        return !anyColor;
     }
 }

@@ -25,7 +25,7 @@ public class FertileGround extends Card {
 
     public FertileGround() {
         target(TargetFilters.land())
-                .addTrigger(Triggers.playerTapsLandForMana(),
+                .addTrigger(Triggers.enchantedLandTappedForMana(),
                         new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect()));
     }
 }

@@ -10,6 +10,6 @@ public class ZhurTaaAncient extends Card {
 
     public ZhurTaaAncient() {
         // Symmetric: any player who taps a land for mana adds one extra mana of a type it produced.
-        addTrigger(Triggers.playerTapsLandForMana(), new AddOneOfEachManaTypeProducedByLandEffect(false));
+        addTrigger(Triggers.playerTapsLandForMana(), new AddOneOfEachManaTypeProducedByLandEffect());
     }
 }

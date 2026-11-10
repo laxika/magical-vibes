@@ -5,11 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileBottomCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -29,52 +25,28 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/** The trigger collector of the scry watches: one default records the scry whatever the effects are. */
 public class ScryTriggerCollectorService {
 
     private final GameLogService gameLogService;
 
-    @CollectsLibraryTrigger(value = SequenceEffect.class, watch = LibraryWatch.ON_CONTROLLER_SCRIES)
-    @CollectsLibraryTrigger(value = SequenceEffect.class, watch = LibraryWatch.ON_OPPONENT_SCRIES)
-    private boolean handleSequenceOnScry(TriggerMatchContext match, SequenceEffect trigger, TriggerContext ctx) {
-        return enqueueOnScry(match, trigger, ctx);
-    }
-
-    @CollectsLibraryTrigger(value = MayPayManaEffect.class, watch = LibraryWatch.ON_CONTROLLER_SCRIES)
-    @CollectsLibraryTrigger(value = MayPayManaEffect.class, watch = LibraryWatch.ON_OPPONENT_SCRIES)
-    private boolean handleMayPayOnScry(TriggerMatchContext match, MayPayManaEffect trigger, TriggerContext ctx) {
-        return enqueueOnScry(match, trigger, ctx);
-    }
-
+    /**
+     * "Whenever you scry, …" and "whenever an opponent scries, …": the ability goes on the stack as written, its entry
+     * recording the scry whatever its effects are: the scrying player as its triggering player (and, for an opponent's
+     * scry, its non-targeting "that player"), the number of cards put on the bottom as its event value ("that many") and
+     * the number of cards looked at. A permanent or player target is chosen as it goes on the stack (CR 603.3d), the
+     * choice carrying the scrying player and the count. "Whenever you choose to put one or more cards on the bottom of
+     * your library while scrying" (The Temporal Anchor) is the ability's event condition on the count.
+     */
     @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_CONTROLLER_SCRIES)
     @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_OPPONENT_SCRIES)
-    private boolean handleSingleEffectOnScry(TriggerMatchContext match, CardEffect trigger, TriggerContext ctx) {
-        return enqueueOnScry(match, trigger, ctx);
-    }
-
-    private boolean enqueueOnScry(TriggerMatchContext match, CardEffect trigger, TriggerContext ctx) {
+    private boolean handleScryDefault(TriggerMatchContext match, CardEffect trigger, TriggerContext ctx) {
         TriggerContext.Scry scry = (TriggerContext.Scry) ctx;
-        if (trigger instanceof ExileBottomCardsToSourceEffect exile && exile.count() instanceof EventValue
-                && scry.bottomedCardCount() == 0) {
-            return false;
-        }
         Card sourceCard = match.permanent().getCard();
         TargetSpec targetSpec = trigger.targetSpec();
-        if (!match.controllerId().equals(scry.scryingPlayerId())) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(trigger)),
-                    scry.scryingPlayerId(),
-                    match.permanent().getId());
-            entry.setEventValue(scry.bottomedCardCount());
-            entry.setCardsLookedAtWhileScrying(scry.cardsLookedAt());
-            entry.setNonTargeting(true);
-            entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
-            match.gameData().enqueueTrigger(entry);
-        } else if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)
-                || targetSpec.admits(TargetPredicate.Kind.PLAYER)) {
+        boolean opponentScry = !match.controllerId().equals(scry.scryingPlayerId());
+        if (!opponentScry && (targetSpec.admits(TargetPredicate.Kind.PERMANENT)
+                || targetSpec.admits(TargetPredicate.Kind.PLAYER))) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     sourceCard,
                     match.controllerId(),
@@ -82,7 +54,9 @@ public class ScryTriggerCollectorService {
                     !targetSpec.admits(TargetPredicate.Kind.PERMANENT),
                     targetFilter(targetSpec),
                     0,
-                    match.permanent().getId()));
+                    match.permanent().getId())
+                    .withTriggeringPlayer(scry.scryingPlayerId())
+                    .withEventValue(scry.bottomedCardCount()));
         } else {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -90,10 +64,12 @@ public class ScryTriggerCollectorService {
                     match.controllerId(),
                     sourceCard.getName() + "'s ability",
                     new ArrayList<>(List.of(trigger)),
-                    null,
+                    opponentScry ? scry.scryingPlayerId() : null,
                     match.permanent().getId());
+            entry.setTriggeringPlayerId(scry.scryingPlayerId());
             entry.setEventValue(scry.bottomedCardCount());
             entry.setCardsLookedAtWhileScrying(scry.cardsLookedAt());
+            entry.setNonTargeting(opponentScry);
             entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
             match.gameData().enqueueTrigger(entry);
         }

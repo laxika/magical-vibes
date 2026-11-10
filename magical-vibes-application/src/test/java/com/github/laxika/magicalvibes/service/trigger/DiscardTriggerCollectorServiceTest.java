@@ -55,7 +55,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -80,9 +79,6 @@ class DiscardTriggerCollectorServiceTest {
 
     @Mock
     private GameLogService gameLogService;
-
-    @Mock
-    private ConditionEvaluationService conditionEvaluationService;
 
     @InjectMocks
     private DiscardTriggerCollectorService sut;
@@ -173,6 +169,56 @@ class DiscardTriggerCollectorServiceTest {
             assertThat(entry.getSourcePermanentId()).isEqualTo(source.getId());
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
         });
+    }
+
+    @Test
+    @DisplayName("\"Whenever a player cycles a card\" has a default that records the cycling player and the cycled card")
+    void cyclingDefaultRecordsTheCycle() {
+        Permanent source = createPermanent("Cycling observer");
+        var effect = new DrawCardEffect(1);
+        Card cycled = createCard("Cycled card");
+        var context = new TriggerContext.Cycle(player2Id, cycled);
+
+        boolean collected = registry.dispatch(
+                match(source, player1Id, effect), LibraryWatch.ON_ANY_PLAYER_CYCLES, effect, context);
+
+        assertThat(collected).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getTriggeringPlayerId()).isEqualTo(player2Id);
+            assertThat(entry.getTargetId()).isEqualTo(player2Id);
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getTriggeringCardId()).isEqualTo(cycled.getId());
+            assertThat(entry.getTriggeringCards()).containsExactly(cycled);
+        });
+    }
+
+    @Test
+    @DisplayName("A targeted discard ability's target choice carries the discard its entry records")
+    void targetedDiscardChoiceCarriesTheDiscard() {
+        Permanent source = createPermanent("Ominous Sphinx");
+        var effect = new BoostTargetCreatureEffect(-2, -2);
+        Card discarded = createCard("Discarded card");
+        var ctx = new TriggerContext.Discard(player1Id, discarded);
+
+        boolean collected = registry.dispatch(
+                match(source, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+
+        assertThat(collected).isTrue();
+        assertThat(gd.stack).isEmpty();
+        var choice = (PermanentChoiceContext.DiscardControllerTriggerTarget) gd.pendingInteractions.getFirst();
+        assertThat(choice.effects()).containsExactly(effect);
+        assertThat(choice.discardingPlayerId()).isEqualTo(player1Id);
+        assertThat(choice.discardedCards()).containsExactly(discarded);
+        assertThat(choice.discardedCardStays()).containsOnlyKeys(discarded.getId());
+
+        StackEntry entry = DiscardTriggerCollectorService.recordDiscard(new StackEntry(
+                        com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY, source.getCard(),
+                        player1Id, "ability", List.of(effect)),
+                choice.discardingPlayerId(), choice.discardedCards(), choice.discardedCardStays(), false);
+        assertThat(entry.getTriggeringPlayerId()).isEqualTo(player1Id);
+        assertThat(entry.getTriggeringCardId()).isEqualTo(discarded.getId());
+        assertThat(entry.getTargetId()).isNull();
     }
 
     @Test

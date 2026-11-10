@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Stream;
 
 /**
  * Reads the tap and untap abilities (a {@link TapTrigger}: a permanent is tapped, CR 701.26a, or untapped,
@@ -63,15 +62,24 @@ public final class TapAbilityReader {
      *                  the first time during each of your turns"), counting its taps before the source was on the
      *                  battlefield
      * @param simultaneousWithPrevious the registration happens at the same time as the effect before it
-     * @param opponentTaps whether only an opponent of the ability's controller tapping the land triggers the ability
-     *                     ({@link TapTrigger#opponentTapsLand()}), which the land-tap collector judges
+     * @param tapRelation who must tap the land or permanent, or which one it must be, for a tap-for-mana trigger whose
+     *                    collector judges it ({@link TapTrigger#judgedTapRelation()}): {@link ObjectRelation#YOU_CONTROL}
+     *                    the ability's controller, {@link ObjectRelation#OPPONENT_CONTROLS} an opponent of theirs,
+     *                    {@link ObjectRelation#ENCHANTED} the permanent the source is attached to,
+     *                    {@link ObjectRelation#THIS} the source; {@link ObjectRelation#ANY} for any other trigger
      */
     public record TapEffect(CardEffect effect, TriggeredAbility ability, PermanentPredicate filter, boolean firstTime,
-                            boolean simultaneousWithPrevious, boolean opponentTaps) {
+                            boolean simultaneousWithPrevious, ObjectRelation tapRelation) {
 
         public TapEffect {
             Objects.requireNonNull(effect, "effect");
             Objects.requireNonNull(ability, "ability");
+            Objects.requireNonNull(tapRelation, "tapRelation");
+        }
+
+        /** Whether the collector judges who tapped the permanent, or which one it is ({@link #tapRelation()}). */
+        public boolean judgesTapRelation() {
+            return tapRelation != ObjectRelation.ANY;
         }
 
         public TriggerLimit limit() {
@@ -113,7 +121,7 @@ public final class TapAbilityReader {
 
         /** This read with {@code effect} in place of its effect. */
         public TapEffect withEffect(CardEffect effect) {
-            return new TapEffect(effect, ability, filter, firstTime, simultaneousWithPrevious, opponentTaps);
+            return new TapEffect(effect, ability, filter, firstTime, simultaneousWithPrevious, tapRelation);
         }
     }
 
@@ -144,7 +152,7 @@ public final class TapAbilityReader {
     /**
      * Every effect of the abilities of {@code card} that {@code watch} reads and {@code judge} lets trigger, as
      * {@link TapEffect#effectAsJudged()} hands them on, for the land-tap collector: it judges the filter on the tapped
-     * land and the tapping player ({@link TapEffect#opponentTaps()}), and no first-time event, "one or more" or limit,
+     * land and the tap relation ({@link TapEffect#tapRelation()}), and no first-time event, "one or more" or limit,
      * which this throws on.
      */
     public static List<TapEffect> readPrintedAsJudged(Card card, TapWatch watch, TriggerJudge judge) {
@@ -166,12 +174,28 @@ public final class TapAbilityReader {
         boolean fromManaAbility = ability.conditions().stream().allMatch(condition
                 -> condition.trigger() instanceof TapTrigger tap && tap.event() == TapEvent.TAPPED_FOR_MANA);
         List<CardEffect> effects = ability.effects().stream()
-                .flatMap(registration -> registration.effect() instanceof SequenceEffect sequence
-                        ? sequence.steps().stream() : Stream.of(registration.effect()))
+                .flatMap(registration -> steps(registration.effect()).stream())
                 .toList();
-        return fromManaAbility
-                && effects.stream().noneMatch(effect -> effect.targetSpec().declaredTarget() != null)
+        return fromManaAbility && isTriggeredManaEffect(effects);
+    }
+
+    /**
+     * Whether an ability that triggers from a permanent being tapped for mana with {@code effect} as its effect is a
+     * triggered mana ability (CR 605.1b): the effect, or its steps, require no target and could add mana (a
+     * {@link TriggeredManaAbilityEffect}).
+     */
+    public static boolean isTriggeredManaEffect(CardEffect effect) {
+        return isTriggeredManaEffect(steps(effect));
+    }
+
+    private static boolean isTriggeredManaEffect(List<CardEffect> effects) {
+        return effects.stream().noneMatch(effect -> effect.targetSpec().declaredTarget() != null)
                 && effects.stream().anyMatch(TriggeredManaAbilityEffect.class::isInstance);
+    }
+
+    /** {@code effect}'s steps, for a {@link SequenceEffect}, else {@code effect} itself. */
+    public static List<CardEffect> steps(CardEffect effect) {
+        return effect instanceof SequenceEffect sequence ? sequence.steps() : List.of(effect);
     }
 
     /**
@@ -242,7 +266,7 @@ public final class TapAbilityReader {
                 effect = new ConditionalEffect(interveningIf, effect);
             }
             effects.add(new TapEffect(effect, ability, filter, firstTime, registration.simultaneousWithPrevious(),
-                    condition.opponentTapsLand()));
+                    condition.judgedTapRelation() ? condition.relation() : ObjectRelation.ANY));
         }
         return effects;
     }
@@ -269,8 +293,8 @@ public final class TapAbilityReader {
      */
     public static void requireNothingToJudge(TapEffect effect, Trigger watched) {
         requireNoFilter(effect, watched);
-        if (effect.opponentTaps()) {
-            throw new IllegalStateException("The collector of " + watched + " judges no tapping player: "
+        if (effect.judgesTapRelation()) {
+            throw new IllegalStateException("The collector of " + watched + " judges no tap relation: "
                     + effect.ability());
         }
         requireNotFirstTime(effect, watched);
@@ -324,7 +348,8 @@ public final class TapAbilityReader {
         }
         TapTrigger first = conditions.getFirst();
         if (conditions.stream().anyMatch(tap -> tap.event() != first.event()
-                || tap.opponentTapsLand() != first.opponentTapsLand()
+                || tap.judgedTapRelation() != first.judgedTapRelation()
+                || (tap.judgedTapRelation() && tap.relation() != first.relation())
                 || !Objects.equals(filter(tap), filter(first)))) {
             throw new IllegalStateException("The tap conditions of one ability watched as " + watched
                     + " must have the same filter, event and tapping player: " + ability);
@@ -362,7 +387,8 @@ public final class TapAbilityReader {
     /**
      * Whether the collector that reads {@code trigger}'s abilities judges a filter on the tapped or untapped permanent:
      * "a permanent you control / an opponent controls becomes tapped" (and the {@link TapTrigger#narrowed()} triggers
-     * it reads), "you tap a permanent an opponent controls", "a player / an opponent taps a land for mana" and "a
+     * it reads), "you tap a permanent an opponent controls", "a player / you / an opponent taps a land for mana" (and
+     * "enchanted land is tapped", "you tap this land"), "a player / an opponent taps a permanent for mana" and "a
      * permanent [you control] becomes untapped".
      */
     private static boolean judgesFilter(TapTrigger trigger) {
@@ -374,7 +400,8 @@ public final class TapAbilityReader {
                     || trigger.relation() == ObjectRelation.OPPONENT_CONTROLS;
             case YOU_TAP -> trigger.relation() == ObjectRelation.OPPONENT_CONTROLS;
             case TAPPED_FOR_MANA -> trigger.watchKey().equals(new TapTrigger(TapEvent.TAPPED_FOR_MANA,
-                    ObjectRelation.ANY, Triggers.LAND));
+                    ObjectRelation.ANY, Triggers.LAND))
+                    || trigger.watchKey().equals(new TapTrigger(TapEvent.TAPPED_FOR_MANA, ObjectRelation.ANY));
             case BECOMES_UNTAPPED -> trigger.relation() == ObjectRelation.YOU_CONTROL
                     || trigger.relation() == ObjectRelation.ANY;
             default -> false;

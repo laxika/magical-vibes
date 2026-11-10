@@ -15,6 +15,6 @@ public class MirarisWake extends Card {
 
     public MirarisWake() {
         addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES));
-        addTrigger(Triggers.playerTapsLandForMana(), new AddOneOfEachManaTypeProducedByLandEffect(true));
+        addTrigger(Triggers.youTapLandForMana(), new AddOneOfEachManaTypeProducedByLandEffect());
     }
 }

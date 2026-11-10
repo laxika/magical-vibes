@@ -69,6 +69,8 @@ class ScryTriggerCollectorServiceTest {
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
             assertThat(entry.getEventValue()).isEqualTo(2);
             assertThat(entry.getCardsLookedAtWhileScrying()).isEqualTo(3);
+            assertThat(entry.getTriggeringPlayerId()).isEqualTo(playerId);
+            assertThat(entry.isNonTargeting()).isFalse();
         });
         verify(gameLogService).append(eq(gameData), any());
     }
@@ -96,6 +98,8 @@ class ScryTriggerCollectorServiceTest {
                     assertThat(pending.sourcePermanentId()).isEqualTo(permanent.getId());
                     assertThat(pending.effects()).containsExactly(effect);
                     assertThat(pending.targetFilter()).isInstanceOf(AnyTargetPredicateTargetFilter.class);
+                    assertThat(pending.triggeringPlayerId()).isEqualTo(playerId);
+                    assertThat(pending.eventValue()).isZero();
                 });
     }
 
@@ -116,6 +120,29 @@ class ScryTriggerCollectorServiceTest {
         assertThat(gameData.stack).singleElement().satisfies(entry -> {
             assertThat(entry.isMarkSourceOncePerTurnOnAcceptance()).isTrue();
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+        });
+    }
+
+    @Test
+    void anOpponentsScryRecordsThatPlayerAsTheNonTargetingTarget() {
+        UUID opponentId = UUID.randomUUID();
+        Card card = new Card();
+        card.setName("River Song");
+        Permanent permanent = new Permanent(card);
+        BoostSelfEffect effect = new BoostSelfEffect(1, 1);
+
+        boolean triggered = registry.dispatch(
+                new TriggerMatchContext(gameData, permanent, playerId, effect),
+                LibraryWatch.ON_OPPONENT_SCRIES,
+                effect,
+                new TriggerContext.Scry(opponentId, 1, 2));
+
+        assertThat(triggered).isTrue();
+        assertThat(gameData.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getTargetId()).isEqualTo(opponentId);
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getTriggeringPlayerId()).isEqualTo(opponentId);
+            assertThat(entry.getEventValue()).isEqualTo(1);
         });
     }
 }

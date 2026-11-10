@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.u.UrborgTombOfYawgmoth;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -10,7 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RainbowVale.class, RuinsOfTrokair.class})
+@CardUsed({RainbowVale.class, RuinsOfTrokair.class, UrborgTombOfYawgmoth.class})
 class RainbowValeTest extends BaseCardTest {
 
     @Test
@@ -131,6 +132,26 @@ class RainbowValeTest extends BaseCardTest {
 
         assertThat(gd.playerManaPools.get(player2.getId()).get(ManaColor.BLACK)).isEqualTo(1);
         harness.passUntil(player2, TurnStep.END_STEP);
+        harness.withAutoStop(TurnStep.CLEANUP, harness::passBothPriorities);
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(land);
+    }
+
+    @Test
+    @DisplayName("Tapping it for mana with another mana ability gives no control change: that is its own ability's")
+    void anotherManaAbilityGivesNoControlChange() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new RainbowVale());
+        harness.addToBattlefield(player1, new UrborgTombOfYawgmoth());
+
+        // Urborg makes Rainbow Vale a Swamp: its second mana ability is "{T}: Add {B}."
+        harness.activateAbility(player1, 0, 1, null, null);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.BLACK)).isEqualTo(1);
+        harness.passUntil(player1, TurnStep.END_STEP);
         harness.withAutoStop(TurnStep.CLEANUP, harness::passBothPriorities);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(land);

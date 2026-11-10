@@ -14,8 +14,8 @@ public class ZendikarResurgent extends Card {
 
     public ZendikarResurgent() {
         // Whenever you tap a land for mana, add one mana of any type that land produced.
-        addTrigger(Triggers.playerTapsLandForMana(),
-                new AddOneOfEachManaTypeProducedByLandEffect(true));
+        addTrigger(Triggers.youTapLandForMana(),
+                new AddOneOfEachManaTypeProducedByLandEffect());
 
         // Whenever you cast a creature spell, draw a card.
         addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)), new DrawCardEffect(1));

@@ -10,6 +10,6 @@ public class DictateOfKarametra extends Card {
 
     public DictateOfKarametra() {
         addTrigger(Triggers.playerTapsLandForMana(),
-                new AddOneOfEachManaTypeProducedByLandEffect(false));
+                new AddOneOfEachManaTypeProducedByLandEffect());
     }
 }

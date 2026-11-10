@@ -52,7 +52,8 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
     }
 
     private void resolvePermanent(GameData gameData, StackEntry entry, GainControlOfTargetEffect e) {
-        List<UUID> targetIds = entry.getTargetIds().isEmpty()
+        List<UUID> targetIds = e.ofTriggeringPermanent() ? triggeringPermanent(entry)
+                : entry.getTargetIds().isEmpty()
                 ? (entry.getTargetId() != null ? List.of(entry.getTargetId()) : List.of())
                 : entry.getTargetIds();
 
@@ -78,8 +79,8 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
     }
 
     private void resolveTemporary(GameData gameData, StackEntry entry, GainControlOfTargetEffect e) {
-        List<UUID> targetIds = entry.targetsForEffect(e);
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
+        List<UUID> targetIds = e.ofTriggeringPermanent() ? triggeringPermanent(entry) : entry.targetsForEffect(e);
+        if (targetIds.isEmpty() && entry.getTargetId() != null && !e.ofTriggeringPermanent()) {
             targetIds = List.of(entry.getTargetId());
         }
 
@@ -128,8 +129,8 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        List<UUID> targetIds = entry.targetsForEffect(e);
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
+        List<UUID> targetIds = e.ofTriggeringPermanent() ? triggeringPermanent(entry) : entry.targetsForEffect(e);
+        if (targetIds.isEmpty() && entry.getTargetId() != null && !e.ofTriggeringPermanent()) {
             targetIds = List.of(entry.getTargetId());
         }
         for (UUID targetId : targetIds) {
@@ -139,5 +140,10 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
                     e, e.duration().toEffectDuration(), sourcePermanentId, entry.getCard().getName());
         }
+    }
+
+    /** "That permanent": the entry's triggering permanent, for {@link GainControlOfTargetEffect#ofTriggeringPermanent()}. */
+    private static List<UUID> triggeringPermanent(StackEntry entry) {
+        return entry.getTriggeringPermanentId() == null ? List.of() : List.of(entry.getTriggeringPermanentId());
     }
 }

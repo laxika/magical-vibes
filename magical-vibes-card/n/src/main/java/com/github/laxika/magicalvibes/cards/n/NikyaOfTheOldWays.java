@@ -11,6 +11,6 @@ public class NikyaOfTheOldWays extends Card {
 
     public NikyaOfTheOldWays() {
         addStaticEffect(new NoncreatureSpellsCantBeCastEffect(0, false, false));
-        addTrigger(Triggers.playerTapsLandForMana(), new AddOneOfEachManaTypeProducedByLandEffect(true));
+        addTrigger(Triggers.youTapLandForMana(), new AddOneOfEachManaTypeProducedByLandEffect());
     }
 }

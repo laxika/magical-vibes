@@ -21,7 +21,7 @@ public class BlightedBurgeoning extends Card {
     public BlightedBurgeoning() {
         target(TargetFilters.land())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), incubator(2))
-                .addTrigger(Triggers.playerTapsLandForMana(),
+                .addTrigger(Triggers.enchantedLandTappedForMana(),
                         new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect()));
     }
 

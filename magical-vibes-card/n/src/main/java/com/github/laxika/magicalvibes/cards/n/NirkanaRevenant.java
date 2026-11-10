@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfSubtypeTappedForManaEffect;
+import com.github.laxika.magicalvibes.model.effect.AddManaWhenTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -17,8 +18,8 @@ import java.util.List;
 public class NirkanaRevenant extends Card {
 
     public NirkanaRevenant() {
-        addTrigger(Triggers.playerTapsLandForMana(),
-                new AddManaWhenLandOfSubtypeTappedForManaEffect(CardSubtype.SWAMP, ManaColor.BLACK, true));
+        addTrigger(Triggers.youTapLandForMana().withFilter(new PermanentHasSubtypePredicate(CardSubtype.SWAMP)),
+                new AddManaWhenTappedForManaEffect(ManaColor.BLACK));
 
         addActivatedAbility(new ActivatedAbility(false, "{B}", List.of(new BoostSelfEffect(1, 1)),
                 "{B}: This creature gets +1/+1 until end of turn."));

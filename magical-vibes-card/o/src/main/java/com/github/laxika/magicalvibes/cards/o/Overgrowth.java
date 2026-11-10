@@ -17,7 +17,7 @@ public class Overgrowth extends Card {
 
     public Overgrowth() {
         target(TargetFilters.land())
-                .addTrigger(Triggers.playerTapsLandForMana(),
+                .addTrigger(Triggers.enchantedLandTappedForMana(),
                         new AddManaOnEnchantedLandTapEffect(new AwardManaEffect(ManaColor.GREEN, 2)));
     }
 }

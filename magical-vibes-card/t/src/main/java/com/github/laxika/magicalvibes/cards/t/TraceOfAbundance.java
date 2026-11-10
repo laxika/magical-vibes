@@ -20,7 +20,7 @@ public class TraceOfAbundance extends Card {
                 // Enchanted land has shroud.
                 .addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ENCHANTED_PERMANENT))
                 // Whenever enchanted land is tapped for mana, its controller adds an additional one mana of any color.
-                .addTrigger(Triggers.playerTapsLandForMana(),
+                .addTrigger(Triggers.enchantedLandTappedForMana(),
                         new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect()));
     }
 }
