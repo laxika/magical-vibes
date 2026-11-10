@@ -114,6 +114,8 @@ Legend: ✅ = supported, ❌ = not supported, — = no shared Options entry.
 
 ---
 
+**One Oracle ability is one `addTrigger`.** A triggered ability is one object on the stack (CR 603.3) with every effect it has, in order: "at the beginning of combat on your turn, target creature you control gets +1/+0 and gains haste until end of turn" is `target(creatureYouControl).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(1, 0), new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))`, never two `addTrigger` calls, which are two abilities that go on the stack, and are targeted, separately. An ability of several target groups ("up to one target creature attacks or blocks this combat if able and up to one target creature can't attack or block this combat", Boros Battleshaper) is one `addTrigger` of its effects, each bound to its group with `target(filter, 0, 1).bindEffect(effect)`. Write two `addTrigger` calls only where the card prints two abilities (Lunar Convocation's two end-step abilities, Bloodhall Ooze's two upkeep ones).
+
 ## Trigger slot → pipeline mapping
 
 Only slots that are actually routed through a targeting pipeline are listed. Every other slot in
@@ -750,8 +752,8 @@ multi-target (Karn's Temporal Sundering's bare "target player" group).
 - **"My trigger's two target groups affect each other's targets."** A trigger with more than one
   `target(...)` group must go through the slot-by-slot walker
   (`ETBTokenTargetService.processNextETBTokenMultiTargetTrigger`) so each group is prompted, and
-  declined, separately — beginning-of-combat triggers route there via `hasMultipleTargetGroups`
-  (Boros Battleshaper). The walker records how many targets each group actually took in
+  declined, separately — the step readers route one ability there with its effects when the card has
+  several groups or one of more than one target (Boros Battleshaper's one ability of two groups). The walker records how many targets each group actually took in
   `StackEntry.targetGroupSizes`; without that a declined "up to N" group would leave the flat target
   list sliced one group short, handing group 1's target to group 0's effect.
 - **"My optional ability asks its question though no target was chosen."** `MayEffectHandler` skips a "you may" whose bound target group took no target while other groups took some, and a "you may" whose wrapped effect declares `actsOnlyOnItsTargets()` (`AttachTargetEquipmentToTriggeringPermanentEffect`, `ReturnTargetCardsFromGraveyardToHandEffect`, `TapPermanentsEffect(TARGET)`) when the entry has no target at all: no permanent or player and no card. Override `actsOnlyOnItsTargets()` only for an effect that does nothing but act on its targets: a "you may pay / sacrifice ... If you do, ... up to N target ..." (Aetherstorm Roc, Glorifier of Suffering) must still be asked with none chosen.

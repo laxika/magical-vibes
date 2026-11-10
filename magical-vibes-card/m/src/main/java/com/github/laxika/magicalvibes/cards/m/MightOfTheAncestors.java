@@ -17,8 +17,7 @@ public class MightOfTheAncestors extends Card {
     public MightOfTheAncestors() {
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new BoostTargetCreatureEffect(2, 0))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                        new BoostTargetCreatureEffect(2, 0),
                         new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET,
                                 new PermanentIsCreaturePredicate()));
     }

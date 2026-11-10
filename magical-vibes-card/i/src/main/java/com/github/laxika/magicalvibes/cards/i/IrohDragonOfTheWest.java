@@ -38,8 +38,7 @@ public class IrohDragonOfTheWest extends Card {
 
         PermanentHasCountersPredicate withAnyCounter = new PermanentHasCountersPredicate(CounterType.ANY);
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new GrantKeywordEffect(Keyword.FIREBENDING, GrantScope.ALL_OWN_CREATURES, withAnyCounter));
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                new GrantKeywordEffect(Keyword.FIREBENDING, GrantScope.ALL_OWN_CREATURES, withAnyCounter),
                 new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.attacks(),
                         new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 2)),

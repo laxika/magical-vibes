@@ -24,8 +24,7 @@ public class AvatarKyoshiEarthbender extends Card {
 
         target(TargetFilters.landYouControl())
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new EarthbendTargetLandEffect(8))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                        new EarthbendTargetLandEffect(8),
                         new UntapPermanentsEffect(TapUntapScope.TARGET));
     }
 }

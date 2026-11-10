@@ -20,7 +20,7 @@ public class SereneSleuth extends Card {
 
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 CreateTokenEffect.ofClueToken(new PermanentCount(
-                        new PermanentIsGoadedPredicate(), CountScope.CONTROLLER)));
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new NoLongerGoadedEffect());
+                        new PermanentIsGoadedPredicate(), CountScope.CONTROLLER)),
+                new NoLongerGoadedEffect());
     }
 }

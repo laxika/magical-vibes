@@ -29,8 +29,8 @@ public class TemmetVizierOfNaktamun extends Card {
                 )),
                 "Target must be a creature token you control"
         ))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(1, 1))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MakeCreatureUnblockableEffect());
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(1, 1),
+                        new MakeCreatureUnblockableEffect());
 
         // Embalm {3}{W}{U} ({3}{W}{U}, Exile this card from your graveyard: Create a token that's a
         // copy of it, except it's a white Zombie Human Cleric with no mana cost. Embalm only as a

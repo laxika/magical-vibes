@@ -29,8 +29,7 @@ public class LivingLightningChargedUp extends Card {
                 )),
                 "Target must be another creature you control"
         )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new BoostTargetCreatureEffect(1, 0))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                new BoostTargetCreatureEffect(1, 0),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 }

@@ -28,10 +28,8 @@ public class FireNationTurret extends Card {
         // At the beginning of combat on your turn, up to one target creature gets +2/+0 and
         // gains firebending 2 until end of turn.
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(2, 0))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new GrantKeywordEffect(Keyword.FIREBENDING, GrantScope.TARGET))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(2, 0),
+                        new GrantKeywordEffect(Keyword.FIREBENDING, GrantScope.TARGET),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.attacks(),
                                 new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 2))));

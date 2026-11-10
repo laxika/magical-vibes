@@ -42,10 +42,8 @@ public class SparkshaperVisionary extends Card {
                                 3, 3, List.of(CardSubtype.BIRD),
                                 Set.of(Keyword.FLYING, Keyword.HEXPROOF), CardColor.BLUE,
                                 Set.of(), GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN
-                        ))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new SetCardTypesUntilEndOfTurnEffect(Set.of(CardType.CREATURE), GrantScope.TARGET))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                        ),
+                        new SetCardTypesUntilEndOfTurnEffect(Set.of(CardType.CREATURE), GrantScope.TARGET),
                         new GrantEffectToTargetEffect(
                                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                                 new ScryEffect(1)),

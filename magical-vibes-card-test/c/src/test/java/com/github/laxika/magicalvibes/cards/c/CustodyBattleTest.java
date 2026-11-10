@@ -163,4 +163,21 @@ class CustodyBattleTest extends BaseCardTest {
         aura.setAttachedTo(creature.getId());
         return creature;
     }
+
+    @Test
+    @CardUsed(com.github.laxika.magicalvibes.cards.b.BloodgiftDemon.class)
+    @DisplayName("The creature's printed and granted upkeep abilities are two objects with their own targets")
+    void grantedAndPrintedUpkeepAbilitiesAreSeparate() {
+        Permanent demon = harness.addToBattlefieldAndReturn(player1,
+                new com.github.laxika.magicalvibes.cards.b.BloodgiftDemon());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new CustodyBattle());
+        aura.setAttachedTo(demon.getId());
+
+        advanceToUpkeep(player1);
+        while (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice) {
+            harness.handlePermanentChosen(player1, player2.getId());
+        }
+
+        assertThat(gd.stack).hasSize(2);
+    }
 }

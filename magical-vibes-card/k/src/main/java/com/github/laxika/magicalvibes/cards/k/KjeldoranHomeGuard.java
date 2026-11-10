@@ -29,9 +29,7 @@ public class KjeldoranHomeGuard extends Card {
         // this creature and create a 0/1 white Deserter creature token.
         addTrigger(Triggers.endOfCombat(),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceAttackedOrBlockedThisCombat()),
-                new PutCountersOnSelfEffect(CounterType.MINUS_ZERO_MINUS_ONE));
-        addTrigger(Triggers.endOfCombat(),
-                TriggerOptions.DEFAULT.withInterveningIf(new SourceAttackedOrBlockedThisCombat()),
+                new PutCountersOnSelfEffect(CounterType.MINUS_ZERO_MINUS_ONE),
                 DESERTER_TOKEN);
     }
 }

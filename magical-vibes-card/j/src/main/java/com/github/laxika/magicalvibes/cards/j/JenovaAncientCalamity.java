@@ -38,8 +38,7 @@ public class JenovaAncientCalamity extends Card {
         target(otherCreature, 0, 1)
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE,
-                                new SourcePower()))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                                new SourcePower()),
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.MUTANT));
 
         // "Whenever a Mutant you control dies during your turn" — Jenova herself counts while she is a Mutant.

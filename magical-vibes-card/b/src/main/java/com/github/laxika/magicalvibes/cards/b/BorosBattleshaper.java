@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetUntilEndOfCombatEffect;
@@ -22,15 +23,14 @@ public class BorosBattleshaper extends Card {
     public BorosBattleshaper() {
         setAllowSharedTargets(true);
         // At the beginning of each combat, up to one target creature attacks or blocks this combat
-        // if able and up to one target creature can't attack or block this combat.
-        target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
-                        SequenceEffect.of(
-                                new GrantStaticEffectToTargetUntilEndOfCombatEffect(new MustAttackEffect()),
-                                new GrantStaticEffectToTargetUntilEndOfCombatEffect(new MustBlockEachCombatEffect())));
-
-        target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
-                        new LockTargetPermanentEffect(true, true, false, EffectDuration.UNTIL_END_OF_COMBAT));
+        // if able and up to one target creature can't attack or block this combat: one ability of two target groups.
+        CardEffect attacksOrBlocks = SequenceEffect.of(
+                new GrantStaticEffectToTargetUntilEndOfCombatEffect(new MustAttackEffect()),
+                new GrantStaticEffectToTargetUntilEndOfCombatEffect(new MustBlockEachCombatEffect()));
+        CardEffect cantAttackOrBlock = new LockTargetPermanentEffect(true, true, false,
+                EffectDuration.UNTIL_END_OF_COMBAT);
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY), attacksOrBlocks, cantAttackOrBlock);
+        target(TargetFilters.creature(), 0, 1).bindEffect(attacksOrBlocks);
+        target(TargetFilters.creature(), 0, 1).bindEffect(cantAttackOrBlock);
     }
 }

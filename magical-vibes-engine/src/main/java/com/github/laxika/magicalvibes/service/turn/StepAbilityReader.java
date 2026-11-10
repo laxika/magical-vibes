@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityS
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -28,8 +27,9 @@ import java.util.UUID;
  * intervening "if" (CR 603.4) are true in the reader's {@link ConditionContext} (its source, its controller and, for
  * "that player", the player whose step it is), and while "this ability triggers only once" hasn't been used up; the
  * intervening "if" is wrapped around each of its effects as a {@link ConditionalEffect}, which checks it again as the
- * ability resolves. The effects then go to the reader's handling of their kinds, until step 15 of
- * effect-slot-refactor.md makes them read the event. The event condition isn't checked again.
+ * ability resolves. Each ability that triggers is a {@link Read}, which the step readers route whole, as one stack
+ * object (CR 603.3): to its target choice with all its effects, or onto the stack as written. The event condition
+ * isn't checked again.
  */
 public final class StepAbilityReader {
 
@@ -77,49 +77,39 @@ public final class StepAbilityReader {
      */
     public List<CardEffect> effects(GameData gameData, List<TriggeredAbility> abilities, ConditionContext context) {
         List<CardEffect> effects = new ArrayList<>();
-        for (List<CardEffect> abilityEffects : effectsByAbility(gameData, abilities, context)) {
-            effects.addAll(abilityEffects);
+        for (Read read : reads(gameData, abilities, context)) {
+            effects.addAll(read.effects());
         }
         return effects;
     }
 
     /**
-     * {@link #effects(GameData, List, ConditionContext)}, recording in {@code abilityByEffect} the ability each returned
-     * effect is of, by effect identity, for a reader that builds its stack entries from the effects: a granted ability
-     * names its granting permanent ({@link TriggeredAbility#grantingPermanentId()}) and its own target filter
-     * ({@link TriggeredAbility#targetFilter()}), which no card's target groups hold.
+     * One triggered ability as it triggers now: the ability, which names its granting permanent
+     * ({@link TriggeredAbility#grantingPermanentId()}) and its own target filter ({@link TriggeredAbility#targetFilter()}),
+     * and the effects it puts on the stack as one object (CR 603.3), its intervening "if" wrapped around each.
      */
-    public List<CardEffect> effects(GameData gameData, List<TriggeredAbility> abilities, ConditionContext context,
-                                    Map<CardEffect, TriggeredAbility> abilityByEffect) {
-        List<CardEffect> effects = new ArrayList<>();
-        for (TriggeredAbility ability : abilities) {
-            List<CardEffect> abilityEffects = triggeredEffects(gameData, ability, context);
-            if (abilityEffects == null) {
-                continue;
-            }
-            for (CardEffect effect : abilityEffects) {
-                abilityByEffect.put(effect, ability);
-            }
-            effects.addAll(abilityEffects);
+    public record Read(TriggeredAbility ability, List<CardEffect> effects) {
+
+        public Read {
+            Objects.requireNonNull(ability, "ability");
+            effects = List.copyOf(effects);
         }
-        return effects;
     }
 
     /**
-     * The effects of each ability of {@code abilities} that triggers now, one list for each ability (one stack object,
-     * CR 603.3), in order, judged in {@code context} as {@link #triggeredEffects(GameData, TriggeredAbility,
-     * ConditionContext)} says.
+     * Each ability of {@code abilities} that triggers now, in order, with the effects it puts on the stack, judged in
+     * {@code context} as {@link #triggeredEffects(GameData, TriggeredAbility, ConditionContext)} says. A step reader
+     * routes each one whole: to its target choice with all its effects when it targets, or onto the stack as written.
      */
-    public List<List<CardEffect>> effectsByAbility(GameData gameData, List<TriggeredAbility> abilities,
-                                                   ConditionContext context) {
-        List<List<CardEffect>> byAbility = new ArrayList<>();
+    public List<Read> reads(GameData gameData, List<TriggeredAbility> abilities, ConditionContext context) {
+        List<Read> reads = new ArrayList<>();
         for (TriggeredAbility ability : abilities) {
             List<CardEffect> effects = triggeredEffects(gameData, ability, context);
-            if (effects != null) {
-                byAbility.add(effects);
+            if (effects != null && !effects.isEmpty()) {
+                reads.add(new Read(ability, effects));
             }
         }
-        return byAbility;
+        return reads;
     }
 
     /**

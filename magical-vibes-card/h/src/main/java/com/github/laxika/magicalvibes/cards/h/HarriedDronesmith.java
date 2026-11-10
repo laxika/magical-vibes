@@ -36,7 +36,7 @@ public class HarriedDronesmith extends Card {
                 false,
                 false,
                 0,
-                Set.of(Keyword.HASTE)));
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new SacrificeCreatedPermanentsAtEndStepEffect());
+                Set.of(Keyword.HASTE)),
+                new SacrificeCreatedPermanentsAtEndStepEffect());
     }
 }

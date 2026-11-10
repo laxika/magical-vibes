@@ -203,4 +203,15 @@ class PlaneMergeElfTest extends BaseCardTest {
         assertThat(bears.getPowerModifier()).isZero();
         assertThat(bears.getToughnessModifier()).isZero();
     }
+
+    @Test
+    @DisplayName("Landship is one ability: one object on the stack")
+    void landshipIsOneStackObject() {
+        harness.addToBattlefield(player1, new PlaneMergeElf());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(1);
+    }
 }

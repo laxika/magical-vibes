@@ -80,4 +80,26 @@ class MiragePhalanxTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
     }
+
+    @Test
+    @CardUsed(com.github.laxika.magicalvibes.cards.m.MindwrackHarpy.class)
+    @DisplayName("The granted copy ability and the partner's printed combat ability are separate objects")
+    void grantedAndPrintedCombatAbilitiesAreSeparate() {
+        Permanent harpy = harness.addToBattlefieldAndReturn(player1,
+                new com.github.laxika.magicalvibes.cards.m.MindwrackHarpy());
+        harness.setHand(player1, List.of(new MiragePhalanx()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, harpy.getId());
+
+        advanceToBeginningOfCombat();
+
+        assertThat(gd.stack).hasSize(3);
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Mindwrack Harpy"))
+                .hasSize(2);
+    }
 }

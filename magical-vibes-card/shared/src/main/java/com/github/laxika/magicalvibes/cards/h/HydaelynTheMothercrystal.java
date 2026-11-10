@@ -36,11 +36,9 @@ public class HydaelynTheMothercrystal extends Card {
                 targetCreature,
                 "Target must be another creature you control"))
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET,
-                                GrantDuration.UNTIL_YOUR_NEXT_TURN))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                                GrantDuration.UNTIL_YOUR_NEXT_TURN),
                         new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)),
                                 new DrawCardEffect()));

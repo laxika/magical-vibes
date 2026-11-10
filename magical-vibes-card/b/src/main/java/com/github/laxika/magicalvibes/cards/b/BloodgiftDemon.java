@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BloodgiftDemon extends Card {
 
     public BloodgiftDemon() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DrawCardForTargetPlayerEffect(1, false, true));
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DrawCardForTargetPlayerEffect(1, false, true),
+                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
     }
 }

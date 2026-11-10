@@ -17,10 +17,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class DeterminedIteration extends Card {
 
     public DeterminedIteration() {
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new PopulateEffect());
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new PopulateEffect(),
                 new GrantKeywordEffect(Keyword.HASTE, GrantScope.TOKENS_CREATED_THIS_RESOLUTION,
-                        GrantDuration.INDEFINITE));
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new SacrificeCreatedPermanentsAtEndStepEffect());
+                        GrantDuration.INDEFINITE),
+                new SacrificeCreatedPermanentsAtEndStepEffect());
     }
 }

@@ -37,8 +37,7 @@ public class BaxterStockman extends Card {
                 )),
                 "Target must be an artifact creature you control"
         )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new BoostTargetCreatureEffect(3, 0))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                new BoostTargetCreatureEffect(3, 0),
                         new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE), GrantScope.TARGET));
     }
 }

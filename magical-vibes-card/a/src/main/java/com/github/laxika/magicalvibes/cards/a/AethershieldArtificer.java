@@ -30,8 +30,7 @@ public class AethershieldArtificer extends Card {
                 )),
                 "Target must be an artifact creature you control"
         ))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(2, 2))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(2, 2),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
     }
 }

@@ -20,10 +20,9 @@ public class YouCannotHideFromMe extends Card {
 
     public YouCannotHideFromMe() {
         target(TargetFilters.creature(), 0, 1)
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(2, 2))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MakeCreatureUnblockableEffect());
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(2, 2),
+                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET),
+                        new MakeCreatureUnblockableEffect());
         addTrigger(Triggers.endStep(ActivePlayer.OPPONENT),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new TargetPlayerLifeAtMost(GameData.STARTING_LIFE_TOTAL / 2 - 1)),

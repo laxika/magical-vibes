@@ -13,10 +13,8 @@ public class StormChargedSlasher extends Card {
 
     public StormChargedSlasher() {
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(2, 0))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(2, 0),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 }

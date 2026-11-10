@@ -34,8 +34,7 @@ public class DoctorDoomKingOfLatveria extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.VILLAIN))),
                 "Target must be a Villain you control"))
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET),
                         new DrawDiscardAndConniveEffect(true));
     }
 }

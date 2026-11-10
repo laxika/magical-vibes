@@ -46,8 +46,7 @@ public class ImotekhTheStormlord extends Card {
                 )),
                 "Target must be another artifact creature you control"
         )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new BoostTargetCreatureEffect(2, 2))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                new BoostTargetCreatureEffect(2, 2),
                         new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET));
     }
 }

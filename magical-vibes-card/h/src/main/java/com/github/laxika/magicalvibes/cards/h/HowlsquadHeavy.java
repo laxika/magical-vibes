@@ -40,8 +40,7 @@ public class HowlsquadHeavy extends Card {
                 null,
                 List.of(CardSubtype.GOBLIN),
                 Set.of(),
-                Set.of()));
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                Set.of()),
                 new MakeCreatedPermanentsMustAttackThisCombatEffect());
 
         addActivatedAbility(new ActivatedAbility(

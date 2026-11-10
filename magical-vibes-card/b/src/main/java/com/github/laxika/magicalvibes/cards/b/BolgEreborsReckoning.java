@@ -25,8 +25,7 @@ public class BolgEreborsReckoning extends Card {
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN, CardSubtype.ORC)),
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
-                new BoostAllOwnCreaturesEffect(2, 2, otherGoblinOrOrc));
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
+                new BoostAllOwnCreaturesEffect(2, 2, otherGoblinOrOrc),
                 new BoostAllCreaturesEffect(-1, -1,
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
     }

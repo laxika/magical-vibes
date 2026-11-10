@@ -24,8 +24,7 @@ public class LagomosHandOfHatred extends Card {
         // trample and haste. Sacrifice it at the beginning of the next end step.
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new CreateTokenEffect(
                 "Elemental", 2, 1, CardColor.RED, List.of(CardSubtype.ELEMENTAL),
-                Set.of(Keyword.TRAMPLE, Keyword.HASTE), Set.of()));
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                Set.of(Keyword.TRAMPLE, Keyword.HASTE), Set.of()),
                 new SacrificeCreatedPermanentsAtEndStepEffect());
 
         // {T}: Search your library for a card, put it into your hand, then shuffle. Activate only

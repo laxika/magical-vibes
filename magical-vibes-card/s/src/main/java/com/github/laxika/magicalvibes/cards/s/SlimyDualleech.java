@@ -28,8 +28,7 @@ public class SlimyDualleech extends Card {
                 )),
                 "Target must be a creature you control with power 2 or less"
         ))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(1, 0))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(1, 0),
                         new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET));
     }
 }

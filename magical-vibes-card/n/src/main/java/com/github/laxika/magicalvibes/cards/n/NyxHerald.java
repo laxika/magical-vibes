@@ -34,8 +34,7 @@ public class NyxHerald extends Card {
                 "Target must be an enchanted creature or an enchantment creature you control"
         );
         target(targetFilter)
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(1, 1))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(1, 1),
                         new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
     }
 }

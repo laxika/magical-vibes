@@ -47,8 +47,7 @@ public class XenagosGodOfRevels extends Card {
                 )),
                 "Target must be another creature you control"
         )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new BoostTargetCreatureEffect(new TargetPower(), new TargetPower()))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                new BoostTargetCreatureEffect(new TargetPower(), new TargetPower()),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 }

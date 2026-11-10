@@ -46,8 +46,7 @@ public class AdditiveEvolution extends Card {
                 "Target must be a creature you control"
         ))
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                         new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET));
     }
 }

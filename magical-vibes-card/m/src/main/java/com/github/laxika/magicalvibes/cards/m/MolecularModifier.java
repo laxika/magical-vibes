@@ -15,8 +15,7 @@ public class MolecularModifier extends Card {
 
     public MolecularModifier() {
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(1, 0))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(1, 0),
                         new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET));
     }
 }

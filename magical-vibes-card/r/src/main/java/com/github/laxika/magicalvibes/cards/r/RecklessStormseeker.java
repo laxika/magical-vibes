@@ -19,8 +19,7 @@ public class RecklessStormseeker extends Card {
         setBackFaceCard(new StormChargedSlasher());
 
         target(TargetFilters.creatureYouControl())
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(1, 0))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(1, 0),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 

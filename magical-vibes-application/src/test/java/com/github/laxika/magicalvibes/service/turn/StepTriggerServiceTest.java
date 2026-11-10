@@ -2177,22 +2177,42 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        void groupedControllerEndStepEffectsQueueOneTargetSelection() {
+        @DisplayName("One end-step ability of two target groups queues one target selection of both its effects")
+        void oneControllerEndStepAbilityOfTwoTargetGroupsQueuesOneTargetSelection() {
             Card card = createCardWithName("Grouped End Step");
-            card.target(com.github.laxika.magicalvibes.model.filter.TargetFilters.creature(), 0, 1)
-                    .addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                            com.github.laxika.magicalvibes.model.effect.FlickerEffect.flickerTarget());
-            card.target(com.github.laxika.magicalvibes.model.filter.TargetFilters.creature(), 0, 1)
-                    .addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                            com.github.laxika.magicalvibes.model.effect.FlickerEffect.flickerTarget());
+            CardEffect first = com.github.laxika.magicalvibes.model.effect.FlickerEffect.flickerTarget();
+            CardEffect second = com.github.laxika.magicalvibes.model.effect.FlickerEffect.flickerTarget();
+            card.addTrigger(Triggers.endStep(ActivePlayer.YOU), first, second);
+            card.target(com.github.laxika.magicalvibes.model.filter.TargetFilters.creature(), 0, 1).bindEffect(first);
+            card.target(com.github.laxika.magicalvibes.model.filter.TargetFilters.creature(), 0, 1).bindEffect(second);
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
 
             sut.handleEndStepTriggers(gd);
 
             var pending = gd.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
             assertThat(pending).isNotNull();
-            assertThat(pending.effects()).hasSize(2);
+            assertThat(pending.effects()).containsExactly(first, second);
             assertThat(gd.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Two end-step abilities with their own target groups queue a target selection each")
+        void twoControllerEndStepAbilitiesQueueATargetSelectionEach() {
+            Card card = createCardWithName("Two End Step Abilities");
+            CardEffect first = com.github.laxika.magicalvibes.model.effect.FlickerEffect.flickerTarget();
+            CardEffect second = com.github.laxika.magicalvibes.model.effect.FlickerEffect.flickerTarget();
+            card.target(com.github.laxika.magicalvibes.model.filter.TargetFilters.creature(), 0, 1)
+                    .addTrigger(Triggers.endStep(ActivePlayer.YOU), first);
+            card.target(com.github.laxika.magicalvibes.model.filter.TargetFilters.creature(), 0, 1)
+                    .addTrigger(Triggers.endStep(ActivePlayer.YOU), second);
+            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
+
+            sut.handleEndStepTriggers(gd);
+
+            var firstPending = gd.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+            var secondPending = gd.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+            assertThat(firstPending.effects()).containsExactly(first);
+            assertThat(secondPending.effects()).containsExactly(second);
         }
 
         @Test

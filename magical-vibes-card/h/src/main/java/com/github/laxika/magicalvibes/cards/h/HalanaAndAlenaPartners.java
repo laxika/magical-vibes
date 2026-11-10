@@ -33,8 +33,7 @@ public class HalanaAndAlenaPartners extends Card {
                 anotherCreatureYouControl,
                 "Target must be another creature you control"
         )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new SourcePower()))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, new SourcePower()),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
     }
 }

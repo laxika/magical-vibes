@@ -25,8 +25,7 @@ public class PrimordialPlasm extends Card {
         ));
         target(new PermanentPredicateTargetFilter(otherCreature, "Target must be another creature"))
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new BoostTargetCreatureEffect(2, 2))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                        new BoostTargetCreatureEffect(2, 2),
                         new LosesAllAbilitiesEffect(GrantScope.TARGET, EffectDuration.UNTIL_END_OF_TURN));
     }
 }

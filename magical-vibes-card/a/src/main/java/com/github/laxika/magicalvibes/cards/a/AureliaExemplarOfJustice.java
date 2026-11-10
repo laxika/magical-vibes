@@ -37,11 +37,9 @@ public class AureliaExemplarOfJustice extends Card {
 
         target(TargetFilters.creatureYouControl(), 0, 1)
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new BoostTargetCreatureEffect(2, 0))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                        new BoostTargetCreatureEffect(2, 0),
                         GrantKeywordEffect.toTargetIf(Keyword.TRAMPLE,
-                                new PermanentColorInPredicate(Set.of(CardColor.RED))))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                                new PermanentColorInPredicate(Set.of(CardColor.RED))),
                         GrantKeywordEffect.toTargetIf(Keyword.VIGILANCE,
                                 new PermanentColorInPredicate(Set.of(CardColor.WHITE))));
     }

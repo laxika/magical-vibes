@@ -26,8 +26,7 @@ public class CombatProfessor extends Card {
                 )),
                 "Target must be a creature you control"
         ))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(1, 0))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new BoostTargetCreatureEffect(1, 0),
                         new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET));
     }
 }

@@ -106,8 +106,12 @@ ROWS = [
 # ability as "any spell" through the generic cast collector (the spell-cast watches have no handler), and Relic Bind's
 # "choose one" goes through the enchanted-tap default, its mode announced from the stack. What is left of the
 # class-keyed registrations is the `HAND` ROUTE above.
+# Row 17z13e8c (run 17z13e8c): every `StepTriggerService` reader reads each ability whole (`StepAbilityReader.reads`)
+# and routes it as one stack object; the readers' merges by target kind and their per-effect splits are gone, and so
+# are the beginning-of-combat reader's untargeted "you may" branch and its Equipment skip. The audit sees no grouping:
+# the run's Findings list what was read.
 DONE_ROWS = {"17z13e2", "17z13e3", "17z13e4", "17z13e5", "17z13e5b", "17z13e6", "17z13e7", "17z13e8", "17z13e8b",
-             "17z13e9"}
+             "17z13e8c", "17z13e9"}
 
 # The reader branches keyed by an effect's class (file, effect class) -> verdict. Row 17z13e's three (the your-upkeep
 # `SurveilEffect`, the your-draw-step `MayEffect` and Haphazard Bombardment's branches) are gone. Run 17z13e8 read the
@@ -122,8 +126,10 @@ STATIC = "STATIC"
 ENGINE = "ENGINE"
 READERS = {
     # The modal goes to its mode choice as written (CR 603.3c, 700.2): the your-upkeep, precombat-main, your-end-step
-    # and beginning-of-combat readers; the chosen upkeep mode with no target records the source, the permanent it is
-    # attached to and the active player, as the reader's untargeted entries do.
+    # and beginning-of-combat readers (`StepTriggerService.modalOf`, which fails loudly on a modal ability with other
+    # effects, so the pattern here doesn't see its `ChooseOneEffect.class` reads; run 17z13e8c); the chosen upkeep mode
+    # with no target records the source, the permanent it is attached to and the active player, as the reader's
+    # untargeted entries do.
     ("StepTriggerService.java", "ChooseOneEffect"): ROUTE,
     ("StepTriggerService.java", "ChooseOneAtTriggerTimeEffect"): ROUTE,
     # "Choose one at random" picks its mode as the ability goes on the stack, before its targets (run 17z11e2).
@@ -131,8 +137,8 @@ READERS = {
     # The remaining `MayEffect` reads only pick a target choice: Puca's Mischief's interdependent exchange looks through
     # its "you may", a targeted "you may" upkeep ability picks between the generic path's two permanent-target choices,
     # the main-phase graveyard choice's minimum looks through the wrappers (with `ReturnCardFromGraveyardEffect`,
-    # `SequenceEffect`, `ConditionalEffect` and `MayPayManaEffect`), and an untargeted beginning-of-combat "you may" is
-    # its own stack object (the reader merges the other untargeted effects into one entry) with the same record.
+    # `SequenceEffect`, `ConditionalEffect` and `MayPayManaEffect`). The beginning-of-combat reader's untargeted "you
+    # may" branch is gone (run 17z13e8c): the ability goes on the stack whole with the reader's record.
     ("StepTriggerService.java", "MayEffect"): ROUTE,
     ("StepTriggerService.java", "MayPayManaEffect"): ROUTE,
     ("StepTriggerService.java", "SequenceEffect"): ROUTE,

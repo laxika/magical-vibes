@@ -45,8 +45,7 @@ public class OldHobAlleycatBlues extends Card {
                 false,
                 false,
                 0,
-                Set.of(Keyword.HASTE)));
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                Set.of(Keyword.HASTE)),
                 new DestroyCreatedPermanentsAtEndStepEffect());
 
         addActivatedAbility(new ActivatedAbility(

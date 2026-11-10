@@ -16,8 +16,7 @@ public class PrairieSurvivalist extends Card {
     public PrairieSurvivalist() {
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new PerpetuallyBoostTargetCreatureEffect(1, 0))
-                .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                        new PerpetuallyBoostTargetCreatureEffect(1, 0),
                         new PerpetuallyBoostCreatureCardInHandEffect(1, Set.of()));
     }
 }

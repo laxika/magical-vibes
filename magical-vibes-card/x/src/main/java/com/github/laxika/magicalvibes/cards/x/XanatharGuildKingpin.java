@@ -22,8 +22,7 @@ public class XanatharGuildKingpin extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                        new TargetPlayerCantCastSpellTypesThisTurnEffect(EnumSet.allOf(CardType.class)))
-                .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                        new TargetPlayerCantCastSpellTypesThisTurnEffect(EnumSet.allOf(CardType.class)),
                         new GrantControllerLibraryTopPermissionForTargetPlayerUntilEndOfTurnEffect());
     }
 }

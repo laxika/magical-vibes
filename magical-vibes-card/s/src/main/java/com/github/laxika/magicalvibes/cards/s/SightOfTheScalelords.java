@@ -16,8 +16,7 @@ public class SightOfTheScalelords extends Card {
     public SightOfTheScalelords() {
         PermanentToughnessAtLeastPredicate toughnessAtLeastFour = new PermanentToughnessAtLeastPredicate(4);
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new BoostAllOwnCreaturesEffect(2, 2, toughnessAtLeastFour));
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                new BoostAllOwnCreaturesEffect(2, 2, toughnessAtLeastFour),
                 new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES, toughnessAtLeastFour));
     }
 }

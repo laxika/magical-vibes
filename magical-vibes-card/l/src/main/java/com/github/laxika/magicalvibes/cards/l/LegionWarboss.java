@@ -45,8 +45,7 @@ public class LegionWarboss extends Card {
                 null,
                 List.of(CardSubtype.GOBLIN),
                 Set.of(),
-                Set.of(Keyword.HASTE)));
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                Set.of(Keyword.HASTE)),
                 new MakeCreatedPermanentsMustAttackThisCombatEffect());
     }
 }
