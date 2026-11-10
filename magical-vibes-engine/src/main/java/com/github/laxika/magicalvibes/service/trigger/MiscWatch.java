@@ -44,6 +44,8 @@ public enum MiscWatch implements TriggerWatch {
             Zone.BATTLEFIELD),
     /** "Whenever this Equipment becomes attached to a creature". */
     ON_EQUIPMENT_ATTACHED(Triggers.becomesAttachedToCreature(), Zone.BATTLEFIELD),
+    /** "Whenever this Equipment becomes unattached from a permanent". */
+    ON_EQUIPMENT_UNATTACHED(Triggers.becomesUnattachedFromPermanent(), Zone.BATTLEFIELD),
     /** "Whenever this creature crews a Vehicle". */
     ON_CREWS_VEHICLE(Triggers.crewsVehicle(), Zone.BATTLEFIELD),
     /** "Whenever a creature you control crews a Vehicle", this creature included. */

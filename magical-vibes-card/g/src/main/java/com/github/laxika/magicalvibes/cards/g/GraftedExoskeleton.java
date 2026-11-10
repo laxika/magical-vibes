@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -18,7 +19,7 @@ public class GraftedExoskeleton extends Card {
     public GraftedExoskeleton() {
         addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantKeywordEffect(Keyword.INFECT, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new SacrificeOnUnattachEffect());
+        addTrigger(Triggers.becomesUnattachedFromPermanent(), new SacrificeTriggeringPermanentEffect());
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

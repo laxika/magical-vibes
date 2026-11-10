@@ -122,7 +122,9 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryCouldTargetAnotherP
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaSpentLessThanManaValuePredicate;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.filter.StackEntryColoredManaSpentPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntrySnowManaOfItsColorSpentPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryManaValueEqualsSourceChosenNumberPredicate;
@@ -5751,6 +5753,12 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryColoredManaSpentPredicate) {
             return !gameData.getSpellCastColorsSpent(stackEntry.getCard().getId()).isEmpty();
+        }
+        if (predicate instanceof StackEntrySnowManaOfItsColorSpentPredicate) {
+            UUID spellCardId = stackEntry.getCard().getId();
+            return stackEntry.getCard().getColors().stream()
+                    .map(color -> ManaColor.valueOf(color.name()))
+                    .anyMatch(color -> gameData.getSpellCastSnowManaSpentByColor(spellCardId, color) > 0);
         }
         if (predicate instanceof StackEntryManaSpentLessThanManaValuePredicate) {
             if (stackEntry.isCastFaceDown()) return false;

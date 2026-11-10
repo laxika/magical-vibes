@@ -1605,7 +1605,29 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                UUID sourcePermanentId, UUID choosingPlayerId,
                                UUID attackedTargetId, UUID triggeringPermanentId, Integer xValue,
                                int eventValue, UUID triggeringPlayerId,
-                               long sourceGraveyardEntryVersion) implements PermanentChoiceContext {
+                               long sourceGraveyardEntryVersion,
+                               StackEntry triggerRecord) implements PermanentChoiceContext {
+
+        public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, UUID choosingPlayerId,
+                                   UUID attackedTargetId, UUID triggeringPermanentId, Integer xValue,
+                                   int eventValue, UUID triggeringPlayerId,
+                                   long sourceGraveyardEntryVersion) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId,
+                    attackedTargetId, triggeringPermanentId, xValue, eventValue, triggeringPlayerId,
+                    sourceGraveyardEntryVersion, null);
+        }
+
+        /**
+         * This choice with {@code record}, the entry the collector builds for an ability of the same trigger that needs
+         * no choice: the entry the chosen target goes on the stack with carries what it records
+         * ({@code StackEntry.carryTriggerRecord}).
+         */
+        public AttackTriggerTarget withTriggerRecord(StackEntry record) {
+            return new AttackTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId,
+                    attackedTargetId, triggeringPermanentId, xValue, eventValue, triggeringPlayerId,
+                    sourceGraveyardEntryVersion, record == null ? null : new StackEntry(record));
+        }
 
         public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID choosingPlayerId,
@@ -1626,14 +1648,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public AttackTriggerTarget withEventValue(int eventValue) {
             return new AttackTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId,
                     attackedTargetId, triggeringPermanentId, xValue, eventValue, triggeringPlayerId,
-                    sourceGraveyardEntryVersion);
+                    sourceGraveyardEntryVersion, triggerRecord);
         }
 
         /** This choice with {@code triggeringPlayerId} as the player the event was about ("that player"). */
         public AttackTriggerTarget withTriggeringPlayer(UUID triggeringPlayerId) {
             return new AttackTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId,
                     attackedTargetId, triggeringPermanentId, xValue, eventValue, triggeringPlayerId,
-                    sourceGraveyardEntryVersion);
+                    sourceGraveyardEntryVersion, triggerRecord);
         }
 
         /**
@@ -1643,7 +1665,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
          */
         public AttackTriggerTarget withSourceGraveyardEntryVersion(long version) {
             return new AttackTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId, choosingPlayerId,
-                    attackedTargetId, triggeringPermanentId, xValue, eventValue, triggeringPlayerId, version);
+                    attackedTargetId, triggeringPermanentId, xValue, eventValue, triggeringPlayerId, version, triggerRecord);
         }
 
         public AttackTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -1855,7 +1877,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                  UUID sourcePermanentId, boolean modesResetEachTurn,
                                  boolean consumeModes, UUID triggeringCardId,
                                  UUID attackedTargetId, UUID triggeringPermanentId,
-                                 boolean rememberLastChosenMode, ModeCount modeCount)
+                                 boolean rememberLastChosenMode, ModeCount modeCount,
+                                 StackEntry triggerRecord)
             implements PermanentChoiceContext {
 
         /** How many modes the ability's controller chooses: from {@code minimum} to {@code maximum}. */
@@ -1875,6 +1898,27 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                      UUID sourcePermanentId, boolean modesResetEachTurn,
                                      boolean consumeModes, UUID triggeringCardId,
                                      UUID attackedTargetId, UUID triggeringPermanentId,
+                                     boolean rememberLastChosenMode, ModeCount modeCount) {
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, consumeModes,
+                    triggeringCardId, attackedTargetId, triggeringPermanentId, rememberLastChosenMode, modeCount,
+                    null);
+        }
+
+        /**
+         * This choice with {@code record}, the entry the collector builds for an ability of the same trigger that needs
+         * no choice: the entry the chosen modes go on the stack as carries what it records
+         * ({@code StackEntry.carryTriggerRecord}).
+         */
+        public TriggeredModalTrigger withTriggerRecord(StackEntry record) {
+            return new TriggeredModalTrigger(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
+                    consumeModes, triggeringCardId, attackedTargetId, triggeringPermanentId, rememberLastChosenMode,
+                    modeCount, record == null ? null : new StackEntry(record));
+        }
+
+        public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                     UUID sourcePermanentId, boolean modesResetEachTurn,
+                                     boolean consumeModes, UUID triggeringCardId,
+                                     UUID attackedTargetId, UUID triggeringPermanentId,
                                      boolean rememberLastChosenMode) {
             this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, consumeModes,
                     triggeringCardId, attackedTargetId, triggeringPermanentId, rememberLastChosenMode, null);
@@ -1884,7 +1928,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public TriggeredModalTrigger withModeCount(int minimum, int maximum) {
             return new TriggeredModalTrigger(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
                     consumeModes, triggeringCardId, attackedTargetId, triggeringPermanentId, rememberLastChosenMode,
-                    new ModeCount(minimum, maximum));
+                    new ModeCount(minimum, maximum), triggerRecord);
         }
 
         public TriggeredModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
@@ -3442,13 +3486,42 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        boolean markSourceOncePerTurnOnAcceptance,
                                        List<Permanent> attackingPermanentSnapshots,
                                        Integer graveyardTargetMaxManaValue,
-                                       StackEntry triggeringSpell)
+                                       StackEntry triggeringSpell,
+                                       StackEntry triggerRecord)
     implements PermanentChoiceContext {
 
         public SpellGraveyardTargetTrigger {
             attackingPermanentSnapshots = attackingPermanentSnapshots == null
                     ? List.of() : List.copyOf(attackingPermanentSnapshots);
             triggeringSpell = triggeringSpell == null ? null : new StackEntry(triggeringSpell);
+        }
+
+        public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                           UUID graveyardOwnerId, int minCount, int xValue, int maxCount,
+                                           Integer sourcePowerAtTrigger,
+                                           boolean sourceAlternateCostAtTrigger,
+                                           UUID triggeringPermanentId,
+                                           UUID sourcePermanentId,
+                                           boolean markSourceOncePerTurnOnAcceptance,
+                                           List<Permanent> attackingPermanentSnapshots,
+                                           Integer graveyardTargetMaxManaValue,
+                                           StackEntry triggeringSpell) {
+            this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
+                    sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId, sourcePermanentId,
+                    markSourceOncePerTurnOnAcceptance, attackingPermanentSnapshots, graveyardTargetMaxManaValue,
+                    triggeringSpell, null);
+        }
+
+        /**
+         * This choice with {@code record}, the entry the collector builds for an ability of the same trigger that needs
+         * no choice: the entry the chosen cards go on the stack with carries what it records
+         * ({@code StackEntry.carryTriggerRecord}).
+         */
+        public SpellGraveyardTargetTrigger withTriggerRecord(StackEntry record) {
+            return new SpellGraveyardTargetTrigger(sourceCard, controllerId, effects, graveyardOwnerId, minCount,
+                    xValue, maxCount, sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId,
+                    sourcePermanentId, markSourceOncePerTurnOnAcceptance, attackingPermanentSnapshots,
+                    graveyardTargetMaxManaValue, triggeringSpell, record == null ? null : new StackEntry(record));
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -3487,7 +3560,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             return new SpellGraveyardTargetTrigger(sourceCard, controllerId, effects, graveyardOwnerId, minCount,
                     xValue, maxCount, sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId,
                     sourcePermanentId, markSourceOncePerTurnOnAcceptance, attackingPermanentSnapshots, maxManaValue,
-                    triggeringSpell);
+                    triggeringSpell, triggerRecord);
         }
 
         /** This choice for a spell-cast ability that triggered on {@code spell}, as it was on the stack then. */
@@ -3495,7 +3568,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             return new SpellGraveyardTargetTrigger(sourceCard, controllerId, effects, graveyardOwnerId, minCount,
                     xValue, maxCount, sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId,
                     sourcePermanentId, markSourceOncePerTurnOnAcceptance, attackingPermanentSnapshots,
-                    graveyardTargetMaxManaValue, spell);
+                    graveyardTargetMaxManaValue, spell, triggerRecord);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,

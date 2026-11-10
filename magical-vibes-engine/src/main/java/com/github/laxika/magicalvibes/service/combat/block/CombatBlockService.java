@@ -1456,10 +1456,21 @@ public class CombatBlockService {
                 .filter(GraveyardCardChoosingEffect::choosesGraveyardCards)
                 .findFirst()
                 .orElse(null);
+        StackEntry trigger = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                attacker.getCard(),
+                activeId,
+                attacker.getCard().getName() + "'s unblocked-attack trigger",
+                effects,
+                defenderId,
+                attacker.getId());
+        // "Defending player" is determined by the combat, not chosen — the trigger can't fizzle.
+        trigger.setNonTargeting(true);
         if (graveyardChoice != null) {
-            // The service owns pushing the entry and its logging.
+            // The service owns pushing the entry and its logging; the entry carries what this one records, and waits
+            // its turn while another ability's choice is being made.
             graveyardTargetingService.handleUnblockedAttackGraveyardChoiceTargeting(gameData, activeId,
-                    attacker.getCard(), effects, attacker.getId(), defenderId, graveyardChoice);
+                    attacker.getCard(), effects, attacker.getId(), defenderId, graveyardChoice, trigger);
             return;
         }
         gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(), "'s unblocked-attack ability triggers."));
@@ -1480,16 +1491,6 @@ public class CombatBlockService {
                     gameData.id, attacker.getCard().getName());
             return;
         }
-        StackEntry trigger = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                attacker.getCard(),
-                activeId,
-                attacker.getCard().getName() + "'s unblocked-attack trigger",
-                effects,
-                defenderId,
-                attacker.getId());
-        // "Defending player" is determined by the combat, not chosen — the trigger can't fizzle.
-        trigger.setNonTargeting(true);
         gameData.stack.add(trigger);
         log.info("Game {} - {} unblocked-attack trigger pushed onto stack", gameData.id, attacker.getCard().getName());
     }

@@ -216,7 +216,7 @@ class GraveyardTargetingServiceTest {
         gd.playerGraveyards.put(damagedPlayerId, damagedGraveyard);
 
         service.handleCombatDamageGraveyardChoiceTargeting(gd, player1Id, froghemoth, List.of(effect),
-                UUID.randomUUID(), damagedPlayerId, effect, 2);
+                UUID.randomUUID(), damagedPlayerId, effect, 2, null);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.graveyardTargetOperation.targetPlayerId).isEqualTo(damagedPlayerId);

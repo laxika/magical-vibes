@@ -110,6 +110,12 @@ public class GraveyardTargetOperationState {
      * selection for the stack entry ("target card with the same name as that spell"), or {@code null}.
      */
     public StackEntry triggeringSpell;
+    /**
+     * The entry the collector builds for an ability of the same trigger that needs no choice, or {@code null}: the
+     * triggered entry the chosen cards go on the stack with carries what it records
+     * ({@code StackEntry.carryTriggerRecord}).
+     */
+    public StackEntry triggerRecord;
     /** Attack destination captured for an attack trigger whose graveyard target is chosen interactively. */
     public UUID attackedTargetId;
     /** Chapter name for saga chapter graveyard targets (e.g. "I", "II"). */

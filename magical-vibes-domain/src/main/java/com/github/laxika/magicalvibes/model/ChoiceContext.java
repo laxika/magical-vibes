@@ -3179,10 +3179,21 @@ public sealed interface ChoiceContext {
                                 List<ChooseOneEffect.ChooseOneOption> chosenModes,
                                 UUID triggeringCardId, UUID attackedTargetId,
                                 UUID triggeringPermanentId,
-                                boolean rememberLastChosenMode) implements ChoiceContext {
+                                boolean rememberLastChosenMode,
+                                StackEntry triggerRecord) implements ChoiceContext {
 
         public TriggeredModalChoice {
             chosenModes = List.copyOf(chosenModes);
+        }
+
+        public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                    UUID sourcePermanentId, boolean modesResetEachTurn, boolean consumeModes,
+                                    List<ChooseOneEffect.ChooseOneOption> chosenModes,
+                                    UUID triggeringCardId, UUID attackedTargetId,
+                                    UUID triggeringPermanentId,
+                                    boolean rememberLastChosenMode) {
+            this(sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn, consumeModes, chosenModes,
+                    triggeringCardId, attackedTargetId, triggeringPermanentId, rememberLastChosenMode, null);
         }
 
         public TriggeredModalChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,

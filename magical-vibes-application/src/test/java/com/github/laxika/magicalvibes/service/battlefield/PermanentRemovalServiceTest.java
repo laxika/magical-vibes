@@ -13,7 +13,8 @@ import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreaturesYouControlToHandInsteadOfDyingEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -225,7 +226,7 @@ class PermanentRemovalServiceTest {
         card.setType(CardType.ARTIFACT);
         card.setManaCost("{2}");
         card.setSubtypes(List.of(CardSubtype.EQUIPMENT));
-        card.addStaticEffect(new SacrificeOnUnattachEffect());
+        card.addTrigger(Triggers.becomesUnattachedFromPermanent(), new SacrificeTriggeringPermanentEffect());
         return card;
     }
 
@@ -730,7 +731,7 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
-        @DisplayName("Equipment with SacrificeOnUnattachEffect sacrifices attached creature when removed")
+        @DisplayName("Equipment with a becomes-unattached sacrifice ability sacrifices attached creature when removed")
         void sacrificeOnUnattachWhenEquipmentRemoved() {
             Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
             Permanent equipment = addPermanent(player1Id, createEquipmentWithSacrificeOnUnattach("Grafted Exoskeleton"));
@@ -961,7 +962,7 @@ class PermanentRemovalServiceTest {
         }
 
         @Test
-        @DisplayName("Equipment with SacrificeOnUnattachEffect sacrifices creature when exiled")
+        @DisplayName("Equipment with a becomes-unattached sacrifice ability sacrifices creature when exiled")
         void sacrificeOnUnattachWhenEquipmentExiled() {
             Permanent creature = addPermanent(player1Id, createCreature("Grizzly Bears"));
             Permanent equipment = addPermanent(player1Id, createEquipmentWithSacrificeOnUnattach("Grafted Exoskeleton"));

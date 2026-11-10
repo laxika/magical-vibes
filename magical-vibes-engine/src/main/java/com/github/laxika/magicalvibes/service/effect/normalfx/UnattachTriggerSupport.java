@@ -6,12 +6,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyOnUnattachEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOnUnattachEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTriggeringPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
+import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -21,10 +18,11 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Materializes triggered abilities for Equipment that becomes unattached: the destroy-on-unattach
- * ability and the sacrifice-on-unattach ability (Grafted Wargear, Stitcher's Graft). Both go on the
- * stack as triggers that name the previously-attached permanent, so the permanent stays on the
- * battlefield until the trigger resolves.
+ * Puts the "whenever this Equipment becomes unattached from a permanent" abilities of an Equipment that became
+ * unattached on the stack ({@code Triggers.becomesUnattachedFromPermanent()}: Captain's Hook, Grafted Wargear,
+ * Grafted Exoskeleton, Stitcher's Graft). Each ability is one object of all its effects (CR 603.3) and records the
+ * permanent the Equipment was attached to as its triggering permanent, "that permanent", whatever its effects are, so
+ * the permanent stays on the battlefield until the ability resolves.
  */
 @Slf4j
 @Component
@@ -44,41 +42,22 @@ public class UnattachTriggerSupport {
         if (oldAttachedTo == null || controllerId == null) {
             return;
         }
-
-        if (hasStaticEffect(equipment, DestroyOnUnattachEffect.class)) {
-            enqueueUnattachTrigger(gameData, equipment, oldAttachedTo, controllerId,
-                    new DestroyReferencedPermanentEffect(PermanentReference.TRIGGERING));
+        for (List<CardEffect> effects : MiscAbilityReader.printedEffectsByAbility(equipment.getCard(),
+                MiscWatch.ON_EQUIPMENT_UNATTACHED)) {
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    equipment.getCard(),
+                    controllerId,
+                    equipment.getCard().getName() + "'s ability",
+                    new ArrayList<>(effects),
+                    null,
+                    equipment.getId()
+            );
+            trigger.setNonTargeting(true);
+            trigger.setTriggeringPermanentId(oldAttachedTo);
+            gameData.enqueueTrigger(trigger);
+            gameLogService.append(gameData, GameLog.abilityTriggers(equipment.getCard()));
+            log.info("Game {} - {} triggers on becoming unattached", gameData.id, equipment.getCard().getName());
         }
-        if (hasStaticEffect(equipment, SacrificeOnUnattachEffect.class)) {
-            enqueueUnattachTrigger(gameData, equipment, oldAttachedTo, controllerId,
-                    new SacrificeTriggeringPermanentEffect());
-        }
-    }
-
-    private void enqueueUnattachTrigger(GameData gameData, Permanent equipment, UUID oldAttachedTo,
-                                        UUID controllerId, CardEffect effect) {
-        StackEntry trigger = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                equipment.getCard(),
-                controllerId,
-                equipment.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                equipment.getId()
-        );
-        trigger.setNonTargeting(true);
-        trigger.setTriggeringPermanentId(oldAttachedTo);
-        gameData.enqueueTrigger(trigger);
-        gameLogService.append(gameData, GameLog.abilityTriggers(equipment.getCard()));
-        log.info("Game {} - {} triggers on becoming unattached", gameData.id, equipment.getCard().getName());
-    }
-
-    private boolean hasStaticEffect(Permanent equipment, Class<? extends CardEffect> effectType) {
-        for (CardEffect effect : equipment.getCard().getStaticEffects()) {
-            if (effectType.isInstance(effect)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

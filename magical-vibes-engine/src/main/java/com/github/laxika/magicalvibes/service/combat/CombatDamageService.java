@@ -2291,6 +2291,17 @@ public class CombatDamageService {
         // "That player" is the player dealt damage: a target "that player controls" is judged against the
         // choice's triggering player, and "of that player's choice" has them choose it.
         UUID targetChooserId = card.isCombatTriggerTargetChosenByDefendingPlayer() ? defenderId : attackerId;
+        // What every route below records, whatever the effects are: the entry an ability that chooses nothing goes on
+        // the stack as, which a mode, graveyard or target choice hands to the entry it builds.
+        StackEntry se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, attackerId,
+                card.getName() + "'s triggered ability", effects, defenderId, creature.getId());
+        se.setSourcePermanentSnapshot(new Permanent(creature));
+        se.setAlternateCost(creature.isAlternateCost());
+        se.setEventValue(damageDealt);
+        se.setTriggeringPlayerId(defenderId);
+        se.setEventDamageSource(creature, attackerId);
+        se.setGrantingPermanentId(ability.ability().grantingPermanentId());
+        se.setNonTargeting(true);
 
         // A modal whose mode is chosen as it goes on the stack (CR 603.3c), and "choose one that hasn't been
         // chosen" (Silent Hallcreeper) among the modes its source hasn't chosen. The choice builds the stack object
@@ -2303,7 +2314,8 @@ public class CombatDamageService {
                         + "one effect: " + ability.ability());
             }
             gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                    card, attackerId, triggerTimeModal, creature.getId(), false, false, null, defenderId));
+                    card, attackerId, triggerTimeModal, creature.getId(), false, false, null, defenderId)
+                    .withTriggerRecord(se));
             gameLogService.append(gameData, GameLog.abilityTriggers(card));
             return;
         }
@@ -2336,10 +2348,7 @@ public class CombatDamageService {
             StackEntry randomSe = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, attackerId,
                     card.getName() + "'s triggered ability", effects,
                     chosenCard.getId(), Zone.GRAVEYARD, creature.getId());
-            randomSe.setSourcePermanentSnapshot(new Permanent(creature));
-            randomSe.setEventValue(damageDealt);
-            randomSe.setTriggeringPlayerId(defenderId);
-            randomSe.setGrantingPermanentId(ability.ability().grantingPermanentId());
+            randomSe.carryTriggerRecord(se);
             randomSe.setNonTargeting(true);
             gameData.stack.add(randomSe);
             gameLogService.append(gameData, GameLog.cardThen(card,
@@ -2358,7 +2367,7 @@ public class CombatDamageService {
                                 ? defenderId : attackerId;
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                         card, attackerId, effects, mayGraveyardOwnerId,
-                        1, damageDealt, 1, null, false, null, creature.getId()));
+                        1, damageDealt, 1, null, false, null, creature.getId()).withTriggerRecord(se));
                 gameLogService.append(gameData, GameLog.cardThen(card,
                         "'s combat damage trigger goes on the stack — choose a graveyard target."));
                 return;
@@ -2366,7 +2375,7 @@ public class CombatDamageService {
             if (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
                 queueDamageToPlayerTargetChoice(gameData, creature, attackerId, defenderId, damageDealt, effects,
-                        targetChooserId);
+                        targetChooserId, se);
                 return;
             }
             // An untargeted "you may" goes on the stack as any untargeted ability does, below, with the same record
@@ -2384,17 +2393,9 @@ public class CombatDamageService {
                 .filter(GraveyardCardChoosingEffect::choosesGraveyardCards)
                 .findFirst().orElse(null);
         if (graveyardChoice != null) {
-            if (gameData.interaction.isAwaitingInput()) {
-                // Another ability is already choosing its graveyard targets: this one, an ability of its own with
-                // its own targets (CR 603.3b), prompts after that choice instead of overwriting it.
-                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        card, attackerId, effects, defenderId, 0, damageDealt,
-                        graveyardChoice.graveyardChoiceMaxTargets(damageDealt), null, false, null,
-                        creature.getId()));
-            } else {
-                graveyardTargetingService.handleCombatDamageGraveyardChoiceTargeting(gameData, attackerId,
-                        card, effects, creature.getId(), defenderId, graveyardChoice, damageDealt);
-            }
+            // The service has an ability that triggers while another choice is being made wait its turn (CR 603.3b).
+            graveyardTargetingService.handleCombatDamageGraveyardChoiceTargeting(gameData, attackerId,
+                    card, effects, creature.getId(), defenderId, graveyardChoice, damageDealt, se);
             return;
         }
 
@@ -2413,7 +2414,8 @@ public class CombatDamageService {
             UUID graveyardOwnerId = graveyardTargeting.targetSpec().graveyardScope().orElse(null)
                     == GraveyardSearchScope.OPPONENT_GRAVEYARD ? defenderId : null;
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    card, attackerId, effects, graveyardOwnerId, 0, damageDealt, creature.isAlternateCost()));
+                    card, attackerId, effects, graveyardOwnerId, 0, damageDealt, 0, null,
+                    creature.isAlternateCost(), null, creature.getId()).withTriggerRecord(se));
             gameLogService.append(gameData, GameLog.text(card.getName() + "'s combat damage trigger fires."));
             return;
         }
@@ -2424,19 +2426,10 @@ public class CombatDamageService {
                 || effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD)
                 || (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER) && card.hasEffectTargetIndex(effect)))) {
             queueDamageToPlayerTargetChoice(gameData, creature, attackerId, defenderId, damageDealt, effects,
-                    targetChooserId);
+                    targetChooserId, se);
             return;
         }
 
-        StackEntry se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, attackerId,
-                card.getName() + "'s triggered ability", effects, defenderId, creature.getId());
-        se.setSourcePermanentSnapshot(new Permanent(creature));
-        se.setAlternateCost(creature.isAlternateCost());
-        se.setEventValue(damageDealt);
-        se.setTriggeringPlayerId(defenderId);
-        se.setEventDamageSource(creature, attackerId);
-        se.setGrantingPermanentId(ability.ability().grantingPermanentId());
-        se.setNonTargeting(true);
         gameData.stack.add(se);
         gameLogService.append(gameData, GameLog.cardThen(card, "'s combat damage trigger goes on the stack."));
     }
@@ -2445,12 +2438,12 @@ public class CombatDamageService {
      * Queues the target choice of one "deals combat damage to a player" ability of {@code creature} with every effect
      * of the ability (CR 603.3d): an ability whose effects target through several of the card's target groups ("it
      * deals X damage to any target, target player draws X cards", Niv-Mizzet, Guildpact), or a card whose target
-     * groups are walked one by one, through that walk, any other through the choice that carries the damage dealt and
-     * the player dealt it.
+     * groups are walked one by one, through that walk, any other through the choice that carries {@code record}, what
+     * the collector records for an ability that chooses nothing.
      */
     private void queueDamageToPlayerTargetChoice(GameData gameData, Permanent creature, UUID attackerId,
                                                  UUID defenderId, int damageDealt, List<CardEffect> effects,
-                                                 UUID targetChooserId) {
+                                                 UUID targetChooserId, StackEntry record) {
         Card card = creature.getCard();
         long targetGroupsOfAbility = card.getTargetGroups().stream()
                 .filter(group -> effects.stream()
@@ -2463,7 +2456,7 @@ public class CombatDamageService {
         } else {
             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                     creature.getCard(), attackerId, effects, creature.getId(), targetChooserId, defenderId)
-                    .withEventValue(damageDealt).withTriggeringPlayer(defenderId));
+                    .withEventValue(damageDealt).withTriggeringPlayer(defenderId).withTriggerRecord(record));
         }
         gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
                 "'s combat damage trigger goes on the stack — choose a target."));
@@ -2597,27 +2590,8 @@ public class CombatDamageService {
     private void putAttachedDamageToPlayerAbilityOnStack(GameData gameData, Permanent perm, UUID ownerId,
                                                          Permanent creature, UUID attackerId, UUID defenderId,
                                                          int damageDealt, List<CardEffect> effects) {
-        if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
-            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    perm.getCard(), ownerId, effects, null));
-            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
-                    "'s combat damage trigger goes on the stack — choose a graveyard target."));
-            return;
-        }
-        if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
-            if (triggerCollectionService.needsSlotBySlotTargetSelection(perm.getCard())) {
-                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        perm.getCard(), ownerId, effects, perm.getId(), List.of(), 0, 0)
-                        .withEventValue(damageDealt));
-            } else {
-                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                        perm.getCard(), ownerId, effects, perm.getId(), ownerId, defenderId)
-                        .withEventValue(damageDealt).withTriggeringPlayer(defenderId));
-            }
-            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
-                    "'s combat damage trigger goes on the stack — choose a target."));
-            return;
-        }
+        // What every route below records, whatever the effects are: the entry an ability that chooses nothing goes on
+        // the stack as, which a graveyard or target choice hands to the entry it builds.
         StackEntry se = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 perm.getCard(),
@@ -2635,6 +2609,28 @@ public class CombatDamageService {
         se.setEventDamageSource(creature, attackerId);
         se.setEventValue(damageDealt);
         se.setNonTargeting(true);
+        if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
+            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    perm.getCard(), ownerId, effects, null, 0, 0, 0, null, false, null, perm.getId())
+                    .withTriggerRecord(se));
+            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                    "'s combat damage trigger goes on the stack — choose a graveyard target."));
+            return;
+        }
+        if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
+            if (triggerCollectionService.needsSlotBySlotTargetSelection(perm.getCard())) {
+                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        perm.getCard(), ownerId, effects, perm.getId(), List.of(), 0, 0)
+                        .withEventValue(damageDealt));
+            } else {
+                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                        perm.getCard(), ownerId, effects, perm.getId(), ownerId, defenderId)
+                        .withEventValue(damageDealt).withTriggeringPlayer(defenderId).withTriggerRecord(se));
+            }
+            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                    "'s combat damage trigger goes on the stack — choose a target."));
+            return;
+        }
         gameData.stack.add(se);
         gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s combat damage trigger goes on the stack."));
     }
@@ -2888,52 +2884,10 @@ public class CombatDamageService {
                     .mapToInt(Map.Entry::getValue)
                     .sum()
                     : damageDealt;
-            // "Choose one that hasn't been chosen this turn" (Parapet Thrasher): the mode is chosen as the
-            // ability goes on the stack (CR 603.3c), among the modes its source hasn't chosen this turn. The
-            // choice builds the stack object from the chosen mode, so it is the ability's one effect.
-            ChooseOneEffect triggerTimeModal = effects.stream().map(TriggeredModalEffect::choiceMadeAsTriggered)
-                    .filter(Objects::nonNull).findFirst().orElse(null);
-            if (triggerTimeModal != null) {
-                if (effects.size() != 1) {
-                    throw new IllegalStateException("A mode chosen as a combat damage ability triggers is the "
-                            + "ability's one effect: " + read.ability());
-                }
-                gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                        perm.getCard(), attackerId, triggerTimeModal, perm.getId(), false, false, null,
-                        defenderId));
-                read.markLimit(gameData, perm.getId());
-                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                continue;
-            }
-            // Player recipients on this trigger normally mean "that player":
-            // bind the damaged player unless the card explicitly declares a target.
-            if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    || (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                    && perm.getCard().hasEffectTargetIndex(effect)))) {
-                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                        perm.getCard(), attackerId, effects, perm.getId(), attackerId, defenderId)
-                        .withEventValue(triggerDamage).withTriggeringPlayer(defenderId));
-                read.markLimit(gameData, perm.getId());
-                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
-                        "'s combat damage trigger goes on the stack — choose a target."));
-                continue;
-            }
-            CardEffect graveyardTargeting = effects.stream()
-                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
-                    .findFirst().orElse(null);
-            if (graveyardTargeting != null) {
-                UUID graveyardOwnerId = graveyardTargeting.targetSpec().graveyardScope().orElse(null)
-                        == GraveyardSearchScope.OPPONENT_GRAVEYARD ? defenderId : null;
-                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        perm.getCard(), attackerId, effects, graveyardOwnerId,
-                        0, triggerDamage, 0, null, false, perm.getId()));
-                read.markLimit(gameData, perm.getId());
-                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
-                        "'s combat damage trigger goes on the stack — choose a graveyard target."));
-                continue;
-            }
-            // "That player" is the player dealt damage, which the entry records as its triggering player and
-            // non-targeting target (Oona's Blackguard: "...that player discards a card").
+            // What every route below records, whatever the effects are: the entry an ability that chooses nothing
+            // goes on the stack as, which a mode, target or graveyard choice hands to the entry it builds. "That
+            // player" is the player dealt damage, its triggering player and non-targeting target (Oona's
+            // Blackguard: "...that player discards a card").
             StackEntry se = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     perm.getCard(),
@@ -2957,8 +2911,52 @@ public class CombatDamageService {
                 se.setEventDamageSource(creature, attackerId);
             }
             se.setNonTargeting(true);
-            if (read.marksLimitOnAcceptance()) {
-                se.setMarkSourceOncePerTurnOnAcceptance(true);
+            // "Do this only once each turn" is used up as the action is taken (CR 603.2h), whichever way the
+            // ability reaches the stack.
+            se.setMarkSourceOncePerTurnOnAcceptance(read.marksLimitOnAcceptance());
+            // "Choose one that hasn't been chosen this turn" (Parapet Thrasher): the mode is chosen as the
+            // ability goes on the stack (CR 603.3c), among the modes its source hasn't chosen this turn. The
+            // choice builds the stack object from the chosen mode, so it is the ability's one effect.
+            ChooseOneEffect triggerTimeModal = effects.stream().map(TriggeredModalEffect::choiceMadeAsTriggered)
+                    .filter(Objects::nonNull).findFirst().orElse(null);
+            if (triggerTimeModal != null) {
+                if (effects.size() != 1) {
+                    throw new IllegalStateException("A mode chosen as a combat damage ability triggers is the "
+                            + "ability's one effect: " + read.ability());
+                }
+                gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                        perm.getCard(), attackerId, triggerTimeModal, perm.getId(), false, false, null,
+                        defenderId).withTriggerRecord(se));
+                read.markLimit(gameData, perm.getId());
+                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                continue;
+            }
+            // Player recipients on this trigger normally mean "that player":
+            // bind the damaged player unless the card explicitly declares a target.
+            if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                    || (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                    && perm.getCard().hasEffectTargetIndex(effect)))) {
+                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                        perm.getCard(), attackerId, effects, perm.getId(), attackerId, defenderId)
+                        .withEventValue(triggerDamage).withTriggeringPlayer(defenderId).withTriggerRecord(se));
+                read.markLimit(gameData, perm.getId());
+                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                        "'s combat damage trigger goes on the stack — choose a target."));
+                continue;
+            }
+            CardEffect graveyardTargeting = effects.stream()
+                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
+                    .findFirst().orElse(null);
+            if (graveyardTargeting != null) {
+                UUID graveyardOwnerId = graveyardTargeting.targetSpec().graveyardScope().orElse(null)
+                        == GraveyardSearchScope.OPPONENT_GRAVEYARD ? defenderId : null;
+                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        perm.getCard(), attackerId, effects, graveyardOwnerId,
+                        0, triggerDamage, 0, null, false, null, perm.getId()).withTriggerRecord(se));
+                read.markLimit(gameData, perm.getId());
+                gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                        "'s combat damage trigger goes on the stack — choose a graveyard target."));
+                continue;
             }
             gameData.stack.add(se);
             read.markLimit(gameData, perm.getId());

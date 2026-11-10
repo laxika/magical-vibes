@@ -2003,6 +2003,7 @@ public class GraveyardChoiceHandlerService {
         long pendingTriggeringCardGraveyardEntryVersion =
                 gameData.graveyardTargetOperation.triggeringCardGraveyardEntryVersion;
         StackEntry pendingTriggeringSpell = gameData.graveyardTargetOperation.triggeringSpell;
+        StackEntry pendingTriggerRecord = gameData.graveyardTargetOperation.triggerRecord;
         List<Permanent> pendingAttackingPermanentSnapshots =
                 gameData.graveyardTargetOperation.attackingPermanentSnapshots;
         String pendingChapterName = gameData.graveyardTargetOperation.chapterName;
@@ -2062,6 +2063,7 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.triggeringCardId = null;
         gameData.graveyardTargetOperation.triggeringCardGraveyardEntryVersion = -1;
         gameData.graveyardTargetOperation.triggeringSpell = null;
+        gameData.graveyardTargetOperation.triggerRecord = null;
         gameData.graveyardTargetOperation.attackingPermanentSnapshots = List.of();
         gameData.graveyardTargetOperation.chapterName = null;
         gameData.graveyardTargetOperation.spellCounterTargetId = null;
@@ -2186,6 +2188,11 @@ public class GraveyardChoiceHandlerService {
             }
             triggeredEntry.setTargetCardIdsByEffect(pendingTargetCardIdsByEffect);
             triggeredEntry.setTargetCardGroupSizes(pendingTargetCardGroupSizes);
+            // What the collector records for an ability of this trigger that needs no choice, whatever the effects
+            // are; the choice's own facts below add to it.
+            if (pendingTriggerRecord != null) {
+                triggeredEntry.carryTriggerRecord(pendingTriggerRecord);
+            }
             if (mixedZoneEffect != null) {
                 cardIds.stream()
                         .filter(cardId -> findPermanentByCardId(gameData, cardId) != null)
@@ -2197,26 +2204,35 @@ public class GraveyardChoiceHandlerService {
             if (pendingTriggeringPermanentPowerAtTrigger != null) {
                 triggeredEntry.setTriggeringPermanentPowerAtTrigger(pendingTriggeringPermanentPowerAtTrigger);
             }
-            triggeredEntry.setGraveyardTargetMaxManaValue(pendingGraveyardTargetMaxManaValue);
+            if (pendingGraveyardTargetMaxManaValue != null || pendingTriggerRecord == null) {
+                triggeredEntry.setGraveyardTargetMaxManaValue(pendingGraveyardTargetMaxManaValue);
+            }
             if (pendingAttackedTargetId != null) {
                 triggeredEntry.setAttackedTargetId(pendingAttackedTargetId);
             }
-            triggeredEntry.setTriggeringPermanentId(pendingTriggeringPermanentId);
+            if (pendingTriggeringPermanentId != null || pendingTriggerRecord == null) {
+                triggeredEntry.setTriggeringPermanentId(pendingTriggeringPermanentId);
+            }
             if (pendingTriggeringCardId != null) {
                 triggeredEntry.setTriggeringCard(pendingTriggeringCardId, pendingTriggeringCardGraveyardEntryVersion);
             } else if (pendingTriggeringSpell != null) {
                 // The spell a spell-cast ability triggered on ("the same name as that spell"), read as it resolves.
                 triggeredEntry.setTriggeringCardId(pendingTriggeringSpell.getTargetableId());
             }
-            triggeredEntry.setTriggeringSpell(pendingTriggeringSpell);
-            triggeredEntry.setAttackingPermanentSnapshots(pendingAttackingPermanentSnapshots);
+            if (pendingTriggeringSpell != null || pendingTriggerRecord == null) {
+                triggeredEntry.setTriggeringSpell(pendingTriggeringSpell);
+            }
+            if (!pendingAttackingPermanentSnapshots.isEmpty() || pendingTriggerRecord == null) {
+                triggeredEntry.setAttackingPermanentSnapshots(pendingAttackingPermanentSnapshots);
+            }
             // The ability goes on the stack as its target is chosen, so a source card in a graveyard is still the
             // stay it triggered from: "this card" of the ability (CR 400.7), whatever the effects are.
             if (pendingCard != null && gameQueryService.findCardInGraveyardById(gameData, pendingCard.getId()) != null) {
                 triggeredEntry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(pendingCard.getId()));
             }
-            triggeredEntry.setAlternateCost(pendingSourceAlternateCostAtTrigger);
-            triggeredEntry.setMarkSourceOncePerTurnOnAcceptance(pendingMarkSourceOncePerTurnOnAcceptance);
+            triggeredEntry.setAlternateCost(pendingSourceAlternateCostAtTrigger || triggeredEntry.isAlternateCost());
+            triggeredEntry.setMarkSourceOncePerTurnOnAcceptance(pendingMarkSourceOncePerTurnOnAcceptance
+                    || triggeredEntry.isMarkSourceOncePerTurnOnAcceptance());
             if (mixedZoneEffect != null) {
                 for (UUID cardId : cardIds) {
                     Permanent permanent = findPermanentByCardId(gameData, cardId);

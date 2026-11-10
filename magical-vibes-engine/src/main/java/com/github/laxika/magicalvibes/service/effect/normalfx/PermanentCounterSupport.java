@@ -1262,8 +1262,9 @@ public class PermanentCounterSupport {
                 TargetFilter targetFilter = targetPredicate != null
                         ? new PermanentPredicateTargetFilter(targetPredicate, "Choose a target.")
                         : null;
+                // The creature is the ability's source whichever way it reaches the stack.
                 gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        card, controllerId, new ArrayList<>(effects), false, targetFilter));
+                        card, controllerId, new ArrayList<>(effects), false, targetFilter, 0, creature.getId()));
                 gameLogService.append(gameData,
                         GameLog.cardThen(card, "'s triggered ability triggers â€” choose a target."));
             } else {
@@ -2111,8 +2112,11 @@ public class PermanentCounterSupport {
                         .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
                 boolean targetsPlayer = effectsToResolve.stream()
                         .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                // Both routes record the number of counters, the source as it triggered and the "do this only once
+                // each turn" mark (CR 603.2h), whatever the effects are.
                 if (targetsPermanent || targetsPlayer) {
-                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    PermanentChoiceContext.SpellTargetTriggerAnyTarget targetChoice =
+                            new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             card,
                             controllerId,
                             effectsToResolve,
@@ -2120,7 +2124,9 @@ public class PermanentCounterSupport {
                             targetFilterForCounterTrigger(card, effectsToResolve),
                             count,
                             source.getId(),
-                            new Permanent(source)));
+                            new Permanent(source));
+                    gameData.queueInteraction(triggering.markOnAcceptance()
+                            ? targetChoice.withMarkSourceOncePerTurnOnAcceptance() : targetChoice);
                 } else {
                     StackEntry triggerEntry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -2132,6 +2138,7 @@ public class PermanentCounterSupport {
                             source.getId()
                     );
                     triggerEntry.setEventValue(count);
+                    triggerEntry.setSourcePermanentSnapshot(new Permanent(source));
                     triggerEntry.setMarkSourceOncePerTurnOnAcceptance(triggering.markOnAcceptance());
                     gameData.stack.add(triggerEntry);
                 }

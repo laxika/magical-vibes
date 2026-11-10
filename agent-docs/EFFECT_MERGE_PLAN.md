@@ -1800,7 +1800,7 @@ All four handlers share the identical core — `expireFloatingEffectsForUnattach
 comment. The two type-specific tails are **already self-guarding**, so the union is safe with no branch:
 `TriggerCollectionService.checkAuraAttachedTriggers:3782` returns immediately unless the card has the
 `AURA` subtype, and `EquipSupport.applySacrificeOnUnattachIfNeeded:45` returns immediately unless the
-card carries `SacrificeOnUnattachEffect`. The equipment handlers' extra card-id fallback
+card has a `Triggers.becomesUnattachedFromPermanent()` ability. The equipment handlers' extra card-id fallback
 (`equipSupport.findEquipmentByCardId`, for the death-trigger path) is harmless on both.
 
 **Gotchas** — the success-log fix from `9b8147333` must survive. And

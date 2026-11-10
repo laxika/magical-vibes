@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.model.trigger;
 import java.util.Objects;
 
 /**
- * An Aura or Equipment becomes attached to a permanent: "whenever an Aura becomes attached to this creature",
- * "whenever this Equipment becomes attached to a creature". Build it through {@link Triggers}.
+ * An Aura or Equipment becomes attached to a permanent, or unattached from one: "whenever an Aura becomes attached to
+ * this creature", "whenever this Equipment becomes attached to a creature", "whenever this Equipment becomes unattached
+ * from a permanent". Build it through {@link Triggers}.
  *
  * @param event which attachment becomes attached to what, relative to the ability's source and controller
  */
@@ -26,6 +27,8 @@ public record AttachTrigger(AttachEvent event) implements Trigger {
          */
         AURA_YOU_CONTROL_TO_OPPONENT_NONLAND_PERMANENT,
         /** The source, an Equipment, becomes attached to a creature. */
-        THIS_EQUIPMENT_TO_CREATURE
+        THIS_EQUIPMENT_TO_CREATURE,
+        /** The source, an Equipment, becomes unattached from a permanent, whichever way (CR 701.3d). */
+        THIS_EQUIPMENT_FROM_PERMANENT
     }
 }

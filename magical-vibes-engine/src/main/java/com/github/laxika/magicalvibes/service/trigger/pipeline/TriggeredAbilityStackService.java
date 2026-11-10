@@ -286,10 +286,41 @@ public class TriggeredAbilityStackService {
                 : 1 + additionalTriggers(gameData, candidate, event, kind);
         int previousCopies = gameData.beginTriggeredAbilityCopies(copies);
         try {
+            // What the ability records whichever way it reaches the stack: the entry it goes there as when it needs
+            // no choice, which a mode choice and the paid graveyard target's choice hand to the entry they build.
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                    card.getName() + "'s ability", effects, null, sourcePermanentId);
+            entry.setNonTargeting(true);
+            entry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
+            if (sourceSnapshot != null) {
+                entry.setSourcePermanentSnapshot(sourceSnapshot);
+                // How it was cast, for an "if" read after it left: a blitz-only death trigger.
+                entry.setAlternateCost(candidate.sourcePermanent().isAlternateCost());
+            }
+            entry.setEventValue(power);
+            entry.setTriggeringPermanentPowerAtTrigger(Math.max(0, power));
+            entry.setDyingPermanentManaValue(lastKnown != null ? lastKnown.getCard().getManaValue()
+                    : card.getManaValue());
+            if (event.to() == Zone.GRAVEYARD) {
+                entry.setTriggeringCard(movedCard.getId(), gameData.graveyardEntryVersion(movedCard.getId()));
+            }
+            if (event.leftBattlefield()) {
+                entry.setTriggeringPermanent(lastKnown, event.attachments());
+                Card imprinted = gameData.getImprintedCard(card);
+                if (imprinted != null) {
+                    entry.setLinkedExiledCardId(imprinted.getId());
+                }
+                if (event.to() == Zone.EXILE && exileOnly(candidate.ability())) {
+                    // "When this is put into exile from the battlefield" refers to the exile object it just
+                    // became (CR 400.7), so a later exile of the card is another object.
+                    entry.setTriggeringCardExileEntryVersion(
+                            gameData.exileEntryVersions.getOrDefault(card.getId(), 0L));
+                }
+            }
             ChooseOneEffect modes = effects.size() == 1 ? modesChosenAsItTriggers(effects.getFirst()) : null;
             if (modes != null) {
                 gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                        card, controllerId, modes, sourcePermanentId));
+                        card, controllerId, modes, sourcePermanentId).withTriggerRecord(entry));
             } else if (targets(effects) && kind == OwnZoneChange.LEAVES) {
                 gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
                         card, controllerId, effects, "leaves-the-battlefield", sourcePermanentId, sourceSnapshot
@@ -298,7 +329,7 @@ public class TriggeredAbilityStackService {
                 // "You may pay {X}. If you do, return target card with mana value X" (Relentless Dead): the card is
                 // chosen with the payment's X as the ability goes on the stack.
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        card, controllerId, effects));
+                        card, controllerId, effects).withTriggerRecord(entry));
             } else if (targets(effects)) {
                 PermanentChoiceContext.DeathTriggerTarget target = new PermanentChoiceContext.DeathTriggerTarget(
                         card, controllerId, effects, power, sourceSnapshot, null, null,
@@ -312,35 +343,6 @@ public class TriggeredAbilityStackService {
                 gameData.queueInteraction(event.leftBattlefield()
                         ? target.withTriggeringPermanent(lastKnown, event.attachments()) : target);
             } else {
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
-                        card.getName() + "'s ability", effects, null, sourcePermanentId);
-                entry.setNonTargeting(true);
-                entry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
-                if (sourceSnapshot != null) {
-                    entry.setSourcePermanentSnapshot(sourceSnapshot);
-                    // How it was cast, for an "if" read after it left: a blitz-only death trigger.
-                    entry.setAlternateCost(candidate.sourcePermanent().isAlternateCost());
-                }
-                entry.setEventValue(power);
-                entry.setTriggeringPermanentPowerAtTrigger(Math.max(0, power));
-                entry.setDyingPermanentManaValue(lastKnown != null ? lastKnown.getCard().getManaValue()
-                        : card.getManaValue());
-                if (event.to() == Zone.GRAVEYARD) {
-                    entry.setTriggeringCard(movedCard.getId(), gameData.graveyardEntryVersion(movedCard.getId()));
-                }
-                if (event.leftBattlefield()) {
-                    entry.setTriggeringPermanent(lastKnown, event.attachments());
-                    Card imprinted = gameData.getImprintedCard(card);
-                    if (imprinted != null) {
-                        entry.setLinkedExiledCardId(imprinted.getId());
-                    }
-                    if (event.to() == Zone.EXILE && exileOnly(candidate.ability())) {
-                        // "When this is put into exile from the battlefield" refers to the exile object it just
-                        // became (CR 400.7), so a later exile of the card is another object.
-                        entry.setTriggeringCardExileEntryVersion(
-                                gameData.exileEntryVersions.getOrDefault(card.getId(), 0L));
-                    }
-                }
                 gameData.enqueueTrigger(entry);
             }
         } finally {

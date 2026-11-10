@@ -1366,7 +1366,7 @@ public class TriggeredAbilityQueueService {
             playerInputService.beginTriggeredModalChoice(gameData, pending.controllerId(), pending.sourceCard(),
                     effect, pending.sourcePermanentId(), pending.modesResetEachTurn(), pending.consumeModes(),
                     List.of(), pending.triggeringCardId(), pending.attackedTargetId(),
-                    pending.triggeringPermanentId(), pending.rememberLastChosenMode());
+                    pending.triggeringPermanentId(), pending.rememberLastChosenMode(), pending.triggerRecord());
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(), "'s ability - choose a mode."));
             log.info("Game {} - {} triggered ability awaiting mode selection", gameData.id,
                     pending.sourceCard().getName());
@@ -1452,6 +1452,19 @@ public class TriggeredAbilityQueueService {
     public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
             UUID sourcePermanentId, List<ChooseOneEffect.ChooseOneOption> chosenModes, UUID triggeringCardId,
             UUID attackedTargetId, UUID triggeringPermanentId) {
+        queueChosenTriggeredModalTrigger(gameData, sourceCard, controllerId, sourcePermanentId, chosenModes,
+                triggeringCardId, attackedTargetId, triggeringPermanentId, null);
+    }
+
+    /**
+     * Puts the chosen modes of a triggered ability on the stack as one object (CR 603.3c), or queues the choice of
+     * their targets (CR 603.3d). {@code triggerRecord}, when the collector gave one, is what it records for an ability
+     * of the same trigger that needs no choice: the entry, or a graveyard or single target choice's entry, carries it
+     * whatever the modes' effects are ({@code StackEntry.carryTriggerRecord}).
+     */
+    public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
+            UUID sourcePermanentId, List<ChooseOneEffect.ChooseOneOption> chosenModes, UUID triggeringCardId,
+            UUID attackedTargetId, UUID triggeringPermanentId, StackEntry triggerRecord) {
         if (chosenModes.isEmpty()) {
             return;
         }
@@ -1477,7 +1490,7 @@ public class TriggeredAbilityQueueService {
                         || effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
         if (needsGraveyardTarget && !needsTarget) {
             gameData.queueInteractionFirst(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    sourceCard, controllerId, effects));
+                    sourceCard, controllerId, effects).withTriggerRecord(triggerRecord));
             return;
         }
         if (needsTarget) {
@@ -1494,8 +1507,15 @@ public class TriggeredAbilityQueueService {
                     gameData.queueInteractionFirst(new PermanentChoiceContext.EntersTriggerTarget(
                             targetingCard, controllerId, effects, sourcePermanentId, null, null, targetFilter));
                 } else {
-                    gameData.queueInteractionFirst(new PermanentChoiceContext.AttackTriggerTarget(
-                            targetingCard, controllerId, effects, sourcePermanentId, controllerId, attackedTargetId));
+                    PermanentChoiceContext.AttackTriggerTarget targetChoice =
+                            new PermanentChoiceContext.AttackTriggerTarget(targetingCard, controllerId, effects,
+                                    sourcePermanentId, controllerId, attackedTargetId);
+                    if (triggerRecord != null) {
+                        targetChoice = targetChoice.withTriggerRecord(triggerRecord)
+                                .withEventValue(triggerRecord.getEventValue())
+                                .withTriggeringPlayer(triggerRecord.getTriggeringPlayerId());
+                    }
+                    gameData.queueInteractionFirst(targetChoice);
                 }
             }
             return;
@@ -1503,8 +1523,8 @@ public class TriggeredAbilityQueueService {
 
         // No chosen mode targets: "that player" is the attacked or damaged player the trigger was about, the entry's
         // non-targeting target (Blizzard Specter's "that player discards a card").
-        UUID triggerTargetId = attackedTargetId != null && gameData.playerIds.contains(attackedTargetId)
-                ? attackedTargetId : null;
+        UUID triggerTargetId = triggerRecord == null && attackedTargetId != null
+                && gameData.playerIds.contains(attackedTargetId) ? attackedTargetId : null;
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -1513,6 +1533,12 @@ public class TriggeredAbilityQueueService {
                 effects,
                 triggerTargetId,
                 sourcePermanentId);
+        if (triggerRecord != null) {
+            // The collector's record of the event, the same as for an ability that chooses no mode.
+            entry.carryTriggerRecord(triggerRecord);
+            gameData.stack.add(entry);
+            return;
+        }
         entry.setTriggeringCardId(triggeringCardId);
         entry.setTriggeringPermanentId(triggeringPermanentId);
         if (triggerTargetId != null) {
@@ -3215,6 +3241,7 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.triggeringPermanentId = pending.triggeringPermanentId();
             gameData.graveyardTargetOperation.triggeringSpell = pending.triggeringSpell() == null
                     ? null : new StackEntry(pending.triggeringSpell());
+            gameData.graveyardTargetOperation.triggerRecord = pending.triggerRecord();
             gameData.graveyardTargetOperation.attackingPermanentSnapshots = pending.attackingPermanentSnapshots();
             gameData.graveyardTargetOperation.sourcePermanentId = pending.sourcePermanentId();
             gameData.graveyardTargetOperation.markSourceOncePerTurnOnAcceptance =
@@ -3340,8 +3367,13 @@ public class TriggeredAbilityQueueService {
                 List.of(),
                 List.of());
         entry.setNonTargeting(true);
-        entry.setAlternateCost(pending.sourceAlternateCostAtTrigger());
-        entry.setTriggeringPermanentId(pending.triggeringPermanentId());
+        if (pending.triggerRecord() != null) {
+            entry.carryTriggerRecord(pending.triggerRecord());
+        }
+        entry.setAlternateCost(pending.sourceAlternateCostAtTrigger() || entry.isAlternateCost());
+        if (pending.triggeringPermanentId() != null || pending.triggerRecord() == null) {
+            entry.setTriggeringPermanentId(pending.triggeringPermanentId());
+        }
         if (pending.triggeringSpell() != null) {
             entry.setTriggeringCardId(pending.triggeringSpell().getTargetableId());
             entry.setTriggeringSpell(pending.triggeringSpell());

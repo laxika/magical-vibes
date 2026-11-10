@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -547,14 +548,15 @@ public class GraveyardTargetingService {
      * (CR 603.3d); "up to N" allows choosing zero, which covers the "you may". The attacker rides
      * along as {@code sourcePermanentId} so the "if you do" rider (assigns no combat damage) knows
      * which creature it applies to. With no matching cards the trigger is still put onto the stack
-     * with no targets and resolves as a no-op.
+     * with no targets and resolves as a no-op. {@code triggerRecord} is the entry the collector puts on the stack
+     * for an ability that chooses nothing: the ability goes on the stack as it, or with what it records.
      */
     public void handleUnblockedAttackGraveyardChoiceTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, UUID sourcePermanentId, UUID defendingPlayerId,
-            GraveyardCardChoosingEffect choosingEffect) {
+            GraveyardCardChoosingEffect choosingEffect, StackEntry triggerRecord) {
         handleSinglePlayerGraveyardChoiceTargeting(gameData, controllerId, card, effects, sourcePermanentId,
-                defendingPlayerId, choosingEffect, choosingEffect.graveyardChoiceMaxTargets(),
-                "unblocked-attack", "defending player's graveyard");
+                defendingPlayerId, choosingEffect, choosingEffect.graveyardChoiceMaxTargets(), 0,
+                "unblocked-attack", "defending player's graveyard", triggerRecord);
     }
 
     /**
@@ -562,18 +564,33 @@ public class GraveyardTargetingService {
      * exile up to N target cards from that player's graveyard" (Skullsnatcher). Same trigger-time
      * up-to-N selection as the unblocked-attack flow (CR 603.3d), narrowed to the damaged player's
      * graveyard. {@code damageDealt} is the event's amount, the N of "up to that many" (Froghemoth).
+     * {@code triggerRecord} is the entry the collector puts on the stack for an ability that chooses nothing: the
+     * ability goes on the stack as it, or with what it records.
      */
     public void handleCombatDamageGraveyardChoiceTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, UUID sourcePermanentId, UUID damagedPlayerId,
-            GraveyardCardChoosingEffect choosingEffect, int damageDealt) {
+            GraveyardCardChoosingEffect choosingEffect, int damageDealt, StackEntry triggerRecord) {
         handleSinglePlayerGraveyardChoiceTargeting(gameData, controllerId, card, effects, sourcePermanentId,
-                damagedPlayerId, choosingEffect, choosingEffect.graveyardChoiceMaxTargets(damageDealt),
-                "combat damage", "that player's graveyard");
+                damagedPlayerId, choosingEffect, choosingEffect.graveyardChoiceMaxTargets(damageDealt), damageDealt,
+                "combat damage", "that player's graveyard", triggerRecord);
     }
 
+    /**
+     * Has {@code controllerId} choose up to {@code choiceMaxTargets} cards in {@code defendingPlayerId}'s graveyard as
+     * the ability goes on the stack (CR 603.3d). While another choice is being made, this ability, an object of its
+     * own with its own targets (CR 603.3b), waits its turn in the queue instead of overwriting that choice. Every way
+     * it reaches the stack, it carries {@code triggerRecord}.
+     */
     private void handleSinglePlayerGraveyardChoiceTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, UUID sourcePermanentId, UUID defendingPlayerId,
-            GraveyardCardChoosingEffect choosingEffect, int choiceMaxTargets, String triggerLabel, String zoneLabel) {
+            GraveyardCardChoosingEffect choosingEffect, int choiceMaxTargets, int eventValue, String triggerLabel,
+            String zoneLabel, StackEntry triggerRecord) {
+        if (gameData.interaction.isAwaitingInput()) {
+            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    card, controllerId, effects, defendingPlayerId, 0, eventValue, choiceMaxTargets, null, false,
+                    null, sourcePermanentId).withTriggerRecord(triggerRecord));
+            return;
+        }
         CardPredicate filter = choosingEffect.graveyardChoiceFilter();
 
         List<Card> matchingCards = new ArrayList<>();
@@ -597,6 +614,9 @@ public class GraveyardTargetingService {
                     defendingPlayerId,
                     sourcePermanentId);
             trigger.setNonTargeting(true);
+            if (triggerRecord != null) {
+                trigger.carryTriggerRecord(triggerRecord);
+            }
             gameData.stack.add(trigger);
             gameLogService.append(gameData, GameLog.cardThen(card,
                     "'s " + triggerLabel + " ability triggers with no graveyard targets."));
@@ -610,6 +630,7 @@ public class GraveyardTargetingService {
         gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
         gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
         gameData.graveyardTargetOperation.targetPlayerId = defendingPlayerId;
+        gameData.graveyardTargetOperation.triggerRecord = triggerRecord;
         playerInputService.beginMultiGraveyardChoice(gameData, controllerId, matchingCards, maxTargets,
                 card.getName() + "'s ability — Choose up to " + maxTargets + " target card"
                         + (maxTargets != 1 ? "s" : "") + " from " + zoneLabel + " to exile.");
@@ -662,6 +683,16 @@ public class GraveyardTargetingService {
                 .filter(ExileGraveyardCardsEffect.class::isInstance)
                 .map(ExileGraveyardCardsEffect.class::cast)
                 .anyMatch(ExileGraveyardCardsEffect::defendingPlayerOnly);
+        if (gameData.interaction.isAwaitingInput() && (!defendingPlayerOnly || defendingPlayerId != null)) {
+            // Another ability is already choosing its targets: this one, an object of its own with its own targets
+            // (CR 603.3b), waits its turn in the queue instead of overwriting that choice.
+            Permanent queuedSource = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    card, controllerId, effects, defendingPlayerOnly ? defendingPlayerId : null, 0, 0, 0,
+                    queuedSource == null ? null : gameQueryService.getEffectivePower(gameData, queuedSource),
+                    false, null, sourcePermanentId, false, attackingPermanentSnapshots));
+            return;
+        }
         List<UUID> searchPlayerIds = defendingPlayerOnly
                 ? defendingPlayerId == null ? List.of() : List.of(defendingPlayerId)
                 : scope.graveyardOwners(gameData.orderedPlayerIds, controllerId);

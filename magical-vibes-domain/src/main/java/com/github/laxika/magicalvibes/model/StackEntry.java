@@ -1480,6 +1480,28 @@ public class StackEntry {
         this.sourcePowerAtTrigger = source.sourcePowerAtTrigger;
     }
 
+    /**
+     * Gives this entry, one a choice made as its ability went on the stack built (a mode, CR 603.3c; a target, CR
+     * 603.3d), what {@code record} holds: the entry its collector builds for an ability that needs no choice. The
+     * trigger event ({@link #copyTriggerEventFrom}), the source as it triggered and how it was cast (CR 608.2h), and
+     * the "do this only once each turn" mark (CR 603.2h) are the same whichever way the ability reaches the stack. An
+     * entry with no target of its own also takes the record's non-targeting "that player" or "that creature".
+     */
+    public void carryTriggerRecord(StackEntry record) {
+        copyTriggerEventFrom(record);
+        if (record.sourcePermanentSnapshot != null) {
+            this.sourcePermanentSnapshot = new Permanent(record.sourcePermanentSnapshot);
+        }
+        this.alternateCost = record.alternateCost;
+        this.markSourceOncePerTurnOnAcceptance = record.markSourceOncePerTurnOnAcceptance;
+        if (record.nonTargeting && this.targetId == null
+                && (this.targetCardIds == null || this.targetCardIds.isEmpty())
+                && (this.targetIds == null || this.targetIds.isEmpty())) {
+            this.targetId = record.targetId;
+            this.nonTargeting = true;
+        }
+    }
+
     public void addGrantedTriggeredEffectOnEntry(EffectSlot slot, CardEffect effect) {
         grantedAbilitiesOnEntry.add(LegacySlots.ability(slot, effect));
     }

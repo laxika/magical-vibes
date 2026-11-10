@@ -1283,11 +1283,27 @@ public class PlayerInputService {
             List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes,
             UUID triggeringCardId, UUID attackedTargetId, UUID triggeringPermanentId,
             boolean rememberLastChosenMode) {
+        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
+                modesResetEachTurn, consumeModes, chosenModes, triggeringCardId, attackedTargetId,
+                triggeringPermanentId, rememberLastChosenMode, null);
+    }
+
+    /**
+     * Asks {@code controllerId} for the modes of a triggered ability as it goes on the stack (CR 603.3c).
+     * {@code triggerRecord}, or {@code null}, is the collector's record of the trigger event, which the entry the
+     * chosen modes go on the stack as carries.
+     */
+    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
+            boolean modesResetEachTurn, boolean consumeModes,
+            List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes,
+            UUID triggeringCardId, UUID attackedTargetId, UUID triggeringPermanentId,
+            boolean rememberLastChosenMode, StackEntry triggerRecord) {
         ChoiceContext.TriggeredModalChoice ctx =
                 new ChoiceContext.TriggeredModalChoice(
                         sourceCard, controllerId, effect, sourcePermanentId, modesResetEachTurn,
                         consumeModes, chosenModes, triggeringCardId, attackedTargetId, triggeringPermanentId,
-                        rememberLastChosenMode);
+                        rememberLastChosenMode, triggerRecord);
         List<String> optionLabels = new java.util.ArrayList<>(effect.options().stream()
                 .filter(option -> effect.modesMayRepeat() || !chosenModes.contains(option))
                 .filter(option -> triggerTargetCollector.hasLegalModeTargets(

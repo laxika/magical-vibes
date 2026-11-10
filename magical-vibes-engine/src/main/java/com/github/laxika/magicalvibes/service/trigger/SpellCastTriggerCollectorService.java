@@ -1,11 +1,9 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -19,17 +17,12 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardExiledWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardMaxManaValueXPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
-import com.github.laxika.magicalvibes.model.effect.GrantAdditionalPlusOnePlusOneCounterToSnowPaidCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -320,13 +313,6 @@ public class SpellCastTriggerCollectorService {
                 && !match.gameData().spellCastUsedTreasureMana(spellCard.getId())) {
             return false;
         }
-        if (trigger.effects().stream().anyMatch(
-                GrantAdditionalPlusOnePlusOneCounterToSnowPaidCreatureSpellEffect.class::isInstance)
-                && spellCard.getColors().stream().map(CardColor::name).map(ManaColor::valueOf)
-                .noneMatch(color -> match.gameData()
-                        .getSpellCastSnowManaSpentByColor(spellCard.getId(), color) > 0)) {
-            return false;
-        }
 
         // "Whenever you cast a spell during an opponent's turn" — the source's controller must not be
         // the active player when the spell is cast (Glen Elendra Pranksters).
@@ -501,11 +487,10 @@ public class SpellCastTriggerCollectorService {
                     spellCard.getId()));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         } else if (needsGraveyardTarget) {
-            // A graveyard target restricted by "that spell's mana value" (Krile Baldesion) is chosen now, as the ability
-            // goes on the stack (CR 603.3d), against the spell's mana value as the choice's X.
-            int graveyardTargetX = resolved.stream()
-                    .anyMatch(SpellCastTriggerCollectorService::graveyardTargetReadsManaValueX)
-                    ? triggeringSpellManaValue : 0;
+            // The graveyard target is chosen now, as the ability goes on the stack (CR 603.3d), with the spell's mana
+            // value as the choice's X whatever the effects are: a target restricted by "that spell's mana value" (Krile
+            // Baldesion) is judged against it.
+            int graveyardTargetX = spellManaValue(match.gameData(), spellCard);
             // A graveyard target restricted by "that spell" ("the same name as that spell", Harness the Storm) is chosen
             // against the triggering spell, which the stack entry keeps for the check as the ability resolves.
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
@@ -653,37 +638,6 @@ public class SpellCastTriggerCollectorService {
         };
     }
 
-    /**
-     * Whether {@code effect}'s graveyard target is restricted by the X the ability goes on the stack with ("return target
-     * creature card with mana value equal to that spell's mana value", Krile Baldesion): it is chosen now, as the ability
-     * goes on the stack (CR 603.3d), so the choice takes the spell's mana value as its X.
-     */
-    private static boolean graveyardTargetReadsManaValueX(CardEffect effect) {
-        return switch (effect) {
-            case ReturnCardFromGraveyardEffect returnEffect -> returnEffect.targetGraveyard()
-                    && (returnEffect.requiresManaValueEqualsX() || returnEffect.requiresManaValueAtMostX()
-                    || readsManaValueX(returnEffect.filter()));
-            case ConditionalEffect conditional -> graveyardTargetReadsManaValueX(conditional.wrapped());
-            case MayEffect may -> graveyardTargetReadsManaValueX(may.wrapped());
-            case SequenceEffect sequence -> sequence.steps().stream()
-                    .anyMatch(SpellCastTriggerCollectorService::graveyardTargetReadsManaValueX);
-            default -> false;
-        };
-    }
-
-    private static boolean readsManaValueX(CardPredicate predicate) {
-        return switch (predicate) {
-            case CardManaValueEqualsXPredicate ignored -> true;
-            case CardMaxManaValueXPredicate ignored -> true;
-            case CardManaValueLessThanXPredicate ignored -> true;
-            case CardAllOfPredicate allOf -> allOf.predicates().stream()
-                    .anyMatch(SpellCastTriggerCollectorService::readsManaValueX);
-            case CardAnyOfPredicate anyOf -> anyOf.predicates().stream()
-                    .anyMatch(SpellCastTriggerCollectorService::readsManaValueX);
-            case CardNotPredicate not -> readsManaValueX(not.predicate());
-            case null, default -> false;
-        };
-    }
 
     /**
      * The filter of the target group the ability's effects are bound to, or {@code null} for none: a "whenever you

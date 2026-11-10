@@ -1137,6 +1137,16 @@ public class PermanentChoiceTriggerHandlerService {
         }
     }
 
+    /**
+     * Gives {@code entry} what {@code att}'s collector records for an ability of the same trigger that chooses no
+     * target, if it gave the choice that record.
+     */
+    private static void carryTriggerRecord(StackEntry entry, PermanentChoiceContext.AttackTriggerTarget att) {
+        if (att.triggerRecord() != null) {
+            entry.carryTriggerRecord(att.triggerRecord());
+        }
+    }
+
     public void handleAttackTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.AttackTriggerTarget att) {
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         boolean isExiledCardTarget = target == null
@@ -1178,7 +1188,10 @@ public class PermanentChoiceTriggerHandlerService {
             if (att.xValue() != null) {
                 entry.setXValue(att.xValue());
             }
-            entry.setEventValue(att.eventValue());
+            carryTriggerRecord(entry, att);
+            if (att.triggerRecord() == null) {
+                entry.setEventValue(att.eventValue());
+            }
             Permanent source = gameQueryService.findPermanentById(gameData, att.sourcePermanentId());
             if (source != null) {
                 entry.setSourcePermanentSnapshot(new Permanent(source));
@@ -1186,9 +1199,11 @@ public class PermanentChoiceTriggerHandlerService {
             if (att.attackedTargetId() != null) {
                 entry.setAttackedTargetId(att.attackedTargetId());
             }
-            entry.setTriggeringPermanentId(att.triggeringPermanentId());
-            entry.setTriggeringPlayerId(att.triggeringPlayerId());
-            entry.setSourceGraveyardEntryVersion(att.sourceGraveyardEntryVersion());
+            if (att.triggerRecord() == null) {
+                entry.setTriggeringPermanentId(att.triggeringPermanentId());
+                entry.setTriggeringPlayerId(att.triggeringPlayerId());
+                entry.setSourceGraveyardEntryVersion(att.sourceGraveyardEntryVersion());
+            }
             entry.setActivePlayerId(gameData.activePlayerId);
             pushTriggeredEntry(gameData, entry);
             if (att.triggeringPermanentId() != null) {
@@ -1217,7 +1232,10 @@ public class PermanentChoiceTriggerHandlerService {
                     new ArrayList<>(att.effects()),
                     null,
                     att.sourcePermanentId());
-            entry.setEventValue(att.eventValue());
+            carryTriggerRecord(entry, att);
+            if (att.triggerRecord() == null) {
+                entry.setEventValue(att.eventValue());
+            }
             Permanent source = gameQueryService.findPermanentById(gameData, att.sourcePermanentId());
             if (source != null) {
                 entry.setSourcePermanentSnapshot(new Permanent(source));
@@ -1225,9 +1243,11 @@ public class PermanentChoiceTriggerHandlerService {
             if (att.attackedTargetId() != null) {
                 entry.setAttackedTargetId(att.attackedTargetId());
             }
-            entry.setTriggeringPermanentId(att.triggeringPermanentId());
-            entry.setTriggeringPlayerId(att.triggeringPlayerId());
-            entry.setSourceGraveyardEntryVersion(att.sourceGraveyardEntryVersion());
+            if (att.triggerRecord() == null) {
+                entry.setTriggeringPermanentId(att.triggeringPermanentId());
+                entry.setTriggeringPlayerId(att.triggeringPlayerId());
+                entry.setSourceGraveyardEntryVersion(att.sourceGraveyardEntryVersion());
+            }
             entry.setActivePlayerId(gameData.activePlayerId);
             pushTriggeredEntry(gameData, entry);
             gameLogService.append(gameData, GameLog.cardThen(att.sourceCard(), "'s ability targets nothing."));
@@ -1266,7 +1286,10 @@ public class PermanentChoiceTriggerHandlerService {
         if (att.xValue() != null) {
             entry.setXValue(att.xValue());
         }
-        entry.setEventValue(att.eventValue());
+        carryTriggerRecord(entry, att);
+        if (att.triggerRecord() == null) {
+            entry.setEventValue(att.eventValue());
+        }
         Permanent source = gameQueryService.findPermanentById(gameData, att.sourcePermanentId());
         if (source != null) {
             entry.setSourcePermanentSnapshot(new Permanent(source));
@@ -1274,9 +1297,11 @@ public class PermanentChoiceTriggerHandlerService {
         if (att.attackedTargetId() != null) {
             entry.setAttackedTargetId(att.attackedTargetId());
         }
-        entry.setTriggeringPermanentId(att.triggeringPermanentId());
-        entry.setTriggeringPlayerId(att.triggeringPlayerId());
-        entry.setSourceGraveyardEntryVersion(att.sourceGraveyardEntryVersion());
+        if (att.triggerRecord() == null) {
+            entry.setTriggeringPermanentId(att.triggeringPermanentId());
+            entry.setTriggeringPlayerId(att.triggeringPlayerId());
+            entry.setSourceGraveyardEntryVersion(att.sourceGraveyardEntryVersion());
+        }
         entry.setActivePlayerId(gameData.activePlayerId);
         pushTriggeredEntry(gameData, entry);
         if (att.triggeringPermanentId() != null) {
