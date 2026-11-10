@@ -27,9 +27,10 @@ import java.util.UUID;
  * (and, for an ability that chooses no target, its non-targeting "that player", which the {@code TRIGGERING_PLAYER}
  * recipients read), the source as it was when the ability triggered, and the ability's "do this only once each turn"
  * marked as its action is taken (CR 603.2h). The effects go on the stack as written; a "you may" is asked as the
- * ability resolves (CR 603.5). A target is chosen as the ability goes on the stack (CR 603.3d), by what the effect's
- * target admits, and the choice carries the same record into the entry. The collectors in
- * {@code TriggerCollectionService} judged the ability's event condition and intervening "if" as it triggered.
+ * ability resolves (CR 603.5). The ability is one object (CR 603.3): a target is chosen as it goes on the stack
+ * (CR 603.3d), by what its effects' targets admit, and the choice carries every effect and the same record into the
+ * entry. The collectors in {@code TriggerCollectionService} judged the ability's event condition and intervening "if"
+ * as it triggered.
  */
 @Slf4j
 @Service
@@ -47,26 +48,26 @@ public class LifeGainTriggerCollectorService {
     @CollectsLifeTrigger(value = CardEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
     @CollectsLifeTrigger(value = CardEffect.class, watch = LifeWatch.ON_OPPONENT_LOSES_LIFE)
     @CollectsLifeTrigger(value = CardEffect.class, watch = LifeWatch.ON_CONTROLLER_PAYS_LIFE)
-    private boolean handleLifeDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+    private boolean handleLifeDefault(TriggerMatchContext match, TriggerContext ctx) {
         LifeEvent event = LifeEvent.of(ctx);
         Card sourceCard = match.permanent().getCard();
-        if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
-            queueGraveyardTarget(match, effect, 0, 0);
+        if (match.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+            queueGraveyardTarget(match, 0, 0);
             return true;
         }
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+        if (match.admits(TargetPredicate.Kind.PERMANENT)
+                || match.admits(TargetPredicate.Kind.PLAYER)) {
             // "Up to X target creatures, where X is the life gained" (Heroic Feast): the targets are chosen group by
             // group, with the life gained as the count.
-            if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+            if (match.admits(TargetPredicate.Kind.PERMANENT)
                     && sourceCard.getTargetGroups().stream().anyMatch(group -> group.getDynamicMaxTargets() != null)) {
                 match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        sourceCard, match.controllerId(), List.of(effect), match.permanent().getId(),
+                        sourceCard, match.controllerId(), match.effects(), match.permanent().getId(),
                         List.of(), 0, 0, List.of(), 0, List.of(), false, null, null, event.amount()));
             } else {
                 match.gameData().queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
-                        sourceCard, match.controllerId(), List.of(effect), match.permanent().getId(),
-                        !effect.targetSpec().admits(TargetPredicate.Kind.PLAYER), event.amount(),
+                        sourceCard, match.controllerId(), match.effects(), match.permanent().getId(),
+                        !match.admits(TargetPredicate.Kind.PLAYER), event.amount(),
                         event.playerId()));
             }
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
@@ -80,10 +81,10 @@ public class LifeGainTriggerCollectorService {
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                match.stackEffects(),
                 null,
                 match.permanent().getId());
-        if (effect.targetSpec().declaredTarget() == null) {
+        if (!match.declaresTarget()) {
             entry.setTargetId(event.playerId());
             entry.setNonTargeting(true);
         }
@@ -108,14 +109,14 @@ public class LifeGainTriggerCollectorService {
             watch = LifeWatch.ON_OPPONENT_LOSES_LIFE)
     private boolean handleOpponentLifeLossCastFromGraveyard(TriggerMatchContext match,
             CastTargetInstantOrSorceryFromGraveyardEffect effect, TriggerContext ctx) {
-        queueGraveyardTarget(match, effect, 1, 1);
+        queueGraveyardTarget(match, 1, 1);
         return true;
     }
 
-    private void queueGraveyardTarget(TriggerMatchContext match, CardEffect effect, int minCount, int maxCount) {
+    private void queueGraveyardTarget(TriggerMatchContext match, int minCount, int maxCount) {
         Card sourceCard = match.permanent().getCard();
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                sourceCard, match.controllerId(), List.of(effect), null, minCount, 0, maxCount, null, false, null,
+                sourceCard, match.controllerId(), match.effects(), null, minCount, 0, maxCount, null, false, null,
                 match.permanent().getId(), match.markSourceOncePerTurnOnAcceptance(), List.of()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on a life event and needs a graveyard target",

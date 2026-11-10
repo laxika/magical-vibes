@@ -20,8 +20,7 @@ import java.util.List;
 public class PermanentCounterRemovalTriggerCollectorService {
 
     @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTER_REMOVED)
-    private boolean handleSelfPlusOnePlusOneCounterRemoved(TriggerMatchContext match, CardEffect effect,
-                                                           TriggerContext ctx) {
+    private boolean handleSelfPlusOnePlusOneCounterRemoved(TriggerMatchContext match, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.PlusOnePlusOneCountersRemoved removed)
                 || removed.amount() <= 0
                 || match.permanent() == null
@@ -37,7 +36,7 @@ public class PermanentCounterRemovalTriggerCollectorService {
                     sourceCard,
                     match.controllerId(),
                     sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
+                    match.stackEffects(),
                     null,
                     match.permanent().getId()));
         }
@@ -45,8 +44,7 @@ public class PermanentCounterRemovalTriggerCollectorService {
     }
 
     @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_SELF_TIME_COUNTERS_REMOVED)
-    private boolean handleSelfTimeCountersRemoved(TriggerMatchContext match, CardEffect effect,
-                                                  TriggerContext ctx) {
+    private boolean handleSelfTimeCountersRemoved(TriggerMatchContext match, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.TimeCountersRemoved removed)
                 || removed.amount() <= 0
                 || match.permanent() == null
@@ -61,7 +59,7 @@ public class PermanentCounterRemovalTriggerCollectorService {
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                match.stackEffects(),
                 null,
                 match.permanent().getId()));
         return true;

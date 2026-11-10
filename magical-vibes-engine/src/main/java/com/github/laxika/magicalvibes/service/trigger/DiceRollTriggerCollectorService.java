@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -29,31 +28,28 @@ public class DiceRollTriggerCollectorService {
     private final ConditionEvaluationService conditionEvaluationService;
 
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_ROLLS_HIGHEST_NATURAL_RESULT)
-    private boolean handleControllerRollsHighestNaturalResult(TriggerMatchContext match, CardEffect effect,
-                                                              TriggerContext context) {
-        return handleControllerRollsDice(match, effect, context);
+    private boolean handleControllerRollsHighestNaturalResult(TriggerMatchContext match, TriggerContext context) {
+        return handleControllerRollsDice(match, context);
     }
 
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_ROLLS_ONE_OR_MORE_DICE)
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_ROLLS_DIE)
-    private boolean handleControllerRollsDice(TriggerMatchContext match, CardEffect effect,
-                                               TriggerContext context) {
+    private boolean handleControllerRollsDice(TriggerMatchContext match, TriggerContext context) {
         Card sourceCard = match.sourceCard() != null ? match.sourceCard() : match.permanent().getCard();
         UUID sourcePermanentId = match.permanent() == null ? null : match.permanent().getId();
-        TargetSpec targetSpec = effect.targetSpec();
-        if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)
-                || targetSpec.admits(TargetPredicate.Kind.PLAYER)) {
-            int targetGroupIndex = sourceCard.getEffectTargetIndex(effect);
+        if (match.admits(TargetPredicate.Kind.PERMANENT) || match.admits(TargetPredicate.Kind.PLAYER)) {
+            CardEffect targeting = match.targetingEffect();
+            int targetGroupIndex = sourceCard.getEffectTargetIndex(targeting);
             TargetFilter targetFilter = targetGroupIndex >= 0
                     ? sourceCard.getTargetGroups().get(targetGroupIndex).getFilter()
                     : sourceCard.getTargetFilter();
-            boolean optionalTarget = effect.hasOptionalTarget()
+            boolean optionalTarget = match.targetIsOptional()
                     || isOptionalSingleTarget(sourceCard, targetGroupIndex);
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     sourceCard,
                     match.controllerId(),
-                    new ArrayList<>(List.of(effect)),
-                    !targetSpec.admits(TargetPredicate.Kind.PERMANENT),
+                    match.stackEffects(),
+                    !match.admits(TargetPredicate.Kind.PERMANENT),
                     targetFilter,
                     0,
                     sourcePermanentId,
@@ -75,7 +71,7 @@ public class DiceRollTriggerCollectorService {
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                match.stackEffects(),
                 null,
                 sourcePermanentId);
         if (context instanceof TriggerContext.DiceRoll diceRoll) {

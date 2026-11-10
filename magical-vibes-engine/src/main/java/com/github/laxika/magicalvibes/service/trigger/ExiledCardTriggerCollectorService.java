@@ -26,8 +26,7 @@ public class ExiledCardTriggerCollectorService {
     private final ConditionEvaluationService conditionEvaluationService;
 
     @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_SELF_TIME_COUNTER_REMOVED_FROM_EXILE)
-    private boolean handleTimeCounterRemoved(TriggerMatchContext match, CardEffect effect,
-            TriggerContext ctx) {
+    private boolean handleTimeCounterRemoved(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.TimeCounterRemovedFromExile removed =
                 (TriggerContext.TimeCounterRemovedFromExile) ctx;
         Card card = match.sourceCard();
@@ -35,9 +34,9 @@ public class ExiledCardTriggerCollectorService {
             return false;
         }
 
-        // The collector dispatches the first of the effects it read, which go on the stack as one object; it judged
-        // the abilities' "when the last time counter is removed" event condition from the exiled card.
-        List<CardEffect> triggeredEffects = removed.effects();
+        // One ability, whole (CR 603.3); the collector judged its "when the last time counter is removed" event
+        // condition from the exiled card.
+        List<CardEffect> triggeredEffects = match.effects();
 
         GameData gameData = match.gameData();
         if (triggeredEffects.stream().anyMatch(triggeredEffect ->

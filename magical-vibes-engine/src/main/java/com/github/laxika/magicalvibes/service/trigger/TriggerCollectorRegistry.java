@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -36,12 +36,14 @@ public class TriggerCollectorRegistry {
     }
 
     /**
-     * Dispatches a single effect to its registered handler.
+     * Dispatches the ability {@code match} carries, its effects together, to {@code slot}'s handler, which puts it on
+     * the stack as one object (CR 603.3).
      * <p>
      * Resolution order:
      * <ol>
-     *   <li>Exact match on the raw effect's class</li>
-     *   <li>Fallback handler registered for {@code CardEffect.class} (default handler)</li>
+     *   <li>A handler registered for the exact class of one of the ability's effects, the first in order that has
+     *       one (a ROUTE: it routes the whole ability)</li>
+     *   <li>The default handler registered for {@code CardEffect.class}, which routes any ability of the watch</li>
      * </ol>
      * A "you may" ({@link com.github.laxika.magicalvibes.model.effect.MayEffect} and the may-pay effects) is the
      * effect itself, never unwrapped: an optional triggered ability goes on the stack with its option, chosen as it
@@ -49,29 +51,24 @@ public class TriggerCollectorRegistry {
      *
      * @return {@code true} if a handler was found and the trigger fired
      */
-    public boolean dispatch(TriggerMatchContext match, Object slot, CardEffect effect, TriggerContext context) {
-        // 1. Exact match
-        TriggerCollectorHandler handler = handlers.get(new TriggerKey(slot, effect.getClass()));
-        if (handler != null) {
-            return handler.handle(match, effect, context);
+    public boolean dispatch(TriggerMatchContext match, Object slot, TriggerContext context) {
+        for (CardEffect effect : match.effects()) {
+            TriggerCollectorHandler handler = handlers.get(new TriggerKey(slot, effect.getClass()));
+            if (handler != null) {
+                return handler.handle(match, context);
+            }
         }
-
-        // 2. Default handler (CardEffect.class)
-        handler = handlers.get(new TriggerKey(slot, CardEffect.class));
-        if (handler != null) {
-            return handler.handle(match, effect, context);
-        }
-
-        return false;
+        TriggerCollectorHandler handler = handlers.get(new TriggerKey(slot, CardEffect.class));
+        return handler != null && handler.handle(match, context);
     }
 
     /**
-     * Whether {@link #dispatch} finds a handler for {@code effect} on {@code slot}: one registered for its class, or the
-     * slot's default handler.
+     * Whether {@link #dispatch} finds a handler for an ability of {@code effects} on {@code slot}: one registered for
+     * the class of one of them, or the slot's default handler.
      */
-    public boolean handles(Object slot, CardEffect effect) {
-        return handlers.containsKey(new TriggerKey(slot, effect.getClass()))
-                || handlers.containsKey(new TriggerKey(slot, CardEffect.class));
+    public boolean handles(Object slot, List<CardEffect> effects) {
+        return handlers.containsKey(new TriggerKey(slot, CardEffect.class))
+                || effects.stream().anyMatch(effect -> handlers.containsKey(new TriggerKey(slot, effect.getClass())));
     }
 
     public int size() {
@@ -82,7 +79,6 @@ public class TriggerCollectorRegistry {
      * Scans a bean for {@link CollectsTrigger}-annotated methods and registers them.
      * Used by non-Spring contexts (tests, AI simulator) that cannot use annotation scanning.
      */
-    @SuppressWarnings("unchecked")
     public static void scanBean(Object bean, TriggerCollectorRegistry registry) {
         for (Method method : bean.getClass().getDeclaredMethods()) {
             CollectsTrigger single = method.getAnnotation(CollectsTrigger.class);
@@ -220,40 +216,71 @@ public class TriggerCollectorRegistry {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private static void registerMethod(Object bean, Method method, CollectsTrigger annotation,
                                         TriggerCollectorRegistry registry) {
         registerMethod(bean, method, annotation.slot(), annotation.value(), registry);
     }
 
-    @SuppressWarnings("unchecked")
     private static void registerMethod(Object bean, Method method, Object key, Class<? extends CardEffect> effectClass,
                                         TriggerCollectorRegistry registry) {
+        registry.register(key, effectClass, handlerOf(bean, method, effectClass));
+    }
+
+    /**
+     * The handler {@code method} of {@code bean} is, registered for {@code effectClass}. A watch's default
+     * ({@code CardEffect.class}) takes {@code (TriggerMatchContext, TriggerContext)}: it routes whatever ability of the
+     * watch triggered, by its effects. A handler for an effect class takes {@code (TriggerMatchContext, <that class>,
+     * TriggerContext)}: it routes an ability that has an effect of that class, which it is given. Both return
+     * {@code boolean}; any other method throws.
+     */
+    @SuppressWarnings("unchecked")
+    public static TriggerCollectorHandler handlerOf(Object bean, Method method,
+                                                    Class<? extends CardEffect> effectClass) {
         method.setAccessible(true);
         Class<?>[] params = method.getParameterTypes();
-
-        if (params.length != 3
-                || params[0] != TriggerMatchContext.class
-                || !CardEffect.class.isAssignableFrom(params[1])
-                || !TriggerContext.class.isAssignableFrom(params[2])) {
-            return;
+        boolean isDefault = effectClass == CardEffect.class;
+        boolean valid = method.getReturnType() == boolean.class && (isDefault
+                ? params.length == 2 && params[0] == TriggerMatchContext.class
+                        && TriggerContext.class.isAssignableFrom(params[1])
+                : params.length == 3 && params[0] == TriggerMatchContext.class
+                        && params[1].isAssignableFrom(effectClass)
+                        && TriggerContext.class.isAssignableFrom(params[2]));
+        if (!valid) {
+            throw new IllegalStateException("Trigger collector method " + method.getDeclaringClass().getSimpleName()
+                    + "." + method.getName() + " must return boolean and take " + (isDefault
+                    ? "(TriggerMatchContext, TriggerContext): a default routes the whole ability"
+                    : "(TriggerMatchContext, " + effectClass.getSimpleName() + ", TriggerContext)"));
         }
-
+        MethodHandle handle;
         try {
-            MethodHandle handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
-            Class<? extends CardEffect> effectParam = (Class<? extends CardEffect>) params[1];
-
-            registry.register(key, effectClass, (match, innerEffect, context) -> {
-                try {
-                    return (boolean) handle.invoke(match, effectParam.cast(innerEffect), context);
-                } catch (RuntimeException re) {
-                    throw re;
-                } catch (Throwable t) {
-                    throw new RuntimeException(t);
-                }
-            });
+            handle = MethodHandles.lookup().unreflect(method).bindTo(bean);
         } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException("Cannot access trigger collector method " + method.getName(), e);
+        }
+        if (isDefault) {
+            return (match, context) -> invoke(handle, method, match, context);
+        }
+        return (match, context) -> invoke(handle, method, match, keyedEffect(match, effectClass), context);
+    }
+
+    /** The effect of {@code match}'s ability whose exact class is {@code effectClass}. */
+    private static CardEffect keyedEffect(TriggerMatchContext match, Class<? extends CardEffect> effectClass) {
+        for (CardEffect effect : match.effects()) {
+            if (effect.getClass() == effectClass) {
+                return effect;
+            }
+        }
+        throw new IllegalStateException("The ability has no " + effectClass.getSimpleName() + ": " + match.effects());
+    }
+
+    private static boolean invoke(MethodHandle handle, Method method, Object... arguments) {
+        try {
+            return (boolean) handle.invokeWithArguments(arguments);
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Throwable t) {
+            throw new RuntimeException("Error invoking trigger collector "
+                    + method.getDeclaringClass().getSimpleName() + "." + method.getName(), t);
         }
     }
 }

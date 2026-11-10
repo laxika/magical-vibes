@@ -40,17 +40,17 @@ public class ScryTriggerCollectorService {
      */
     @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_CONTROLLER_SCRIES)
     @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_OPPONENT_SCRIES)
-    private boolean handleScryDefault(TriggerMatchContext match, CardEffect trigger, TriggerContext ctx) {
+    private boolean handleScryDefault(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.Scry scry = (TriggerContext.Scry) ctx;
         Card sourceCard = match.permanent().getCard();
-        TargetSpec targetSpec = trigger.targetSpec();
         boolean opponentScry = !match.controllerId().equals(scry.scryingPlayerId());
-        if (!opponentScry && (targetSpec.admits(TargetPredicate.Kind.PERMANENT)
-                || targetSpec.admits(TargetPredicate.Kind.PLAYER))) {
+        if (!opponentScry && (match.admits(TargetPredicate.Kind.PERMANENT)
+                || match.admits(TargetPredicate.Kind.PLAYER))) {
+            TargetSpec targetSpec = match.targetingEffect().targetSpec();
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     sourceCard,
                     match.controllerId(),
-                    new ArrayList<>(List.of(trigger)),
+                    match.stackEffects(),
                     !targetSpec.admits(TargetPredicate.Kind.PERMANENT),
                     targetFilter(targetSpec),
                     0,
@@ -63,7 +63,7 @@ public class ScryTriggerCollectorService {
                     sourceCard,
                     match.controllerId(),
                     sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(trigger)),
+                    match.stackEffects(),
                     opponentScry ? scry.scryingPlayerId() : null,
                     match.permanent().getId());
             entry.setTriggeringPlayerId(scry.scryingPlayerId());

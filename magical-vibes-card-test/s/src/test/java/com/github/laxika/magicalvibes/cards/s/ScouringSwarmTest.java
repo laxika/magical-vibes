@@ -32,6 +32,20 @@ class ScouringSwarmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Sacrificing a land puts one ability on the stack, not one for each token clause (CR 603.3)")
+    void sacrificeAbilityIsOneStackObject() {
+        harness.addToBattlefield(player1, new ZuranOrb());
+        harness.addToBattlefield(player1, new ScouringSwarm());
+        harness.addToBattlefield(player1, new Forest());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+
+        assertThat(gd.stack.stream().filter(entry -> entry.getCard().getName().equals("Scouring Swarm")))
+                .singleElement()
+                .satisfies(entry -> assertThat(entry.getEffectsToResolve()).hasSize(2));
+    }
+
+    @Test
     @DisplayName("Seven land cards make the trigger create a tapped token copy")
     void createsTappedTokenCopyAtSevenLandCards() {
         harness.setGraveyard(player1, List.of(

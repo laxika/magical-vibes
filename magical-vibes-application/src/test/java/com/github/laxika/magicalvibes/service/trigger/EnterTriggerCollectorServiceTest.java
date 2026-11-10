@@ -326,7 +326,7 @@ class EnterTriggerCollectorServiceTest {
 
         AtomicInteger dispatchCount = new AtomicInteger();
         registry.register(LifeWatch.ON_CONTROLLER_GAINS_LIFE, CardEffect.class,
-                (match, dispatchedEffect, context) -> {
+                (match, context) -> {
                     dispatchCount.incrementAndGet();
                     return true;
                 });

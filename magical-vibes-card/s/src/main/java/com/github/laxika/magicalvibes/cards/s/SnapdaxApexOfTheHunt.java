@@ -40,7 +40,7 @@ public class SnapdaxApexOfTheHunt extends Card {
                 creatureOrPlaneswalkerAnOpponentControls,
                 "Target must be a creature or planeswalker an opponent controls"
         )).addTrigger(Triggers.mutates(),
-                new DealDamageToTargetCreatureOrPlaneswalkerEffect(4, creatureOrPlaneswalkerAnOpponentControls))
-                .addTrigger(Triggers.mutates(), new GainLifeEffect(4));
+                new DealDamageToTargetCreatureOrPlaneswalkerEffect(4, creatureOrPlaneswalkerAnOpponentControls),
+                new GainLifeEffect(4));
     }
 }

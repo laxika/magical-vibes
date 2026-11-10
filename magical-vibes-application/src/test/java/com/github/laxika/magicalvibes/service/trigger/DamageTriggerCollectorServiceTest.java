@@ -134,7 +134,7 @@ class DamageTriggerCollectorServiceTest {
         DrawCardEffect effect = new DrawCardEffect(1);
 
         registry.dispatch(match(equipment, player1Id, effect),
-                CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER, effect,
+                CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER,
                 new TriggerContext.SourceDealsCombatDamage(attacker.getCard(), player2Id,
                         attacker.getId(), 3, 3));
 
@@ -154,7 +154,7 @@ class DamageTriggerCollectorServiceTest {
         var ctx = new TriggerContext.AnyPermanentDealtDamage(damaged, player1Id, 2);
 
         boolean result = registry.dispatch(
-                match(watcher, player1Id, wrapped), DamageWatch.ON_ANY_PERMANENT_DEALT_DAMAGE, wrapped, ctx);
+                match(watcher, player1Id, wrapped), DamageWatch.ON_ANY_PERMANENT_DEALT_DAMAGE, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
@@ -201,7 +201,7 @@ class DamageTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(watcher, player1Id, effect),
-                DamageWatch.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLANESWALKER, effect, ctx);
+                DamageWatch.ON_ALLY_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLANESWALKER, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -222,7 +222,7 @@ class DamageTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(watcher, player1Id, effect),
-                DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT, effect, ctx);
+                DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -241,7 +241,7 @@ class DamageTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(quest, player1Id, effect),
-                DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT, effect, ctx);
+                DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -260,7 +260,7 @@ class DamageTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(watcher, player1Id, wrapped),
-                DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER, wrapped, ctx);
+                DamageWatch.ON_ALLY_CREATURES_DEAL_DAMAGE_TO_PLAYER, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -283,8 +283,7 @@ class DamageTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(source, player1Id, effect),
-                CombatWatch.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE,
-                effect, ctx);
+                CombatWatch.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)).isTrue();
@@ -307,7 +306,7 @@ class DamageTriggerCollectorServiceTest {
             var ctx = new TriggerContext.AnyCreatureDealtDamage(damaged, player2Id, 2);
 
             boolean result = registry.dispatch(
-                    match(watcher, player1Id, effect), DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE, effect, ctx);
+                    match(watcher, player1Id, effect), DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -329,7 +328,7 @@ class DamageTriggerCollectorServiceTest {
             var ctx = new TriggerContext.AnyCreatureDealtDamage(damaged, player2Id, 2);
 
             assertThat(registry.dispatch(match(watcher, player1Id, effect),
-                    DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE, effect, ctx)).isTrue();
+                    DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE, ctx)).isTrue();
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
@@ -350,8 +349,9 @@ class DamageTriggerCollectorServiceTest {
                     "Reflect the damage?");
             var ctx = new TriggerContext.AnyCreatureDealtDamage(damaged, player1Id, 2);
 
-            assertThat(registry.dispatch(new TriggerMatchContext(gd, watcher, player1Id, may, watcher.getCard(), true),
-                    DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE, may, ctx)).isTrue();
+            assertThat(registry.dispatch(new TriggerMatchContext(gd, watcher, player1Id, List.of(may),
+                    watcher.getCard(), null, true),
+                    DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE, ctx)).isTrue();
 
             assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
                     .isNotNull()
@@ -377,7 +377,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(aura, player1Id, effect),
-                    DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -396,7 +396,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(aura, player1Id, effect),
-                    DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -421,7 +421,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(aura, player1Id, effect),
-                    DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -448,7 +448,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(aura, player1Id, effect),
-                    DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, ctx);
 
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
@@ -463,15 +463,16 @@ class DamageTriggerCollectorServiceTest {
         @DisplayName("the abilities the cards write with trigger filters have no class-keyed handler on the watch")
         void theCardsEffectsHaveNoClassKeyedHandler() {
             assertThat(registry.handles(DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
-                    new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST), "Put a quest counter?")))
+                    List.of(new MayEffect(new PutCountersOnSelfEffect(CounterType.QUEST), "Put a quest counter?"))))
                     .isFalse();
             assertThat(registry.handles(DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
-                    new PutCountersOnSourceEffect(1, 1, 1))).isFalse();
+                    List.of(new PutCountersOnSourceEffect(1, 1, 1)))).isFalse();
             assertThat(registry.handles(DamageWatch.ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE,
-                    new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER)
-                            .dealtByEventDamageSource())).isFalse();
+                    List.of(new DealDamageToPlayersEffect(new EventValue(),
+                    DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER)
+                            .dealtByEventDamageSource()))).isFalse();
             assertThat(registry.handles(DamageWatch.ON_SELF_DEALS_DAMAGE_TO_CREATURE,
-                    com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect.ofTriggeringPermanent()))
+                    List.of(com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect.ofTriggeringPermanent())))
                     .isFalse();
         }
     }
@@ -492,7 +493,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(damagedCreature, player1Id, effect),
-                    DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_DEALT_DAMAGE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -512,7 +513,7 @@ class DamageTriggerCollectorServiceTest {
             var effect = new DealDamageToDamageSourceCreatureOrSpellControllerEffect();
             var ctx = new TriggerContext.DamageToCreature(damagedCreature, 2, player2Id, createCard("Shock"), null);
 
-            registry.dispatch(match(damagedCreature, player1Id, effect), DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
+            registry.dispatch(match(damagedCreature, player1Id, effect), DamageWatch.ON_DEALT_DAMAGE, ctx);
 
             assertThat(gd.stack).singleElement().satisfies(entry -> {
                 assertThat(entry.getEffectsToResolve()).containsExactly(effect);
@@ -534,7 +535,7 @@ class DamageTriggerCollectorServiceTest {
                     source.getId());
 
             assertThat(registry.dispatch(match(damagedCreature, player1Id, effect), DamageWatch.ON_DEALT_DAMAGE,
-                    effect, ctx)).isTrue();
+                    ctx)).isTrue();
 
             assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
                     .satisfies(pending -> {
@@ -555,7 +556,7 @@ class DamageTriggerCollectorServiceTest {
             var effect = com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.triggering();
             var ctx = new TriggerContext.DamageToCreature(damagedCreature, 2, player2Id, null, null, lastKnown);
 
-            registry.dispatch(match(damagedCreature, player1Id, effect), DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
+            registry.dispatch(match(damagedCreature, player1Id, effect), DamageWatch.ON_DEALT_DAMAGE, ctx);
 
             assertThat(gd.stack).singleElement()
                     .satisfies(entry -> assertThat(entry.getSourcePermanentSnapshot()).isSameAs(lastKnown));
@@ -574,7 +575,7 @@ class DamageTriggerCollectorServiceTest {
             var ctx = new TriggerContext.DamageToControllerAmount(player1Id, 4);
 
             boolean result = registry.dispatch(match(lich, player1Id, effect),
-                    DamageWatch.ON_CONTROLLER_DEALT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_CONTROLLER_DEALT_DAMAGE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -594,7 +595,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(aura, player1Id, effect),
-                    DamageWatch.ON_CONTROLLER_DEALT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_CONTROLLER_DEALT_DAMAGE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -618,7 +619,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(hound, player1Id, effect),
-                    DamageWatch.ON_CONTROLLER_DEALT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_CONTROLLER_DEALT_DAMAGE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -641,7 +642,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(lich, player1Id, effect),
-                    DamageWatch.ON_CONTROLLER_DEALT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_CONTROLLER_DEALT_DAMAGE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -666,7 +667,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(talon, player1Id, effect),
-                    DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT, effect, ctx);
+                    DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -690,7 +691,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(spitfire, player1Id, effect),
-                    DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -710,7 +711,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(thor, player1Id, effect),
-                    DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx);
+                    DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -734,7 +735,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(incinerator, player1Id, effect),
-                    DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx);
+                    DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
@@ -757,7 +758,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(norn, player1Id, effect),
-                    DamageWatch.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT, effect, ctx);
+                    DamageWatch.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -785,7 +786,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(watcher, player1Id, effect),
-                    DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx);
+                    DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
@@ -811,7 +812,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(mask, player1Id, effect),
-                    DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT, effect, ctx);
+                    DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -828,7 +829,7 @@ class DamageTriggerCollectorServiceTest {
         var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player1Id, 1);
 
         assertThat(registry.dispatch(match(perm, player1Id, effect),
-                DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx)).isTrue();
+                DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, ctx)).isTrue();
 
         assertThat(gd.stack).singleElement()
                 .satisfies(entry -> assertThat(entry.getEffectsToResolve()).containsExactly(effect));
@@ -848,7 +849,7 @@ class DamageTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(watcher, player1Id, effect),
-                DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT, effect, ctx);
+                DamageWatch.ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -866,7 +867,7 @@ class DamageTriggerCollectorServiceTest {
                 Map.of(player2Id, 2));
 
         boolean result = registry.dispatch(
-                match(null, player1Id, effect), DamageWatch.ON_SELF_DEALS_DAMAGE, effect, ctx);
+                match(null, player1Id, effect), DamageWatch.ON_SELF_DEALS_DAMAGE, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -887,7 +888,7 @@ class DamageTriggerCollectorServiceTest {
             var ctx = new TriggerContext.DamageToCreature(damagedCreature, 3, player2Id);
 
             boolean result = registry.dispatch(
-                    match(damagedCreature, player1Id, effect), DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
+                    match(damagedCreature, player1Id, effect), DamageWatch.ON_DEALT_DAMAGE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -913,7 +914,7 @@ class DamageTriggerCollectorServiceTest {
             var ctx = new TriggerContext.DamageToControllerAmount(player2Id, 3, UUID.randomUUID());
 
             boolean result = registry.dispatch(
-                    match(watcher, player1Id, effect), DamageWatch.ON_OPPONENT_DEALT_DAMAGE, effect, ctx);
+                    match(watcher, player1Id, effect), DamageWatch.ON_OPPONENT_DEALT_DAMAGE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -943,7 +944,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(damagedCreature, player1Id, effect),
-                    DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_DEALT_DAMAGE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
@@ -962,7 +963,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(damagedCreature, player1Id, effect),
-                    DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_DEALT_DAMAGE, ctx);
 
             assertThat(result).isFalse();
             assertThat(gd.stack).isEmpty();
@@ -977,7 +978,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(damagedCreature, player1Id, effect),
-                    DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_DEALT_DAMAGE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1001,7 +1002,7 @@ class DamageTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(damagedCreature, player1Id, effect),
-                    DamageWatch.ON_DEALT_DAMAGE, effect, ctx);
+                    DamageWatch.ON_DEALT_DAMAGE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
@@ -1030,7 +1031,7 @@ class DamageTriggerCollectorServiceTest {
         var ctx = new TriggerContext.AnyPermanentDealtDamage(damaged, player1Id, 3);
 
         boolean result = registry.dispatch(
-                match(watcher, player1Id, damage), DamageWatch.ON_ANY_PERMANENT_DEALT_DAMAGE, damage, ctx);
+                match(watcher, player1Id, damage), DamageWatch.ON_ANY_PERMANENT_DEALT_DAMAGE, ctx);
 
         assertThat(result).isTrue();
         var pending = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
@@ -1060,7 +1061,7 @@ class DamageTriggerCollectorServiceTest {
                     source.getId(), player1Id);
 
             boolean result = registry.dispatch(match(watcher, player1Id, may),
-                    DamageWatch.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT, may, ctx);
+                    DamageWatch.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -1076,31 +1077,33 @@ class DamageTriggerCollectorServiceTest {
             var gainLife = new GainLifeEffect(new EventValue());
             var destroy = new com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect(
                     PermanentReference.TRIGGERING);
-            assertThat(registry.handles(DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE, gainLife)).isFalse();
-            assertThat(registry.handles(DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE, gainLife)).isFalse();
-            assertThat(registry.handles(DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, destroy)).isFalse();
+            assertThat(registry.handles(DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE, List.of(gainLife))).isFalse();
+            assertThat(registry.handles(DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE, List.of(gainLife))).isFalse();
+            assertThat(registry.handles(DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU, List.of(destroy))).isFalse();
             assertThat(registry.handles(DamageWatch.ON_CREATURE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT,
-                    new com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentEffect(
-                            new EventValue()))).isFalse();
+                    List.of(new com.github.laxika.magicalvibes.model.effect.DealDamageToTriggeringPermanentEffect(
+                            new EventValue())))).isFalse();
         }
 
         @Test
         @DisplayName("The deals-damage-to-you, chosen-color source and only-target-creature abilities' effects go on the stack through no record handler")
         void theDamageToYouAbilitiesHaveNoRecordHandler() {
             assertThat(registry.handles(DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU,
-                    com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.triggering())).isFalse();
+                    List.of(com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.triggering()))).isFalse();
             assertThat(registry.handles(DamageWatch.ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU,
-                    new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING, CounterType.GOLD)))
+                    List.of(new PutCounterOnReferencedPermanentEffect(PermanentReference.TRIGGERING,
+                    CounterType.GOLD))))
                     .isFalse();
             assertThat(registry.handles(DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE_TO_YOU,
-                    new com.github.laxika.magicalvibes.model.effect.MayPayManaEffect("{1}", new GainLifeEffect(1),
-                            "Pay {1}?"))).isFalse();
+                    List.of(new com.github.laxika.magicalvibes.model.effect.MayPayManaEffect("{1}",
+                    new GainLifeEffect(1),
+                            "Pay {1}?")))).isFalse();
             assertThat(registry.handles(DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE,
-                    new com.github.laxika.magicalvibes.model.effect.MayPayManaEffect("{1}", new GainLifeEffect(1),
-                            "Pay {1}?"))).isFalse();
-            assertThat(registry.handles(DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_ITS_ONLY_TARGET_CREATURE,
-                    new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(new EventValue(),
-                            com.github.laxika.magicalvibes.model.effect.DamageRecipient.EACH_OPPONENT))).isFalse();
+                    List.of(new com.github.laxika.magicalvibes.model.effect.MayPayManaEffect("{1}",
+                    new GainLifeEffect(1),
+                            "Pay {1}?")))).isFalse();
+            assertThat(registry.handles(DamageWatch.ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_ITS_ONLY_TARGET_CREATURE, List.of(new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(new EventValue(),
+                            com.github.laxika.magicalvibes.model.effect.DamageRecipient.EACH_OPPONENT)))).isFalse();
         }
 
         @Test
@@ -1114,7 +1117,7 @@ class DamageTriggerCollectorServiceTest {
             var ctx = new TriggerContext.CreatureFights(fighter);
 
             boolean result = registry.dispatch(match(watcher, player1Id, delayed),
-                    ActionWatch.ON_ALLY_CREATURE_FIGHTS, delayed, ctx);
+                    ActionWatch.ON_ALLY_CREATURE_FIGHTS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -1134,7 +1137,7 @@ class DamageTriggerCollectorServiceTest {
             var ctx = new TriggerContext.DamageToCreature(creature, 2, player1Id);
 
             boolean result = registry.dispatch(match(aura, player1Id, destroy),
-                    DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, destroy, ctx);
+                    DamageWatch.ON_ENCHANTED_CREATURE_DEALT_DAMAGE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).singleElement().satisfies(entry -> {

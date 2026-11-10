@@ -25,10 +25,8 @@ public class KrosDefenseContractor extends Card {
                         new PutCounterOnTargetPermanentEffect(CounterType.SHIELD, 1));
 
         addTrigger(Triggers.youPutCountersOnCreatureYouDontControl(),
-                new TapPermanentsEffect(TapUntapScope.TRIGGERING));
-        addTrigger(Triggers.youPutCountersOnCreatureYouDontControl(),
-                new GoadTriggeringCreatureUntilNextTurnEffect());
-        addTrigger(Triggers.youPutCountersOnCreatureYouDontControl(),
+                new TapPermanentsEffect(TapUntapScope.TRIGGERING),
+                new GoadTriggeringCreatureUntilNextTurnEffect(),
                 new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TRIGGERING_PERMANENT,
                         GrantDuration.UNTIL_YOUR_NEXT_TURN));
     }

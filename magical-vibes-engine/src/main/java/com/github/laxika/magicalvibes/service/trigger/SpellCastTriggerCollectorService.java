@@ -292,7 +292,7 @@ public class SpellCastTriggerCollectorService {
         if (trigger.filter().grantedToTheSpell() && match.sourceCard() != spellCard) {
             boolean queued = false;
             TriggerMatchContext spellSourced = new TriggerMatchContext(match.gameData(), match.permanent(),
-                    match.controllerId(), match.rawEffect(), spellCard, match.sourcePlanarObject(),
+                    match.controllerId(), match.effects(), spellCard, match.sourcePlanarObject(),
                     match.markSourceOncePerTurnOnAcceptance(), match.triggersOnlyOnceEachTurn());
             for (CardEffect cascade : trigger.effects()) {
                 queued |= handleGenericSpellCastTrigger(spellSourced, trigger.withEffects(List.of(cascade)),

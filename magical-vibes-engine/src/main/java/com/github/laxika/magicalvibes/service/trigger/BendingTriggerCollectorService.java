@@ -13,13 +13,13 @@ import java.util.List;
 public class BendingTriggerCollectorService {
 
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_BENDS)
-    private boolean handleBending(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+    private boolean handleBending(TriggerMatchContext match, TriggerContext ctx) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                match.stackEffects(),
                 null,
                 match.permanent().getId());
         entry.setNonTargeting(true);

@@ -27,7 +27,7 @@ public class SeekTriggerCollectorService {
      * your turn" is the ability's event condition, judged by the dispatcher.
      */
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_SEEKS)
-    private boolean handleSeek(TriggerMatchContext match, CardEffect effect, TriggerContext context) {
+    private boolean handleSeek(TriggerMatchContext match, TriggerContext context) {
         TriggerContext.Seek seek = (TriggerContext.Seek) context;
         Card sourceCard = match.permanent().getCard();
         StackEntry entry = new StackEntry(
@@ -35,7 +35,7 @@ public class SeekTriggerCollectorService {
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                match.stackEffects(),
                 null,
                 match.permanent().getId());
         entry.setNonTargeting(true);

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TriggeredManaAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -66,9 +65,9 @@ public class LandTapTriggerCollectorService {
      * additional {G}" (Wild Growth), "target opponent creates …" (Forbidden Orchard).
      */
     @CollectsTapTrigger(value = CardEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
-    private boolean handleLandTapAbility(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+    private boolean handleLandTapAbility(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.LandTap landTap = (TriggerContext.LandTap) ctx;
-        return collect(match, effect, landTap.tappingPlayerId(), landTap.tappedLandId(), landTap.producedColors(),
+        return collect(match, landTap.tappingPlayerId(), landTap.tappedLandId(), landTap.producedColors(),
                 landTap.tappingPlayerId());
     }
 
@@ -85,8 +84,7 @@ public class LandTapTriggerCollectorService {
             @CollectsTapTrigger(value = CardEffect.class, watch = TapWatch.ON_CONTROLLER_TAPS_NONLAND_PERMANENT_FOR_MANA),
             @CollectsTapTrigger(value = CardEffect.class, watch = TapWatch.ON_CONTROLLER_TAPS_ARTIFACT_TOKEN_FOR_MANA)
     })
-    private boolean handlePermanentTapForManaAbility(TriggerMatchContext match, CardEffect effect,
-                                                     TriggerContext ctx) {
+    private boolean handlePermanentTapForManaAbility(TriggerMatchContext match, TriggerContext ctx) {
         UUID tappingPlayerId;
         UUID tappedPermanentId;
         Set<ManaColor> produced;
@@ -110,19 +108,20 @@ public class LandTapTriggerCollectorService {
                 return false;
             }
         }
-        if (produced != null && produced.isEmpty() && readsProducedMana(effect)) {
+        if (produced != null && produced.isEmpty()
+                && match.effects().stream().anyMatch(LandTapTriggerCollectorService::readsProducedMana)) {
             return false;
         }
-        return collect(match, effect, tappingPlayerId, tappedPermanentId, produced, tappedPermanentId);
+        return collect(match, tappingPlayerId, tappedPermanentId, produced, tappedPermanentId);
     }
 
-    private boolean collect(TriggerMatchContext match, CardEffect effect, UUID tappingPlayerId,
+    private boolean collect(TriggerMatchContext match, UUID tappingPlayerId,
                             UUID tappedPermanentId, Set<ManaColor> producedColors, UUID thatObjectId) {
         GameData gameData = match.gameData();
         boolean producedUnknown = producedColors == null || (producedColors.isEmpty()
                 && gameData.interaction.activeInteraction() instanceof PendingInteraction.ColorChoice);
-        if (TapAbilityReader.isTriggeredManaEffect(effect)) {
-            List<CardEffect> steps = TapAbilityReader.steps(effect);
+        if (TapAbilityReader.isTriggeredManaAbility(match.effects())) {
+            List<CardEffect> steps = TapAbilityReader.steps(match.effects());
             StackEntry entry = tapEntry(match, steps, tappingPlayerId, tappedPermanentId, thatObjectId);
             if (producedUnknown && steps.stream().anyMatch(LandTapTriggerCollectorService::readsProducedMana)) {
                 park(gameData, entry);
@@ -132,9 +131,8 @@ public class LandTapTriggerCollectorService {
             resolveAtOnce(gameData, entry);
             return true;
         }
-        TargetSpec targetSpec = effect.targetSpec();
-        StackEntry entry = tapEntry(match, List.of(effect), tappingPlayerId, tappedPermanentId, thatObjectId);
-        if (targetSpec.admits(TargetPredicate.Kind.PERMANENT) || targetSpec.admits(TargetPredicate.Kind.PLAYER)) {
+        StackEntry entry = tapEntry(match, match.effects(), tappingPlayerId, tappedPermanentId, thatObjectId);
+        if (match.admits(TargetPredicate.Kind.PERMANENT) || match.admits(TargetPredicate.Kind.PLAYER)) {
             if (producedUnknown) {
                 park(gameData, entry);
                 return true;

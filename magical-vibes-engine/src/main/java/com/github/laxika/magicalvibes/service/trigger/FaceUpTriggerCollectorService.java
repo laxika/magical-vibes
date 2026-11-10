@@ -29,15 +29,14 @@ public class FaceUpTriggerCollectorService {
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_TURNS_FACE_UP)
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ALLY_PERMANENT_TURNS_FACE_UP)
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ANY_PERMANENT_TURNS_FACE_UP)
-    private boolean handleCreatureTurnsFaceUp(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+    private boolean handleCreatureTurnsFaceUp(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.PermanentTurnsFaceUp faceUp = (TriggerContext.PermanentTurnsFaceUp) ctx;
         Card sourceCard = match.permanent().getCard();
-        CardEffect resolvedEffect = effect;
-        boolean untapsTurnedPermanent = resolvedEffect instanceof UntapPermanentsEffect untap
-                && untap.scope() == TapUntapScope.TARGET;
-        if (!untapsTurnedPermanent && resolvedEffect.targetSpec().declaredTarget() != null) {
+        boolean untapsTurnedPermanent = match.effects().stream().anyMatch(effect ->
+                effect instanceof UntapPermanentsEffect untap && untap.scope() == TapUntapScope.TARGET);
+        if (!untapsTurnedPermanent && match.declaresTarget()) {
             match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                    sourceCard, match.controllerId(), new ArrayList<>(List.of(resolvedEffect)),
+                    sourceCard, match.controllerId(), match.stackEffects(),
                     match.permanent().getId(), faceUp.turnedPermanent().getId()));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} triggers when {} is turned face up (awaiting target)",
@@ -49,7 +48,7 @@ public class FaceUpTriggerCollectorService {
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(resolvedEffect)),
+                match.stackEffects(),
                 faceUp.turnedPermanent().getId(),
                 match.permanent().getId());
         entry.setTriggeringPermanentId(faceUp.turnedPermanent().getId());

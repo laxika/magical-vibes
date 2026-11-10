@@ -32,36 +32,36 @@ public class DiscardTriggerCollectorService {
     private final GameLogService gameLogService;
 
     /**
-     * Puts the effect of a "whenever you cycle a card" ability on the stack for a cycling the collector judged
+     * Puts a "whenever you cycle a card" ability on the stack, whole, for a cycling the collector judged
      * ({@code LibraryTrigger.LibraryEvent.CYCLES}), choosing its target first if it has one.
      */
-    public boolean collectCycling(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
-        return collect(match, effect, ctx, "cycling");
+    public boolean collectCycling(TriggerMatchContext match, TriggerContext ctx) {
+        return collect(match, ctx, "cycling");
     }
 
     /**
-     * Puts the effect of a "whenever a spell or ability an opponent controls causes you to discard a card" ability on
-     * the stack for a discard the collector judged ({@code LibraryTrigger.LibraryEvent.DISCARDS_BY_OPPONENT}).
+     * Puts a "whenever a spell or ability an opponent controls causes you to discard a card" ability on the stack,
+     * whole, for a discard the collector judged ({@code LibraryTrigger.LibraryEvent.DISCARDS_BY_OPPONENT}).
      */
-    public boolean collectOpponentCausedDiscard(TriggerMatchContext match, CardEffect effect,
-                                                TriggerContext ctx) {
-        return collect(match, effect, ctx, "opponent-caused discard");
+    public boolean collectOpponentCausedDiscard(TriggerMatchContext match, TriggerContext ctx) {
+        return collect(match, ctx, "opponent-caused discard");
     }
 
     /**
      * "Whenever you discard a card, …" and "whenever an opponent discards a card, …": the ability goes on the stack as
-     * written, one object of its effect (CR 603.3); a modal one announces its mode there (CR 603.3c), among those its
+     * written, one object of its effects (CR 603.3); a modal one announces its mode there (CR 603.3c), among those its
      * restriction leaves ("choose one that hasn't been chosen this turn": Monument to Endurance); a permanent or player
      * target is chosen as it goes on the stack (CR 603.3d). The entry records the discard ({@link #recordDiscard}). An
-     * effect that targets something else (a card in a graveyard) is collected by no handler and doesn't trigger.
+     * ability with an effect that targets something else (a card in a graveyard) is collected by no handler and doesn't
+     * trigger.
      */
     @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARDS)
     @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_OPPONENT_DISCARDS)
-    private boolean handleDiscardDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
-        if (effect.targetSpec().declaredTarget() != null && !targetsPermanentOrPlayer(effect)) {
+    private boolean handleDiscardDefault(TriggerMatchContext match, TriggerContext ctx) {
+        if (targetsOtherThanPermanentOrPlayer(match)) {
             return false;
         }
-        return collect(match, effect, ctx, "discard");
+        return collect(match, ctx, "discard");
     }
 
     /**
@@ -70,11 +70,11 @@ public class DiscardTriggerCollectorService {
      * the cycled card as a discard's entry records the discard.
      */
     @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_ANY_PLAYER_CYCLES)
-    private boolean handleCycleDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
-        if (effect.targetSpec().declaredTarget() != null && !targetsPermanentOrPlayer(effect)) {
+    private boolean handleCycleDefault(TriggerMatchContext match, TriggerContext ctx) {
+        if (targetsOtherThanPermanentOrPlayer(match)) {
             return false;
         }
-        return collect(match, effect, ctx, "cycling");
+        return collect(match, ctx, "cycling");
     }
 
     /**
@@ -83,20 +83,20 @@ public class DiscardTriggerCollectorService {
      * (CR 603.3d), with the number of cards discarded as the choice's event value.
      */
     @CollectsLibraryTrigger(value = CardEffect.class, watch = LibraryWatch.ON_CONTROLLER_DISCARD_EVENT)
-    private boolean handleDiscardEventDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+    private boolean handleDiscardEventDefault(TriggerMatchContext match, TriggerContext ctx) {
         if (!(ctx instanceof TriggerContext.DiscardEvent)) {
             return false;
         }
-        return collect(match, effect, ctx, "discard event");
+        return collect(match, ctx, "discard event");
     }
 
-    private boolean collect(TriggerMatchContext match, CardEffect effect, TriggerContext ctx, String event) {
+    private boolean collect(TriggerMatchContext match, TriggerContext ctx, String event) {
         GameData gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
         Discarded discarded = discarded(gameData, ctx);
-        if (targetsPermanentOrPlayer(effect)) {
+        if (match.admits(TargetPredicate.Kind.PERMANENT) || match.admits(TargetPredicate.Kind.PLAYER)) {
             var choice = new PermanentChoiceContext.DiscardControllerTriggerTarget(sourceCard, match.controllerId(),
-                    new ArrayList<>(List.of(effect)), match.permanent().getId(), discarded.count());
+                    match.stackEffects(), match.permanent().getId(), discarded.count());
             gameData.queueInteraction(discarded.playerId() == null ? choice
                     : choice.withDiscard(discarded.playerId(), discarded.cards(), discarded.stays()));
         } else {
@@ -105,19 +105,20 @@ public class DiscardTriggerCollectorService {
                     sourceCard,
                     match.controllerId(),
                     sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
+                    match.stackEffects(),
                     null,
                     match.permanent().getId()), ctx));
         }
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on {} ({})", gameData.id, sourceCard.getName(), event,
-                effect.getClass().getSimpleName());
+        log.info("Game {} - {} triggers on {}", gameData.id, sourceCard.getName(), event);
         return true;
     }
 
-    private static boolean targetsPermanentOrPlayer(CardEffect effect) {
-        return effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER);
+    /** Whether an effect of the ability declares a target that is neither a permanent nor a player. */
+    private static boolean targetsOtherThanPermanentOrPlayer(TriggerMatchContext match) {
+        return match.effects().stream().anyMatch(effect -> effect.targetSpec().declaredTarget() != null
+                && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                && !effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
     }
 
     /**

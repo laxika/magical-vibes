@@ -156,13 +156,27 @@ public final class TapAbilityReader {
      * which this throws on.
      */
     public static List<TapEffect> readPrintedAsJudged(Card card, TapWatch watch, TriggerJudge judge) {
-        List<TapEffect> effects = read(judge.filter(printed(card, watch)), watch.trigger());
-        effects.forEach(effect -> {
-            requireNotFirstTime(effect, watch.trigger());
-            requireNoOneOrMore(effect, watch.trigger());
-            requireNoLimit(effect, watch.trigger());
-        });
-        return effects.stream().map(effect -> effect.withEffect(effect.effectAsJudged())).toList();
+        return readPrintedAsJudgedByAbility(card, watch, judge).stream().flatMap(List::stream).toList();
+    }
+
+    /**
+     * {@link #readPrintedAsJudged}, one list for each ability, in order: each list is one object on the stack
+     * (CR 603.3), whose trigger-level parts (filter, tap relation, options) every read of it shares.
+     */
+    public static List<List<TapEffect>> readPrintedAsJudgedByAbility(Card card, TapWatch watch, TriggerJudge judge) {
+        List<List<TapEffect>> byAbility = new ArrayList<>();
+        for (TriggeredAbility ability : judge.filter(printed(card, watch))) {
+            List<TapEffect> effects = read(ability, watch.trigger());
+            effects.forEach(effect -> {
+                requireNotFirstTime(effect, watch.trigger());
+                requireNoOneOrMore(effect, watch.trigger());
+                requireNoLimit(effect, watch.trigger());
+            });
+            if (!effects.isEmpty()) {
+                byAbility.add(effects.stream().map(effect -> effect.withEffect(effect.effectAsJudged())).toList());
+            }
+        }
+        return byAbility;
     }
 
     /**
@@ -191,6 +205,18 @@ public final class TapAbilityReader {
     private static boolean isTriggeredManaEffect(List<CardEffect> effects) {
         return effects.stream().noneMatch(effect -> effect.targetSpec().declaredTarget() != null)
                 && effects.stream().anyMatch(TriggeredManaAbilityEffect.class::isInstance);
+    }
+
+    /**
+     * Whether the ability of {@code effects} is a triggered mana ability ({@link #isTriggeredManaEffect(CardEffect)}).
+     */
+    public static boolean isTriggeredManaAbility(List<CardEffect> effects) {
+        return isTriggeredManaEffect(steps(effects));
+    }
+
+    /** The steps of the ability of {@code effects}: each effect's ({@link #steps(CardEffect)}), in order. */
+    public static List<CardEffect> steps(List<CardEffect> effects) {
+        return effects.stream().flatMap(effect -> steps(effect).stream()).toList();
     }
 
     /** {@code effect}'s steps, for a {@link SequenceEffect}, else {@code effect} itself. */

@@ -22,8 +22,7 @@ public class SagaTriggerCollectorService {
 
     @CollectsSagaTrigger(value = CardEffect.class, watch = SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_RESOLVES)
     @CollectsSagaTrigger(value = CardEffect.class, watch = SagaWatch.ON_SAGA_FINAL_CHAPTER_ABILITY_TRIGGERS)
-    private boolean handleFinalChapterResolution(TriggerMatchContext match, CardEffect trigger,
-                                                  TriggerContext context) {
+    private boolean handleFinalChapterResolution(TriggerMatchContext match, TriggerContext context) {
         if (!(context instanceof TriggerContext.SagaFinalChapterAbilityResolved resolved)
                 || !match.controllerId().equals(resolved.sagaControllerId())) {
             return false;
@@ -35,7 +34,7 @@ public class SagaTriggerCollectorService {
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
+                match.stackEffects(),
                 null,
                 match.permanent().getId());
         entry.setEventValue(resolved.sagaManaValue());

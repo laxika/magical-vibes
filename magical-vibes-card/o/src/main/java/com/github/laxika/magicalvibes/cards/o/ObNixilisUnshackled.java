@@ -20,8 +20,7 @@ public class ObNixilisUnshackled extends Card {
         // choice and loses 10 life. The searching player is baked in as the trigger's targetId, so
         // both TARGET_PLAYER-scoped effects act on them.
         addTrigger(Triggers.opponentSearchesTheirLibrary(), new SacrificePermanentsEffect(
-                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER));
-        addTrigger(Triggers.opponentSearchesTheirLibrary(),
+                1, new PermanentIsCreaturePredicate(), SacrificeRecipient.TARGET_PLAYER),
                 new LoseLifeEffect(10, LoseLifeRecipient.TARGET_PLAYER));
 
         // Whenever another creature dies, put a +1/+1 counter on Ob Nixilis.

@@ -18,16 +18,16 @@ import java.util.UUID;
 public class CounterTriggerCollectorService {
 
     @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_COUNTERS_SPELL)
-    private boolean handleControllerCountersSpell(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+    private boolean handleControllerCountersSpell(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.SpellCountered countered = (TriggerContext.SpellCountered) ctx;
-        enqueueTrigger(match, effect, countered.counteringPlayerId());
+        enqueueTrigger(match, countered.counteringPlayerId());
         return true;
     }
 
     @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_SPELL_COUNTERED)
-    private boolean handleControllerSpellCountered(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+    private boolean handleControllerSpellCountered(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.SpellCastCountered countered = (TriggerContext.SpellCastCountered) ctx;
-        enqueueTrigger(match, effect, countered.spellControllerId());
+        enqueueTrigger(match, countered.spellControllerId());
         return true;
     }
 
@@ -37,7 +37,7 @@ public class CounterTriggerCollectorService {
      * triggering spell ("copy it" copies that, CR 608.2h).
      */
     @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_SELF_SPELL_COUNTERED_OR_FIZZLED)
-    private boolean handleSelfSpellCounteredOrFizzled(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+    private boolean handleSelfSpellCounteredOrFizzled(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.SpellCounteredOrFizzled countered = (TriggerContext.SpellCounteredOrFizzled) ctx;
         StackEntry spell = countered.spellEntry();
         if (spell == null || spell.getCard() == null) return false;
@@ -48,21 +48,21 @@ public class CounterTriggerCollectorService {
                 spellCard,
                 match.controllerId(),
                 spellCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)));
+                match.stackEffects());
         entry.setTriggeringCardId(spellCard.getId());
         entry.setTriggeringSpell(spell);
         match.gameData().enqueueTrigger(entry);
         return true;
     }
 
-    private void enqueueTrigger(TriggerMatchContext match, CardEffect effect, UUID controllerId) {
+    private void enqueueTrigger(TriggerMatchContext match, UUID controllerId) {
         GameData gameData = match.gameData();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
                 controllerId,
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                match.stackEffects(),
                 null,
                 match.permanent().getId());
         gameData.enqueueTrigger(entry);

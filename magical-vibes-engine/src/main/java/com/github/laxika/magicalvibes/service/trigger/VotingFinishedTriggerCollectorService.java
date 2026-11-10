@@ -26,7 +26,7 @@ public class VotingFinishedTriggerCollectorService {
      * of Unity).
      */
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_PLAYERS_FINISH_VOTING)
-    private boolean handleVotingFinished(TriggerMatchContext match, CardEffect effect, TriggerContext context) {
+    private boolean handleVotingFinished(TriggerMatchContext match, TriggerContext context) {
         if (!(context instanceof TriggerContext.VotingFinished votingFinished)
                 || match.permanent() == null) {
             return false;
@@ -38,7 +38,7 @@ public class VotingFinishedTriggerCollectorService {
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                match.stackEffects(),
                 null,
                 match.permanent().getId());
         entry.setTriggeringVotingResult(votingFinished.result());

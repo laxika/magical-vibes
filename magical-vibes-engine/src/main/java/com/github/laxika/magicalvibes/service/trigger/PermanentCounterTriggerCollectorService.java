@@ -22,8 +22,7 @@ public class PermanentCounterTriggerCollectorService {
 
     @CollectsCounterTrigger(value = CardEffect.class,
             watch = CounterWatch.ON_YOU_PUT_TIME_COUNTERS_ON_CONTROLLED_PERMANENT)
-    private boolean handleTimeCountersPlaced(TriggerMatchContext match, CardEffect effect,
-                                             TriggerContext context) {
+    private boolean handleTimeCountersPlaced(TriggerMatchContext match, TriggerContext context) {
         TriggerContext.TimeCountersPlaced placed = (TriggerContext.TimeCountersPlaced) context;
         if (!match.controllerId().equals(placed.placingPlayerId())) {
             return false;
@@ -35,7 +34,7 @@ public class PermanentCounterTriggerCollectorService {
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                match.stackEffects(),
                 null,
                 match.permanent().getId()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));

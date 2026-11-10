@@ -28,8 +28,7 @@ public class WildfireCerberus extends Card {
         ));
 
         addTrigger(Triggers.becomesMonstrous(),
-                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.becomesMonstrous(),
+                new DealDamageToPlayersEffect(2, DamageRecipient.EACH_OPPONENT),
                 new DealDamageToEachMatchingPermanentEffect(
                         2,
                         new PermanentAllOfPredicate(List.of(

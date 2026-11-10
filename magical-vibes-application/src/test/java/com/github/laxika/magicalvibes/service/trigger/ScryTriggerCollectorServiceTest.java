@@ -20,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -60,7 +61,6 @@ class ScryTriggerCollectorServiceTest {
         boolean triggered = registry.dispatch(
                 new TriggerMatchContext(gameData, permanent, playerId, effect),
                 LibraryWatch.ON_CONTROLLER_SCRIES,
-                effect,
                 new TriggerContext.Scry(playerId, 2, 3));
 
         assertThat(triggered).isTrue();
@@ -88,7 +88,6 @@ class ScryTriggerCollectorServiceTest {
         boolean triggered = registry.dispatch(
                 new TriggerMatchContext(gameData, permanent, playerId, effect),
                 LibraryWatch.ON_CONTROLLER_SCRIES,
-                effect,
                 new TriggerContext.Scry(playerId));
 
         assertThat(triggered).isTrue();
@@ -111,9 +110,8 @@ class ScryTriggerCollectorServiceTest {
         BoostSelfEffect effect = new BoostSelfEffect(1, 0);
 
         boolean triggered = registry.dispatch(
-                new TriggerMatchContext(gameData, permanent, playerId, effect, card, true),
+                new TriggerMatchContext(gameData, permanent, playerId, List.of(effect), card, null, true),
                 LibraryWatch.ON_CONTROLLER_SCRIES,
-                effect,
                 new TriggerContext.Scry(playerId));
 
         assertThat(triggered).isTrue();
@@ -134,7 +132,6 @@ class ScryTriggerCollectorServiceTest {
         boolean triggered = registry.dispatch(
                 new TriggerMatchContext(gameData, permanent, playerId, effect),
                 LibraryWatch.ON_OPPONENT_SCRIES,
-                effect,
                 new TriggerContext.Scry(opponentId, 1, 2));
 
         assertThat(triggered).isTrue();

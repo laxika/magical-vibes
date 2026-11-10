@@ -26,18 +26,17 @@ public class DungeonTriggerCollectorService {
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
 
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_COMPLETES_DUNGEON)
-    private boolean handleDungeonCompletion(TriggerMatchContext match, CardEffect effect,
-                                            TriggerContext context) {
+    private boolean handleDungeonCompletion(TriggerMatchContext match, TriggerContext context) {
         Card sourceCard = match.permanent().getCard();
-        if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
-                && !effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+        if (match.admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                && !match.admits(TargetPredicate.Kind.PLAYER)
+                && !match.admits(TargetPredicate.Kind.PERMANENT)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     sourceCard,
                     match.controllerId(),
-                    List.of(effect),
+                    match.effects(),
                     null,
-                    effect.hasOptionalTarget() ? 0 : 1));
+                    match.targetIsOptional() ? 0 : 1));
             triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(match.gameData());
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} triggers on dungeon completion (awaiting graveyard target)",
@@ -50,7 +49,7 @@ public class DungeonTriggerCollectorService {
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                match.stackEffects(),
                 null,
                 match.permanent().getId()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));

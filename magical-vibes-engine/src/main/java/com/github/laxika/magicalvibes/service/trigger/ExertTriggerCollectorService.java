@@ -22,14 +22,14 @@ public class ExertTriggerCollectorService {
     private final GameLogService gameLogService;
 
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_EXERTS)
-    private boolean handleExert(TriggerMatchContext match, CardEffect effect, TriggerContext context) {
+    private boolean handleExert(TriggerMatchContext match, TriggerContext context) {
         TriggerContext.Exert exert = (TriggerContext.Exert) context;
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+        if (match.admits(TargetPredicate.Kind.PERMANENT)
+                || match.admits(TargetPredicate.Kind.PLAYER)) {
             // "Whenever you exert a creature, tap target creature …" (Vizier of the True): the
             // target is chosen as the trigger is put on the stack.
             match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
+                    match.permanent().getCard(), match.controllerId(), match.stackEffects(),
                     "exerted a creature", match.permanent().getId(), new Permanent(match.permanent()), null));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
             return true;
@@ -39,7 +39,7 @@ public class ExertTriggerCollectorService {
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                match.stackEffects(),
                 null,
                 match.permanent().getId());
         entry.setTargetId(exert.exertedCreatureId());

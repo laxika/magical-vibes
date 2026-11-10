@@ -23,8 +23,7 @@ public class ManifestDreadTriggerCollectorService {
 
     /** "Whenever you manifest dread": "that card", the card put into the graveyard, is the entry's triggering card. */
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_MANIFESTS_DREAD)
-    private boolean handleManifestDreadDefault(TriggerMatchContext match, CardEffect effect,
-                                               TriggerContext context) {
+    private boolean handleManifestDreadDefault(TriggerMatchContext match, TriggerContext context) {
         TriggerContext.ManifestDread manifestDread = (TriggerContext.ManifestDread) context;
         Card sourceCard = match.permanent().getCard();
         Card graveyardCard = manifestDread.cardPutIntoGraveyard();
@@ -33,7 +32,7 @@ public class ManifestDreadTriggerCollectorService {
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                match.stackEffects(),
                 null,
                 match.permanent().getId());
         if (graveyardCard != null) {

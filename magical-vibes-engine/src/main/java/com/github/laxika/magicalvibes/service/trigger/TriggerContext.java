@@ -430,15 +430,8 @@ public sealed interface TriggerContext {
      *
      * @param remainingCounters the time counters left on the card
      * @param removerId         the player who removed the counter, or {@code null} for the card's owner
-     * @param effects           the effects of the card's abilities that trigger, as their collector read them, put on
-     *                          the stack as one object
      */
-    record TimeCounterRemovedFromExile(int remainingCounters, UUID removerId, List<CardEffect> effects)
-            implements TriggerContext {
-        public TimeCounterRemovedFromExile {
-            effects = List.copyOf(effects);
-        }
-    }
+    record TimeCounterRemovedFromExile(int remainingCounters, UUID removerId) implements TriggerContext {}
 
     /** Context for triggers that fire when a player wins a coin flip. */
     record CoinFlipWon(UUID winningPlayerId) implements TriggerContext {}
@@ -841,14 +834,8 @@ public sealed interface TriggerContext {
      *
      * @param controllerId the permanent's controller
      * @param xValue       the monstrosity X
-     * @param effects      the effects of the permanent's "when this becomes monstrous" abilities, put on the stack as
-     *                     one object
      */
-    record SelfBecomesMonstrous(UUID controllerId, int xValue, List<CardEffect> effects) implements TriggerContext {
-        public SelfBecomesMonstrous {
-            effects = List.copyOf(effects);
-        }
-    }
+    record SelfBecomesMonstrous(UUID controllerId, int xValue) implements TriggerContext {}
 
     /** Context for a permanent becoming untapped. */
     record SelfBecomesUntapped(UUID controllerId) implements TriggerContext {}

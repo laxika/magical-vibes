@@ -115,29 +115,26 @@ public class PlayedCardNameTriggerCollectorService {
     }
 
     /**
-     * Default for {@link SpellAbilityWatch#ON_CONTROLLER_PLAYS_LAND}: put bare effects on the stack
-     * (e.g. Juju Bubble's {@code SacrificeSelfEffect}), with the land played as the triggering card.
+     * Default for {@link SpellAbilityWatch#ON_CONTROLLER_PLAYS_LAND}: put the ability on the stack
+     * whole (e.g. Juju Bubble's {@code SacrificeSelfEffect}), with the land played as the triggering card.
      */
     @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_LAND)
     @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_CONTROLLER_PLAYS_ANOTHER_LAND)
-    private boolean handleControllerPlaysLandDefault(TriggerMatchContext match,
-            CardEffect effect, TriggerContext ctx) {
-        return enqueueLandPlayTrigger(match, effect, (TriggerContext.LandPlayed) ctx);
+    private boolean handleControllerPlaysLandDefault(TriggerMatchContext match, TriggerContext ctx) {
+        return enqueueLandPlayTrigger(match, (TriggerContext.LandPlayed) ctx);
     }
 
     /**
-     * Default for {@link SpellAbilityWatch#ON_OPPONENT_PLAYS_LAND}: put bare effects on the stack
-     * (e.g. Dirtcowl Wurm's {@code PutCountersOnSourceEffect}), with the land played as the triggering card.
+     * Default for {@link SpellAbilityWatch#ON_OPPONENT_PLAYS_LAND}: put the ability on the stack
+     * whole (e.g. Dirtcowl Wurm's {@code PutCountersOnSourceEffect}), with the land played as the triggering card.
      */
     @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_OPPONENT_PLAYS_LAND)
-    private boolean handleOpponentPlaysLandDefault(TriggerMatchContext match,
-            CardEffect effect, TriggerContext ctx) {
-        return enqueueLandPlayTrigger(match, effect, (TriggerContext.LandPlayed) ctx);
+    private boolean handleOpponentPlaysLandDefault(TriggerMatchContext match, TriggerContext ctx) {
+        return enqueueLandPlayTrigger(match, (TriggerContext.LandPlayed) ctx);
     }
 
-    private boolean enqueueLandPlayTrigger(TriggerMatchContext match, CardEffect effect,
-            TriggerContext.LandPlayed landPlayed) {
-        return enqueueLandPlayTrigger(match, List.of(effect), landPlayed.playingPlayerId(), landPlayed.landCard());
+    private boolean enqueueLandPlayTrigger(TriggerMatchContext match, TriggerContext.LandPlayed landPlayed) {
+        return enqueueLandPlayTrigger(match, match.effects(), landPlayed.playingPlayerId(), landPlayed.landCard());
     }
 
     /**

@@ -20,7 +20,7 @@ public class RingTriggerCollectorService {
     private final GameLogService gameLogService;
 
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_TEMPTS_RING)
-    private boolean handleRingTempted(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+    private boolean handleRingTempted(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.RingTempted ringTempted = (TriggerContext.RingTempted) ctx;
         if (match.permanent() == null
                 || match.permanent().getId().equals(ringTempted.ringBearerId())) {
@@ -34,7 +34,7 @@ public class RingTriggerCollectorService {
                 source.getCard(),
                 match.controllerId(),
                 source.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                match.stackEffects(),
                 null,
                 source.getId());
         entry.setNonTargeting(true);

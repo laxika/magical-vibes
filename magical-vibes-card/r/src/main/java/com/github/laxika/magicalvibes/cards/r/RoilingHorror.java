@@ -24,8 +24,7 @@ public class RoilingHorror extends Card {
                 new Scaled(new HighestOpponentLifeTotal(), -1));
         addStaticEffect(new SetPowerToughnessToAmountEffect(lifeDifference, lifeDifference));
         addTrigger(Triggers.timeCounterRemovedFromThisInExile(),
-                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER));
-        addTrigger(Triggers.timeCounterRemovedFromThisInExile(),
+                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
                 new GainLifeEffect(1));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,

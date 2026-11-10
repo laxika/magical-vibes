@@ -15,7 +15,7 @@ public class Archipelagore extends Card {
 
     public Archipelagore() {
         targetUpTo(new TimesSourceMutated(), TargetFilters.creature(), 100)
-                .addTrigger(Triggers.mutates(), new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.mutates(), new SkipNextUntapEffect(TapUntapScope.TARGET));
+                .addTrigger(Triggers.mutates(), new TapPermanentsEffect(TapUntapScope.TARGET),
+                        new SkipNextUntapEffect(TapUntapScope.TARGET));
     }
 }

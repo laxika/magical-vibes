@@ -26,8 +26,7 @@ public class Sharktocrab extends Card {
 
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.plusOneCountersPutOnThis(),
-                        new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.plusOneCountersPutOnThis(),
+                        new TapPermanentsEffect(TapUntapScope.TARGET),
                         new SkipNextUntapEffect(TapUntapScope.TARGET));
     }
 }

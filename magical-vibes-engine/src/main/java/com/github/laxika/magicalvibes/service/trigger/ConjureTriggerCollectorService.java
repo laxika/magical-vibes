@@ -21,7 +21,7 @@ public class ConjureTriggerCollectorService {
     private final GameLogService gameLogService;
 
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_CONJURES)
-    private boolean handleConjure(TriggerMatchContext match, CardEffect effect, TriggerContext context) {
+    private boolean handleConjure(TriggerMatchContext match, TriggerContext context) {
         var gameData = match.gameData();
         var source = match.permanent();
         var conjure = (TriggerContext.Conjure) context;
@@ -30,7 +30,7 @@ public class ConjureTriggerCollectorService {
                 source.getCard(),
                 match.controllerId(),
                 source.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                match.stackEffects(),
                 null,
                 source.getId());
         entry.setEventValue(conjure.cardCount());

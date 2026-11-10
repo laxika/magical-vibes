@@ -23,8 +23,7 @@ public class ObeliskSpider extends Card {
         // gain 1 life. Once-per-creature cadence (fires once regardless of how many counters were
         // placed at once), controller-restricted. Both halves share one stack entry.
         addTrigger(Triggers.youPutMinusOneCountersOnCreature(),
-                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.youPutMinusOneCountersOnCreature(),
+                new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                 new GainLifeEffect(1));
     }
 }

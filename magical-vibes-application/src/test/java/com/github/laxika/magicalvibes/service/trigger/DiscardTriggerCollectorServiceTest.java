@@ -108,7 +108,7 @@ class DiscardTriggerCollectorServiceTest {
         var ctx = new TriggerContext.Discard(player2Id, createCard("Discarded card"));
 
         boolean result = registry.dispatch(
-                match(source, player1Id, effect), LibraryWatch.ON_OPPONENT_DISCARDS, effect, ctx);
+                match(source, player1Id, effect), LibraryWatch.ON_OPPONENT_DISCARDS, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -128,7 +128,7 @@ class DiscardTriggerCollectorServiceTest {
         var ctx = new TriggerContext.Discard(player1Id, createCard("Discarded card"));
 
         boolean result = registry.dispatch(
-                match(source, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                match(source, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -145,7 +145,7 @@ class DiscardTriggerCollectorServiceTest {
         var ctx = new TriggerContext.Discard(player1Id, createCard("Madness card"));
 
         boolean result = registry.dispatch(
-                match(source, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                match(source, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -161,7 +161,7 @@ class DiscardTriggerCollectorServiceTest {
         var context = new TriggerContext.Cycle(player2Id, createCard("Cycled card"));
 
         boolean collected = registry.dispatch(
-                match(source, player1Id, effect), LibraryWatch.ON_ANY_PLAYER_CYCLES, effect, context);
+                match(source, player1Id, effect), LibraryWatch.ON_ANY_PLAYER_CYCLES, context);
 
         assertThat(collected).isTrue();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -180,7 +180,7 @@ class DiscardTriggerCollectorServiceTest {
         var context = new TriggerContext.Cycle(player2Id, cycled);
 
         boolean collected = registry.dispatch(
-                match(source, player1Id, effect), LibraryWatch.ON_ANY_PLAYER_CYCLES, effect, context);
+                match(source, player1Id, effect), LibraryWatch.ON_ANY_PLAYER_CYCLES, context);
 
         assertThat(collected).isTrue();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -202,7 +202,7 @@ class DiscardTriggerCollectorServiceTest {
         var ctx = new TriggerContext.Discard(player1Id, discarded);
 
         boolean collected = registry.dispatch(
-                match(source, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                match(source, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
         assertThat(collected).isTrue();
         assertThat(gd.stack).isEmpty();
@@ -229,7 +229,7 @@ class DiscardTriggerCollectorServiceTest {
         var context = new TriggerContext.Cycle(player2Id, createCard("Cycled card"));
 
         boolean collected = registry.dispatch(match(source, player1Id, effect),
-                LibraryWatch.ON_ANY_PLAYER_CYCLES, effect, context);
+                LibraryWatch.ON_ANY_PLAYER_CYCLES, context);
 
         assertThat(collected).isTrue();
         assertThat(gd.stack).isEmpty();
@@ -246,7 +246,7 @@ class DiscardTriggerCollectorServiceTest {
         var ctx = new TriggerContext.DiscardEvent(player1Id, 2, List.of(first, second));
 
         boolean collected = registry.dispatch(
-                match(source, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+                match(source, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, ctx);
 
         assertThat(collected).isTrue();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -284,7 +284,7 @@ class DiscardTriggerCollectorServiceTest {
             var ctx = new TriggerContext.Discard(player1Id, discarded);
 
             boolean result = registry.dispatch(
-                    match(source, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    match(source, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -305,7 +305,7 @@ class DiscardTriggerCollectorServiceTest {
             Permanent healer = createPermanent("Drannith Healer");
             var effect = new GainLifeEffect(1);
 
-            boolean result = sut.collectCycling(match(healer, player1Id, effect), effect,
+            boolean result = sut.collectCycling(match(healer, player1Id, effect),
                     new TriggerContext.Discard(player1Id, createCard("Cycled card"), true));
 
             assertThat(result).isTrue();
@@ -320,7 +320,7 @@ class DiscardTriggerCollectorServiceTest {
             Permanent tactician = createPermanent("Snare Tactician");
             var effect = new TapPermanentsEffect(TapUntapScope.TARGET);
 
-            boolean result = sut.collectCycling(match(tactician, player1Id, effect), effect,
+            boolean result = sut.collectCycling(match(tactician, player1Id, effect),
                     new TriggerContext.Discard(player1Id, createCard("Cycled card"), true));
 
             assertThat(result).isTrue();
@@ -340,7 +340,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(source, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).singleElement().satisfies(entry ->
@@ -362,7 +362,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(megrim, player1Id, effect),
-                    LibraryWatch.ON_OPPONENT_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_OPPONENT_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
@@ -392,7 +392,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(enchantment, player1Id, effect),
-                    LibraryWatch.ON_OPPONENT_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_OPPONENT_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.getLife(player2Id)).isEqualTo(lifeBefore);
@@ -416,7 +416,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(enchantment, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.getLife(player1Id)).isEqualTo(lifeBefore);
@@ -446,7 +446,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(enchantment, player1Id, effect),
-                    LibraryWatch.ON_OPPONENT_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_OPPONENT_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
@@ -467,7 +467,7 @@ class DiscardTriggerCollectorServiceTest {
             var ctx = new TriggerContext.Discard(player2Id, createCard("Grizzly Bears"));
 
             boolean result = registry.dispatch(
-                    match(source, player1Id, effect), LibraryWatch.ON_OPPONENT_DISCARDS, effect, ctx);
+                    match(source, player1Id, effect), LibraryWatch.ON_OPPONENT_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -495,7 +495,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(necro, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -515,7 +515,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(bag, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -533,7 +533,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(necro, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -556,7 +556,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(curator, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -581,7 +581,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(source, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -608,7 +608,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(pyre, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -633,7 +633,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(hekma, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -658,7 +658,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(buccaneer, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -680,7 +680,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(classPermanent, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -701,7 +701,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(urza, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -727,7 +727,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(artillerist, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -756,7 +756,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(doom, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -782,7 +782,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(mishra, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -807,7 +807,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(rielle, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -835,7 +835,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(mako, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -861,7 +861,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(aura, player1Id, effect),
-                    LibraryWatch.ON_ANY_PLAYER_CYCLES, effect, ctx);
+                    LibraryWatch.ON_ANY_PLAYER_CYCLES, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -886,7 +886,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(inti, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -913,7 +913,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(survivor, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -933,7 +933,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(source, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
@@ -959,7 +959,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(nocturnus, player1Id, effect),
-                    LibraryWatch.ON_OPPONENT_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_OPPONENT_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -986,7 +986,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(captain, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, ctx);
 
             assertThat(result).isTrue();
             PermanentChoiceContext.DiscardControllerTriggerTarget pending =
@@ -1013,7 +1013,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(archfiend, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1043,7 +1043,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(sphinx, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.hasPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class)).isTrue();
@@ -1070,7 +1070,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(drakeHaven, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1095,7 +1095,7 @@ class DiscardTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(boneMiser, player1Id, effect),
-                    LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1122,7 +1122,7 @@ class DiscardTriggerCollectorServiceTest {
             var ctx = new TriggerContext.Discard(player1Id, discarded);
 
             boolean result = registry.dispatch(
-                    match(construct, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARDS, effect, ctx);
+                    match(construct, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -1150,7 +1150,7 @@ class DiscardTriggerCollectorServiceTest {
             var ctx = new TriggerContext.DiscardEvent(player1Id, 2, List.of(first, second));
 
             boolean result = registry.dispatch(
-                    match(toluz, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, effect, ctx);
+                    match(toluz, player1Id, effect), LibraryWatch.ON_CONTROLLER_DISCARD_EVENT, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).singleElement().satisfies(entry -> {

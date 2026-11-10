@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -42,26 +40,25 @@ public class EnterTriggerCollectorService {
     }
 
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_PERMANENT_ENTERS_BATTLEFIELD)
-    private boolean handleAnyPermanentEnterDefault(TriggerMatchContext match, CardEffect effect,
-                                                    TriggerContext ctx) {
+    private boolean handleAnyPermanentEnterDefault(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        if (effect instanceof MayEffect may && (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || may.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
+        if (match.effects().stream().anyMatch(effect -> effect instanceof MayEffect may
+                && (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)))) {
             // "You may have target player …": the target is chosen as the ability goes on the stack (CR 603.3d).
-            queueTargetChoices(match, may, pe, false);
+            queueTargetChoices(match, pe, false);
             return true;
         }
-        return enqueueAnyPermanentEnter(match, effect, pe);
+        return enqueueAnyPermanentEnter(match, pe);
     }
 
     @CollectsMiscTrigger(value = CardEffect.class, watch = MiscWatch.ON_ALLY_ROOM_FULLY_UNLOCKED)
-    private boolean handleRoomFullyUnlockedDefault(TriggerMatchContext match, CardEffect effect,
-                                                    TriggerContext ctx) {
+    private boolean handleRoomFullyUnlockedDefault(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.RoomFullyUnlocked room = (TriggerContext.RoomFullyUnlocked) ctx;
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+        if (match.admits(TargetPredicate.Kind.PERMANENT)
+                || match.admits(TargetPredicate.Kind.PLAYER)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
+                    match.permanent().getCard(), match.controllerId(), match.stackEffects(),
                     match.permanent().getId(), room.roomPermanentId()));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
             log.info("Game {} - {} triggers when a Room is fully unlocked, awaiting target",
@@ -74,7 +71,7 @@ public class EnterTriggerCollectorService {
                 match.permanent().getCard(),
                 match.controllerId(),
                 match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                match.stackEffects(),
                 null,
                 match.permanent().getId());
         entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
@@ -87,9 +84,8 @@ public class EnterTriggerCollectorService {
         return true;
     }
 
-    private boolean enqueueAnyPermanentEnter(TriggerMatchContext match, CardEffect effect,
-                                             TriggerContext.PermanentEnters pe) {
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+    private boolean enqueueAnyPermanentEnter(TriggerMatchContext match, TriggerContext.PermanentEnters pe) {
+        if (match.admits(TargetPredicate.Kind.PERMANENT)) {
             UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
             if (enteringPermanentId == null) {
                 return true;
@@ -97,7 +93,7 @@ public class EnterTriggerCollectorService {
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
                 match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
                         match.permanent().getCard(), match.controllerId(),
-                        new ArrayList<>(List.of(effect)), match.permanent().getId(),
+                        match.stackEffects(), match.permanent().getId(),
                         enteringPermanentId, match.permanent().getId(), null, pe.enteringControllerId()));
             }
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
@@ -111,7 +107,7 @@ public class EnterTriggerCollectorService {
                     match.permanent().getCard(),
                     match.controllerId(),
                     match.permanent().getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
+                    match.stackEffects(),
                     pe.defaultTargetPlayerId() != null ? pe.defaultTargetPlayerId() : pe.enteringControllerId(),
                     match.permanent().getId());
             entry.setNonTargeting(true);
@@ -146,12 +142,12 @@ public class EnterTriggerCollectorService {
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_ENTERS_TRANSFORMED)
     @CollectsWatchTrigger(value = CardEffect.class,
             watch = ZoneChangeWatch.COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD)
-    private boolean handleEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+    private boolean handleEnterDefault(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         // A trigger-time modal ("choose one" as Ayula, Queen Among Bears' ability triggers) or "choose one that hasn't
         // been chosen this turn" (Galadriel, Light of Valinor): the mode is chosen as the ability goes on the stack
         // (CR 603.3c), once for each instance.
-        ChooseOneEffect modes = TriggeredModalEffect.choiceMadeAsTriggered(effect);
+        ChooseOneEffect modes = match.modal(TriggeredModalEffect::choiceMadeAsTriggered);
         if (modes != null) {
             UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
@@ -163,10 +159,10 @@ public class EnterTriggerCollectorService {
             logTriggered(match);
             return true;
         }
-        if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
-                && !effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
-            queueGraveyardTargetChoices(match, effect, pe);
+        if (match.admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                && !match.admits(TargetPredicate.Kind.PLAYER)
+                && !match.admits(TargetPredicate.Kind.PERMANENT)) {
+            queueGraveyardTargetChoices(match, pe);
             return true;
         }
         // Permanent-targeting effects (e.g. Reaper King's "destroy target permanent") always route through the
@@ -174,13 +170,13 @@ public class EnterTriggerCollectorService {
         // entering permanent's controller as "that player", while the ally scans leave it null (Sage's Row Denizen's
         // "target player mills two cards"). A command-zone source has no permanent to choose for, and puts the
         // ability on the stack as written.
-        boolean needsTargetChoice = effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER) && pe.defaultTargetPlayerId() == null);
+        boolean needsTargetChoice = match.admits(TargetPredicate.Kind.PERMANENT)
+                || (match.admits(TargetPredicate.Kind.PLAYER) && pe.defaultTargetPlayerId() == null);
         if (needsTargetChoice && (match.permanent() != null || match.sourcePlanarObject() != null)) {
-            queueTargetChoices(match, effect, pe, true);
+            queueTargetChoices(match, pe, true);
             return true;
         }
-        enqueue(match, effect, pe.defaultTargetPlayerId(), pe);
+        enqueue(match, pe.defaultTargetPlayerId(), pe);
         logTriggered(match);
         return true;
     }
@@ -190,12 +186,11 @@ public class EnterTriggerCollectorService {
      * the permanent the event was about, the source and the "do this only once each turn" mark (CR 603.2h), which the
      * entry it makes records.
      */
-    private void queueGraveyardTargetChoices(TriggerMatchContext match, CardEffect effect,
-                                             TriggerContext.PermanentEnters pe) {
+    private void queueGraveyardTargetChoices(TriggerMatchContext match, TriggerContext.PermanentEnters pe) {
         UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    match.sourceCard(), match.controllerId(), List.of(effect), null, 0, 0, 0, null, false,
+                    match.sourceCard(), match.controllerId(), match.effects(), null, 0, 0, 0, null, false,
                     enteringPermanentId, match.permanent() == null ? null : match.permanent().getId(),
                     match.markSourceOncePerTurnOnAcceptance()));
         }
@@ -209,7 +204,7 @@ public class EnterTriggerCollectorService {
      * A plane's ability goes to the any-target choice with the plane; a source with several target groups, when
      * {@code multiTargetGroups}, to the multi-target choice.
      */
-    private void queueTargetChoices(TriggerMatchContext match, CardEffect effect, TriggerContext.PermanentEnters pe,
+    private void queueTargetChoices(TriggerMatchContext match, TriggerContext.PermanentEnters pe,
                                     boolean multiTargetGroups) {
         Card sourceCard = match.sourceCard();
         UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
@@ -218,17 +213,17 @@ public class EnterTriggerCollectorService {
                 Permanent entering = enteringPermanentId == null
                         ? null : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
                 match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), false, null,
+                        sourceCard, match.controllerId(), match.stackEffects(), false, null,
                         0, enteringPermanentId, entering == null ? null : new Permanent(entering), false,
                         enteringPermanentId, null, pe.enteringControllerId(), match.sourcePlanarObject().copy()));
             } else if (multiTargetGroups && sourceCard.getTargetGroups().size() > 1) {
                 match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
+                        sourceCard, match.controllerId(), match.stackEffects(),
                         match.permanent().getId(), List.of(), 0, 0, List.of(), 0, List.of(),
                         false, pe.enteringCard().getId(), enteringPermanentId));
             } else {
                 match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                        sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
+                        sourceCard, match.controllerId(), match.stackEffects(),
                         match.permanent().getId(), enteringPermanentId));
             }
         }
@@ -237,11 +232,11 @@ public class EnterTriggerCollectorService {
 
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD)
-    private boolean handleTokenEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+    private boolean handleTokenEnterDefault(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
         Card sourceCard = match.permanent().getCard();
-        if (isTargeting(effect)) {
-            queueTokenEnterTargetChoices(match, effect, tokensEnter);
+        if (match.targets()) {
+            queueTokenEnterTargetChoices(match, tokensEnter);
             return true;
         }
         StackEntry entry = new StackEntry(
@@ -249,7 +244,7 @@ public class EnterTriggerCollectorService {
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                match.stackEffects(),
                 null,
                 match.permanent().getId());
         entry.setEventValue(tokensEnter.count());
@@ -291,11 +286,10 @@ public class EnterTriggerCollectorService {
      * that's a copy of it"), and a target restricted by it ("target player other than its controller") is judged
      * against it. The choice carries the ability's "do this only once each turn" mark (CR 603.2h) to its entry.
      */
-    private void queueTokenEnterTargetChoices(TriggerMatchContext match, CardEffect effect,
-                                              TriggerContext.TokensEnter tokensEnter) {
+    private void queueTokenEnterTargetChoices(TriggerMatchContext match, TriggerContext.TokensEnter tokensEnter) {
         UUID enteringTokenId = tokensEnter.permanentIds().size() == 1 ? tokensEnter.permanentIds().getFirst() : null;
         var choice = new PermanentChoiceContext.EntersTriggerTarget(match.permanent().getCard(), match.controllerId(),
-                new ArrayList<>(List.of(effect)), match.permanent().getId(), enteringTokenId);
+                match.stackEffects(), match.permanent().getId(), enteringTokenId);
         for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
             match.gameData().queueInteraction(match.markSourceOncePerTurnOnAcceptance()
                     ? choice.withMarkSourceOncePerTurnOnAcceptance() : choice);
@@ -305,38 +299,37 @@ public class EnterTriggerCollectorService {
 
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_CREATURE_ENTERS_BATTLEFIELD)
-    private boolean handleAnyCreatureEnterDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+    private boolean handleAnyCreatureEnterDefault(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
-        if (isTargeting(effect)) {
+        if (match.targets()) {
             // "You may have it deal damage to any target" (Pandemonium, the Immersturm plane): the target is chosen as
             // the ability goes on the stack, the "you may" asked as it resolves (CR 603.5).
-            queueTargetChoices(match, effect, pe, false);
+            queueTargetChoices(match, pe, false);
             return true;
         }
-        enqueue(match, effect, pe.defaultTargetPlayerId(), pe);
+        enqueue(match, pe.defaultTargetPlayerId(), pe);
         logTriggered(match);
         return true;
     }
 
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_CREATURE_ENTERS_FROM_GRAVEYARD)
-    private boolean handleCreatureEnterFromGraveyardDefault(TriggerMatchContext match,
-                                                             CardEffect effect, TriggerContext ctx) {
+    private boolean handleCreatureEnterFromGraveyardDefault(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
         UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
         if (enteringPermanentId == null) {
             return true;
         }
-        if (!isTargeting(effect)) {
+        if (!match.targets()) {
             // "You may attach this Equipment to it" (Dredging Claw): "it" is the entry's triggering permanent.
-            enqueue(match, effect, null, pe);
+            enqueue(match, null, pe);
             logTriggered(match);
             return true;
         }
         // "That creature deals damage equal to its power to any target" (Flayer of the Hatebound): the ability is the
-        // watcher's, its target judged against it (CR 113.7); the effect reads the entry's triggering permanent.
+        // watcher's, its target judged against it (CR 113.7); its effects read the entry's triggering permanent.
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
             match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(match.permanent().getCard(),
-                    match.controllerId(), new ArrayList<>(List.of(effect)), match.permanent().getId(),
+                    match.controllerId(), match.stackEffects(), match.permanent().getId(),
                     enteringPermanentId));
         }
         logTriggered(match);
@@ -354,10 +347,10 @@ public class EnterTriggerCollectorService {
     }
 
     /**
-     * Puts {@code effect}'s ability on the stack, once for each time it triggers, with the permanent the enter event
-     * was about recorded on it whatever the effect is ({@link #recordEnteringPermanent}).
+     * Puts {@code match}'s ability on the stack, whole, once for each time it triggers, with the permanent the enter
+     * event was about recorded on it whatever its effects are ({@link #recordEnteringPermanent}).
      */
-    private void enqueue(TriggerMatchContext match, CardEffect effect, UUID targetPlayerId,
+    private void enqueue(TriggerMatchContext match, UUID targetPlayerId,
                          TriggerContext.PermanentEnters pe) {
         Card sourceCard = match.sourceCard();
         UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
@@ -369,11 +362,11 @@ public class EnterTriggerCollectorService {
                     sourceCard,
                     match.controllerId(),
                     sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
+                    match.stackEffects(),
                     targetPlayerId,
                     match.permanent() == null ? null : match.permanent().getId()
             );
-            entry.setNonTargeting(!isTargeting(effect) || isPlayerFixedByEvent(effect, targetPlayerId));
+            entry.setNonTargeting(!match.targets() || isPlayerFixedByEvent(match, targetPlayerId));
             entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
             entry.setSourcePlanarObject(match.sourcePlanarObject() == null
                     ? null : match.sourcePlanarObject().copy());
@@ -428,25 +421,15 @@ public class EnterTriggerCollectorService {
     }
 
     /**
-     * Whether the only target-like slot of {@code effect} is a player the triggering event already
+     * Whether the only target-like slot of {@code match}'s ability is a player the triggering event already
      * fixed ("that player loses 2 life"), which is referenced rather than targeted and so ignores
      * shroud and hexproof.
      */
-    private static boolean isPlayerFixedByEvent(CardEffect effect, UUID fixedPlayerId) {
-        TargetSpec spec = effect.targetSpec();
+    private static boolean isPlayerFixedByEvent(TriggerMatchContext match, UUID fixedPlayerId) {
         return fixedPlayerId != null
-                && spec.admits(TargetPredicate.Kind.PLAYER)
-                && !spec.admits(TargetPredicate.Kind.PERMANENT)
-                && !spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)
-                && !EffectResolution.targetsSpellOnStack(effect);
+                && match.admits(TargetPredicate.Kind.PLAYER)
+                && !match.admits(TargetPredicate.Kind.PERMANENT)
+                && !match.admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                && !match.targetsSpellOnStack();
     }
-
-    private static boolean isTargeting(CardEffect effect) {
-        TargetSpec spec = effect.targetSpec();
-        return spec.admits(TargetPredicate.Kind.PLAYER)
-                || spec.admits(TargetPredicate.Kind.PERMANENT)
-                || EffectResolution.targetsSpellOnStack(effect)
-                || spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD);
-    }
-
 }

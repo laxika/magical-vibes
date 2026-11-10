@@ -20,7 +20,7 @@ public class ForageTriggerCollectorService {
     private final GameLogService gameLogService;
 
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_FORAGES)
-    private boolean handleForage(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+    private boolean handleForage(TriggerMatchContext match, TriggerContext ctx) {
         var gameData = match.gameData();
         var source = match.permanent();
         gameData.enqueueTrigger(new StackEntry(
@@ -28,7 +28,7 @@ public class ForageTriggerCollectorService {
                 source.getCard(),
                 match.controllerId(),
                 source.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
+                match.stackEffects(),
                 null,
                 source.getId()));
         gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));

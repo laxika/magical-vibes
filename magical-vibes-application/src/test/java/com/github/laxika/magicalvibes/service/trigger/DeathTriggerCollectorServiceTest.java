@@ -165,7 +165,7 @@ class DeathTriggerCollectorServiceTest {
                 dyingCard, PLAYER2_ID, PLAYER2_ID, dyingPermanent, 0, 0);
 
         assertThat(svc.handleOpponentPermanentGraveyardDefault(
-                match(watcher, PLAYER1_ID, effect), effect, context)).isTrue();
+                match(watcher, PLAYER1_ID, effect), context)).isTrue();
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -187,7 +187,7 @@ class DeathTriggerCollectorServiceTest {
         token.setToken(true);
         Permanent sacrificed = new Permanent(token);
 
-        svc.queueDepartureAbility(new TriggerMatchContext(gd, null, PLAYER1_ID, effect, exiledSource), effect, token,
+        svc.queueDepartureAbility(new TriggerMatchContext(gd, null, PLAYER1_ID, effect, exiledSource), token,
                 PLAYER1_ID, sacrificed, PLAYER1_ID);
 
         assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -213,7 +213,7 @@ class DeathTriggerCollectorServiceTest {
         Permanent departed = new Permanent(land);
         gd.graveyardEntryVersions.put(land.getId(), 4L);
 
-        assertThat(svc.handleLandGraveyardDefault(match(watcher, PLAYER1_ID, effect), effect,
+        assertThat(svc.handleLandGraveyardDefault(match(watcher, PLAYER1_ID, effect),
                 new TriggerContext.AnyPermanentGraveyard(land, PLAYER2_ID, PLAYER2_ID, departed, 0, 0))).isTrue();
 
         assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -238,7 +238,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(equipment);
             var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, null, 4);
 
-            svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(effect);
@@ -253,7 +253,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(equipment);
             var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, null);
 
-            svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getCard()).isEqualTo(equipment);
@@ -267,7 +267,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(equipment);
             var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, null);
 
-            svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
@@ -281,7 +281,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(equipment);
             var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, null);
 
-            svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Trigger Blade") && logEntry.plainText().contains("equipped creature died")));
         }
@@ -300,7 +300,7 @@ class DeathTriggerCollectorServiceTest {
             var effect = new ReturnDyingCreatureToBattlefieldEffect(false);
             var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, dying);
 
-            svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
@@ -316,7 +316,7 @@ class DeathTriggerCollectorServiceTest {
             var effect = new ReturnDyingCreatureToBattlefieldEffect(false);
             var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, null);
 
-            assertThat(svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+            assertThat(svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), ctx)).isTrue();
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getTriggeringCardId()).isNull();
         }
@@ -339,7 +339,7 @@ class DeathTriggerCollectorServiceTest {
                     dyingPermanent);
 
             assertThat(svc.dispatchCreatureDeath(CreatureDeathWatch.EQUIPPED, match(perm, PLAYER1_ID, effect),
-                    effect, ctx)).isTrue();
+                    ctx)).isTrue();
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.getFirst();
@@ -360,7 +360,7 @@ class DeathTriggerCollectorServiceTest {
             var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, null);
 
             assertThat(svc.dispatchCreatureDeath(CreatureDeathWatch.EQUIPPED, match(perm, PLAYER1_ID, effect),
-                    effect, ctx)).isTrue();
+                    ctx)).isTrue();
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getTriggeringCardId()).isNull();
         }
@@ -376,7 +376,7 @@ class DeathTriggerCollectorServiceTest {
             var ctx = new TriggerContext.EquippedCreatureDeath(dyingPermanent.getId(), PLAYER2_ID, dying, 3,
                     dyingPermanent);
 
-            svc.dispatchCreatureDeath(CreatureDeathWatch.EQUIPPED, match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.EQUIPPED, match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.pendingInteractions).singleElement()
                     .isInstanceOfSatisfying(PermanentChoiceContext.DeathTriggerTarget.class, target -> {
@@ -404,7 +404,7 @@ class DeathTriggerCollectorServiceTest {
             var ctx = new TriggerContext.EnchantedPermanentDeath(dying.getId(), PLAYER1_ID, creature.getId(), 2, 2,
                     0, true, List.of(creature.getId()), PLAYER1_ID, creature, dying);
 
-            svc.handleEnchantedPermanentDeathDefault(match(perm, PLAYER2_ID, effect), effect, ctx);
+            svc.handleEnchantedPermanentDeathDefault(match(perm, PLAYER2_ID, effect), ctx);
 
             var choice = gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
             assertThat(choice.effects()).containsExactly(effect);
@@ -422,7 +422,7 @@ class DeathTriggerCollectorServiceTest {
             var ctx = new TriggerContext.EnchantedPermanentDeath(dying.getId(), PLAYER1_ID, creature.getId(), 2, 2,
                     0, true, List.of(creature.getId()), PLAYER1_ID, creature, dying);
 
-            svc.handleEnchantedPermanentDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleEnchantedPermanentDeathDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             StackEntry entry = gd.stack.get(0);
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
@@ -443,7 +443,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(aura);
             var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), null, null, 0, 0);
 
-            svc.handleEnchantedPermanentDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleEnchantedPermanentDeathDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getCard()).isEqualTo(aura);
@@ -460,7 +460,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(aura);
             var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), null, null, 3, 3);
 
-            svc.handleEnchantedPermanentDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleEnchantedPermanentDeathDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(3);
@@ -481,7 +481,7 @@ class DeathTriggerCollectorServiceTest {
             UUID dyingId = UUID.randomUUID();
             var ctx = new TriggerContext.EnchantedPermanentDeath(dyingId, PLAYER2_ID, null, 2, 4);
 
-            svc.handleEnchantedPermanentDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleEnchantedPermanentDeathDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack).hasSize(1);
             var entry = gd.stack.get(0);
@@ -506,7 +506,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(aura);
             var ctx = new TriggerContext.EnchantedPermanentDeath(UUID.randomUUID(), PLAYER2_ID, null, 0, 0);
 
-            svc.handleEnchantedPermanentDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleEnchantedPermanentDeathDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getTargetId()).isEqualTo(PLAYER2_ID);
@@ -528,7 +528,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent auraPerm = new Permanent(aura);
             var ctx = new TriggerContext.EnchantedPermanentLeaves(new Permanent(createCreature("Leaving", 2, 2)), PLAYER1_ID);
 
-            svc.handleEnchantedPermanentLeavesDefault(match(auraPerm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleEnchantedPermanentLeavesDefault(match(auraPerm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getTriggeringPermanentId()).isEqualTo(ctx.leavingPermanent().getId());
@@ -552,7 +552,7 @@ class DeathTriggerCollectorServiceTest {
             var ctx = new TriggerContext.AnyPermanentGraveyard(dying, PLAYER2_ID, PLAYER2_ID);
 
             assertThat(svc.handleAnyPermanentGraveyardDefault(
-                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+                    match(perm, PLAYER1_ID, effect), ctx)).isTrue();
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(effect);
@@ -573,7 +573,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID);
 
-            svc.handleArtifactGraveyardDefault(match(perm, PLAYER1_ID, may), may, ctx);
+            svc.handleArtifactGraveyardDefault(match(perm, PLAYER1_ID, may), ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(may);
@@ -590,7 +590,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent departed = new Permanent(artifact);
             var ctx = new TriggerContext.ArtifactGraveyard(PLAYER2_ID, PLAYER2_ID, artifact, 0, departed, false);
 
-            svc.handleArtifactGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleArtifactGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             StackEntry entry = gd.stack.get(0);
             assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(PLAYER2_ID);
@@ -606,7 +606,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID);
 
-            svc.handleArtifactGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleArtifactGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack.get(0).getTargetId()).isNull();
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
@@ -621,7 +621,7 @@ class DeathTriggerCollectorServiceTest {
             var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID);
 
             assertThat(svc.handleArtifactGraveyardDefault(
-                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+                    match(perm, PLAYER1_ID, effect), ctx)).isTrue();
 
             var pending = (PermanentChoiceContext.DeathTriggerTarget)
                     gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
@@ -640,7 +640,7 @@ class DeathTriggerCollectorServiceTest {
             var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID);
 
             assertThat(svc.handleArtifactGraveyardDefault(
-                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+                    match(perm, PLAYER1_ID, effect), ctx)).isTrue();
 
             assertThat(gd.pendingInteractions).isEmpty();
             assertThat(gd.stack).hasSize(1);
@@ -663,7 +663,7 @@ class DeathTriggerCollectorServiceTest {
                     PLAYER1_ID, PLAYER1_ID, artifact.getCard(), 0, artifact, false);
 
             assertThat(svc.handleArtifactGraveyardDefault(
-                    match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+                    match(perm, PLAYER1_ID, effect), ctx)).isTrue();
 
             var pending = (PermanentChoiceContext.DeathTriggerTarget)
                     gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
@@ -685,7 +685,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.EnchantmentGraveyard(PLAYER1_ID, PLAYER1_ID);
 
-            svc.handleEnchantmentGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleEnchantmentGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack.get(0).getTargetId()).isNull();
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
@@ -704,7 +704,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.ArtifactGraveyard(PLAYER2_ID, PLAYER2_ID);
 
-            svc.handleOpponentArtifactGraveyardDefault(match(perm, PLAYER1_ID, may), may, ctx);
+            svc.handleOpponentArtifactGraveyardDefault(match(perm, PLAYER1_ID, may), ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(may);
@@ -720,7 +720,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.ArtifactGraveyard(PLAYER2_ID, PLAYER2_ID);
 
-            svc.handleOpponentArtifactGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleOpponentArtifactGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
         }
@@ -738,7 +738,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
-            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
         }
@@ -751,7 +751,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
-            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
         }
@@ -764,7 +764,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
-            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
@@ -778,7 +778,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
-            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, may), may, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, may), ctx);
 
             assertThat(gd.stack).hasSize(1);
         }
@@ -792,7 +792,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 4, 4), PLAYER1_ID, 4, 4);
 
-            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, may), may, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, may), ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
@@ -809,7 +809,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
-            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, may), may, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, may), ctx);
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
@@ -823,7 +823,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER2_ID, 1, 1);
 
-            svc.handleAnyCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleAnyCreatureDeathDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
@@ -841,7 +841,7 @@ class DeathTriggerCollectorServiceTest {
                     dyingPermanent);
 
             assertThat(svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, rawMayPay),
-                    rawMayPay, ctx)).isTrue();
+                    ctx)).isTrue();
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.getFirst();
@@ -864,7 +864,7 @@ class DeathTriggerCollectorServiceTest {
                     dying, PLAYER2_ID, 2, 2, dyingPermanent.getId(), dyingPermanent);
 
             assertThat(svc.dispatchCreatureDeath(CreatureDeathWatch.ANY,
-                    match(perm, PLAYER1_ID, copyEffect), copyEffect, ctx)).isTrue();
+                    match(perm, PLAYER1_ID, copyEffect), ctx)).isTrue();
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
             assertThat(gd.stack.getFirst().getTriggeringPermanentId()).isEqualTo(dyingPermanent.getId());
@@ -881,7 +881,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
-            svc.handleAnyCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleAnyCreatureDeathDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
@@ -895,7 +895,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER2_ID, 1, 1);
 
-            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.getFirst();
@@ -913,7 +913,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
-            svc.handleAnyCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleAnyCreatureDeathDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
@@ -937,7 +937,7 @@ class DeathTriggerCollectorServiceTest {
                     dyingPermanent);
 
             svc.dispatchCreatureDeath(CreatureDeathWatch.ANY,
-                    new TriggerMatchContext(gd, perm, PLAYER1_ID, may, watcher, true), may, ctx);
+                    new TriggerMatchContext(gd, perm, PLAYER1_ID, List.of(may), watcher, null, true), ctx);
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.getFirst();
@@ -966,7 +966,7 @@ class DeathTriggerCollectorServiceTest {
             var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2, 3, dyingPermanent.getId(),
                     dyingPermanent);
 
-            svc.dispatchCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, match(perm, PLAYER1_ID, effect), ctx);
 
             StackEntry entry = gd.stack.getFirst();
             assertThat(entry.getControllerId()).isEqualTo(PLAYER1_ID);
@@ -989,7 +989,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 2, 2), PLAYER1_ID, 2, 2);
 
-            svc.dispatchCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, match(perm, PLAYER1_ID, may), may, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, match(perm, PLAYER1_ID, may), ctx);
 
             assertThat(gd.stack).hasSize(1);
         }
@@ -1002,7 +1002,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 2, 2), PLAYER1_ID, 2, 2);
 
-            svc.handleAllyNontokenDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleAllyNontokenDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
@@ -1019,7 +1019,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2, 2);
 
-            svc.dispatchCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, match(perm, PLAYER1_ID, mayPay), mayPay, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, match(perm, PLAYER1_ID, mayPay), ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
@@ -1041,7 +1041,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 3, 3);
 
-            svc.handleAnyNontokenCreatureDeathDefault(match(perm, PLAYER1_ID, may), may, ctx);
+            svc.handleAnyNontokenCreatureDeathDefault(match(perm, PLAYER1_ID, may), ctx);
 
             assertThat(gd.pendingMayAbilities).isEmpty();
             assertThat(gd.stack).hasSize(1);
@@ -1059,7 +1059,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(deathmantle);
             var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2, 2);
 
-            assertThat(svc.handleAnyNontokenCreatureDeathDefault(match(perm, PLAYER1_ID, mayPay), mayPay, ctx)).isTrue();
+            assertThat(svc.handleAnyNontokenCreatureDeathDefault(match(perm, PLAYER1_ID, mayPay), ctx)).isTrue();
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(mayPay);
             assertThat(gd.stack.get(0).getTriggeringCardId()).isEqualTo(dying.getId());
@@ -1085,7 +1085,7 @@ class DeathTriggerCollectorServiceTest {
                     dyingPermanent);
 
             svc.dispatchCreatureDeath(CreatureDeathWatch.OPPONENT,
-                    new TriggerMatchContext(gd, perm, PLAYER2_ID, may, watcher, true), may, ctx);
+                    new TriggerMatchContext(gd, perm, PLAYER2_ID, List.of(may), watcher, null, true), ctx);
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingInteractions).singleElement()
@@ -1104,7 +1104,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(null, PLAYER1_ID, 0, 0);
 
-            svc.dispatchCreatureDeath(CreatureDeathWatch.OPPONENT, match(perm, PLAYER2_ID, may), may, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.OPPONENT, match(perm, PLAYER2_ID, may), ctx);
 
             assertThat(gd.stack).hasSize(1);
         }
@@ -1117,7 +1117,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(null, PLAYER1_ID, 0, 0);
 
-            svc.handleOpponentCreatureDeathDefault(match(perm, PLAYER2_ID, effect), effect, ctx);
+            svc.handleOpponentCreatureDeathDefault(match(perm, PLAYER2_ID, effect), ctx);
 
             assertThat(gd.stack.get(0).getTargetId()).isEqualTo(PLAYER1_ID);
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
@@ -1132,7 +1132,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2, 2);
 
-            svc.handleOpponentCreatureDeathDefault(match(perm, PLAYER2_ID, effect), effect, ctx);
+            svc.handleOpponentCreatureDeathDefault(match(perm, PLAYER2_ID, effect), ctx);
 
             assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(effect);
             assertThat(gd.stack.get(0).getTriggeringCardId()).isEqualTo(dying.getId());
@@ -1152,7 +1152,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(tiana);
             var ctx = new TriggerContext.AllyAuraOrEquipmentGraveyard(dyingAura, PLAYER1_ID);
 
-            svc.handleAllyAuraOrEquipmentGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleAllyAuraOrEquipmentGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(effect);
@@ -1168,7 +1168,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(tiana);
             var ctx = new TriggerContext.AllyAuraOrEquipmentGraveyard(dyingAura, PLAYER1_ID);
 
-            svc.handleAllyAuraOrEquipmentGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleAllyAuraOrEquipmentGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Tiana Ship's Caretaker") && logEntry.plainText().contains("Fallen Aura")));
         }
@@ -1190,7 +1190,7 @@ class DeathTriggerCollectorServiceTest {
             var effect = new ReturnTriggeringLandFromGraveyardToBattlefieldEffect();
             var ctx = new TriggerContext.AnyPermanentGraveyard(land, PLAYER1_ID, PLAYER1_ID, new Permanent(land), 0, 0);
 
-            assertThat(svc.handleLandPutIntoGraveyardByOpponentDefault(match(perm, PLAYER1_ID, effect), effect, ctx))
+            assertThat(svc.handleLandPutIntoGraveyardByOpponentDefault(match(perm, PLAYER1_ID, effect), ctx))
                     .isTrue();
 
             assertThat(gd.stack).hasSize(1);
@@ -1210,7 +1210,7 @@ class DeathTriggerCollectorServiceTest {
             var ctx = new TriggerContext.AnyPermanentGraveyard(artifact, PLAYER1_ID, PLAYER1_ID,
                     new Permanent(artifact), 0, 0);
 
-            assertThat(svc.handleAllyPermanentGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx))
+            assertThat(svc.handleAllyPermanentGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx))
                     .isTrue();
 
             assertThat(gd.pendingInteractions)
@@ -1252,7 +1252,7 @@ class DeathTriggerCollectorServiceTest {
             var effect = new ReturnTriggeringCardToOwnerHandEffect();
             var ctx = new TriggerContext.AnyPermanentGraveyard(dying, PLAYER2_ID, PLAYER2_ID);
 
-            assertThat(svc.handleAnyPermanentGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx)).isTrue();
+            assertThat(svc.handleAnyPermanentGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx)).isTrue();
 
             assertCarriesTheCardUnchanged(effect, dying, 4L);
         }
@@ -1265,7 +1265,7 @@ class DeathTriggerCollectorServiceTest {
             var effect = new ReturnTriggeringCardToOwnerHandEffect();
             var ctx = new TriggerContext.AnyPermanentGraveyard(dying, PLAYER2_ID, PLAYER1_ID);
 
-            assertThat(svc.handleCreaturePutIntoOwnerGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx))
+            assertThat(svc.handleCreaturePutIntoOwnerGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx))
                     .isTrue();
 
             assertCarriesTheCardUnchanged(effect, dying, 2L);
@@ -1279,7 +1279,7 @@ class DeathTriggerCollectorServiceTest {
             var effect = new ReturnTriggeringCardToOwnerHandEffect();
             var ctx = new TriggerContext.AnyPermanentGraveyard(dying, PLAYER1_ID, PLAYER1_ID);
 
-            assertThat(svc.handleAllyNontokenPermanentGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx))
+            assertThat(svc.handleAllyNontokenPermanentGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx))
                     .isTrue();
 
             assertCarriesTheCardUnchanged(effect, dying, 3L);
@@ -1293,7 +1293,7 @@ class DeathTriggerCollectorServiceTest {
             var effect = new ReturnTriggeringCardToOwnerHandEffect();
             var ctx = new TriggerContext.AnyPermanentGraveyard(dying, PLAYER2_ID, PLAYER2_ID);
 
-            assertThat(svc.handleAnyNontokenPermanentGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx))
+            assertThat(svc.handleAnyNontokenPermanentGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx))
                     .isTrue();
 
             assertCarriesTheCardUnchanged(effect, dying, 5L);
@@ -1307,7 +1307,7 @@ class DeathTriggerCollectorServiceTest {
             var effect = new ReturnTriggeringCardToOwnerHandEffect();
             var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, dying);
 
-            svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.handleEquippedCreatureDeathDefault(match(perm, PLAYER1_ID, effect), ctx);
 
             assertCarriesTheCardUnchanged(effect, dying, 6L);
         }
@@ -1322,7 +1322,7 @@ class DeathTriggerCollectorServiceTest {
             var effect = new DrawCardEffect(1);
             var ctx = new TriggerContext.AllyAuraOrEquipmentGraveyard(equipment, PLAYER1_ID);
 
-            assertThat(svc.handleAllyAuraOrEquipmentGraveyardDefault(match(perm, PLAYER1_ID, effect), effect, ctx))
+            assertThat(svc.handleAllyAuraOrEquipmentGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx))
                     .isTrue();
 
             assertThat(gd.stack).singleElement().satisfies(entry -> {

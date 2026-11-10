@@ -175,6 +175,39 @@ public final class DamageAbilityReader {
         return effects;
     }
 
+    /**
+     * The effects of {@code abilities}, one list for each ability, in order, as their collector reads them for the
+     * condition watched as {@code watched}: each list is one object on the stack (CR 603.3), whose trigger-level parts
+     * (filter, limit, multiplicity, options) every read of it shares.
+     */
+    /**
+     * {@code reads}, a flat list of abilities' reads in order, one list for each ability: the consecutive reads of one
+     * ability object, each list one object on the stack (CR 603.3).
+     */
+    public static List<List<DamageEffect>> byAbility(List<DamageEffect> reads) {
+        List<List<DamageEffect>> byAbility = new ArrayList<>();
+        List<DamageEffect> current = null;
+        for (DamageEffect read : reads) {
+            if (current == null || current.getFirst().ability() != read.ability()) {
+                current = new ArrayList<>();
+                byAbility.add(current);
+            }
+            current.add(read);
+        }
+        return byAbility;
+    }
+
+    public static List<List<DamageEffect>> readByAbility(List<TriggeredAbility> abilities, Trigger watched) {
+        List<List<DamageEffect>> byAbility = new ArrayList<>(abilities.size());
+        for (TriggeredAbility ability : abilities) {
+            List<DamageEffect> effects = read(ability, watched);
+            if (!effects.isEmpty()) {
+                byAbility.add(effects);
+            }
+        }
+        return byAbility;
+    }
+
     /** The effects of {@code ability}, as its collector reads them for the condition watched as {@code watched}. */
     public static List<DamageEffect> read(TriggeredAbility ability, Trigger watched) {
         PermanentPredicate filter = filter(ability, watched);

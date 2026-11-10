@@ -174,7 +174,7 @@ class LandTapTriggerCollectorServiceTest {
     private boolean tapLand(Permanent source, UUID controllerId, CardEffect effect, UUID tappingPlayerId,
                             UUID landId, ManaColor... produced) {
         return registry.dispatch(new TriggerMatchContext(gd, source, controllerId, effect),
-                TapWatch.ON_ANY_PLAYER_TAPS_LAND, effect,
+                TapWatch.ON_ANY_PLAYER_TAPS_LAND,
                 new TriggerContext.LandTap(tappingPlayerId, landId, Set.of(produced)));
     }
 
@@ -552,7 +552,7 @@ class LandTapTriggerCollectorServiceTest {
             var effect = GainControlOfTargetEffect.ofTriggeringPermanent(ControlDuration.UNTIL_END_OF_YOUR_NEXT_TURN);
 
             assertThat(registry.dispatch(new TriggerMatchContext(gd, nabber, player1Id, effect),
-                    TapWatch.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA, effect,
+                    TapWatch.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA,
                     new TriggerContext.PermanentTapForMana(player2Id, artifact.getId(), Set.of(ManaColor.COLORLESS))))
                     .isTrue();
 
@@ -571,7 +571,7 @@ class LandTapTriggerCollectorServiceTest {
             var effect = new AddManaOfTypeProducedByTappedPermanentEffect();
 
             assertThat(registry.dispatch(new TriggerMatchContext(gd, kinnan, player1Id, effect),
-                    TapWatch.ON_CONTROLLER_TAPS_NONLAND_PERMANENT_FOR_MANA, effect,
+                    TapWatch.ON_CONTROLLER_TAPS_NONLAND_PERMANENT_FOR_MANA,
                     new TriggerContext.NonlandPermanentTapForMana(player1Id, manaRockId, null))).isTrue();
 
             StackEntry parked = gd.pendingManaAbilityTriggers.getFirst();
@@ -591,7 +591,7 @@ class LandTapTriggerCollectorServiceTest {
             var effect = new AddManaWhenTappedForManaEffect(ManaColor.GREEN);
 
             assertThat(registry.dispatch(new TriggerMatchContext(gd, cub, player1Id, effect),
-                    TapWatch.ON_CONTROLLER_TAPS_CREATURE_FOR_MANA, effect,
+                    TapWatch.ON_CONTROLLER_TAPS_CREATURE_FOR_MANA,
                     new TriggerContext.CreatureTapForMana(player1Id, UUID.randomUUID()))).isTrue();
 
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(1);

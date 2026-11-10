@@ -22,17 +22,15 @@ public class TransformTriggerCollectorService {
     private final GameLogService gameLogService;
 
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_TRANSFORMS)
-    private boolean handleAllyPermanentTransform(TriggerMatchContext match, CardEffect effect,
-                                                  TriggerContext context) {
+    private boolean handleAllyPermanentTransform(TriggerMatchContext match, TriggerContext context) {
         TriggerContext.PermanentTransforms transforms = (TriggerContext.PermanentTransforms) context;
-        CardEffect resolved = effect;
         Card sourceCard = match.permanent().getCard();
         StackEntry trigger = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(resolved)),
+                match.stackEffects(),
                 null,
                 match.permanent().getId());
         trigger.setTriggeringPermanentId(transforms.transformedPermanent().getId());

@@ -22,8 +22,7 @@ public class AuntieOolCursewretch extends Card {
         TargetPermanentMatches controlsAffectedCreature = new TargetPermanentMatches(
                 new PermanentControlledBySourceControllerPredicate());
         addTrigger(Triggers.minusOneCountersPutOnCreature(),
-                new ConditionalEffect(controlsAffectedCreature, new DrawCardEffect()));
-        addTrigger(Triggers.minusOneCountersPutOnCreature(),
+                new ConditionalEffect(controlsAffectedCreature, new DrawCardEffect()),
                 new ConditionalEffect(new NotCondition(controlsAffectedCreature),
                         new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER)));
     }

@@ -25,7 +25,7 @@ public class ShipbreakerKraken extends Card {
         ));
 
         target(TargetFilters.creature(), 0, 4)
-                .addTrigger(Triggers.becomesMonstrous(), new TapPermanentsEffect(TapUntapScope.TARGET))
-                .addTrigger(Triggers.becomesMonstrous(), DoesntUntapEffect.targetWhileSourceControlled());
+                .addTrigger(Triggers.becomesMonstrous(), new TapPermanentsEffect(TapUntapScope.TARGET),
+                        DoesntUntapEffect.targetWhileSourceControlled());
     }
 }

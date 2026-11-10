@@ -13,8 +13,7 @@ public class SirenOfTheSilentSong extends Card {
 
     public SirenOfTheSilentSong() {
         addTrigger(Triggers.becomesUntapped(),
-                new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT));
-        addTrigger(Triggers.becomesUntapped(),
+                new DiscardEffect(1, DiscardRecipient.EACH_OPPONENT),
                 new MillEffect(1, MillRecipient.EACH_OPPONENT));
     }
 }

@@ -148,7 +148,7 @@ class MiscTriggerCollectorServiceTest {
         var effect = new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER);
 
         registry.dispatch(match(aura, player1Id, effect), TapWatch.ON_ENCHANTED_PERMANENT_TAPPED,
-                effect, new TriggerContext.EnchantedPermanentTap(land, player2Id));
+                new TriggerContext.EnchantedPermanentTap(land, player2Id));
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTriggeringPermanentId()).isEqualTo(land.getId());
@@ -161,7 +161,7 @@ class MiscTriggerCollectorServiceTest {
         var effect = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         boolean collected = registry.dispatch(match(source, player1Id, effect),
-                ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, effect,
+                ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
                 new TriggerContext.ControllerCardsLeaveGraveyard(player1Id));
 
         assertThat(collected).isTrue();
@@ -181,7 +181,7 @@ class MiscTriggerCollectorServiceTest {
         Card second = createCard("Second departed card");
 
         boolean collected = registry.dispatch(match(source, player1Id, effect),
-                ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD, effect,
+                ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
                 new TriggerContext.ControllerCardsLeaveGraveyard(player1Id, List.of(first, second)));
 
         assertThat(collected).isTrue();
@@ -200,7 +200,7 @@ class MiscTriggerCollectorServiceTest {
         Card second = createCard("Second milled card");
 
         boolean collected = registry.dispatch(match(source, player1Id, effect),
-                ZoneChangeWatch.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY, effect,
+                ZoneChangeWatch.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
                 new TriggerContext.CardsPutIntoGraveyardFromLibrary(player1Id, 2, List.of(first, second)));
 
         assertThat(collected).isTrue();
@@ -219,7 +219,7 @@ class MiscTriggerCollectorServiceTest {
         gd.graveyardEntryVersions.put(card.getId(), 3L);
 
         boolean collected = registry.dispatch(match(source, player1Id, effect),
-                ZoneChangeWatch.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, effect,
+                ZoneChangeWatch.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
                 new TriggerContext.CardPutIntoGraveyard(card, player1Id));
 
         assertThat(collected).isTrue();
@@ -240,7 +240,7 @@ class MiscTriggerCollectorServiceTest {
         gd.graveyardEntryVersions.put(card.getId(), 2L);
 
         boolean collected = registry.dispatch(match(source, player1Id, effect),
-                ZoneChangeWatch.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE, effect,
+                ZoneChangeWatch.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
                 new TriggerContext.CardPutIntoGraveyard(card, player2Id));
 
         assertThat(collected).isTrue();
@@ -261,7 +261,7 @@ class MiscTriggerCollectorServiceTest {
         Card second = createCard("Second exiled creature card");
 
         boolean collected = registry.dispatch(match(source, player1Id, effect),
-                ZoneChangeWatch.ON_CONTROLLER_CREATURES_OR_CREATURE_CARDS_EXILED, effect,
+                ZoneChangeWatch.ON_CONTROLLER_CREATURES_OR_CREATURE_CARDS_EXILED,
                 new TriggerContext.ControllerCreaturesOrCreatureCardsExiled(player1Id, 2, List.of(first, second)));
 
         assertThat(collected).isTrue();
@@ -279,7 +279,7 @@ class MiscTriggerCollectorServiceTest {
                 new PermanentHasSubtypePredicate(CardSubtype.ADVISOR));
 
         boolean collected = registry.dispatch(match(source, player1Id, effect), ZoneChangeWatch.ON_OPPONENT_MILLS,
-                effect, new TriggerContext.Mill(player2Id, 3));
+                new TriggerContext.Mill(player2Id, 3));
 
         assertThat(collected).isTrue();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -301,7 +301,7 @@ class MiscTriggerCollectorServiceTest {
         gd.graveyardEntryVersions.put(card.getId(), 5L);
 
         boolean collected = registry.dispatch(new TriggerMatchContext(gd, null, player1Id, effect, plane),
-                ZoneChangeWatch.ON_NONBLACK_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, effect,
+                ZoneChangeWatch.ON_NONBLACK_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
                 new TriggerContext.CardPutIntoGraveyard(card, player2Id));
 
         assertThat(collected).isTrue();
@@ -325,7 +325,7 @@ class MiscTriggerCollectorServiceTest {
         gd.exileEntryVersions.put(exiled.getCard().getId(), 4L);
 
         boolean collected = registry.dispatch(match(source, player1Id, effect),
-                ZoneChangeWatch.ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD, effect,
+                ZoneChangeWatch.ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD,
                 new TriggerContext.CreatureExiledFromBattlefield(exiled, player2Id, 2));
 
         assertThat(collected).isTrue();
@@ -349,7 +349,7 @@ class MiscTriggerCollectorServiceTest {
                 new ChooseOneEffect.ChooseOneOption("Damage", new DealDamageToTargetPlayerOrPlaneswalkerEffect(1))));
 
         registry.dispatch(match(aura, player1Id, effect), TapWatch.ON_ENCHANTED_PERMANENT_TAPPED,
-                effect, new TriggerContext.EnchantedPermanentTap(tapped, player2Id));
+                new TriggerContext.EnchantedPermanentTap(tapped, player2Id));
 
         assertThat(gd.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)).isFalse();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -399,7 +399,7 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.LifeGain(player1Id, 3);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_GAINS_LIFE, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -415,7 +415,7 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.LifeGain(player1Id, 1);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_GAINS_LIFE, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -434,7 +434,7 @@ class MiscTriggerCollectorServiceTest {
         Permanent perm = new Permanent(card);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect,
+                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_GAINS_LIFE,
                 new TriggerContext.LifeGain(player1Id, 4));
 
         assertThat(result).isTrue();
@@ -453,7 +453,7 @@ class MiscTriggerCollectorServiceTest {
         var effect = new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect,
+                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_GAINS_LIFE,
                 new TriggerContext.LifeGain(player1Id, 2));
 
         assertThat(result).isTrue();
@@ -477,7 +477,6 @@ class MiscTriggerCollectorServiceTest {
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
                 LifeWatch.ON_CONTROLLER_GAINS_LIFE,
-                effect,
                 new TriggerContext.LifeGain(player1Id, 3));
 
         assertThat(result).isTrue();
@@ -500,7 +499,6 @@ class MiscTriggerCollectorServiceTest {
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
                 LifeWatch.ON_CONTROLLER_GAINS_LIFE,
-                effect,
                 new TriggerContext.LifeGain(player1Id, 3));
 
         assertThat(result).isTrue();
@@ -520,7 +518,6 @@ class MiscTriggerCollectorServiceTest {
         assertThat(registry.dispatch(
                 match(perm, player1Id, effect),
                 LifeWatch.ON_OPPONENT_LOSES_LIFE,
-                effect,
                 new TriggerContext.LifeLoss(player2Id, 1))).isTrue();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
@@ -542,7 +539,7 @@ class MiscTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
-                ZoneChangeWatch.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY, effect, ctx);
+                ZoneChangeWatch.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -558,7 +555,7 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.Surveil(player1Id, true);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), LibraryWatch.ON_CONTROLLER_SURVEILS, effect, ctx);
+                match(perm, player1Id, effect), LibraryWatch.ON_CONTROLLER_SURVEILS, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -576,7 +573,7 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.Surveil(player2Id, true);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), LibraryWatch.ON_OPPONENT_SURVEILS, effect, ctx);
+                match(perm, player1Id, effect), LibraryWatch.ON_OPPONENT_SURVEILS, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -593,7 +590,7 @@ class MiscTriggerCollectorServiceTest {
         var effect = new DrawCardEffect(1);
 
         boolean result = registry.dispatch(match(perm, player1Id, effect),
-                TapWatch.ON_CONTROLLER_UNTAPS_DURING_UNTAP_STEP, effect, new TriggerContext.UntapStep(3));
+                TapWatch.ON_CONTROLLER_UNTAPS_DURING_UNTAP_STEP, new TriggerContext.UntapStep(3));
 
         assertThat(result).isTrue();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -616,7 +613,6 @@ class MiscTriggerCollectorServiceTest {
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
                 MiscWatch.ON_SELF_BECOMES_CREWED,
-                effect,
                 new TriggerContext.SelfBecomesCrewed(player1Id));
 
         assertThat(result).isTrue();
@@ -637,8 +633,8 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.Surveil(player1Id, true);
 
         boolean result = registry.dispatch(
-                new TriggerMatchContext(gd, perm, player1Id, effect, perm.getCard(), true),
-                LibraryWatch.ON_CONTROLLER_SURVEILS, effect, ctx);
+                new TriggerMatchContext(gd, perm, player1Id, List.of(effect), perm.getCard(), null, true),
+                LibraryWatch.ON_CONTROLLER_SURVEILS, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -654,7 +650,7 @@ class MiscTriggerCollectorServiceTest {
         var effect = new ConditionalEffect(new ControllerTurn(), new PutCountersOnSourceEffect(1, 1, 1));
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect,
+                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_GAINS_LIFE,
                 new TriggerContext.LifeGain(player1Id, 3));
 
         assertThat(result).isTrue();
@@ -670,7 +666,7 @@ class MiscTriggerCollectorServiceTest {
         var effect = new ConditionalEffect(new ControllerTurn(), new PutCountersOnSourceEffect(1, 1, 1));
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_LOSES_LIFE, effect,
+                match(perm, player1Id, effect), LifeWatch.ON_CONTROLLER_LOSES_LIFE,
                 new TriggerContext.LifeLoss(player1Id, 2));
 
         assertThat(result).isTrue();
@@ -686,7 +682,7 @@ class MiscTriggerCollectorServiceTest {
         var effect = new DrawCardEffect(new EventValue());
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), LifeWatch.ON_OPPONENT_LOSES_LIFE, effect,
+                match(perm, player1Id, effect), LifeWatch.ON_OPPONENT_LOSES_LIFE,
                 new TriggerContext.LifeLoss(player2Id, 4));
 
         assertThat(result).isTrue();
@@ -705,7 +701,7 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.EnergyGain(player1Id, 2);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), CounterWatch.ON_CONTROLLER_GETS_ENERGY, effect, ctx);
+                match(perm, player1Id, effect), CounterWatch.ON_CONTROLLER_GETS_ENERGY, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).isEmpty();
@@ -733,7 +729,7 @@ class MiscTriggerCollectorServiceTest {
             Permanent perm = createPermanent("Territorial Gorger");
             var effect = new BoostSelfEffect(2, 2);
 
-            registry.dispatch(match(perm, player1Id, effect), CounterWatch.ON_CONTROLLER_GETS_ENERGY, effect,
+            registry.dispatch(match(perm, player1Id, effect), CounterWatch.ON_CONTROLLER_GETS_ENERGY,
                     new TriggerContext.EnergyGain(player1Id, 3));
 
             assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -752,12 +748,12 @@ class MiscTriggerCollectorServiceTest {
             var token = CreateTokenEffect.ofClueToken(1);
             Card foretold = createCard("Foretold card");
 
-            registry.dispatch(match(perm, player1Id, token), ActionWatch.ON_CONTROLLER_COLLECTS_EVIDENCE, token,
+            registry.dispatch(match(perm, player1Id, token), ActionWatch.ON_CONTROLLER_COLLECTS_EVIDENCE,
                     new TriggerContext.CollectEvidence(player1Id));
-            registry.dispatch(match(perm, player1Id, token), ActionWatch.ON_CONTROLLER_INVESTIGATES, token,
+            registry.dispatch(match(perm, player1Id, token), ActionWatch.ON_CONTROLLER_INVESTIGATES,
                     new TriggerContext.Investigate(player1Id));
             var boost = new BoostSelfEffect(2, 0);
-            registry.dispatch(match(perm, player1Id, boost), ActionWatch.ON_CONTROLLER_FORETELLS, boost,
+            registry.dispatch(match(perm, player1Id, boost), ActionWatch.ON_CONTROLLER_FORETELLS,
                     new TriggerContext.Foretell(player1Id, foretold));
 
             assertThat(gd.stack).hasSize(3).allSatisfy(entry -> {
@@ -775,7 +771,7 @@ class MiscTriggerCollectorServiceTest {
             Permanent perm = createPermanent("Tax Taker");
             var effect = CreateTokenEffect.ofTreasureToken(new EventValue());
 
-            registry.dispatch(match(perm, player1Id, effect), ActionWatch.ON_OPPONENT_PAYS_TAX, effect,
+            registry.dispatch(match(perm, player1Id, effect), ActionWatch.ON_OPPONENT_PAYS_TAX,
                     new TriggerContext.TaxPayment(player2Id, player1Id, 3));
 
             assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -795,7 +791,7 @@ class MiscTriggerCollectorServiceTest {
             var damage = new DealDamageToAnyTargetEffect(new EventValue());
 
             boolean result = registry.dispatch(match(watcher, player1Id, damage),
-                    CounterWatch.ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER, damage,
+                    CounterWatch.ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER,
                     new TriggerContext.CountersPlaced(player1Id, 4));
 
             assertThat(result).isTrue();
@@ -814,7 +810,7 @@ class MiscTriggerCollectorServiceTest {
             var effect = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
             registry.dispatch(match(sigurd, player1Id, effect), CounterWatch.ON_YOU_PUT_LORE_COUNTERS_ON_SAGA,
-                    effect, new TriggerContext.LoreCounterPlaced(saga, player1Id));
+                    new TriggerContext.LoreCounterPlaced(saga, player1Id));
 
             var pending = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
             assertThat(pending.triggeringPermanentId()).isEqualTo(saga.getId());
@@ -829,7 +825,7 @@ class MiscTriggerCollectorServiceTest {
             var damage = new DealDamageToTargetPlayerOrPlaneswalkerEffect(new EventValue(), PlayerRelation.OPPONENT);
 
             registry.dispatch(match(chandra, player1Id, damage), CounterWatch.ON_SELF_LOYALTY_COUNTERS_REMOVED,
-                    damage, new TriggerContext.LoyaltyCountersRemoved(chandra, 2));
+                    new TriggerContext.LoyaltyCountersRemoved(chandra, 2));
 
             var pending = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
             assertThat(pending.effects()).containsExactly(damage);
@@ -846,7 +842,7 @@ class MiscTriggerCollectorServiceTest {
             var seek = new SeekEffect(new CardTypePredicate(CardType.CREATURE));
 
             registry.dispatch(match(armorer, player1Id, seek), CounterWatch.ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT,
-                    seek, new TriggerContext.CountersRemovedFromPermanent(shielded, 1));
+                    new TriggerContext.CountersRemovedFromPermanent(shielded, 1));
 
             assertThat(gd.stack).singleElement().satisfies(entry -> {
                 assertThat(entry.getEffectsToResolve()).containsExactly(seek);
@@ -864,7 +860,7 @@ class MiscTriggerCollectorServiceTest {
             var effect = CreateTokenEffect.ofTreasureToken(1);
 
             registry.dispatch(match(zidane, player1Id, effect), MiscWatch.ON_OPPONENT_GAINS_CONTROL_OF_YOUR_PERMANENT,
-                    effect, new TriggerContext.PermanentControlChanged(stolen, player1Id, player2Id));
+                    new TriggerContext.PermanentControlChanged(stolen, player1Id, player2Id));
 
             assertThat(gd.stack).singleElement().satisfies(entry -> {
                 assertThat(entry.getTriggeringPermanentId()).isEqualTo(stolen.getId());
@@ -882,7 +878,7 @@ class MiscTriggerCollectorServiceTest {
             var effect = new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue());
 
             registry.dispatch(match(creature, player1Id, effect), SpellAbilityWatch.ON_SELF_MANA_ABILITY_RESOLVES,
-                    effect, new TriggerContext.ManaAbilityResolved(player1Id, 2));
+                    new TriggerContext.ManaAbilityResolved(player1Id, 2));
 
             assertThat(gd.stack).singleElement().satisfies(entry -> {
                 assertThat(entry.getEffectsToResolve()).containsExactly(effect);
@@ -903,7 +899,7 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.Proliferate(player1Id);
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), CounterWatch.ON_CONTROLLER_PROLIFERATES, effect, ctx);
+                match(perm, player1Id, effect), CounterWatch.ON_CONTROLLER_PROLIFERATES, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -917,7 +913,7 @@ class MiscTriggerCollectorServiceTest {
         var effect = new ConditionalEffect(new ControllerTurn(), new GainLifeEffect(1));
 
         boolean result = registry.dispatch(
-                match(perm, player1Id, effect), CounterWatch.ON_CONTROLLER_PROLIFERATES, effect,
+                match(perm, player1Id, effect), CounterWatch.ON_CONTROLLER_PROLIFERATES,
                 new TriggerContext.Proliferate(player1Id));
 
         assertThat(result).isTrue();
@@ -941,7 +937,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isNotEmpty();
@@ -958,7 +954,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, ctx);
 
             assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2Id);
         }
@@ -980,7 +976,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isNotEmpty();
@@ -997,7 +993,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, ctx);
 
             assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2Id);
         }
@@ -1018,7 +1014,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1036,7 +1032,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, ctx);
 
             assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         }
@@ -1050,7 +1046,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, ctx);
 
             assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player2Id);
         }
@@ -1074,7 +1070,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
@@ -1102,7 +1098,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_SACRIFICED, ctx);
 
             assertThat(result).isTrue();
             var pending = gd.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
@@ -1125,7 +1121,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    ZoneChangeWatch.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1149,7 +1145,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    ZoneChangeWatch.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, effect, ctx);
+                    ZoneChangeWatch.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
@@ -1175,7 +1171,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(aura, player1Id, effect),
-                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1196,7 +1192,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(aura, player1Id, effect),
-                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, ctx);
 
             StackEntry entry = gd.stack.getLast();
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
@@ -1216,7 +1212,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(aura, player1Id, effect),
-                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, ctx);
 
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
@@ -1240,7 +1236,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(aura, player1Id, effect),
-                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1269,7 +1265,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(aura, player1Id, effect),
-                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1298,7 +1294,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(aura, player1Id, effect),
-                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1328,7 +1324,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(aura, player1Id, effect),
-                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1354,7 +1350,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(aura, player1Id, effect),
-                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, effect, ctx);
+                    TapWatch.ON_ENCHANTED_PERMANENT_TAPPED, ctx);
 
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
@@ -1386,7 +1382,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(master, player1Id, effect),
-                    LifeWatch.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_LOSES_LIFE, ctx);
 
             assertThat(result).isTrue();
             assertMillTriggerQueued(player1Id, 2);
@@ -1402,7 +1398,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(mindcrank, player1Id, effect),
-                    LifeWatch.ON_OPPONENT_LOSES_LIFE, effect, ctx);
+                    LifeWatch.ON_OPPONENT_LOSES_LIFE, ctx);
 
             assertThat(result).isTrue();
             assertMillTriggerQueued(player2Id, 3);
@@ -1425,7 +1421,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1445,7 +1441,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, ctx);
 
             assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         }
@@ -1459,7 +1455,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, ctx);
 
             verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
         }
@@ -1478,7 +1474,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1500,7 +1496,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1523,7 +1519,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1544,7 +1540,7 @@ class MiscTriggerCollectorServiceTest {
 
             registry.dispatch(
                     match(perm, player1Id, effect),
-                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, ctx);
 
             assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
         }
@@ -1563,7 +1559,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1589,7 +1585,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1617,7 +1613,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_GAINS_LIFE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1639,8 +1635,8 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.LifeGain(player1Id, 3);
 
         boolean result = registry.dispatch(
-                new TriggerMatchContext(gd, perm, player1Id, effect, perm.getCard(), true),
-                LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
+                new TriggerMatchContext(gd, perm, player1Id, List.of(effect), perm.getCard(), null, true),
+                LifeWatch.ON_CONTROLLER_GAINS_LIFE, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -1650,8 +1646,8 @@ class MiscTriggerCollectorServiceTest {
         assertThat(gd.oncePerTurnTriggersFiredThisTurn).doesNotContain(perm.getId());
 
         assertThat(registry.dispatch(
-                new TriggerMatchContext(gd, perm, player1Id, effect, perm.getCard(), true),
-                LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect,
+                new TriggerMatchContext(gd, perm, player1Id, List.of(effect), perm.getCard(), null, true),
+                LifeWatch.ON_CONTROLLER_GAINS_LIFE,
                 new TriggerContext.LifeGain(player1Id, 4))).isTrue();
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEventValue()).isEqualTo(4);
@@ -1674,7 +1670,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    LifeWatch.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_LOSES_LIFE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1696,7 +1692,7 @@ class MiscTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
-                LifeWatch.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
+                LifeWatch.ON_CONTROLLER_LOSES_LIFE, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -1722,7 +1718,7 @@ class MiscTriggerCollectorServiceTest {
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),
-                    LifeWatch.ON_CONTROLLER_LOSES_LIFE, effect, ctx);
+                    LifeWatch.ON_CONTROLLER_LOSES_LIFE, ctx);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -1745,8 +1741,7 @@ class MiscTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
-                ZoneChangeWatch.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD,
-                effect, ctx);
+                ZoneChangeWatch.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -1765,8 +1760,7 @@ class MiscTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
-                ZoneChangeWatch.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
-                effect, ctx);
+                ZoneChangeWatch.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -1789,8 +1783,7 @@ class MiscTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
-                ZoneChangeWatch.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
-                effect, ctx);
+                ZoneChangeWatch.ON_CREATURE_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -1812,8 +1805,8 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.NonlandCardsMilled(player2Id, 3);
 
         boolean result = registry.dispatch(
-                new TriggerMatchContext(gd, perm, player1Id, effect, perm.getCard(), true),
-                ZoneChangeWatch.ON_NONLAND_CARDS_MILLED, effect, ctx);
+                new TriggerMatchContext(gd, perm, player1Id, List.of(effect), perm.getCard(), null, true),
+                ZoneChangeWatch.ON_NONLAND_CARDS_MILLED, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
@@ -1835,8 +1828,7 @@ class MiscTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 new TriggerMatchContext(gd, null, player1Id, effect, sourceCard),
-                ZoneChangeWatch.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
-                effect, ctx);
+                ZoneChangeWatch.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
@@ -1856,8 +1848,7 @@ class MiscTriggerCollectorServiceTest {
 
         boolean result = registry.dispatch(
                 match(perm, player1Id, effect),
-                ZoneChangeWatch.ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD,
-                effect, ctx);
+                ZoneChangeWatch.ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);

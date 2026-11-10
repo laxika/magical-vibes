@@ -23,7 +23,7 @@ public class RingTemptsYouTriggerCollectorService {
     private final GameLogService gameLogService;
 
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_RING_TEMPTS_YOU)
-    private boolean handleRingTemptsYou(TriggerMatchContext match, CardEffect trigger, TriggerContext context) {
+    private boolean handleRingTemptsYou(TriggerMatchContext match, TriggerContext context) {
         if (!(context instanceof TriggerContext.RingTemptsYou)) {
             return false;
         }
@@ -34,7 +34,7 @@ public class RingTemptsYouTriggerCollectorService {
                 sourceCard,
                 match.controllerId(),
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(trigger)),
+                match.stackEffects(),
                 null,
                 match.permanent().getId());
         entry.setNonTargeting(true);

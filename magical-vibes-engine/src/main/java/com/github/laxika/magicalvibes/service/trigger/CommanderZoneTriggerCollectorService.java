@@ -20,24 +20,23 @@ import java.util.List;
 public class CommanderZoneTriggerCollectorService {
 
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_YOUR_COMMANDER_PUT_INTO_COMMAND_ZONE)
-    private boolean handleCommanderPutIntoCommandZoneDefault(TriggerMatchContext match,
-                                                              CardEffect effect, TriggerContext ctx) {
+    private boolean handleCommanderPutIntoCommandZoneDefault(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.CommanderPutIntoCommandZone commander = (TriggerContext.CommanderPutIntoCommandZone) ctx;
-        return enqueue(match, effect, commander.departedCommander());
+        return enqueue(match, commander.departedCommander());
     }
 
-    private boolean enqueue(TriggerMatchContext match, CardEffect effect, Permanent departedCommander) {
+    private boolean enqueue(TriggerMatchContext match, Permanent departedCommander) {
         Permanent source = match.permanent();
         if (source == null) {
             return false;
         }
 
         Card sourceCard = source.getCard();
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+        if (match.admits(TargetPredicate.Kind.PERMANENT)
+                || match.admits(TargetPredicate.Kind.PLAYER)
+                || match.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)),
+                    sourceCard, match.controllerId(), match.stackEffects(),
                     "commander put into the command zone", source.getId(), new Permanent(source), null)
                     .withTriggeringPermanent(departedCommander));
         } else {
@@ -46,7 +45,7 @@ public class CommanderZoneTriggerCollectorService {
                     sourceCard,
                     match.controllerId(),
                     sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
+                    match.stackEffects(),
                     null,
                     source.getId());
             entry.setSourcePermanentSnapshot(new Permanent(source));

@@ -27,8 +27,7 @@ public class PolukranosWorldEater extends Card {
         targetWithDynamicRange(new Min(List.of(new Fixed(1), new XValue())), new XValue(),
                 TargetFilters.creatureAnOpponentControls(), 99)
                 .addTrigger(Triggers.becomesMonstrous(),
-                        DealDividedDamageEffect.xAmongTargetCreaturesAtResolution())
-                .addTrigger(Triggers.becomesMonstrous(),
+                        DealDividedDamageEffect.xAmongTargetCreaturesAtResolution(),
                         new EachTargetCreatureDealsPowerDamageToSourceEffect());
     }
 }
