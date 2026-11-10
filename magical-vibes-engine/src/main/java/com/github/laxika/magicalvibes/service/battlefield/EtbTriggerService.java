@@ -479,23 +479,21 @@ public class EtbTriggerService {
             // An ability that is one "you may" goes through the may paths, which ask before it targets nothing
             // (CR 603.3d); a "you may" among an ability's other effects is asked as that ability resolves (CR 603.5).
             List<CardEffect> mayEffects = concat(printedAbilities, grantedAbilities).stream()
-                    .filter(ability -> ability.effects().size() == 1
-                            && ability.effects().getFirst() instanceof MayEffect)
+                    .filter(OwnEntryAbility::isLoneMay)
                     .map(ability -> ability.effects().getFirst())
                     .toList();
+            // An ability whose mode is chosen as it triggers is that one choice (CR 603.3c).
             List<ChooseOneAtTriggerTimeEffect> triggerTimeChoices = concat(printedAbilities, grantedAbilities)
-                    .stream().flatMap(ability -> ability.effects().stream())
-                    .filter(ChooseOneAtTriggerTimeEffect.class::isInstance)
-                    .map(ChooseOneAtTriggerTimeEffect.class::cast)
+                    .stream().map(OwnEntryAbility::triggerTimeChoice)
+                    .filter(Objects::nonNull)
                     .toList();
-            boolean hasEvokeSacrifice = printedAbilities.stream().flatMap(ability -> ability.effects().stream())
-                    .anyMatch(com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect.class::isInstance);
+            boolean hasEvokeSacrifice = printedAbilities.stream().anyMatch(OwnEntryAbility::isEvokeSacrifice);
             UUID triggerSourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
             List<OwnEntryAbility> triggered = new ArrayList<>();
             List<CardEffect> grantedMandatoryEffects = new ArrayList<>();
             // The granted abilities, each an object of its own with its own targets.
             for (OwnEntryAbility ability : grantedAbilities) {
-                List<CardEffect> abilityEffects = mandatoryEffects(etbCtx, ability.effects());
+                List<CardEffect> abilityEffects = mandatoryEffects(etbCtx, ability);
                 grantedMandatoryEffects.addAll(abilityEffects);
                 if (!abilityEffects.isEmpty() || ability.triggersWithoutMandatoryEffects()) {
                     triggered.add(ability);
@@ -633,7 +631,7 @@ public class EtbTriggerService {
 
             List<OwnEntryAbility> printedMandatory = new ArrayList<>();
             for (OwnEntryAbility ability : printedAbilities) {
-                List<CardEffect> abilityEffects = mandatoryEffects(etbCtx, ability.effects());
+                List<CardEffect> abilityEffects = mandatoryEffects(etbCtx, ability);
                 if (!abilityEffects.isEmpty() || ability.triggersWithoutMandatoryEffects()) {
                     triggered.add(ability);
                 }
@@ -692,11 +690,39 @@ public class EtbTriggerService {
             return new OwnEntryAbility(ability, effects.stream().map(operator).toList(), modal);
         }
 
+        /** Whether the ability is one "you may", which the may paths put on the stack. */
+        boolean isLoneMay() {
+            return effects.size() == 1 && effects.getFirst() instanceof MayEffect;
+        }
+
+        /** Whether the ability is evoke's sacrifice (CR 702.74a), which goes on the stack only for an evoked permanent. */
+        boolean isEvokeSacrifice() {
+            return effects.size() == 1
+                    && effects.getFirst() instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
+        }
+
+        /**
+         * The mode choice the ability's controller makes as it triggers (CR 603.3c), when the ability is that choice;
+         * {@code null} for any other ability. The choice puts the chosen modes on the stack as the ability, so an
+         * ability that had other effects beside it would lose them from that object: it fails, and no card writes
+         * one (its other effects belong in the modes).
+         */
+        ChooseOneAtTriggerTimeEffect triggerTimeChoice() {
+            ChooseOneAtTriggerTimeEffect choice = effects.stream()
+                    .filter(ChooseOneAtTriggerTimeEffect.class::isInstance)
+                    .map(ChooseOneAtTriggerTimeEffect.class::cast)
+                    .findFirst().orElse(null);
+            if (choice != null && effects.size() > 1) {
+                throw new IllegalStateException("A \"when this enters\" ability whose mode is chosen as it triggers"
+                        + " has " + (effects.size() - 1) + " more effect(s) beside the choice; one ability is one"
+                        + " stack object, so they must be written into its modes");
+            }
+            return choice;
+        }
+
         /** Whether the ability goes on the stack through the may, modal or evoke paths rather than as effects. */
         boolean triggersWithoutMandatoryEffects() {
-            return effects.size() == 1 && effects.getFirst() instanceof MayEffect
-                    || effects.stream().anyMatch(effect -> effect instanceof ChooseOneAtTriggerTimeEffect
-                    || effect instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect);
+            return isLoneMay() || isEvokeSacrifice() || triggerTimeChoice() != null;
         }
     }
 
@@ -722,18 +748,17 @@ public class EtbTriggerService {
     }
 
     /**
-     * The effects of one "when this enters" ability that go on the stack as that ability, in their trigger-time form
-     * (modal unwrap, value materialisation, intervening-if gating, CR 603.4): not an ability that is one "you may"
-     * (the may paths put it there), a trigger-time mode choice (CR 603.3c) or the evoke sacrifice, which have paths
-     * of their own. Empty when none is left, and then the ability doesn't trigger.
+     * The effects of one "when this enters" ability that go on the stack as that ability, all of them (CR 603.3), in
+     * their trigger-time form (modal unwrap, value materialisation, intervening-if gating, CR 603.4). Empty for an
+     * ability that goes there whole by a path of its own, which is one "you may" (the may paths), one mode choice
+     * made as it triggers (CR 603.3c) or evoke's sacrifice, and for an ability none of whose effects is left; that
+     * one doesn't trigger.
      */
-    private List<CardEffect> mandatoryEffects(EtbEffectContext etbCtx, List<CardEffect> effects) {
-        if (effects.size() == 1 && effects.getFirst() instanceof MayEffect) {
+    private List<CardEffect> mandatoryEffects(EtbEffectContext etbCtx, OwnEntryAbility ability) {
+        if (ability.triggersWithoutMandatoryEffects()) {
             return List.of();
         }
-        return effects.stream()
-                .filter(e -> !(e instanceof ChooseOneAtTriggerTimeEffect))
-                .filter(e -> !(e instanceof com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect))
+        return ability.effects().stream()
                 .map(e -> e instanceof ChooseOneEffect chooseOne && chooseOne.choicesRequired() > 1
                         ? e : etbEffectResolver.resolve(etbCtx, e))
                 .filter(Objects::nonNull)
@@ -938,17 +963,126 @@ public class EtbTriggerService {
     }
 
     /**
-     * Routes the already-resolved mandatory ETB effects to the stack or to the appropriate
-     * interactive target-selection queue, and processes any pending queue that isn't already
-     * awaiting input. The effects have already been unwrapped/gated by {@link EtbEffectResolver}.
-     *
-     * <p>Effects are partitioned by the kind of target selection they need at trigger time:
-     * graveyard-exile (multi-target), graveyard-cast and grant-flashback (single graveyard target),
-     * spell-targeting (choose a spell on the stack), and everything else ("other"), which either
-     * goes straight onto the stack (targets supplied by the entering event, such as an Aura's
-     * attachment or a reflexive put-onto-the-battlefield effect) or is queued to choose targets as
-     * the ability goes on the stack (CR 603.3d). Trigger-copy effects apply to every path via
-     * {@code extraTriggerCopies}.
+     * How one "when this enters" ability reaches the stack: {@link #STACK} as an entry of its effects, with the
+     * targets the entering event supplied or a choice of permanents and players made as it goes on the stack
+     * (CR 603.3d), or one of the choices that pick a card in a graveyard or a spell. An ability has one route, read
+     * from all its effects, and goes there whole, as one stack object (CR 603.3).
+     */
+    private enum OwnEntryRoute {
+        STACK,
+        /** A player is targeted, then cards in that player's graveyard are chosen. */
+        TARGET_PLAYER_GRAVEYARD,
+        /** Several target cards exiled from graveyards ({@link ExileCardsFromGraveyardEffect}). */
+        GRAVEYARD_EXILE,
+        /** Target cards exiled from the graveyards an {@link ExileGraveyardCardsEffect}'s scope names. */
+        GRAVEYARD_CARD_EXILE,
+        /** One selection across the battlefield and graveyards. */
+        BATTLEFIELD_AND_GRAVEYARD,
+        GRAVEYARD_CAST,
+        GRAVEYARD_FLASHBACK,
+        GRAVEYARD_MAY_PLAY,
+        OPPONENT_GRAVEYARD_CREATURE,
+        GRAVEYARD_TO_HAND,
+        GRAVEYARD_ON_TOP_OF_LIBRARY,
+        GRAVEYARD_TO_BATTLEFIELD,
+        GRAVEYARD_SHUFFLE,
+        /** Any other target card in a graveyard, by the effect's target spec. */
+        GRAVEYARD_TARGET,
+        /** A target spell (or ability) on the stack. */
+        SPELL;
+
+        /** The route {@code effect} alone asks for; {@link #STACK} when it needs none of the special choices. */
+        static OwnEntryRoute of(Card card, CardEffect effect) {
+            if (effect instanceof ExileCardsFromGraveyardEffect) {
+                return GRAVEYARD_EXILE;
+            }
+            if (effect instanceof ExileGraveyardCardsEffect
+                    && effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                return GRAVEYARD_CARD_EXILE;
+            }
+            if (effect instanceof BattlefieldAndGraveyardCardChoosingEffect) {
+                return BATTLEFIELD_AND_GRAVEYARD;
+            }
+            // A graveyard cast bound to one of the card's target groups takes its target from that group.
+            boolean groupBoundGraveyardCast = effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect
+                    && card.getEffectTargetIndex(effect) >= 0;
+            if (effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect && !groupBoundGraveyardCast) {
+                return GRAVEYARD_CAST;
+            }
+            if (effect instanceof GrantFlashbackToTargetGraveyardCardEffect) {
+                return GRAVEYARD_FLASHBACK;
+            }
+            if (effect instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect) {
+                return GRAVEYARD_MAY_PLAY;
+            }
+            if (effect instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect
+                    || effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect
+                    || effect instanceof MayEffect may
+                    && may.wrapped() instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect) {
+                return OPPONENT_GRAVEYARD_CREATURE;
+            }
+            if (effect instanceof ReturnTargetCardsFromGraveyardToHandEffect) {
+                return GRAVEYARD_TO_HAND;
+            }
+            if (effect instanceof PutTargetCardsFromGraveyardOnTopOfLibraryEffect) {
+                return GRAVEYARD_ON_TOP_OF_LIBRARY;
+            }
+            if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect) {
+                return GRAVEYARD_TO_BATTLEFIELD;
+            }
+            if (effect instanceof ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect) {
+                return GRAVEYARD_SHUFFLE;
+            }
+            if (effect instanceof GraveyardCardChoosingEffect choosingEffect && choosingEffect.choosesGraveyardCards()
+                    && effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                return TARGET_PLAYER_GRAVEYARD;
+            }
+            // A target-group declaration describes the ability's target, but the graveyard card is chosen when
+            // that ability goes on the stack.
+            if (!groupBoundGraveyardCast && effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                    && !(effect instanceof TargetedGraveyardAndPlayerEffect)) {
+                return GRAVEYARD_TARGET;
+            }
+            if (EffectResolution.targetsSpellOnStack(effect) && !isMixedPermanentAndSpellTarget(effect)) {
+                return SPELL;
+            }
+            return STACK;
+        }
+    }
+
+    /**
+     * Fails for an ability the collector can't put on the stack as one object: {@code route} makes one choice, of a
+     * card in a graveyard or a spell, so an effect that asks for another of those choices, or for a permanent or
+     * player target of its own, would be left without its target. No card writes one; effects that share the
+     * routed effect's choice (the same route) go with it.
+     */
+    private static void requireOneTargetChoice(Card card, List<CardEffect> abilityEffects, OwnEntryRoute route) {
+        if (route == OwnEntryRoute.STACK) {
+            return;
+        }
+        for (CardEffect effect : abilityEffects) {
+            OwnEntryRoute own = OwnEntryRoute.of(card, effect);
+            boolean targetsOnItsOwn = own == OwnEntryRoute.STACK && route != OwnEntryRoute.TARGET_PLAYER_GRAVEYARD
+                    && !effect.targetsChosenByReflexiveAbility()
+                    && (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                    || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                    || effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD)
+                    || card.getEffectTargetIndex(effect) > (card.isAura() ? 0 : -1));
+            if (own != route && own != OwnEntryRoute.STACK || targetsOnItsOwn) {
+                throw new IllegalStateException(card.getName() + "'s \"when this enters\" ability chooses its "
+                        + route + " target and another one for " + effect.getClass().getSimpleName()
+                        + "; one ability is one stack object, so its targets must share one choice");
+            }
+        }
+    }
+
+    /**
+     * Puts one "when this enters" ability, {@code mandatoryEffects} (already unwrapped and gated by
+     * {@link EtbEffectResolver}), on the stack as one object of all its effects (CR 603.3), or queues the one choice
+     * that picks its targets as it goes there (CR 603.3d), and processes any pending choice that isn't already
+     * awaiting input. The route ({@link OwnEntryRoute}) is read from all the ability's effects, never effect by
+     * effect: "return target card from your graveyard to your hand and draw a card" is one object that chooses the
+     * card. Trigger-copy effects apply to every route via {@code extraTriggerCopies}.
      */
     private void queueMandatoryETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId,
                                           List<UUID> targetIds, List<CardEffect> mandatoryEffects,
@@ -957,104 +1091,13 @@ public class EtbTriggerService {
                                           List<String> repeatedAdditionalCosts,
                                           List<UUID> convokeCreatureIds) {
         Permanent enteringPermanent = findEnteringPermanent(gameData, card);
-        // Separate graveyard exile effects (need multi-target selection at trigger time)
-        List<CardEffect> graveyardExileEffects = mandatoryEffects.stream()
-                .filter(e -> e instanceof ExileCardsFromGraveyardEffect).toList();
-        // Separate targeted graveyard-card exile effects (Disposal Mummy: "exile target card from an
-        // opponent's graveyard"). Distinct from the whole-set ExileCardsFromGraveyardEffect above: the
-        // scope decides which graveyards are searched, and targets are chosen at trigger time.
-        List<CardEffect> graveyardCardsExileEffects = mandatoryEffects.stream()
-                .filter(e -> e instanceof ExileGraveyardCardsEffect ege && ege.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
-                .toList();
-        // Separate mixed-zone exile effects (Angel of Serenity: "up to three other target creatures
-        // from the battlefield and/or creature cards from graveyards"): one card pool spanning both
-        // zones, chosen at trigger time.
-        List<CardEffect> mixedZoneChoiceEffects = mandatoryEffects.stream()
-                .filter(e -> e instanceof BattlefieldAndGraveyardCardChoosingEffect).toList();
-        // Separate graveyard cast effects (need single-target selection at trigger time)
-        List<CardEffect> graveyardCastEffects = mandatoryEffects.stream()
-                .filter(e -> e instanceof CastTargetInstantOrSorceryFromGraveyardEffect)
-                .filter(e -> card.getEffectTargetIndex(e) < 0)
-                .toList();
-        // Separate graveyard flashback-grant effects (need single-target selection at trigger time)
-        List<CardEffect> graveyardFlashbackEffects = mandatoryEffects.stream()
-                .filter(e -> e instanceof GrantFlashbackToTargetGraveyardCardEffect).toList();
-        // Separate graveyard exile-and-may-play effects (need single-target selection at trigger time)
-        List<CardEffect> graveyardMayPlayEffects = mandatoryEffects.stream()
-                .filter(e -> e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect).toList();
-        // Separate opponent-graveyard steal effects (need single-target selection at trigger time)
-        List<CardEffect> graveyardStealEffects = mandatoryEffects.stream()
-                .filter(e -> e instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect
-                        || e instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect
-                        || e instanceof MayEffect may
-                        && may.wrapped() instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect).toList();
-        // Separate graveyard return-to-hand effects (need multi-target selection at trigger time)
-        List<CardEffect> graveyardReturnToHandEffects = mandatoryEffects.stream()
-                .filter(e -> e instanceof ReturnTargetCardsFromGraveyardToHandEffect).toList();
-        // Separate controller-graveyard top-of-library effects (multi-target selection at trigger time)
-        List<CardEffect> graveyardPutOnTopEffects = mandatoryEffects.stream()
-                .filter(e -> e instanceof PutTargetCardsFromGraveyardOnTopOfLibraryEffect).toList();
-        // Separate graveyard return-to-battlefield effects (need multi-target selection at trigger time)
-        List<CardEffect> graveyardReturnToBattlefieldEffects = mandatoryEffects.stream()
-                .filter(e -> e instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect).toList();
-        // Separate effects that first target a player and then choose cards from that player's graveyard.
-        List<CardEffect> targetPlayerGraveyardChoiceEffects = mandatoryEffects.stream()
-                .filter(e -> e instanceof GraveyardCardChoosingEffect choosingEffect
-                        && choosingEffect.choosesGraveyardCards()
-                        && e.targetSpec().admits(TargetPredicate.Kind.PLAYER)).toList();
-        // Separate controller-graveyard shuffle-into-library effects (multi-target at trigger time)
-        List<CardEffect> graveyardShuffleIntoLibraryEffects = mandatoryEffects.stream()
-                .filter(e -> e instanceof ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect).toList();
-        // Separate targeted graveyard-return effects (e.g. Bladewing the Risen: "return target Dragon
-        // permanent card from your graveyard to the battlefield"): any remaining graveyard-target effect
-        // not covered by the specialized paths above. Its target is chosen as the trigger goes on the
-        // stack via the shared SpellGraveyardTargetTrigger flow (identified by target category, not by
-        // concrete effect type, so a new graveyard-target effect needs no branch here).
-        List<CardEffect> graveyardTargetReturnEffects = mandatoryEffects.stream()
-                .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
-                // A target-group declaration describes the ETB ability's target, but the
-                // graveyard card is chosen when that ability goes on the stack.
-                .filter(e -> !(e instanceof TargetedGraveyardAndPlayerEffect))
-                .filter(e -> !graveyardExileEffects.contains(e))
-                .filter(e -> !graveyardCardsExileEffects.contains(e))
-                .filter(e -> !(e instanceof CastTargetInstantOrSorceryFromGraveyardEffect))
-                .filter(e -> !graveyardCastEffects.contains(e))
-                .filter(e -> !graveyardFlashbackEffects.contains(e))
-                .filter(e -> !graveyardMayPlayEffects.contains(e))
-                .filter(e -> !graveyardStealEffects.contains(e))
-                .filter(e -> !graveyardReturnToHandEffects.contains(e))
-                .filter(e -> !graveyardPutOnTopEffects.contains(e))
-                .filter(e -> !graveyardReturnToBattlefieldEffects.contains(e))
-                .filter(e -> !graveyardShuffleIntoLibraryEffects.contains(e))
-                .toList();
-        List<CardEffect> otherEffects = graveyardExileEffects.isEmpty()
-                ? mandatoryEffects.stream()
-                        .filter(e -> !(e instanceof ExileCardsFromGraveyardEffect))
-                        .filter(e -> !graveyardCastEffects.contains(e))
-                        .filter(e -> !(e instanceof GrantFlashbackToTargetGraveyardCardEffect))
-                        .filter(e -> !(e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect))
-                        .filter(e -> !graveyardStealEffects.contains(e))
-                        .filter(e -> !graveyardPutOnTopEffects.contains(e))
-                        .filter(e -> !(e instanceof ReturnTargetCardsFromGraveyardToHandEffect))
-                        .filter(e -> !graveyardReturnToBattlefieldEffects.contains(e))
-                        .filter(e -> !targetPlayerGraveyardChoiceEffects.contains(e))
-                        .filter(e -> !(e instanceof ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect))
-                        .filter(e -> !graveyardTargetReturnEffects.contains(e))
-                        .filter(e -> !graveyardCardsExileEffects.contains(e))
-                        .filter(e -> !mixedZoneChoiceEffects.contains(e))
-                        .filter(e -> !EffectResolution.targetsSpellOnStack(e)
-                                || isMixedPermanentAndSpellTarget(e)).toList()
-                : List.of();
-        boolean combinesGraveyardCardExileWithOtherEffects = graveyardCardsExileEffects.size() == 1
-                && !otherEffects.isEmpty()
-                && otherEffects.size() + graveyardCardsExileEffects.size() == mandatoryEffects.size()
-                && targetId == null
-                && targetIds.isEmpty();
-        // Separate spell-targeting effects (need stack-target selection at trigger time)
-        List<CardEffect> spellTargetEffects = mandatoryEffects.stream()
-                .filter(EffectResolution::targetsSpellOnStack)
-                .filter(e -> !isMixedPermanentAndSpellTarget(e)).toList();
-
+        // The ability's one route, chosen from all its effects: the first effect whose target is chosen through a
+        // choice of its own decides it, and every effect of the ability goes there with it.
+        CardEffect routed = mandatoryEffects.stream()
+                .filter(e -> OwnEntryRoute.of(card, e) != OwnEntryRoute.STACK).findFirst().orElse(null);
+        OwnEntryRoute route = routed == null ? OwnEntryRoute.STACK : OwnEntryRoute.of(card, routed);
+        requireOneTargetChoice(card, mandatoryEffects, route);
+        List<CardEffect> otherEffects = route == OwnEntryRoute.STACK ? mandatoryEffects : List.of();
         List<Permanent> sourceBattlefield = gameData.playerBattlefields.get(controllerId);
         boolean sourceWasCastForSpectacle = enteringPermanent != null
                 && enteringPermanent.isSpectacle();
@@ -1067,8 +1110,8 @@ public class EtbTriggerService {
         boolean controlledDragonAsCast = enteringPermanent != null
                 && enteringPermanent.isControlledDragonAsCast();
 
-        // Put non-special effects on the stack as before
-        if (!otherEffects.isEmpty() && !combinesGraveyardCardExileWithOtherEffects) {
+        // An ability with no choice of its own: one entry of its effects, or one permanent-or-player target choice.
+        if (route == OwnEntryRoute.STACK && !otherEffects.isEmpty()) {
             List<UUID> activeTargetIds = targetsForActiveEtbGroups(card, otherEffects, targetIds);
             boolean hasTarget = targetId != null || !activeTargetIds.isEmpty();
 
@@ -1276,163 +1319,158 @@ public class EtbTriggerService {
             }
         }
 
-        // Handle effects that target a player and then choose cards from that player's graveyard.
-        for (CardEffect effect : targetPlayerGraveyardChoiceEffects) {
-            List<Permanent> enteredBattlefield = gameData.playerBattlefields.get(controllerId);
-            UUID sourcePermanentId = enteringPermanent == null ? null : enteringPermanent.getId();
-            for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+        UUID routedSourcePermanentId = enteringPermanent == null ? null : enteringPermanent.getId();
+        switch (route) {
+            case STACK -> { }
+            case TARGET_PLAYER_GRAVEYARD -> {
+                // The player is the ability's target; the cards are chosen from that player's graveyard next.
                 TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
-                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                        card, controllerId, List.of(effect), sourcePermanentId, etbTargetFilter, xValue));
+                for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
+                            card, controllerId, mandatoryEffects, routedSourcePermanentId, etbTargetFilter, xValue));
+                }
             }
-        }
-
-        // Handle graveyard exile effects: targets must be chosen at trigger time
-        List<Permanent> enteredBattlefield = gameData.playerBattlefields.get(controllerId);
-        UUID graveyardSourcePermanentId = enteringPermanent == null ? null : enteringPermanent.getId();
-        for (CardEffect effect : graveyardExileEffects) {
-            ExileCardsFromGraveyardEffect exile = (ExileCardsFromGraveyardEffect) effect;
-            int multikickerPaymentCount = exile.maxTargetsFromMultikicker()
-                    ? countMultikickerPayments(card, repeatedAdditionalCosts) : 0;
-            graveyardTargetingService.handleGraveyardExileETBTargeting(
-                    gameData, controllerId, card, mandatoryEffects, graveyardSourcePermanentId, exile,
-                    multikickerPaymentCount);
-            // Each additional copy chooses its own targets, one after another, once the previous
-            // trigger's targets have been chosen (processNextSpellGraveyardTargetTrigger).
-            for (int t = 0; t < extraTriggerCopies; t++) {
-                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        card, controllerId, new ArrayList<>(mandatoryEffects), null, 0,
-                        multikickerPaymentCount, 0, null, false, null, graveyardSourcePermanentId));
+            case GRAVEYARD_EXILE -> {
+                ExileCardsFromGraveyardEffect exile = (ExileCardsFromGraveyardEffect) routed;
+                int multikickerPaymentCount = exile.maxTargetsFromMultikicker()
+                        ? countMultikickerPayments(card, repeatedAdditionalCosts) : 0;
+                graveyardTargetingService.handleGraveyardExileETBTargeting(
+                        gameData, controllerId, card, mandatoryEffects, routedSourcePermanentId, exile,
+                        multikickerPaymentCount);
+                // Each additional copy chooses its own targets, one after another, once the previous
+                // trigger's targets have been chosen (processNextSpellGraveyardTargetTrigger).
+                for (int t = 0; t < extraTriggerCopies; t++) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                            card, controllerId, new ArrayList<>(mandatoryEffects), null, 0,
+                            multikickerPaymentCount, 0, null, false, null, routedSourcePermanentId));
+                }
             }
-        }
-
-        // Handle targeted graveyard-card exile effects (opponent's/any graveyard, e.g. Disposal Mummy):
-        // choose the graveyard target as the trigger goes on the stack.
-        for (CardEffect effect : graveyardCardsExileEffects) {
-            ExileGraveyardCardsEffect exile = (ExileGraveyardCardsEffect) effect;
-            int maximumTargets = maximumGraveyardCardExileTargets(card, exile, gameData, controllerId,
-                    xValue, repeatedAdditionalCosts);
-            for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                List<CardEffect> effects = combinesGraveyardCardExileWithOtherEffects
-                        ? mandatoryEffects : List.of(effect);
-                graveyardTargetingService.handleGraveyardCardsExileETBTargeting(
-                        gameData, controllerId, card, effects, exile, maximumTargets);
+            case GRAVEYARD_CARD_EXILE -> {
+                // "Exile target card from an opponent's graveyard" (Disposal Mummy): the scope decides which
+                // graveyards are searched.
+                ExileGraveyardCardsEffect exile = (ExileGraveyardCardsEffect) routed;
+                int maximumTargets = maximumGraveyardCardExileTargets(card, exile, gameData, controllerId,
+                        xValue, repeatedAdditionalCosts);
+                for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    graveyardTargetingService.handleGraveyardCardsExileETBTargeting(
+                            gameData, controllerId, card, mandatoryEffects, exile, maximumTargets);
+                }
             }
-        }
-
-        // Handle mixed-zone exile effects: one selection across battlefield creatures and graveyard
-        // creature cards, chosen as the trigger goes on the stack.
-        for (CardEffect effect : mixedZoneChoiceEffects) {
-            List<Permanent> mixedZoneBf = gameData.playerBattlefields.get(controllerId);
-            UUID mixedZoneSourceId = enteringPermanent != null ? enteringPermanent.getId() : null;
-            for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                graveyardTargetingService.handleBattlefieldAndGraveyardExileETBTargeting(gameData, controllerId,
-                        card, List.of(effect), mixedZoneSourceId,
-                        (BattlefieldAndGraveyardCardChoosingEffect) effect);
+            case BATTLEFIELD_AND_GRAVEYARD -> {
+                // One selection across battlefield creatures and graveyard creature cards (Angel of Serenity).
+                for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    graveyardTargetingService.handleBattlefieldAndGraveyardExileETBTargeting(gameData, controllerId,
+                            card, mandatoryEffects, routedSourcePermanentId,
+                            (BattlefieldAndGraveyardCardChoosingEffect) routed);
+                }
             }
-        }
-
-        // Handle graveyard cast effects: target instant/sorcery in opponent's graveyard
-        for (CardEffect effect : graveyardCastEffects) {
-            for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                graveyardTargetingService.handleGraveyardCastETBTargeting(gameData, controllerId, card, List.of(effect));
+            case GRAVEYARD_CAST -> {
+                for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    graveyardTargetingService.handleGraveyardCastETBTargeting(gameData, controllerId, card,
+                            mandatoryEffects);
+                }
             }
-        }
-
-        // Handle graveyard flashback-grant effects: target instant/sorcery in controller's graveyard
-        for (CardEffect effect : graveyardFlashbackEffects) {
-            for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                graveyardTargetingService.handleGrantFlashbackETBTargeting(gameData, controllerId, card, List.of(effect));
+            case GRAVEYARD_FLASHBACK -> {
+                for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    graveyardTargetingService.handleGrantFlashbackETBTargeting(gameData, controllerId, card,
+                            mandatoryEffects);
+                }
             }
-        }
-
-        // Handle graveyard exile-and-may-play effects: target card in controller's graveyard
-        for (CardEffect effect : graveyardMayPlayEffects) {
-            for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                UUID sourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
-                graveyardTargetingService.handleGraveyardMayPlayETBTargeting(
-                        gameData, controllerId, card, List.of(effect), sourcePermanentId);
+            case GRAVEYARD_MAY_PLAY -> {
+                for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    graveyardTargetingService.handleGraveyardMayPlayETBTargeting(
+                            gameData, controllerId, card, mandatoryEffects, routedSourcePermanentId);
+                }
             }
-        }
-
-        // Handle opponent-graveyard steal effects: target creature card in an opponent's graveyard
-        for (CardEffect effect : graveyardStealEffects) {
-            for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                graveyardTargetingService.handlePutCreatureFromOpponentGraveyardETBTargeting(gameData, controllerId, card, List.of(effect));
+            case OPPONENT_GRAVEYARD_CREATURE -> {
+                for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    graveyardTargetingService.handlePutCreatureFromOpponentGraveyardETBTargeting(gameData,
+                            controllerId, card, mandatoryEffects);
+                }
             }
-        }
-
-        // Handle graveyard return-to-hand effects: up to N target cards in controller's graveyard
-        for (CardEffect effect : graveyardReturnToHandEffects) {
-            for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                graveyardTargetingService.handleReturnToHandETBTargeting(gameData, controllerId, card,
-                        List.of(effect), (ReturnTargetCardsFromGraveyardToHandEffect) effect);
+            case GRAVEYARD_TO_HAND -> {
+                for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    graveyardTargetingService.handleReturnToHandETBTargeting(gameData, controllerId, card,
+                            mandatoryEffects, (ReturnTargetCardsFromGraveyardToHandEffect) routed);
+                }
             }
-        }
-
-        // Handle putting up to N cards from the controller's graveyard on top of the library
-        for (CardEffect effect : graveyardPutOnTopEffects) {
-            for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                graveyardTargetingService.handlePutOnTopOfLibraryETBTargeting(gameData, controllerId, card,
-                        List.of(effect), (PutTargetCardsFromGraveyardOnTopOfLibraryEffect) effect);
+            case GRAVEYARD_ON_TOP_OF_LIBRARY -> {
+                for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    graveyardTargetingService.handlePutOnTopOfLibraryETBTargeting(gameData, controllerId, card,
+                            mandatoryEffects, (PutTargetCardsFromGraveyardOnTopOfLibraryEffect) routed);
+                }
             }
-        }
-
-        // Handle graveyard return-to-battlefield effects: up to the cast-context cap of target
-        // creature cards from the controller's graveyard.
-        for (CardEffect effect : graveyardReturnToBattlefieldEffects) {
-            ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect =
-                    (ReturnTargetCardsFromGraveyardToBattlefieldEffect) effect;
-            int maxTargets = returnEffect.dynamicMaxTargets() == null
-                    ? returnEffect.maxTargets()
-                    : Math.max(0, amountEvaluationService.evaluate(gameData, returnEffect.dynamicMaxTargets(),
-                            new AmountContext(controllerId, null, null, xValue, 0, false, null,
-                                    repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts, card)));
-            Integer maxTotalManaValue = null;
-            if (returnEffect.hasTotalManaValueCap()) {
-                maxTotalManaValue = returnEffect.dynamicMaxTotalManaValue() == null
-                        ? returnEffect.maxTotalManaValue()
-                        : Math.max(0, amountEvaluationService.evaluate(gameData,
-                                returnEffect.dynamicMaxTotalManaValue(),
+            case GRAVEYARD_TO_BATTLEFIELD -> {
+                // Up to the cast-context cap of target creature cards from the controller's graveyard.
+                ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect =
+                        (ReturnTargetCardsFromGraveyardToBattlefieldEffect) routed;
+                int maxTargets = returnEffect.dynamicMaxTargets() == null
+                        ? returnEffect.maxTargets()
+                        : Math.max(0, amountEvaluationService.evaluate(gameData, returnEffect.dynamicMaxTargets(),
                                 new AmountContext(controllerId, null, null, xValue, 0, false, null,
                                         repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts, card)));
+                Integer maxTotalManaValue = null;
+                if (returnEffect.hasTotalManaValueCap()) {
+                    maxTotalManaValue = returnEffect.dynamicMaxTotalManaValue() == null
+                            ? returnEffect.maxTotalManaValue()
+                            : Math.max(0, amountEvaluationService.evaluate(gameData,
+                                    returnEffect.dynamicMaxTotalManaValue(),
+                                    new AmountContext(controllerId, null, null, xValue, 0, false, null,
+                                            repeatedAdditionalCosts == null ? List.of() : repeatedAdditionalCosts,
+                                            card)));
+                }
+                for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    graveyardTargetingService.handleReturnToBattlefieldETBTargeting(gameData, controllerId, card,
+                            mandatoryEffects, returnEffect, maxTargets, maxTotalManaValue, xValue,
+                            returnEffect.attachToSourceHost() ? routedSourcePermanentId : null);
+                }
             }
-            for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                graveyardTargetingService.handleReturnToBattlefieldETBTargeting(gameData, controllerId, card,
-                        List.of(effect), returnEffect, maxTargets, maxTotalManaValue, xValue,
-                        returnEffect.attachToSourceHost() ? graveyardSourcePermanentId : null);
+            case GRAVEYARD_SHUFFLE -> {
+                for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    graveyardTargetingService.handleShuffleIntoLibraryETBTargeting(gameData, controllerId, card,
+                            mandatoryEffects, (ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect) routed);
+                }
             }
-        }
-
-        // Handle shuffle-into-library effects: up to N target cards in controller's graveyard
-        for (CardEffect effect : graveyardShuffleIntoLibraryEffects) {
-            for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                graveyardTargetingService.handleShuffleIntoLibraryETBTargeting(gameData, controllerId, card,
-                        List.of(effect), (ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect) effect);
+            case GRAVEYARD_TARGET -> {
+                // Any other graveyard target (Bladewing the Risen: "return target Dragon permanent card from your
+                // graveyard to the battlefield"), chosen through the shared SpellGraveyardTargetTrigger flow. An
+                // optional effect uses an up-to-one selection.
+                int minimumGraveyardTargets = minimumGraveyardTargets(card, routed);
+                GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(List.of(routed));
+                int targetXValue = enteringPermanent != null && target != null
+                        && target.maximumManaValue() instanceof com.github.laxika.magicalvibes.model.amount.ManaSpentToCast
+                        ? enteringPermanent.getManaSpentToCast() : xValue;
+                // A cap that counts the spell's repeated additional costs ("up to X target cards, where X
+                // is the number of times it was kicked") is evaluated here, where those payments are known.
+                int dynamicMaxTargets = target != null && target.maximumTargetCount() != null
+                        && repeatedAdditionalCosts != null && !repeatedAdditionalCosts.isEmpty()
+                        ? Math.max(0, amountEvaluationService.evaluate(gameData, target.maximumTargetCount(),
+                                new AmountContext(controllerId, null, null, targetXValue, 0, false, null,
+                                        repeatedAdditionalCosts, card)))
+                        : 0;
+                for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                            card, controllerId, mandatoryEffects, null, minimumGraveyardTargets, targetXValue,
+                            dynamicMaxTargets));
+                }
             }
-        }
-
-        // Handle targeted graveyard-return effects (return target card from your graveyard to the
-        // battlefield/hand): choose the graveyard target as the trigger goes on the stack, reusing the
-        // shared SpellGraveyardTargetTrigger flow. Optional effects use an up-to-one selection.
-        for (CardEffect effect : graveyardTargetReturnEffects) {
-            int minimumGraveyardTargets = minimumGraveyardTargets(card, effect);
-            GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(List.of(effect));
-            int targetXValue = enteringPermanent != null && target != null
-                    && target.maximumManaValue() instanceof com.github.laxika.magicalvibes.model.amount.ManaSpentToCast
-                    ? enteringPermanent.getManaSpentToCast() : xValue;
-            // A cap that counts the spell's repeated additional costs ("up to X target cards, where X
-            // is the number of times it was kicked") is evaluated here, where those payments are known.
-            int dynamicMaxTargets = target != null && target.maximumTargetCount() != null
-                    && repeatedAdditionalCosts != null && !repeatedAdditionalCosts.isEmpty()
-                    ? Math.max(0, amountEvaluationService.evaluate(gameData, target.maximumTargetCount(),
-                            new AmountContext(controllerId, null, null, targetXValue, 0, false, null,
-                                    repeatedAdditionalCosts, card)))
-                    : 0;
-            for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        card, controllerId, List.of(effect), null, minimumGraveyardTargets, targetXValue,
-                        dynamicMaxTargets));
+            case SPELL -> {
+                StackEntryPredicate spellFilter = null;
+                boolean includeAbilities = false;
+                if (routed instanceof CopySpellEffect cse) {
+                    spellFilter = cse.spellFilter();
+                } else if (card.getTargetFilter() instanceof StackEntryPredicateTargetFilter sf) {
+                    // "counter target spell with mana value X or less" (Spellstutter Sprite): the
+                    // legal-spell restriction lives on the card's target filter, not the effect.
+                    spellFilter = sf.predicate();
+                    // "target spell or ability" (Mizzium Meddler) is signalled by a has-target filter.
+                    includeAbilities = TriggerCollectionService.predicateContainsHasTarget(sf.predicate());
+                }
+                for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
+                            card, controllerId, mandatoryEffects, spellFilter, includeAbilities,
+                            routedSourcePermanentId));
+                }
             }
         }
         // State-based actions come before a triggered ability's targets are chosen, so a legend rule
@@ -1442,30 +1480,6 @@ public class EtbTriggerService {
                 && !gameData.interaction.isAwaitingInput()
                 && (legendRuleService == null || !legendRuleService.hasLegendRuleViolation(gameData, controllerId))) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
-        }
-
-        // Handle spell-targeting ETB effects: target must be chosen from spells on the stack
-        for (CardEffect effect : spellTargetEffects) {
-            StackEntryPredicate spellFilter = null;
-            boolean includeAbilities = false;
-            if (effect instanceof CopySpellEffect cse) {
-                spellFilter = cse.spellFilter();
-            } else if (card.getTargetFilter() instanceof StackEntryPredicateTargetFilter sf) {
-                // "counter target spell with mana value X or less" (Spellstutter Sprite): the
-                // legal-spell restriction lives on the card's target filter, not the effect.
-                spellFilter = sf.predicate();
-                // "target spell or ability" (Mizzium Meddler) is signalled by a has-target filter.
-                includeAbilities = TriggerCollectionService.predicateContainsHasTarget(sf.predicate());
-            }
-            List<Permanent> entered = gameData.playerBattlefields.get(controllerId);
-            UUID sourcePermanentId = entered == null ? null : entered.stream()
-                    .filter(p -> p.getCard().getId().equals(card.getId()))
-                    .map(Permanent::getId)
-                    .findFirst().orElse(null);
-            for (int t = 0; t < 1 + extraTriggerCopies; t++) {
-                gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
-                        card, controllerId, List.of(effect), spellFilter, includeAbilities, sourcePermanentId));
-            }
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)
                 && !gameData.interaction.isAwaitingInput()) {

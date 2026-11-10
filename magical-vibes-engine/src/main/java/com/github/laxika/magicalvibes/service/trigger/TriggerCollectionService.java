@@ -1988,27 +1988,25 @@ public class TriggerCollectionService {
     /**
      * Collects {@code ability}, a "whenever an opponent casts a spell" ability of the suspended card {@code card}, for
      * the cast {@code context}: its options are judged as it triggers, and its intervening "if" ("if this card is
-     * suspended") stays around each effect and is checked again as it resolves (CR 603.4). Each effect goes on the stack
-     * as it is, the spell's caster as "that player" (the entry's
-     * non-targeting target, who decides Pardic Dragon's "that player may put a time counter on it") and the spell as its
-     * triggering card.
+     * suspended") stays around each effect and is checked again as it resolves (CR 603.4). The ability goes on the
+     * stack as one object of its effects (CR 603.3), the spell's caster as "that player" (the entry's non-targeting
+     * target, who decides Pardic Dragon's "that player may put a time counter on it") and the spell as its triggering
+     * card.
      */
     private void collectSuspendedCastAbility(GameData gameData, Card card, UUID ownerId,
                                              TriggerContext.SpellCast context, TriggeredAbility ability) {
         List<CardEffect> effects = triggeredEffects(gameData, ability, ConditionContext.forCard(card, ownerId),
                 UnaryOperator.identity());
-        if (effects == null) {
+        if (effects == null || effects.isEmpty()) {
             return;
         }
-        for (CardEffect effect : effects) {
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, ownerId,
-                    card.getName() + "'s ability", new ArrayList<>(List.of(effect)));
-            entry.setTargetId(context.castingPlayerId());
-            entry.setTriggeringCardId(context.spellCard().getId());
-            entry.setNonTargeting(true);
-            gameData.stack.add(entry);
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s ability triggers."));
-        }
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, ownerId,
+                card.getName() + "'s ability", new ArrayList<>(effects));
+        entry.setTargetId(context.castingPlayerId());
+        entry.setTriggeringCardId(context.spellCard().getId());
+        entry.setNonTargeting(true);
+        gameData.stack.add(entry);
+        gameLogService.append(gameData, GameLog.cardThen(card, "'s ability triggers."));
     }
 
     private boolean isNthMatchingSpell(GameData gameData, SpellFilter filter, UUID playerId) {
@@ -5148,10 +5146,7 @@ public class TriggerCollectionService {
                     gameData, candidate, watch, effects, anyPermanentGraveyard(event));
             case GRAVEYARD_ON_CREATURE_PUT_INTO_CONTROLLER_GRAVEYARD_FROM_BATTLEFIELD,
                  GRAVEYARD_ON_CREATURE_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD -> {
-                for (CardEffect effect : effects) {
-                    triggered |= queueGraveyardCreaturePutTrigger(gameData, candidate.sourceCard(), controllerId,
-                            effect);
-                }
+                triggered = queueGraveyardCreaturePutTrigger(gameData, candidate.sourceCard(), controllerId, effects);
             }
             case ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD,
                  ON_ARTIFACT_PUT_INTO_OPPONENT_GRAVEYARD_FROM_BATTLEFIELD,
@@ -5326,9 +5321,9 @@ public class TriggerCollectionService {
                     new TriggerContext.NonlandCardsMilled(event.ownerId(), events.size()));
             case GRAVEYARD_ON_OPPONENT_NONLAND_CARD_MILLED -> {
                 Card card = candidate.sourceCard();
-                for (CardEffect effect : effects) {
+                if (!effects.isEmpty()) {
                     StackEntry milledTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
-                            card.getName() + "'s ability", new ArrayList<>(List.of(effect)));
+                            card.getName() + "'s ability", new ArrayList<>(effects));
                     milledTrigger.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                     gameData.enqueueTrigger(milledTrigger);
                     gameLogService.append(gameData, GameLog.abilityTriggers(card));
@@ -5339,9 +5334,9 @@ public class TriggerCollectionService {
                     effects, new TriggerContext.CardPutIntoGraveyard(event.card(), event.ownerId(), event.from()));
             case GRAVEYARD_ON_CREATURE_CARD_LEAVES_OPPONENT_GRAVEYARD, GRAVEYARD_ON_SELF_RETURNED_TO_HAND -> {
                 Card card = candidate.sourceCard();
-                for (CardEffect effect : effects) {
+                if (!effects.isEmpty()) {
                     gameData.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
-                            card.getName() + "'s ability", new ArrayList<>(List.of(effect))));
+                            card.getName() + "'s ability", new ArrayList<>(effects)));
                     gameLogService.append(gameData, GameLog.abilityTriggers(card));
                     triggered = true;
                 }
@@ -5394,13 +5389,13 @@ public class TriggerCollectionService {
             List<CardEffect> effects, ZoneChangeEvent event) {
         Permanent leavingPermanent = event.permanent();
         UUID ownerId = controllerId;
-        for (CardEffect effect : effects) {
+        if (!effects.isEmpty()) {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     perm.getCard(),
                     ownerId,
                     perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
+                    new ArrayList<>(effects),
                     null,
                     perm.getId()
             );
@@ -5421,27 +5416,23 @@ public class TriggerCollectionService {
         UUID leavingId = leavingPermanent.getId();
         UUID ownerId = controllerId;
         UUID leavingControllerId = event.controllerId();
-        for (CardEffect resolved : effects) {
-            if (!perm.getCard().getTargetGroups().isEmpty()
-                    && resolved.targetSpec().declaredTarget() != null) {
-                // The card declares the trigger's target (Extractor Demon's "target player"), which is
-                // chosen as the trigger is put on the stack.
-                boolean playerTargetOnly = !resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
-                gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        perm.getCard(), ownerId, new ArrayList<>(List.of(resolved)), playerTargetOnly,
-                        perm.getCard().getTargetFilter(), 0, perm.getId(), new Permanent(perm), false,
-                        leavingId, null, ownerId, null).withDepartedPermanent(leavingPermanent));
-                gameLogService.append(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
-                log.info("Game {} - {} triggers on another creature leaving the battlefield ({})",
-                        gameData.id, perm.getCard().getName(), leavingPermanent.getCard().getName());
-                continue;
-            }
+        if (effects.isEmpty()) {
+            return true;
+        }
+        if (!perm.getCard().getTargetGroups().isEmpty() && declaresTarget(effects)) {
+            // The card declares the trigger's target (Extractor Demon's "target player"), which is
+            // chosen as the trigger is put on the stack, for the ability with all its effects.
+            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    perm.getCard(), ownerId, new ArrayList<>(effects), declaredTargetsArePlayers(effects),
+                    perm.getCard().getTargetFilter(), 0, perm.getId(), new Permanent(perm), false,
+                    leavingId, null, ownerId, null).withDepartedPermanent(leavingPermanent));
+        } else {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     perm.getCard(),
                     ownerId,
                     perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(resolved)),
+                    new ArrayList<>(effects),
                     null,
                     perm.getId()
             );
@@ -5449,10 +5440,10 @@ public class TriggerCollectionService {
             entry.setTriggeringPermanentControllerId(leavingControllerId);
             entry.setTriggeringPermanent(leavingPermanent);
             gameData.enqueueTrigger(entry);
-            gameLogService.append(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
-            log.info("Game {} - {} triggers on another creature leaving the battlefield ({})",
-                    gameData.id, perm.getCard().getName(), leavingPermanent.getCard().getName());
         }
+        gameLogService.append(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
+        log.info("Game {} - {} triggers on another creature leaving the battlefield ({})",
+                gameData.id, perm.getCard().getName(), leavingPermanent.getCard().getName());
         return true;
     }
 
@@ -5460,37 +5451,38 @@ public class TriggerCollectionService {
     private boolean triggerAllyPermanentLeaves(GameData gameData, Permanent perm, UUID controllerId,
             List<CardEffect> effects, ZoneChangeEvent event) {
         Permanent leavingPermanent = event.permanent();
-        for (CardEffect dispatchEffect : effects) {
-            if (dispatchEffect instanceof ConditionalEffect conditional
-                    && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    ConditionContext.forStaticEffect(perm, controllerId))) {
-                continue;
-            }
-            if (dispatchEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    || dispatchEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        perm.getCard(), controllerId, new ArrayList<>(List.of(dispatchEffect)), false,
-                        perm.getCard().getTargetFilter(), 0, perm.getId())
-                        .withDepartedPermanent(leavingPermanent));
-                gameLogService.append(gameData, GameLog.text(
-                        perm.getCard().getName() + "'s ability triggers — choose a target."));
-                continue;
-            }
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    perm.getCard(),
-                    controllerId,
-                    perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(dispatchEffect)),
-                    null,
-                    perm.getId()
-            );
-            entry.setTriggeringPermanent(leavingPermanent);
-            gameData.enqueueTrigger(entry);
-            gameLogService.append(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
-            log.info("Game {} - {} triggers on another permanent you control leaving the battlefield ({})",
-                    gameData.id, perm.getCard().getName(), leavingPermanent.getCard().getName());
+        List<CardEffect> abilityEffects = effects.stream()
+                .filter(effect -> !(effect instanceof ConditionalEffect conditional)
+                        || conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forStaticEffect(perm, controllerId)))
+                .toList();
+        if (abilityEffects.isEmpty()) {
+            return true;
         }
+        if (targetsPermanentOrPlayer(abilityEffects)) {
+            // The target is chosen as the ability goes on the stack (CR 603.3d), with all its effects.
+            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    perm.getCard(), controllerId, new ArrayList<>(abilityEffects), false,
+                    perm.getCard().getTargetFilter(), 0, perm.getId())
+                    .withDepartedPermanent(leavingPermanent));
+            gameLogService.append(gameData, GameLog.text(
+                    perm.getCard().getName() + "'s ability triggers — choose a target."));
+            return true;
+        }
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                perm.getCard(),
+                controllerId,
+                perm.getCard().getName() + "'s ability",
+                new ArrayList<>(abilityEffects),
+                null,
+                perm.getId()
+        );
+        entry.setTriggeringPermanent(leavingPermanent);
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
+        log.info("Game {} - {} triggers on another permanent you control leaving the battlefield ({})",
+                gameData.id, perm.getCard().getName(), leavingPermanent.getCard().getName());
         return true;
     }
 
@@ -5498,37 +5490,38 @@ public class TriggerCollectionService {
     private boolean triggerAllyCreatureLeaves(GameData gameData, Permanent perm, UUID controllerId,
             List<CardEffect> effects, ZoneChangeEvent event) {
         Permanent leavingPermanent = event.permanent();
-        for (CardEffect dispatchEffect : effects) {
-            if (dispatchEffect instanceof ConditionalEffect conditional
-                    && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    ConditionContext.forStaticEffect(perm, controllerId))) {
-                continue;
-            }
-            if (dispatchEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    || dispatchEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        perm.getCard(), controllerId, new ArrayList<>(List.of(dispatchEffect)), false,
-                        perm.getCard().getTargetFilter(), 0, perm.getId())
-                        .withDepartedPermanent(leavingPermanent));
-                gameLogService.append(gameData, GameLog.text(
-                        perm.getCard().getName() + "'s ability triggers — choose a target."));
-                continue;
-            }
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    perm.getCard(),
-                    controllerId,
-                    perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(dispatchEffect)),
-                    null,
-                    perm.getId()
-            );
-            entry.setTriggeringPermanent(leavingPermanent);
-            gameData.enqueueTrigger(entry);
-            gameLogService.append(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
-            log.info("Game {} - {} triggers on another creature you control leaving the battlefield ({})",
-                    gameData.id, perm.getCard().getName(), leavingPermanent.getCard().getName());
+        List<CardEffect> abilityEffects = effects.stream()
+                .filter(effect -> !(effect instanceof ConditionalEffect conditional)
+                        || conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forStaticEffect(perm, controllerId)))
+                .toList();
+        if (abilityEffects.isEmpty()) {
+            return true;
         }
+        if (targetsPermanentOrPlayer(abilityEffects)) {
+            // The target is chosen as the ability goes on the stack (CR 603.3d), with all its effects.
+            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    perm.getCard(), controllerId, new ArrayList<>(abilityEffects), false,
+                    perm.getCard().getTargetFilter(), 0, perm.getId())
+                    .withDepartedPermanent(leavingPermanent));
+            gameLogService.append(gameData, GameLog.text(
+                    perm.getCard().getName() + "'s ability triggers — choose a target."));
+            return true;
+        }
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                perm.getCard(),
+                controllerId,
+                perm.getCard().getName() + "'s ability",
+                new ArrayList<>(abilityEffects),
+                null,
+                perm.getId()
+        );
+        entry.setTriggeringPermanent(leavingPermanent);
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.text(perm.getCard().getName() + "'s ability triggers."));
+        log.info("Game {} - {} triggers on another creature you control leaving the battlefield ({})",
+                gameData.id, perm.getCard().getName(), leavingPermanent.getCard().getName());
         return true;
     }
 
@@ -5537,13 +5530,13 @@ public class TriggerCollectionService {
             List<CardEffect> effects, ZoneChangeEvent event) {
         Permanent leavingPermanent = event.permanent();
         UUID leavingId = leavingPermanent.getId();
-        for (CardEffect resolved : effects) {
+        if (!effects.isEmpty()) {
             gameData.enqueueTrigger(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     perm.getCard(),
                     controllerId,
                     perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(resolved)),
+                    new ArrayList<>(effects),
                     null,
                     perm.getId()
             ));
@@ -5558,13 +5551,13 @@ public class TriggerCollectionService {
     private boolean triggerAllyCreatureExiled(GameData gameData, Permanent perm, UUID controllerId,
             List<CardEffect> effects, ZoneChangeEvent event) {
         Permanent exiledPermanent = event.permanent();
-        for (CardEffect resolved : effects) {
+        if (!effects.isEmpty()) {
             gameData.enqueueTrigger(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     perm.getCard(),
                     controllerId,
                     perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(resolved)),
+                    new ArrayList<>(effects),
                     null,
                     perm.getId()
             ));
@@ -5579,12 +5572,11 @@ public class TriggerCollectionService {
     private boolean triggerAnotherArtifactLeaves(GameData gameData, Permanent perm, UUID controllerId,
             List<CardEffect> effects, ZoneChangeEvent event) {
         Permanent leavingPermanent = event.permanent();
-        for (CardEffect effect : effects) {
-            if (effect.targetSpec().declaredTarget() != null) {
-                // The target is chosen as the trigger goes on the stack (CR 603.3d).
-                boolean playerTargetOnly = !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
+        if (!effects.isEmpty()) {
+            if (declaresTarget(effects)) {
+                // The target is chosen as the ability goes on the stack (CR 603.3d), with all its effects.
                 gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        perm.getCard(), controllerId, new ArrayList<>(List.of(effect)), playerTargetOnly,
+                        perm.getCard(), controllerId, new ArrayList<>(effects), declaredTargetsArePlayers(effects),
                         perm.getCard().getTargetFilter(), 0, perm.getId(), new Permanent(perm)));
             } else {
                 gameData.enqueueTrigger(new StackEntry(
@@ -5592,7 +5584,7 @@ public class TriggerCollectionService {
                         perm.getCard(),
                         controllerId,
                         perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)),
+                        new ArrayList<>(effects),
                         null,
                         perm.getId()
                 ));
@@ -5609,11 +5601,11 @@ public class TriggerCollectionService {
             List<CardEffect> effects, ZoneChangeEvent event) {
         Permanent leavingPermanent = event.permanent();
         Zone destination = event.to();
-        for (CardEffect effect : effects) {
-            if (effect.targetSpec().declaredTarget() != null) {
-                boolean playerTargetOnly = !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
+        if (!effects.isEmpty()) {
+            if (declaresTarget(effects)) {
+                // The target is chosen as the ability goes on the stack (CR 603.3d), with all its effects.
                 gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        perm.getCard(), controllerId, new ArrayList<>(List.of(effect)), playerTargetOnly,
+                        perm.getCard(), controllerId, new ArrayList<>(effects), declaredTargetsArePlayers(effects),
                         perm.getCard().getTargetFilter(), 0, perm.getId(), new Permanent(perm)));
             } else {
                 gameData.enqueueTrigger(new StackEntry(
@@ -5621,7 +5613,7 @@ public class TriggerCollectionService {
                         perm.getCard(),
                         controllerId,
                         perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)),
+                        new ArrayList<>(effects),
                         null,
                         perm.getId()
                 ));
@@ -5665,13 +5657,13 @@ public class TriggerCollectionService {
             List<CardEffect> effects, ZoneChangeEvent event) {
         Permanent returnedPermanent = event.permanent();
         UUID returnedToPlayerId = controllerId;
-        for (CardEffect effect : effects) {
+        if (!effects.isEmpty()) {
             gameData.enqueueTrigger(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     perm.getCard(),
                     returnedToPlayerId,
                     perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
+                    new ArrayList<>(effects),
                     null,
                     perm.getId()
             ));
@@ -5686,13 +5678,13 @@ public class TriggerCollectionService {
     private boolean triggerControllerPermanentReturnedToHand(GameData gameData, Permanent perm, UUID controllerId,
             List<CardEffect> effects, ZoneChangeEvent event) {
         UUID returnedToPlayerId = controllerId;
-        for (CardEffect effect : effects) {
+        if (!effects.isEmpty()) {
             gameData.enqueueTrigger(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     perm.getCard(),
                     returnedToPlayerId,
                     perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
+                    new ArrayList<>(effects),
                     null,
                     perm.getId()
             ));
@@ -5707,13 +5699,13 @@ public class TriggerCollectionService {
     private boolean triggerControllerAnotherNonlandPermanentReturnedToHand(GameData gameData, Permanent perm, UUID controllerId,
             List<CardEffect> effects, ZoneChangeEvent event) {
         UUID returnedPermanentControllerId = controllerId;
-        for (CardEffect effect : effects) {
+        if (!effects.isEmpty()) {
             gameData.enqueueTrigger(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     perm.getCard(),
                     returnedPermanentControllerId,
                     perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
+                    new ArrayList<>(effects),
                     null,
                     perm.getId()
             ));
@@ -5735,20 +5727,7 @@ public class TriggerCollectionService {
     /** "Whenever a land card is put into a graveyard from anywhere", from a graveyard. */
     private boolean triggerGraveyardLandPutIntoGraveyard(GameData gameData, Card sourceCard, UUID sourceControllerId,
                                                          List<CardEffect> effects) {
-        boolean triggered = false;
-        for (CardEffect resolved : effects) {
-            if (resolved instanceof MayPayManaEffect mayPay) {
-                gameData.queueMayAbility(sourceCard, sourceControllerId, mayPay, null);
-            } else if (resolved instanceof MayEffect may) {
-                gameData.queueMayAbility(sourceCard, sourceControllerId, may);
-            } else {
-                gameData.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard,
-                        sourceControllerId, sourceCard.getName() + "'s ability", new ArrayList<>(List.of(resolved))));
-            }
-            gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-            triggered = true;
-        }
-        return triggered;
+        return enqueueGraveyardAbility(gameData, sourceCard, sourceControllerId, effects) != null;
     }
 
     /**
@@ -6134,22 +6113,7 @@ public class TriggerCollectionService {
     /** Landfall from the graveyard (Reach of Branches). */
     private boolean triggerGraveyardLandEnters(GameData gameData, Card card, UUID landControllerId,
                                                List<CardEffect> effects, Entering entering) {
-        boolean triggered = false;
-        for (CardEffect resolved : effects) {
-            StackEntry landfallEntry;
-            if (resolved instanceof MayEffect may) {
-                gameData.queueMayAbility(card, landControllerId, may);
-                landfallEntry = gameData.stack.getLast();
-            } else {
-                landfallEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, landControllerId,
-                        card.getName() + "'s ability", new ArrayList<>(List.of(resolved)));
-                gameData.stack.add(landfallEntry);
-            }
-            recordGraveyardEnterAbility(gameData, landfallEntry, card, entering.permanent(), resolved);
-            gameLogService.append(gameData, GameLog.abilityTriggers(card));
-            triggered = true;
-        }
-        return triggered;
+        return enqueueGraveyardEnterAbility(gameData, card, landControllerId, effects, entering.permanent());
     }
 
     /**
@@ -6158,68 +6122,76 @@ public class TriggerCollectionService {
      */
     private boolean triggerGraveyardCreatureEnters(GameData gameData, Card card, UUID controllerId,
                                                    List<CardEffect> effects, Entering entering) {
-        Permanent enteringPermanent = entering.permanent();
-        boolean triggered = false;
-        for (CardEffect resolved : effects) {
-            if (resolved instanceof MayEffect may) {
-                gameData.queueMayAbility(card, controllerId, may);
-                recordGraveyardEnterAbility(gameData, gameData.stack.getLast(), card, enteringPermanent, may);
-            } else {
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
-                        card.getName() + "'s ability", new ArrayList<>(List.of(resolved)));
-                recordGraveyardEnterAbility(gameData, entry, card, enteringPermanent, resolved);
-                gameData.enqueueTrigger(entry);
+        return enqueueGraveyardEnterAbility(gameData, card, controllerId, effects, entering.permanent());
+    }
+
+    /**
+     * Puts one triggered ability of {@code card}, a card in a graveyard, on the stack as one object of all its
+     * {@code effects} (CR 603.3), a "you may" among them asked as it resolves (CR 603.5).
+     *
+     * @return the entry, or {@code null} for an ability with no effect left
+     */
+    private StackEntry enqueueGraveyardAbility(GameData gameData, Card card, UUID controllerId,
+                                               List<CardEffect> effects) {
+        if (effects.isEmpty()) {
+            return null;
+        }
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                card.getName() + "'s ability", new ArrayList<>(effects));
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(card));
+        return entry;
+    }
+
+    /**
+     * Puts one enters ability of {@code card}, a card in a graveyard, on the stack as one object of all its
+     * {@code effects} (CR 603.3), with what every such ability records, whatever its effects are: the stay in the
+     * graveyard its source card is ("this card", a new object once it has left and returned, CR 400.7) and the
+     * permanent that entered. "That creature" is the stack entry's triggering permanent, read as the ability resolves
+     * (Sword of the Meek, Dragon Wings); an ability none of whose effects targets says so.
+     *
+     * @return whether it triggered
+     */
+    private boolean enqueueGraveyardEnterAbility(GameData gameData, Card card, UUID controllerId,
+                                                 List<CardEffect> effects, Permanent enteringPermanent) {
+        if (effects.isEmpty()) {
+            return false;
+        }
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                card.getName() + "'s ability", new ArrayList<>(effects));
+        entry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+        if (enteringPermanent != null) {
+            entry.setTriggeringPermanentId(enteringPermanent.getId());
+            if (effects.stream().allMatch(effect -> effect.targetSpec() == TargetSpec.NONE)) {
+                entry.setNonTargeting(true);
             }
-            gameLogService.append(gameData, GameLog.abilityTriggers(card));
-            triggered = true;
         }
-        return triggered;
+        gameData.enqueueTrigger(entry);
+        gameLogService.append(gameData, GameLog.abilityTriggers(card));
+        return true;
     }
 
-    /**
-     * What every enters ability of a card in a graveyard records, whatever its effects are: the stay in the graveyard
-     * its source card is ("this card", a new object once it has left and returned, CR 400.7) and the permanent that
-     * entered.
-     */
-    private static void recordGraveyardEnterAbility(GameData gameData, StackEntry entry, Card sourceCard,
-                                                    Permanent enteringPermanent, CardEffect effect) {
-        entry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(sourceCard.getId()));
-        recordEnteringPermanent(entry, enteringPermanent, effect);
+    /** Whether one of {@code effects}, an ability's, declares a target of its own. */
+    private static boolean declaresTarget(List<CardEffect> effects) {
+        return effects.stream().anyMatch(effect -> effect.targetSpec().declaredTarget() != null);
     }
 
-    /**
-     * "That creature" of a graveyard card's enters ability is the stack entry's triggering permanent, read as the
-     * ability resolves (Sword of the Meek, Dragon Wings); a non-targeting ability says so.
-     */
-    private static void recordEnteringPermanent(StackEntry entry, Permanent enteringPermanent, CardEffect effect) {
-        if (enteringPermanent == null) {
-            return;
-        }
-        entry.setTriggeringPermanentId(enteringPermanent.getId());
-        if (effect.targetSpec() == TargetSpec.NONE) {
-            entry.setNonTargeting(true);
-        }
+    /** Whether every effect of {@code effects} that declares a target admits no permanent: a player alone is offered. */
+    private static boolean declaredTargetsArePlayers(List<CardEffect> effects) {
+        return effects.stream().filter(effect -> effect.targetSpec().declaredTarget() != null)
+                .noneMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+    }
+
+    /** Whether one of {@code effects}, an ability's, targets a permanent or a player. */
+    private static boolean targetsPermanentOrPlayer(List<CardEffect> effects) {
+        return effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
     }
 
     /** From the graveyard, "whenever an artifact you control enters" and "an enchantment you control". */
     private boolean triggerGraveyardPermanentTypeEnters(GameData gameData, Card card, UUID controllerId,
                                                         List<CardEffect> effects, Entering entering) {
-        boolean triggered = false;
-        for (CardEffect resolved : effects) {
-            StackEntry entry;
-            if (resolved instanceof MayEffect may) {
-                gameData.queueMayAbility(card, controllerId, may);
-                entry = gameData.stack.getLast();
-            } else {
-                entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
-                        card.getName() + "'s ability", new ArrayList<>(List.of(resolved)));
-                gameData.stack.add(entry);
-            }
-            recordGraveyardEnterAbility(gameData, entry, card, entering.permanent(), resolved);
-            gameLogService.append(gameData, GameLog.abilityTriggers(card));
-            triggered = true;
-        }
-        return triggered;
+        return enqueueGraveyardEnterAbility(gameData, card, controllerId, effects, entering.permanent());
     }
 
     /** From the graveyard, "whenever a creature enters from your graveyard or you cast a creature from it". */
@@ -6234,19 +6206,12 @@ public class TriggerCollectionService {
                 && !(castFromGraveyard && graveyardOwnerId.equals(entering.controllerId()))) {
             return false;
         }
-        for (CardEffect effect : effects) {
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, graveyardOwnerId,
-                    card.getName() + "'s ability", new ArrayList<>(List.of(effect)));
-            recordGraveyardEnterAbility(gameData, entry, card, enteringPermanent, effect);
-            gameData.stack.add(entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(card));
-        }
-        return !effects.isEmpty();
+        return enqueueGraveyardEnterAbility(gameData, card, graveyardOwnerId, effects, enteringPermanent);
     }
 
     /**
      * "Whenever this or another permanent enters from a graveyard" (River Kelpie) and "whenever a permanent you
-     * control enters from exile": a non-targeting stack entry for each.
+     * control enters from exile": the ability as one stack entry of its effects, once for each time it triggers.
      */
     private boolean triggerPermanentEntersFromZone(GameData gameData, ZoneChangeWatch watch, Permanent perm,
                                                    UUID controllerId, List<CardEffect> effects, Entering entering) {
@@ -6260,20 +6225,19 @@ public class TriggerCollectionService {
         }
         int triggerCount = 1 + gameQueryService.countETBExtraTriggers(gameData, controllerId,
                 entering.controllerId(), entering.card());
-        for (CardEffect effect : effects) {
-            for (int i = 0; i < triggerCount; i++) {
-                gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(), controllerId,
-                        perm.getCard().getName() + "'s ability", new ArrayList<>(List.of(effect))));
-                gameLogService.append(gameData, GameLog.cardTextCard(perm.getCard(), "'s ability triggers (",
-                        entering.card(), fromExile ? " entered from exile)." : " entered from a graveyard)."));
-            }
+        for (int i = 0; i < (effects.isEmpty() ? 0 : triggerCount); i++) {
+            gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(), controllerId,
+                    perm.getCard().getName() + "'s ability", new ArrayList<>(effects)));
+            gameLogService.append(gameData, GameLog.cardTextCard(perm.getCard(), "'s ability triggers (",
+                    entering.card(), fromExile ? " entered from exile)." : " entered from a graveyard)."));
         }
         return !effects.isEmpty();
     }
 
     /**
-     * "When this creature enters from a graveyard" (Treacherous Pit-Dweller). A targeting effect picks its target as
-     * the ability goes on the stack (CR 603.3d): the permanent was never cast, so no target was chosen then.
+     * "When this creature enters from a graveyard" (Treacherous Pit-Dweller), one stack object of all its effects
+     * (CR 603.3). An ability with a targeting effect picks its target as it goes on the stack (CR 603.3d): the
+     * permanent was never cast, so no target was chosen then.
      */
     private boolean triggerSelfEntersFromGraveyard(GameData gameData, Card enteringCard, List<CardEffect> effects,
                                                    Entering entering) {
@@ -6285,29 +6249,27 @@ public class TriggerCollectionService {
         }
         int triggerCount = 1 + gameQueryService.countETBExtraTriggers(gameData, enteringControllerId,
                 enteringControllerId, enteringCard);
-        boolean triggered = false;
-        for (CardEffect effect : effects) {
-            if (effect instanceof ConditionalEffect conditional
-                    && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    ConditionContext.forPermanent(enteringPermanent, enteringControllerId))) {
-                continue;
-            }
-            boolean targets = effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                    || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
+        List<CardEffect> abilityEffects = effects.stream()
+                .filter(effect -> !(effect instanceof ConditionalEffect conditional)
+                        || conditionEvaluationService.isMet(gameData, conditional.condition(),
+                        ConditionContext.forPermanent(enteringPermanent, enteringControllerId)))
+                .toList();
+        boolean triggered = !abilityEffects.isEmpty();
+        if (triggered) {
+            boolean targets = targetsPermanentOrPlayer(abilityEffects);
             for (int i = 0; i < triggerCount; i++) {
                 if (targets) {
                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                            enteringCard, enteringControllerId, new ArrayList<>(List.of(effect)),
+                            enteringCard, enteringControllerId, new ArrayList<>(abilityEffects),
                             enteringPermanent.getId(), enteringCard.getTargetFilter()));
                 } else {
                     gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, enteringCard,
                             enteringControllerId, enteringCard.getName() + "'s ability",
-                            new ArrayList<>(List.of(effect)), null, enteringPermanent.getId()));
+                            new ArrayList<>(abilityEffects), null, enteringPermanent.getId()));
                 }
             }
             gameLogService.append(gameData, GameLog.cardThen(enteringCard,
                     "'s ability triggers (it entered from a graveyard)."));
-            triggered = true;
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)
                 && !gameData.interaction.isAwaitingInput()) {
@@ -6405,17 +6367,7 @@ public class TriggerCollectionService {
                 triggered |= dispatch(new TriggerMatchContext(gameData, perm, controllerId, effects), watch, ctx);
             }
             case GRAVEYARD_ON_ALLY_PERMANENT_TURNS_FACE_UP -> {
-                Card card = candidate.sourceCard();
-                for (CardEffect effect : effects) {
-                    if (effect instanceof MayEffect may) {
-                        gameData.queueMayAbility(card, controllerId, may);
-                    } else {
-                        gameData.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
-                                card.getName() + "'s ability", new ArrayList<>(List.of(effect))));
-                    }
-                    gameLogService.append(gameData, GameLog.abilityTriggers(card));
-                    triggered = true;
-                }
+                triggered = enqueueGraveyardAbility(gameData, candidate.sourceCard(), controllerId, effects) != null;
             }
             case ON_TURNED_FACE_UP -> triggered = turnFaceUpCopyService.putTurnedFaceUpAbilityOnStack(gameData,
                     changed, controllerId, effects, event.xValue());
@@ -6476,22 +6428,9 @@ public class TriggerCollectionService {
     /** "When you sacrifice a [filter] permanent", from the graveyard. */
     private boolean triggerGraveyardPermanentSacrificed(GameData gameData, Card card, UUID controllerId,
                                                         List<CardEffect> effects) {
-        boolean triggered = false;
-        for (CardEffect resolved : effects) {
-            if (resolved instanceof MayEffect may) {
-                gameData.queueMayAbility(card, controllerId, may);
-            } else {
-                gameData.enqueueTrigger(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        card,
-                        controllerId,
-                        card.getName() + "'s ability",
-                        new ArrayList<>(List.of(resolved))
-                ));
-            }
-            gameLogService.append(gameData, GameLog.abilityTriggers(card));
+        boolean triggered = enqueueGraveyardAbility(gameData, card, controllerId, effects) != null;
+        if (triggered) {
             log.info("Game {} - {} graveyard permanent-sacrifice trigger queued", gameData.id, card.getName());
-            triggered = true;
         }
         return triggered;
     }
@@ -10069,34 +10008,37 @@ public class TriggerCollectionService {
     }
 
     /**
-     * "When this phases out" and "when this phases in" (Teferi's Imp): each effect is its own ability. A targeted
-     * phase-in ability (Shimmering Efreet) chooses its target as it is put on the stack.
+     * "When this phases out" and "when this phases in" (Teferi's Imp): the ability as one stack object of its effects
+     * (CR 603.3). A targeted phase-in ability (Shimmering Efreet) chooses its target as it is put on the stack, with
+     * all its effects.
      */
     private boolean enqueuePhasingTriggers(GameData gameData, Permanent permanent, UUID controllerId,
                                            List<CardEffect> effects, boolean phasesIn) {
         String direction = phasesIn ? "in" : "out";
-        for (CardEffect effect : effects) {
-            if (phasesIn && effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
-                gameData.queueInteraction(new PermanentChoiceContext.PhasesInTriggerTarget(
-                        permanent.getCard(), controllerId, new ArrayList<>(List.of(effect)), permanent.getId()));
-                gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
-                log.info("Game {} - {} triggers on phasing {} (awaiting target)",
-                        gameData.id, permanent.getCard().getName(), direction);
-                continue;
-            }
-            gameData.enqueueTrigger(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    permanent.getCard(),
-                    controllerId,
-                    permanent.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
-                    null,
-                    permanent.getId()
-            ));
-            gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
-            log.info("Game {} - {} triggers on phasing {}", gameData.id, permanent.getCard().getName(), direction);
+        if (effects.isEmpty()) {
+            return false;
         }
-        return !effects.isEmpty();
+        if (phasesIn && effects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
+            gameData.queueInteraction(new PermanentChoiceContext.PhasesInTriggerTarget(
+                    permanent.getCard(), controllerId, new ArrayList<>(effects), permanent.getId()));
+            gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+            log.info("Game {} - {} triggers on phasing {} (awaiting target)",
+                    gameData.id, permanent.getCard().getName(), direction);
+            return true;
+        }
+        gameData.enqueueTrigger(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                permanent.getCard(),
+                controllerId,
+                permanent.getCard().getName() + "'s ability",
+                new ArrayList<>(effects),
+                null,
+                permanent.getId()
+        ));
+        gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+        log.info("Game {} - {} triggers on phasing {}", gameData.id, permanent.getCard().getName(), direction);
+        return true;
     }
 
     // ── Ability-activation triggers ────────────────────────────────────
@@ -13159,15 +13101,19 @@ public class TriggerCollectionService {
     }
 
     private boolean queueGraveyardCreaturePutTrigger(GameData gameData, Card sourceCard, UUID controllerId,
-                                                      CardEffect resolved) {
+                                                      List<CardEffect> effects) {
+        if (effects.isEmpty()) {
+            return false;
+        }
         long sourceEntryVersion = gameData.graveyardEntryVersion(sourceCard.getId());
-        // A "you may" or "you may pay" goes on the stack like any other effect and is asked as it resolves (CR 603.5).
+        // The ability is one object of all its effects (CR 603.3); a "you may" or "you may pay" goes on the stack like
+        // any other effect and is asked as it resolves (CR 603.5).
         gameData.stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
                 controllerId,
                 sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(resolved))
+                new ArrayList<>(effects)
         ));
         // CR 400.7: the trigger refers to this stay of the card in the graveyard; once the card
         // leaves and returns, it is a new object the trigger can no longer move, and "if this card
@@ -13821,16 +13767,16 @@ public class TriggerCollectionService {
 
     private void enqueueAllyPermanentsLeaveBattlefieldTriggers(GameData gameData, Permanent source,
                                                                UUID controllerId, List<CardEffect> effects) {
-        for (CardEffect effect : effects) {
-            if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                    || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+        if (!effects.isEmpty()) {
+            // An ability with a target chooses it as it goes on the stack (CR 603.3d), with all its effects.
+            if (targetsPermanentOrPlayer(effects) || effects.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
                 gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                        source.getCard(), controllerId, new ArrayList<>(List.of(effect))));
+                        source.getCard(), controllerId, new ArrayList<>(effects)));
             } else {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
-                        source.getCard().getName() + "'s ability", new ArrayList<>(List.of(effect)),
+                        source.getCard().getName() + "'s ability", new ArrayList<>(effects),
                         null, source.getId()));
             }
             gameLogService.append(gameData, GameLog.text(source.getCard().getName() + "'s ability triggers."));
@@ -13841,16 +13787,16 @@ public class TriggerCollectionService {
 
     private void enqueueCreatureLeavesBattlefieldWithoutDyingTriggers(
             GameData gameData, Permanent source, UUID controllerId, List<CardEffect> effects) {
-        for (CardEffect effect : effects) {
-            if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                    || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+        if (!effects.isEmpty()) {
+            // An ability with a target chooses it as it goes on the stack (CR 603.3d), with all its effects.
+            if (targetsPermanentOrPlayer(effects) || effects.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
                 gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                        source.getCard(), controllerId, new ArrayList<>(List.of(effect))));
+                        source.getCard(), controllerId, new ArrayList<>(effects)));
             } else {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
-                        source.getCard().getName() + "'s ability", new ArrayList<>(List.of(effect)),
+                        source.getCard().getName() + "'s ability", new ArrayList<>(effects),
                         null, source.getId()));
             }
             gameLogService.append(gameData, GameLog.text(source.getCard().getName() + "'s ability triggers."));
@@ -14446,21 +14392,7 @@ public class TriggerCollectionService {
      */
     private boolean queueGraveyardPermanentEntersTriggers(GameData gameData, Card card, UUID graveyardOwnerId,
                                                           List<CardEffect> effects, Permanent enteringPermanent) {
-        boolean triggered = false;
-        for (CardEffect resolved : effects) {
-            if (resolved instanceof MayEffect may) {
-                gameData.queueMayAbility(card, graveyardOwnerId, may);
-                recordGraveyardEnterAbility(gameData, gameData.stack.getLast(), card, enteringPermanent, may);
-            } else {
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, graveyardOwnerId,
-                        card.getName() + "'s ability", new ArrayList<>(List.of(resolved)));
-                recordGraveyardEnterAbility(gameData, entry, card, enteringPermanent, resolved);
-                gameData.enqueueTrigger(entry);
-            }
-            gameLogService.append(gameData, GameLog.abilityTriggers(card));
-            triggered = true;
-        }
-        return triggered;
+        return enqueueGraveyardEnterAbility(gameData, card, graveyardOwnerId, effects, enteringPermanent);
     }
 
     /** The abilities a spell registered until end of turn that see a creature enter under an opponent's control. */
