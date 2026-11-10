@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.r.RakdosCackler;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -47,6 +48,20 @@ class NivMizzetGuildpactTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(12);
         assertThat(gd.getLife(player1.getId())).isEqualTo(22);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The combat damage ability is one stack object with both its targets")
+    void combatDamageAbilityIsOneStackObject() {
+        Permanent niv = addCreatureReady(player1, new NivMizzetGuildpact());
+        niv.setAttacking(true);
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getEffectsToResolve()).hasSize(3));
     }
 
     @Test

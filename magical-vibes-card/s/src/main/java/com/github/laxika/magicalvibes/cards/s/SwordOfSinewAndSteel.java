@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -24,11 +25,13 @@ public class SwordOfSinewAndSteel extends Card {
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK, CardColor.RED), GrantScope.EQUIPPED_CREATURE));
 
         setAllowSharedTargets(true);
+        CardEffect destroyPlaneswalker = new DestroyTargetPermanentEffect();
+        CardEffect destroyArtifact = new DestroyTargetPermanentEffect();
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), destroyPlaneswalker, destroyArtifact);
         target(new PermanentPredicateTargetFilter(
                 new PermanentIsPlaneswalkerPredicate(), "Target must be a planeswalker"), 0, 1)
-                .addTrigger(Triggers.dealsCombatDamageToPlayer(), new DestroyTargetPermanentEffect());
-        target(TargetFilters.artifact(), 0, 1)
-                .addTrigger(Triggers.dealsCombatDamageToPlayer(), new DestroyTargetPermanentEffect());
+                .bindEffect(destroyPlaneswalker);
+        target(TargetFilters.artifact(), 0, 1).bindEffect(destroyArtifact);
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

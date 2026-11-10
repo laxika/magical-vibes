@@ -77,9 +77,15 @@ public class CombatDamageState {
     public final Map<Permanent, List<UUID>> combatDamageDealtToCreatures = new HashMap<>();
     public final Set<UUID> combatDamageToBlockingCreatureSources = new HashSet<>();
     public final Map<Permanent, UUID> combatDamageDealerControllers = new HashMap<>();
-    public final Map<Permanent, List<CardEffect>> selfDealsCombatDamageEffects = new HashMap<>();
-    public final Map<Permanent, List<CardEffect>> selfDealsCombatDamageToPlayerOrPlaneswalkerEffects = new HashMap<>();
-    public final Map<Permanent, List<CardEffect>> selfDealsCombatDamageToPlayerOrBattleEffects = new HashMap<>();
+    /**
+     * The granted "whenever this creature deals combat damage" abilities each source had as the damage was dealt: one
+     * list of effects for each ability, each one object on the stack (CR 603.3).
+     */
+    public final Map<Permanent, List<List<CardEffect>>> selfDealsCombatDamageEffects = new HashMap<>();
+    /** As {@link #selfDealsCombatDamageEffects}, for "deals combat damage to a player or planeswalker". */
+    public final Map<Permanent, List<List<CardEffect>>> selfDealsCombatDamageToPlayerOrPlaneswalkerEffects = new HashMap<>();
+    /** As {@link #selfDealsCombatDamageEffects}, for "deals combat damage to a player or battle". */
+    public final Map<Permanent, List<List<CardEffect>>> selfDealsCombatDamageToPlayerOrBattleEffects = new HashMap<>();
     public final Map<Permanent, List<TriggeredAbility>> selfDealsDamageAbilities = new HashMap<>();
     public final List<StackEntry> enchantedCreatureDealsDamageTriggers = new ArrayList<>();
     public final List<StackEntry> allyCreatureDealsDamageToPlaneswalkerTriggers = new ArrayList<>();

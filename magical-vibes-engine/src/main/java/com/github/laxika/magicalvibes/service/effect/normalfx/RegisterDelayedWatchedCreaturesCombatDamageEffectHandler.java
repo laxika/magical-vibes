@@ -35,12 +35,18 @@ public class RegisterDelayedWatchedCreaturesCombatDamageEffectHandler implements
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RegisterDelayedWatchedCreaturesCombatDamageEffect) effect;
 
-        List<UUID> targetIds = entry.targetsForEffect(effect);
-        if (targetIds.isEmpty() && entry.getTargetIds() != null) {
-            targetIds = entry.getTargetIds();
-        }
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
+        List<UUID> targetIds;
+        if (e.watchesChosenCreature()) {
+            // "That creature" is the one the resolving ability chose (bolster's), not a target.
+            targetIds = entry.getChosenPermanentId() == null ? List.of() : List.of(entry.getChosenPermanentId());
+        } else {
+            targetIds = entry.targetsForEffect(effect);
+            if (targetIds.isEmpty() && entry.getTargetIds() != null) {
+                targetIds = entry.getTargetIds();
+            }
+            if (targetIds.isEmpty() && entry.getTargetId() != null) {
+                targetIds = List.of(entry.getTargetId());
+            }
         }
 
         // "Up to two target creatures": a target that already left the battlefield contributes
@@ -57,7 +63,7 @@ public class RegisterDelayedWatchedCreaturesCombatDamageEffectHandler implements
 
         gameData.queueDelayedAction(new DelayedWatchedCreaturesCombatDamage(
                 watched, entry.getControllerId(), e.effects(), entry.getCard(),
-                e.combatDamageToPlayerOnly(), e.untilEndOfTurn()));
+                e.combatDamageToPlayerOnly(), e.untilEndOfTurn(), entry.getSourcePermanentId()));
         log.info("Game {} - {} watches {} creature(s) for combat damage until its controller's next turn",
                 gameData.id, entry.getCard().getName(), watched.size());
     }

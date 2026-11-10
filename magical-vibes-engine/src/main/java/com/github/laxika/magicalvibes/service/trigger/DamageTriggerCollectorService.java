@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
-import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfCombatDamageSourceIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -821,8 +820,6 @@ public class DamageTriggerCollectorService {
             TriggerContext.SourceDealsCombatDamage sd,
                                                                int damage) {
         if (sd.totalDamage() <= 0 || match.permanent() == null) return false;
-        if (match.effectOf(ConjureDuplicateOfCombatDamageSourceIntoHandEffect.class) != null
-                && sd.sourceCard().isToken()) return false;
 
         Permanent equipment = match.permanent();
         if (match.admits(TargetPredicate.Kind.PERMANENT)

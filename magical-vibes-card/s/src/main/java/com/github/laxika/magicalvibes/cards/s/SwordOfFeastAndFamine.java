@@ -34,11 +34,8 @@ public class SwordOfFeastAndFamine extends Card {
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK, CardColor.GREEN), GrantScope.EQUIPPED_CREATURE));
 
         // Triggered: whenever equipped creature deals combat damage to a player,
-        // that player discards a card
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
-
-        // Triggered: ...and you untap all lands you control
-        addTrigger(Triggers.dealsCombatDamageToPlayer(),
+        // that player discards a card and you untap all lands you control
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER),
                 new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate()));
 
         // Equip {2}

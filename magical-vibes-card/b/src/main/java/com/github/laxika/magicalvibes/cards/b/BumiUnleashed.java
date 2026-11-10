@@ -20,8 +20,7 @@ public class BumiUnleashed extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new EarthbendTargetLandEffect(4));
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate()));
-        addTrigger(Triggers.dealsCombatDamageToPlayer(),
+                new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate()),
                 new AdditionalCombatPhaseEffect(1, new OnlyLandCreaturesCanAttackThisCombatEffect()));
     }
 }

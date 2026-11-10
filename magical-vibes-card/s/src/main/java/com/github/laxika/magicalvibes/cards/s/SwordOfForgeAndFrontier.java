@@ -19,8 +19,8 @@ public class SwordOfForgeAndFrontier extends Card {
     public SwordOfForgeAndFrontier() {
         addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.RED, CardColor.GREEN), GrantScope.EQUIPPED_CREATURE));
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new ExileTopCardMayPlayThisTurnEffect(2, false));
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new PlayAdditionalLandsEffect(1));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new ExileTopCardMayPlayThisTurnEffect(2, false),
+                new PlayAdditionalLandsEffect(1));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

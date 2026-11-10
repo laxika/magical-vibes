@@ -9464,9 +9464,9 @@ public class GameData {
         source.combatDamageDealtToCreatures.forEach((key, value) -> copy.combatDamageDealtToCreatures.put(permanentCopy.apply(key), new ArrayList<>(value)));
         copy.combatDamageToBlockingCreatureSources.addAll(source.combatDamageToBlockingCreatureSources);
         source.combatDamageDealerControllers.forEach((key, value) -> copy.combatDamageDealerControllers.put(permanentCopy.apply(key), value));
-        source.selfDealsCombatDamageEffects.forEach((key, value) -> copy.selfDealsCombatDamageEffects.put(permanentCopy.apply(key), new ArrayList<>(value)));
-        source.selfDealsCombatDamageToPlayerOrPlaneswalkerEffects.forEach((key, value) -> copy.selfDealsCombatDamageToPlayerOrPlaneswalkerEffects.put(permanentCopy.apply(key), new ArrayList<>(value)));
-        source.selfDealsCombatDamageToPlayerOrBattleEffects.forEach((key, value) -> copy.selfDealsCombatDamageToPlayerOrBattleEffects.put(permanentCopy.apply(key), new ArrayList<>(value)));
+        source.selfDealsCombatDamageEffects.forEach((key, value) -> copy.selfDealsCombatDamageEffects.put(permanentCopy.apply(key), value.stream().<List<CardEffect>>map(ArrayList::new).collect(java.util.stream.Collectors.toCollection(ArrayList::new))));
+        source.selfDealsCombatDamageToPlayerOrPlaneswalkerEffects.forEach((key, value) -> copy.selfDealsCombatDamageToPlayerOrPlaneswalkerEffects.put(permanentCopy.apply(key), value.stream().<List<CardEffect>>map(ArrayList::new).collect(java.util.stream.Collectors.toCollection(ArrayList::new))));
+        source.selfDealsCombatDamageToPlayerOrBattleEffects.forEach((key, value) -> copy.selfDealsCombatDamageToPlayerOrBattleEffects.put(permanentCopy.apply(key), value.stream().<List<CardEffect>>map(ArrayList::new).collect(java.util.stream.Collectors.toCollection(ArrayList::new))));
         source.selfDealsDamageAbilities.forEach((key, value) -> copy.selfDealsDamageAbilities.put(permanentCopy.apply(key), new ArrayList<>(value)));
         source.enchantedCreatureDealsDamageTriggers.forEach(value -> copy.enchantedCreatureDealsDamageTriggers.add(new StackEntry(value)));
         source.allyCreatureDealsDamageToPlaneswalkerTriggers.forEach(value -> copy.allyCreatureDealsDamageToPlaneswalkerTriggers.add(new StackEntry(value)));

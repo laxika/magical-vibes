@@ -4571,9 +4571,9 @@ public class TriggerCollectionService {
                                                       UUID sourceControllerId, UUID sourcePermanentId,
                                                       int totalDamage, int damageToPlayers,
                                                       UUID damagedPlayerId,
-                                                      List<CardEffect> snapshottedSelfEffects) {
+                                                      List<List<CardEffect>> snapshottedSelfAbilities) {
         queueSourceDealsCombatDamageTriggers(gameData, sourceCard, sourceControllerId, sourcePermanentId,
-                totalDamage, damageToPlayers, damagedPlayerId, snapshottedSelfEffects, null);
+                totalDamage, damageToPlayers, damagedPlayerId, snapshottedSelfAbilities, null);
     }
 
     /**
@@ -4597,7 +4597,7 @@ public class TriggerCollectionService {
                                                       UUID sourceControllerId, UUID sourcePermanentId,
                                                       int totalDamage, int damageToPlayers,
                                                       UUID damagedPlayerId,
-                                                      List<CardEffect> snapshottedSelfEffects,
+                                                      List<List<CardEffect>> snapshottedSelfAbilities,
                                                       List<Permanent> snapshottedAllyWatchers) {
         if (sourceCard == null || sourceControllerId == null || sourcePermanentId == null || totalDamage <= 0) {
             return;
@@ -4606,7 +4606,7 @@ public class TriggerCollectionService {
         var ctx = new TriggerContext.SourceDealsCombatDamage(
                 sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers, damagedPlayerId);
         dispatchSourceDealsCombatDamageTriggers(gameData, sourceCard, sourceControllerId, sourcePermanentId,
-                totalDamage, damageToPlayers, snapshottedSelfEffects, CombatWatch.ON_SELF_DEALS_COMBAT_DAMAGE);
+                totalDamage, damageToPlayers, snapshottedSelfAbilities, CombatWatch.ON_SELF_DEALS_COMBAT_DAMAGE);
 
         // "Whenever a creature you control deals combat damage" watchers (Five-Alarm Fire). Scanned on
         // the damage source's controller's battlefield only; the watcher itself needn't be a creature.
@@ -8612,10 +8612,10 @@ public class TriggerCollectionService {
                                                                             UUID sourcePermanentId,
                                                                             int totalDamage,
                                                                             int damageToPlayers,
-                                                                            List<CardEffect> snapshottedEffects) {
+                                                                            List<List<CardEffect>> snapshottedAbilities) {
         if (sourceCard == null || sourceControllerId == null || sourcePermanentId == null || totalDamage <= 0) return;
         dispatchSourceDealsCombatDamageTriggers(gameData, sourceCard, sourceControllerId, sourcePermanentId,
-                totalDamage, damageToPlayers, snapshottedEffects,
+                totalDamage, damageToPlayers, snapshottedAbilities,
                 CombatWatch.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER);
     }
 
@@ -8624,10 +8624,10 @@ public class TriggerCollectionService {
                                                                        UUID sourcePermanentId,
                                                                        int totalDamage,
                                                                        int damageToPlayers,
-                                                                       List<CardEffect> snapshottedEffects) {
+                                                                       List<List<CardEffect>> snapshottedAbilities) {
         if (sourceCard == null || sourceControllerId == null || sourcePermanentId == null || totalDamage <= 0) return;
         dispatchSourceDealsCombatDamageTriggers(gameData, sourceCard, sourceControllerId, sourcePermanentId,
-                totalDamage, damageToPlayers, snapshottedEffects,
+                totalDamage, damageToPlayers, snapshottedAbilities,
                 CombatWatch.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE);
         queueEquippedCreatureDealsCombatDamageToPlayerOrBattleTriggers(
                 gameData, sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers);
@@ -8636,7 +8636,7 @@ public class TriggerCollectionService {
     private void dispatchSourceDealsCombatDamageTriggers(GameData gameData, Card sourceCard,
                                                          UUID sourceControllerId, UUID sourcePermanentId,
                                                          int totalDamage, int damageToPlayers,
-                                                         List<CardEffect> snapshottedEffects,
+                                                         List<List<CardEffect>> snapshottedAbilities,
                                                          CombatWatch watch) {
         var ctx = new TriggerContext.SourceDealsCombatDamage(
                 sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers);
@@ -8645,10 +8645,9 @@ public class TriggerCollectionService {
         List<List<CardEffect>> abilities = new ArrayList<>(byAbility(WatchedAbilities.printed(sourceCard, watch),
                 read));
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        if (snapshottedEffects != null) {
-            // The granted abilities' effects as the combat damage step snapshotted them, a flat list that no longer
-            // tells its abilities apart: one object each (row 17z14g).
-            snapshottedEffects.forEach(effect -> abilities.add(List.of(effect)));
+        if (snapshottedAbilities != null) {
+            // The granted abilities as the combat damage step snapshotted them, one list of effects for each.
+            abilities.addAll(snapshottedAbilities);
         } else if (sourcePermanent != null) {
             abilities.addAll(byAbility(WatchedAbilities.temporary(sourcePermanent, watch.trigger()), read));
             abilities.addAll(byAbility(WatchedAbilities.persistent(sourcePermanent, watch.trigger()), read));

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.DeterminedOnce;
 import com.github.laxika.magicalvibes.model.amount.DistinctColorPairsAmongControlledPermanents;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -48,10 +49,10 @@ public class NivMizzetGuildpact extends Card {
         );
         setAllowSharedTargets(true);
 
-        target(anyTarget).addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new DealDamageToAnyTargetEffect(colorPairs));
-        target(anyPlayer).addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new DrawCardForTargetPlayerEffect(colorPairs, false, true));
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new GainLifeEffect(colorPairs));
+        CardEffect damage = new DealDamageToAnyTargetEffect(colorPairs);
+        CardEffect draw = new DrawCardForTargetPlayerEffect(colorPairs, false, true);
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), damage, draw, new GainLifeEffect(colorPairs));
+        target(anyTarget).bindEffect(damage);
+        target(anyPlayer).bindEffect(draw);
     }
 }

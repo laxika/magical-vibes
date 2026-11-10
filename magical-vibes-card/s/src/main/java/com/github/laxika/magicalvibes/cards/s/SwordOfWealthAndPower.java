@@ -22,8 +22,8 @@ public class SwordOfWealthAndPower extends Card {
         addStaticEffect(new GrantEffectEffect(
                 new ProtectionFromCardTypesEffect(Set.of(CardType.INSTANT, CardType.SORCERY)),
                 GrantScope.EQUIPPED_CREATURE));
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), CreateTokenEffect.ofTreasureToken(1));
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new CopyNextInstantOrSorceryCastThisTurnEffect());
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), CreateTokenEffect.ofTreasureToken(1),
+                new CopyNextInstantOrSorceryCastThisTurnEffect());
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

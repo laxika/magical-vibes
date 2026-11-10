@@ -16,8 +16,7 @@ public class BusterSword extends Card {
 
     public BusterSword() {
         addStaticEffect(new StaticBoostEffect(3, 2, GrantScope.EQUIPPED_CREATURE));
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new DrawCardEffect(1));
-        addTrigger(Triggers.dealsCombatDamageToPlayer(),
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new DrawCardEffect(1),
                 new MayCastAnySpellFromHandWithoutPayingManaCostEffect(new EventValue()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

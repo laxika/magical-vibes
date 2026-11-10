@@ -23,8 +23,7 @@ public class ArmMountedAnchor extends Card {
     public ArmMountedAnchor() {
         addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new DrawCardEffect(2));
-        addTrigger(Triggers.dealsCombatDamageToPlayer(),
+        addTrigger(Triggers.dealsCombatDamageToPlayer(), new DrawCardEffect(2),
                 new DiscardTwoUnlessCardPredicateEffect(new CardSubtypePredicate(CardSubtype.PIRATE)));
         addActivatedAbility(new EquipActivatedAbility("{2}", new ReduceActivationCostEffect(
                 new FixedIfCondition(new CardsInHandAtMost(1), 2, 0))));

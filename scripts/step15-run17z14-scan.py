@@ -32,6 +32,10 @@ DONE = {
     "KarazikarTheEyeTyrant", "OathOfKaya", "TenuredOilcaster",
     # Run 17z14f (scripts/step15-run17z14f-cards.py): the block-step collectors read each ability whole.
     "KeeperOfTresserhorn", "LimDLsPaladin", "MasterOfCruelties",
+    # Run 17z14g (scripts/step15-run17z14g-cards.py): the combat-damage collectors read each ability whole.
+    "ArmMountedAnchor", "BumiUnleashed", "BusterSword", "NivMizzetGuildpact", "SwordOfBodyAndMind",
+    "SwordOfFeastAndFamine", "SwordOfForgeAndFrontier", "SwordOfSinewAndSteel", "SwordOfWarAndPeace",
+    "SwordOfWealthAndPower", "VengefulPharaoh",
 }
 # Run 17z14b: read against their Oracle text; their abilities on the listed trigger print apart (Class levels,
 # vanishing beside its own ability, two cast abilities).
@@ -51,6 +55,11 @@ SEPARATE = {
     # power, destroy the blocking creature" and "whenever a creature blocks a creature with lesser power, destroy the
     # attacking creature".
     "NoQuarter",
+    # Run 17z14g: Karai, Future of the Foot prints one ability ("return target creature card from your graveyard to
+    # your hand. If her sneak cost was paid this turn, instead return that card to the battlefield"), written as two
+    # whose event conditions exclude each other, so one triggers at a time and it is one object either way; merging
+    # them needs one return effect whose destination is a condition, which no effect has.
+    "KaraiFutureOfTheFoot",
 }
 STEP = re.compile(r"Triggers\.(upkeep|drawStep|endStep|beginningOfCombat|precombatMainPhase|postcombatMainPhase"
                   r"|secondMainPhase|endOfCombat)\b")

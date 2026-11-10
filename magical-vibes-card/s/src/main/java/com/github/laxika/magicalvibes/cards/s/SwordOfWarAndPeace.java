@@ -32,11 +32,10 @@ public class SwordOfWarAndPeace extends Card {
 
         // Triggered: whenever equipped creature deals combat damage to a player,
         // Sword of War and Peace deals damage to that player equal to the number of cards in their hand
+        // and you gain 1 life for each card in your hand
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), DamageRecipient.TARGET_PLAYER));
-
-        // Triggered: ...and you gain 1 life for each card in your hand
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new GainLifeEffect(new CardsInHand(CountScope.CONTROLLER)));
+                new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), DamageRecipient.TARGET_PLAYER),
+                new GainLifeEffect(new CardsInHand(CountScope.CONTROLLER)));
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

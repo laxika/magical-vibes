@@ -4,12 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RenownEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,7 +22,9 @@ public class HonoredHierarch extends Card {
 
     public HonoredHierarch() {
         // Renown 1
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new RenownEffect(1));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
+                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new SourceIsRenowned())),
+                new RenownEffect(1));
 
         // As long as Honored Hierarch is renowned, it has vigilance ...
         addStaticEffect(new ConditionalEffect(

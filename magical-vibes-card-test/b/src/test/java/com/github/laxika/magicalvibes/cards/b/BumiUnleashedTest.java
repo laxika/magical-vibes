@@ -59,6 +59,17 @@ class BumiUnleashedTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The combat damage ability is one stack object")
+    void combatDamageAbilityIsOneStackObject() {
+        Permanent attacker = addCreatureReady(player1, new BumiUnleashed());
+        attacker.setAttacking(true);
+
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
     @DisplayName("The restriction ends with Bumi's extra combat")
     void restrictionEndsWithExtraCombat() {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());

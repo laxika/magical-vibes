@@ -31,14 +31,12 @@ public class SwordOfBodyAndMind extends Card {
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.GREEN, CardColor.BLUE), GrantScope.EQUIPPED_CREATURE));
 
         // Triggered: whenever equipped creature deals combat damage to a player,
-        // you create a 2/2 green Wolf creature token
+        // you create a 2/2 green Wolf creature token and that player mills ten cards
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new CreateTokenEffect(1, "Wolf", 2, 2,
                         CardColor.GREEN, List.of(CardSubtype.WOLF),
-                        Set.of(), Set.of()));
-
-        // Triggered: ...and that player mills ten cards
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new MillEffect(10, MillRecipient.TARGET_PLAYER));
+                        Set.of(), Set.of()),
+                new MillEffect(10, MillRecipient.TARGET_PLAYER));
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

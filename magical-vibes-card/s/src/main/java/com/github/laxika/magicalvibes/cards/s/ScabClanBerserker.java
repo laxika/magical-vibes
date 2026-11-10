@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -18,7 +19,9 @@ public class ScabClanBerserker extends Card {
 
     public ScabClanBerserker() {
         // Renown 1
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new RenownEffect(1));
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
+                TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new SourceIsRenowned())),
+                new RenownEffect(1));
 
         // Whenever an opponent casts a noncreature spell, if this creature is renowned, this
         // creature deals 2 damage to that player.

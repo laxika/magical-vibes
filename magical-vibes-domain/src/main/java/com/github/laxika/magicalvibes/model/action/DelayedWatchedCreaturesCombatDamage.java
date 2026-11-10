@@ -21,6 +21,11 @@ import java.util.UUID;
  *
  * <p>Cleared at the beginning of {@code controllerId}'s next turn by {@code TurnProgressionService},
  * matching the "until your next turn" duration rather than the usual end-of-turn cleanup.
+ *
+ * <p>{@code creatingPermanentId} is the permanent whose ability created this delayed triggered ability (CR 603.7), or
+ * {@code null}: the stack entry of each trigger names it as its granting permanent, which "convert Optimus Prime"
+ * reads ({@code TransformGrantingPermanentEffect}). The ability is the watching player's, not the watched creature's,
+ * so nothing that adds triggers for that creature's abilities applies to it.
  */
 public record DelayedWatchedCreaturesCombatDamage(
         Set<UUID> watchedPermanentIds,
@@ -28,6 +33,14 @@ public record DelayedWatchedCreaturesCombatDamage(
         List<CardEffect> effects,
         Card sourceCard,
         boolean combatDamageToPlayerOnly,
-        boolean untilEndOfTurn
+        boolean untilEndOfTurn,
+        UUID creatingPermanentId
 ) implements DelayedAction {
+
+    /** A watch that names no creating permanent. */
+    public DelayedWatchedCreaturesCombatDamage(Set<UUID> watchedPermanentIds, UUID controllerId,
+                                               List<CardEffect> effects, Card sourceCard,
+                                               boolean combatDamageToPlayerOnly, boolean untilEndOfTurn) {
+        this(watchedPermanentIds, controllerId, effects, sourceCard, combatDamageToPlayerOnly, untilEndOfTurn, null);
+    }
 }

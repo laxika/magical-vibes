@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -135,37 +134,6 @@ public final class DamageAbilityReader {
         return effects(printed(card, watch), watch.trigger());
     }
 
-    /** {@link #printedEffects(Card, DamageWatch)} of the abilities {@code judge} lets trigger. */
-    public static List<CardEffect> printedEffects(Card card, DamageWatch watch, TriggerJudge judge) {
-        return effects(judge.filter(printed(card, watch)), watch.trigger());
-    }
-
-    /** {@link #temporaryEffects(Permanent, DamageWatch)} of the abilities {@code judge} lets trigger. */
-    public static List<CardEffect> temporaryEffects(Permanent permanent, DamageWatch watch, TriggerJudge judge) {
-        return effects(judge.filter(WatchedAbilities.temporary(permanent, watch.trigger())), watch.trigger());
-    }
-
-    /** {@link #persistentEffects(Permanent, DamageWatch)} of the abilities {@code judge} lets trigger. */
-    public static List<CardEffect> persistentEffects(Permanent permanent, DamageWatch watch, TriggerJudge judge) {
-        return effects(judge.filter(WatchedAbilities.persistent(permanent, watch.trigger())), watch.trigger());
-    }
-
-    /**
-     * The effects of the abilities {@code watch} reads granted to {@code permanent} until end of turn, end of combat or
-     * next upkeep, for a collector that reads no filter, limit or multiplicity (this throws on one).
-     */
-    public static List<CardEffect> temporaryEffects(Permanent permanent, DamageWatch watch) {
-        return effects(WatchedAbilities.temporary(permanent, watch.trigger()), watch.trigger());
-    }
-
-    /**
-     * The effects of the abilities {@code watch} reads granted to {@code permanent} until it leaves the battlefield,
-     * for a collector that reads no filter, limit or multiplicity (this throws on one).
-     */
-    public static List<CardEffect> persistentEffects(Permanent permanent, DamageWatch watch) {
-        return effects(WatchedAbilities.persistent(permanent, watch.trigger()), watch.trigger());
-    }
-
     /** Every effect of {@code abilities}, as their collector reads them for the condition watched as {@code watched}. */
     public static List<DamageEffect> read(List<TriggeredAbility> abilities, Trigger watched) {
         List<DamageEffect> effects = new ArrayList<>();
@@ -173,23 +141,6 @@ public final class DamageAbilityReader {
             effects.addAll(read(ability, watched));
         }
         return effects;
-    }
-
-    /**
-     * {@code reads}, a flat list of abilities' reads in order, one list for each ability: the consecutive reads of one
-     * ability object, each list one object on the stack (CR 603.3).
-     */
-    public static List<List<DamageEffect>> byAbility(List<DamageEffect> reads) {
-        List<List<DamageEffect>> byAbility = new ArrayList<>();
-        List<DamageEffect> current = null;
-        for (DamageEffect read : reads) {
-            if (current == null || current.getFirst().ability() != read.ability()) {
-                current = new ArrayList<>();
-                byAbility.add(current);
-            }
-            current.add(read);
-        }
-        return byAbility;
     }
 
     /**
