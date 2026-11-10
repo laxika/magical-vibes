@@ -191,6 +191,20 @@ class ObliviousBookwormTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(retained);
     }
 
+    @Test
+    @CardUsed(NarsetParterOfVeils.class)
+    void triggersWhileDrawingIsPrevented() {
+        harness.addToBattlefield(player1, new ObliviousBookworm());
+        harness.addToBattlefieldAndReturn(player2, new NarsetParterOfVeils()).setCounterCount(CounterType.LOYALTY, 5);
+        harness.setLibrary(player1, List.of(new CanyonLurkers()));
+        harness.setHand(player1, List.of(new CanyonLurkers()));
+        gd.cardsDrawnThisTurn.put(player1.getId(), 1);
+
+        advanceToBookwormMay();
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Oblivious Bookworm"));
+    }
+
     private void resolveBookwormMay() {
         advanceToBookwormMay();
         harness.passBothPriorities();

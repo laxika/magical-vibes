@@ -30,7 +30,7 @@ public class DeadwoodTreefolk extends Card {
     public DeadwoodTreefolk() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                TriggerOptions.DEFAULT.withEventCondition(new SourceCounterThreshold(1, CounterType.TIME)),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.TIME)),
                         new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
 
         ReturnCardFromGraveyardEffect returnAnotherCreature = ReturnCardFromGraveyardEffect.builder()

@@ -37,6 +37,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -778,7 +779,9 @@ public class CloneService {
                 if (addVanishingIfCopiedPermanentLacksIt && !copiedPermanentHasVanishing) {
                     applyAdditionalCopyCharacteristics(perm.getCard(), Set.of(), Set.of(Keyword.VANISHING));
                     perm.getCard().addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
+                    // Vanishing's upkeep ability: "if this permanent has a time counter on it" (CR 702.63a).
                     perm.getCard().addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                            TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.TIME)),
                             new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
                 }
                 if (addTypeAppropriateCounters) {

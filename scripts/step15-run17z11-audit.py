@@ -154,6 +154,9 @@ CLASSIFIED = {
     # `MayEffect`) and the read is gone. Darigaaz Reincarnated's egg-counter ability below is made by the engine for a
     # card exiled with egg counters (the card declares no effect there), so nothing a card wrote is rewritten.
     ("StepTriggerService.java", "RemoveEggCounterFromExileAndReturnEffect"): "ENGINE",
+    # Run 17z13e8: the each-upkeep `UpkeepPlayerDependentEffect` read judges the engine-made ability of an Aura that
+    # returned as a non-Aura enchantment ("at the beginning of that player's upkeep"); no card declares it.
+    ("StepTriggerService.java", "UpkeepPlayerDependentEffect"): "ENGINE",
     ("StepTriggerService.java", "ChooseOneEffect"): "ROUTE",
     ("TriggerCollectionService.java", "EnterBattlefieldOnDiscardEffect"): "ROUTE",
     ("TriggerCollectionService.java", "ChooseOneEffect"): "ROUTE",
@@ -204,18 +207,14 @@ REVIEWED_ROUTE = {
         "ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect", "SoulbondChoosePartnerEffect",
         "SubtypeChoiceOnEnterEffect", "TargetedGraveyardAndPlayerEffect",
     },
+    # Run 17z13e8: the step reader's class-judged trigger conditions, merges, window resets and the draw-prevented skip
+    # are gone (their labels with them); `step15-run17z13e-audit.py`'s `READERS` gives each remaining read's verdict.
     "StepTriggerService.java": {
-        "AdditionalUpkeepStepEffect", "BecomeCopyOfTargetCreatureEffect", "ChooseCardTypeOnEnterEffect",
-        "ChooseOneAtTriggerTimeEffect", "DealDamageIfFewCardsInHandEffect", "DestroyOneOfTargetsAtRandomEffect",
-        "DrawCardEffect",
+        "BecomeCopyOfTargetCreatureEffect", "ChooseCardTypeOnEnterEffect",
+        "ChooseOneAtTriggerTimeEffect", "DestroyOneOfTargetsAtRandomEffect",
         "ExchangeControlOfTargetPermanentsEffect", "ExileGraveyardCardsEffect", "MaySkipDrawReplacementEffect",
-        "MonarchEndStepTriggeredEffect", "OpponentDrawStepOnlyEffect",
-        "PlayerWithMostLifeGainsControlOfSourceCreatureEffect", "PutCounterOnReturnedPermanentsEffect",
-        "PutOrRemoveCounterIfBlockedSinceLastUpkeepEffect", "RemoveCounterAndSacrificeSelfOnLastEffect",
-        "RemoveScreamCounterFromExiledCardEffect", "ReturnCardFromGraveyardEffect",
-        "ReturnTargetCardsFromGraveyardToHandEffect", "SacrificeSelfAndReturnCardsExiledWithSourceEffect",
-        "SkipDrawStepEffect", "SoulEchoUpkeepEffect",
-        "TargetPlayerGainsControlOfEnchantedPermanentEffect", "TemporaryCopyEffect", "UpkeepPlayerDependentEffect",
+        "ReturnCardFromGraveyardEffect", "ReturnTargetCardsFromGraveyardToHandEffect",
+        "SkipDrawStepEffect", "TemporaryCopyEffect",
     },
     "TriggerCollectionService.java": {
         "AddOneOfEachManaTypeProducedByLandEffect", "ChooseCardNameAtResolutionEffect", "ChooseColorForSourceEffect",

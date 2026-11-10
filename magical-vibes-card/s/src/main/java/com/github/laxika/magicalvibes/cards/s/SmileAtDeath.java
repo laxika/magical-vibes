@@ -24,8 +24,7 @@ public class SmileAtDeath extends Card {
                 new CardAllOfPredicate(List.of(
                         new CardTypePredicate(CardType.CREATURE),
                         new CardPowerAtMostPredicate(2))),
-                2, false, false));
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                2, false, false),
                 new PutCounterOnReturnedPermanentsEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

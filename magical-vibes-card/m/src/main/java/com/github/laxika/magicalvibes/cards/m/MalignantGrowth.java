@@ -15,6 +15,6 @@ public class MalignantGrowth extends Card {
     public MalignantGrowth() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CumulativeUpkeepEffect("{1}"));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCountersOnSelfEffect(CounterType.GROWTH));
-        addTrigger(Triggers.drawStep(ActivePlayer.ANY), new DrawPerSourceCounterThenDamageEffect(CounterType.GROWTH));
+        addTrigger(Triggers.drawStep(ActivePlayer.OPPONENT), new DrawPerSourceCounterThenDamageEffect(CounterType.GROWTH));
     }
 }

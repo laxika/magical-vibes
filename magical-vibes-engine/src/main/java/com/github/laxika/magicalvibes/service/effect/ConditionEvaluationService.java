@@ -19,6 +19,11 @@ import com.github.laxika.magicalvibes.model.action.DelayedControllerSpellCastTri
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.condition.APlayerControlsMoreCreaturesThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreCardsInHandThanEachOtherPlayer;
+import com.github.laxika.magicalvibes.model.condition.APlayerHasMoreLifeThanEachOtherPlayer;
+import com.github.laxika.magicalvibes.model.effect.PlayerWithMostLifeGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.model.condition.ActivePlayerIsMonarch;
+import com.github.laxika.magicalvibes.model.condition.FirstUpkeepThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInExileWithScreamCounter;
 import com.github.laxika.magicalvibes.model.condition.ActivationCount;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsMoreLandsThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerControlsPermanent;
@@ -2215,6 +2220,14 @@ public class ConditionEvaluationService {
                             : aPlayerControlsMoreCreaturesThanEachOtherPlayer(gameData, c.creatureFilter(), ctx);
             case APlayerHasMoreCardsInHandThanEachOtherPlayer ignored ->
                     aPlayerHasMoreCardsInHandThanEachOtherPlayer(gameData);
+            case APlayerHasMoreLifeThanEachOtherPlayer ignored ->
+                    PlayerWithMostLifeGainsControlOfSourceCreatureEffect.hasUniqueLifeLeader(gameData);
+            case FirstUpkeepThisTurn ignored -> !gameData.currentUpkeepIsAdditional;
+            case ActivePlayerIsMonarch ignored ->
+                    gameData.activePlayerId != null && gameData.activePlayerId.equals(gameData.monarchPlayerId);
+            case SourceCardInExileWithScreamCounter ignored -> ctx.sourceCard() != null
+                    && gameData.exiledCardScreamCounters.getOrDefault(ctx.sourceCard().getId(), 0) > 0
+                    && gameData.findExiledCard(ctx.sourceCard().getId()) != null;
             case OpponentControlsMoreLands ignored ->
                     gameQueryService.anyOpponentControlsMoreLands(gameData, ctx.controllerId());
             case OpponentControlsNoPermanent c ->

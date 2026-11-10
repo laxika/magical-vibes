@@ -11,12 +11,13 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
 import java.util.List;
 import java.util.Set;
 
@@ -51,6 +52,7 @@ public class OmenpathToNaya extends Card {
     public OmenpathToNaya() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(4)));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.TIME)),
                 new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
         addActivatedAbility(new ActivatedAbility(
                 true,

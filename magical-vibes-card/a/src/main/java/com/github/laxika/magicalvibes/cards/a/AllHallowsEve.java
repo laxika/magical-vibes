@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.condition.SourceCardInExileWithScreamCounter;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveScreamCounterFromExiledCardEffect;
@@ -19,7 +20,8 @@ public class AllHallowsEve extends Card {
 
     public AllHallowsEve() {
         addSpellEffect(ExileSpellEffect.withScreamCounters(2));
-        addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.EXILE), TriggerOptions.DEFAULT,
+        addTrigger(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU), AbilityZones.EXILE),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCardInExileWithScreamCounter()),
                 new RemoveScreamCounterFromExiledCardEffect(
                         getId(),
                         new EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(

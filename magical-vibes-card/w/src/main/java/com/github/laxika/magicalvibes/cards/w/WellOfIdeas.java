@@ -14,7 +14,7 @@ public class WellOfIdeas extends Card {
 
     public WellOfIdeas() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
-        addTrigger(Triggers.drawStep(ActivePlayer.ANY), DrawCardForTargetPlayerEffect.forOpponentDrawStep(1));
+        addTrigger(Triggers.drawStep(ActivePlayer.OPPONENT), new DrawCardForTargetPlayerEffect(1));
         addTrigger(Triggers.drawStep(ActivePlayer.YOU), new DrawCardEffect(2));
     }
 }

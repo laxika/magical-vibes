@@ -25,10 +25,10 @@ The labels are a heuristic: a handler that records the same through a choice the
 another service, can be labelled RECORD-GAP. `HAND` holds the hand classification where the heuristic's label is wrong
 (the reason in the comment); `ROWS` names the row of step 15 that holds a watch's handlers that aren't ROUTE, which
 `--summary` counts; `READERS` (keyed by file and effect class) holds the verdicts on the step and draw readers'
-class-keyed branches, all row 17z13e8's to read. The run's Findings (effect-slot-refactor.md, run 17z13e) give the
+class-keyed branches (row 17z13e8 read them; run 17z13e8 split the draw-trigger readers' into row 17z13e8b). The run's Findings (effect-slot-refactor.md, run 17z13e) give the
 details. `TriggerCollectorRegistry.register` throws on a duplicate key since run 17z13e, so DUP can only come from two
 annotations naming one key (the registry rejects those at start-up too). The rows' done condition: no RECORD-GAP,
-REWRITE or DUP left, no reader branch unread.
+REWRITE or DUP left, no reader branch unread or open (a reader verdict is ROUTE, STATIC, ENGINE or an open row).
 
 Read-only. Usage: step15-run17z13e-audit.py [--summary] [--watch NAME]
 """
@@ -105,12 +105,80 @@ ROWS = [
 # ability as "any spell" through the generic cast collector (the spell-cast watches have no handler), and Relic Bind's
 # "choose one" goes through the enchanted-tap default, its mode announced from the stack. What is left of the
 # class-keyed registrations is the `HAND` ROUTE above.
-DONE_ROWS = {"17z13e2", "17z13e3", "17z13e4", "17z13e5", "17z13e5b", "17z13e6", "17z13e7", "17z13e9"}
+DONE_ROWS = {"17z13e2", "17z13e3", "17z13e4", "17z13e5", "17z13e5b", "17z13e6", "17z13e7", "17z13e8", "17z13e9"}
 
 # The reader branches keyed by an effect's class (file, effect class) -> verdict. Row 17z13e's three (the your-upkeep
-# `SurveilEffect`, the your-draw-step `MayEffect` and Haphazard Bombardment's branches) are gone; the rest are row
-# 17z13e8's to read.
-READERS = {}
+# `SurveilEffect`, the your-draw-step `MayEffect` and Haphazard Bombardment's branches) are gone. Run 17z13e8 read the
+# rest (its Findings): `StepTriggerService`'s 33 violations are gone (the "you may" branches that put a bare entry on
+# the stack, the draw-prevented skip, the class-judged trigger conditions, now the cards' intervening "if"s, event
+# conditions and `Triggers.drawStep(ActivePlayer.OPPONENT)`, Smile at Death's merge, the class-keyed window resets);
+# what is left is ROUTE (the class picks the target or mode choice the ability goes to as written, with the reader's
+# record), STATIC (no triggered ability) or ENGINE (an ability the engine makes). `DrawService`'s are replacement and
+# static abilities (STATIC) but for the draw-trigger readers' branches, row 17z13e8b.
+ROUTE = "ROUTE"
+STATIC = "STATIC"
+ENGINE = "ENGINE"
+OPEN_B = "OPEN(17z13e8b)"
+READERS = {
+    # The modal goes to its mode choice as written (CR 603.3c, 700.2): the your-upkeep, precombat-main, your-end-step
+    # and beginning-of-combat readers; the chosen upkeep mode with no target records the source, the permanent it is
+    # attached to and the active player, as the reader's untargeted entries do.
+    ("StepTriggerService.java", "ChooseOneEffect"): ROUTE,
+    ("StepTriggerService.java", "ChooseOneAtTriggerTimeEffect"): ROUTE,
+    # "Choose one at random" picks its mode as the ability goes on the stack, before its targets (run 17z11e2).
+    ("StepTriggerService.java", "ChooseOneAtRandomEffect"): ROUTE,
+    # The remaining `MayEffect` reads only pick a target choice: Puca's Mischief's interdependent exchange looks through
+    # its "you may", a targeted "you may" upkeep ability picks between the generic path's two permanent-target choices,
+    # the main-phase graveyard choice's minimum looks through the wrappers (with `ReturnCardFromGraveyardEffect`,
+    # `SequenceEffect`, `ConditionalEffect` and `MayPayManaEffect`), and an untargeted beginning-of-combat "you may" is
+    # its own stack object (the reader merges the other untargeted effects into one entry) with the same record.
+    ("StepTriggerService.java", "MayEffect"): ROUTE,
+    ("StepTriggerService.java", "MayPayManaEffect"): ROUTE,
+    ("StepTriggerService.java", "SequenceEffect"): ROUTE,
+    ("StepTriggerService.java", "ReturnCardFromGraveyardEffect"): ROUTE,
+    # The each- and your-end-step readers route an intervening "if" around a targeted effect to its target choice by
+    # the wrapped effect's target spec (run 17m); a boon's condition is a boon's, not a step ability's.
+    ("StepTriggerService.java", "ConditionalEffect"): ROUTE,
+    # Interdependent targets chosen as the ability goes on the stack: Puca's Mischief, Capricious Efreet, the
+    # "another creature" copy target; a saga chapter's graveyard return; a beginning-of-combat "target cards in any
+    # graveyard" exile.
+    ("StepTriggerService.java", "ExchangeControlOfTargetPermanentsEffect"): ROUTE,
+    ("StepTriggerService.java", "DestroyOneOfTargetsAtRandomEffect"): ROUTE,
+    ("StepTriggerService.java", "BecomeCopyOfTargetCreatureEffect"): ROUTE,
+    ("StepTriggerService.java", "ReturnTargetCardsFromGraveyardToHandEffect"): ROUTE,
+    ("StepTriggerService.java", "ExileGraveyardCardsEffect"): ROUTE,
+    # The engine's abilities: the "returns as a non-Aura enchantment" one (`ReturnSourceAuraToCreatureOrNonAuraOnDeath
+    # EffectHandler` grants `DealDamageToPlayerAtUpkeepEffect`, "at the beginning of that player's upkeep") and the
+    # egg-counter return of a card exiled with egg counters (run 17z12).
+    ("StepTriggerService.java", "UpkeepPlayerDependentEffect"): ENGINE,
+    ("StepTriggerService.java", "RemoveEggCounterFromExileAndReturnEffect"): ENGINE,
+    # No triggered ability: a static draw (Teferi, Who Slows the Sunset's emblem), draw-step replacements and skips,
+    # an as-enters choice of a returning card, a floating copy effect ending.
+    ("StepTriggerService.java", "DrawDuringEachOpponentsDrawStepEffect"): STATIC,
+    ("StepTriggerService.java", "MaySkipDrawReplacementEffect"): STATIC,
+    ("StepTriggerService.java", "SkipDrawStepEffect"): STATIC,
+    ("StepTriggerService.java", "ChooseCardTypeOnEnterEffect"): STATIC,
+    ("StepTriggerService.java", "TemporaryCopyEffect"): STATIC,
+    # `DrawService`: replacement effects of a draw (CR 614.1b, 614.11) and static abilities (a draw restriction, the
+    # top card revealed, a drawn card revealed, Laboratory Maniac-style "win instead").
+    **{("DrawService.java", name): STATIC for name in (
+        "PlayWithTopCardRevealedEffect", "CyclingDrawReplacementEffect", "DrawRestrictionEffect",
+        "SkipDrawReplacementEffect", "SkipDrawIfEmptyLibraryReplacementEffect", "MaySkipDrawReplacementEffect",
+        "IslandSanctuaryEffect", "UbaMaskDrawReplacementEffect", "ZursWeirdingDrawReplacementEffect",
+        "OpponentExtraDrawsRedirectedEffect", "OpponentExtraDrawsCreateTreasureEffect",
+        "OpponentDrawTwoOrMoreReplacedEffect", "DoubleDrawExceptFirstDrawStepDrawEffect", "CounterDrawReplacementEffect",
+        "CounterThresholdDrawReplacementEffect", "FirstNonDrawStepDrawReplacementEffect",
+        "ReturnFromGraveyardInsteadOfDrawEffect", "EmptyLibraryDrawReplacementEffect", "AbundanceDrawReplacementEffect",
+        "RevealTopCardsCreaturesToHandDrawReplacementEffect", "LookAtTopCardsChooseOneToHandDrawReplacementEffect",
+        "RevealTopCreatureToGraveyardElseDrawReplacementEffect", "WinGameOnEmptyLibraryDrawEffect",
+        "ExileTopCardsMayPlayThisTurnDrawReplacementEffect", "RevealDrawnCardsEffect")},
+    # Row 17z13e8b: the draw-trigger readers' class-keyed branches (`checkControllerDrawTriggerSlot`'s Diviner's Wand
+    # skip, `queueControllerDrawAbility`'s bare "you may" and its modal's missing "that player", the opponent-draw,
+    # planar and enchanted-player readers' bare "you may"s).
+    ("DrawService.java", "BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect"): OPEN_B,
+    ("DrawService.java", "MayEffect"): OPEN_B,
+    ("DrawService.java", "ChooseOneEffect"): OPEN_B,
+}
 
 
 def row_of(watch):
@@ -264,7 +332,7 @@ def main():
         text = (S / rel).read_text()
         for m in READER_HIT.finditer(text):
             effect = m.group(1) or m.group(2)
-            verdict = READERS.get((pathlib.Path(rel).name, effect), "UNREAD(17z13e8)")
+            verdict = READERS.get((pathlib.Path(rel).name, effect), "UNREAD")
             readers[verdict] += 1
             if not only:
                 line = text.count("\n", 0, m.start()) + 1

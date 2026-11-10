@@ -15,36 +15,33 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * @param targetsPlayer          whether this effect itself establishes a player target
  * @param targetGroup            activated-ability target group to draw for, or {@code -1} for
  *                               the entry's normal target resolution
- * @param opponentDrawStepOnly   whether an {@code Triggers.drawStep(ActivePlayer.ANY)} instance skips the
- *                               source controller's draw step
  * @param triggeringCardOwner    whether the player is instead the owner of the card a "whenever you play a card" event
  *                               was about ("its owner draws a card", Apple of Eden, Isu Relic), read from the entry as
  *                               the ability resolves ({@link #ofTriggeringCardOwner(int)})
  */
 public record DrawCardForTargetPlayerEffect(DynamicAmount amount, boolean requireSourceUntapped,
-                                            boolean targetsPlayer, int targetGroup,
-                                            boolean opponentDrawStepOnly, boolean triggeringCardOwner)
-        implements CardEffect, OpponentDrawStepOnlyEffect {
+                                            boolean targetsPlayer, int targetGroup, boolean triggeringCardOwner)
+        implements CardEffect {
 
     public DrawCardForTargetPlayerEffect(DynamicAmount amount, boolean requireSourceUntapped,
-                                         boolean targetsPlayer, int targetGroup, boolean opponentDrawStepOnly) {
-        this(amount, requireSourceUntapped, targetsPlayer, targetGroup, opponentDrawStepOnly, false);
+                                         boolean targetsPlayer, int targetGroup) {
+        this(amount, requireSourceUntapped, targetsPlayer, targetGroup, false);
     }
 
     public DrawCardForTargetPlayerEffect(int amount) {
-        this(new Fixed(amount), false, false, -1, false);
+        this(new Fixed(amount), false, false, -1);
     }
 
     public DrawCardForTargetPlayerEffect(int amount, boolean requireSourceUntapped) {
-        this(new Fixed(amount), requireSourceUntapped, false, -1, false);
+        this(new Fixed(amount), requireSourceUntapped, false, -1);
     }
 
     public DrawCardForTargetPlayerEffect(int amount, boolean requireSourceUntapped, boolean targetsPlayer) {
-        this(new Fixed(amount), requireSourceUntapped, targetsPlayer, -1, false);
+        this(new Fixed(amount), requireSourceUntapped, targetsPlayer, -1);
     }
 
     public DrawCardForTargetPlayerEffect(DynamicAmount amount, boolean requireSourceUntapped, boolean targetsPlayer) {
-        this(amount, requireSourceUntapped, targetsPlayer, -1, false);
+        this(amount, requireSourceUntapped, targetsPlayer, -1);
     }
 
     public static DrawCardForTargetPlayerEffect forTargetGroup(int amount, int targetGroup) {
@@ -52,15 +49,11 @@ public record DrawCardForTargetPlayerEffect(DynamicAmount amount, boolean requir
     }
 
     public static DrawCardForTargetPlayerEffect forTargetGroup(DynamicAmount amount, int targetGroup) {
-        return new DrawCardForTargetPlayerEffect(amount, false, true, targetGroup, false);
+        return new DrawCardForTargetPlayerEffect(amount, false, true, targetGroup);
     }
 
     /** "That card's owner draws [amount]", of the card the trigger event was about; it chooses no target. */
     public static DrawCardForTargetPlayerEffect ofTriggeringCardOwner(int amount) {
-        return new DrawCardForTargetPlayerEffect(new Fixed(amount), false, false, -1, false, true);
-    }
-
-    public static DrawCardForTargetPlayerEffect forOpponentDrawStep(int amount) {
         return new DrawCardForTargetPlayerEffect(new Fixed(amount), false, false, -1, true);
     }
 

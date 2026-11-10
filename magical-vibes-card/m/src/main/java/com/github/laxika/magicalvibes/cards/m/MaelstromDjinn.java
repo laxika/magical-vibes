@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.GrantDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FUT", collectorNumber = "39")
@@ -24,6 +26,7 @@ public class MaelstromDjinn extends Card {
                 new PutCountersOnSelfEffect(CounterType.TIME, 2),
                 new GrantKeywordEffect(Keyword.VANISHING, GrantScope.SELF, GrantDuration.INDEFINITE),
                 new GrantEffectToSourceEffect(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
+                        TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.TIME)),
                         new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME))));
     }
 }

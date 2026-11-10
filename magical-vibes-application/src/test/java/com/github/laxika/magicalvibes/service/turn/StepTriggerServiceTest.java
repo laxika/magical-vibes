@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.action.EchoAtNextUpkeep;
 import com.github.laxika.magicalvibes.model.action.RandomDiscardCardsAtNextUpkeep;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.ActivePlayerHandAtMost;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -37,7 +38,6 @@ import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -1389,11 +1389,13 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Triggers.upkeep(ActivePlayer.OPPONENT) with DealDamageIfFewCardsInHandEffect triggers when hand size meets condition")
+        @DisplayName("Triggers.upkeep(ActivePlayer.OPPONENT) with an \"if that player has N or fewer cards in hand\" intervening if triggers when hand size meets condition")
         void opponentUpkeepFewCardsTriggersWhenConditionMet() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Punisher Card");
-            card.addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new DealDamageIfFewCardsInHandEffect(3, 2));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
+                    TriggerOptions.DEFAULT.withInterveningIf(new ActivePlayerHandAtMost(3)),
+                    new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PLAYER));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             // Active player has 2 cards in hand (≤ 3)
@@ -1406,11 +1408,13 @@ class StepTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Triggers.upkeep(ActivePlayer.OPPONENT) with DealDamageIfFewCardsInHandEffect skips when hand too large")
+        @DisplayName("Triggers.upkeep(ActivePlayer.OPPONENT) with an \"if that player has N or fewer cards in hand\" intervening if skips when hand too large")
         void opponentUpkeepFewCardsSkipsWhenHandTooLarge() {
             gd.turnNumber = 2;
             Card card = createCardWithName("Punisher Card");
-            card.addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new DealDamageIfFewCardsInHandEffect(3, 2));
+            card.addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
+                    TriggerOptions.DEFAULT.withInterveningIf(new ActivePlayerHandAtMost(3)),
+                    new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PLAYER));
             gd.playerBattlefields.get(player2Id).add(new Permanent(card));
 
             // Active player has 5 cards in hand (> 3)

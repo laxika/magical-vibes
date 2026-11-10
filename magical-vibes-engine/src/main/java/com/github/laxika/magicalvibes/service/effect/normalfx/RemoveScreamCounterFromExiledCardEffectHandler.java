@@ -64,7 +64,12 @@ public class RemoveScreamCounterFromExiledCardEffectHandler implements NormalEff
 
         CardEffect followUp = screamEffect.whenLastCounterRemoved();
         if (followUp != null) {
+            // The effect resolves at its own position, or inside the intervening "if" ("if this card is exiled
+            // with a scream counter on it") wrapped around it at the resolving position.
             int effectIndex = entry.getEffectsToResolve().indexOf(effect);
+            if (effectIndex < 0) {
+                effectIndex = entry.getResolvingEffectIndex();
+            }
             if (effectIndex >= 0) {
                 entry.insertEffectsToResolve(effectIndex + 1, List.of(followUp));
             }
