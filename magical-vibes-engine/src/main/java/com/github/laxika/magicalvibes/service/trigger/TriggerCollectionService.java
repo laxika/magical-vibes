@@ -145,13 +145,11 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToActivate;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellWithSuspendCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
@@ -1911,11 +1909,7 @@ public class TriggerCollectionService {
      */
     private void collectSelfCastAbilities(GameData gameData, Card spellCard, UUID castingPlayerId, Zone castZone,
                                           StackEntry spellEntry, List<List<CardEffect>> abilities) {
-        for (List<CardEffect> abilityEffects : abilities) {
-            List<CardEffect> effects = abilityEffects.stream()
-                    .filter(effect -> !(effect instanceof ExileTriggeringSpellWithSuspendCountersEffect suspend
-                            && suspend.skipIfCastFromExile() && castZone == Zone.EXILE))
-                    .toList();
+        for (List<CardEffect> effects : abilities) {
             if (effects.isEmpty()) {
                 continue;
             }
@@ -7585,14 +7579,6 @@ public class TriggerCollectionService {
             effects.removeIf(effect -> actsOnASpell(effect)
                     && (printedWard || grantedEffects.contains(effect)));
         }
-        boolean triggeringIsSpell = triggeringEntry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
-                && triggeringEntry.getEntryType() != StackEntryType.TRIGGERED_ABILITY;
-        if (!triggeringIsSpell && !gameQueryService.hasKeyword(gameData, source, Keyword.WARD)) {
-            // "Whenever this creature becomes the target of a spell an opponent controls" (Reality Smasher)
-            // does not see abilities; only a Ward keyword's discard form also counters abilities.
-            effects.removeIf(effect -> effect instanceof CounterUnlessDiscardsEffect
-                    && !grantedEffects.contains(effect));
-        }
         if (effects.isEmpty()) return;
 
         // The abilities that act on "that spell or ability" (ward and the other "counter it unless" abilities); the
@@ -7771,8 +7757,11 @@ public class TriggerCollectionService {
             GameData gameData, Permanent source, UUID controllerId, StackEntry spellEntry) {
         if (controllerId.equals(spellEntry.getControllerId())) return;
 
-        List<CardEffect> printed = TargetAbilityReader.printedEffects(source.getCard(),
-                TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY);
+        // "Whenever this creature becomes the target of a spell an opponent controls" (Reality Smasher) sees spells
+        // only; a face-down permanent, or one whose printed abilities were removed, has none of its printed abilities.
+        List<CardEffect> printed = source.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, source)
+                ? List.of()
+                : TargetAbilityReader.printedEffects(source.getCard(), TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY);
         List<CardEffect> granted = grantedTargetEffects(gameData, source, TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL_ONLY);
         if (printed.isEmpty() && granted.isEmpty()) return;
 

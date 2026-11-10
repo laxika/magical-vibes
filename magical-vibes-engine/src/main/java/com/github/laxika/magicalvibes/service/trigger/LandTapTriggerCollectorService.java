@@ -37,8 +37,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenForTargetPlayerEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTappedLandToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -639,29 +637,6 @@ public class LandTapTriggerCollectorService {
                 " triggers — " + match.gameData().playerIdToName.get(landControllerId)
                         + " adds " + amount + " additional " + trigger.color().name().toLowerCase()
                         + " mana (" + trigger.restriction().description() + ")."));
-        return true;
-    }
-
-    @CollectsTapTrigger(value = ReturnTappedLandToHandEffect.class, watch = TapWatch.ON_ANY_PLAYER_TAPS_LAND)
-    private boolean handleReturnTappedLandToHand(TriggerMatchContext match,
-            ReturnTappedLandToHandEffect trigger, TriggerContext ctx) {
-        TriggerContext.LandTap lt = (TriggerContext.LandTap) ctx;
-
-        Permanent tappedLand = gameQueryService.findPermanentById(match.gameData(), lt.tappedLandId());
-        if (tappedLand == null) return false;
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(ReturnToHandEffect.triggering())),
-                null,
-                match.permanent().getId());
-        entry.setNonTargeting(true);
-        entry.setTriggeringPermanentId(tappedLand.getId());
-        match.gameData().enqueueTrigger(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
 

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -15,10 +14,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.HullbreakerHorrorTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RandomChoiceEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -31,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -89,10 +84,6 @@ public class StackedModalTriggerService {
             if (awaitingRandomModeAnnouncement(entry)) {
                 announceRandomMode(gameData, entry);
                 continue;
-            }
-            if (awaitingHullbreakerHorrorAnnouncement(entry)) {
-                announceHullbreakerHorrorMode(gameData, entry);
-                return true;
             }
             if (!awaitingModeAnnouncement(gameData, entry)) {
                 continue;
@@ -157,10 +148,6 @@ public class StackedModalTriggerService {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
-        if (awaitingHullbreakerHorrorAnnouncement(entry)) {
-            handleHullbreakerHorrorModeChosen(gameData, player, mode, ctx, entry);
-            return;
-        }
         recordChosenMode(gameData, entry, announcedModal(entry), mode);
         List<UUID> validTargets = modeTargets(gameData, entry, mode);
         List<CardEffect> modeEffects = mode.effects();
@@ -221,89 +208,6 @@ public class StackedModalTriggerService {
                     "'s ability targets " + targetName + "."));
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private static boolean awaitingHullbreakerHorrorAnnouncement(StackEntry entry) {
-        return entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
-                && entry.getEffectsToResolve().size() == 1
-                && entry.getEffectsToResolve().getFirst() instanceof HullbreakerHorrorTriggerEffect;
-    }
-
-    /**
-     * Hullbreaker Horror's "choose up to one" trigger announces its mode as it goes on the stack
-     * (CR 603.3c); a mode with no legal target can't be chosen, and choosing none is always possible.
-     */
-    private void announceHullbreakerHorrorMode(GameData gameData, StackEntry entry) {
-        UUID controllerId = entry.getControllerId();
-        List<ChooseOneEffect.ChooseOneOption> modes = new ArrayList<>();
-        if (!opponentSpellIds(gameData, controllerId).isEmpty()) {
-            modes.add(new ChooseOneEffect.ChooseOneOption(
-                    ChoiceContext.HullbreakerHorrorModeChoice.SPELL, new ReturnTargetSpellToHandEffect()));
-        }
-        if (!nonlandPermanentIds(gameData).isEmpty()) {
-            modes.add(new ChooseOneEffect.ChooseOneOption(
-                    ChoiceContext.HullbreakerHorrorModeChoice.PERMANENT, ReturnToHandEffect.target()));
-        }
-        modes.add(new ChooseOneEffect.ChooseOneOption(ChoiceContext.HullbreakerHorrorModeChoice.NONE,
-                List.of(), null, null, 0, 0, false, null, null));
-        ChooseOneEffect modal = new ChooseOneEffect(modes);
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                controllerId, null, null,
-                new ChoiceContext.StackedModalTriggerModeChoice(
-                        entry.getTargetableId(), controllerId, entry.getCard(), modal),
-                modes.stream().map(ChooseOneEffect.ChooseOneOption::label).toList(),
-                entry.getCard().getName() + " - Choose up to one."));
-        log.info("Game {} - {} modal trigger awaiting mode announcement",
-                gameData.id, entry.getCard().getName());
-    }
-
-    private void handleHullbreakerHorrorModeChosen(GameData gameData, Player player,
-                                                   ChooseOneEffect.ChooseOneOption mode,
-                                                   ChoiceContext.StackedModalTriggerModeChoice ctx,
-                                                   StackEntry entry) {
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " chooses \"" + mode.label() + "\" for ", ctx.sourceCard(), "."));
-        if (mode.effects().isEmpty()) {
-            gameData.stack.remove(entry);
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
-                    "'s triggered ability has no mode chosen and is removed from the stack."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-        boolean spellMode = mode.effects().getFirst() instanceof ReturnTargetSpellToHandEffect;
-        List<UUID> validTargets = spellMode
-                ? opponentSpellIds(gameData, ctx.chooserId()) : nonlandPermanentIds(gameData);
-        entry.replaceEffectsToResolve(mode.effects());
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.StackedModalTriggerTarget(
-                ctx.stackEntryId(), ctx.sourceCard(), null));
-        if (spellMode) {
-            playerInputService.beginAnyTargetChoice(gameData, ctx.chooserId(), validTargets, List.of(),
-                    ctx.sourceCard().getName() + " - Choose target spell you don't control.");
-        } else {
-            playerInputService.beginPermanentChoice(gameData, ctx.chooserId(), validTargets,
-                    ctx.sourceCard().getName() + " - Choose target nonland permanent.");
-        }
-    }
-
-    private static List<UUID> opponentSpellIds(GameData gameData, UUID controllerId) {
-        return gameData.stack.stream()
-                .filter(se -> se.getEntryType() != StackEntryType.ACTIVATED_ABILITY
-                        && se.getEntryType() != StackEntryType.TRIGGERED_ABILITY)
-                .filter(se -> !controllerId.equals(se.getControllerId()))
-                .map(StackEntry::getTargetableId)
-                .toList();
-    }
-
-    private static List<UUID> nonlandPermanentIds(GameData gameData) {
-        List<UUID> ids = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-                if (!permanent.getCard().hasType(CardType.LAND)) {
-                    ids.add(permanent.getId());
-                }
-            }
-        }
-        return ids;
     }
 
     /** Whether {@code entry} is a triggered ability whose one effect is a "choose one at random", maybe under an "if". */

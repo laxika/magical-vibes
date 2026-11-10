@@ -260,4 +260,25 @@ class CorrosiveOozeTest extends BaseCardTest {
     private Permanent addEquipment(Player player) {
         return harness.addToBattlefieldAndReturn(player, new ShortSword());
     }
+
+    @Test
+    void equipmentOfACreatureThatLeavesBeforeTheBlockTriggerResolvesIsStillDestroyed() {
+        addReadyOoze(player2);
+        Permanent attacker = addCreatureReady(player1, new BalothGorger());
+        attacker.setAttacking(true);
+        Permanent equipment = addEquipment(player1);
+        equipment.setAttachedTo(attacker.getId());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        assertThat(gd.stack).hasSize(1);
+        harness.sacrifice(attacker);
+        harness.assertOnBattlefield(player1, "Short Sword");
+
+        harness.passUntil(TurnStep.POSTCOMBAT_MAIN);
+
+        harness.assertInGraveyard(player1, "Baloth Gorger");
+        harness.assertNotOnBattlefield(player1, "Short Sword");
+        harness.assertInGraveyard(player1, "Short Sword");
+    }
 }

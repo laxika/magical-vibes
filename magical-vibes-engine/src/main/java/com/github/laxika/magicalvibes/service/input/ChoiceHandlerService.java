@@ -51,7 +51,6 @@ import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -63,14 +62,12 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -1406,14 +1403,6 @@ public class ChoiceHandlerService {
                 throw new IllegalArgumentException("Invalid card name: " + colorName);
             }
             handleChooseCardNameForDelayedCreatureCombatDamageChoice(gameData, player, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.RelicBindModeChoice ctx) {
-            handleRelicBindModeChoice(gameData, player, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.HullbreakerHorrorModeChoice ctx) {
-            handleHullbreakerHorrorModeChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.AdjustCounterKindChoice ctx) {
@@ -3625,6 +3614,8 @@ public class ChoiceHandlerService {
             triggerCollectionService.processNextEntersTriggerTarget(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)) {
+            triggerCollectionService.processNextETBSpellTargetTrigger(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
             triggerCollectionService.processNextTriggeredModalTrigger(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class)) {
@@ -3833,140 +3824,6 @@ public class ChoiceHandlerService {
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * Relic Bind's "choose one" modal triggered ability, resolved after the enchanted artifact
-     * became tapped. The chosen mode's targeted effect is handed to the shared
-     * {@link PermanentChoiceContext.MayAbilityTriggerTarget} flow: DAMAGE targets any player or
-     * planeswalker, LIFE targets any player. A legal target always exists (both modes can hit a
-     * player), so the ability never fizzles for lack of one.
-     */
-    private void handleRelicBindModeChoice(GameData gameData, Player player, String chosen,
-            ChoiceContext.RelicBindModeChoice ctx) {
-        if (!ChoiceContext.RelicBindModeChoice.OPTIONS.contains(chosen)) {
-            throw new IllegalArgumentException("Invalid Relic Bind mode: " + chosen);
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        // The modal trigger's single effect has fully resolved into this choice; nothing remains to
-        // resume on the RelicBindTapEffect entry, so drop the resume pointer before the target step.
-        gameData.pendingEffectResolutionEntry = null;
-        gameData.pendingEffectResolutionIndex = 0;
-
-        boolean damageMode = ChoiceContext.RelicBindModeChoice.DAMAGE.equals(chosen);
-        CardEffect modeEffect = damageMode
-                ? new DealDamageToTargetPlayerOrPlaneswalkerEffect(1)
-                : new TargetPlayerGainsLifeEffect(1);
-
-        List<UUID> validTargets = new ArrayList<>(gameData.orderedPlayerIds);
-        validTargets.removeIf(pid -> !pid.equals(ctx.controllerId())
-                && gameQueryService.playerHasHexproof(gameData, pid)
-                && !gameQueryService.ignoresOpponentPlayerHexproof(gameData, ctx.controllerId()));
-        if (damageMode) {
-            for (UUID pid : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                if (battlefield == null) {
-                    continue;
-                }
-                for (Permanent permanent : battlefield) {
-                    if (permanent.getCard().hasType(CardType.PLANESWALKER)) {
-                        validTargets.add(permanent.getId());
-                    }
-                }
-            }
-        }
-
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
-                ctx.sourceCard(), ctx.controllerId(), List.of(modeEffect)));
-        String targetDescription = damageMode ? "player or planeswalker" : "player";
-        playerInputService.beginPermanentChoice(gameData, ctx.controllerId(), validTargets,
-                ctx.sourceCard().getName() + " — Choose target " + targetDescription + ".");
-
-        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " chooses \"" + chosen + "\" for " , ctx.sourceCard(), "."));
-        inputCompletionService.publishStateAfterInput(gameData);
-    }
-
-    /**
-     * Hullbreaker Horror: after the "choose up to one" list pick, either finish (NONE) or hand the
-     * chosen bounce effect to {@link PermanentChoiceContext.MayAbilityTriggerTarget} for target
-     * selection. SPELL mode lists opponent-controlled spells on the stack; PERMANENT mode lists
-     * every nonland permanent.
-     */
-    private void handleHullbreakerHorrorModeChoice(GameData gameData, Player player, String chosen,
-            ChoiceContext.HullbreakerHorrorModeChoice ctx) {
-        boolean spellMode = ChoiceContext.HullbreakerHorrorModeChoice.SPELL.equals(chosen);
-        boolean permanentMode = ChoiceContext.HullbreakerHorrorModeChoice.PERMANENT.equals(chosen);
-        boolean noneMode = ChoiceContext.HullbreakerHorrorModeChoice.NONE.equals(chosen);
-        if (!spellMode && !permanentMode && !noneMode) {
-            throw new IllegalArgumentException("Invalid Hullbreaker Horror mode: " + chosen);
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        // The mode choice paused the trigger's resolution after its only effect. Drain the parked
-        // entry now (a past-the-end resume): that clears pendingEffectResolutionEntry, releases
-        // deferPlayerLossCheck, and runs the post-resolution SBA. Nulling the entry instead would
-        // leave the loss check wedged (see InputHandlerEpilogueRatchetTest).
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData,
-                    gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
-        }
-
-        gameLogService.append(gameData,
-                GameLog.textCardText(player.getUsername() + " chooses \"" + chosen + "\" for ",
-                        ctx.sourceCard(), "."));
-
-        if (noneMode) {
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        if (spellMode) {
-            List<UUID> validSpellCardIds = new ArrayList<>();
-            for (StackEntry se : gameData.stack) {
-                StackEntryType type = se.getEntryType();
-                if (type == StackEntryType.ACTIVATED_ABILITY || type == StackEntryType.TRIGGERED_ABILITY) {
-                    continue;
-                }
-                if (!ctx.controllerId().equals(se.getControllerId())) {
-                    validSpellCardIds.add(se.getTargetableId());
-                }
-            }
-            if (validSpellCardIds.isEmpty()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-                return;
-            }
-            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
-                    ctx.sourceCard(), ctx.controllerId(), List.of(new ReturnTargetSpellToHandEffect())));
-            playerInputService.beginAnyTargetChoice(gameData, ctx.controllerId(),
-                    validSpellCardIds, List.of(),
-                    ctx.sourceCard().getName() + " — Choose target spell you don't control.");
-            inputCompletionService.publishStateAfterInput(gameData);
-            return;
-        }
-
-        // permanent mode
-        List<UUID> validPermanents = new ArrayList<>();
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-            if (battlefield == null) {
-                continue;
-            }
-            for (Permanent permanent : battlefield) {
-                if (!permanent.getCard().hasType(CardType.LAND)) {
-                    validPermanents.add(permanent.getId());
-                }
-            }
-        }
-        if (validPermanents.isEmpty()) {
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
-                ctx.sourceCard(), ctx.controllerId(), List.of(ReturnToHandEffect.target())));
-        playerInputService.beginPermanentChoice(gameData, ctx.controllerId(), validPermanents,
-                ctx.sourceCard().getName() + " — Choose target nonland permanent.");
-        inputCompletionService.publishStateAfterInput(gameData);
     }
 
     /**

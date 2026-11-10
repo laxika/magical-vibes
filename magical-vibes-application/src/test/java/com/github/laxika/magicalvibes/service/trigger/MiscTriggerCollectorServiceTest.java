@@ -279,7 +279,11 @@ class MiscTriggerCollectorServiceTest {
     void enchantedPermanentTapModalWaitsForModeAndTargetBeforeGoingOnTheStack() {
         Permanent aura = createPermanent("Modal aura");
         Permanent tapped = createPermanent("Artifact");
-        var effect = new com.github.laxika.magicalvibes.model.effect.RelicBindTapEffect();
+        var effect = new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect(List.of(
+                new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption("Gain",
+                        new com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect(1)),
+                new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption("Damage",
+                        new com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect(1))));
 
         registry.dispatch(match(aura, player1Id, effect), TapWatch.ON_ENCHANTED_PERMANENT_TAPPED,
                 effect, new TriggerContext.EnchantedPermanentTap(tapped, player2Id));
@@ -290,6 +294,8 @@ class MiscTriggerCollectorServiceTest {
         assertThat(choice).isNotNull();
         assertThat(choice.controllerId()).isEqualTo(player1Id);
         assertThat(choice.sourcePermanentId()).isEqualTo(aura.getId());
+        assertThat(choice.effect()).isSameAs(effect);
+        assertThat(choice.triggeringPermanentId()).isEqualTo(tapped.getId());
     }
     private GameData gd;
     private UUID player1Id;

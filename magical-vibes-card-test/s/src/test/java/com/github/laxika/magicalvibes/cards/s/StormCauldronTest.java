@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AshayaSoulOfTheWild;
+import com.github.laxika.magicalvibes.cards.c.CrystalVein;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -16,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({AshayaSoulOfTheWild.class, Forest.class, GrizzlyBears.class, Plains.class, RazorGolem.class, StormCauldron.class})
+@CardUsed({AshayaSoulOfTheWild.class, CrystalVein.class, Forest.class, GrizzlyBears.class, Plains.class, RazorGolem.class, StormCauldron.class})
 class StormCauldronTest extends BaseCardTest {
 
     @Test
@@ -232,5 +233,22 @@ class StormCauldronTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.playLand(player2, 0))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(countPermanents(player2, "Forest")).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A land sacrificed as it is tapped for mana still triggers the return, which returns nothing")
+    void landSacrificedForManaTriggersButReturnsNothing() {
+        harness.addToBattlefield(player1, new StormCauldron());
+        harness.addToBattlefield(player1, new CrystalVein());
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, 1, 1, null, null);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Storm Cauldron");
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Crystal Vein");
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }

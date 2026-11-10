@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTappedLandToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ALL", collectorNumber = "134")
@@ -15,6 +15,6 @@ public class StormCauldron extends Card {
         // Each player may play an additional land during each of their turns.
         addStaticEffect(new EachPlayerPlaysAdditionalLandEffect());
         // Whenever a land is tapped for mana, return it to its owner's hand.
-        addTrigger(Triggers.playerTapsLandForMana(), new ReturnTappedLandToHandEffect());
+        addTrigger(Triggers.playerTapsLandForMana(), ReturnToHandEffect.triggering());
     }
 }

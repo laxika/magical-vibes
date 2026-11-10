@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -30,6 +31,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -67,10 +70,40 @@ public class TriggerTargetCollector {
                 controllerId, sourceCard, Options.END_STEP).validTargets().isEmpty()) {
             return false;
         }
+        if (!hasLegalSpellTarget(gameData, option, controllerId)) return false;
         List<CardEffect> permanentEffects = option.effectsForSelection().stream()
                 .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)).toList();
         return permanentEffects.isEmpty() || !collect(gameData, permanentEffects, option.targetFilter(),
                 controllerId, sourceCard, Options.END_STEP).validTargets().isEmpty();
+    }
+
+    /**
+     * Whether a mode of a triggered modal ability that targets a spell ("return target spell you don't control",
+     * Hullbreaker Horror) has a legal target on the stack, so it can be chosen as the ability goes on the stack
+     * (CR 603.3c): a spell matching the mode's stack filter ({@link #spellTargetFilter}), or a spell or ability for a
+     * filter that admits abilities; {@code true} for a mode that targets no spell.
+     */
+    public boolean hasLegalSpellTarget(GameData gameData,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption option, UUID controllerId) {
+        if (option.minTargets() == 0
+                || option.effectsForSelection().stream().noneMatch(EffectResolution::targetsSpellOnStack)) {
+            return true;
+        }
+        StackEntryPredicate filter = spellTargetFilter(option);
+        boolean includeAbilities = filter != null && TriggerCollectionService.predicateContainsHasTarget(filter);
+        return gameData.stack.stream().anyMatch(entry -> {
+            boolean ability = entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                    || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY;
+            return (!ability || includeAbilities) && (filter == null
+                    || targetLegalityService.matchesStackEntryPredicate(gameData, entry, filter, controllerId));
+        });
+    }
+
+    /** The stack filter of a modal ability's mode that targets a spell, or {@code null} when it declares none. */
+    public static StackEntryPredicate spellTargetFilter(
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption option) {
+        return option.targetFilter() instanceof StackEntryPredicateTargetFilter stackFilter
+                ? stackFilter.predicate() : null;
     }
 
     /** Whether a modal graveyard target restriction currently has a legal card to select. */

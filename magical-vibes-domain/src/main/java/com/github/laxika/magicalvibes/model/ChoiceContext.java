@@ -2249,32 +2249,6 @@ public sealed interface ChoiceContext {
                                     EffectDuration duration) implements ChoiceContext {}
 
     /**
-     * Relic Bind's "choose one" mode pick, made as the enchanted-artifact-tap triggered ability
-     * resolves. {@code sourceCard} is the Aura (used for the follow-up target choice and logging);
-     * {@code controllerId} chooses the mode and then the target. The two options are
-     * {@link #DAMAGE} (deal 1 damage to target player or planeswalker) and {@link #LIFE}
-     * (target player gains 1 life).
-     */
-    record RelicBindModeChoice(Card sourceCard, UUID controllerId) implements ChoiceContext {
-
-        public static final String DAMAGE = "Deal 1 damage to target player or planeswalker";
-        public static final String LIFE = "Target player gains 1 life";
-        public static final List<String> OPTIONS = List.of(DAMAGE, LIFE);
-    }
-
-    /**
-     * Hullbreaker Horror's "choose up to one" mode pick, made as the spell-cast triggered ability
-     * resolves. {@code sourceCard} is Hullbreaker Horror; {@code controllerId} chooses the mode and
-     * then (for SPELL / PERMANENT) the target. {@link #NONE} skips both modes.
-     */
-    record HullbreakerHorrorModeChoice(Card sourceCard, UUID controllerId) implements ChoiceContext {
-
-        public static final String SPELL = "Return target spell you don't control to its owner's hand";
-        public static final String PERMANENT = "Return target nonland permanent to its owner's hand";
-        public static final String NONE = "Do nothing";
-    }
-
-    /**
      * Quarry Hauler: "for each kind of counter on target permanent, put another counter of that kind
      * on it or remove one from it." The controller answers {@link #ADD}/{@link #REMOVE} once for the
      * first entry of {@code remainingKinds}; the answer is applied to {@code targetId} and, if any

@@ -276,6 +276,31 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps the attachments recorded for a departed permanent on an entry and a delayed ability")
+    void deepCopyKeepsRecordedAttachmentsOfDepartedPermanent() {
+        UUID departedId = UUID.randomUUID();
+        UUID equipmentId = UUID.randomUUID();
+        DepartedAttachments attachments = new DepartedAttachments(List.of(), List.of(equipmentId));
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY, new SerraAngel(), player1.getId(), "Block trigger", List.of());
+        entry.rememberLastKnownPermanentAttachments(departedId, attachments);
+        gd.stack.add(entry);
+        gd.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger(
+                player1.getId(), new SerraAngel(), null, departedId,
+                new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1), null, attachments));
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.stack.getFirst()).isNotSameAs(entry);
+        assertThat(copy.stack.getFirst().lastKnownPermanentAttachments(departedId).equipmentPermanentIds())
+                .containsExactly(equipmentId);
+        assertThat(copy.delayedActions).singleElement()
+                .isInstanceOfSatisfying(com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger.class,
+                        delayed -> assertThat(delayed.affectedPermanentAttachments().equipmentPermanentIds())
+                                .containsExactly(equipmentId));
+    }
+
+    @Test
     @DisplayName("Deep copy keeps a stack entry's triggering permanent and attachments, independently")
     void deepCopyKeepsTriggeringPermanentIndependently() {
         Permanent dying = new Permanent(new GrizzlyBears());

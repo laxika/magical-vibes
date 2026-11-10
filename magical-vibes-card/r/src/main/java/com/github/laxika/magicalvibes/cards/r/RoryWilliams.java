@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.CastFromZone;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchPlayer;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
@@ -14,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "153")
@@ -40,8 +44,9 @@ public class RoryWilliams extends Card {
                 MayChoicePlayer.TARGET_PLAYER
         ));
 
+        // "When you cast this spell from anywhere other than exile" is the trigger's event condition (CR 603.2).
         addTrigger(Triggers.youCastThisSpell(),
-                ExileTriggeringSpellWithSuspendCountersEffect.unlessCastFromExile(
-                        3, CreateTokenEffect.ofClueToken(1)));
+                TriggerOptions.DEFAULT.withEventCondition(new NotCondition(new CastFromZone(Zone.EXILE))),
+                new ExileTriggeringSpellWithSuspendCountersEffect(3, CreateTokenEffect.ofClueToken(1)));
     }
 }

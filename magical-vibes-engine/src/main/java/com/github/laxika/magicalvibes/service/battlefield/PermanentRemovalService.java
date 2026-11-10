@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
+import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Ability;
@@ -2392,37 +2394,30 @@ public class PermanentRemovalService {
     }
 
     /**
-     * Finds and removes the given permanent from whatever battlefield it's on, cleans up
-     * stolen-creature and permanent-exiled-cards tracking, and returns controller/owner info.
+     * Records the Auras and Equipment attached to {@code target} just before it leaves the battlefield (CR 608.2h) on
+     * every stack entry that targets it or names it as its non-targeting "that creature", and on every delayed "at end
+     * of combat" ability that affects it, whatever their effects are: "destroy all Equipment attached to that creature"
+     * (Corrosive Ooze) reads them once the creature is gone.
      */
-    private void rememberCombatEquipmentAttachments(GameData gameData, Permanent target) {
-        List<UUID> equipmentIds = new ArrayList<>();
-        gameData.forEachPermanent((controller, attachment) -> {
-            if (target.getId().equals(attachment.getAttachedTo())
-                    && gameQueryService.hasEffectiveSubtype(gameData, attachment, CardSubtype.EQUIPMENT)) {
-                equipmentIds.add(attachment.getId());
-            }
-        });
+    private void rememberAttachmentsOfDepartingPermanent(GameData gameData, Permanent target) {
+        DepartedAttachments attachments = DyingCreatureAttachmentSnapshot.capture(gameData, target.getId())
+                .toDepartedAttachments();
+        if (attachments.auraCardIds().isEmpty() && attachments.equipmentPermanentIds().isEmpty()) {
+            return;
+        }
         synchronized (gameData.delayedActions) {
             for (int i = 0; i < gameData.delayedActions.size(); i++) {
-                var action = gameData.delayedActions.get(i);
-                if (action instanceof com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger delayed
-                        && target.getId().equals(delayed.affectedPermanentId())
-                        && delayed.effect() instanceof com.github.laxika.magicalvibes.model.effect.DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect effect) {
-                    gameData.delayedActions.set(i, new com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger(
-                            delayed.controllerId(), delayed.sourceCard(), delayed.sourcePermanentId(),
-                            delayed.affectedPermanentId(), new com.github.laxika.magicalvibes.model.effect.DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect(
-                                    effect.schedule(), equipmentIds)));
+                if (gameData.delayedActions.get(i) instanceof DelayedEndOfCombatTrigger delayed
+                        && target.getId().equals(delayed.affectedPermanentId())) {
+                    gameData.delayedActions.set(i, delayed.withAffectedPermanentAttachments(attachments));
                 }
             }
         }
         for (StackEntry entry : gameData.stack) {
-            if (!target.getId().equals(entry.getTargetId())) continue;
-            List<CardEffect> updated = new ArrayList<>(entry.getEffectsToResolve());
-            updated.replaceAll(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect equipmentEffect
-                    ? new com.github.laxika.magicalvibes.model.effect.DestroyEquipmentOnEquippedCombatOpponentAtEndOfCombatEffect(
-                            equipmentEffect.schedule(), equipmentIds) : effect);
-            entry.replaceEffectsToResolve(updated);
+            if (target.getId().equals(entry.getTargetId())
+                    || entry.getDeclaredTargetIds().contains(target.getId())) {
+                entry.rememberLastKnownPermanentAttachments(target.getId(), attachments);
+            }
         }
     }
 
@@ -2468,7 +2463,7 @@ public class PermanentRemovalService {
                         : Set.copyOf(gameQueryService.getEffectiveColors(gameData, target)));
                 target.setLastKnownPower(gameData.simultaneousDyingPowers.getOrDefault(
                         target.getId(), gameQueryService.getEffectivePower(gameData, target)));
-                rememberCombatEquipmentAttachments(gameData, target);
+                rememberAttachmentsOfDepartingPermanent(gameData, target);
                 recordLastKnownAttachmentCounts(gameData, target);
                 if (gameQueryService.hasKeyword(gameData, target, Keyword.LIFELINK)) {
                     // Lifelink granted by an attachment falls off with it, so the permanent's last known

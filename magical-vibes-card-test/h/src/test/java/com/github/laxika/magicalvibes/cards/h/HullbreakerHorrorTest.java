@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.o.Opt;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
+import com.github.laxika.magicalvibes.cards.s.SlipperyBogle;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HullbreakerHorror.class, Cancel.class, GrizzlyBears.class, Opt.class})
+@CardUsed({HullbreakerHorror.class, Cancel.class, GrizzlyBears.class, Opt.class, SlipperyBogle.class})
 class HullbreakerHorrorTest extends BaseCardTest {
 
     // Flash + can't be countered + whenever you cast a spell, choose up to one bounce.
@@ -54,7 +56,7 @@ class HullbreakerHorrorTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         harness.castInstant(player1, 0);
-        harness.handleListChoice(player1, ChoiceContext.HullbreakerHorrorModeChoice.PERMANENT);
+        harness.handleListChoice(player1, "Return target nonland permanent to its owner's hand");
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
@@ -77,7 +79,7 @@ class HullbreakerHorrorTest extends BaseCardTest {
         harness.passPriority(player2);
 
         harness.castInstant(player1, 0);
-        harness.handleListChoice(player1, ChoiceContext.HullbreakerHorrorModeChoice.SPELL);
+        harness.handleListChoice(player1, "Return target spell you don't control to its owner's hand");
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
@@ -96,7 +98,7 @@ class HullbreakerHorrorTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         harness.castInstant(player1, 0);
-        harness.handleListChoice(player1, ChoiceContext.HullbreakerHorrorModeChoice.NONE);
+        harness.handleListChoice(player1, ChooseOneEffect.NO_MODE_LABEL);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.stack).hasSize(1);
@@ -128,11 +130,47 @@ class HullbreakerHorrorTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         harness.castInstant(player1, 0);
-        harness.handleListChoice(player1, ChoiceContext.HullbreakerHorrorModeChoice.PERMANENT);
+        harness.handleListChoice(player1, "Return target nonland permanent to its owner's hand");
         harness.handlePermanentChosen(player1, horror.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Hullbreaker Horror");
         harness.assertInHand(player1, "Hullbreaker Horror");
+    }
+
+    @Test
+    @DisplayName("Permanent mode can't target an opponent's hexproof permanent")
+    void permanentModeCannotTargetOpponentsHexproofPermanent() {
+        harness.addToBattlefield(player1, new HullbreakerHorror());
+        Permanent bogle = harness.addToBattlefieldAndReturn(player2, new SlipperyBogle());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Opt()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+
+        harness.castInstant(player1, 0);
+        harness.handleListChoice(player1, "Return target nonland permanent to its owner's hand");
+
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).contains(bears.getId()).doesNotContain(bogle.getId());
+    }
+
+    @Test
+    @DisplayName("The spell mode is offered only while a spell you don't control is on the stack")
+    void spellModeNeedsASpellYouDontControl() {
+        harness.addToBattlefield(player1, new HullbreakerHorror());
+        harness.setHand(player1, List.of(new Opt()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.forceActivePlayer(player1);
+
+        harness.castInstant(player1, 0);
+
+        PendingInteraction.ColorChoice modeChoice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(modeChoice).isNotNull();
+        assertThat(modeChoice.options()).contains("Return target nonland permanent to its owner's hand", ChooseOneEffect.NO_MODE_LABEL)
+                .doesNotContain("Return target spell you don't control to its owner's hand");
     }
 }

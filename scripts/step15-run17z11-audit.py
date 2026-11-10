@@ -85,6 +85,10 @@ CLASSIFIED = {
     # reader judges, `EmblemStepTriggerEffect` is gone; Teferi, Who Slows the Sunset's draw during each opponent's draw
     # step is a static ability the draw step reads (STATIC).
     ("StepTriggerService.java", "DrawDuringEachOpponentsDrawStepEffect"): "STATIC",
+    # Run 17z13d: `TriggerCollectionService`'s suspend `skipIfCastFromExile` filter and the becomes-the-target
+    # collector's `CounterUnlessDiscardsEffect` removal (two trigger conditions judged by an effect's class, ROUTE) are
+    # gone: Rory Williams' "from anywhere other than exile" is its event condition, Reality Smasher's "a spell an
+    # opponent controls" its trigger (`Triggers.becomesTargetOfOpponentSpell()`); their labels are gone with them.
     # 17z11e2 (done): the Aura grants are granted abilities the your-upkeep and your-end-step readers read (the entry
     # names the granting permanent), the each-upkeep payment's "that player" the declared-target rule, Call to the
     # Kindred's "you may" records the enchanted creature, the Energy Flux family grants its ability, Admiral Beckett
@@ -206,9 +210,8 @@ REVIEWED_ROUTE = {
     },
     "TriggerCollectionService.java": {
         "AddOneOfEachManaTypeProducedByLandEffect", "ChooseCardNameAtResolutionEffect", "ChooseColorForSourceEffect",
-        "ChooseTargetsAtRandomEffect", "CompleteDungeonEffect", "CounterUnlessDiscardsEffect",
+        "ChooseTargetsAtRandomEffect", "CompleteDungeonEffect",
         "CounterUnlessPaysEffect", "CounterUnlessSacrificesEffect", "DealDamageToAnyTargetEffect",
-        "ExileTriggeringSpellWithSuspendCountersEffect",
         "GrantActivatedAbilityEffect", "GrantCastTriggerToSpellsEffect",
         "LoseGameIfSourceDealtDamageToPlayerThisTurnEffect", "NextMatchingSpellCostEffect",
         "PhaseInLinkedPermanentEffect", "ReturnTriggeringPermanentToBattlefieldEffect",

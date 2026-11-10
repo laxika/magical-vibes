@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.EffectResolution;
+import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -1383,6 +1384,9 @@ public class TriggeredAbilityQueueService {
                 return false;
             }
         }
+        if (!triggerTargetCollector.hasLegalSpellTarget(gameData, option, pending.controllerId())) {
+            return false;
+        }
         boolean requiresTarget = option.minTargets() > 0 && option.effects().stream().anyMatch(effect ->
                 effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
@@ -1437,6 +1441,16 @@ public class TriggeredAbilityQueueService {
         List<CardEffect> effects = chosenModes.stream()
                 .flatMap(option -> option.effects().stream())
                 .toList();
+        if (chosenModes.size() == 1 && effects.stream().anyMatch(EffectResolution::targetsSpellOnStack)) {
+            // A mode that targets a spell ("return target spell you don't control", Hullbreaker Horror) chooses it on
+            // the stack as the ability goes there (CR 603.3d), among the spells its stack filter admits.
+            StackEntryPredicate spellFilter = TriggerTargetCollector.spellTargetFilter(chosenModes.getFirst());
+            gameData.queueInteractionFirst(new PermanentChoiceContext.ETBSpellTargetTrigger(
+                    sourceCard, controllerId, effects, spellFilter,
+                    spellFilter != null && TriggerCollectionService.predicateContainsHasTarget(spellFilter),
+                    sourcePermanentId));
+            return;
+        }
         boolean needsGraveyardTarget = effects.stream().anyMatch(effect ->
                 effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                         || graveyardTargetingSupport.findTarget(List.of(effect)) != null);

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -38,7 +39,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
-import com.github.laxika.magicalvibes.model.effect.RelicBindTapEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -147,12 +147,7 @@ public class MiscTriggerCollectorService {
         }
         // The judge left out the abilities whose intervening "if" doesn't hold; the effects go on the stack as written,
         // an intervening "if" still around them for the check as the ability resolves (CR 603.4).
-        List<CardEffect> triggeredEffects = cardEffects.stream()
-                .filter(triggeredEffect -> !(triggeredEffect instanceof
-                        com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect)
-                        || match.permanent().getChosenPermanentId() != null)
-                .toList();
-        if (triggeredEffects.isEmpty()) return true;
+        List<CardEffect> triggeredEffects = cardEffects;
 
         boolean needsTarget = triggeredEffects.stream()
                 .anyMatch(triggeredEffect ->
@@ -728,18 +723,18 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    @CollectsTapTrigger(value = RelicBindTapEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
-    private boolean handleEnchantedPermanentTapRelicBind(TriggerMatchContext match,
-            RelicBindTapEffect e, TriggerContext ctx) {
-        var choice = new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect(List.of(
-                new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
-                        com.github.laxika.magicalvibes.model.ChoiceContext.RelicBindModeChoice.DAMAGE,
-                        new com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect(1)),
-                new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
-                        com.github.laxika.magicalvibes.model.ChoiceContext.RelicBindModeChoice.LIFE,
-                        new com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsLifeEffect(1))));
+    /**
+     * "Whenever enchanted artifact becomes tapped, choose one —" (Relic Bind): the card's modal goes to the mode choice as
+     * written, its mode and that mode's target chosen as the ability is put on the stack (CR 603.3c), with the tapped
+     * permanent as the ability's triggering permanent.
+     */
+    @CollectsTapTrigger(value = ChooseOneEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
+    private boolean handleEnchantedPermanentTapModal(TriggerMatchContext match,
+            ChooseOneEffect modal, TriggerContext ctx) {
+        TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
         match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                match.permanent().getCard(), match.controllerId(), choice, match.permanent().getId()));
+                match.permanent().getCard(), match.controllerId(), modal, match.permanent().getId(),
+                false, false, null, null, ept.tappedPermanent().getId()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers on enchanted permanent tap (modal)",
                 match.gameData().id, match.permanent().getCard().getName());

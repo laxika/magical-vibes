@@ -160,4 +160,37 @@ class FangkeepersFamiliarTest extends BaseCardTest {
         }
     }
 
+    @Test
+    @DisplayName("Entering without being cast, the counter mode targets a creature spell as the ability goes on the stack")
+    void counterModeTargetsACreatureSpellWhenEnteringWithoutBeingCast() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        FaerieInvaders creatureSpell = new FaerieInvaders();
+        harness.castFromHand(player2, creatureSpell, "{4}{U}");
+
+        enterAndChooseMode("Counter target creature spell");
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).isNotNull();
+        assertThat(targetChoice.validIds()).containsExactly(creatureSpell.getId());
+        harness.handlePermanentChosen(player1, creatureSpell.getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Faerie Invaders");
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getName().equals("Faerie Invaders"));
+    }
+
+    @Test
+    @DisplayName("Entering without being cast, the counter mode isn't offered without a creature spell to target")
+    void counterModeIsNotOfferedWithoutACreatureSpell() {
+        harness.enterBattlefieldAndReturn(player1, new FangkeepersFamiliar());
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
+
+        PendingInteraction.ColorChoice modeChoice =
+                gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(modeChoice).isNotNull();
+        assertThat(modeChoice.options()).contains("You gain 3 life and surveil 3")
+                .doesNotContain("Counter target creature spell");
+    }
 }

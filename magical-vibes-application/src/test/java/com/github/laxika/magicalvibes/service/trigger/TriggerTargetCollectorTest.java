@@ -382,4 +382,47 @@ class TriggerTargetCollectorTest {
 
         assertThat(result.validTargets()).containsExactly(cheap.getId());
     }
+
+    @Test
+    @DisplayName("A spell-target mode is legal only while a spell its stack filter admits is on the stack")
+    void spellTargetModeNeedsAMatchingSpell() {
+        var notYours = new com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate(
+                new com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate());
+        var mode = new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
+                "Return target spell you don't control to its owner's hand",
+                new com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect(),
+                new com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter(notYours, "Not yours"));
+        var ownSpell = new com.github.laxika.magicalvibes.model.StackEntry(
+                com.github.laxika.magicalvibes.model.StackEntryType.INSTANT_SPELL, new Card(), player1Id, "Own", List.of());
+        var opponentAbility = new com.github.laxika.magicalvibes.model.StackEntry(
+                com.github.laxika.magicalvibes.model.StackEntryType.ACTIVATED_ABILITY, new Card(), player2Id,
+                "Ability", List.of());
+        gd.stack.add(ownSpell);
+        gd.stack.add(opponentAbility);
+        lenient().when(targetLegalityService.matchesStackEntryPredicate(gd, ownSpell, notYours, player1Id))
+                .thenReturn(false);
+        lenient().when(targetLegalityService.matchesStackEntryPredicate(gd, opponentAbility, notYours, player1Id))
+                .thenReturn(true);
+
+        assertThat(collector.hasLegalSpellTarget(gd, mode, player1Id)).isFalse();
+        assertThat(collector.hasLegalModeTargets(gd, mode, player1Id, sourceCard)).isFalse();
+
+        var opponentSpell = new com.github.laxika.magicalvibes.model.StackEntry(
+                com.github.laxika.magicalvibes.model.StackEntryType.CREATURE_SPELL, new Card(), player2Id,
+                "Opponent's", List.of());
+        gd.stack.add(opponentSpell);
+        org.mockito.Mockito.when(targetLegalityService.matchesStackEntryPredicate(gd, opponentSpell, notYours, player1Id))
+                .thenReturn(true);
+
+        assertThat(collector.hasLegalSpellTarget(gd, mode, player1Id)).isTrue();
+    }
+
+    @Test
+    @DisplayName("A mode that targets no spell needs no spell on the stack")
+    void modeWithoutSpellTargetNeedsNoSpell() {
+        var mode = new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
+                "Gain", new com.github.laxika.magicalvibes.model.effect.GainLifeEffect(1));
+
+        assertThat(collector.hasLegalSpellTarget(gd, mode, player1Id)).isTrue();
+    }
 }

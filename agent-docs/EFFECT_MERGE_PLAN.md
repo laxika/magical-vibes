@@ -1414,9 +1414,9 @@ The chosen-type-count handlers really do share the whole two-phase choice protoc
   Sun-Crowned Hunters is the only card with either form in `Triggers.dealtDamage()`.
 - `TargetPolarityClassifier` loses two of its four name-keyed entries — both merges collapse a pair
   that already mapped to the same `HARMFUL_DAMAGE`, so no `instanceof` branch was needed.
-- `ChoiceHandlerService:696` (Relic Bind's damage mode) and
+- Relic Bind's damage mode (its own `ChooseOneEffect` mode since effect-slot-refactor.md step 15, run 17z13c) and
   `DamageTargetPlayerOrPlaneswalkerUnlessPaysHandler:68` (Quenchable Fire's delayed damage) both
-  **construct** the survivor at runtime; the `(int)` / `(DynamicAmount)` sugar keeps them `ANY`,
+  **construct** the survivor; the `(int)` / `(DynamicAmount)` sugar keeps them `ANY`,
   which is what both cards print.
 - `BoostTargetCreaturePerChosenTypeCountEffect` / its handler and `DrawCardPerChosenTypeCountEffect`
   name the deleted chosen-type-count record in their "sibling of" javadoc; re-pointed.

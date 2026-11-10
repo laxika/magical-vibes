@@ -187,6 +187,31 @@ class DestroyAttachmentsOnTargetCreatureEffectHandlerTest {
         }
 
         @Test
+        @DisplayName("Once \"that creature\" has left, destroys the Equipment the entry recorded as attached to it")
+        void destroysRecordedEquipmentOfDepartedCreature() {
+            UUID departedCreatureId = UUID.randomUUID();
+            Card scimitarCard = createArtifactCard("Leonin Scimitar", "{1}");
+            scimitarCard.setSubtypes(List.of(CardSubtype.EQUIPMENT));
+            Permanent scimitar = addPermanent(player2Id, scimitarCard);
+            Card otherCard = createArtifactCard("Bonesplitter", "{1}");
+            otherCard.setSubtypes(List.of(CardSubtype.EQUIPMENT));
+            addPermanent(player2Id, otherCard);
+
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Corrosive Ooze"),
+                    player1Id, "Corrosive Ooze's end-of-combat ability", List.of(), departedCreatureId, (UUID) null);
+            entry.setNonTargeting(true);
+            entry.rememberLastKnownPermanentAttachments(departedCreatureId,
+                    new com.github.laxika.magicalvibes.model.rules.DepartedAttachments(List.of(),
+                            List.of(scimitar.getId())));
+
+            handler.resolve(gd, entry, new DestroyAttachmentsOnTargetCreatureEffect(false, true));
+
+            verify(permanentRemovalService).departToGraveyard(eq(gd), eq(scimitar),
+                    eq(DepartureIntent.destroy(scimitar.getId(), false)), any());
+            verify(permanentRemovalService, org.mockito.Mockito.times(1)).departToGraveyard(any(), any(), any(), any());
+        }
+
+        @Test
         @DisplayName("No attachments to destroy resolves without error")
         void noAttachmentsResolvesCleanly() {
             Permanent angel = addCreature(player2Id, "Serra Angel");

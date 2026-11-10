@@ -3540,6 +3540,8 @@ public class StepTriggerService {
             );
             delayedEntry.setNonTargeting(delayedTrigger.affectedPermanentId() != null);
             delayedEntry.setTriggeringPermanentId(delayedTrigger.triggeringPermanentId());
+            delayedEntry.rememberLastKnownPermanentAttachments(delayedTrigger.affectedPermanentId(),
+                    delayedTrigger.affectedPermanentAttachments());
             gameData.stack.add(delayedEntry);
 
             gameLogService.append(gameData, GameLog.cardThen(

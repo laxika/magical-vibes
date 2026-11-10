@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.b.BlindingDrone;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LoxodonSmiter;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -121,5 +122,26 @@ class RealitySmasherTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.setHand(player2, hand);
         harness.addMana(player2, ManaColor.RED, 1);
+    }
+
+    @Test
+    void grantedWardDoesNotMakeItsSpellTriggerSeeAnOpponentsActivatedAbility() {
+        Permanent smasher = addReadyRealitySmasher();
+        smasher.getGrantedKeywords().add(Keyword.WARD);
+        Permanent drone = addCreatureReady(player2, new BlindingDrone());
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of());
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, null, smasher.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+
+        assertThat(drone.isTapped()).isTrue();
+        assertThat(smasher.isTapped()).isTrue();
+        assertThat(gd.stack).isEmpty();
     }
 }

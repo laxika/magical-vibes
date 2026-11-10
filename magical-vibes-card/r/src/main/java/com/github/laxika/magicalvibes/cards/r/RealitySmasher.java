@@ -10,6 +10,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class RealitySmasher extends Card {
 
     public RealitySmasher() {
-        addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessDiscardsEffect());
+        addTrigger(Triggers.becomesTargetOfOpponentSpell(), new CounterUnlessDiscardsEffect());
     }
 }

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellWithSuspendCountersEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -51,7 +50,6 @@ public class ExileTriggeringSpellWithSuspendCountersEffectHandler implements Nor
             insertFollowUp(entry, effect, suspendEffect);
             return;
         }
-        if (suspendEffect.skipIfCastFromExile() && spell.getSourceZone() == Zone.EXILE) return;
 
         Card card = spell.getCard();
         UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : spell.getControllerId();

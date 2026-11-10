@@ -153,6 +153,15 @@ public class StackEntry {
     private final Map<UUID, Integer> lastKnownPermanentPowers = new HashMap<>();
     /** Effective toughness just before a permanent leaves while an ability that references it is on the stack. */
     private final Map<UUID, Integer> lastKnownPermanentToughnesses = new HashMap<>();
+    /**
+     * The Auras and Equipment attached to a permanent this entry targets, or names as its non-targeting "that
+     * creature", just before it left the battlefield (CR 608.2h): "destroy all Equipment attached to that creature"
+     * (Corrosive Ooze) still finds them once the creature is gone. Recorded by the departure whatever the effects are;
+     * read through {@link #lastKnownPermanentAttachments}.
+     */
+    @Getter(AccessLevel.NONE)
+    private final Map<UUID, com.github.laxika.magicalvibes.model.rules.DepartedAttachments>
+            lastKnownPermanentAttachments = new HashMap<>();
     private final Map<UUID, Map<CounterType, Integer>> lastKnownPermanentCounters = new HashMap<>();
     /** Permanents returned by a previous effect in this resolution, for follow-up effects. */
     private final Set<UUID> returnedPermanentIds = new LinkedHashSet<>();
@@ -1196,6 +1205,7 @@ public class StackEntry {
         this.battlefieldChosenTargetCardIds.addAll(source.battlefieldChosenTargetCardIds);
         this.lastKnownPermanentPowers.putAll(source.lastKnownPermanentPowers);
         this.lastKnownPermanentToughnesses.putAll(source.lastKnownPermanentToughnesses);
+        this.lastKnownPermanentAttachments.putAll(source.lastKnownPermanentAttachments);
         source.lastKnownPermanentCounters.forEach((id, counts) ->
                 this.lastKnownPermanentCounters.put(id, new EnumMap<>(counts)));
         this.returnedPermanentIds.addAll(source.returnedPermanentIds);
@@ -2408,6 +2418,26 @@ public class StackEntry {
 
     public Card lastKnownPermanentCard(UUID permanentId) {
         return lastKnownPermanentCards.get(permanentId);
+    }
+
+    /** Records {@code attachments} as what was attached to {@code permanentId} just before it left the battlefield. */
+    public void rememberLastKnownPermanentAttachments(UUID permanentId,
+            com.github.laxika.magicalvibes.model.rules.DepartedAttachments attachments) {
+        if (permanentId != null && attachments != null) {
+            lastKnownPermanentAttachments.put(permanentId, attachments);
+        }
+    }
+
+    /**
+     * The Auras and Equipment attached to {@code permanentId} just before it left the battlefield, as this entry
+     * recorded them; {@link com.github.laxika.magicalvibes.model.rules.DepartedAttachments#NONE} when it recorded none
+     * (the permanent hasn't left, or the entry doesn't refer to it).
+     */
+    public com.github.laxika.magicalvibes.model.rules.DepartedAttachments lastKnownPermanentAttachments(
+            UUID permanentId) {
+        return permanentId == null ? com.github.laxika.magicalvibes.model.rules.DepartedAttachments.NONE
+                : lastKnownPermanentAttachments.getOrDefault(permanentId,
+                        com.github.laxika.magicalvibes.model.rules.DepartedAttachments.NONE);
     }
 
     public void clearReturnedPermanentIds() {

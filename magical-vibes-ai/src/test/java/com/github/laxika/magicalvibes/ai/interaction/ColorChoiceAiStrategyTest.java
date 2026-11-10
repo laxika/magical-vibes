@@ -159,21 +159,28 @@ class ColorChoiceAiStrategyTest {
     }
 
     @Test
-    @DisplayName("Hullbreaker Horror mode choice answers with an offered mode")
-    void answersHullbreakerHorrorModeChoiceWithOfferedMode() throws Exception {
+    @DisplayName("A triggered \"choose up to one\" mode choice (Hullbreaker Horror) answers with an offered mode")
+    void answersOptionalTriggeredModalChoiceWithOfferedMode() throws Exception {
         UUID opponentId = UUID.randomUUID();
         gameData.orderedPlayerIds.add(aiPlayerId);
         gameData.orderedPlayerIds.add(opponentId);
         gameData.playerBattlefields.put(opponentId, List.of());
+        String permanentMode = "Return target nonland permanent to its owner's hand";
+        com.github.laxika.magicalvibes.model.effect.ChooseOneEffect modal =
+                new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect(List.of(
+                        new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
+                                permanentMode,
+                                com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.target())),
+                        true, 0, 1);
 
         PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(
                 aiPlayerId,
                 null,
                 null,
-                new ChoiceContext.HullbreakerHorrorModeChoice(null, aiPlayerId),
-                List.of(
-                        ChoiceContext.HullbreakerHorrorModeChoice.PERMANENT,
-                        ChoiceContext.HullbreakerHorrorModeChoice.NONE),
+                new ChoiceContext.TriggeredModalChoice(null, aiPlayerId, modal, null, false, false, List.of(),
+                        null, null, null, false),
+                List.of(permanentMode,
+                        com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.NO_MODE_LABEL),
                 "Choose up to one.");
 
         strategy.answer(interaction, new AiInteractionContext(
@@ -181,8 +188,7 @@ class ColorChoiceAiStrategyTest {
 
         ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
         verify(gameActions).answerInteraction(captor.capture());
-        assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade(
-                ChoiceContext.HullbreakerHorrorModeChoice.PERMANENT));
+        assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade(permanentMode));
     }
 
     @Test

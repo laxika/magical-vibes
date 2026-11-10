@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
 import com.github.laxika.magicalvibes.cards.s.ShalaiVoiceOfPlenty;
-import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -94,7 +93,7 @@ class RelicBindTest extends BaseCardTest {
         Permanent artifact = attachAuraToOpponentArtifact();
         int p2Before = gd.playerLifeTotals.get(player2.getId());
 
-        tapAndResolveModal(artifact, ChoiceContext.RelicBindModeChoice.DAMAGE, player2.getId());
+        tapAndResolveModal(artifact, "This Aura deals 1 damage to target player or planeswalker", player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(p2Before - 1);
     }
@@ -105,7 +104,7 @@ class RelicBindTest extends BaseCardTest {
         Permanent artifact = attachAuraToOpponentArtifact();
         int p1Before = gd.playerLifeTotals.get(player1.getId());
 
-        tapAndResolveModal(artifact, ChoiceContext.RelicBindModeChoice.DAMAGE, player1.getId());
+        tapAndResolveModal(artifact, "This Aura deals 1 damage to target player or planeswalker", player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(p1Before - 1);
     }
@@ -117,7 +116,7 @@ class RelicBindTest extends BaseCardTest {
         Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
         jace.setCounterCount(CounterType.LOYALTY, 3);
 
-        tapAndResolveModal(artifact, ChoiceContext.RelicBindModeChoice.DAMAGE, jace.getId());
+        tapAndResolveModal(artifact, "This Aura deals 1 damage to target player or planeswalker", jace.getId());
 
         assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(2);
     }
@@ -133,7 +132,7 @@ class RelicBindTest extends BaseCardTest {
         harness.inMutationScope(
                 () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
         harness.passPriority(player1);
-        harness.handleListChoice(player1, ChoiceContext.RelicBindModeChoice.DAMAGE);
+        harness.handleListChoice(player1, "This Aura deals 1 damage to target player or planeswalker");
 
         PendingInteraction.PermanentChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -147,7 +146,7 @@ class RelicBindTest extends BaseCardTest {
         Permanent artifact = attachAuraToOpponentArtifact();
         int p1Before = gd.playerLifeTotals.get(player1.getId());
 
-        tapAndResolveModal(artifact, ChoiceContext.RelicBindModeChoice.LIFE, player1.getId());
+        tapAndResolveModal(artifact, "Target player gains 1 life", player1.getId());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(p1Before + 1);
     }
@@ -158,7 +157,7 @@ class RelicBindTest extends BaseCardTest {
         Permanent artifact = attachAuraToOpponentArtifact();
         int p2Before = gd.playerLifeTotals.get(player2.getId());
 
-        tapAndResolveModal(artifact, ChoiceContext.RelicBindModeChoice.LIFE, player2.getId());
+        tapAndResolveModal(artifact, "Target player gains 1 life", player2.getId());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(p2Before + 1);
     }
@@ -205,7 +204,7 @@ class RelicBindTest extends BaseCardTest {
         harness.inMutationScope(
                 () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
         harness.passPriority(player1);
-        harness.handleListChoice(player1, ChoiceContext.RelicBindModeChoice.LIFE);
+        harness.handleListChoice(player1, "Target player gains 1 life");
 
         PendingInteraction.PermanentChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -227,7 +226,7 @@ class RelicBindTest extends BaseCardTest {
         harness.inMutationScope(
                 () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
         harness.passPriority(player1);
-        harness.handleListChoice(player1, ChoiceContext.RelicBindModeChoice.DAMAGE);
+        harness.handleListChoice(player1, "This Aura deals 1 damage to target player or planeswalker");
 
         PendingInteraction.PermanentChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -245,7 +244,7 @@ class RelicBindTest extends BaseCardTest {
         harness.inMutationScope(
                 () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
         harness.passPriority(player1);
-        harness.handleListChoice(player1, ChoiceContext.RelicBindModeChoice.DAMAGE);
+        harness.handleListChoice(player1, "This Aura deals 1 damage to target player or planeswalker");
         harness.handlePermanentChosen(player1, player2.getId());
         harness.addToBattlefield(player2, new ShalaiVoiceOfPlenty());
 
