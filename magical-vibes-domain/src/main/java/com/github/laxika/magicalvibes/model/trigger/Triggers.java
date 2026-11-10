@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.trigger;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -1163,6 +1164,13 @@ public final class Triggers {
     /** "Whenever a time counter is removed from this card while it's exiled", from exile. */
     public static CounterTrigger timeCounterRemovedFromThisInExile() {
         return new CounterTrigger(CounterTrigger.CounterEvent.TIME_COUNTER_REMOVED_IN_EXILE, ObjectRelation.THIS);
+    }
+
+    /** "When you remove the last [{@code counterKind}] counter from this permanent". */
+    public static CounterTrigger youRemoveLastCounterFromThis(CounterType counterKind) {
+        Objects.requireNonNull(counterKind, "counterKind");
+        return new CounterTrigger(CounterTrigger.CounterEvent.YOU_REMOVE_LAST_COUNTER, ObjectRelation.THIS, null, null,
+                counterKind);
     }
 
     /** "Whenever you remove a time counter from this card while it's exiled", from exile. */

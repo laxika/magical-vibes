@@ -65,7 +65,6 @@ import com.github.laxika.magicalvibes.model.effect.FirstestStrikeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEqualToDamageDealtEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseGameIfSourceDealtDamageToPlayerThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
@@ -2194,11 +2193,6 @@ public class CombatDamageService {
                 UUID targetChooserId = creature.getCard().isCombatTriggerTargetChosenByDefendingPlayer()
                         ? defenderId : attackerId;
 
-                if (effect instanceof LoseGameIfSourceDealtDamageToPlayerThisTurnEffect threshold
-                        && gameData.damageDealtBySourceToPlayerThisTurn(
-                        creature.getId(), defenderId) < threshold.minimumDamage()) {
-                    continue;
-                }
                 // A modal whose mode is chosen as it goes on the stack (CR 603.3c), and "choose one that hasn't been
                 // chosen" (Silent Hallcreeper) among the modes its source hasn't chosen.
                 ChooseOneEffect triggerTimeModal = TriggeredModalEffect.choiceMadeAsTriggered(effect);

@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.trigger.CounterTrigger;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -106,6 +108,10 @@ public enum CounterWatch implements TriggerWatch {
     ON_SELF_EVOLVES(Triggers.evolves(), Zone.BATTLEFIELD),
     /** "Whenever one or more loyalty counters are removed from this planeswalker". */
     ON_SELF_LOYALTY_COUNTERS_REMOVED(Triggers.loyaltyCountersRemovedFromThis(), Zone.BATTLEFIELD),
+    /** "When you remove the last [kind] counter from this permanent"; its collector reads the kind from the ability. */
+    ON_YOU_REMOVE_LAST_COUNTER_FROM_SELF(
+            new CounterTrigger(CounterTrigger.CounterEvent.YOU_REMOVE_LAST_COUNTER, ObjectRelation.THIS),
+            Zone.BATTLEFIELD),
     /** "Whenever one or more time counters are removed from this permanent". */
     ON_SELF_TIME_COUNTERS_REMOVED(Triggers.timeCountersRemovedFromThis(), Zone.BATTLEFIELD),
     /** "Whenever a +1/+1 counter is removed from this creature", once for each counter. */

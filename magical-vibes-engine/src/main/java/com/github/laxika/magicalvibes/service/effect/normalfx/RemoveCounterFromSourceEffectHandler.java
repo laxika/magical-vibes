@@ -41,6 +41,9 @@ public class RemoveCounterFromSourceEffectHandler implements NormalEffectHandler
         int amount = e.dynamicAmount() != null
                 ? amountEvaluationService.evaluate(gameData, e.dynamicAmount(), AmountContext.forStackEntry(entry, self))
                 : e.amount();
+        int before = self.getCounterCount(e.counterType());
         permanentCounterSupport.removeCounterFromPermanent(gameData, self, e.counterType(), amount);
+        permanentCounterSupport.notifyLastCounterRemoved(gameData, self, e.counterType(),
+                before - self.getCounterCount(e.counterType()), entry.getControllerId());
     }
 }

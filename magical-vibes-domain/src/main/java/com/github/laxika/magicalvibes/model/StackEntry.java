@@ -806,6 +806,17 @@ public class StackEntry {
      */
     @Setter private UUID triggeringPlayerId;
     /**
+     * The kind of counters a counter event was about ("the same number and kind of counters"), with
+     * {@link #eventValue} as their number; {@code null} for an event about no one kind. Not a target.
+     */
+    @Setter private CounterType eventCounterType;
+    /**
+     * Whether this ability of an Aura triggered as the permanent it was attached to left, before the Aura itself is put
+     * into its owner's graveyard as a state-based action (CR 704.5m): the Aura's next graveyard stay is the one "return
+     * this card" means, and {@code GameData.markGraveyardEntry} records it as {@link #sourceGraveyardEntryVersion}.
+     */
+    @Setter private boolean awaitingSourceGraveyardEntry;
+    /**
      * The vote a "whenever players finish voting" ability triggered on, as the players finished it (Erestor of the
      * Council, Model of Unity). Immutable. Not a target.
      */
@@ -1459,6 +1470,8 @@ public class StackEntry {
         this.triggeringPermanentId = source.triggeringPermanentId;
         this.triggeringPermanentIds = source.triggeringPermanentIds;
         this.triggeringPlayerId = source.triggeringPlayerId;
+        this.eventCounterType = source.eventCounterType;
+        this.awaitingSourceGraveyardEntry = source.awaitingSourceGraveyardEntry;
         this.triggeringVotingResult = source.triggeringVotingResult;
         this.triggeringPermanentControllerId = source.triggeringPermanentControllerId;
         this.triggeringPermanentOwnerId = source.triggeringPermanentOwnerId;

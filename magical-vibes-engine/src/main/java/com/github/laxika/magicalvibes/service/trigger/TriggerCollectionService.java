@@ -91,7 +91,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.AttachedCreatureBe
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardNameAtResolutionEffectHandler;
 import com.github.laxika.magicalvibes.model.effect.CommanderCreaturesDealPowerDamageToPreventedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseGameIfSourceDealtDamageToPlayerThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -140,7 +139,6 @@ import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedB
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseTargetsAtRandomEffect;
-import com.github.laxika.magicalvibes.model.effect.ReselectTargetAtRandomEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -149,6 +147,7 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterBattlefieldOnDiscardEffect;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.TriggeringSpellMatches;
 import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToActivate;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -397,22 +396,18 @@ public class TriggerCollectionService {
         }
 
         for (Card card : new ArrayList<>(graveyard)) {
-            // Each ability whole (CR 603.3); one that is a lone "you may" is still asked before it goes on the stack.
+            // Each ability whole (CR 603.3), a "you may" like any other: it is asked as the ability resolves (CR 603.5).
             for (List<CardEffect> effects : graveyardCounterAbilities(gameData, card,
                     CounterWatch.GRAVEYARD_ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_CREATURE)) {
-                if (effects.size() == 1 && effects.getFirst() instanceof MayEffect may) {
-                    gameData.queueMayAbility(card, creatureControllerId, may, card.getId());
-                } else {
-                    StackEntry trigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            card,
-                            creatureControllerId,
-                            card.getName() + "'s ability",
-                            new ArrayList<>(effects));
-                    trigger.setTriggeringCardId(card.getId());
-                    trigger.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
-                    gameData.enqueueTrigger(trigger);
-                }
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        creatureControllerId,
+                        card.getName() + "'s ability",
+                        new ArrayList<>(effects));
+                trigger.setTriggeringCardId(card.getId());
+                trigger.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+                gameData.enqueueTrigger(trigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
                 log.info("Game {} - {} graveyard trigger queued on +1/+1 counter placement",
                         gameData.id, card.getName());
@@ -716,20 +711,16 @@ public class TriggerCollectionService {
      * limit.
      */
     private void queueGraveyardEerieTriggers(GameData gameData, UUID controllerId, Card card) {
-        // Each ability whole (CR 603.3); one that is a lone "you may" is still asked before it goes on the stack.
+        // Each ability whole (CR 603.3), a "you may" like any other: it is asked as the ability resolves (CR 603.5).
         for (List<CardEffect> effects : MiscAbilityReader.printedEffectsByAbility(card,
                 MiscWatch.GRAVEYARD_ON_ALLY_ROOM_FULLY_UNLOCKED)) {
-            if (effects.size() == 1 && effects.getFirst() instanceof MayEffect may) {
-                gameData.queueMayAbility(card, controllerId, may);
-            } else {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        card,
-                        controllerId,
-                        card.getName() + "'s ability",
-                        new ArrayList<>(effects)
-                ));
-            }
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    controllerId,
+                    card.getName() + "'s ability",
+                    new ArrayList<>(effects)
+            ));
             gameLogService.append(gameData, GameLog.abilityTriggers(card));
             log.info("Game {} - {} graveyard eerie trigger queued", gameData.id, card.getName());
         }
@@ -3378,7 +3369,8 @@ public class TriggerCollectionService {
      * judged by the caller as it triggered. An intervening "if" (the {@link ConditionalEffect} the reader wraps around
      * each effect) stays around them and is checked again as the ability resolves (CR 603.4), against the damage dealt
      * as the entry's event value; the effects under it decide how the ability goes on the stack: with a target chosen
-     * as it does when one of them has a target (CR 603.3d), a lone "you may" through its question, else as written.
+     * as it does when one of them has a target (CR 603.3d), else as written, a "you may" asked as it resolves
+     * (CR 603.5).
      */
     private void queueNoncombatDamageToPlayerAbility(GameData gameData, Permanent source, UUID controllerId,
                                                      UUID damagedPlayerId, int damageDealt, List<CardEffect> effects) {
@@ -3386,13 +3378,6 @@ public class TriggerCollectionService {
                 .map(effect -> effect instanceof ConditionalEffect wrapper ? wrapper.wrapped() : effect)
                 .toList();
 
-        for (CardEffect effect : toQueue) {
-            if (effect instanceof LoseGameIfSourceDealtDamageToPlayerThisTurnEffect threshold
-                    && gameData.damageDealtBySourceToPlayerThisTurn(
-                    source.getId(), damagedPlayerId) < threshold.minimumDamage()) {
-                return;
-            }
-        }
         // A target is chosen as the ability goes on the stack (CR 603.3d), a "you may" one too, its question asked as
         // it resolves (CR 603.5); "that player" is the player dealt damage and "that much" the damage dealt.
         if (toQueue.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
@@ -3412,17 +3397,8 @@ public class TriggerCollectionService {
             return;
         }
 
-        // A "you may" under an intervening "if" goes on the stack as the "if", its question asked as it resolves once
-        // the "if" still holds (CR 603.4, 603.5); so does one beside other effects.
-        if (effects.size() == 1 && effects.getFirst() instanceof MayEffect may) {
-            UUID mayTargetId = may.wrapped().targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    ? null : damagedPlayerId;
-            gameData.queueMayAbility(source.getCard(), controllerId, may, mayTargetId, source.getId(), damageDealt,
-                    false, null, null).setTriggeringPlayerId(damagedPlayerId);
-            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s damage trigger fires."));
-            return;
-        }
-
+        // Any other ability goes on the stack as written, a "you may" like the rest: its question is asked as the
+        // ability resolves (CR 603.5), under an intervening "if" once the "if" still holds (CR 603.4).
         StackEntry se = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), controllerId,
                 source.getCard().getName() + "'s triggered ability", new ArrayList<>(effects), damagedPlayerId,
                 source.getId());
@@ -7216,6 +7192,18 @@ public class TriggerCollectionService {
                 TargetEffect read = reads.getFirst();
                 TargetAbilityReader.requireNoFilter(read, watched);
                 List<CardEffect> effects = TargetAbilityReader.effectsOf(reads);
+                // The intervening "if" (CR 603.4): "if it has a single target" is judged on the spell or ability
+                // whose targets were chosen (TriggeringSpellMatches), from the ability's source; it stays around the
+                // effects for the check as the ability resolves, against the entry's triggering spell.
+                Condition interveningIf = read.ability().options().interveningIf();
+                boolean triggers = interveningIf instanceof TriggeringSpellMatches matches
+                        ? targetLegalityService.matchesStackEntryPredicate(gameData, targetEntry, matches.filter(),
+                                controllerId, permanent)
+                        : conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
+                                ConditionContext.forPermanent(permanent, controllerId));
+                if (!triggers || gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+                    continue;
+                }
                 if (read.byController()) {
                     // "Whenever you or a permanent becomes the target of an ability you control" (Loki).
                     if (gameQueryService.hasLostAllAbilities(gameData, permanent)
@@ -7230,10 +7218,6 @@ public class TriggerCollectionService {
                 } else {
                     TargetAbilityReader.requireNoLimit(read, watched);
                 }
-                if (effects.stream().anyMatch(ReselectTargetAtRandomEffect.class::isInstance)
-                        && (!targetEntry.isSingleTarget() || gameQueryService.hasLostAllAbilities(gameData, permanent))) {
-                    continue;
-                }
                 StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         permanent.getCard(),
@@ -7244,6 +7228,7 @@ public class TriggerCollectionService {
                         permanent.getId()
                 );
                 trigger.setTriggeringCardId(targetEntry.getTargetableId());
+                trigger.setTriggeringSpell(targetEntry);
                 gameData.enqueueTrigger(trigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
                 log.info("Game {} - {} triggers when targets are chosen", gameData.id,
@@ -9816,12 +9801,7 @@ public class TriggerCollectionService {
                     ConditionContext.forPermanent(untappedPermanent, controllerId));
             for (TriggeredAbility ability : judge.filter(TapAbilityReader.printed(untappedPermanent.getCard(),
                     TapWatch.ON_SELF_BECOMES_UNTAPPED))) {
-                List<CardEffect> effects = TapAbilityReader.effects(List.of(ability), selfUntap).stream()
-                        .filter(effect -> !(effect
-                                instanceof com.github.laxika.magicalvibes.model.effect.PhaseInLinkedPermanentEffect
-                                && gameData.phasedOutWhileSourceTapped
-                                .getOrDefault(untappedPermanent.getId(), java.util.Set.of()).isEmpty()))
-                        .toList();
+                List<CardEffect> effects = TapAbilityReader.effects(List.of(ability), selfUntap);
                 if (effects.isEmpty()) continue;
                 dispatch(new TriggerMatchContext(gameData, untappedPermanent, controllerId, effects),
                         TapWatch.ON_SELF_BECOMES_UNTAPPED, new TriggerContext.SelfBecomesUntapped(controllerId));
@@ -12615,23 +12595,18 @@ public class TriggerCollectionService {
         if (effects.isEmpty()) {
             return false;
         }
-        // The ability is one object of all its effects (CR 603.3); one that is a lone "you may" is still asked before
-        // it goes on the stack.
-        if (effects.size() == 1 && effects.getFirst() instanceof MayEffect may) {
-            gameData.queueMayAbility(card, controllerId, may, card.getId());
-            gameData.stack.getLast().setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
-        } else {
-            StackEntry triggerEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    controllerId,
-                    card.getName() + "'s ability",
-                    new ArrayList<>(effects)
-            );
-            // CR 400.7: the ability refers to this graveyard object, not a later one.
-            triggerEntry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
-            gameData.stack.add(triggerEntry);
-        }
+        // The ability is one object of all its effects (CR 603.3), a "you may" like any other: it is asked as the
+        // ability resolves (CR 603.5).
+        StackEntry triggerEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                card,
+                controllerId,
+                card.getName() + "'s ability",
+                new ArrayList<>(effects)
+        );
+        // CR 400.7: the ability refers to this graveyard object, not a later one.
+        triggerEntry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+        gameData.stack.add(triggerEntry);
         gameLogService.append(gameData, GameLog.abilityTriggers(card));
         log.info("Game {} - {} graveyard creature-death trigger queued", gameData.id, card.getName());
         return true;
@@ -12653,12 +12628,8 @@ public class TriggerCollectionService {
         if (effects.isEmpty()) {
             return false;
         }
-        // The ability is one object of all its effects (CR 603.3); one that is a lone "you may" is still asked before
-        // it goes on the stack.
-        if (effects.size() == 1 && effects.getFirst() instanceof MayEffect may) {
-            gameData.queueMayAbility(sourceCard, controllerId, may);
-            return true;
-        }
+        // The ability is one object of all its effects (CR 603.3), a "you may" like any other: it is asked as the
+        // ability resolves (CR 603.5).
         gameData.stack.add(new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -13190,19 +13161,14 @@ public class TriggerCollectionService {
     private boolean queueGraveyardCreaturePutTrigger(GameData gameData, Card sourceCard, UUID controllerId,
                                                       CardEffect resolved) {
         long sourceEntryVersion = gameData.graveyardEntryVersion(sourceCard.getId());
-        if (resolved instanceof MayPayManaEffect mayPay) {
-            gameData.queueMayAbility(sourceCard, controllerId, mayPay, null);
-        } else if (resolved instanceof MayEffect may) {
-            gameData.queueMayAbility(sourceCard, controllerId, may);
-        } else {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    controllerId,
-                    sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(resolved))
-            ));
-        }
+        // A "you may" or "you may pay" goes on the stack like any other effect and is asked as it resolves (CR 603.5).
+        gameData.stack.add(new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                controllerId,
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(List.of(resolved))
+        ));
         // CR 400.7: the trigger refers to this stay of the card in the graveyard; once the card
         // leaves and returns, it is a new object the trigger can no longer move, and "if this card
         // is in your graveyard" is false.
@@ -13216,25 +13182,19 @@ public class TriggerCollectionService {
     private void queueGraveyardCreatureDeathTrigger(GameData gameData, Card sourceCard, UUID controllerId,
                                                      List<CardEffect> effects, Card dyingCard,
                                                      UUID dyingCreatureControllerId) {
-        // The ability is one object of all its effects (CR 603.3); one that is a lone "you may" is still asked before
-        // it goes on the stack.
-        if (effects.size() == 1 && effects.getFirst() instanceof MayPayManaEffect mayPay) {
-            gameData.queueMayAbility(sourceCard, controllerId, mayPay, null);
-        } else if (effects.size() == 1 && effects.getFirst() instanceof MayEffect may) {
-            gameData.queueMayAbility(sourceCard, controllerId, may);
-        } else {
-            StackEntry triggerEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    controllerId,
-                    sourceCard.getName() + "'s ability",
-                    new ArrayList<>(effects)
-            );
-            triggerEntry.setTriggeringCardId(dyingCard.getId());
-            // "Its controller" is the dying creature's last-known controller (CR 608.2h), whatever the effects are.
-            triggerEntry.setTriggeringPermanentControllerId(dyingCreatureControllerId);
-            gameData.stack.add(triggerEntry);
-        }
+        // The ability is one object of all its effects (CR 603.3), a "you may" or "you may pay" like any other: it
+        // is asked as the ability resolves (CR 603.5), and its entry records the creature that died too.
+        StackEntry triggerEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                controllerId,
+                sourceCard.getName() + "'s ability",
+                new ArrayList<>(effects)
+        );
+        triggerEntry.setTriggeringCardId(dyingCard.getId());
+        // "Its controller" is the dying creature's last-known controller (CR 608.2h), whatever the effects are.
+        triggerEntry.setTriggeringPermanentControllerId(dyingCreatureControllerId);
+        gameData.stack.add(triggerEntry);
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} graveyard creature-death trigger queued",
                 gameData.id, sourceCard.getName());

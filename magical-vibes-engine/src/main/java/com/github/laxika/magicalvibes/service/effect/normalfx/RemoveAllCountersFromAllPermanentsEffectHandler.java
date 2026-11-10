@@ -37,17 +37,18 @@ public class RemoveAllCountersFromAllPermanentsEffectHandler implements NormalEf
             for (Permanent permanent : battlefield) {
                 int removedFromPermanent = 0;
                 int oilRemoved = permanent.getCounterCount(CounterType.OIL);
-                int interventionRemoved = permanent.getCounterCount(CounterType.INTERVENTION);
+                java.util.Map<CounterType, Integer> removedByKind = new java.util.EnumMap<>(CounterType.class);
                 for (CounterType counterType : CounterType.values()) {
                     if (counterType == CounterType.ANY || counterType == CounterType.SILVER) {
                         continue;
                     }
                     removedFromPermanent += permanent.getCounterCount(counterType);
+                    removedByKind.put(counterType, permanent.getCounterCount(counterType));
                     permanent.setCounterCount(counterType, 0);
                 }
                 gameData.recordOilCounterRemoved(permanent, oilRemoved);
-                permanentCounterSupport.notifyLastCounterRemoved(gameData, permanent,
-                        CounterType.INTERVENTION, interventionRemoved, entry.getControllerId());
+                removedByKind.forEach((counterType, count) -> permanentCounterSupport.notifyLastCounterRemoved(
+                        gameData, permanent, counterType, count, entry.getControllerId()));
                 if (removedFromPermanent > 0) {
                     affected++;
                     removed += removedFromPermanent;

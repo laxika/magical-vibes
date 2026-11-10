@@ -8,17 +8,20 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.WinGameIfPlayerAttackedByControlledSubtypeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import com.github.laxika.magicalvibes.service.outcome.LossReplacer;
 import com.github.laxika.magicalvibes.service.trigger.ActionAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.ActionWatch;
+import com.github.laxika.magicalvibes.service.trigger.TriggerJudge;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -34,6 +37,12 @@ public class GameOutcomeService {
     private final GameLogService gameLogService;
     private final List<LossReplacer> lossReplacers;
     private final GameMutationCoordinator mutationCoordinator;
+    private ConditionEvaluationService conditionEvaluationService;
+
+    @Autowired
+    void setConditionEvaluationService(@Lazy ConditionEvaluationService conditionEvaluationService) {
+        this.conditionEvaluationService = conditionEvaluationService;
+    }
 
     public GameOutcomeService(GameQueryService gameQueryService,
                               GameLogService gameLogService,
@@ -223,16 +232,16 @@ public class GameOutcomeService {
         }
 
         gameData.forEachPermanent((controllerId, perm) -> {
-            // "Whenever a player loses the game, if ..." intervening-if (CR 603.4): the trigger does not
-            // go on the stack unless its condition holds when the player loses.
+            // "Whenever a player loses the game, if ..." (CR 603.4): the ability's intervening "if" is judged as the
+            // player loses, "that player" being the player who lost, and stays around the effects for the check as
+            // the ability resolves.
+            if (ActionAbilityReader.printed(perm.getCard(), ActionWatch.ON_PLAYER_LOSES_GAME).isEmpty()) {
+                return;
+            }
+            TriggerJudge judge = conditionEvaluationService.judge(gameData,
+                    ConditionContext.forPermanent(perm, controllerId).withTargetId(losingPlayerId));
             for (List<CardEffect> effects : ActionAbilityReader.printedEffectsByAbility(perm.getCard(),
-                    ActionWatch.ON_PLAYER_LOSES_GAME)) {
-                if (effects.stream().anyMatch(effect ->
-                        effect instanceof WinGameIfPlayerAttackedByControlledSubtypeThisTurnEffect win
-                                && !gameQueryService.wasPlayerAttackedByControlledSubtypeThisTurn(
-                                        gameData, losingPlayerId, controllerId, win.subtype()))) {
-                    continue;
-                }
+                    ActionWatch.ON_PLAYER_LOSES_GAME, judge)) {
                 queuePlayerLosesGameAbility(gameData, perm, controllerId, losingPlayerId, effects);
             }
         });

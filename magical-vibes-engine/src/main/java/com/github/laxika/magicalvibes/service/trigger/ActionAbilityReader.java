@@ -116,6 +116,18 @@ public final class ActionAbilityReader {
         return byAbility;
     }
 
+    /** {@link #printedEffectsByAbility(Card, ActionWatch)} of the abilities {@code judge} lets trigger. */
+    public static List<List<CardEffect>> printedEffectsByAbility(Card card, ActionWatch watch, TriggerJudge judge) {
+        List<List<CardEffect>> byAbility = new ArrayList<>();
+        for (TriggeredAbility ability : judge.filter(printed(card, watch))) {
+            List<CardEffect> effects = effects(List.of(ability), watch.trigger());
+            if (!effects.isEmpty()) {
+                byAbility.add(effects);
+            }
+        }
+        return byAbility;
+    }
+
     /**
      * The effects of {@code abilities} for the condition watched as {@code watched}, for a collector that judges no
      * filter or limit: none of its abilities is written with one, and this throws on one.

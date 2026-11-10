@@ -340,7 +340,7 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("Relic Bind's \"choose one\" goes on the stack with the enchanted-tap record, its modes' targets its own")
+    @DisplayName("Relic Bind's \"choose one\" goes on the stack with the enchanted-tap record of any other ability")
     void enchantedPermanentTapModalGoesOnTheStackWithTheRecord() {
         Permanent aura = createPermanent("Modal aura");
         Permanent tapped = createPermanent("Artifact");
@@ -358,7 +358,8 @@ class MiscTriggerCollectorServiceTest {
             assertThat(entry.getSourcePermanentSnapshot()).isNotNull();
             assertThat(entry.getTriggeringPermanentId()).isEqualTo(tapped.getId());
             assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
-            assertThat(entry.getTargetId()).isNull();
+            assertThat(entry.getTargetId()).isEqualTo(player2Id);
+            assertThat(entry.isNonTargeting()).isTrue();
         });
     }
     private GameData gd;

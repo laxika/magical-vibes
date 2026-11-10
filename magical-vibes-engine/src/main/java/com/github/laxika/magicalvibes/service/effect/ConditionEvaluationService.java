@@ -385,6 +385,9 @@ import com.github.laxika.magicalvibes.model.condition.SacrificedCardMatches;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfDealtDamageToOpponentThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceDealtDamageToTargetPlayerThisTurn;
+import com.github.laxika.magicalvibes.model.condition.SourceKeepsPermanentPhasedOut;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerAttackedBySubtypeControllerControlledThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.SelfWasDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
@@ -1159,6 +1162,12 @@ public class ConditionEvaluationService {
                         && ctx.controllerId() != null
                         && gameQueryService.controlsMoreLandsThan(gameData, thatPlayerId, ctx.controllerId());
             }
+            case TargetPlayerAttackedBySubtypeControllerControlledThisTurn c -> {
+                UUID thatPlayerId = thatPlayer(gameData, ctx);
+                yield thatPlayerId != null && ctx.controllerId() != null
+                        && gameQueryService.wasPlayerAttackedByControlledSubtypeThisTurn(
+                        gameData, thatPlayerId, ctx.controllerId(), c.subtype());
+            }
             case TargetPlayerAttackedControllerDuringLastTurn ignored ->
                 ctx.targetId() != null
                         && ctx.controllerId() != null
@@ -1479,6 +1488,16 @@ public class ConditionEvaluationService {
                             && gameData.playersWhoSurveilledThisTurn.contains(ctx.controllerId());
             case SelfDealtDamageToOpponentThisTurn ignored ->
                     sourceDealtDamageToOpponentThisTurn(gameData, ctx);
+            case SourceDealtDamageToTargetPlayerThisTurn c -> {
+                UUID thatPlayerId = thatPlayer(gameData, ctx);
+                yield thatPlayerId != null && ctx.sourcePermanentId() != null
+                        && gameData.damageDealtBySourceToPlayerThisTurn(ctx.sourcePermanentId(), thatPlayerId)
+                        >= c.minimum();
+            }
+            case SourceKeepsPermanentPhasedOut ignored ->
+                    ctx.sourcePermanentId() != null
+                            && !gameData.phasedOutWhileSourceTapped
+                            .getOrDefault(ctx.sourcePermanentId(), Set.of()).isEmpty();
             case SelfWasDealtDamageThisTurn c ->
                     ctx.sourcePermanentId() != null
                             && gameData.damageDealtToPermanentsThisTurn.getOrDefault(ctx.sourcePermanentId(), 0)

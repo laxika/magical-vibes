@@ -9,11 +9,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEnchantedPermanentControllerEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -118,26 +113,8 @@ public class DeathTriggerCollectorService {
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD)
     boolean handleEnchantedPermanentDeathDefault(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.EnchantedPermanentDeath epd = (TriggerContext.EnchantedPermanentDeath) ctx;
-        StackEntry entry = addEnchantedPermanentDeathEntryReturning(match, ctx, null,
-                epd.dyingPermanentControllerId());
-        if (entry != null
-                && match.effects().stream().anyMatch(DeathTriggerCollectorService::enchantedPermanentDealsDamage)) {
-            // The dying creature deals the damage (last-known information): its lifelink and its
-            // controller apply to that damage rather than the Aura's.
-            if (epd.dyingCard() != null) {
-                entry.setDamageSourceCard(epd.dyingCard());
-            }
-            entry.setDamageSourceControllerId(epd.dyingPermanentControllerId());
-        }
+        addEnchantedPermanentDeathEntryReturning(match, ctx, null, epd.dyingPermanentControllerId());
         return true;
-    }
-
-    private static boolean enchantedPermanentDealsDamage(CardEffect effect) {
-        if (effect instanceof SequenceEffect sequence) {
-            return sequence.steps().stream().anyMatch(DeathTriggerCollectorService::enchantedPermanentDealsDamage);
-        }
-        return effect instanceof DealDamageToEnchantedPermanentControllerEffect damage
-                && damage.enchantedPermanentIsSource();
     }
 
     /**
@@ -177,11 +154,10 @@ public class DeathTriggerCollectorService {
                 match.permanent().getId()
         );
         entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        if (match.effects().stream().anyMatch(DeathTriggerCollectorService::returnsSourceCardFromGraveyard)) {
-            // The aura is still on the battlefield while this is queued and enters the graveyard in the
-            // same state-based pass; GameData.markGraveyardEntry binds that stay's identity to this entry.
-            entry.setTriggeringCardId(match.permanent().getCard().getId());
-        }
+        // The Aura is still on the battlefield as its ability triggers and is put into its owner's graveyard by the
+        // state-based actions that follow (CR 704.5m): that stay is the one "return this card" means, whatever the
+        // effects are, and GameData.markGraveyardEntry records it on this entry as the Aura arrives (CR 400.7).
+        entry.setAwaitingSourceGraveyardEntry(true);
         if (enchantedControllerId != null) {
             entry.setTargetId(enchantedControllerId);
             entry.setNonTargeting(true);
@@ -223,21 +199,6 @@ public class DeathTriggerCollectorService {
         for (Card card : dyingCards) {
             entry.getEventCardGraveyardEntryVersions().put(card.getId(), gameData.graveyardEntryVersion(card.getId()));
         }
-    }
-
-    /**
-     * Whether {@code effect} returns the source Aura from its graveyard ("return this card to its owner's hand",
-     * "return it transformed", Puppet Master's paid follow-up), so the entry's triggering card is the Aura, whose
-     * graveyard stay the return checks.
-     */
-    private static boolean returnsSourceCardFromGraveyard(CardEffect effect) {
-        if (effect instanceof SequenceEffect sequence) {
-            return sequence.steps().stream().anyMatch(DeathTriggerCollectorService::returnsSourceCardFromGraveyard);
-        }
-        return effect instanceof ReturnSourceCardFromGraveyardToOwnerHandEffect
-                || effect instanceof ReturnSourceTransformedFromGraveyardEffect
-                || effect instanceof ReturnEnchantedCreatureToOwnerHandOnDeathEffect returnToHand
-                && returnToHand.followUpManaCost() != null;
     }
 
     /**

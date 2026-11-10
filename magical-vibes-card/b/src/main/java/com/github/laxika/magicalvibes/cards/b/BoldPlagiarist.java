@@ -10,6 +10,6 @@ public class BoldPlagiarist extends Card {
 
     public BoldPlagiarist() {
         addTrigger(Triggers.opponentPutsCountersOnCreatureTheyControl(),
-                new PutSameCountersOnSourceEffect());
+                PutSameCountersOnSourceEffect.putByTriggeringPlayer());
     }
 }

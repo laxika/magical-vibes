@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -31,6 +32,28 @@ public class DealDamageToEnchantedPermanentControllerEffectHandler implements No
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToEnchantedPermanentControllerEffect) effect;
+        Card enchantedCard = entry.getTriggeringPermanentSnapshot() != null
+                ? entry.getTriggeringPermanentSnapshot().getCard()
+                : entry.getTriggeringCards().isEmpty() ? null : entry.getTriggeringCards().getFirst();
+        if (!e.enchantedPermanentIsSource() || enchantedCard == null) {
+            dealDamage(gameData, entry, e);
+            return;
+        }
+        // "It deals 1 damage to its controller": the enchanted permanent the trigger event was about deals the damage,
+        // as it last existed (CR 608.2h), so its lifelink and its controller apply to that damage, not the Aura's.
+        Card auraDamageSourceCard = entry.getDamageSourceCard();
+        UUID auraDamageSourceControllerId = entry.getDamageSourceControllerId();
+        entry.setDamageSourceCard(enchantedCard);
+        entry.setDamageSourceControllerId(entry.getTriggeringPermanentControllerId());
+        try {
+            dealDamage(gameData, entry, e);
+        } finally {
+            entry.setDamageSourceCard(auraDamageSourceCard);
+            entry.setDamageSourceControllerId(auraDamageSourceControllerId);
+        }
+    }
+
+    private void dealDamage(GameData gameData, StackEntry entry, DealDamageToEnchantedPermanentControllerEffect e) {
         UUID controllerId = findEnchantedPermanentController(gameData, entry);
         if (controllerId == null || damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) {
             return;

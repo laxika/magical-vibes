@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -361,11 +362,13 @@ public class StackedModalTriggerService {
     /**
      * A modal's "that player" modes act on the player the trigger event was about, which the entry already carries
      * as its non-targeting target (a damage-to-a-player trigger's damaged player), so choosing such a mode chooses no
-     * target: a mode with no permanent target and no player target the card declares.
+     * target: a mode with no permanent target and no player target the card declares. A mode that declares a player
+     * target filter ("target player gains 1 life", Relic Bind) chooses that player, never "that player".
      */
     private static boolean usesBoundDamagedPlayer(GameData gameData, StackEntry entry,
                                                   ChooseOneEffect.ChooseOneOption mode) {
         return boundPlayerTarget(gameData, entry)
+                && !(mode.targetFilter() instanceof PlayerPredicateTargetFilter)
                 && mode.effects().stream().noneMatch(effect ->
                 effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         || entry.getCard().hasEffectTargetIndex(effect));

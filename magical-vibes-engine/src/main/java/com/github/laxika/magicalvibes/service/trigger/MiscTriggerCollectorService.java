@@ -8,10 +8,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.KayaSpiritsJusticeEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -315,8 +312,7 @@ public class MiscTriggerCollectorService {
         String cardName = match.permanent().getCard().getName();
         Permanent sacrificed = as.sacrificedPermanent() != null ? as.sacrificedPermanent()
                 : as.sacrificedCard() != null ? new Permanent(as.sacrificedCard()) : null;
-        if (match.effects().stream().anyMatch(effect -> (effect instanceof MayEffect may ? may.wrapped() : effect)
-                instanceof ReturnCardFromGraveyardEffect returnEffect && returnEffect.targetGraveyard())) {
+        if (match.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             // The card is targeted as the trigger is put on the stack (CR 603.3d), so the may choice
             // comes at resolution. "Do this only once each turn" is used up only by an accepted return.
             // The choice's X is the sacrificed permanent's mana value as it last existed (CR 603.10a), which a
@@ -401,8 +397,9 @@ public class MiscTriggerCollectorService {
      * player mills three cards", read as the ability resolves, else from its last known information), the controller as
      * the non-targeting "that player" and the Aura as it was. A targeted ability's target is chosen as it goes on the
      * stack (CR 603.3d), the choice carrying the same record. A "choose one" (Relic Bind) goes on the stack the same
-     * way, its mode and that mode's target announced there before a player gets priority (CR 603.3c,
-     * {@link StackedModalTriggerService}); its modes choose their own targets, so it names no "that player".
+     * way, with the same record, its mode and that mode's target announced there before a player gets priority
+     * (CR 603.3c, {@link StackedModalTriggerService}): a mode that declares its target chooses it, and the chosen
+     * target takes the place of the non-targeting "that player".
      */
     @CollectsTapTrigger(value = CardEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
     private boolean handleEnchantedPermanentTapDefault(TriggerMatchContext match, TriggerContext ctx) {
@@ -422,7 +419,7 @@ public class MiscTriggerCollectorService {
                     match.controllerId(),
                     sourceCard.getName() + "'s triggered ability",
                     match.stackEffects(),
-                    match.effectOf(ChooseOneEffect.class) != null ? null : ept.tappedPermanentControllerId(),
+                    ept.tappedPermanentControllerId(),
                     match.permanent().getId());
             entry.setNonTargeting(true);
             entry.setTriggeringPermanentId(ept.tappedPermanent().getId());

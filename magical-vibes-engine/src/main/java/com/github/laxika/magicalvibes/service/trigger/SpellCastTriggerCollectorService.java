@@ -25,11 +25,9 @@ import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalPlusOnePlusOneCounterToSnowPaidCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.AttachedPermanentSelfTargetingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
-import com.github.laxika.magicalvibes.model.effect.CounterSpellingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
@@ -447,20 +445,12 @@ public class SpellCastTriggerCollectorService {
                     .map(effect -> (CardEffect) new ConditionalEffect(trigger.interveningIf(), effect))
                     .toList();
         }
-        boolean selfTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).selfTargeting());
-        boolean attachedSelfTarget = resolved.stream().anyMatch(
-                e -> e instanceof AttachedPermanentSelfTargetingEffect && e.targetSpec().selfTargeting());
         boolean needsPlayerTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).admits(TargetPredicate.Kind.PLAYER));
         boolean needsPermanentTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).admits(TargetPredicate.Kind.PERMANENT));
         boolean needsGraveyardTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         boolean needsSpellTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).admits(TargetPredicate.Kind.SPELL));
         boolean needsTargeting = needsPlayerTarget || needsPermanentTarget;
         boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
-        boolean countersTriggeringSpell = resolved.stream().anyMatch(CounterSpellingEffect.class::isInstance);
-        // A counter that acts on "that spell" without targeting it still resolves after the spell was countered in
-        // response (CR 608.2b): revealing, offering the free cast, flipping for its caster.
-        boolean countersWithoutTargetingTheSpell = resolved.stream().anyMatch(effect ->
-                effect instanceof CounterSpellingEffect counter && !counter.targetsTriggeringSpell());
         // A permanent target restricted by "that spell's mana value" (Skyfire Kirin) is chosen now, as the ability goes
         // on the stack (CR 603.3d), against the spell's mana value as the ability's X.
         boolean targetRestrictedBySpellManaValue = needsPermanentTarget && readsManaValueX(
@@ -582,50 +572,22 @@ public class SpellCastTriggerCollectorService {
             gameLogService.append(match.gameData(), GameLog.cardThen(sourceCard,
                     "'s triggered ability triggers — choose a target."));
         } else {
-            StackEntry entry;
-            if (countersTriggeringSpell) {
-                entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        sourceCard,
-                        match.controllerId(),
-                        abilityDescription(sourceCard),
-                        resolved,
-                        abilityX,
-                        spellCard.getId(),
-                        sourcePermanentId,
-                        null,
-                        Zone.STACK,
-                        null,
-                        null
-                );
-                if (countersWithoutTargetingTheSpell) {
-                    entry.setNonTargeting(true);
-                }
-            } else if (selfTarget) {
-                UUID selfTargetId = attachedSelfTarget
-                        ? match.permanent().getAttachedTo()
-                        : castingPlayerId;
-                entry = abilityX > 0
-                        ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
-                            abilityDescription(sourceCard), resolved, abilityX,
-                            selfTargetId, sourcePermanentId, null, null, null, null)
-                        : new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
-                            abilityDescription(sourceCard), resolved, selfTargetId,
-                            sourcePermanentId);
-                entry.setNonTargeting(true);
-            } else {
-                entry = abilityX > 0
-                        ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
-                            abilityDescription(sourceCard), resolved, abilityX,
-                            null, sourcePermanentId, null, null, null, null)
-                        : new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
-                            abilityDescription(sourceCard), resolved, null,
-                            sourcePermanentId);
-                // Contextual "that player" = the caster (Leshrac's Sigil may-pay look-at-hand).
-                // Non-targeting: oracle does not use the word "target".
-                entry.setTargetId(castingPlayerId);
-                entry.setNonTargeting(true);
-            }
+            // An ability that chooses no target goes on the stack the same way whatever its effects are. "That
+            // player" is the caster, the entry's non-targeting player; "that spell" is its triggering card and
+            // triggering spell, which "counter that spell", "reveal ... if it shares a card type with that spell" and
+            // "any player may pay ... If a player does, counter that spell" read as they resolve: the ability has no
+            // target, so it still resolves once the spell has left the stack (CR 608.2b removes only an ability whose
+            // targets are all illegal). "Enchanted creature" of an Aura's ability is read from the source, or from its
+            // snapshot below once it has left the battlefield (CR 608.2h).
+            StackEntry entry = abilityX > 0
+                    ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
+                        abilityDescription(sourceCard), resolved, abilityX,
+                        null, sourcePermanentId, null, null, null, null)
+                    : new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
+                        abilityDescription(sourceCard), resolved, null,
+                        sourcePermanentId);
+            entry.setTargetId(castingPlayerId);
+            entry.setNonTargeting(true);
             // Contextual "it" = the spell that caused the trigger, still on the stack below this
             // ability (Bloodlord of Vaasgoth's bloodthirst grant), and as it was then once it has left (CR 608.2h).
             entry.setTriggeringCardId(spellCard.getId());

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -95,6 +96,23 @@ class TemporalExtortionTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Temporal Extortion");
         assertThat(gd.extraTurns).isEmpty();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Players may still pay after the spell has left the stack: the ability has no target")
+    void playersMayStillPayAfterTheSpellHasLeftTheStack() {
+        harness.setLife(player2, 20);
+        castTemporalExtortion();
+        gd.stack.removeIf(entry -> entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY);
+
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        harness.assertLife(player1, 20);
+        harness.assertLife(player2, 10);
+        assertThat(gd.extraTurns).isEmpty();
     }
 
     private void castTemporalExtortion() {

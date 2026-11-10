@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.SourceKeepsPermanentPhasedOut;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseInLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutTargetPermanentWhileSourceTappedEffect;
@@ -16,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -49,7 +51,9 @@ public class ThePandorica extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addTrigger(Triggers.becomesUntapped(), new PhaseInLinkedPermanentEffect());
+        addTrigger(Triggers.becomesUntapped(),
+                TriggerOptions.DEFAULT.withEventCondition(new SourceKeepsPermanentPhasedOut()),
+                new PhaseInLinkedPermanentEffect());
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new PhaseInLinkedPermanentEffect());
     }
 }

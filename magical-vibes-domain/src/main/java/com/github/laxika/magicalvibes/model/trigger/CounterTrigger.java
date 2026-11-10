@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.trigger;
 
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
@@ -25,13 +26,22 @@ import java.util.Objects;
  *                  {@code Triggers.youPutPlusOneCountersOnAnotherCreature().withFilter(new
  *                  PermanentIsColorlessPredicate())}. The counter collectors read it from the ability, through
  *                  {@code CounterAbilityReader}, so {@link #watchKey()} drops it
+ * @param counterKind the one kind of counter the event is about where the event doesn't say it, or {@code null}: "the
+ *                    last intervention counter" of {@link CounterEvent#YOU_REMOVE_LAST_COUNTER}. The collector reads
+ *                    it from the ability as it does the qualifier, so {@link #watchKey()} drops it
  */
 public record CounterTrigger(CounterEvent event, ObjectRelation relation, PermanentPredicate filter,
-                             PermanentPredicate qualifier) implements Trigger {
+                             PermanentPredicate qualifier, CounterType counterKind) implements Trigger {
 
     public CounterTrigger {
         Objects.requireNonNull(event, "event");
         Objects.requireNonNull(relation, "relation");
+    }
+
+    /** A trigger about counters of the kind the event says, on a permanent that also matches {@code qualifier}. */
+    public CounterTrigger(CounterEvent event, ObjectRelation relation, PermanentPredicate filter,
+                          PermanentPredicate qualifier) {
+        this(event, relation, filter, qualifier, null);
     }
 
     /** A trigger on any permanent of {@code filter}'s type that relates to the source as {@code relation} says. */
@@ -53,7 +63,7 @@ public record CounterTrigger(CounterEvent event, ObjectRelation relation, Perman
         if (qualifier != null) {
             throw new IllegalStateException("This counter trigger already has a filter: " + this);
         }
-        return new CounterTrigger(event, relation, this.filter, filter);
+        return new CounterTrigger(event, relation, this.filter, filter, counterKind);
     }
 
     /**
@@ -81,7 +91,7 @@ public record CounterTrigger(CounterEvent event, ObjectRelation relation, Perman
     @Override
     public Trigger watchKey() {
         CounterEvent watched = watchedEvent();
-        if (watched == event && qualifier == null) {
+        if (watched == event && qualifier == null && counterKind == null) {
             return this;
         }
         return new CounterTrigger(watched, relation, filter);
@@ -136,6 +146,11 @@ public record CounterTrigger(CounterEvent event, ObjectRelation relation, Perman
         YOU_PUT_MINUS_ONE_COUNTERS,
         /** You put a -1/-1 counter on a permanent, once for each counter. */
         YOU_PUT_EACH_MINUS_ONE_COUNTER,
+        /**
+         * You remove the last counter of a kind from a permanent: none of that kind is left on it
+         * ({@link CounterTrigger#counterKind()} says which kind).
+         */
+        YOU_REMOVE_LAST_COUNTER,
         /** One or more loyalty counters are put on a permanent. */
         LOYALTY_COUNTERS_PUT,
         /** One or more loyalty counters are removed from a permanent. */

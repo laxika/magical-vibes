@@ -4640,6 +4640,14 @@ public class GameData {
                 .filter(entry -> card.getId().equals(entry.getTriggeringCardId())
                         && entry.getTriggeringCardGraveyardEntryVersion() == -1L)
                 .forEach(entry -> entry.setTriggeringCardGraveyardEntryVersion(version));
+        java.util.stream.Stream.of(stack, pendingManaAbilityTriggers, suspendedZoneTriggers)
+                .flatMap(java.util.Collection::stream)
+                .filter(entry -> entry.isAwaitingSourceGraveyardEntry() && entry.getCard() != null
+                        && card.getId().equals(entry.getCard().getId()))
+                .forEach(entry -> {
+                    entry.setSourceGraveyardEntryVersion(version);
+                    entry.setAwaitingSourceGraveyardEntry(false);
+                });
         return version;
     }
 

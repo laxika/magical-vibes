@@ -15,13 +15,11 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutSameCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
-import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -35,6 +33,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.CounterAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.CounterWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerJudge;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -92,7 +91,12 @@ public class PermanentCounterSupport {
         fireCountersPutOnCreatureYouDontControlTriggers(gameData, target, amount, placingPlayerId);
     }
 
-    /** Queues a last-counter draw trigger when that permanent's controller removed the counter. */
+    /**
+     * "When you remove the last [kind] counter from this permanent": {@code removingPlayerId}, its controller, removed
+     * {@code removed} {@code counterType} counters from {@code source} and none is left. Each such ability of the
+     * permanent about that kind goes on the stack whole (CR 603.3), its intervening "if" judged as it triggers
+     * (CR 603.4); the entry records the kind as its event counter type and the number removed as its event value.
+     */
     public void notifyLastCounterRemoved(GameData gameData, Permanent source, CounterType counterType,
                                         int removed, UUID removingPlayerId) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
@@ -101,15 +105,25 @@ public class PermanentCounterSupport {
                 || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
             return;
         }
-        for (CardEffect effect : source.getCard()
-                .getTriggerEffects(Triggers.upkeep(ActivePlayer.YOU), Zone.BATTLEFIELD)) {
-            if (effect instanceof com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect removal
-                    && removal.counterType() == counterType && removal.onlyIfLastCounterRemoved()
-                    && removal.thenEffect() instanceof com.github.laxika.magicalvibes.model.effect.DrawGameEffect) {
-                gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                        source.getCard(), controllerId, source.getCard().getName() + "'s ability",
-                        List.of(removal.thenEffect()), null, source.getId()));
+        Trigger watched = CounterWatch.ON_YOU_REMOVE_LAST_COUNTER_FROM_SELF.trigger();
+        for (List<CounterAbilityReader.CounterEffect> reads : CounterAbilityReader.readPrintedByAbility(
+                source.getCard(), CounterWatch.ON_YOU_REMOVE_LAST_COUNTER_FROM_SELF)) {
+            CounterAbilityReader.CounterEffect read = reads.getFirst();
+            CounterAbilityReader.requireNoFilter(read, watched);
+            CounterAbilityReader.requireNoLimit(read, watched);
+            if (read.counterKind() != counterType
+                    || !conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
+                    ConditionContext.forPermanent(source, controllerId))) {
+                continue;
             }
+            StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(), controllerId, source.getCard().getName() + "'s ability",
+                    new ArrayList<>(CounterAbilityReader.effectsOf(reads)), null, source.getId());
+            trigger.setSourcePermanentSnapshot(new Permanent(source));
+            trigger.setEventCounterType(counterType);
+            trigger.setEventValue(removed);
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
         }
     }
 
@@ -253,64 +267,47 @@ public class PermanentCounterSupport {
                 continue;
             }
 
+            // The intervening "if" ("if it's not a Kree") is judged against the creature the counters were put on as
+            // the ability triggers (CR 603.4) and stays around the effects for the check as it resolves.
+            TriggerJudge judge = conditionEvaluationService.judge(gameData,
+                    ConditionContext.forPermanent(source, placingPlayerId).withTriggeringPermanentId(target.getId()),
+                    amount);
             for (List<CardEffect> effects : CounterAbilityReader.printedEffectsByAbility(source.getCard(),
-                    CounterWatch.ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE)) {
-                queueYouPutCountersOnAnotherCreatureAbility(gameData, source, effects, target, counterType, amount,
+                    CounterWatch.ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE, judge)) {
+                queueCountersPutAbility(gameData, source, placingPlayerId, effects, target, counterType, amount,
                         placingPlayerId);
+                log.info("Game {} - {} counter-on-another-creature trigger fires", gameData.id,
+                        source.getCard().getName());
             }
         }
     }
 
-    /** Puts one "whenever you put counters on another creature" ability of {@code source} on the stack. */
-    private void queueYouPutCountersOnAnotherCreatureAbility(GameData gameData, Permanent source,
-                                                             List<CardEffect> effects, Permanent target,
-                                                             CounterType counterType, int amount,
-                                                             UUID placingPlayerId) {
-        List<CardEffect> boundEffects = new ArrayList<>();
-        for (CardEffect effect : effects) {
-            if (effect instanceof MayEffect may
-                    && may.wrapped() instanceof PutSameCountersOnSourceEffect) {
-                PutSameCountersOnSourceEffect sameCounters =
-                        (PutSameCountersOnSourceEffect) may.wrapped();
-                if (sameCounters.requiresNonKree()
-                        && gameQueryService.effectiveCreatureSubtypes(gameData, target)
-                        .contains(CardSubtype.KREE)) {
-                    continue;
-                }
-                boundEffects.add(new MayEffect(
-                        new PutSameCountersOnSourceEffect(counterType, amount, target.getId(),
-                                null, sameCounters.requiresNonKree()),
-                        may.prompt(), may.elseEffect(), may.choicePlayer()));
-            } else if (effect instanceof PutSameCountersOnSourceEffect) {
-                PutSameCountersOnSourceEffect sameCounters = (PutSameCountersOnSourceEffect) effect;
-                if (sameCounters.requiresNonKree()
-                        && gameQueryService.effectiveCreatureSubtypes(gameData, target)
-                        .contains(CardSubtype.KREE)) {
-                    continue;
-                }
-                boundEffects.add(new PutSameCountersOnSourceEffect(
-                        counterType, amount, target.getId(), null, sameCounters.requiresNonKree()));
-            }
-        }
-        if (boundEffects.isEmpty()) {
-            return;
-        }
-
+    /**
+     * Puts one "whenever [a player] puts one or more counters on a creature" ability of {@code source} on the stack as
+     * one object of all its {@code effects} (CR 603.3). The entry records the event whatever the effects are: the
+     * creature the counters were put on as its triggering permanent, the player who put them as its triggering player,
+     * their kind as its event counter type and their number as its event value ("the same number and kind of
+     * counters"), read as the ability resolves.
+     */
+    private void queueCountersPutAbility(GameData gameData, Permanent source, UUID controllerId,
+                                         List<CardEffect> effects, Permanent target, CounterType counterType,
+                                         int amount, UUID placingPlayerId) {
         StackEntry trigger = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 source.getCard(),
-                placingPlayerId,
+                controllerId,
                 source.getCard().getName() + "'s triggered ability",
-                boundEffects,
+                new ArrayList<>(effects),
                 null,
                 source.getId());
         trigger.setTriggeringPermanentId(target.getId());
+        trigger.setTriggeringPlayerId(placingPlayerId);
+        trigger.setEventCounterType(counterType);
+        trigger.setEventValue(amount);
         trigger.setNonTargeting(true);
         gameData.enqueueTrigger(trigger);
         gameLogService.append(gameData, GameLog.cardThen(
                 source.getCard(), "'s triggered ability triggers."));
-        log.info("Game {} - {} counter-on-another-creature trigger fires", gameData.id,
-                source.getCard().getName());
     }
 
     /** Fires "whenever an opponent puts counters on a creature they control" watchers. */
@@ -332,33 +329,13 @@ public class PermanentCounterSupport {
                 return;
             }
             for (Permanent source : new ArrayList<>(battlefield)) {
+                TriggerJudge judge = conditionEvaluationService.judge(gameData,
+                        ConditionContext.forPermanent(source, sourceControllerId)
+                                .withTriggeringPermanentId(target.getId()), amount);
                 for (List<CardEffect> effects : CounterAbilityReader.printedEffectsByAbility(source.getCard(),
-                        CounterWatch.ON_OPPONENT_PUT_COUNTERS_ON_CREATURE_THEY_CONTROL)) {
-                    List<CardEffect> boundEffects = new ArrayList<>();
-                    for (CardEffect effect : effects) {
-                        if (effect instanceof PutSameCountersOnSourceEffect sameCounters) {
-                            boundEffects.add(new PutSameCountersOnSourceEffect(
-                                    counterType, amount, target.getId(), placingPlayerId,
-                                    sameCounters.requiresNonKree()));
-                        }
-                    }
-                    if (boundEffects.isEmpty()) {
-                        continue;
-                    }
-
-                    StackEntry trigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            source.getCard(),
-                            sourceControllerId,
-                            source.getCard().getName() + "'s triggered ability",
-                            boundEffects,
-                            null,
-                            source.getId());
-                    trigger.setTriggeringPermanentId(target.getId());
-                    trigger.setNonTargeting(true);
-                    gameData.enqueueTrigger(trigger);
-                    gameLogService.append(gameData, GameLog.cardThen(
-                            source.getCard(), "'s triggered ability triggers."));
+                        CounterWatch.ON_OPPONENT_PUT_COUNTERS_ON_CREATURE_THEY_CONTROL, judge)) {
+                    queueCountersPutAbility(gameData, source, sourceControllerId, effects, target, counterType,
+                            amount, placingPlayerId);
                     log.info("Game {} - {} opponent counter-on-own-creature trigger fires", gameData.id,
                             source.getCard().getName());
                 }

@@ -11,9 +11,4 @@ public record FlipCoinForTriggeringSpellAndCounterOnLossEffect() implements Coun
     public TargetSpec targetSpec() {
         return TargetSpec.benign(TargetPredicates.spellOnStack());
     }
-
-    @Override
-    public boolean targetsTriggeringSpell() {
-        return false;
-    }
 }

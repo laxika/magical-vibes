@@ -9,7 +9,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.WinGameIfPlayerAttackedByControlledSubtypeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.condition.TargetPlayerAttackedBySubtypeControllerControlledThisTurn;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -155,7 +157,9 @@ class RamsesAssassinLordTest extends BaseCardTest {
                 source.getCard(),
                 player1.getId(),
                 "Ramses, Assassin Lord's triggered ability",
-                List.of(new WinGameIfPlayerAttackedByControlledSubtypeThisTurnEffect(CardSubtype.ASSASSIN)),
+                List.of(new ConditionalEffect(
+                        new TargetPlayerAttackedBySubtypeControllerControlledThisTurn(CardSubtype.ASSASSIN),
+                        new WinGameEffect())),
                 player2.getId(),
                 source.getId());
         trigger.setNonTargeting(true);

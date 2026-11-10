@@ -496,7 +496,7 @@ class SpellCastTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("captures the attached permanent for an attached self-targeting effect")
+        @DisplayName("an Aura's ability names the caster and keeps the Aura as it was, attachment included")
         void attachedSelfTargetingStackEntry() {
             Permanent aura = createPermanent("Predatory Hunger");
             Permanent host = createPermanent("Enchanted Creature");
@@ -512,8 +512,10 @@ class SpellCastTriggerCollectorServiceTest {
             sut.collectCastAbility(match(aura, player1Id, effect), effect, ctx, false);
 
             assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getLast().getTargetId()).isEqualTo(host.getId());
+            assertThat(gd.stack.getLast().getTargetId()).isEqualTo(player2Id);
+            assertThat(gd.stack.getLast().isNonTargeting()).isTrue();
             assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(aura.getId());
+            assertThat(gd.stack.getLast().getSourcePermanentSnapshot().getAttachedTo()).isEqualTo(host.getId());
         }
 
         @Test

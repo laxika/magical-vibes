@@ -7,9 +7,4 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public record RevealTopCardAndCounterTriggeringSpellIfManaValueMatchesEffect()
         implements CounterSpellingEffect {
-
-    @Override
-    public boolean targetsTriggeringSpell() {
-        return false;
-    }
 }

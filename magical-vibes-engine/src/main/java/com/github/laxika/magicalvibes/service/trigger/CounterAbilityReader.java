@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -53,9 +54,12 @@ public final class CounterAbilityReader {
      * @param event   the watched condition's own event, which may be narrower than the watch's
      *                ({@link CounterTrigger#watchedEvent()})
      * @param simultaneousWithPrevious the registration happens at the same time as the effect before it
+     * @param counterKind the one kind of counter the watched condition is about ("the last intervention counter",
+     *                    {@link CounterTrigger#counterKind()}), or {@code null}
      */
     public record CounterEffect(CardEffect effect, TriggeredAbility ability,
-                                PermanentPredicate filter, CounterEvent event, boolean simultaneousWithPrevious) {
+                                PermanentPredicate filter, CounterEvent event, boolean simultaneousWithPrevious,
+                                CounterType counterKind) {
 
         public CounterEffect {
             Objects.requireNonNull(effect, "effect");
@@ -100,7 +104,7 @@ public final class CounterAbilityReader {
 
         /** This effect read as {@code effect} instead, as a collector binds it. */
         public CounterEffect withEffect(CardEffect effect) {
-            return new CounterEffect(effect, ability, filter, event, simultaneousWithPrevious);
+            return new CounterEffect(effect, ability, filter, event, simultaneousWithPrevious, counterKind);
         }
 
         /**
@@ -196,6 +200,16 @@ public final class CounterAbilityReader {
         return byAbility;
     }
 
+    /** {@link #printedEffectsByAbility(Card, CounterWatch)} of the abilities {@code judge} lets trigger. */
+    public static List<List<CardEffect>> printedEffectsByAbility(Card card, CounterWatch watch, TriggerJudge judge) {
+        List<List<CardEffect>> byAbility = new ArrayList<>();
+        for (List<CounterEffect> ability : readByAbility(judge.filter(printed(card, watch)), watch.trigger())) {
+            ability.forEach(effect -> requireNothingToJudge(effect, watch.trigger()));
+            byAbility.add(effectsOf(ability));
+        }
+        return byAbility;
+    }
+
     /** Every effect of {@code abilities}, as their collector reads them for the condition watched as {@code watched}. */
     public static List<CounterEffect> read(List<TriggeredAbility> abilities, Trigger watched) {
         List<CounterEffect> effects = new ArrayList<>();
@@ -220,7 +234,7 @@ public final class CounterAbilityReader {
                 effect = new ConditionalEffect(interveningIf, effect);
             }
             effects.add(new CounterEffect(effect, ability, condition.qualifier(),
-                    condition.event(), registration.simultaneousWithPrevious()));
+                    condition.event(), registration.simultaneousWithPrevious(), condition.counterKind()));
         }
         return effects;
     }
