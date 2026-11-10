@@ -282,7 +282,7 @@ public class DestroyTargetPermanentThenEffectHandler implements NormalEffectHand
             return List.of(thenEffect);
         }
         if (!(thenEffect instanceof SequenceEffect sequence) || sequence.simultaneous()
-                || sequence.controllerDrawCount() != 0 || sequence.optionalTarget()
+                || sequence.optionalTarget()
                 || sequence.steps().stream().noneMatch(riderStepHandler::resolvesAsStep)
                 || !sequence.steps().stream().allMatch(step -> riderStepHandler.resolvesAsStep(step)
                         || !(step instanceof MayEffect || step instanceof SequenceEffect

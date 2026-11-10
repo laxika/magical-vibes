@@ -45,20 +45,11 @@ import java.util.List;
  * entry's {@code targetId}, allowing steps such as {@link DrawCardForTargetPlayerEffect} to act on
  * "that player".</p>
  */
-public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean optionalTarget,
-                             boolean simultaneous)
+public record SequenceEffect(List<CardEffect> steps, boolean optionalTarget, boolean simultaneous)
         implements CardEffect {
 
     public SequenceEffect(List<CardEffect> steps) {
-        this(steps, 0, false);
-    }
-
-    public SequenceEffect(List<CardEffect> steps, int controllerDrawCount) {
-        this(steps, controllerDrawCount, false);
-    }
-
-    public SequenceEffect(List<CardEffect> steps, int controllerDrawCount, boolean optionalTarget) {
-        this(steps, controllerDrawCount, optionalTarget, false);
+        this(steps, false, false);
     }
 
     public SequenceEffect {
@@ -74,15 +65,6 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
     }
 
     /**
-     * Returns the first explicitly declared target in the sequence. Implicit source bindings such
-     * as {@link SacrificeSelfEffect} do not consume a target slot; they are retained only when the
-     * sequence has no explicit target at all.
-     */
-    public static SequenceEffect onSecondControllerDraw(CardEffect... steps) {
-        return new SequenceEffect(List.of(steps), 2);
-    }
-
-    /**
      * Creates a sequence whose steps happen at the same time ("deals 4 damage to any target and 2
      * damage to you"). The steps still resolve one after another, but the damage they deal is one
      * damage event: a lifelink source gains life once for all of it, and a "whenever this deals
@@ -90,22 +72,17 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
      * events ("… Then …", or a second sentence).
      */
     public static SequenceEffect simultaneous(CardEffect... steps) {
-        return new SequenceEffect(List.of(steps), 0, false, true);
+        return new SequenceEffect(List.of(steps), false, true);
     }
 
     /** Returns this sequence with its steps replaced, keeping every other setting. */
     public SequenceEffect withSteps(List<CardEffect> newSteps) {
-        return new SequenceEffect(newSteps, controllerDrawCount, optionalTarget, simultaneous);
+        return new SequenceEffect(newSteps, optionalTarget, simultaneous);
     }
 
     /** Creates a sequence whose single declared target may be omitted. */
     public static SequenceEffect upToOneTarget(CardEffect... steps) {
-        return new SequenceEffect(List.of(steps), 0, true);
-    }
-
-    @Override
-    public boolean triggersOnControllerDrawCount(int cardsDrawnThisTurn) {
-        return controllerDrawCount == 0 || controllerDrawCount == cardsDrawnThisTurn;
+        return new SequenceEffect(List.of(steps), true, false);
     }
 
     @Override
@@ -113,6 +90,11 @@ public record SequenceEffect(List<CardEffect> steps, int controllerDrawCount, bo
         return steps.stream().anyMatch(CardEffect::hasAbilityResolutionCondition);
     }
 
+    /**
+     * Returns the first explicitly declared target in the sequence. Implicit source bindings such
+     * as {@link SacrificeSelfEffect} do not consume a target slot; they are retained only when the
+     * sequence has no explicit target at all.
+     */
     @Override
     public TargetSpec targetSpec() {
         TargetSpec implicitSourceSpec = TargetSpec.NONE;

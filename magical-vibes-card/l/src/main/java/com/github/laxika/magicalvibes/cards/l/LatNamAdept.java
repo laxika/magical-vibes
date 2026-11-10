@@ -9,6 +9,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class LatNamAdept extends Card {
 
     public LatNamAdept() {
-        addTrigger(Triggers.youDrawCard(), PutCountersOnSourceEffect.onSecondControllerDraw());
+        addTrigger(Triggers.youDrawSecondCardEachTurn(), new PutCountersOnSourceEffect(1, 1, 1));
     }
 }

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -23,9 +22,9 @@ import java.util.List;
 public class GixianPuppeteer extends Card {
 
     public GixianPuppeteer() {
-        addTrigger(Triggers.youDrawCard(), SequenceEffect.onSecondControllerDraw(
+        addTrigger(Triggers.youDrawSecondCardEachTurn(),
                 new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT),
-                new GainLifeEffect(2)));
+                new GainLifeEffect(2));
         addTrigger(Triggers.dies(ObjectRelation.THIS), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardAllOfPredicate(List.of(

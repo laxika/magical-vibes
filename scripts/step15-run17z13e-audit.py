@@ -25,7 +25,8 @@ The labels are a heuristic: a handler that records the same through a choice the
 another service, can be labelled RECORD-GAP. `HAND` holds the hand classification where the heuristic's label is wrong
 (the reason in the comment); `ROWS` names the row of step 15 that holds a watch's handlers that aren't ROUTE, which
 `--summary` counts; `READERS` (keyed by file and effect class) holds the verdicts on the step and draw readers'
-class-keyed branches (row 17z13e8 read them; run 17z13e8 split the draw-trigger readers' into row 17z13e8b). The run's Findings (effect-slot-refactor.md, run 17z13e) give the
+class-keyed branches (row 17z13e8 read them; run 17z13e8 split the draw-trigger readers' into row 17z13e8b, which run
+17z13e8b closed). The run's Findings (effect-slot-refactor.md, run 17z13e) give the
 details. `TriggerCollectorRegistry.register` throws on a duplicate key since run 17z13e, so DUP can only come from two
 annotations naming one key (the registry rejects those at start-up too). The rows' done condition: no RECORD-GAP,
 REWRITE or DUP left, no reader branch unread or open (a reader verdict is ROUTE, STATIC, ENGINE or an open row).
@@ -105,7 +106,8 @@ ROWS = [
 # ability as "any spell" through the generic cast collector (the spell-cast watches have no handler), and Relic Bind's
 # "choose one" goes through the enchanted-tap default, its mode announced from the stack. What is left of the
 # class-keyed registrations is the `HAND` ROUTE above.
-DONE_ROWS = {"17z13e2", "17z13e3", "17z13e4", "17z13e5", "17z13e5b", "17z13e6", "17z13e7", "17z13e8", "17z13e9"}
+DONE_ROWS = {"17z13e2", "17z13e3", "17z13e4", "17z13e5", "17z13e5b", "17z13e6", "17z13e7", "17z13e8", "17z13e8b",
+             "17z13e9"}
 
 # The reader branches keyed by an effect's class (file, effect class) -> verdict. Row 17z13e's three (the your-upkeep
 # `SurveilEffect`, the your-draw-step `MayEffect` and Haphazard Bombardment's branches) are gone. Run 17z13e8 read the
@@ -114,11 +116,10 @@ DONE_ROWS = {"17z13e2", "17z13e3", "17z13e4", "17z13e5", "17z13e5b", "17z13e6", 
 # conditions and `Triggers.drawStep(ActivePlayer.OPPONENT)`, Smile at Death's merge, the class-keyed window resets);
 # what is left is ROUTE (the class picks the target or mode choice the ability goes to as written, with the reader's
 # record), STATIC (no triggered ability) or ENGINE (an ability the engine makes). `DrawService`'s are replacement and
-# static abilities (STATIC) but for the draw-trigger readers' branches, row 17z13e8b.
+# static abilities (STATIC); the draw-trigger readers' branches were row 17z13e8b's (run 17z13e8b, gone).
 ROUTE = "ROUTE"
 STATIC = "STATIC"
 ENGINE = "ENGINE"
-OPEN_B = "OPEN(17z13e8b)"
 READERS = {
     # The modal goes to its mode choice as written (CR 603.3c, 700.2): the your-upkeep, precombat-main, your-end-step
     # and beginning-of-combat readers; the chosen upkeep mode with no target records the source, the permanent it is
@@ -172,12 +173,10 @@ READERS = {
         "RevealTopCardsCreaturesToHandDrawReplacementEffect", "LookAtTopCardsChooseOneToHandDrawReplacementEffect",
         "RevealTopCreatureToGraveyardElseDrawReplacementEffect", "WinGameOnEmptyLibraryDrawEffect",
         "ExileTopCardsMayPlayThisTurnDrawReplacementEffect", "RevealDrawnCardsEffect")},
-    # Row 17z13e8b: the draw-trigger readers' class-keyed branches (`checkControllerDrawTriggerSlot`'s Diviner's Wand
-    # skip, `queueControllerDrawAbility`'s bare "you may" and its modal's missing "that player", the opponent-draw,
-    # planar and enchanted-player readers' bare "you may"s).
-    ("DrawService.java", "BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect"): OPEN_B,
-    ("DrawService.java", "MayEffect"): OPEN_B,
-    ("DrawService.java", "ChooseOneEffect"): OPEN_B,
+    # Row 17z13e8b's six (run 17z13e8b) are gone: the draw readers read each ability whole and put it on the stack as
+    # written with their record (`DrawService.recordDrawEvent`), the Diviner's Wand skip (no card reached it: the Wand
+    # grants its ability to the equipped creature) and the effects' draw count (`triggersOnControllerDrawCount`, now
+    # `Triggers.youDrawSecondCardEachTurn()`) with them.
 }
 
 

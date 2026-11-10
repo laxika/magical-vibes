@@ -20,7 +20,7 @@ import java.util.List;
 public class GurglingAnointer extends Card {
 
     public GurglingAnointer() {
-        addTrigger(Triggers.youDrawCard(), PutCountersOnSourceEffect.onSecondControllerDraw());
+        addTrigger(Triggers.youDrawSecondCardEachTurn(), new PutCountersOnSourceEffect(1, 1, 1));
         addTrigger(Triggers.dies(ObjectRelation.THIS), ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardAllOfPredicate(List.of(

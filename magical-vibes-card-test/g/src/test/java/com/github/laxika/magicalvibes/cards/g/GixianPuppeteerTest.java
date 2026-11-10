@@ -168,6 +168,29 @@ class GixianPuppeteerTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("The second-draw ability is one object on the stack: the loss and the gain resolve together")
+    void drawAbilityIsOneStackObject() {
+        harness.addToBattlefield(player1, new GixianPuppeteer());
+        harness.setLibrary(player1, List.of(new ArgothianSprite(), new ArgothianSprite()));
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+
+        drawAndResolveTrigger(player1);
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+
+        assertThat(gd.stack).singleElement()
+                .satisfies(entry -> assertThat(entry.getEffectsToResolve()).hasSize(2));
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
     private void killInCombat() {
         Permanent puppeteer = harness.addToBattlefieldAndReturn(player1, new GixianPuppeteer());
         puppeteer.setSummoningSick(false);

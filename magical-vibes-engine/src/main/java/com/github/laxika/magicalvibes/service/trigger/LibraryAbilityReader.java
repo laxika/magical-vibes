@@ -160,6 +160,27 @@ public final class LibraryAbilityReader {
         return read(abilities, watched);
     }
 
+    /**
+     * The effects of {@code abilities}, one list for each ability, in order, as their collector reads them for the
+     * condition watched as {@code watched}: each list is one object on the stack (CR 603.3), whose trigger-level parts
+     * (filter, event, counts, limit, options) every read of it shares.
+     */
+    public static List<List<LibraryEffect>> readByAbility(List<TriggeredAbility> abilities, Trigger watched) {
+        List<List<LibraryEffect>> byAbility = new ArrayList<>(abilities.size());
+        for (TriggeredAbility ability : abilities) {
+            List<LibraryEffect> effects = read(ability, watched);
+            if (!effects.isEmpty()) {
+                byAbility.add(effects);
+            }
+        }
+        return byAbility;
+    }
+
+    /** {@link #readByAbility(List, Trigger)} of the abilities of {@code card} that {@code watch} reads. */
+    public static List<List<LibraryEffect>> readPrintedByAbility(Card card, LibraryWatch watch) {
+        return readByAbility(printed(card, watch), watch.trigger());
+    }
+
     /** Every effect of {@code abilities}, as their collector reads them for the condition watched as {@code watched}. */
     public static List<LibraryEffect> read(List<TriggeredAbility> abilities, Trigger watched) {
         List<LibraryEffect> effects = new ArrayList<>();

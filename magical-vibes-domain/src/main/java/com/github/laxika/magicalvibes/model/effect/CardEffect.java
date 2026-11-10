@@ -102,12 +102,6 @@ public interface CardEffect {
     default boolean targetsChosenByReflexiveAbility() { return false; }
 
     /**
-     * Returns whether this effect should trigger for the controller's current draw count this turn.
-     * Effects that do not restrict a draw count always return {@code true}.
-     */
-    default boolean triggersOnControllerDrawCount(int cardsDrawnThisTurn) { return true; }
-
-    /**
      * Returns {@code true} when this effect's declared target may be omitted, such as an
      * "up to one target" choice made while a triggered ability is put on the stack.
      */

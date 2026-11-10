@@ -17,7 +17,7 @@ import java.util.Set;
 public class ThopterMechanic extends Card {
 
     public ThopterMechanic() {
-        addTrigger(Triggers.youDrawCard(), PutCountersOnSourceEffect.onSecondControllerDraw());
+        addTrigger(Triggers.youDrawSecondCardEachTurn(), new PutCountersOnSourceEffect(1, 1, 1));
         addTrigger(Triggers.dies(ObjectRelation.THIS),
                 new CreateTokenEffect("Thopter", 1, 1, null,
                         List.of(CardSubtype.THOPTER), Set.of(Keyword.FLYING), Set.of(CardType.ARTIFACT)));

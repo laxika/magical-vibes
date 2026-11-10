@@ -11,14 +11,12 @@ import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AbundanceDrawReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleDrawReplacementEffect;
@@ -244,54 +242,58 @@ class DrawServiceTest {
         return card;
     }
 
-    private Permanent addEquipmentWithDrawTrigger(UUID controllerId) {
-        Card card = createCard("Diviner's Wand", CardType.ARTIFACT);
-        card.addTrigger(Triggers.youDrawCard(),
-                new BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect(1, 1, Keyword.FLYING));
-        Permanent equipment = new Permanent(card);
-        gd.playerBattlefields.get(controllerId).add(equipment);
-        return equipment;
-    }
-
-    // ===== checkControllerDrawTriggers — equipment-granted draw trigger =====
-
     @Nested
-    @DisplayName("checkControllerDrawTriggers — equipment-granted draw trigger")
-    class EquipmentGrantedDrawTrigger {
+    @DisplayName("checkControllerDrawTriggers — the abilities as written")
+    class ControllerDrawAbilities {
 
         @Test
-        @DisplayName("does not trigger while the equipment is unattached")
-        void unattachedEquipmentDoesNotTrigger() {
-            addEquipmentWithDrawTrigger(player1Id);
+        @DisplayName("an ability of two effects is one stack entry recording the draw")
+        void abilityOfTwoEffectsIsOneEntry() {
+            Card card = createCard("Gixian Puppeteer", CardType.CREATURE);
+            LoseLifeEffect loss = new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT);
+            GainLifeEffect gain = new GainLifeEffect(2);
+            card.addTrigger(Triggers.youDrawCard(), loss, gain);
+            Permanent puppeteer = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(puppeteer);
+            Card drawn = createCard("Island", CardType.LAND);
 
-            sut.checkControllerDrawTriggers(gd, player1Id);
+            sut.checkControllerDrawTriggers(gd, player1Id, drawn);
 
-            assertThat(gd.stack).isEmpty();
-            verify(gameLogService, never()).append(eq(gd), any());
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEffectsToResolve()).containsExactly(loss, gain);
+                assertThat(entry.getSourcePermanentId()).isEqualTo(puppeteer.getId());
+                assertThat(entry.getTargetId()).isEqualTo(player1Id);
+                assertThat(entry.isNonTargeting()).isTrue();
+                assertThat(entry.getTriggeringPlayerId()).isEqualTo(player1Id);
+                assertThat(entry.getTriggeringCards()).containsExactly(drawn);
+                assertThat(entry.getSourcePermanentSnapshot()).isNotNull();
+            });
         }
 
         @Test
-        @DisplayName("pushes the trigger onto the stack while the equipment is attached")
-        void attachedEquipmentTriggers() {
-            Permanent creature = new Permanent(createCard("Grizzly Bears", CardType.CREATURE));
-            gd.playerBattlefields.get(player1Id).add(creature);
-            Permanent equipment = addEquipmentWithDrawTrigger(player1Id);
-            equipment.setAttachedTo(creature.getId());
+        @DisplayName("a \"you may\" goes on the stack as written with the reader's record")
+        void mayAbilityGoesOnTheStackWithTheRecord() {
+            Card card = createCard("Hoofprints of the Stag", CardType.ENCHANTMENT);
+            MayEffect may = new MayEffect(new BoostSelfEffect(1, 1), "Do it?");
+            card.addTrigger(Triggers.youDrawCard(), may);
+            Permanent hoofprints = new Permanent(card);
+            gd.playerBattlefields.get(player1Id).add(hoofprints);
 
             sut.checkControllerDrawTriggers(gd, player1Id);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(equipment.getId());
-            assertThat(gd.stack.getFirst().getEffectsToResolve())
-                    .containsExactly(new BoostEquippedCreatureAndGrantKeywordUntilEndOfTurnEffect(1, 1, Keyword.FLYING));
-            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Diviner's Wand's ability triggers.")));
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEffectsToResolve()).containsExactly(may);
+                assertThat(entry.getSourcePermanentId()).isEqualTo(hoofprints.getId());
+                assertThat(entry.getTargetId()).isEqualTo(player1Id);
+                assertThat(entry.isNonTargeting()).isTrue();
+                assertThat(entry.getTriggeringPlayerId()).isEqualTo(player1Id);
+                assertThat(entry.getSourcePermanentSnapshot()).isNotNull();
+            });
         }
 
         @Test
-        @DisplayName("non-equipment draw trigger still fires while another permanent is unattached")
-        void nonEquipmentDrawTriggerUnaffected() {
-            addEquipmentWithDrawTrigger(player1Id); // unattached — must stay silent
+        @DisplayName("a draw ability fires whoever else is on the battlefield")
+        void drawTriggerFires() {
             Card crawlerCard = createCard("Psychosis Crawler", CardType.CREATURE);
             crawlerCard.addTrigger(Triggers.youDrawCard(), new BoostSelfEffect(1, 1));
             Permanent crawler = new Permanent(crawlerCard);
@@ -311,7 +313,7 @@ class DrawServiceTest {
             crawlerCard.addTrigger(Triggers.youDrawCard(), new BoostSelfEffect(1, 1));
             Permanent crawler = new Permanent(crawlerCard);
             gd.playerBattlefields.get(player1Id).add(crawler);
-            when(gameQueryService.countAdditionalTriggeredAbilityTriggers(gd, player1Id, crawler))
+            when(gameQueryService.countAdditionalDrawTriggeredAbilityTriggers(gd, player1Id, crawler))
                     .thenReturn(1);
 
             sut.checkControllerDrawTriggers(gd, player1Id);
