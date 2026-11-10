@@ -270,6 +270,74 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
+    @DisplayName("An opponent's mill: the count is the event value, the milling player the non-targeting \"that player\"")
+    void opponentMillRecordsCountAndPlayer() {
+        Permanent source = createPermanent("Lo and Li, Royal Advisors");
+        var effect = new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1,
+                new PermanentHasSubtypePredicate(CardSubtype.ADVISOR));
+
+        boolean collected = registry.dispatch(match(source, player1Id, effect), ZoneChangeWatch.ON_OPPONENT_MILLS,
+                effect, new TriggerContext.Mill(player2Id, 3));
+
+        assertThat(collected).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getEventValue()).isEqualTo(3);
+            assertThat(entry.getTriggeringPlayerId()).isEqualTo(player2Id);
+            assertThat(entry.getTargetId()).isEqualTo(player2Id);
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getSourcePermanentSnapshot()).isNotNull();
+        });
+    }
+
+    @Test
+    @DisplayName("A nonblack card put into a graveyard: the card, its owner \"that player\", from a source with no permanent")
+    void nonblackCardRecordsTheCardAndItsOwner() {
+        Card plane = createCard("The Dark Barony");
+        var effect = new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER);
+        Card card = createCard("Grizzly Bears");
+        gd.graveyardEntryVersions.put(card.getId(), 5L);
+
+        boolean collected = registry.dispatch(new TriggerMatchContext(gd, null, player1Id, effect, plane),
+                ZoneChangeWatch.ON_NONBLACK_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, effect,
+                new TriggerContext.CardPutIntoGraveyard(card, player2Id));
+
+        assertThat(collected).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getCard()).isSameAs(plane);
+            assertThat(entry.getSourcePermanentId()).isNull();
+            assertThat(entry.getTargetId()).isEqualTo(player2Id);
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getTriggeringCardId()).isEqualTo(card.getId());
+            assertThat(entry.isTriggeringCardIncarnation(5L)).isTrue();
+        });
+    }
+
+    @Test
+    @DisplayName("A creature exiled from the battlefield: \"that card\" with its exile incarnation, the creature as it last existed")
+    void exiledCreatureRecordsTheCardAndTheCreature() {
+        Permanent source = createPermanent("Athreos, Shroud-Veiled");
+        var effect = new com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect(
+                com.github.laxika.magicalvibes.model.Zone.EXILE);
+        Permanent exiled = createPermanent("Grizzly Bears");
+        gd.exileEntryVersions.put(exiled.getCard().getId(), 4L);
+
+        boolean collected = registry.dispatch(match(source, player1Id, effect),
+                ZoneChangeWatch.ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD, effect,
+                new TriggerContext.CreatureExiledFromBattlefield(exiled, player2Id, 2));
+
+        assertThat(collected).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getTriggeringCardId()).isEqualTo(exiled.getCard().getId());
+            assertThat(entry.getTriggeringCardExileEntryVersion()).isEqualTo(4L);
+            assertThat(entry.getTriggeringPermanentId()).isEqualTo(exiled.getId());
+            assertThat(entry.getTriggeringPermanentSnapshot()).isNotNull();
+            assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
+            assertThat(entry.getEventValue()).isEqualTo(2);
+        });
+    }
+
+    @Test
     void enchantedPermanentTapModalWaitsForModeAndTargetBeforeGoingOnTheStack() {
         Permanent aura = createPermanent("Modal aura");
         Permanent tapped = createPermanent("Artifact");
@@ -305,8 +373,6 @@ class MiscTriggerCollectorServiceTest {
         TriggerCollectorRegistry.scanBean(sut, registry);
         TriggerCollectorRegistry.scanBean(new LifeGainTriggerCollectorService(gameLogService), registry);
     }
-
-    // ===== Helpers =====
 
     private static Card createCard(String name) {
         Card card = new Card();

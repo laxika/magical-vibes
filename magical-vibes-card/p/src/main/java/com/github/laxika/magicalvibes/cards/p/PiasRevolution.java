@@ -16,7 +16,7 @@ public class PiasRevolution extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANY),
+        )).addTrigger(Triggers.dies(Triggers.NONTOKEN_ARTIFACT, ObjectRelation.YOU_OWN),
                 new ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect(3));
     }
 }

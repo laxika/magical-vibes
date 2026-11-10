@@ -80,6 +80,7 @@ ROWS = [
     ("CreatureDeathWatch.", "17z13e4"), ("Legacy.", "17z13e4"),
     # Run 17z13e5 did the enter watches (a watch name with "ENTERS": every enter, enters-from and tokens-enter watch, the
     # command-zone one among them) and split the graveyard, sacrifice, milled and exiled ones into row 17z13e5b.
+    # Run 17z13e5b did the graveyard, sacrifice, milled and exiled ones (every other zone-change watch).
     ("ZoneChangeWatch.*ENTERS", "17z13e5"), ("ZoneChangeWatch.", "17z13e5b"),
     ("LibraryWatch.", "17z13e6"),
     ("ActionWatch.", "17z13e7"), ("CounterWatch.", "17z13e7"), ("SpellAbilityWatch.", "17z13e7"),
@@ -98,7 +99,7 @@ ROWS = [
 # the `DEATH` and `LEGACY_BLOCK` patterns find nothing and the "CreatureDeathWatch." and "Legacy." rows are empty.
 # Row 17z13e5 (run 17z13e5): the enter watches' "you may", "you may pay", modal, graveyard-target and Portcullis handlers
 # are gone into their watches' defaults (`EnterTriggerCollectorService`), the command-zone watch has the default too.
-DONE_ROWS = {"17z13e2", "17z13e3", "17z13e4", "17z13e5", "17z13e6", "17z13e9"}
+DONE_ROWS = {"17z13e2", "17z13e3", "17z13e4", "17z13e5", "17z13e5b", "17z13e6", "17z13e9"}
 
 # The reader branches keyed by an effect's class (file, effect class) -> verdict. Row 17z13e's three (the your-upkeep
 # `SurveilEffect`, the your-draw-step `MayEffect` and Haphazard Bombardment's branches) are gone; the rest are row

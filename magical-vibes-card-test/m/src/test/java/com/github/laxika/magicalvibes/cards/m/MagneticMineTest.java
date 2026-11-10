@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
+import com.github.laxika.magicalvibes.cards.t.TeysaKarlov;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +20,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MagneticMine.class, MindStone.class, Naturalize.class, GrizzlyBears.class,
+@CardUsed({TeysaKarlov.class, MagneticMine.class, MindStone.class, Naturalize.class, GrizzlyBears.class,
         CruelEdict.class, Memnite.class, CreepingCorrosion.class})
 class MagneticMineTest extends BaseCardTest {
 
@@ -235,5 +236,25 @@ class MagneticMineTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Magnetic Mine");
         harness.passBothPriorities();
         harness.assertLife(player2, 18);
+    }
+
+    @Test
+    @DisplayName("Teysa Karlov makes it trigger an additional time when an artifact creature dies")
+    void teysaDoublesForAnArtifactCreatureDying() {
+        harness.addToBattlefield(player1, new MagneticMine());
+        harness.addToBattlefield(player1, new TeysaKarlov());
+        harness.addToBattlefield(player2, new Memnite());
+        harness.setLife(player2, 20);
+        UUID memniteId = harness.getPermanentId(player2, "Memnite");
+
+        harness.setHand(player1, List.of(new Naturalize()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castAndResolveInstant(player1, 0, memniteId);
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Magnetic Mine")).hasSize(2);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 16);
     }
 }

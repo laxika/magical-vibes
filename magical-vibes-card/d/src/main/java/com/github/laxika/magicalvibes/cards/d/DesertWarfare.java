@@ -12,11 +12,10 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -29,21 +28,21 @@ import java.util.Set;
 public class DesertWarfare extends Card {
 
     public DesertWarfare() {
-        CardSubtypePredicate desertCard = new CardSubtypePredicate(CardSubtype.DESERT);
         RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect returnDesert =
-                new RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect(desertCard);
+                new RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect();
 
-        // Whenever you sacrifice a Desert, or a Desert card is put into your graveyard from your
-        // hand or library, return that card to the battlefield under your control at the next end step.
+        // Whenever you sacrifice a Desert and whenever a Desert card is put into your graveyard from your
+        // hand or library, put that card onto the battlefield under your control at the beginning of your
+        // next end step. "That card" is the stack entry's triggering card; each Desert card triggers once.
         addTrigger(Triggers.sacrificed(
                         new PermanentHasSubtypePredicate(CardSubtype.DESERT),
                         ObjectRelation.YOU_CONTROL),
                 returnDesert);
-        addTrigger(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN, ObjectRelation.ANOTHER_YOU_OWN),
+        addTrigger(Triggers.putIntoGraveyardFrom(Set.of(Zone.HAND, Zone.LIBRARY),
+                        new PermanentAllOfPredicate(List.of(Triggers.NONTOKEN,
+                                new PermanentHasSubtypePredicate(CardSubtype.DESERT))),
+                        ObjectRelation.YOU_OWN),
                 returnDesert);
-        addTrigger(new TriggerCondition(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN,
-                ObjectRelation.YOU_OWN)),
-                TriggerOptions.ONE_OR_MORE, returnDesert);
 
         PermanentHasSubtypePredicate desertPermanent = new PermanentHasSubtypePredicate(CardSubtype.DESERT);
         PermanentCount deserts = new PermanentCount(desertPermanent, CountScope.CONTROLLER);

@@ -74,7 +74,9 @@ BIND = re.compile(r"\.set\w+\((?:effect|e|may|mayPay|marker|trigger)\.")
 # patterns below find nothing. Run 17z13e5 deleted the enter watches' eight (32 registrations of
 # `EnterTriggerCollectorService`: the "you may", "you may pay", trigger-time modal, graveyard multi-target and
 # Portcullis routes): each enter watch's default records the entering permanent whatever the effects are; the
-# graveyard, sacrifice, milled and exiled handlers left are that audit's row 17z13e5b.
+# graveyard, sacrifice, milled and exiled handlers left were that audit's row 17z13e5b, which run 17z13e5b deleted (34
+# handlers, 36 registrations of `DeathTriggerCollectorService` and `MiscTriggerCollectorService`): each of those
+# watches has one default recording the permanent that left or the cards put into a graveyard whatever the effects are.
 OPEN = {}
 
 

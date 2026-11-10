@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.BendingType;
 import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -299,18 +300,11 @@ public sealed interface TriggerContext {
                            int exploitedPower)
             implements TriggerContext {}
 
-    record OpponentNontokenPermanentSacrificed(UUID sacrificingPlayerId,
-                                               Card sacrificedCard) implements TriggerContext {}
-
     /** Context for opponent-nontoken-permanent-sacrificed triggers. */
     record OpponentPermanentSacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
 
     /** Context for global permanent-sacrificed triggers. */
     record PermanentSacrificed(UUID sacrificingPlayerId, Card sacrificedCard) implements TriggerContext {}
-
-    /** Context for global noncreature-artifact sacrifice or destruction triggers. */
-    record NoncreatureArtifactSacrificedOrDestroyed(UUID artifactControllerId, Card artifactCard)
-            implements TriggerContext {}
 
     /**
      * Context for dealt-damage-to-creature triggers (ON_DEALT_DAMAGE): the permanent dealt damage, the damage, the
@@ -462,11 +456,6 @@ public sealed interface TriggerContext {
             this(damagedPlayerId, null, 0);
         }
     }
-
-    /**
-     * Context for creature-card-milled triggers (ON_OPPONENT_CREATURE_CARD_MILLED).
-     */
-    record CreatureCardMilled(UUID milledPlayerId, Card milledCard) implements TriggerContext {}
 
     /**
      * Context for enter-the-battlefield triggers (ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD,
@@ -694,6 +683,15 @@ public sealed interface TriggerContext {
             this(graveyardOwnerId, artifactControllerId, null, 0, null, false);
         }
 
+        /**
+         * An artifact creature put into a graveyard from the battlefield died, so an effect that makes a creature dying
+         * trigger an ability an additional time (Teysa Karlov) applies; its types are the ones it had as it last existed.
+         */
+        @Override
+        public boolean causedByCreatureDying() {
+            return artifactPermanent != null && artifactPermanent.getCard().hasType(CardType.CREATURE);
+        }
+
         public ArtifactGraveyard(UUID graveyardOwnerId, UUID artifactControllerId, Card artifactCard) {
             this(graveyardOwnerId, artifactControllerId, artifactCard,
                     artifactCard == null ? 0 : artifactCard.getManaValue(), null, false);
@@ -706,13 +704,6 @@ public sealed interface TriggerContext {
     }
 
     /**
-     * Context for ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers (Dingus Egg).
-     */
-    record AnyLandGraveyard(Card landCard,
-                            UUID graveyardOwnerId,
-                            UUID landControllerId) implements TriggerContext {}
-
-    /**
      * Context for ON_ANY_ENCHANTMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers
      * (Femeref Enchantress).
      */
@@ -720,31 +711,9 @@ public sealed interface TriggerContext {
                                 UUID enchantmentControllerId) implements TriggerContext {}
 
     /**
-     * Context for ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE triggers (Compost).
-     */
-    record BlackCardOpponentGraveyard(UUID graveyardOwnerId,
-                                      Card card) implements TriggerContext {}
-
-    /**
-     * Context for ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers (Prince of
-     * Thralls).
-     *
-     * @param dyingCard          the permanent's card, now in {@code graveyardOwnerId}'s graveyard
-     * @param dyingControllerId  the player who controlled the permanent on the battlefield ("that opponent")
-     * @param graveyardOwnerId   the owner of the graveyard the card was put into
-     * @param dyingPermanent     the permanent's last-known battlefield state, when available
-     */
-    record OpponentPermanentGraveyard(Card dyingCard, UUID dyingControllerId,
-                                      UUID graveyardOwnerId, Permanent dyingPermanent) implements TriggerContext {
-        public OpponentPermanentGraveyard(Card dyingCard, UUID dyingControllerId,
-                                          UUID graveyardOwnerId) {
-            this(dyingCard, dyingControllerId, graveyardOwnerId, null);
-        }
-    }
-
-    /**
-     * Context for ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers (Yomiji, Who Bars
-     * the Way).
+     * Context for the triggers of a permanent leaving the battlefield for a graveyard, or destroyed or sacrificed
+     * (ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD, Yomiji, Who Bars the Way; the land, opponent's permanent,
+     * noncreature-artifact, destroyed-by-an-opponent and "put into your graveyard" watches).
      *
      * @param dyingCard          the permanent's card, now in {@code graveyardOwnerId}'s graveyard
      * @param dyingControllerId  the player who controlled the permanent on the battlefield
@@ -753,6 +722,16 @@ public sealed interface TriggerContext {
     record AnyPermanentGraveyard(Card dyingCard, UUID dyingControllerId,
                                  UUID graveyardOwnerId, Permanent dyingPermanent,
                                  int dyingPower, int dyingToughness) implements TriggerContext {
+        /**
+         * A creature put into a graveyard from the battlefield died ("whenever a land is put into a graveyard" of a land
+         * creature), so an effect that makes a creature dying trigger an ability an additional time (Teysa Karlov)
+         * applies; its types are the ones it had as it last existed.
+         */
+        @Override
+        public boolean causedByCreatureDying() {
+            return dyingPermanent != null && dyingPermanent.getCard().hasType(CardType.CREATURE);
+        }
+
         public AnyPermanentGraveyard(Card dyingCard, UUID dyingControllerId, UUID graveyardOwnerId) {
             this(dyingCard, dyingControllerId, graveyardOwnerId, null,
                     dyingCard != null && dyingCard.getPower() != null ? dyingCard.getPower() : 0,
@@ -771,11 +750,11 @@ public sealed interface TriggerContext {
     }
 
     /**
-     * Context for ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT triggers (Sacred Ground).
+     * Context for ON_ALLY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE triggers.
      *
-     * @param landCard          the land card that was put into the graveyard from the battlefield
+     * @param landCard          the land card that was put into the graveyard
      * @param graveyardOwnerId  the owner of the graveyard the land was put into
-     * @param causeControllerId the controller of the spell or ability that caused it (an opponent)
+     * @param causeControllerId the controller of the spell or ability that caused it, or {@code null}
      */
     record LandPutIntoGraveyard(Card landCard, UUID graveyardOwnerId,
                                  UUID causeControllerId) implements TriggerContext {}
@@ -830,10 +809,6 @@ public sealed interface TriggerContext {
 
     /** Context for ON_ANY_CARDS_PUT_INTO_LIBRARY triggers. */
     record CardsPutIntoLibrary(UUID libraryOwnerId, int cardCount) implements TriggerContext {}
-
-    /** Context for ON_ALLY_NONCREATURE_PERMANENT_DESTROYED_BY_OPPONENT triggers (Karmic Justice). */
-    record NoncreaturePermanentDestroyed(Card destroyedCard, UUID destroyedControllerId,
-                                         UUID causeControllerId) implements TriggerContext {}
 
     /**
      * Context for ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE triggers (Soulcipher Board).

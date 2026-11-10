@@ -35,7 +35,7 @@ public class YunaGrandSummoner extends Card {
                 "{T}: Add one mana of any color. When you next cast a creature spell this turn, that creature enters with two additional +1/+1 counters on it."
         ));
 
-        addTrigger(Triggers.dies(new PermanentHasCountersPredicate(CounterType.ANY), ObjectRelation.ANY),
+        addTrigger(Triggers.dies(new PermanentHasCountersPredicate(CounterType.ANY), ObjectRelation.ANOTHER_YOU_CONTROL),
                 new MayEffect(
                                 new PutPlusOnePlusOneCountersOnTargetForEachDyingSourceCounterEffect(),
                                 "Put that many +1/+1 counters on target creature?"

@@ -320,4 +320,29 @@ class DesertWarfareTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Sand Warrior")).isEmpty();
     }
+
+    @Test
+    @DisplayName("A Desert that left the graveyard and returned before the ability resolves is not returned")
+    void triggerFromAnEarlierStayDoesNotReturnTheNewDesert() {
+        harness.addToBattlefield(player1, new DesertWarfare());
+        Permanent millstone = harness.addToBattlefieldAndReturn(player1, new Millstone());
+        HashepOasis desert = new HashepOasis();
+        harness.setLibrary(player1, List.of(desert, new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(millstone),
+                0, null, player1.getId());
+        harness.passBothPriorities();
+        assertThat(gd.stack).anySatisfy(entry -> assertThat(entry.getCard().getName()).isEqualTo("Desert Warfare"));
+
+        harness.setGraveyard(player1, List.of());
+        gd.markGraveyardExit(desert.getId());
+        harness.setGraveyard(player1, List.of(desert));
+        gd.markGraveyardEntry(desert);
+        harness.passBothPriorities();
+        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Hashep Oasis");
+        harness.assertNotOnBattlefield(player1, "Hashep Oasis");
+    }
 }

@@ -5138,7 +5138,7 @@ public class TriggerCollectionService {
                 }
             }
             case ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED -> {
-                var ctx = new TriggerContext.OpponentNontokenPermanentSacrificed(event.controllerId(), movedCard);
+                var ctx = new TriggerContext.AllySacrificed(event.controllerId(), movedCard, event.permanent());
                 for (CardEffect effect : effects) {
                     triggered |= dispatch(new TriggerMatchContext(gameData, perm, controllerId, effect), watch,
                             effect, ctx);
@@ -5154,8 +5154,7 @@ public class TriggerCollectionService {
             case ON_ANY_CREATURE_SACRIFICED -> triggered = dispatchWatchEffects(gameData, candidate, watch, effects,
                     new TriggerContext.AllySacrificed(event.controllerId(), movedCard, event.permanent()));
             case ON_ANY_NONCREATURE_ARTIFACT_SACRIFICED_OR_DESTROYED -> triggered = dispatchWatchEffects(gameData,
-                    candidate, watch, effects,
-                    new TriggerContext.NoncreatureArtifactSacrificedOrDestroyed(event.controllerId(), movedCard));
+                    candidate, watch, effects, anyPermanentGraveyard(event));
             case EXILE_ON_CONTROLLER_TOKEN_SACRIFICED -> {
                 var ctx = new TriggerContext.AllySacrificed(event.controllerId(), movedCard, event.permanent());
                 for (CardEffect effect : effects) {
@@ -5187,8 +5186,7 @@ public class TriggerCollectionService {
                     candidate, watch, effects,
                     new TriggerContext.EnchantmentGraveyard(event.ownerId(), event.controllerId()));
             case ON_OPPONENT_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD -> triggered = dispatchWatchEffects(
-                    gameData, candidate, watch, effects, new TriggerContext.OpponentPermanentGraveyard(event.card(),
-                            event.controllerId(), event.ownerId(), new Permanent(event.permanent())));
+                    gameData, candidate, watch, effects, anyPermanentGraveyard(event));
             case ON_ANY_PERMANENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD -> triggered =
                     dispatchAnyPermanentDeathTriggersForWatcher(gameData, controllerId, perm, effects,
                             watchesPermanentsYouControl(candidate), event.card(), anyPermanentGraveyard(event));
@@ -5213,15 +5211,9 @@ public class TriggerCollectionService {
                             effect, ctx);
                 }
             }
-            case ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT -> triggered = dispatchWatchEffects(gameData, candidate,
-                    watch, effects, new TriggerContext.LandPutIntoGraveyard(event.card(), event.ownerId(),
-                            event.causeControllerId()));
-            case ON_ALLY_NONCREATURE_PERMANENT_DESTROYED_BY_OPPONENT -> triggered = dispatchWatchEffects(gameData,
-                    candidate, watch, effects, new TriggerContext.NoncreaturePermanentDestroyed(movedCard,
-                            event.controllerId(), event.causeControllerId()));
-            case ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD -> triggered = dispatchWatchEffects(gameData,
-                    candidate, watch, effects,
-                    new TriggerContext.AnyLandGraveyard(movedCard, event.ownerId(), event.controllerId()));
+            case ON_ALLY_LAND_PUT_INTO_GRAVEYARD_BY_OPPONENT, ON_ALLY_NONCREATURE_PERMANENT_DESTROYED_BY_OPPONENT,
+                 ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD -> triggered = dispatchWatchEffects(gameData,
+                    candidate, watch, effects, anyPermanentGraveyard(event));
             case ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD -> {
                 CreatureDeath death = CreatureDeath.of(event);
                 Permanent enchanted = event.permanent();
@@ -5262,11 +5254,7 @@ public class TriggerCollectionService {
             case ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD -> {
                 var ctx = new TriggerContext.CreatureExiledFromBattlefield(new Permanent(event.permanent()),
                         event.controllerId(), Math.max(0, CreatureDeath.of(event).power()));
-                // Only some effects see the creature's own exile.
-                triggered = candidate.sourcePermanent() != null
-                        && candidate.sourcePermanent().getId().equals(event.permanent().getId())
-                        ? dispatchCounterReturnForLeavingSource(gameData, controllerId, perm, watch, effects, ctx)
-                        : dispatchWatchEffects(gameData, candidate, watch, effects, ctx);
+                triggered = dispatchWatchEffects(gameData, candidate, watch, effects, ctx);
             }
             case ON_ANY_ARTIFACT_EXILED_FROM_BATTLEFIELD -> triggered = dispatchWatchEffects(gameData, candidate,
                     watch, effects, new TriggerContext.ArtifactExiledFromBattlefield(new Permanent(event.permanent()),
@@ -5368,7 +5356,7 @@ public class TriggerCollectionService {
             }
             case ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE -> triggered = dispatchWatchEffects(gameData,
                     candidate, watch, effects,
-                    new TriggerContext.BlackCardOpponentGraveyard(event.ownerId(), event.card()));
+                    new TriggerContext.CardPutIntoGraveyard(event.card(), event.ownerId(), event.from()));
             case GRAVEYARD_ON_ANY_LAND_PUT_INTO_GRAVEYARD_FROM_ANYWHERE -> triggered = triggerGraveyardLandPutIntoGraveyard(
                     gameData, candidate.sourceCard(), controllerId, effects);
             case ON_OPPONENT_MILLS -> triggered = dispatchWatchEffects(gameData, candidate, watch, effects,
@@ -5386,13 +5374,8 @@ public class TriggerCollectionService {
                     triggered = true;
                 }
             }
-            case ON_OPPONENT_CREATURE_CARD_MILLED -> {
-                var ctx = new TriggerContext.CreatureCardMilled(event.ownerId(), event.card());
-                for (CardEffect effect : effects) {
-                    triggered |= dispatch(new TriggerMatchContext(gameData, perm, controllerId, effect), watch, effect,
-                            ctx);
-                }
-            }
+            case ON_OPPONENT_CREATURE_CARD_MILLED -> triggered = dispatchWatchEffects(gameData, candidate, watch,
+                    effects, new TriggerContext.CardPutIntoGraveyard(event.card(), event.ownerId(), event.from()));
             case GRAVEYARD_ON_CREATURE_CARD_LEAVES_OPPONENT_GRAVEYARD, GRAVEYARD_ON_SELF_RETURNED_TO_HAND -> {
                 Card card = candidate.sourceCard();
                 for (CardEffect effect : effects) {
@@ -13641,19 +13624,6 @@ public class TriggerCollectionService {
         gameData.stack.add(entry);
         gameLogService.append(gameData, GameLog.text(description + " triggers (a creature died)."));
         log.info("Game {} - {} triggers for {} dying", gameData.id, description, dyingCard.getName());
-    }
-
-    private boolean dispatchCounterReturnForLeavingSource(GameData gameData, UUID controllerId,
-                                                          Permanent source, Object slot, List<CardEffect> effects,
-                                                          TriggerContext context) {
-        boolean triggered = false;
-        for (CardEffect effect : effects) {
-            if (effect instanceof com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect) {
-                triggered |= dispatch(new TriggerMatchContext(gameData, source, controllerId, effect), slot, effect,
-                        context);
-            }
-        }
-        return triggered;
     }
 
     /**

@@ -46,13 +46,17 @@ public class ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffectHan
                         + " damage to you to keep " + artifactName + " in its owner's graveyard?",
                 targetPlayerId, null, entry.getSourcePermanentId(), null,
                 0, 0, null, null, targetPlayerId, entry.getSourcePermanentSnapshot(),
-                entry.getControllerId(), entry.getTriggeringCardId(), 0));
+                entry.getControllerId(), entry.getTriggeringCardId(), 0)
+                .withTriggeringCard(entry.getTriggeringCardId(), entry.getTriggeringCardGraveyardEntryVersion()));
     }
 
-    public void returnArtifactToOwnerHand(GameData gameData, UUID artifactId) {
+    public void returnArtifactToOwnerHand(GameData gameData, UUID artifactId, long graveyardEntryVersion) {
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, artifactId);
         Card artifact = gameQueryService.findCardInGraveyardById(gameData, artifactId);
-        if (artifact == null || ownerId == null) {
+        // "That card" is the graveyard object the ability triggered for: once it left the graveyard and came back it is
+        // a new object, which isn't returned (CR 400.7).
+        if (artifact == null || ownerId == null
+                || graveyardEntryVersion >= 0 && gameData.graveyardEntryVersion(artifactId) != graveyardEntryVersion) {
             return;
         }
 

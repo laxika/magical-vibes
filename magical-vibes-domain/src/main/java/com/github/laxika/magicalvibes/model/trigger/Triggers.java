@@ -244,6 +244,12 @@ public final class Triggers {
         return new ZoneChangeTrigger(relation, filter, Set.of(from), Zone.GRAVEYARD, Set.of());
     }
 
+    /** "Whenever [a filter card] is put into a graveyard from [one of several zones]" ("from your hand or library"). */
+    public static ZoneChangeTrigger putIntoGraveyardFrom(Set<Zone> from, PermanentPredicate filter,
+                                                         ObjectRelation relation) {
+        return new ZoneChangeTrigger(relation, filter, from, Zone.GRAVEYARD, Set.of());
+    }
+
     /**
      * "Whenever [a filter card] is put into a graveyard from anywhere". It is never a leaves-the-battlefield
      * ability, even for a move from the battlefield (CR 603.6c).

@@ -7,31 +7,17 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.KayaSpiritsJusticeEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -40,7 +26,6 @@ import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -63,31 +48,31 @@ public class MiscTriggerCollectorService {
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final GameQueryService gameQueryService;
-    private final PredicateEvaluationService predicateEvaluationService;
     private final DrawService drawService;
     private final AmountEvaluationService amountEvaluationService;
     private final ConditionEvaluationService conditionEvaluationService;
     private final ETBTokenTargetService etbTokenTargetService;
     private PermanentRemovalService permanentRemovalService;
+    private final DeathTriggerCollectorService deathTriggerCollectorService;
 
     public MiscTriggerCollectorService(GameLogService gameLogService,
                                        @Lazy GraveyardService graveyardService,
                                        GameQueryService gameQueryService,
-                                       PredicateEvaluationService predicateEvaluationService,
                                        @Lazy DrawService drawService,
                                        AmountEvaluationService amountEvaluationService,
                                        ConditionEvaluationService conditionEvaluationService,
                                        @Lazy ETBTokenTargetService etbTokenTargetService,
-                                       @Lazy PermanentRemovalService permanentRemovalService) {
+                                       @Lazy PermanentRemovalService permanentRemovalService,
+                                       @Lazy DeathTriggerCollectorService deathTriggerCollectorService) {
         this.gameLogService = gameLogService;
         this.graveyardService = graveyardService;
         this.gameQueryService = gameQueryService;
-        this.predicateEvaluationService = predicateEvaluationService;
         this.drawService = drawService;
         this.amountEvaluationService = amountEvaluationService;
         this.conditionEvaluationService = conditionEvaluationService;
         this.etbTokenTargetService = etbTokenTargetService;
         this.permanentRemovalService = permanentRemovalService;
+        this.deathTriggerCollectorService = deathTriggerCollectorService;
     }
 
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_GIVES_GIFT)
@@ -239,86 +224,43 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    // ── ON_ALLY_PERMANENT_SACRIFICED ───────────────────────────────────
-
-    @CollectsWatchTrigger(value = MayEffect.class,
-            watch = ZoneChangeWatch.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED)
-    private boolean handleOpponentNontokenPermanentSacrificeMay(TriggerMatchContext match,
-                                                                 MayEffect may,
-                                                                 TriggerContext ctx) {
-        TriggerContext.OpponentNontokenPermanentSacrificed sacrifice =
-                (TriggerContext.OpponentNontokenPermanentSacrificed) ctx;
-        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may,
-                sacrifice.sacrificedCard().getId());
-        return true;
-    }
-
-    // ── ON_ANY_CREATURE_SACRIFICED ─────────────────────────────────────
-
-    @CollectsWatchTrigger(value = MayEffect.class, watch = ZoneChangeWatch.ON_ANY_CREATURE_SACRIFICED)
-    private boolean handleAnyCreatureSacrificedMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
-        // "Whenever a player sacrifices a creature, you may put a +1/+1 counter on this creature"
-        // (Thraximundar). The wrapped PutCountersOnSourceEffect resolves onto the source permanent,
-        // and the "you may" is offered to the source's controller (not the sacrificing player).
-        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), may,
-                null, match.permanent().getId());
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = PutCountersOnSourceEffect.class, watch = ZoneChangeWatch.ON_ANY_CREATURE_SACRIFICED)
-    private boolean handleAnyCreatureSacrificedPutCounters(TriggerMatchContext match,
-            PutCountersOnSourceEffect effect, TriggerContext ctx) {
-        match.gameData().enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()
-        ));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        return true;
-    }
-
+    /**
+     * "Whenever a player sacrifices a creature": the sacrifice recorded whatever the effects are
+     * ({@link DeathTriggerCollectorService#queueDepartureAbility}), the sacrificing player its non-targeting "that
+     * player".
+     */
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_CREATURE_SACRIFICED)
     private boolean handleAnyCreatureSacrificedDefault(TriggerMatchContext match,
                                                         CardEffect effect, TriggerContext ctx) {
-        match.gameData().enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()
-        ));
+        queueSacrificeAbility(match, effect, (TriggerContext.AllySacrificed) ctx);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
 
-    @CollectsWatchTrigger(value = PerpetuallyBoostCardEffect.class,
-            watch = ZoneChangeWatch.EXILE_ON_CONTROLLER_TOKEN_SACRIFICED)
-    private boolean handleExileTokenSacrificePerpetualBoost(TriggerMatchContext match,
-                                                             PerpetuallyBoostCardEffect effect,
-                                                             TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.AllySacrificed sacrificed)
-                || sacrificed.sacrificedCard() == null
-                || !sacrificed.sacrificedCard().isToken()
-                || match.sourceCard() == null) {
+    /**
+     * "Whenever you sacrifice a token", from exile (Albiorix, Goose Tyrant, CR 113.6k): the sacrifice recorded whatever
+     * the effects are ({@link DeathTriggerCollectorService#queueDepartureAbility}); the source is the exiled card.
+     */
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.EXILE_ON_CONTROLLER_TOKEN_SACRIFICED)
+    private boolean handleExileTokenSacrificedDefault(TriggerMatchContext match,
+                                                       CardEffect effect, TriggerContext ctx) {
+        if (match.sourceCard() == null) {
             return false;
         }
-
-        Card sourceCard = match.sourceCard();
-        match.gameData().enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect))));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        queueSacrificeAbility(match, effect, (TriggerContext.AllySacrificed) ctx);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.sourceCard()));
         return true;
+    }
+
+    /**
+     * The sacrifice {@code sacrificed} as {@link DeathTriggerCollectorService#queueDepartureAbility} records a
+     * permanent's leaving the battlefield: "that card", the permanent as it last existed, the sacrificing player as its
+     * controller and as the entry's non-targeting "that player".
+     */
+    private void queueSacrificeAbility(TriggerMatchContext match, CardEffect effect,
+                                       TriggerContext.AllySacrificed sacrificed) {
+        deathTriggerCollectorService.queueDepartureAbility(match, effect, sacrificed.sacrificedCard(),
+                sacrificed.sacrificingPlayerId(), sacrificed.sacrificedPermanent(), sacrificed.sacrificingPlayerId());
     }
 
     /**
@@ -464,52 +406,16 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    /**
+     * "Whenever an opponent sacrifices a nontoken permanent" (Tergrid, It That Betrays, the Nazgûl Battle-Mace's grant):
+     * the sacrifice recorded whatever the effects are ({@link #queueSacrificeAbility}); "that card" may have been exiled
+     * instead (Leyline of the Void), its exile incarnation recorded too.
+     */
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED)
     private boolean handleOpponentNontokenPermanentSacrificed(TriggerMatchContext match,
                                                                CardEffect effect,
                                                                TriggerContext ctx) {
-        TriggerContext.OpponentNontokenPermanentSacrificed sacrificed =
-                (TriggerContext.OpponentNontokenPermanentSacrificed) ctx;
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId());
-        entry.setNonTargeting(true);
-        entry.setTriggeringCardId(sacrificed.sacrificedCard().getId());
-        entry.setTriggeringCardGraveyardEntryVersion(
-                match.gameData().graveyardEntryVersion(sacrificed.sacrificedCard().getId()));
-        entry.setTriggeringCardExileEntryVersion(match.gameData().exileEntryVersions
-                .getOrDefault(sacrificed.sacrificedCard().getId(), 0L));
-        match.gameData().enqueueTrigger(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = StealDyingOpponentPermanentUnlessPaysLifeEffect.class,
-            watch = ZoneChangeWatch.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED)
-    private boolean handleOpponentNontokenPermanentSacrificeSteal(
-            TriggerMatchContext match, StealDyingOpponentPermanentUnlessPaysLifeEffect effect,
-            TriggerContext ctx) {
-        TriggerContext.OpponentNontokenPermanentSacrificed sacrificed =
-                (TriggerContext.OpponentNontokenPermanentSacrificed) ctx;
-        // "That card" is the entry's triggering card and "that player" the player who sacrificed it.
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId());
-        entry.setNonTargeting(true);
-        UUID sacrificedCardId = sacrificed.sacrificedCard().getId();
-        entry.setTriggeringCard(sacrificedCardId, match.gameData().graveyardEntryVersion(sacrificedCardId));
-        entry.setTriggeringPermanentControllerId(sacrificed.sacrificingPlayerId());
-        match.gameData().enqueueTrigger(entry);
+        queueSacrificeAbility(match, effect, (TriggerContext.AllySacrificed) ctx);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
@@ -863,6 +769,11 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    /**
+     * "Whenever a card is put into your graveyard from anywhere" (and from your library, from your hand or library,
+     * or from anywhere but the battlefield, of a filter): the cards recorded whatever the effects are
+     * ({@link #queueGraveyardCardsAbility}).
+     */
     @CollectsWatchTrigger(value = CardEffect.class,
                     watch = ZoneChangeWatch.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
     @CollectsWatchTrigger(value = CardEffect.class,
@@ -870,214 +781,126 @@ public class MiscTriggerCollectorService {
     @CollectsWatchTrigger(value = CardEffect.class,
                     watch = ZoneChangeWatch.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
     @CollectsWatchTrigger(value = CardEffect.class,
+                    watch = ZoneChangeWatch.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
+    @CollectsWatchTrigger(value = CardEffect.class,
                     watch = ZoneChangeWatch.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
     private boolean handleCardPutIntoGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
-        var gameData = match.gameData();
-        String cardName = match.permanent().getCard().getName();
-        Card triggeringCard = ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut
-                ? cardPut.card()
-                : ctx instanceof TriggerContext.PermanentCardPutIntoGraveyard permanentPut
-                ? permanentPut.permanentCard() : null;
-
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
-            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                    match.permanent().getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
-                    "card put into the graveyard", match.permanent().getId()));
-        } else {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    match.permanent().getCard(),
-                    match.controllerId(),
-                    cardName + "'s ability",
-                    new ArrayList<>(List.of(effect)),
-                    null,
-                    match.permanent().getId()
-            );
-            if (ctx instanceof TriggerContext.CardsPutIntoGraveyardFromLibrary cardsPut) {
-                recordCardsPutIntoGraveyard(gameData, entry, cardsPut.cards());
-            } else if (triggeringCard != null) {
-                recordCardsPutIntoGraveyard(gameData, entry, List.of(triggeringCard));
-            }
-            gameData.enqueueTrigger(entry);
-        }
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers (card put into controller's graveyard from anywhere)", gameData.id, cardName);
-        return true;
+        List<Card> cards = switch (ctx) {
+            case TriggerContext.CardsPutIntoGraveyardFromLibrary cardsPut -> cardsPut.cards();
+            case TriggerContext.CardPutIntoGraveyard cardPut -> List.of(cardPut.card());
+            case TriggerContext.PermanentCardPutIntoGraveyard permanentPut -> List.of(permanentPut.permanentCard());
+            default -> List.of();
+        };
+        return queueGraveyardCardsAbility(match, effect, cards, null, null, null,
+                "card put into controller's graveyard");
     }
 
-    @CollectsWatchTrigger(value = LoseLifeEffect.class,
-            watch = ZoneChangeWatch.ON_NONBLACK_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
-    private boolean handleNonblackCardPutIntoGraveyardLoseLife(TriggerMatchContext match,
-            LoseLifeEffect effect, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut)
-                || effect.recipient() != LoseLifeRecipient.TARGET_PLAYER) {
-            return false;
-        }
-
-        Card sourceCard = match.sourceCard();
-        if (sourceCard == null) {
-            return false;
-        }
-        UUID sourcePermanentId = match.permanent() == null ? null : match.permanent().getId();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                cardPut.graveyardOwnerId(),
-                sourcePermanentId);
-        entry.setNonTargeting(true);
-        if (match.sourcePlanarObject() != null) {
-            entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
-        }
-        match.gameData().enqueueTrigger(entry);
-
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers (nonblack card put into a graveyard from anywhere)",
-                match.gameData().id, sourceCard.getName());
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
-    private boolean handleExileTriggeringPermanentCardFromLibraryWithCroakCounter(
-            TriggerMatchContext match, ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect effect,
-            TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.PermanentCardPutIntoGraveyard cardPut)) {
-            return false;
-        }
-
-        Card triggeringCard = cardPut.permanentCard();
-        var gameData = match.gameData();
-        List<Card> graveyard = gameData.playerGraveyards.get(cardPut.graveyardOwnerId());
-        if (graveyard == null || graveyard.stream().noneMatch(card -> card.getId().equals(triggeringCard.getId()))) {
-            return false;
-        }
-
-        String cardName = match.permanent().getCard().getName();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                cardName + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId());
-        entry.setTriggeringCardId(triggeringCard.getId());
-        entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(triggeringCard.getId()));
-        gameData.enqueueTrigger(entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers to exile {} with a croak counter", gameData.id, cardName,
-                triggeringCard.getName());
-        return true;
-    }
-
+    /** "Whenever a creature card is put into your graveyard from anywhere": {@link #queueGraveyardCardsAbility}. */
     @CollectsWatchTrigger(value = CardEffect.class,
                     watch = ZoneChangeWatch.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
     @CollectsWatchTrigger(value = CardEffect.class,
                     watch = ZoneChangeWatch.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD)
     private boolean handleCreatureCardPutIntoGraveyardDefault(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
-        var gameData = match.gameData();
-        String cardName = match.permanent().getCard().getName();
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                cardName + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()
-        );
-        // The source as the ability goes on the stack, whatever the effect is (CR 608.2h, 701.27f).
-        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        gameData.enqueueTrigger(entry);
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers (creature card put into graveyard from anywhere)", gameData.id, cardName);
-        return true;
+        List<Card> cards = ctx instanceof TriggerContext.CreatureCardPutIntoGraveyard creatureCard
+                && creatureCard.creatureCard() != null ? List.of(creatureCard.creatureCard()) : List.of();
+        return queueGraveyardCardsAbility(match, effect, cards, null, null, null,
+                "creature card put into graveyard from anywhere");
     }
 
-    @CollectsWatchTrigger(value = RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect.class,
-                    watch = ZoneChangeWatch.ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
-    @CollectsWatchTrigger(value = RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect.class,
-                    watch = ZoneChangeWatch.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY)
-    private boolean handleDelayedReturnMatchingCardFromGraveyard(TriggerMatchContext match,
-            RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect effect, TriggerContext ctx) {
-        if (ctx instanceof TriggerContext.CardPutIntoGraveyard cardPut) {
-            if (cardPut.sourceZone() != Zone.HAND
-                    || !predicateEvaluationService.matchesCardPredicate(
-                    cardPut.card(), effect.filter(), match.permanent().getCard().getId(),
-                    match.gameData(), cardPut.graveyardOwnerId())) {
-                return false;
-            }
-            enqueueDelayedReturnMatchingCard(match, effect, cardPut.card());
-            return true;
-        }
+    /**
+     * "Whenever a nonblack card is put into a player's graveyard from anywhere, that player …" (The Dark Barony) and
+     * "whenever a black card is put into an opponent's graveyard from anywhere" (Compost): the card recorded whatever
+     * the effects are ({@link #queueGraveyardCardsAbility}), the graveyard's owner the non-targeting "that player".
+     */
+    @CollectsWatchTrigger(value = CardEffect.class,
+            watch = ZoneChangeWatch.ON_NONBLACK_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
+    @CollectsWatchTrigger(value = CardEffect.class,
+            watch = ZoneChangeWatch.ON_BLACK_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE)
+    private boolean handleCardPutIntoPlayersGraveyardDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        TriggerContext.CardPutIntoGraveyard cardPut = (TriggerContext.CardPutIntoGraveyard) ctx;
+        return queueGraveyardCardsAbility(match, effect, List.of(cardPut.card()), cardPut.graveyardOwnerId(),
+                cardPut.graveyardOwnerId(), null, "card put into a player's graveyard from anywhere");
+    }
 
-        if (!(ctx instanceof TriggerContext.CardsPutIntoGraveyardFromLibrary cardsPut)) {
+    /**
+     * "Whenever a creature card is put into an opponent's graveyard from their library" (Undead Alchemist): the card
+     * recorded whatever the effects are ({@link #queueGraveyardCardsAbility}), its owner the non-targeting "that
+     * player".
+     */
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_CREATURE_CARD_MILLED)
+    private boolean handleOpponentCreatureCardMilledDefault(TriggerMatchContext match,
+            CardEffect effect, TriggerContext ctx) {
+        TriggerContext.CardPutIntoGraveyard cardPut = (TriggerContext.CardPutIntoGraveyard) ctx;
+        return queueGraveyardCardsAbility(match, effect, List.of(cardPut.card()), cardPut.graveyardOwnerId(),
+                cardPut.graveyardOwnerId(), null, "creature card milled");
+    }
+
+    /**
+     * "Whenever an opponent mills one or more cards" (Lo and Li, Royal Advisors): the mill recorded whatever the
+     * effects are ({@link #queueGraveyardCardsAbility}), the number of cards milled the event value and the milling
+     * player the non-targeting "that player".
+     */
+    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_MILLS)
+    private boolean handleOpponentMillsDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        TriggerContext.Mill mill = (TriggerContext.Mill) ctx;
+        return queueGraveyardCardsAbility(match, effect, List.of(), mill.milledPlayerId(), mill.milledPlayerId(),
+                mill.milledCount(), "opponent milled");
+    }
+
+    /**
+     * Puts {@code effect}, an effect of an ability that cards put into a graveyard triggered, on the stack whatever the
+     * effect is: the entry records {@code cards} ({@link #recordCardsPutIntoGraveyard}: "that card", "them", each with
+     * the graveyard stay it went to, CR 400.7), {@code triggeringPlayerId} as its triggering player and
+     * {@code thatPlayerId} as its non-targeting "that player", {@code eventValue} ("that many") when not {@code null},
+     * the source as it triggered (a permanent's snapshot, a plane's planar object) and the "do this only once each
+     * turn" mark (CR 603.2h). An ability that targets waits for its targets as it goes on the stack (CR 603.3d).
+     * Returns whether it triggered: an ability of no source doesn't.
+     */
+    private boolean queueGraveyardCardsAbility(TriggerMatchContext match, CardEffect effect, List<Card> cards,
+                                               UUID triggeringPlayerId, UUID thatPlayerId, Integer eventValue,
+                                               String event) {
+        GameData gameData = match.gameData();
+        Permanent source = match.permanent();
+        Card sourceCard = source != null ? source.getCard() : match.sourceCard();
+        if (sourceCard == null) {
             return false;
         }
-
-        boolean triggered = false;
-        for (Card card : cardsPut.cards()) {
-            if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
-                    card, effect.filter(), match.permanent().getCard().getId(),
-                    match.gameData(), cardsPut.graveyardOwnerId())) {
-                continue;
+        if (source != null && (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
+            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                    sourceCard, match.controllerId(), new ArrayList<>(List.of(effect)), event, source.getId(),
+                    new Permanent(source), eventValue));
+        } else {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    sourceCard,
+                    match.controllerId(),
+                    sourceCard.getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    thatPlayerId,
+                    source == null ? null : source.getId());
+            entry.setNonTargeting(true);
+            recordCardsPutIntoGraveyard(gameData, entry, cards);
+            entry.setTriggeringPlayerId(triggeringPlayerId);
+            if (eventValue != null) {
+                entry.setEventValue(eventValue);
             }
-            enqueueDelayedReturnMatchingCard(match, effect, card);
-            triggered = true;
+            // The source as the ability goes on the stack, whatever the effect is (CR 608.2h).
+            if (source != null) {
+                entry.setSourcePermanentSnapshot(new Permanent(source));
+            }
+            if (match.sourcePlanarObject() != null) {
+                entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
+            }
+            entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+            gameData.enqueueTrigger(entry);
         }
-        return triggered;
-    }
-
-    private void enqueueDelayedReturnMatchingCard(TriggerMatchContext match,
-            RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect effect, Card card) {
-        // One ability for each card ("that card"), which is its stack entry's triggering card.
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId());
-        entry.setTriggeringCard(card.getId(), match.gameData().graveyardEntryVersion(card.getId()));
-        match.gameData().enqueueTrigger(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-    }
-
-    @CollectsWatchTrigger(value = PerpetuallyGrantTriggeredAbilityEffect.class,
-            watch = ZoneChangeWatch.ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE)
-    private boolean handlePerpetualTriggeredAbilityGrant(TriggerMatchContext match,
-            PerpetuallyGrantTriggeredAbilityEffect effect, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.CreatureCardPutIntoGraveyard creatureCard)
-                || (creatureCard.sourceZone() != Zone.HAND
-                && creatureCard.sourceZone() != Zone.LIBRARY)) {
-            return false;
-        }
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId());
-        entry.setTriggeringCardId(creatureCard.creatureCard().getId());
-        match.gameData().enqueueTrigger(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers to perpetually grant an ability to {}",
-                match.gameData().id, match.permanent().getCard().getName(),
-                creatureCard.creatureCard().getName());
+        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers ({})", gameData.id, sourceCard.getName(), event);
         return true;
     }
 
@@ -1146,90 +969,6 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    // ── ON_OPPONENT_CREATURE_CARD_MILLED ────────────────────────────────
-
-    @CollectsWatchTrigger(value = ExileMilledCreatureAndCreateTokenEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_CREATURE_CARD_MILLED)
-    private boolean handleExileMilledCreatureAndCreateToken(TriggerMatchContext match,
-            ExileMilledCreatureAndCreateTokenEffect effect, TriggerContext ctx) {
-        TriggerContext.CreatureCardMilled milled = (TriggerContext.CreatureCardMilled) ctx;
-        var gameData = match.gameData();
-        Card sourceCard = match.permanent().getCard();
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)));
-        entry.setTriggeringCardId(milled.milledCard().getId());
-        entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(milled.milledCard().getId()));
-        gameData.enqueueTrigger(entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on creature card milled", gameData.id, sourceCard.getName());
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = PutCounterOnEachControlledPermanentEffect.class,
-            watch = ZoneChangeWatch.ON_OPPONENT_MILLS)
-    private boolean handlePutCountersOnOpponentMill(TriggerMatchContext match,
-            PutCounterOnEachControlledPermanentEffect effect, TriggerContext ctx) {
-        var gameData = match.gameData();
-        Card sourceCard = match.permanent().getCard();
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()));
-        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on opponent mill (put counters on matching permanents)",
-                gameData.id, sourceCard.getName());
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = GainLifeEffect.class, watch = ZoneChangeWatch.ON_NONLAND_CARDS_MILLED)
-    private boolean handleGainLifeOnNonlandCardsMilled(TriggerMatchContext match,
-            GainLifeEffect effect, TriggerContext ctx) {
-        int nonlandCardCount = ((TriggerContext.NonlandCardsMilled) ctx).nonlandCardCount();
-        Card sourceCard = match.permanent().getCard();
-
-        for (int i = 0; i < nonlandCardCount; i++) {
-            match.gameData().enqueueTrigger(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
-                    null,
-                    match.permanent().getId()));
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        }
-
-        log.info("Game {} - {} triggers once for each of {} nonland cards milled",
-                match.gameData().id, sourceCard.getName(), nonlandCardCount);
-        return nonlandCardCount > 0;
-    }
-
-    @CollectsWatchTrigger(value = SequenceEffect.class,
-            watch = ZoneChangeWatch.ON_NONLAND_CARDS_MILLED)
-    private boolean handleNonlandCardsMilledSequence(TriggerMatchContext match,
-            SequenceEffect effect, TriggerContext ctx) {
-        match.gameData().enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers on nonland cards milled",
-                match.gameData().id, match.permanent().getCard().getName());
-        return true;
-    }
-
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_NONLAND_CARDS_MILLED)
     private boolean handleNonlandCardsMilled(TriggerMatchContext match,
                                              CardEffect effect, TriggerContext ctx) {
@@ -1254,6 +993,8 @@ public class MiscTriggerCollectorService {
                     null,
                     match.permanent().getId());
             entry.setEventValue(milled.nonlandCardCount());
+            entry.setTriggeringPlayerId(milled.milledPlayerId());
+            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
             gameData.enqueueTrigger(entry);
         }
@@ -1539,8 +1280,6 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    // ── ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD ────────────────────────────
-
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD)
     boolean handleControllerCardsLeaveGraveyard(TriggerMatchContext match,
             CardEffect effect, TriggerContext ctx) {
@@ -1719,6 +1458,13 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
+    /**
+     * "Whenever a creature is put into exile from the battlefield", its own exile included (CR 603.6c, 603.10a): the
+     * entry records, whatever the effects are, "that card" with the exile incarnation it has now (CR 400.7), the
+     * creature as it last existed on the battlefield with its controller and power then ("its power" is the event value,
+     * CR 608.2h), the source as it triggered and the "do this only once each turn" mark (CR 603.2h). An ability that
+     * targets waits for its targets as it goes on the stack (CR 603.3d), its choice carrying the creature.
+     */
     @CollectsWatchTrigger(value = CardEffect.class,
             watch = ZoneChangeWatch.ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD)
     boolean handleAnyCreatureExiledFromBattlefield(TriggerMatchContext match,
@@ -1726,55 +1472,41 @@ public class MiscTriggerCollectorService {
         if (!(ctx instanceof TriggerContext.CreatureExiledFromBattlefield exiled)) {
             return false;
         }
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()
-        );
-        entry.setTriggeringPermanentId(exiled.exiledPermanent().getId());
-        entry.setTriggeringPermanentControllerId(exiled.exiledControllerId());
-        entry.setTriggeringPermanentPowerAtTrigger(exiled.exiledPowerAtTrigger());
-        entry.setEventValue(exiled.exiledPowerAtTrigger());
-        match.gameData().enqueueTrigger(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers (creature exiled from battlefield)",
-                match.gameData().id, match.permanent().getCard().getName());
-        return true;
-    }
-
-    @CollectsWatchTrigger(value = ReturnTriggeringPermanentToBattlefieldEffect.class,
-            watch = ZoneChangeWatch.ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD)
-    boolean handleAnyCreatureExiledReturnTriggeringPermanent(TriggerMatchContext match,
-            ReturnTriggeringPermanentToBattlefieldEffect effect, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.CreatureExiledFromBattlefield exiled)
-                || effect.fromZone() != Zone.EXILE
-                || exiled.exiledPermanent() == null
-                || exiled.exiledPermanent().getCard() == null) {
-            return false;
+        Permanent source = match.permanent();
+        Permanent lastKnown = exiled.exiledPermanent();
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                    source.getCard(), match.controllerId(), new ArrayList<>(List.of(effect)),
+                    "creature exiled from the battlefield", source.getId(), new Permanent(source),
+                    exiled.exiledPowerAtTrigger()).withTriggeringPermanent(lastKnown));
+        } else {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    match.controllerId(),
+                    source.getCard().getName() + "'s ability",
+                    new ArrayList<>(List.of(effect)),
+                    null,
+                    source.getId()
+            );
+            entry.setNonTargeting(true);
+            Card exiledCard = lastKnown.getOriginalCard() != null ? lastKnown.getOriginalCard() : lastKnown.getCard();
+            entry.setTriggeringCardId(exiledCard.getId());
+            entry.setTriggeringCardExileEntryVersion(
+                    match.gameData().exileEntryVersions.getOrDefault(exiledCard.getId(), 0L));
+            entry.setTriggeringPermanentId(lastKnown.getId());
+            entry.setTriggeringPermanent(lastKnown);
+            entry.setTriggeringPermanentControllerId(exiled.exiledControllerId());
+            entry.setTriggeringPermanentPowerAtTrigger(exiled.exiledPowerAtTrigger());
+            entry.setEventValue(exiled.exiledPowerAtTrigger());
+            entry.setSourcePermanentSnapshot(new Permanent(source));
+            entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+            match.gameData().enqueueTrigger(entry);
         }
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()
-        );
-        entry.setTriggeringCardId(exiled.exiledPermanent().getCard().getId());
-        entry.setTriggeringCardExileEntryVersion(match.gameData().exileEntryVersions
-                .getOrDefault(exiled.exiledPermanent().getCard().getId(), 0L));
-        entry.setTriggeringPermanentId(exiled.exiledPermanent().getId());
-        entry.setTriggeringPermanentControllerId(exiled.exiledControllerId());
-        match.gameData().enqueueTrigger(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers (creature exiled from battlefield, returning it)",
-                match.gameData().id, match.permanent().getCard().getName());
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(source.getCard()));
+        log.info("Game {} - {} triggers (creature exiled from battlefield)",
+                match.gameData().id, source.getCard().getName());
         return true;
     }
 

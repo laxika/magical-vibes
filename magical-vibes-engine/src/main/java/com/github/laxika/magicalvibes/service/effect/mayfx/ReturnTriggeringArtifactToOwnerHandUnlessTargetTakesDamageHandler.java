@@ -54,7 +54,8 @@ public class ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageHandler
             damageEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
             dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry, damage);
         } else {
-            effectHandler.returnArtifactToOwnerHand(gameData, ability.triggeringCardId());
+            effectHandler.returnArtifactToOwnerHand(gameData, ability.triggeringCardId(),
+                    ability.triggeringCardGraveyardEntryVersion());
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -105,6 +106,29 @@ class PiasRevolutionTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Mind Stone");
         harness.assertNotInHand(player1, "Mind Stone");
         harness.assertLife(player2, 17);
+    }
+
+    @Test
+    @DisplayName("An artifact card that left the graveyard and returned before the ability resolves isn't returned")
+    void artifactThatLeftAndReturnedIsNotReturned() {
+        harness.addToBattlefield(player1, new PiasRevolution());
+        harness.addToBattlefield(player1, new MindStone());
+        UUID mindStoneId = harness.getPermanentId(player1, "Mind Stone");
+
+        destroyArtifact(mindStoneId);
+        harness.handlePermanentChosen(player1, player2.getId());
+        Card mindStone = gd.playerGraveyards.get(player1.getId()).stream()
+                .filter(card -> card.getName().equals("Mind Stone"))
+                .findFirst().orElseThrow();
+        harness.setGraveyard(player1, List.of());
+        gd.markGraveyardExit(mindStone.getId());
+        harness.setGraveyard(player1, List.of(mindStone));
+        gd.markGraveyardEntry(mindStone);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+
+        harness.assertInGraveyard(player1, "Mind Stone");
+        harness.assertNotInHand(player1, "Mind Stone");
     }
 
     private void destroyArtifact(UUID artifactId) {

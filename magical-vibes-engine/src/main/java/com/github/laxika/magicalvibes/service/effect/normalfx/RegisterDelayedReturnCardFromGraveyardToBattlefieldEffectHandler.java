@@ -20,7 +20,9 @@ public class RegisterDelayedReturnCardFromGraveyardToBattlefieldEffectHandler im
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID cardId = entry.getTriggeringCardId();
-        if (cardId == null) {
+        // "That card" is the graveyard object the event put there: once it left and came back it is a new object the
+        // ability doesn't find (CR 400.7).
+        if (cardId == null || !entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(cardId))) {
             return;
         }
 

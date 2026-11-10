@@ -240,7 +240,9 @@ public enum ZoneChangeWatch {
             TriggerMultiplicity.ONE_OR_MORE)),
     /** "Whenever another card is put into your graveyard from anywhere". */
     ON_ALLY_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE(battlefield(
-            Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN, ObjectRelation.ANOTHER_YOU_OWN))),
+            Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN, ObjectRelation.ANOTHER_YOU_OWN)),
+            battlefield(Triggers.putIntoGraveyardFrom(Set.of(Zone.HAND, Zone.LIBRARY), Triggers.NONTOKEN,
+                    ObjectRelation.YOU_OWN))),
     /** "Whenever an artifact card is put into your graveyard from anywhere other than the battlefield". */
     ON_ALLY_ARTIFACT_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD(battlefield(
             Triggers.putIntoGraveyardFromAnywhereButBattlefield(Triggers.NONTOKEN_ARTIFACT, ObjectRelation.YOU_OWN))),
@@ -254,6 +256,8 @@ public enum ZoneChangeWatch {
     ON_ALLY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE(
             battlefield(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN_CREATURE,
                     ObjectRelation.ANOTHER_YOU_OWN)),
+            battlefield(Triggers.putIntoGraveyardFrom(Set.of(Zone.HAND, Zone.LIBRARY), Triggers.NONTOKEN_CREATURE,
+                    ObjectRelation.YOU_OWN)),
             battlefield(Triggers.putIntoGraveyardFromAnywhere(Triggers.NONTOKEN_CREATURE,
                     ObjectRelation.ANOTHER_YOU_OWN), TriggerMultiplicity.ONE_OR_MORE),
             battlefield(Triggers.putIntoGraveyardFromAnywhereBut(Zone.LIBRARY, Triggers.NONTOKEN_CREATURE,
@@ -288,7 +292,7 @@ public enum ZoneChangeWatch {
     ON_OPPONENT_MILLS(battlefield(Triggers.mills(null, ObjectRelation.OPPONENT_OWNS), TriggerMultiplicity.ONE_OR_MORE)),
     /** "Whenever one or more nonland cards are milled". */
     ON_NONLAND_CARDS_MILLED(battlefield(Triggers.mills(Triggers.NONLAND, ObjectRelation.ANY),
-            TriggerMultiplicity.ONE_OR_MORE)),
+            TriggerMultiplicity.ONE_OR_MORE), battlefield(Triggers.mills(Triggers.NONLAND, ObjectRelation.ANY))),
     /** "Whenever an opponent mills a nonland card", from the graveyard. */
     GRAVEYARD_ON_OPPONENT_NONLAND_CARD_MILLED(in(Zone.GRAVEYARD,
             Triggers.milled(Triggers.NONLAND, ObjectRelation.OPPONENT_OWNS))),
