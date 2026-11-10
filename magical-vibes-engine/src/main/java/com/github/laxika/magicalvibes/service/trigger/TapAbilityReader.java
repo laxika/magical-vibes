@@ -257,6 +257,32 @@ public final class TapAbilityReader {
         return read(abilities, watched);
     }
 
+    /**
+     * The abilities granted to {@code permanent} for a duration (until end of turn, and until it leaves) that are
+     * watched as {@code watched}, each read as {@link #readByAbility(List, Trigger)} reads it.
+     */
+    public static List<List<TapEffect>> readGrantedToPermanentByAbility(Permanent permanent, Trigger watched) {
+        List<TriggeredAbility> abilities = new ArrayList<>(WatchedAbilities.temporary(permanent, watched));
+        abilities.addAll(WatchedAbilities.persistent(permanent, watched));
+        return readByAbility(abilities, watched);
+    }
+
+    /**
+     * The effects of {@code abilities}, one list for each ability, in order, as their collector reads them for the
+     * condition watched as {@code watched}: each list is one object on the stack (CR 603.3), whose trigger-level parts
+     * (filter, first-time event, "one or more", limit, options) every read of it shares.
+     */
+    public static List<List<TapEffect>> readByAbility(List<TriggeredAbility> abilities, Trigger watched) {
+        List<List<TapEffect>> byAbility = new ArrayList<>(abilities.size());
+        for (TriggeredAbility ability : abilities) {
+            List<TapEffect> effects = read(ability, watched);
+            if (!effects.isEmpty()) {
+                byAbility.add(effects);
+            }
+        }
+        return byAbility;
+    }
+
     /** Every effect of {@code abilities}, as their collector reads them for the condition watched as {@code watched}. */
     public static List<TapEffect> read(List<TriggeredAbility> abilities, Trigger watched) {
         List<TapEffect> effects = new ArrayList<>();

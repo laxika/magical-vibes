@@ -53,21 +53,24 @@ public final class LibraryShuffleHelper {
                 : null;
         boolean causedByOwnSpellOrAbility = shufflingPlayerId.equals(causingControllerId);
         gameData.forEachPermanent((controllerId, perm) -> {
-            List<CardEffect> effects = new ArrayList<>(
-                    LibraryAbilityReader.printedEffects(perm.getCard(), LibraryWatch.ON_ANY_PLAYER_SHUFFLES_LIBRARY));
+            // Each ability is one object of all its effects (CR 603.3).
+            List<List<CardEffect>> abilities = new ArrayList<>(LibraryAbilityReader.printedEffectsByAbility(
+                    perm.getCard(), LibraryWatch.ON_ANY_PLAYER_SHUFFLES_LIBRARY));
             if (!controllerId.equals(shufflingPlayerId)) {
-                effects.addAll(LibraryAbilityReader.printedEffects(perm.getCard(), LibraryWatch.ON_OPPONENT_SHUFFLES_LIBRARY));
+                abilities.addAll(LibraryAbilityReader.printedEffectsByAbility(perm.getCard(),
+                        LibraryWatch.ON_OPPONENT_SHUFFLES_LIBRARY));
             }
             if (causedByOwnSpellOrAbility) {
-                effects.addAll(LibraryAbilityReader.printedEffects(perm.getCard(), LibraryWatch.ON_SPELL_OR_ABILITY_CAUSES_CONTROLLER_SHUFFLE));
+                abilities.addAll(LibraryAbilityReader.printedEffectsByAbility(perm.getCard(),
+                        LibraryWatch.ON_SPELL_OR_ABILITY_CAUSES_CONTROLLER_SHUFFLE));
             }
-            for (CardEffect effect : effects) {
+            for (List<CardEffect> effects : abilities) {
                 StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         controllerId,
                         perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)),
+                        new ArrayList<>(effects),
                         shufflingPlayerId,
                         perm.getId()
                 );

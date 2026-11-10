@@ -128,29 +128,29 @@ public class PermanentCounterSupport {
         }
         for (Permanent source : new ArrayList<>(battlefield)) {
             Card card = source.getCard();
-            List<CardEffect> effects = CounterAbilityReader.printedEffects(card, CounterWatch.ON_YOU_PUT_COUNTERS_ON_CREATURE);
-            if (effects.isEmpty()
-                    || source.isLosesAllAbilitiesUntilEndOfTurn()
+            if (source.isLosesAllAbilitiesUntilEndOfTurn()
                     || gameQueryService.hasLostPrintedAbilities(gameData, source)) {
                 continue;
             }
-
-            StackEntry trigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    placingPlayerId,
-                    card.getName() + "'s triggered ability",
-                    new ArrayList<>(effects),
-                    null,
-                    source.getId()
-            );
-            trigger.setNonTargeting(true);
-            trigger.setEventValue(count);
-            trigger.setTriggeringPermanentId(creature.getId());
-            trigger.setTriggeringPermanentControllerId(creatureControllerId);
-            gameData.stack.add(trigger);
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
-            log.info("Game {} - {} creature counter trigger fires", gameData.id, card.getName());
+            for (List<CardEffect> effects : CounterAbilityReader.printedEffectsByAbility(card,
+                    CounterWatch.ON_YOU_PUT_COUNTERS_ON_CREATURE)) {
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        placingPlayerId,
+                        card.getName() + "'s triggered ability",
+                        new ArrayList<>(effects),
+                        null,
+                        source.getId()
+                );
+                trigger.setNonTargeting(true);
+                trigger.setEventValue(count);
+                trigger.setTriggeringPermanentId(creature.getId());
+                trigger.setTriggeringPermanentControllerId(creatureControllerId);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+                log.info("Game {} - {} creature counter trigger fires", gameData.id, card.getName());
+            }
         }
     }
 
@@ -177,28 +177,25 @@ public class PermanentCounterSupport {
                 continue;
             }
             Card card = source.getCard();
-            List<CardEffect> effects = CounterAbilityReader.printedEffects(card,
-                    CounterWatch.ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL);
-            if (effects.isEmpty()) {
-                continue;
+            for (List<CardEffect> effects : CounterAbilityReader.printedEffectsByAbility(card,
+                    CounterWatch.ON_YOU_PUT_COUNTERS_ON_CREATURE_YOU_DONT_CONTROL)) {
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        placingPlayerId,
+                        card.getName() + "'s triggered ability",
+                        new ArrayList<>(effects),
+                        null,
+                        source.getId()
+                );
+                trigger.setTriggeringPermanentId(creature.getId());
+                trigger.setTriggeringPermanentControllerId(creatureControllerId);
+                trigger.setNonTargeting(true);
+                trigger.setEventValue(count);
+                gameData.stack.add(trigger);
+                gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+                log.info("Game {} - {} opponent-creature counter trigger fires", gameData.id, card.getName());
             }
-
-            StackEntry trigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    placingPlayerId,
-                    card.getName() + "'s triggered ability",
-                    new ArrayList<>(effects),
-                    null,
-                    source.getId()
-            );
-            trigger.setTriggeringPermanentId(creature.getId());
-            trigger.setTriggeringPermanentControllerId(creatureControllerId);
-            trigger.setNonTargeting(true);
-            trigger.setEventValue(count);
-            gameData.stack.add(trigger);
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
-            log.info("Game {} - {} opponent-creature counter trigger fires", gameData.id, card.getName());
         }
     }
 
@@ -256,58 +253,64 @@ public class PermanentCounterSupport {
                 continue;
             }
 
-            List<CardEffect> effects = CounterAbilityReader.printedEffects(source.getCard(),
-                    CounterWatch.ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE);
-            if (effects.isEmpty()) {
-                continue;
+            for (List<CardEffect> effects : CounterAbilityReader.printedEffectsByAbility(source.getCard(),
+                    CounterWatch.ON_YOU_PUT_COUNTERS_ON_ANOTHER_CREATURE)) {
+                queueYouPutCountersOnAnotherCreatureAbility(gameData, source, effects, target, counterType, amount,
+                        placingPlayerId);
             }
-
-            List<CardEffect> boundEffects = new ArrayList<>();
-            for (CardEffect effect : effects) {
-                if (effect instanceof MayEffect may
-                        && may.wrapped() instanceof PutSameCountersOnSourceEffect) {
-                    PutSameCountersOnSourceEffect sameCounters =
-                            (PutSameCountersOnSourceEffect) may.wrapped();
-                    if (sameCounters.requiresNonKree()
-                            && gameQueryService.effectiveCreatureSubtypes(gameData, target)
-                            .contains(CardSubtype.KREE)) {
-                        continue;
-                    }
-                    boundEffects.add(new MayEffect(
-                            new PutSameCountersOnSourceEffect(counterType, amount, target.getId(),
-                                    null, sameCounters.requiresNonKree()),
-                            may.prompt(), may.elseEffect(), may.choicePlayer()));
-                } else if (effect instanceof PutSameCountersOnSourceEffect) {
-                    PutSameCountersOnSourceEffect sameCounters = (PutSameCountersOnSourceEffect) effect;
-                    if (sameCounters.requiresNonKree()
-                            && gameQueryService.effectiveCreatureSubtypes(gameData, target)
-                            .contains(CardSubtype.KREE)) {
-                        continue;
-                    }
-                    boundEffects.add(new PutSameCountersOnSourceEffect(
-                            counterType, amount, target.getId(), null, sameCounters.requiresNonKree()));
-                }
-            }
-            if (boundEffects.isEmpty()) {
-                continue;
-            }
-
-            StackEntry trigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    source.getCard(),
-                    placingPlayerId,
-                    source.getCard().getName() + "'s triggered ability",
-                    boundEffects,
-                    null,
-                    source.getId());
-            trigger.setTriggeringPermanentId(target.getId());
-            trigger.setNonTargeting(true);
-            gameData.enqueueTrigger(trigger);
-            gameLogService.append(gameData, GameLog.cardThen(
-                    source.getCard(), "'s triggered ability triggers."));
-            log.info("Game {} - {} counter-on-another-creature trigger fires", gameData.id,
-                    source.getCard().getName());
         }
+    }
+
+    /** Puts one "whenever you put counters on another creature" ability of {@code source} on the stack. */
+    private void queueYouPutCountersOnAnotherCreatureAbility(GameData gameData, Permanent source,
+                                                             List<CardEffect> effects, Permanent target,
+                                                             CounterType counterType, int amount,
+                                                             UUID placingPlayerId) {
+        List<CardEffect> boundEffects = new ArrayList<>();
+        for (CardEffect effect : effects) {
+            if (effect instanceof MayEffect may
+                    && may.wrapped() instanceof PutSameCountersOnSourceEffect) {
+                PutSameCountersOnSourceEffect sameCounters =
+                        (PutSameCountersOnSourceEffect) may.wrapped();
+                if (sameCounters.requiresNonKree()
+                        && gameQueryService.effectiveCreatureSubtypes(gameData, target)
+                        .contains(CardSubtype.KREE)) {
+                    continue;
+                }
+                boundEffects.add(new MayEffect(
+                        new PutSameCountersOnSourceEffect(counterType, amount, target.getId(),
+                                null, sameCounters.requiresNonKree()),
+                        may.prompt(), may.elseEffect(), may.choicePlayer()));
+            } else if (effect instanceof PutSameCountersOnSourceEffect) {
+                PutSameCountersOnSourceEffect sameCounters = (PutSameCountersOnSourceEffect) effect;
+                if (sameCounters.requiresNonKree()
+                        && gameQueryService.effectiveCreatureSubtypes(gameData, target)
+                        .contains(CardSubtype.KREE)) {
+                    continue;
+                }
+                boundEffects.add(new PutSameCountersOnSourceEffect(
+                        counterType, amount, target.getId(), null, sameCounters.requiresNonKree()));
+            }
+        }
+        if (boundEffects.isEmpty()) {
+            return;
+        }
+
+        StackEntry trigger = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source.getCard(),
+                placingPlayerId,
+                source.getCard().getName() + "'s triggered ability",
+                boundEffects,
+                null,
+                source.getId());
+        trigger.setTriggeringPermanentId(target.getId());
+        trigger.setNonTargeting(true);
+        gameData.enqueueTrigger(trigger);
+        gameLogService.append(gameData, GameLog.cardThen(
+                source.getCard(), "'s triggered ability triggers."));
+        log.info("Game {} - {} counter-on-another-creature trigger fires", gameData.id,
+                source.getCard().getName());
     }
 
     /** Fires "whenever an opponent puts counters on a creature they control" watchers. */
@@ -329,40 +332,36 @@ public class PermanentCounterSupport {
                 return;
             }
             for (Permanent source : new ArrayList<>(battlefield)) {
-                List<CardEffect> effects =
-                        CounterAbilityReader.printedEffects(source.getCard(),
-                        CounterWatch.ON_OPPONENT_PUT_COUNTERS_ON_CREATURE_THEY_CONTROL);
-                if (effects.isEmpty()) {
-                    continue;
-                }
-
-                List<CardEffect> boundEffects = new ArrayList<>();
-                for (CardEffect effect : effects) {
-                    if (effect instanceof PutSameCountersOnSourceEffect sameCounters) {
-                        boundEffects.add(new PutSameCountersOnSourceEffect(
-                                counterType, amount, target.getId(), placingPlayerId,
-                                sameCounters.requiresNonKree()));
+                for (List<CardEffect> effects : CounterAbilityReader.printedEffectsByAbility(source.getCard(),
+                        CounterWatch.ON_OPPONENT_PUT_COUNTERS_ON_CREATURE_THEY_CONTROL)) {
+                    List<CardEffect> boundEffects = new ArrayList<>();
+                    for (CardEffect effect : effects) {
+                        if (effect instanceof PutSameCountersOnSourceEffect sameCounters) {
+                            boundEffects.add(new PutSameCountersOnSourceEffect(
+                                    counterType, amount, target.getId(), placingPlayerId,
+                                    sameCounters.requiresNonKree()));
+                        }
                     }
-                }
-                if (boundEffects.isEmpty()) {
-                    continue;
-                }
+                    if (boundEffects.isEmpty()) {
+                        continue;
+                    }
 
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        source.getCard(),
-                        sourceControllerId,
-                        source.getCard().getName() + "'s triggered ability",
-                        boundEffects,
-                        null,
-                        source.getId());
-                trigger.setTriggeringPermanentId(target.getId());
-                trigger.setNonTargeting(true);
-                gameData.enqueueTrigger(trigger);
-                gameLogService.append(gameData, GameLog.cardThen(
-                        source.getCard(), "'s triggered ability triggers."));
-                log.info("Game {} - {} opponent counter-on-own-creature trigger fires", gameData.id,
-                        source.getCard().getName());
+                    StackEntry trigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            source.getCard(),
+                            sourceControllerId,
+                            source.getCard().getName() + "'s triggered ability",
+                            boundEffects,
+                            null,
+                            source.getId());
+                    trigger.setTriggeringPermanentId(target.getId());
+                    trigger.setNonTargeting(true);
+                    gameData.enqueueTrigger(trigger);
+                    gameLogService.append(gameData, GameLog.cardThen(
+                            source.getCard(), "'s triggered ability triggers."));
+                    log.info("Game {} - {} opponent counter-on-own-creature trigger fires", gameData.id,
+                            source.getCard().getName());
+                }
             }
         });
     }
@@ -416,34 +415,35 @@ public class PermanentCounterSupport {
                 continue;
             }
             CounterWatch watch = CounterWatch.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_OTHER_HERO;
-            List<CounterAbilityReader.CounterEffect> effects =
-                    CounterAbilityReader.readPrinted(source.getCard(), watch);
-            effects.forEach(effect -> {
-                CounterAbilityReader.requireNoFilter(effect, watch.trigger());
-                CounterAbilityReader.requireWatchedEvent(effect, watch.trigger());
-            });
-            WithinLimits triggering = withinLimits(gameData, source.getId(), effects);
-            List<CardEffect> effectsToResolve = triggering.effects();
-            if (effectsToResolve.isEmpty()) {
-                continue;
-            }
+            for (List<CounterAbilityReader.CounterEffect> effects
+                    : CounterAbilityReader.readPrintedByAbility(source.getCard(), watch)) {
+                effects.forEach(effect -> {
+                    CounterAbilityReader.requireNoFilter(effect, watch.trigger());
+                    CounterAbilityReader.requireWatchedEvent(effect, watch.trigger());
+                });
+                WithinLimits triggering = withinLimits(gameData, source.getId(), effects);
+                List<CardEffect> effectsToResolve = triggering.effects();
+                if (effectsToResolve.isEmpty()) {
+                    continue;
+                }
 
-            StackEntry triggerEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    source.getCard(),
-                    placingPlayerId,
-                    source.getCard().getName() + "'s triggered ability",
-                    effectsToResolve,
-                    null,
-                    source.getId());
-            triggerEntry.setEventValue(count);
-            triggerEntry.setMarkSourceOncePerTurnOnAcceptance(triggering.markOnAcceptance());
-            gameData.stack.add(triggerEntry);
-            triggering.markLimits(gameData, source.getId());
-            gameLogService.append(gameData, GameLog.cardThen(
-                    source.getCard(), "'s triggered ability triggers."));
-            log.info("Game {} - {} +1/+1 counter-on-other-Hero trigger fires", gameData.id,
-                    source.getCard().getName());
+                StackEntry triggerEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        source.getCard(),
+                        placingPlayerId,
+                        source.getCard().getName() + "'s triggered ability",
+                        effectsToResolve,
+                        null,
+                        source.getId());
+                triggerEntry.setEventValue(count);
+                triggerEntry.setMarkSourceOncePerTurnOnAcceptance(triggering.markOnAcceptance());
+                gameData.stack.add(triggerEntry);
+                triggering.markLimits(gameData, source.getId());
+                gameLogService.append(gameData, GameLog.cardThen(
+                        source.getCard(), "'s triggered ability triggers."));
+                log.info("Game {} - {} +1/+1 counter-on-other-Hero trigger fires", gameData.id,
+                        source.getCard().getName());
+            }
         }
     }
 
@@ -464,37 +464,41 @@ public class PermanentCounterSupport {
                 continue;
             }
             CounterWatch watch = CounterWatch.ON_YOU_PUT_PLUS_ONE_PLUS_ONE_COUNTERS_ON_ANOTHER_CREATURE;
-            List<CounterAbilityReader.CounterEffect> matching = new ArrayList<>();
-            for (CounterAbilityReader.CounterEffect effect : CounterAbilityReader.readPrinted(source.getCard(), watch)) {
-                CounterAbilityReader.requireWatchedEvent(effect, watch.trigger());
-                // "Another colorless creature" (Omarthis): the trigger's filter on the creature.
-                if (effect.filter() == null
-                        || predicateEvaluationService.matchesPermanentPredicate(gameData, target, effect.filter())) {
-                    matching.add(effect);
+            for (List<CounterAbilityReader.CounterEffect> ability
+                    : CounterAbilityReader.readPrintedByAbility(source.getCard(), watch)) {
+                List<CounterAbilityReader.CounterEffect> matching = new ArrayList<>();
+                for (CounterAbilityReader.CounterEffect effect : ability) {
+                    CounterAbilityReader.requireWatchedEvent(effect, watch.trigger());
+                    // "Another colorless creature" (Omarthis): the trigger's filter on the creature.
+                    if (effect.filter() == null
+                            || predicateEvaluationService.matchesPermanentPredicate(gameData, target,
+                            effect.filter())) {
+                        matching.add(effect);
+                    }
                 }
-            }
-            WithinLimits triggering = withinLimits(gameData, source.getId(), matching);
-            List<CardEffect> effectsToResolve = triggering.effects();
-            if (effectsToResolve.isEmpty()) {
-                continue;
-            }
+                WithinLimits triggering = withinLimits(gameData, source.getId(), matching);
+                List<CardEffect> effectsToResolve = triggering.effects();
+                if (effectsToResolve.isEmpty()) {
+                    continue;
+                }
 
-            StackEntry triggerEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    source.getCard(),
-                    placingPlayerId,
-                    source.getCard().getName() + "'s triggered ability",
-                    effectsToResolve,
-                    null,
-                    source.getId());
-            triggerEntry.setEventValue(count);
-            triggerEntry.setMarkSourceOncePerTurnOnAcceptance(triggering.markOnAcceptance());
-            gameData.stack.add(triggerEntry);
-            triggering.markLimits(gameData, source.getId());
-            gameLogService.append(gameData, GameLog.cardThen(
-                    source.getCard(), "'s triggered ability triggers."));
-            log.info("Game {} - {} +1/+1 counter-on-another-creature trigger fires", gameData.id,
-                    source.getCard().getName());
+                StackEntry triggerEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        source.getCard(),
+                        placingPlayerId,
+                        source.getCard().getName() + "'s triggered ability",
+                        effectsToResolve,
+                        null,
+                        source.getId());
+                triggerEntry.setEventValue(count);
+                triggerEntry.setMarkSourceOncePerTurnOnAcceptance(triggering.markOnAcceptance());
+                gameData.stack.add(triggerEntry);
+                triggering.markLimits(gameData, source.getId());
+                gameLogService.append(gameData, GameLog.cardThen(
+                        source.getCard(), "'s triggered ability triggers."));
+                log.info("Game {} - {} +1/+1 counter-on-another-creature trigger fires", gameData.id,
+                        source.getCard().getName());
+            }
         }
     }
 
@@ -1171,29 +1175,29 @@ public class PermanentCounterSupport {
                 }
                 Card card = source.getCard();
 
-                // Per-counter watchers: global (Flourishing Defenses) + you-put (Nest of Scarabs).
-                List<CardEffect> globalEffects =
-                        CounterAbilityReader.printedEffects(card,
-                        CounterWatch.ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE);
-                List<CardEffect> youPutEffects = placedByThisController
-                        ? CounterAbilityReader.printedEffects(card,
-                        CounterWatch.ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE)
-                        : List.of();
-                List<CardEffect> perCounterEffects = globalEffects.isEmpty() ? youPutEffects
-                        : youPutEffects.isEmpty() ? globalEffects
-                        : concat(globalEffects, youPutEffects);
-                if (!perCounterEffects.isEmpty()) {
+                // Per-counter watchers: global (Flourishing Defenses) + you-put (Nest of Scarabs), each ability one
+                // object for each counter.
+                List<List<CardEffect>> perCounterAbilities = new ArrayList<>(CounterAbilityReader
+                        .printedEffectsByAbility(card, CounterWatch.ON_MINUS_ONE_MINUS_ONE_COUNTER_PUT_ON_CREATURE));
+                if (placedByThisController) {
+                    perCounterAbilities.addAll(CounterAbilityReader.printedEffectsByAbility(card,
+                            CounterWatch.ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTER_ON_CREATURE));
+                }
+                if (!perCounterAbilities.isEmpty()) {
                     for (int i = 0; i < count; i++) {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                card,
-                                controllerId,
-                                card.getName() + "'s triggered ability",
-                                new ArrayList<>(perCounterEffects),
-                                null,
-                                source.getId()
-                        ));
-                        gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+                        for (List<CardEffect> perCounterEffects : perCounterAbilities) {
+                            gameData.stack.add(new StackEntry(
+                                    StackEntryType.TRIGGERED_ABILITY,
+                                    card,
+                                    controllerId,
+                                    card.getName() + "'s triggered ability",
+                                    new ArrayList<>(perCounterEffects),
+                                    null,
+                                    source.getId()
+                            ));
+                            gameLogService.append(gameData,
+                                    GameLog.cardThen(card, "'s triggered ability triggers."));
+                        }
                     }
                     log.info("Game {} - {} -1/-1-counter watcher fires {} time(s)", gameData.id, card.getName(), count);
                 }
@@ -1202,10 +1206,8 @@ public class PermanentCounterSupport {
                 // even when the placement put multiple -1/-1 counters on it. The affected creature
                 // is carried as the trigger target so the resolving ability can inspect its current
                 // controller, with its controller at trigger time retained for zone changes.
-                List<CardEffect> globalOnceEffects =
-                        CounterAbilityReader.printedEffects(card,
-                        CounterWatch.ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE);
-                if (!globalOnceEffects.isEmpty()) {
+                for (List<CardEffect> globalOnceEffects : CounterAbilityReader.printedEffectsByAbility(card,
+                        CounterWatch.ON_MINUS_ONE_MINUS_ONE_COUNTERS_PUT_ON_CREATURE)) {
                     StackEntry triggerEntry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,
@@ -1225,11 +1227,11 @@ public class PermanentCounterSupport {
 
                 // Once-per-creature you-put watcher (Hapatra, Nest of Scarabs): fires a single trigger
                 // regardless of count; the count is carried as the event value for "that many" effects.
-                List<CardEffect> youPutOnceEffects = placedByThisController
-                        ? CounterAbilityReader.printedEffects(card,
+                List<List<CardEffect>> youPutOnceAbilities = placedByThisController
+                        ? CounterAbilityReader.printedEffectsByAbility(card,
                         CounterWatch.ON_YOU_PUT_MINUS_ONE_MINUS_ONE_COUNTERS_ON_CREATURE)
                         : List.of();
-                if (!youPutOnceEffects.isEmpty()) {
+                for (List<CardEffect> youPutOnceEffects : youPutOnceAbilities) {
                     StackEntry youPutOnceTrigger = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,
@@ -1262,9 +1264,9 @@ public class PermanentCounterSupport {
      */
     void fireSelfMinusOneMinusOneCountersPutTriggers(GameData gameData, Permanent creature, UUID placingPlayerId) {
         Card card = creature.getCard();
-        List<CardEffect> effects = CounterAbilityReader.printedEffects(card,
+        List<List<CardEffect>> abilities = CounterAbilityReader.printedEffectsByAbility(card,
                 CounterWatch.ON_SELF_MINUS_ONE_MINUS_ONE_COUNTERS_PUT);
-        if (effects.isEmpty()) {
+        if (abilities.isEmpty()) {
             return;
         }
 
@@ -1273,27 +1275,29 @@ public class PermanentCounterSupport {
             return;
         }
 
-        boolean needsTarget = effects.stream().anyMatch(e -> e.targetSpec().declaredTarget() != null);
-        if (needsTarget) {
-            PermanentPredicate targetPredicate = effects.stream()
-                    .map(e -> e.targetSpec().predicate())
-                    .filter(Objects::nonNull)
-                    .findFirst().orElse(null);
-            TargetFilter targetFilter = targetPredicate != null
-                    ? new PermanentPredicateTargetFilter(targetPredicate, "Choose a target.")
-                    : null;
-            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    card, controllerId, new ArrayList<>(effects), false, targetFilter));
-            gameLogService.append(gameData,
-                    GameLog.cardThen(card, "'s triggered ability triggers â€” choose a target."));
-        } else {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, card, controllerId,
-                    card.getName() + "'s triggered ability",
-                    new ArrayList<>(effects), null, creature.getId()));
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+        for (List<CardEffect> effects : abilities) {
+            boolean needsTarget = effects.stream().anyMatch(e -> e.targetSpec().declaredTarget() != null);
+            if (needsTarget) {
+                PermanentPredicate targetPredicate = effects.stream()
+                        .map(e -> e.targetSpec().predicate())
+                        .filter(Objects::nonNull)
+                        .findFirst().orElse(null);
+                TargetFilter targetFilter = targetPredicate != null
+                        ? new PermanentPredicateTargetFilter(targetPredicate, "Choose a target.")
+                        : null;
+                gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                        card, controllerId, new ArrayList<>(effects), false, targetFilter));
+                gameLogService.append(gameData,
+                        GameLog.cardThen(card, "'s triggered ability triggers â€” choose a target."));
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                        card.getName() + "'s triggered ability",
+                        new ArrayList<>(effects), null, creature.getId()));
+                gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+            }
+            log.info("Game {} - {} self -1/-1-counter trigger fires", gameData.id, card.getName());
         }
-        log.info("Game {} - {} self -1/-1-counter trigger fires", gameData.id, card.getName());
     }
 
     private void fireSelfReachesLevelTwoTriggers(GameData gameData, Permanent permanent, int previousLevel) {
@@ -1326,8 +1330,8 @@ public class PermanentCounterSupport {
     private void queueLevelReachedTriggers(GameData gameData, Permanent permanent, CounterWatch watch,
                                            String eventDescription) {
         Card card = permanent.getCard();
-        List<CardEffect> effects = CounterAbilityReader.printedEffects(card, watch);
-        if (effects.isEmpty()) {
+        List<List<CardEffect>> abilities = CounterAbilityReader.printedEffectsByAbility(card, watch);
+        if (abilities.isEmpty()) {
             return;
         }
 
@@ -1336,26 +1340,28 @@ public class PermanentCounterSupport {
             return;
         }
 
-        List<CardEffect> effectsToResolve = new ArrayList<>(effects);
-        if (effectsToResolve.stream().anyMatch(effect ->
-                effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
-            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    card, controllerId, effectsToResolve));
-            gameLogService.append(gameData,
-                    GameLog.cardThen(card, "'s triggered ability triggers â€” choose a graveyard target."));
-        } else if (effectsToResolve.stream().anyMatch(effect ->
-                effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
-            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                    card, controllerId, effectsToResolve, eventDescription, permanent.getId()));
-            gameLogService.append(gameData,
-                    GameLog.cardThen(card, "'s triggered ability triggers â€” choose a target."));
-        } else {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, card, controllerId,
-                    card.getName() + "'s triggered ability", effectsToResolve, null, permanent.getId()));
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+        for (List<CardEffect> effects : abilities) {
+            List<CardEffect> effectsToResolve = new ArrayList<>(effects);
+            if (effectsToResolve.stream().anyMatch(effect ->
+                    effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
+                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        card, controllerId, effectsToResolve));
+                gameLogService.append(gameData,
+                        GameLog.cardThen(card, "'s triggered ability triggers â€” choose a graveyard target."));
+            } else if (effectsToResolve.stream().anyMatch(effect ->
+                    effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
+                gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                        card, controllerId, effectsToResolve, eventDescription, permanent.getId()));
+                gameLogService.append(gameData,
+                        GameLog.cardThen(card, "'s triggered ability triggers â€” choose a target."));
+            } else {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                        card.getName() + "'s triggered ability", effectsToResolve, null, permanent.getId()));
+                gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+            }
+            log.info("Game {} - {} {} trigger fires", gameData.id, card.getName(), eventDescription);
         }
-        log.info("Game {} - {} {} trigger fires", gameData.id, card.getName(), eventDescription);
     }
 
     /**
@@ -1417,12 +1423,6 @@ public class PermanentCounterSupport {
         return null;
     }
 
-    private static List<CardEffect> concat(List<CardEffect> a, List<CardEffect> b) {
-        List<CardEffect> merged = new ArrayList<>(a);
-        merged.addAll(b);
-        return merged;
-    }
-
     public void firePlusOnePlusOneCounterTriggers(GameData gameData, Permanent target) {
         firePlusOnePlusOneCounterTriggers(gameData, target, placingPlayerId(gameData, null, target), List.of());
     }
@@ -1481,32 +1481,33 @@ public class PermanentCounterSupport {
 
         for (Permanent source : new ArrayList<>(battlefield)) {
             CounterWatch watch = CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_HUMAN;
-            List<CounterAbilityReader.CounterEffect> effects =
-                    CounterAbilityReader.readPrinted(source.getCard(), watch);
-            effects.forEach(effect -> {
-                CounterAbilityReader.requireNoFilter(effect, watch.trigger());
-                CounterAbilityReader.requireWatchedEvent(effect, watch.trigger());
-                requireNoDoOnlyOnceEachTurn(effect, watch);
-            });
-            WithinLimits triggering = withinLimits(gameData, source.getId(), effects);
-            List<CardEffect> effectsToResolve = triggering.effects();
-            if (effectsToResolve.isEmpty()) {
-                continue;
-            }
-            triggering.markLimits(gameData, source.getId());
+            for (List<CounterAbilityReader.CounterEffect> effects
+                    : CounterAbilityReader.readPrintedByAbility(source.getCard(), watch)) {
+                effects.forEach(effect -> {
+                    CounterAbilityReader.requireNoFilter(effect, watch.trigger());
+                    CounterAbilityReader.requireWatchedEvent(effect, watch.trigger());
+                    requireNoDoOnlyOnceEachTurn(effect, watch);
+                });
+                WithinLimits triggering = withinLimits(gameData, source.getId(), effects);
+                List<CardEffect> effectsToResolve = triggering.effects();
+                if (effectsToResolve.isEmpty()) {
+                    continue;
+                }
+                triggering.markLimits(gameData, source.getId());
 
-            Card card = source.getCard();
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    controllerId,
-                    card.getName() + "'s triggered ability",
-                    effectsToResolve,
-                    null,
-                    source.getId()
-            ));
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
-            log.info("Game {} - {} Human +1/+1-counter watcher fires", gameData.id, card.getName());
+                Card card = source.getCard();
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        controllerId,
+                        card.getName() + "'s triggered ability",
+                        effectsToResolve,
+                        null,
+                        source.getId()
+                ));
+                gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+                log.info("Game {} - {} Human +1/+1-counter watcher fires", gameData.id, card.getName());
+            }
         }
     }
 
@@ -1530,73 +1531,73 @@ public class PermanentCounterSupport {
         for (Permanent source : new ArrayList<>(battlefield)) {
             Card card = source.getCard();
             CounterWatch watch = CounterWatch.ON_ALLY_COUNTER_PUT_ON_CREATURE;
-            List<CounterAbilityReader.CounterEffect> effects = CounterAbilityReader.readPrinted(card, watch);
-            if (effects.isEmpty()) {
-                continue;
-            }
-            effects.forEach(effect -> requireNoDoOnlyOnceEachTurn(effect, watch));
+            List<List<CounterAbilityReader.CounterEffect>> abilities =
+                    CounterAbilityReader.readPrintedByAbility(card, watch);
+            abilities.forEach(ability -> ability.forEach(effect -> requireNoDoOnlyOnceEachTurn(effect, watch)));
             for (int i = 0; i < count; i++) {
-                List<CardEffect> effectsToResolve = new ArrayList<>();
-                List<CounterAbilityReader.CounterEffect> queued = new ArrayList<>();
-                for (CounterAbilityReader.CounterEffect read : effects) {
-                    // "You put" (Mikey & Leo, The Great Goblin), the filter, the limit, then the intervening "if"; a
-                    // limit is marked only for an ability that triggers.
-                    if (read.byController() && !Objects.equals(placingPlayerId, controllerId)) {
-                        continue;
-                    }
-                    if (read.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, creature, read.filter())) {
-                        continue;
-                    }
-                    if (read.limit() == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
-                        // "If it's the first time counters have been put on that creature this turn" (Stalwart
-                        // Successor), for each creature.
-                        if (!firstCountersThisTurn
-                                || read.limitReached(gameData, source.getId(), creature.getId())) {
+                for (List<CounterAbilityReader.CounterEffect> effects : abilities) {
+                    List<CardEffect> effectsToResolve = new ArrayList<>();
+                    List<CounterAbilityReader.CounterEffect> queued = new ArrayList<>();
+                    for (CounterAbilityReader.CounterEffect read : effects) {
+                        // "You put" (Mikey & Leo, The Great Goblin), the filter, the limit, then the intervening
+                        // "if"; a limit is marked only for an ability that triggers.
+                        if (read.byController() && !Objects.equals(placingPlayerId, controllerId)) {
                             continue;
                         }
-                    } else if (read.limitReached(gameData, source.getId())) {
+                        if (read.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
+                                gameData, creature, read.filter())) {
+                            continue;
+                        }
+                        if (read.limit() == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
+                            // "If it's the first time counters have been put on that creature this turn"
+                            // (Stalwart Successor), for each creature.
+                            if (!firstCountersThisTurn
+                                    || read.limitReached(gameData, source.getId(), creature.getId())) {
+                                continue;
+                            }
+                        } else if (read.limitReached(gameData, source.getId())) {
+                            continue;
+                        }
+                        // The ability's intervening "if" and event condition, as it triggers (CR 603.4, CR 603.2);
+                        // the intervening "if" wraps the effect, so it is checked again as it resolves.
+                        if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
+                                ConditionContext.forPermanent(source, controllerId))) {
+                            continue;
+                        }
+                        queued.add(read);
+                        effectsToResolve.add(read.effect());
+                    }
+                    if (effectsToResolve.isEmpty()) {
                         continue;
                     }
-                    // The ability's intervening "if" and event condition, as it triggers (CR 603.4, CR 603.2); the
-                    // intervening "if" wraps the effect, so it is checked again as it resolves.
-                    if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
-                            ConditionContext.forPermanent(source, controllerId))) {
-                        continue;
+                    queued.forEach(read -> read.markLimit(gameData, source.getId(), creature.getId()));
+                    boolean targetsPermanent = effectsToResolve.stream()
+                            .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+                    boolean targetsPlayer = effectsToResolve.stream()
+                            .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                    if (targetsPermanent || targetsPlayer) {
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                                card, controllerId, effectsToResolve, !targetsPermanent,
+                                card.getTargetFilter(), 0, source.getId(), creature.getId()));
+                        gameLogService.append(gameData,
+                                GameLog.cardThen(card, "'s triggered ability triggers — choose a target."));
+                    } else {
+                        StackEntry trigger = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                card,
+                                controllerId,
+                                card.getName() + "'s triggered ability",
+                                effectsToResolve,
+                                null,
+                                source.getId()
+                        );
+                        trigger.setTriggeringPermanentId(creature.getId());
+                        trigger.setTriggeringPermanentControllerId(controllerId);
+                        gameData.stack.add(trigger);
+                        gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
                     }
-                    queued.add(read);
-                    effectsToResolve.add(read.effect());
+                    log.info("Game {} - {} generic counter watcher fires", gameData.id, card.getName());
                 }
-                if (effectsToResolve.isEmpty()) {
-                    continue;
-                }
-                queued.forEach(read -> read.markLimit(gameData, source.getId(), creature.getId()));
-                boolean targetsPermanent = effectsToResolve.stream()
-                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-                boolean targetsPlayer = effectsToResolve.stream()
-                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-                if (targetsPermanent || targetsPlayer) {
-                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            card, controllerId, effectsToResolve, !targetsPermanent,
-                            card.getTargetFilter(), 0, source.getId(), creature.getId()));
-                    gameLogService.append(gameData,
-                            GameLog.cardThen(card, "'s triggered ability triggers — choose a target."));
-                } else {
-                    StackEntry trigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            card,
-                            controllerId,
-                            card.getName() + "'s triggered ability",
-                            effectsToResolve,
-                            null,
-                            source.getId()
-                    );
-                    trigger.setTriggeringPermanentId(creature.getId());
-                    trigger.setTriggeringPermanentControllerId(controllerId);
-                    gameData.stack.add(trigger);
-                    gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
-                }
-                log.info("Game {} - {} generic counter watcher fires", gameData.id, card.getName());
             }
         }
     }
@@ -1643,25 +1644,22 @@ public class PermanentCounterSupport {
             return;
         }
         Card card = source.getCard();
-        List<CardEffect> effects = CounterAbilityReader.printedEffects(card,
-                CounterWatch.ON_YOU_PUT_LOYALTY_COUNTERS_ON_PLANESWALKERS);
-        if (effects.isEmpty()) {
-            return;
+        for (List<CardEffect> effects : CounterAbilityReader.printedEffectsByAbility(card,
+                CounterWatch.ON_YOU_PUT_LOYALTY_COUNTERS_ON_PLANESWALKERS)) {
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    card,
+                    controllerId,
+                    card.getName() + "'s triggered ability",
+                    new ArrayList<>(effects),
+                    null,
+                    source.getId());
+            trigger.setEventValue(count);
+            gameData.stack.add(trigger);
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+            log.info("Game {} - {} loyalty-counter trigger fires for {} counter(s)",
+                    gameData.id, card.getName(), count);
         }
-
-        StackEntry trigger = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                controllerId,
-                card.getName() + "'s triggered ability",
-                new ArrayList<>(effects),
-                null,
-                source.getId());
-        trigger.setEventValue(count);
-        gameData.stack.add(trigger);
-        gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
-        log.info("Game {} - {} loyalty-counter trigger fires for {} counter(s)",
-                gameData.id, card.getName(), count);
     }
 
     void firePlusOnePlusOneCountersPutOnSelfTriggers(GameData gameData, Permanent target) {
@@ -1678,14 +1676,15 @@ public class PermanentCounterSupport {
         if (gameQueryService.hasLostPrintedAbilities(gameData, target)) return;
         Card card = target.getCard();
         CounterWatch watch = CounterWatch.ON_SELF_PLUS_ONE_PLUS_ONE_COUNTERS_PUT;
-        List<CounterAbilityReader.CounterEffect> effects = CounterAbilityReader.readPrinted(card, watch);
-        if (effects.isEmpty()) {
+        List<List<CounterAbilityReader.CounterEffect>> abilities =
+                CounterAbilityReader.readPrintedByAbility(card, watch);
+        if (abilities.isEmpty()) {
             return;
         }
-        effects.forEach(effect -> {
+        abilities.forEach(ability -> ability.forEach(effect -> {
             CounterAbilityReader.requireNoFilter(effect, watch.trigger());
             requireNoDoOnlyOnceEachTurn(effect, watch);
-        });
+        }));
 
         UUID controllerId = null;
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -1699,34 +1698,33 @@ public class PermanentCounterSupport {
             return;
         }
 
-        // "Whenever a +1/+1 counter is put on this" (Fathom Mage, Bloodcrazed Hoplite): once for each counter.
-        List<CardEffect> perCounter = new ArrayList<>();
-        for (CounterAbilityReader.CounterEffect read : effects) {
-            if (read.eachCounter()) {
-                CounterAbilityReader.requireNoLimit(read, watch.trigger());
-                perCounter.add(read.effect());
-            }
-        }
-        for (CardEffect effect : perCounter) {
-            for (int i = 0; i < count; i++) {
-                if (effect.targetSpec().declaredTarget() != null) {
-                    gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                            card, controllerId, List.of(effect), "+1/+1 counter placement", target.getId()));
-                } else {
-                    gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                            card, controllerId, card.getName() + "'s triggered ability",
-                            List.of(effect), null, target.getId()));
+        for (List<CounterAbilityReader.CounterEffect> ability : abilities) {
+            CounterAbilityReader.CounterEffect first = ability.getFirst();
+            if (first.eachCounter()) {
+                // "Whenever a +1/+1 counter is put on this" (Fathom Mage, Bloodcrazed Hoplite): once for each counter.
+                CounterAbilityReader.requireNoLimit(first, watch.trigger());
+                List<CardEffect> abilityEffects = CounterAbilityReader.effectsOf(ability);
+                for (int i = 0; i < count; i++) {
+                    if (abilityEffects.stream().anyMatch(effect -> effect.targetSpec().declaredTarget() != null)) {
+                        gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                                card, controllerId, abilityEffects, "+1/+1 counter placement", target.getId()));
+                    } else {
+                        gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                                card, controllerId, card.getName() + "'s triggered ability",
+                                new ArrayList<>(abilityEffects), null, target.getId()));
+                    }
                 }
+            } else if (!first.byController() || controllerId.equals(placingPlayerId)) {
+                // "Whenever you put one or more +1/+1 counters on this" (Exemplar of Light, Blaster) only when its
+                // controller puts them.
+                queueSelfPlusOneCountersAbility(gameData, target, card, controllerId, ability);
             }
         }
-        // "Whenever you put one or more +1/+1 counters on this" (Exemplar of Light, Blaster) only when its
-        // controller puts them.
-        List<CounterAbilityReader.CounterEffect> perEvent = new ArrayList<>();
-        for (CounterAbilityReader.CounterEffect read : effects) {
-            if (!read.eachCounter() && (!read.byController() || controllerId.equals(placingPlayerId))) {
-                perEvent.add(read);
-            }
-        }
+    }
+
+    /** Puts one "whenever one or more +1/+1 counters are put on this" ability of {@code target} on the stack. */
+    private void queueSelfPlusOneCountersAbility(GameData gameData, Permanent target, Card card, UUID controllerId,
+                                                 List<CounterAbilityReader.CounterEffect> perEvent) {
         WithinLimits triggering = withinLimits(gameData, target.getId(), perEvent);
         List<CardEffect> effectsToResolve = triggering.effects();
         if (effectsToResolve.isEmpty()) {
@@ -1762,20 +1760,20 @@ public class PermanentCounterSupport {
                                               boolean firstPlacementThisTurn) {
         Card card = target.getCard();
         CounterWatch watch = CounterWatch.ON_SELF_COUNTERS_PUT;
-        List<CounterAbilityReader.CounterEffect> effects =
-                new ArrayList<>(CounterAbilityReader.readPrinted(card, watch));
+        List<List<CounterAbilityReader.CounterEffect>> abilities =
+                new ArrayList<>(CounterAbilityReader.readPrintedByAbility(card, watch));
         // A granted ability with a limit (Danny Pink's "draw a card", once each turn) triggers only on the turn's
         // first placement.
         gameQueryService.getGrantedEffects(gameData, target).stream()
                 .filter(GrantTriggeredAbilityEffect.class::isInstance)
                 .map(GrantTriggeredAbilityEffect.class::cast)
                 .filter(grant -> grant.grantedAbility() instanceof TriggeredAbility ability
-                        && ability.hasWatchedTrigger(watch.trigger()))
-                .flatMap(grant -> CounterAbilityReader.read((TriggeredAbility) grant.grantedAbility(),
-                        watch.trigger()).stream())
-                .filter(granted -> firstPlacementThisTurn || granted.limit() == TriggerLimit.NONE)
-                .forEach(effects::add);
-        if (effects.isEmpty()) {
+                        && ability.hasWatchedTrigger(watch.trigger())
+                        && (firstPlacementThisTurn || ability.options().limit() == TriggerLimit.NONE))
+                .map(grant -> CounterAbilityReader.read((TriggeredAbility) grant.grantedAbility(), watch.trigger()))
+                .filter(granted -> !granted.isEmpty())
+                .forEach(abilities::add);
+        if (abilities.isEmpty()) {
             return;
         }
 
@@ -1785,6 +1783,17 @@ public class PermanentCounterSupport {
         }
 
         int currentCount = target.getCounterCount(counterType);
+        for (List<CounterAbilityReader.CounterEffect> effects : abilities) {
+            queueSelfCountersAbility(gameData, target, card, controllerId, counterType, previousCount, currentCount,
+                    effects);
+        }
+    }
+
+    /** Puts one "whenever counters are put on this" ability of {@code target} on the stack, if it triggers. */
+    private void queueSelfCountersAbility(GameData gameData, Permanent target, Card card, UUID controllerId,
+                                          CounterType counterType, int previousCount, int currentCount,
+                                          List<CounterAbilityReader.CounterEffect> effects) {
+        CounterWatch watch = CounterWatch.ON_SELF_COUNTERS_PUT;
         List<CardEffect> effectsToResolve = new ArrayList<>();
         List<CounterAbilityReader.CounterEffect> queued = new ArrayList<>();
         for (CounterAbilityReader.CounterEffect read : effects) {
@@ -1864,24 +1873,20 @@ public class PermanentCounterSupport {
                 continue;
             }
             Card card = watcher.getCard();
-            List<CardEffect> effects =
-                    CounterAbilityReader.printedEffects(card,
-                    CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_CREATURE);
-            if (effects.isEmpty()) {
-                continue;
+            for (List<CardEffect> effects : CounterAbilityReader.printedEffectsByAbility(card,
+                    CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_CREATURE)) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        targetControllerId,
+                        card.getName() + "'s triggered ability",
+                        new ArrayList<>(effects),
+                        null,
+                        watcher.getId()));
+                gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+                log.info("Game {} - {} triggers for a +1/+1 counter on another creature",
+                        gameData.id, card.getName());
             }
-
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    targetControllerId,
-                    card.getName() + "'s triggered ability",
-                    new ArrayList<>(effects),
-                    null,
-                    watcher.getId()));
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
-            log.info("Game {} - {} triggers for a +1/+1 counter on another creature",
-                    gameData.id, card.getName());
         }
     }
 
@@ -1917,26 +1922,24 @@ public class PermanentCounterSupport {
                 .collect(java.util.stream.Collectors.toSet());
         for (Permanent watcher : new ArrayList<>(battlefield)) {
             Card card = watcher.getCard();
-            List<CardEffect> effects =
-                    CounterAbilityReader.printedEffects(card,
-                    CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE);
-            if (effects.isEmpty()
-                    || watcher.getId().equals(target.getId()) || excludedSourceIds.contains(watcher.getId())
+            if (watcher.getId().equals(target.getId()) || excludedSourceIds.contains(watcher.getId())
                     || gameQueryService.hasLostAllAbilities(gameData, watcher)) {
                 continue;
             }
-
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    targetControllerId,
-                    card.getName() + "'s triggered ability",
-                    new ArrayList<>(effects),
-                    null,
-                    watcher.getId()));
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
-            log.info("Game {} - {} triggers for a +1/+1 counter on another non-Hydra creature",
-                    gameData.id, card.getName());
+            for (List<CardEffect> effects : CounterAbilityReader.printedEffectsByAbility(card,
+                    CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_NON_HYDRA_CREATURE)) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        targetControllerId,
+                        card.getName() + "'s triggered ability",
+                        new ArrayList<>(effects),
+                        null,
+                        watcher.getId()));
+                gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+                log.info("Game {} - {} triggers for a +1/+1 counter on another non-Hydra creature",
+                        gameData.id, card.getName());
+            }
         }
     }
 
@@ -2079,22 +2082,19 @@ public class PermanentCounterSupport {
             if (source.getId().equals(target.getId())) {
                 continue;
             }
-            List<CardEffect> effects =
-                    CounterAbilityReader.printedEffects(source.getCard(),
-                            CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_PERMANENT_FIRST_TIME_EACH_TURN);
-            if (effects.isEmpty()) {
-                continue;
+            for (List<CardEffect> effects : CounterAbilityReader.printedEffectsByAbility(source.getCard(),
+                    CounterWatch.ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_ANOTHER_PERMANENT_FIRST_TIME_EACH_TURN)) {
+                gameData.stack.add(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        source.getCard(),
+                        controllerId,
+                        source.getCard().getName() + "'s triggered ability",
+                        new ArrayList<>(effects),
+                        null,
+                        source.getId()));
+                gameLogService.append(gameData, GameLog.cardThen(
+                        source.getCard(), "'s triggered ability triggers."));
             }
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    source.getCard(),
-                    controllerId,
-                    source.getCard().getName() + "'s triggered ability",
-                    new ArrayList<>(effects),
-                    null,
-                    source.getId()));
-            gameLogService.append(gameData, GameLog.cardThen(
-                    source.getCard(), "'s triggered ability triggers."));
         }
     }
 
@@ -2118,53 +2118,51 @@ public class PermanentCounterSupport {
             return;
         }
         for (Permanent source : new ArrayList<>(battlefield)) {
-            List<CounterAbilityReader.CounterEffect> effects =
-                    CounterAbilityReader.readPrinted(source.getCard(), watch);
-            if (effects.isEmpty()) {
-                continue;
+            for (List<CounterAbilityReader.CounterEffect> effects
+                    : CounterAbilityReader.readPrintedByAbility(source.getCard(), watch)) {
+                effects.forEach(effect -> {
+                    CounterAbilityReader.requireNoFilter(effect, watch.trigger());
+                    CounterAbilityReader.requireWatchedEvent(effect, watch.trigger());
+                });
+                Card card = source.getCard();
+                WithinLimits triggering = withinLimits(gameData, source.getId(), effects);
+                List<CardEffect> effectsToResolve = triggering.effects();
+                if (effectsToResolve.isEmpty()) {
+                    continue;
+                }
+                boolean targetsPermanent = effectsToResolve.stream()
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+                boolean targetsPlayer = effectsToResolve.stream()
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                if (targetsPermanent || targetsPlayer) {
+                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            card,
+                            controllerId,
+                            effectsToResolve,
+                            targetsPlayer && !targetsPermanent,
+                            targetFilterForCounterTrigger(card, effectsToResolve),
+                            count,
+                            source.getId(),
+                            new Permanent(source)));
+                } else {
+                    StackEntry triggerEntry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            controllerId,
+                            card.getName() + "'s triggered ability",
+                            effectsToResolve,
+                            null,
+                            source.getId()
+                    );
+                    triggerEntry.setEventValue(count);
+                    triggerEntry.setMarkSourceOncePerTurnOnAcceptance(triggering.markOnAcceptance());
+                    gameData.stack.add(triggerEntry);
+                }
+                triggering.markLimits(gameData, source.getId());
+                gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
+                log.info("Game {} - {} +1/+1 counter-on-controlled-permanent trigger fires", gameData.id,
+                        card.getName());
             }
-            effects.forEach(effect -> {
-                CounterAbilityReader.requireNoFilter(effect, watch.trigger());
-                CounterAbilityReader.requireWatchedEvent(effect, watch.trigger());
-            });
-            Card card = source.getCard();
-            WithinLimits triggering = withinLimits(gameData, source.getId(), effects);
-            List<CardEffect> effectsToResolve = triggering.effects();
-            if (effectsToResolve.isEmpty()) {
-                continue;
-            }
-            boolean targetsPermanent = effectsToResolve.stream()
-                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-            boolean targetsPlayer = effectsToResolve.stream()
-                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-            if (targetsPermanent || targetsPlayer) {
-                gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        card,
-                        controllerId,
-                        effectsToResolve,
-                        targetsPlayer && !targetsPermanent,
-                        targetFilterForCounterTrigger(card, effectsToResolve),
-                        count,
-                        source.getId(),
-                        new Permanent(source)));
-            } else {
-                StackEntry triggerEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        card,
-                        controllerId,
-                        card.getName() + "'s triggered ability",
-                        effectsToResolve,
-                        null,
-                        source.getId()
-                );
-                triggerEntry.setEventValue(count);
-                triggerEntry.setMarkSourceOncePerTurnOnAcceptance(triggering.markOnAcceptance());
-                gameData.stack.add(triggerEntry);
-            }
-            triggering.markLimits(gameData, source.getId());
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
-            log.info("Game {} - {} +1/+1 counter-on-controlled-permanent trigger fires", gameData.id,
-                    card.getName());
         }
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)
                 && !gameData.interaction.isAwaitingInput()) {

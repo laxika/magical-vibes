@@ -25,9 +25,9 @@ public class YidaroWanderingMonster extends Card {
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardIsSelfPredicate())
                 .returnAll(true)
-                .build()));
-        addTrigger(Triggers.youCycleThisCard(), new ConditionalEffect(new NotCondition(threshold),
-                new ShuffleSelfFromGraveyardIntoLibraryEffect()));
+                .build()),
+                new ConditionalEffect(new NotCondition(threshold),
+                        new ShuffleSelfFromGraveyardIntoLibraryEffect()));
         addCycling("{1}{R}");
     }
 }

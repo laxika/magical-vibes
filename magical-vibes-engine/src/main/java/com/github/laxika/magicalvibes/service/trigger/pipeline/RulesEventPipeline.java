@@ -8,7 +8,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
@@ -225,9 +228,11 @@ public class RulesEventPipeline {
             }
             if (candidate.ability().options().multiplicity() == TriggerMultiplicity.ONE_OR_MORE
                     && gameData.collectingSimultaneousCreatureEntryTriggers) {
-                CardEffect marker = candidate.ability().effects().getFirst().effect();
+                // Keyed by the whole ability, which triggers once for the event (CR 603.2c); another ability of the
+                // source triggers on its own.
                 if (!gameData.simultaneousCreatureEntryTriggers
-                        .computeIfAbsent(candidate.sourceObjectId(), ignored -> new HashSet<>()).add(marker)) {
+                        .computeIfAbsent(candidate.sourceObjectId(), ignored -> new HashSet<>())
+                        .add(candidate.ability())) {
                     joinTriggeredEntry(gameData, candidate, entering.getId());
                     continue;
                 }
@@ -261,11 +266,19 @@ public class RulesEventPipeline {
                 controllerId));
     }
 
-    /** Names {@code enteringId} on the stack objects a "one or more" ability of {@code candidate} already put there. */
+    /**
+     * Names {@code enteringId} on the stack object the "one or more" ability of {@code candidate} already put there: an
+     * entry of its source whose effects are that ability's (its intervening "if" put around them or inside their "you
+     * may" as its collector read them), never another ability's.
+     */
     private static void joinTriggeredEntry(GameData gameData, TriggerCandidate candidate, UUID enteringId) {
+        List<CardEffect> effects = candidate.ability().effects().stream().map(EffectRegistration::effect).toList();
+        Condition interveningIf = candidate.ability().options().interveningIf();
         for (StackEntry entry : gameData.stack) {
             if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                     && candidate.sourceObjectId().equals(entry.getSourcePermanentId())
+                    && entry.getEffectsToResolve().stream()
+                    .map(effect -> withoutInterveningIf(effect, interveningIf)).toList().equals(effects)
                     && !entry.getTriggeringPermanentIds().isEmpty()
                     && !entry.getTriggeringPermanentIds().contains(enteringId)) {
                 List<UUID> group = new ArrayList<>(entry.getTriggeringPermanentIds());
@@ -273,6 +286,22 @@ public class RulesEventPipeline {
                 entry.setTriggeringPermanentIds(group);
             }
         }
+    }
+
+    /** {@code effect} without the ability's intervening "if" its collector put around it or inside its "you may". */
+    private static CardEffect withoutInterveningIf(CardEffect effect, Condition interveningIf) {
+        if (interveningIf == null) {
+            return effect;
+        }
+        if (effect instanceof ConditionalEffect conditional && conditional.condition().equals(interveningIf)) {
+            return withoutInterveningIf(conditional.wrapped(), interveningIf);
+        }
+        if (effect instanceof MayEffect may) {
+            CardEffect wrapped = withoutInterveningIf(may.wrapped(), interveningIf);
+            return wrapped == may.wrapped() ? may
+                    : new MayEffect(wrapped, may.prompt(), may.elseEffect(), may.choicePlayer(), may.choicePlayerId());
+        }
+        return effect;
     }
 
     /** The moving objects' own abilities, and the slot abilities shadow mode reports. */

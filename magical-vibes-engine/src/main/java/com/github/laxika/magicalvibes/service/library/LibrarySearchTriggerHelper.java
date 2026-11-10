@@ -41,25 +41,25 @@ public final class LibrarySearchTriggerHelper {
             for (var perm : List.copyOf(battlefield)) {
                 if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
                 boolean controllerSearch = controllerId.equals(searchingPlayerId);
-                List<CardEffect> effects = LibraryAbilityReader.printedEffects(perm.getCard(), controllerSearch
-                        ? LibraryWatch.ON_CONTROLLER_SEARCHES_LIBRARY
-                        : LibraryWatch.ON_OPPONENT_SEARCHES_LIBRARY);
-                if (effects.isEmpty()) continue;
-
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        controllerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(effects),
-                        controllerSearch ? null : searchingPlayerId,
-                        perm.getId()
-                );
-                // The searching player is the trigger's subject, not a chosen target, so hexproof on
-                // that player must not make the trigger fizzle on resolution.
-                trigger.setNonTargeting(true);
-                gameData.enqueueTrigger(trigger);
-                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                for (List<CardEffect> effects : LibraryAbilityReader.printedEffectsByAbility(perm.getCard(),
+                        controllerSearch
+                                ? LibraryWatch.ON_CONTROLLER_SEARCHES_LIBRARY
+                                : LibraryWatch.ON_OPPONENT_SEARCHES_LIBRARY)) {
+                    StackEntry trigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            controllerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(effects),
+                            controllerSearch ? null : searchingPlayerId,
+                            perm.getId()
+                    );
+                    // The searching player is the trigger's subject, not a chosen target, so hexproof on
+                    // that player must not make the trigger fizzle on resolution.
+                    trigger.setNonTargeting(true);
+                    gameData.enqueueTrigger(trigger);
+                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                }
             }
         });
     }

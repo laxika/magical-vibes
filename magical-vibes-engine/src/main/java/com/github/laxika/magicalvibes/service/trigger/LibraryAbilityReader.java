@@ -181,6 +181,29 @@ public final class LibraryAbilityReader {
         return readByAbility(printed(card, watch), watch.trigger());
     }
 
+    /**
+     * The effects of the abilities of {@code card} that {@code watch} reads, one list for each ability (one object on
+     * the stack, CR 603.3), for a collector that reads no filter, narrower event, count or limit: none of the abilities
+     * it reads is written with one, and this throws on one.
+     */
+    public static List<List<CardEffect>> printedEffectsByAbility(Card card, LibraryWatch watch) {
+        return effectsByAbility(printed(card, watch), watch.trigger());
+    }
+
+    /** {@link #printedEffectsByAbility(Card, LibraryWatch)} of the abilities {@code judge} lets trigger. */
+    public static List<List<CardEffect>> printedEffectsByAbility(Card card, LibraryWatch watch, TriggerJudge judge) {
+        return effectsByAbility(judge.filter(printed(card, watch)), watch.trigger());
+    }
+
+    private static List<List<CardEffect>> effectsByAbility(List<TriggeredAbility> abilities, Trigger watched) {
+        List<List<CardEffect>> byAbility = new ArrayList<>();
+        for (List<LibraryEffect> ability : readByAbility(abilities, watched)) {
+            ability.forEach(effect -> requireNothingToJudge(effect, watched));
+            byAbility.add(effectsOf(ability));
+        }
+        return byAbility;
+    }
+
     /** Every effect of {@code abilities}, as their collector reads them for the condition watched as {@code watched}. */
     public static List<LibraryEffect> read(List<TriggeredAbility> abilities, Trigger watched) {
         List<LibraryEffect> effects = new ArrayList<>();

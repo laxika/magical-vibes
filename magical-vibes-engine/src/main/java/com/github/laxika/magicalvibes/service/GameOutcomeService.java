@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingLossReplacement;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -224,31 +225,37 @@ public class GameOutcomeService {
         gameData.forEachPermanent((controllerId, perm) -> {
             // "Whenever a player loses the game, if ..." intervening-if (CR 603.4): the trigger does not
             // go on the stack unless its condition holds when the player loses.
-            List<CardEffect> effects = ActionAbilityReader.printedEffects(perm.getCard(), ActionWatch.ON_PLAYER_LOSES_GAME).stream()
-                    .filter(effect -> !(effect instanceof WinGameIfPlayerAttackedByControlledSubtypeThisTurnEffect win)
-                            || gameQueryService.wasPlayerAttackedByControlledSubtypeThisTurn(
-                                    gameData, losingPlayerId, controllerId, win.subtype()))
-                    .toList();
-            if (effects.isEmpty()) {
-                return;
+            for (List<CardEffect> effects : ActionAbilityReader.printedEffectsByAbility(perm.getCard(),
+                    ActionWatch.ON_PLAYER_LOSES_GAME)) {
+                if (effects.stream().anyMatch(effect ->
+                        effect instanceof WinGameIfPlayerAttackedByControlledSubtypeThisTurnEffect win
+                                && !gameQueryService.wasPlayerAttackedByControlledSubtypeThisTurn(
+                                        gameData, losingPlayerId, controllerId, win.subtype()))) {
+                    continue;
+                }
+                queuePlayerLosesGameAbility(gameData, perm, controllerId, losingPlayerId, effects);
             }
-
-            StackEntry se = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    perm.getCard(),
-                    controllerId,
-                    perm.getCard().getName() + "'s triggered ability",
-                    new ArrayList<>(effects),
-                    null,
-                    perm.getId());
-            // This is non-targeting event context: the player whose loss caused the trigger.
-            se.setTargetId(losingPlayerId);
-            se.setNonTargeting(true);
-            gameData.stack.add(se);
-
-            gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s triggered ability goes on the stack ("
-                    + gameData.playerIdToName.get(losingPlayerId) + " loses the game)."));
         });
+    }
+
+    /** Puts one "whenever a player loses the game" ability of {@code perm} on the stack. */
+    private void queuePlayerLosesGameAbility(GameData gameData, Permanent perm, UUID controllerId,
+                                             UUID losingPlayerId, List<CardEffect> effects) {
+        StackEntry se = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                perm.getCard(),
+                controllerId,
+                perm.getCard().getName() + "'s triggered ability",
+                new ArrayList<>(effects),
+                null,
+                perm.getId());
+        // This is non-targeting event context: the player whose loss caused the trigger.
+        se.setTargetId(losingPlayerId);
+        se.setNonTargeting(true);
+        gameData.stack.add(se);
+
+        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s triggered ability goes on the stack ("
+                + gameData.playerIdToName.get(losingPlayerId) + " loses the game)."));
     }
 
     /**

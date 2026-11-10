@@ -39,14 +39,18 @@ public class ClassLevelUpEffectHandler implements NormalEffectHandlerBean {
         }
 
         source.setClassLevel(levelUp.level());
-        List<CardEffect> levelEffects = levelUp.gainedEffects().isEmpty()
-                ? CounterAbilityReader.printedEffects(source.getCard(), levelUp.level() == 2
+        // The level's "when this Class becomes level N" abilities, each one object of all its effects (CR 603.3).
+        List<List<CardEffect>> levelAbilities = levelUp.gainedEffects().isEmpty()
+                ? CounterAbilityReader.printedEffectsByAbility(source.getCard(), levelUp.level() == 2
                         ? CounterWatch.ON_SELF_REACHES_LEVEL_TWO : CounterWatch.ON_SELF_REACHES_LEVEL_THREE)
-                : levelUp.gainedEffects();
-        if (levelEffects.isEmpty()) {
-            return;
+                : List.of(levelUp.gainedEffects());
+        for (List<CardEffect> levelEffects : levelAbilities) {
+            queueLevelAbility(gameData, entry, source, levelUp, levelEffects);
         }
+    }
 
+    private void queueLevelAbility(GameData gameData, StackEntry entry, Permanent source, ClassLevelUpEffect levelUp,
+                                   List<CardEffect> levelEffects) {
         List<CardEffect> gainedEffects = new ArrayList<>(levelEffects);
         if (gainedEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(

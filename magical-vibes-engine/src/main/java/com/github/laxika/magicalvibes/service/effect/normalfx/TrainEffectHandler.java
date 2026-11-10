@@ -47,11 +47,15 @@ public class TrainEffectHandler implements NormalEffectHandlerBean {
         }
 
         Card card = source.getCard();
-        List<CardEffect> trainTriggers = CounterAbilityReader.printedEffects(card, CounterWatch.ON_SELF_TRAINS);
-        if (trainTriggers.isEmpty()) {
-            return;
+        // Each "whenever this creature trains" ability is one object of all its effects (CR 603.3).
+        for (List<CardEffect> trainTriggers : CounterAbilityReader.printedEffectsByAbility(card,
+                CounterWatch.ON_SELF_TRAINS)) {
+            queueTrainsAbility(gameData, entry, source, card, trainTriggers);
         }
+    }
 
+    private void queueTrainsAbility(GameData gameData, StackEntry entry, Permanent source, Card card,
+                                    List<CardEffect> trainTriggers) {
         BattlefieldAndGraveyardCardChoosingEffect mixedZoneTrigger = trainTriggers.stream()
                 .filter(BattlefieldAndGraveyardCardChoosingEffect.class::isInstance)
                 .map(BattlefieldAndGraveyardCardChoosingEffect.class::cast)

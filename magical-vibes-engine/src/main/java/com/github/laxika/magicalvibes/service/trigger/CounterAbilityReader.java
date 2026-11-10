@@ -161,6 +161,41 @@ public final class CounterAbilityReader {
         return effects(judge.filter(printed(card, watch)), watch.trigger());
     }
 
+    /**
+     * The effects of {@code abilities}, one list for each ability, in order, as their collector reads them for the
+     * condition watched as {@code watched}: each list is one object on the stack (CR 603.3), whose trigger-level parts
+     * (filter, event, limit, options) every read of it shares.
+     */
+    public static List<List<CounterEffect>> readByAbility(List<TriggeredAbility> abilities, Trigger watched) {
+        List<List<CounterEffect>> byAbility = new ArrayList<>(abilities.size());
+        for (TriggeredAbility ability : abilities) {
+            List<CounterEffect> effects = read(ability, watched);
+            if (!effects.isEmpty()) {
+                byAbility.add(effects);
+            }
+        }
+        return byAbility;
+    }
+
+    /** {@link #readByAbility(List, Trigger)} of the abilities of {@code card} that {@code watch} reads. */
+    public static List<List<CounterEffect>> readPrintedByAbility(Card card, CounterWatch watch) {
+        return readByAbility(printed(card, watch), watch.trigger());
+    }
+
+    /**
+     * The effects of the abilities of {@code card} that {@code watch} reads, one list for each ability (one object on
+     * the stack, CR 603.3), for a collector that reads no filter, narrower event or limit: none of the abilities it
+     * reads is written with one, and this throws on one.
+     */
+    public static List<List<CardEffect>> printedEffectsByAbility(Card card, CounterWatch watch) {
+        List<List<CardEffect>> byAbility = new ArrayList<>();
+        for (List<CounterEffect> ability : readPrintedByAbility(card, watch)) {
+            ability.forEach(effect -> requireNothingToJudge(effect, watch.trigger()));
+            byAbility.add(effectsOf(ability));
+        }
+        return byAbility;
+    }
+
     /** Every effect of {@code abilities}, as their collector reads them for the condition watched as {@code watched}. */
     public static List<CounterEffect> read(List<TriggeredAbility> abilities, Trigger watched) {
         List<CounterEffect> effects = new ArrayList<>();

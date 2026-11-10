@@ -101,6 +101,22 @@ public final class ActionAbilityReader {
     }
 
     /**
+     * The effects of the abilities of {@code card} that {@code watch} reads, one list for each ability (one object on
+     * the stack, CR 603.3), for a collector that judges no filter or limit: none of the abilities it reads is written
+     * with one, and this throws on one.
+     */
+    public static List<List<CardEffect>> printedEffectsByAbility(Card card, ActionWatch watch) {
+        List<List<CardEffect>> byAbility = new ArrayList<>();
+        for (TriggeredAbility ability : printed(card, watch)) {
+            List<CardEffect> effects = effects(List.of(ability), watch.trigger());
+            if (!effects.isEmpty()) {
+                byAbility.add(effects);
+            }
+        }
+        return byAbility;
+    }
+
+    /**
      * The effects of {@code abilities} for the condition watched as {@code watched}, for a collector that judges no
      * filter or limit: none of its abilities is written with one, and this throws on one.
      */

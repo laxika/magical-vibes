@@ -48,26 +48,23 @@ public class EvolveEffectHandler implements NormalEffectHandlerBean {
 
     /** "Whenever this creature evolves": a +1/+1 counter was put on it by its evolve ability (CR 702.100b). */
     private void fireEvolvesTriggers(GameData gameData, Permanent source) {
-        List<CardEffect> effects = CounterAbilityReader.printedEffects(source.getCard(),
-                CounterWatch.ON_SELF_EVOLVES);
-        if (effects.isEmpty()) {
-            return;
-        }
-
         UUID controllerId = gameData.findControllerOf(source);
         if (controllerId == null) {
             return;
         }
-
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                source.getCard(),
-                controllerId,
-                source.getCard().getName() + "'s triggered ability",
-                new ArrayList<>(effects),
-                null,
-                source.getId()
-        ));
-        gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s evolve trigger triggers."));
+        // Each ability is one object of all its effects (CR 603.3).
+        for (List<CardEffect> effects : CounterAbilityReader.printedEffectsByAbility(source.getCard(),
+                CounterWatch.ON_SELF_EVOLVES)) {
+            gameData.stack.add(new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    source.getCard(),
+                    controllerId,
+                    source.getCard().getName() + "'s triggered ability",
+                    new ArrayList<>(effects),
+                    null,
+                    source.getId()
+            ));
+            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s evolve trigger triggers."));
+        }
     }
 }

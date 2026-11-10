@@ -1022,8 +1022,11 @@ public class GameData {
     /** When true, all combat damage that would be dealt to players is prevented this turn (Defend the Hearth). */
     public boolean preventAllCombatDamageToPlayers;
     /** When true, all damage to all creatures (both players') is prevented this turn (Blinding Fog). */
-    /** Ability instances already collected during the current simultaneous creature-entry event. */
-    public final Map<UUID, Set<com.github.laxika.magicalvibes.model.effect.CardEffect>> simultaneousCreatureEntryTriggers = new HashMap<>();
+    /**
+     * The "one or more" abilities, by source, already put on the stack for the current simultaneous creature-entry
+     * event: a later permanent of the event joins that ability's stack object instead of triggering it again.
+     */
+    public final Map<UUID, Set<TriggeredAbility>> simultaneousCreatureEntryTriggers = new HashMap<>();
     public boolean collectingSimultaneousCreatureEntryTriggers;
     /** Permanents put onto the battlefield together whose enter abilities are still being processed. An
      *  as-enters choice of one of them (Rescuer Sphinx) can't pick another, as they weren't there yet. */
@@ -9542,8 +9545,8 @@ public class GameData {
         copy.preventAllCombatDamageByAttackingCreatures = this.preventAllCombatDamageByAttackingCreatures;
         copy.preventAllCombatDamageToPlayers = this.preventAllCombatDamageToPlayers;
         copy.collectingSimultaneousCreatureEntryTriggers = this.collectingSimultaneousCreatureEntryTriggers;
-        this.simultaneousCreatureEntryTriggers.forEach((id, effects) ->
-                copy.simultaneousCreatureEntryTriggers.put(id, new HashSet<>(effects)));
+        this.simultaneousCreatureEntryTriggers.forEach((id, abilities) ->
+                copy.simultaneousCreatureEntryTriggers.put(id, new HashSet<>(abilities)));
         copy.preventAllDamageToAllCreatures = this.preventAllDamageToAllCreatures;
         copy.preventAllDamageByCreatures = this.preventAllDamageByCreatures;
         copy.preventAllDamageFromNonHumanSources = this.preventAllDamageFromNonHumanSources;

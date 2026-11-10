@@ -1529,19 +1529,18 @@ public class EtbTriggerService {
     public void queueTriggeredAbilityCounters(GameData gameData, StackEntry triggeredAbility) {
         gameData.forEachBattlefield((controllerId, battlefield) -> {
             for (Permanent permanent : List.copyOf(battlefield)) {
-                List<CardEffect> effects = MiscAbilityReader.printedEffects(permanent.getCard(),
-                        MiscWatch.ON_PERMANENT_ENTERING_CAUSES_ABILITY_TO_TRIGGER);
-                if (effects.isEmpty() || permanent.isFaceDown()
-                        || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
+                if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                     continue;
                 }
-                for (CardEffect effect : effects) {
+                // Each ability is one object of all its effects (CR 603.3).
+                for (List<CardEffect> effects : MiscAbilityReader.printedEffectsByAbility(permanent.getCard(),
+                        MiscWatch.ON_PERMANENT_ENTERING_CAUSES_ABILITY_TO_TRIGGER)) {
                     StackEntry entry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             permanent.getCard(),
                             controllerId,
                             permanent.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(effect)),
+                            new ArrayList<>(effects),
                             triggeredAbility.getTargetableId(),
                             Zone.STACK,
                             permanent.getId());

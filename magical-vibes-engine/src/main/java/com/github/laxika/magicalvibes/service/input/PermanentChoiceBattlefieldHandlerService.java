@@ -1951,11 +1951,28 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        // "When a creature is championed with this permanent, ..." (e.g. Mistbind Clique).
-        List<CardEffect> championedEffects = source != null
-                ? ActionAbilityReader.printedEffects(source.getCard(), ActionWatch.ON_CHAMPIONED) : List.of();
-        if (championedEffects != null && !championedEffects.isEmpty()) {
-            beginChampionedTrigger(gameData, source, context.controllerId(), new ArrayList<>(championedEffects));
+        // "When a creature is championed with this permanent, ..." (e.g. Mistbind Clique): each ability is one object
+        // of all its effects (CR 603.3); an untargeted one goes on the stack as written, a targeted one to its target
+        // choice (no card prints two targeted ones).
+        List<List<CardEffect>> championedAbilities = source != null
+                ? ActionAbilityReader.printedEffectsByAbility(source.getCard(), ActionWatch.ON_CHAMPIONED) : List.of();
+        List<CardEffect> targetedAbility = null;
+        for (List<CardEffect> effects : championedAbilities) {
+            if (effects.stream().anyMatch(effect -> effect.targetSpec().declaredTarget() != null)) {
+                if (targetedAbility != null) {
+                    throw new IllegalStateException("No champion collector reads two targeted championed abilities: "
+                            + source.getCard().getName());
+                }
+                targetedAbility = effects;
+            } else {
+                gameData.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(),
+                        context.controllerId(), source.getCard().getName() + "'s ability",
+                        new ArrayList<>(effects), null, source.getId()));
+                gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
+            }
+        }
+        if (targetedAbility != null) {
+            beginChampionedTrigger(gameData, source, context.controllerId(), new ArrayList<>(targetedAbility));
             return;
         }
 

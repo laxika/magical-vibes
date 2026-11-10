@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
@@ -470,15 +471,14 @@ public class CreatureControlService {
     }
 
     private void queueSelfControlChangeTriggers(GameData gameData, Permanent permanent, UUID controllerId) {
-        List<CardEffect> effects = selfControlChangeEffects(permanent, MiscWatch.ON_SELF_BECOMES_CONTROLLED);
-
-        for (CardEffect effect : effects) {
+        // Each ability is one object of all its effects (CR 603.3).
+        for (List<CardEffect> effects : selfControlChangeAbilities(permanent, MiscWatch.ON_SELF_BECOMES_CONTROLLED)) {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     permanent.getCard(),
                     controllerId,
                     permanent.getCard().getName() + "'s ability",
-                    List.of(effect),
+                    new ArrayList<>(effects),
                     null,
                     permanent.getId());
             entry.setNonTargeting(true);
@@ -490,15 +490,14 @@ public class CreatureControlService {
 
     private void queueSelfControlLossTriggers(GameData gameData, Permanent permanent,
                                               UUID controllerId) {
-        List<CardEffect> effects = selfControlChangeEffects(permanent, MiscWatch.ON_SELF_LOSES_CONTROL);
-
-        for (CardEffect effect : effects) {
+        // Each ability is one object of all its effects (CR 603.3).
+        for (List<CardEffect> effects : selfControlChangeAbilities(permanent, MiscWatch.ON_SELF_LOSES_CONTROL)) {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     permanent.getCard(),
                     controllerId,
                     permanent.getCard().getName() + "'s ability",
-                    List.of(effect),
+                    new ArrayList<>(effects),
                     null,
                     permanent.getId());
             entry.setNonTargeting(true);
@@ -509,16 +508,15 @@ public class CreatureControlService {
     }
 
     /**
-     * The effects of {@code permanent}'s abilities {@code watch} reads: its printed ones, then those granted to it for a
-     * duration and until it leaves, read through {@link MiscAbilityReader}; no control-change ability takes a limit.
+     * The effects of {@code permanent}'s abilities {@code watch} reads, one list for each ability (one object on the
+     * stack, CR 603.3): its printed ones, then those granted to it for a duration and until it leaves, read through
+     * {@link MiscAbilityReader}; no control-change ability takes a limit.
      */
-    private static List<CardEffect> selfControlChangeEffects(Permanent permanent, MiscWatch watch) {
-        List<CardEffect> effects = new ArrayList<>(MiscAbilityReader.printedEffects(permanent.getCard(), watch));
-        effects.addAll(MiscAbilityReader.effects(WatchedAbilities.temporary(permanent, watch.trigger()),
-                watch.trigger()));
-        effects.addAll(MiscAbilityReader.effects(WatchedAbilities.persistent(permanent, watch.trigger()),
-                watch.trigger()));
-        return effects;
+    private static List<List<CardEffect>> selfControlChangeAbilities(Permanent permanent, MiscWatch watch) {
+        List<TriggeredAbility> abilities = new ArrayList<>(MiscAbilityReader.printed(permanent.getCard(), watch));
+        abilities.addAll(WatchedAbilities.temporary(permanent, watch.trigger()));
+        abilities.addAll(WatchedAbilities.persistent(permanent, watch.trigger()));
+        return MiscAbilityReader.effectsByAbility(abilities, watch.trigger());
     }
 
     private void removeFromCombat(GameData gameData, Permanent permanent) {

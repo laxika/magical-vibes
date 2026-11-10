@@ -118,7 +118,7 @@ ROWS = [
 # effects onto the stack. Run 17z14b made the registry dispatch an ability (`TriggerMatchContext.effects()`): a default
 # is `(match, ctx)` and routes the whole ability, the one class-keyed handler routes an ability containing its class.
 DONE_ROWS = {"17z13e2", "17z13e3", "17z13e4", "17z13e5", "17z13e5b", "17z13e6", "17z13e7", "17z13e8", "17z13e8b",
-             "17z13e8c", "17z13e8d", "17z13e9", "17z14b"}
+             "17z13e8c", "17z13e8d", "17z13e9", "17z14b", "17z14b2", "17z14c"}
 
 # The reader branches keyed by an effect's class (file, effect class) -> verdict. Row 17z13e's three (the your-upkeep
 # `SurveilEffect`, the your-draw-step `MayEffect` and Haphazard Bombardment's branches) are gone. Run 17z13e8 read the

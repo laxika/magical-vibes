@@ -411,14 +411,10 @@ public class TriggerCollectionService {
         }
 
         for (Card card : new ArrayList<>(graveyard)) {
-            List<CardEffect> effects = graveyardCounterEffects(gameData, card,
-                    CounterWatch.GRAVEYARD_ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_CREATURE);
-            if (effects.isEmpty()) {
-                continue;
-            }
-
-            for (CardEffect effect : effects) {
-                if (effect instanceof MayEffect may) {
+            // Each ability whole (CR 603.3); one that is a lone "you may" is still asked before it goes on the stack.
+            for (List<CardEffect> effects : graveyardCounterAbilities(gameData, card,
+                    CounterWatch.GRAVEYARD_ON_ALLY_PLUS_ONE_PLUS_ONE_COUNTERS_PUT_ON_CREATURE)) {
+                if (effects.size() == 1 && effects.getFirst() instanceof MayEffect may) {
                     gameData.queueMayAbility(card, creatureControllerId, may, card.getId());
                 } else {
                     StackEntry trigger = new StackEntry(
@@ -426,7 +422,7 @@ public class TriggerCollectionService {
                             card,
                             creatureControllerId,
                             card.getName() + "'s ability",
-                            new ArrayList<>(List.of(effect)));
+                            new ArrayList<>(effects));
                     trigger.setTriggeringCardId(card.getId());
                     trigger.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                     gameData.enqueueTrigger(trigger);
@@ -719,9 +715,9 @@ public class TriggerCollectionService {
         List<Card> graveyard = gameData.playerGraveyards.get(committingPlayerId);
         if (graveyard != null) {
             for (Card card : List.copyOf(graveyard)) {
-                for (CardEffect effect : graveyardActionEffects(gameData, card,
+                for (List<CardEffect> effects : graveyardActionAbilities(gameData, card,
                         ActionWatch.GRAVEYARD_ON_CONTROLLER_COMMITS_CRIME)) {
-                    queueGraveyardCrimeTrigger(gameData, card, committingPlayerId, effect);
+                    queueGraveyardCrimeTrigger(gameData, card, committingPlayerId, effects);
                 }
             }
         }
@@ -730,12 +726,14 @@ public class TriggerCollectionService {
 
     /**
      * Queues the "whenever you fully unlock a Room" abilities of {@code card} in its owner's graveyard (Fear of
-     * Infinity), each effect as it is; their collector judges no door, first time or limit.
+     * Infinity), each ability as one object of its effects (CR 603.3); their collector judges no door, first time or
+     * limit.
      */
     private void queueGraveyardEerieTriggers(GameData gameData, UUID controllerId, Card card) {
-        for (CardEffect resolved : MiscAbilityReader.printedEffects(card,
+        // Each ability whole (CR 603.3); one that is a lone "you may" is still asked before it goes on the stack.
+        for (List<CardEffect> effects : MiscAbilityReader.printedEffectsByAbility(card,
                 MiscWatch.GRAVEYARD_ON_ALLY_ROOM_FULLY_UNLOCKED)) {
-            if (resolved instanceof MayEffect may) {
+            if (effects.size() == 1 && effects.getFirst() instanceof MayEffect may) {
                 gameData.queueMayAbility(card, controllerId, may);
             } else {
                 gameData.stack.add(new StackEntry(
@@ -743,7 +741,7 @@ public class TriggerCollectionService {
                         card,
                         controllerId,
                         card.getName() + "'s ability",
-                        new ArrayList<>(List.of(resolved))
+                        new ArrayList<>(effects)
                 ));
             }
             gameLogService.append(gameData, GameLog.abilityTriggers(card));
@@ -752,13 +750,13 @@ public class TriggerCollectionService {
     }
 
     private void queueGraveyardCrimeTrigger(GameData gameData, Card card, UUID controllerId,
-                                             CardEffect effect) {
+                                             List<CardEffect> effects) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 card,
                 controllerId,
                 card.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)));
+                new ArrayList<>(effects));
         entry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(card));
@@ -2332,9 +2330,9 @@ public class TriggerCollectionService {
             // "When you discard this card" — any discard (Edgar's Awakening). Non-targeting effects
             // (e.g. MayPayManaEffect) go straight onto the stack; any-target effects use the
             // DiscardTriggerAnyTarget pipeline (same as Guerrilla Tactics).
-            List<CardEffect> anyDiscardTriggers = LibraryAbilityReader.printedEffects(discardedCard,
-                    LibraryWatch.ON_SELF_DISCARDED);
-            if (!anyDiscardTriggers.isEmpty()) {
+            // Each ability is one object of all its effects (CR 603.3).
+            for (List<CardEffect> anyDiscardTriggers : LibraryAbilityReader.printedEffectsByAbility(discardedCard,
+                    LibraryWatch.ON_SELF_DISCARDED)) {
                 boolean needsAnyTarget = anyDiscardTriggers.stream()
                         .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                                 || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
@@ -2359,12 +2357,15 @@ public class TriggerCollectionService {
 
             // Skip EnterBattlefieldOnDiscardEffect — it's a replacement effect handled earlier in the discard flow
             if (gameData.discardCausedByOpponent) {
-                List<CardEffect> selfTriggers = LibraryAbilityReader.printedEffects(discardedCard,
-                                LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT, conditionEvaluationService.judge(gameData,
-                                        ConditionContext.forCard(discardedCard, discardingPlayerId))).stream()
-                        .filter(e -> !(e instanceof EnterBattlefieldOnDiscardEffect))
-                        .toList();
-                if (!selfTriggers.isEmpty()) {
+                for (List<CardEffect> ability : LibraryAbilityReader.printedEffectsByAbility(discardedCard,
+                        LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT, conditionEvaluationService.judge(gameData,
+                                ConditionContext.forCard(discardedCard, discardingPlayerId)))) {
+                    List<CardEffect> selfTriggers = ability.stream()
+                            .filter(e -> !(e instanceof EnterBattlefieldOnDiscardEffect))
+                            .toList();
+                    if (selfTriggers.isEmpty()) {
+                        continue;
+                    }
                     boolean needsAnyTarget = selfTriggers.stream()
                             .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                                     || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
@@ -2418,9 +2419,10 @@ public class TriggerCollectionService {
     public void checkCycleTriggers(GameData gameData, UUID cyclingPlayerId, Card cycledCard, int cyclingXValue,
                                    com.github.laxika.magicalvibes.model.ActivatedAbility targetingCyclingAbility,
                                    List<UUID> announcedTargetIds) {
-        List<CardEffect> selfEffects = LibraryAbilityReader.printedEffects(cycledCard, LibraryWatch.ON_SELF_CYCLED,
-                conditionEvaluationService.judge(gameData, ConditionContext.forCard(cycledCard, cyclingPlayerId)));
-        if (!selfEffects.isEmpty()) {
+        // Each "when you cycle this card" ability is one object of all its effects (CR 603.3).
+        for (List<CardEffect> selfEffects : LibraryAbilityReader.printedEffectsByAbility(cycledCard,
+                LibraryWatch.ON_SELF_CYCLED,
+                conditionEvaluationService.judge(gameData, ConditionContext.forCard(cycledCard, cyclingPlayerId)))) {
             List<UUID> announcedTargets = announcedTargetIds != null ? announcedTargetIds : List.of();
             boolean chooseOnTrigger = targetingCyclingAbility != null && announcedTargets.isEmpty()
                     && targetingCyclingAbility.isCyclingTriggerTargetsChosenOnTriggerIfOmitted();
@@ -2681,14 +2683,14 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : List.copyOf(graveyard)) {
-            for (CardEffect effect : ActionAbilityReader.printedEffects(card,
+            for (List<CardEffect> effects : ActionAbilityReader.printedEffectsByAbility(card,
                     ActionWatch.GRAVEYARD_ON_CONTROLLER_ROLLS_NATURAL_20)) {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
                         rollingPlayerId,
                         card.getName() + "'s ability",
-                        new ArrayList<>(List.of(effect))
+                        new ArrayList<>(effects)
                 ));
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
                 log.info("Game {} - {} graveyard ability triggers on a natural 20",
@@ -2752,15 +2754,16 @@ public class TriggerCollectionService {
 
         LibraryWatch graveyardWatch = LibraryWatch.GRAVEYARD_ON_CONTROLLER_SURVEILS;
         for (Card card : List.copyOf(graveyard)) {
-            for (CardEffect effect : LibraryAbilityReader.effects(WatchedAbilities.withWatchedTrigger(
+            for (List<CardEffect> effects : byAbility(WatchedAbilities.withWatchedTrigger(
                     gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card),
-                    graveyardWatch.trigger(), graveyardWatch.zone()), graveyardWatch.trigger())) {
+                    graveyardWatch.trigger(), graveyardWatch.zone()),
+                    abilities -> LibraryAbilityReader.effects(abilities, graveyardWatch.trigger()))) {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
                         surveilingPlayerId,
                         card.getName() + "'s ability",
-                        new ArrayList<>(List.of(effect))
+                        new ArrayList<>(effects)
                 ));
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
                 log.info("Game {} - {} graveyard ability triggers on surveil",
@@ -2824,14 +2827,14 @@ public class TriggerCollectionService {
         }
 
         for (Card card : List.copyOf(graveyard)) {
-            for (CardEffect effect : ActionAbilityReader.printedEffects(card,
+            for (List<CardEffect> effects : ActionAbilityReader.printedEffectsByAbility(card,
                     ActionWatch.GRAVEYARD_ON_CONTROLLER_COMPLETES_DUNGEON)) {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
                         completingPlayerId,
                         card.getName() + "'s ability",
-                        new ArrayList<>(List.of(effect))
+                        new ArrayList<>(effects)
                 );
                 entry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                 gameData.enqueueTrigger(entry);
@@ -2871,14 +2874,14 @@ public class TriggerCollectionService {
             return;
         }
         for (Card card : List.copyOf(graveyard)) {
-            for (CardEffect effect : graveyardActionEffects(gameData, card,
+            for (List<CardEffect> effects : graveyardActionAbilities(gameData, card,
                     ActionWatch.GRAVEYARD_ON_CONTROLLER_CONJURES)) {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
                         conjuringPlayerId,
                         card.getName() + "'s ability",
-                        new ArrayList<>(List.of(effect))
+                        new ArrayList<>(effects)
                 ));
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
                 log.info("Game {} - {} graveyard ability triggers on conjure",
@@ -3276,25 +3279,25 @@ public class TriggerCollectionService {
 
     /**
      * The effects of the abilities {@code watch} reads of {@code card} in a graveyard, its own and its perpetual ones,
-     * or none while cards in graveyards have lost all abilities. No graveyard damage ability is written with a filter,
-     * limit or multiplicity, and this throws on one.
+     * one list for each ability (one object on the stack, CR 603.3), or none while cards in graveyards have lost all
+     * abilities. No graveyard damage ability is written with a filter, limit or multiplicity, and this throws on one.
      */
-    private List<CardEffect> graveyardDamageEffects(GameData gameData, Card card, DamageWatch watch) {
-        return DamageAbilityReader.effects(WatchedAbilities.withWatchedTrigger(
+    private List<List<CardEffect>> graveyardDamageAbilities(GameData gameData, Card card, DamageWatch watch) {
+        return byAbility(WatchedAbilities.withWatchedTrigger(
                 gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card), watch.trigger(),
-                watch.zone()), watch.trigger());
+                watch.zone()), abilities -> DamageAbilityReader.effects(abilities, watch.trigger()));
     }
 
     /**
      * The effects of the abilities {@code watch} reads of {@code card} in a graveyard, its own and its perpetual ones,
-     * or none while cards in graveyards have lost all abilities, each in its intervening "if" (Moss-Pit Skeleton,
-     * Ichor Aberration). No graveyard counter ability is written with a filter, narrower event, limit or
-     * multiplicity, and this throws on one.
+     * one list for each ability (one object on the stack, CR 603.3), or none while cards in graveyards have lost all
+     * abilities, each in its intervening "if" (Moss-Pit Skeleton, Ichor Aberration). No graveyard counter ability is
+     * written with a filter, narrower event, limit or multiplicity, and this throws on one.
      */
-    private List<CardEffect> graveyardCounterEffects(GameData gameData, Card card, CounterWatch watch) {
-        return CounterAbilityReader.effects(WatchedAbilities.withWatchedTrigger(
+    private List<List<CardEffect>> graveyardCounterAbilities(GameData gameData, Card card, CounterWatch watch) {
+        return byAbility(WatchedAbilities.withWatchedTrigger(
                 gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card), watch.trigger(),
-                watch.zone()), watch.trigger());
+                watch.zone()), abilities -> CounterAbilityReader.effects(abilities, watch.trigger()));
     }
 
     /**
@@ -4723,24 +4726,25 @@ public class TriggerCollectionService {
      */
     public void checkSelfTappedForManaTriggers(GameData gameData, Permanent tappedPermanent, UUID controllerId) {
         Trigger watched = TapWatch.ON_SELF_TAPPED_FOR_MANA.trigger();
-        List<CardEffect> effects = new ArrayList<>(
-                TapAbilityReader.printedEffects(tappedPermanent.getCard(), TapWatch.ON_SELF_TAPPED_FOR_MANA));
-        effects.addAll(TapAbilityReader.effects(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
-                gameData, tappedPermanent, watched), watched));
-        if (effects.isEmpty()) return;
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                tappedPermanent.getCard(),
-                controllerId,
-                tappedPermanent.getCard().getName() + "'s ability",
-                new ArrayList<>(effects),
-                null,
-                tappedPermanent.getId());
-        entry.setTriggeringPermanentId(tappedPermanent.getId());
-        gameData.enqueueTrigger(entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(tappedPermanent.getCard()));
-        log.info("Game {} - {} triggers on being tapped for mana", gameData.id, tappedPermanent.getCard().getName());
+        List<TriggeredAbility> abilities = new ArrayList<>(
+                TapAbilityReader.printed(tappedPermanent.getCard(), TapWatch.ON_SELF_TAPPED_FOR_MANA));
+        abilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, tappedPermanent, watched));
+        // Each printed or granted ability is one object of all its effects (CR 603.3).
+        for (List<CardEffect> effects : byAbility(abilities, ability -> TapAbilityReader.effects(ability, watched))) {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    tappedPermanent.getCard(),
+                    controllerId,
+                    tappedPermanent.getCard().getName() + "'s ability",
+                    new ArrayList<>(effects),
+                    null,
+                    tappedPermanent.getId());
+            entry.setTriggeringPermanentId(tappedPermanent.getId());
+            gameData.enqueueTrigger(entry);
+            gameLogService.append(gameData, GameLog.abilityTriggers(tappedPermanent.getCard()));
+            log.info("Game {} - {} triggers on being tapped for mana", gameData.id,
+                    tappedPermanent.getCard().getName());
+        }
     }
 
     /**
@@ -9415,16 +9419,17 @@ public class TriggerCollectionService {
         Trigger allyWatched = TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED.trigger();
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(controllerId)) return;
-            List<TapAbilityReader.TapEffect> printed = TapAbilityReader.readPrinted(
-                    LayerSystemService.currentCard(gameData, perm), TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED);
-            List<TapAbilityReader.TapEffect> reads = printed.isEmpty()
-                    || gameQueryService.hasLostPrintedAbilities(gameData, perm)
+            List<List<TapAbilityReader.TapEffect>> abilities = gameQueryService.hasLostPrintedAbilities(gameData, perm)
                     ? new ArrayList<>()
-                    : new ArrayList<>(printed);
-            reads.addAll(TapAbilityReader.readGrantedToPermanent(perm, allyWatched));
-            reads.addAll(TapAbilityReader.read(
+                    : new ArrayList<>(TapAbilityReader.readByAbility(TapAbilityReader.printed(
+                            LayerSystemService.currentCard(gameData, perm), TapWatch.ON_ALLY_PERMANENT_BECOMES_TAPPED),
+                            allyWatched));
+            abilities.addAll(TapAbilityReader.readGrantedToPermanentByAbility(perm, allyWatched));
+            abilities.addAll(TapAbilityReader.readByAbility(
                     grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, allyWatched), allyWatched));
-            for (TapAbilityReader.TapEffect read : reads) {
+            // Each ability is one object of all its effects (CR 603.3).
+            for (List<TapAbilityReader.TapEffect> reads : abilities) {
+                TapAbilityReader.TapEffect read = reads.getFirst();
                 if (shouldSkipBatchedTapTrigger(gameData, perm, read)) continue;
                 if (!tappedPermanentMatches(gameData, perm, ownerId, tappedPermanent, read)) continue;
                 // "For the first time during each of your turns": the creature's first tap this turn, during its
@@ -9433,9 +9438,10 @@ public class TriggerCollectionService {
                     continue;
                 }
                 if (read.limitReached(gameData, perm.getId())) continue;
-                CardEffect resolved = read.effect();
+                List<CardEffect> effects = new ArrayList<>(TapAbilityReader.effectsOf(reads));
                 // A modal ability's mode is chosen as it goes on the stack (CR 603.3c).
-                ChooseOneEffect triggerTimeModal = TriggeredModalEffect.choiceMadeAsTriggered(resolved);
+                ChooseOneEffect triggerTimeModal = effects.size() == 1
+                        ? TriggeredModalEffect.choiceMadeAsTriggered(effects.getFirst()) : null;
                 if (triggerTimeModal != null) {
                     gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                             perm.getCard(), ownerId, triggerTimeModal, perm.getId(),
@@ -9446,9 +9452,10 @@ public class TriggerCollectionService {
                     markTapTriggered(gameData, perm, read);
                     continue;
                 }
-                if (resolved.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                if (effects.stream()
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
                     gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                            perm.getCard(), ownerId, new ArrayList<>(List.of(resolved))));
+                            perm.getCard(), ownerId, effects));
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} triggers on ally permanent tap (awaiting graveyard target)",
                             gameData.id, perm.getCard().getName());
@@ -9463,11 +9470,10 @@ public class TriggerCollectionService {
                 // "you may pay" wrapper (Surgespanner). Bake the tapped permanent's controller only
                 // when damage needs TRIGGERING_PERMANENT_CONTROLLER (Royal Decree).
                 // triggeringPermanentId always carries "it" (Freyalise's Winds).
-                if ((resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        || resolved.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
+                if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
                     gameData.queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                            perm.getCard(), ownerId, new ArrayList<>(List.of(resolved)), perm.getId(),
-                            tappedPermanent.getId()));
+                            perm.getCard(), ownerId, effects, perm.getId(), tappedPermanent.getId()));
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} triggers on ally permanent tap ({}, awaiting target)",
                             gameData.id, perm.getCard().getName(), tappedPermanent.getCard().getName());
@@ -9479,7 +9485,7 @@ public class TriggerCollectionService {
                         perm.getCard(),
                         ownerId,
                         perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(resolved)),
+                        effects,
                         null,
                         perm.getId()
                 );
@@ -9495,20 +9501,24 @@ public class TriggerCollectionService {
         // "Whenever a permanent an opponent controls becomes tapped" triggers (e.g. Thoughtleech).
         gameData.forEachPermanent((ownerId, perm) -> {
             if (ownerId.equals(controllerId)) return;
-            for (TapAbilityReader.TapEffect read
-                    : TapAbilityReader.readPrinted(perm.getCard(), TapWatch.ON_OPPONENT_PERMANENT_BECOMES_TAPPED)) {
-                if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) break;
+            if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
+            // Each ability is one object of all its effects (CR 603.3).
+            for (List<TapAbilityReader.TapEffect> reads : TapAbilityReader.readByAbility(TapAbilityReader.printed(
+                    perm.getCard(), TapWatch.ON_OPPONENT_PERMANENT_BECOMES_TAPPED),
+                    TapWatch.ON_OPPONENT_PERMANENT_BECOMES_TAPPED.trigger())) {
+                TapAbilityReader.TapEffect read = reads.getFirst();
                 if (shouldSkipBatchedTapTrigger(gameData, perm, read)) continue;
                 if (!tappedPermanentMatches(gameData, perm, ownerId, tappedPermanent, read)) continue;
                 if (read.limitReached(gameData, perm.getId())) continue;
-                CardEffect resolved = read.effect();
                 if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
                         ConditionContext.forPermanent(perm, ownerId))) {
                     continue;
                 }
-                if (resolved.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                List<CardEffect> effects = new ArrayList<>(TapAbilityReader.effectsOf(reads));
+                if (effects.stream()
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
                     gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                            perm.getCard(), ownerId, new ArrayList<>(List.of(resolved))));
+                            perm.getCard(), ownerId, effects));
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} triggers on opponent permanent tap (awaiting graveyard target)",
                             gameData.id, perm.getCard().getName());
@@ -9520,7 +9530,7 @@ public class TriggerCollectionService {
                         perm.getCard(),
                         ownerId,
                         perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(resolved)),
+                        effects,
                         null,
                         perm.getId()
                 );
@@ -9548,33 +9558,36 @@ public class TriggerCollectionService {
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(tappingPlayerId)) return;
             if (gameQueryService.hasLostAllAbilities(gameData, perm)) return;
-            List<TapAbilityReader.TapEffect> reads = new ArrayList<>(
-                    TapAbilityReader.readPrinted(perm.getCard(), TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT));
-            reads.addAll(TapAbilityReader.readGrantedToPermanent(perm, youTapWatched));
-            reads.addAll(TapAbilityReader.read(
+            List<List<TapAbilityReader.TapEffect>> abilities = new ArrayList<>(TapAbilityReader.readByAbility(
+                    TapAbilityReader.printed(perm.getCard(), TapWatch.ON_CONTROLLER_TAPS_OPPONENT_PERMANENT),
+                    youTapWatched));
+            abilities.addAll(TapAbilityReader.readGrantedToPermanentByAbility(perm, youTapWatched));
+            abilities.addAll(TapAbilityReader.readByAbility(
                     grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, youTapWatched),
                     youTapWatched));
-            for (TapAbilityReader.TapEffect read : reads) {
+            // Each ability is one object of all its effects (CR 603.3).
+            for (List<TapAbilityReader.TapEffect> reads : abilities) {
+                TapAbilityReader.TapEffect read = reads.getFirst();
                 if (shouldSkipBatchedTapTrigger(gameData, perm, read)) continue;
                 if (!tappedPermanentMatches(gameData, perm, ownerId, tappedPermanent, read)) continue;
                 if (read.limitReached(gameData, perm.getId())) continue;
-                CardEffect resolved = read.effect();
                 if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
                         ConditionContext.forPermanent(perm, ownerId))) {
                     continue;
                 }
-                if (resolved.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                List<CardEffect> effects = new ArrayList<>(TapAbilityReader.effectsOf(reads));
+                if (effects.stream()
+                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
                     gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                            perm.getCard(), ownerId, new ArrayList<>(List.of(resolved))));
+                            perm.getCard(), ownerId, effects));
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     markTapTriggered(gameData, perm, read);
                     continue;
                 }
-                if (resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        && !(resolved instanceof MayPayManaEffect)) {
+                if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        && !(effect instanceof MayPayManaEffect))) {
                     gameData.queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                            perm.getCard(), ownerId, new ArrayList<>(List.of(resolved)), perm.getId(),
-                            tappedPermanent.getId()));
+                            perm.getCard(), ownerId, effects, perm.getId(), tappedPermanent.getId()));
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     markTapTriggered(gameData, perm, read);
                     continue;
@@ -9584,7 +9597,7 @@ public class TriggerCollectionService {
                         perm.getCard(),
                         ownerId,
                         perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(resolved)),
+                        effects,
                         null,
                         perm.getId()
                 );
@@ -9699,17 +9712,18 @@ public class TriggerCollectionService {
         if (controllerId == null) {
             return;
         }
-        for (CardEffect effect : MiscAbilityReader.printedEffects(crewingCreature.getCard(),
+        if (gameQueryService.hasLostPrintedAbilities(gameData, crewingCreature)) {
+            return;
+        }
+        // Each ability is one object of all its effects (CR 603.3).
+        for (List<CardEffect> effects : MiscAbilityReader.printedEffectsByAbility(crewingCreature.getCard(),
                 MiscWatch.ON_CREWS_VEHICLE)) {
-            if (gameQueryService.hasLostPrintedAbilities(gameData, crewingCreature)) {
-                continue;
-            }
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     crewingCreature.getCard(),
                     controllerId,
                     crewingCreature.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
+                    new ArrayList<>(effects),
                     null,
                     crewingCreature.getId()
             );
@@ -9750,22 +9764,23 @@ public class TriggerCollectionService {
             return;
         }
         Trigger watched = TapWatch.ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST.trigger();
-        List<CardEffect> effects = new ArrayList<>(
-                TapAbilityReader.printedEffects(tappedCreature.getCard(), TapWatch.ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST));
-        effects.addAll(TapAbilityReader.effects(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
-                gameData, tappedCreature, watched), watched));
-        if (effects.isEmpty()) {
+        List<TriggeredAbility> abilities = new ArrayList<>(
+                TapAbilityReader.printed(tappedCreature.getCard(), TapWatch.ON_SELF_TAPPED_TO_PAY_TEAMWORK_COST));
+        abilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, tappedCreature, watched));
+        List<List<CardEffect>> byAbility = byAbility(abilities, ability -> TapAbilityReader.effects(ability, watched));
+        if (byAbility.isEmpty()) {
             return;
         }
         int triggerCopies = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
                 gameData, controllerId, tappedCreature);
-        for (CardEffect effect : effects) {
+        // Each printed or granted ability is one object of all its effects (CR 603.3).
+        for (List<CardEffect> effects : byAbility) {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     tappedCreature.getCard(),
                     controllerId,
                     tappedCreature.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
+                    new ArrayList<>(effects),
                     null,
                     tappedCreature.getId());
             entry.setNonTargeting(true);
@@ -9864,17 +9879,20 @@ public class TriggerCollectionService {
         UUID untappedControllerId = controllerId;
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(untappedControllerId)) return;
-            for (TapAbilityReader.TapEffect read : TapAbilityReader.readPrinted(perm.getCard(),
+            Trigger allyUntap = TapWatch.ON_ALLY_PERMANENT_BECOMES_UNTAPPED.trigger();
+            // Each ability is one object of all its effects (CR 603.3).
+            for (TriggeredAbility ability : TapAbilityReader.printed(perm.getCard(),
                     TapWatch.ON_ALLY_PERMANENT_BECOMES_UNTAPPED)) {
-                TapAbilityReader.requireNoLimit(read, TapWatch.ON_ALLY_PERMANENT_BECOMES_UNTAPPED.trigger());
+                List<TapAbilityReader.TapEffect> reads = TapAbilityReader.read(ability, allyUntap);
+                TapAbilityReader.TapEffect read = reads.getFirst();
+                TapAbilityReader.requireNoLimit(read, allyUntap);
                 if (!tappedPermanentMatches(gameData, perm, ownerId, untappedPermanent, read)) continue;
-                CardEffect resolved = read.effect();
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         ownerId,
                         perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(resolved)),
+                        new ArrayList<>(TapAbilityReader.effectsOf(reads)),
                         null,
                         perm.getId()
                 ));
@@ -9886,17 +9904,20 @@ public class TriggerCollectionService {
 
         gameData.forEachPermanent((ownerId, perm) -> {
             if (perm.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
-            for (TapAbilityReader.TapEffect read : TapAbilityReader.readPrinted(perm.getCard(),
+            // Each ability is one object of all its effects (CR 603.3), its limit marked once.
+            for (TriggeredAbility ability : TapAbilityReader.printed(perm.getCard(),
                     TapWatch.ON_ANY_PERMANENT_BECOMES_UNTAPPED)) {
+                List<TapAbilityReader.TapEffect> reads = TapAbilityReader.read(ability,
+                        TapWatch.ON_ANY_PERMANENT_BECOMES_UNTAPPED.trigger());
+                TapAbilityReader.TapEffect read = reads.getFirst();
                 if (!tappedPermanentMatches(gameData, perm, ownerId, untappedPermanent, read)) continue;
                 if (read.limitReached(gameData, perm.getId())) continue;
-                CardEffect resolved = read.effect();
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
                         ownerId,
                         perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(resolved)),
+                        new ArrayList<>(TapAbilityReader.effectsOf(reads)),
                         null,
                         perm.getId()
                 );
@@ -9939,14 +9960,15 @@ public class TriggerCollectionService {
      * @param controllerId     the player controlling it
      */
     public void checkBecomesRenownedTriggers(GameData gameData, Permanent renownedCreature, UUID controllerId) {
-        for (CardEffect effect : CounterAbilityReader.printedEffects(renownedCreature.getCard(),
+        // Each ability is one object of all its effects (CR 603.3).
+        for (List<CardEffect> effects : CounterAbilityReader.printedEffectsByAbility(renownedCreature.getCard(),
                 CounterWatch.ON_SELF_BECOMES_RENOWNED)) {
             gameData.enqueueTrigger(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     renownedCreature.getCard(),
                     controllerId,
                     renownedCreature.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
+                    new ArrayList<>(effects),
                     null,
                     renownedCreature.getId()
             ));
@@ -9956,12 +9978,12 @@ public class TriggerCollectionService {
 
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!ownerId.equals(controllerId)) return;
-            for (CounterAbilityReader.CounterEffect read : CounterAbilityReader.readPrinted(perm.getCard(),
-                    CounterWatch.ON_ALLY_CREATURE_BECOMES_RENOWNED)) {
+            for (List<CounterAbilityReader.CounterEffect> reads : CounterAbilityReader.readPrintedByAbility(
+                    perm.getCard(), CounterWatch.ON_ALLY_CREATURE_BECOMES_RENOWNED)) {
+                CounterAbilityReader.CounterEffect read = reads.getFirst();
                 if (read.limit() != TriggerLimit.NONE) {
                     throw new IllegalStateException("The renowned collector judges no limit: " + read.ability());
                 }
-                CardEffect resolved = read.effect();
                 if (read.filter() != null) {
                     FilterContext filterContext = FilterContext.of(gameData)
                             .withSourceCardId(perm.getOriginalCard().getId())
@@ -9975,7 +9997,7 @@ public class TriggerCollectionService {
                         perm.getCard(),
                         ownerId,
                         perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(resolved)),
+                        new ArrayList<>(CounterAbilityReader.effectsOf(reads)),
                         null,
                         perm.getId()
                 ));
@@ -9993,12 +10015,17 @@ public class TriggerCollectionService {
             ActionWatch watch = controllerBecameMonarch
                     ? ActionWatch.ON_CONTROLLER_BECOMES_MONARCH
                     : ActionWatch.ON_OPPONENT_BECOMES_MONARCH;
-            for (CardEffect effect : ActionAbilityReader.printedEffects(permanent.getCard(), watch,
-                    conditionEvaluationService.judge(gameData, ConditionContext.forPermanent(permanent, ownerId)))) {
-
-                List<CardEffect> effects = new ArrayList<>(List.of(effect));
-                if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                        || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+            // Each ability is one object of all its effects (CR 603.3); a targeted one goes to its target choice whole.
+            for (List<CardEffect> abilityEffects : byAbility(conditionEvaluationService.judge(gameData,
+                            ConditionContext.forPermanent(permanent, ownerId))
+                    .filter(ActionAbilityReader.printed(permanent.getCard(), watch)),
+                    abilities -> ActionAbilityReader.effects(abilities, watch.trigger()))) {
+                List<CardEffect> effects = new ArrayList<>(abilityEffects);
+                CardEffect effect = effects.stream()
+                        .filter(candidate -> candidate.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                                || candidate.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                        .findFirst().orElse(null);
+                if (effect != null) {
                     int targetGroupIndex = permanent.getCard().getEffectTargetIndex(effect);
                     TargetFilter targetFilter = targetGroupIndex >= 0
                             && targetGroupIndex < permanent.getCard().getTargetGroups().size()
@@ -10041,14 +10068,15 @@ public class TriggerCollectionService {
     public void checkAllyCaseSolvesTriggers(GameData gameData, Permanent solvedCase, UUID controllerId) {
         gameData.forEachPermanent((ownerId, permanent) -> {
             if (!ownerId.equals(controllerId)) return;
-            for (CardEffect effect : ActionAbilityReader.printedEffects(permanent.getCard(),
+            // Each ability is one object of all its effects (CR 603.3).
+            for (List<CardEffect> effects : ActionAbilityReader.printedEffectsByAbility(permanent.getCard(),
                     ActionWatch.ON_ALLY_CASE_SOLVES)) {
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         permanent.getCard(),
                         controllerId,
                         permanent.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)),
+                        new ArrayList<>(effects),
                         null,
                         permanent.getId()
                 );
@@ -10389,21 +10417,21 @@ public class TriggerCollectionService {
         if (watcher == null || watcher.isLosesAllAbilitiesUntilEndOfTurn()) return;
 
         MiscWatch watch = MiscWatch.ON_SELF_SADDLES_OR_CREWS_DURING_MAIN_PHASE;
-        List<CardEffect> effects = new ArrayList<>(MiscAbilityReader.printedEffects(watcher.getCard(), watch));
-        effects.addAll(MiscAbilityReader.effects(
-                grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, watcher, watch.trigger()),
-                watch.trigger()));
-        if (effects.isEmpty()) return;
+        List<TriggeredAbility> abilities = new ArrayList<>(MiscAbilityReader.printed(watcher.getCard(), watch));
+        abilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, watcher, watch.trigger()));
+        List<List<CardEffect>> byAbility = MiscAbilityReader.effectsByAbility(abilities, watch.trigger());
+        if (byAbility.isEmpty()) return;
 
         int triggerCopies = 1 +
                 gameQueryService.countAdditionalTriggeredAbilityTriggers(gameData, activatingPlayerId, watcher);
-        for (CardEffect effect : effects) {
+        // Each printed or granted ability is one object of all its effects (CR 603.3).
+        for (List<CardEffect> effects : byAbility) {
             StackEntry trigger = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     watcher.getCard(),
                     activatingPlayerId,
                     watcher.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
+                    new ArrayList<>(effects),
                     null,
                     watcher.getId());
             trigger.setNonTargeting(true);
@@ -11454,18 +11482,18 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            List<CardEffect> effects = graveyardCounterEffects(gameData, card,
+            List<List<CardEffect>> abilities = graveyardCounterAbilities(gameData, card,
                     CounterWatch.GRAVEYARD_ON_CONTROLLER_PROLIFERATES);
-            if (effects.isEmpty()) continue;
+            if (abilities.isEmpty()) continue;
 
             for (int i = 0; i < proliferateCount; i++) {
-                for (CardEffect effect : effects) {
+                for (List<CardEffect> effects : abilities) {
                     StackEntry entry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,
                             proliferatingPlayerId,
                             card.getName() + "'s ability",
-                            new ArrayList<>(List.of(effect))
+                            new ArrayList<>(effects)
                     );
                     entry.setTriggeringCardId(card.getId());
                     entry.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
@@ -11487,14 +11515,14 @@ public class TriggerCollectionService {
 
             LifeWatch watch = LifeWatch.GRAVEYARD_ON_OPPONENT_GAINS_LIFE;
             for (Card card : new ArrayList<>(graveyard)) {
-                for (CardEffect effect : LifeAbilityReader.effects(graveyardLifeAbilities(gameData, card, watch),
-                        watch.trigger())) {
+                for (List<CardEffect> effects : byAbility(graveyardLifeAbilities(gameData, card, watch),
+                        abilities -> LifeAbilityReader.effects(abilities, watch.trigger()))) {
                     gameData.enqueueTrigger(new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             card,
                             playerId,
                             card.getName() + "'s ability",
-                            new ArrayList<>(List.of(effect))
+                            new ArrayList<>(effects)
                     ));
                     gameLogService.append(gameData, GameLog.abilityTriggers(card));
                     log.info("Game {} - {} triggers from the graveyard when an opponent gains life",
@@ -11562,16 +11590,14 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            List<CardEffect> effects = graveyardDamageEffects(gameData, card, DamageWatch.GRAVEYARD_ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT);
-            if (effects == null || effects.isEmpty()) continue;
-
-            for (CardEffect effect : effects) {
+            for (List<CardEffect> effects : graveyardDamageAbilities(gameData, card,
+                    DamageWatch.GRAVEYARD_ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
                         sourceControllerId,
                         card.getName() + "'s ability",
-                        new ArrayList<>(List.of(effect))
+                        new ArrayList<>(effects)
                 ));
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
             }
@@ -11618,17 +11644,14 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            List<CardEffect> effects =
-                    graveyardDamageEffects(gameData, card, DamageWatch.GRAVEYARD_ON_OPPONENT_DAMAGED_BY_RED_SPELL_OR_PLANESWALKER);
-            if (effects == null || effects.isEmpty()) continue;
-
-            for (CardEffect effect : effects) {
+            for (List<CardEffect> effects : graveyardDamageAbilities(gameData, card,
+                    DamageWatch.GRAVEYARD_ON_OPPONENT_DAMAGED_BY_RED_SPELL_OR_PLANESWALKER)) {
                 gameData.stack.add(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
                         controllerId,
                         card.getName() + "'s ability",
-                        new ArrayList<>(List.of(effect))
+                        new ArrayList<>(effects)
                 ));
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
             }
@@ -11693,16 +11716,14 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            List<CardEffect> effects = graveyardDamageEffects(gameData, card, DamageWatch.GRAVEYARD_ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT_OR_BATTLE);
-            if (effects == null || effects.isEmpty()) continue;
-
-            for (CardEffect effect : effects) {
+            for (List<CardEffect> effects : graveyardDamageAbilities(gameData, card,
+                    DamageWatch.GRAVEYARD_ON_ALLY_INSTANT_OR_SORCERY_DEALS_DAMAGE_TO_OPPONENT_OR_BATTLE)) {
                 gameData.enqueueTrigger(new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
                         sourceControllerId,
                         card.getName() + "'s ability",
-                        new ArrayList<>(List.of(effect))
+                        new ArrayList<>(effects)
                 ));
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
             }
@@ -11802,8 +11823,10 @@ public class TriggerCollectionService {
 
         LifeWatch watch = LifeWatch.GRAVEYARD_ON_CONTROLLER_GAINS_LIFE;
         for (Card card : new ArrayList<>(graveyard)) {
-            for (LifeAbilityReader.LifeEffect read : LifeAbilityReader.read(graveyardLifeAbilities(gameData, card,
-                    watch), watch.trigger())) {
+            // Each ability is one object of all its effects (CR 603.3).
+            for (TriggeredAbility ability : graveyardLifeAbilities(gameData, card, watch)) {
+                List<LifeAbilityReader.LifeEffect> reads = LifeAbilityReader.read(ability, watch.trigger());
+                LifeAbilityReader.LifeEffect read = reads.getFirst();
                 LifeAbilityReader.requireNoLimit(read, watch.trigger());
                 if (read.firstTimeEachTurn()
                         && gameData.getLifeGainedThisTurn(gainingPlayerId) != lifeGainedAmount) {
@@ -11815,7 +11838,7 @@ public class TriggerCollectionService {
                         card,
                         gainingPlayerId,
                         card.getName() + "'s ability",
-                        new ArrayList<>(List.of(read.effect()))
+                        new ArrayList<>(LifeAbilityReader.effectsOf(reads))
                 ));
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
                 log.info("Game {} - {} triggers from the graveyard when its controller gains life",
@@ -11826,24 +11849,24 @@ public class TriggerCollectionService {
 
     /**
      * The effects of the abilities the graveyard action watch {@code watch} reads of {@code card} in a graveyard, its
-     * own and those perpetually granted to it, or none while cards in graveyards have lost all abilities; its
-     * collectors judge no filter or limit.
+     * own and those perpetually granted to it, one list for each ability (one object on the stack, CR 603.3), or none
+     * while cards in graveyards have lost all abilities; its collectors judge no filter or limit.
      */
-    private List<CardEffect> graveyardActionEffects(GameData gameData, Card card, ActionWatch watch) {
-        return ActionAbilityReader.effects(WatchedAbilities.withWatchedTrigger(
+    private List<List<CardEffect>> graveyardActionAbilities(GameData gameData, Card card, ActionWatch watch) {
+        return byAbility(WatchedAbilities.withWatchedTrigger(
                 gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card), watch.trigger(),
-                watch.zone()), watch.trigger());
+                watch.zone()), abilities -> ActionAbilityReader.effects(abilities, watch.trigger()));
     }
 
     /**
      * The effects of the abilities the graveyard misc watch {@code watch} reads of {@code card} in a graveyard, its own
-     * and those perpetually granted to it, or none while cards in graveyards have lost all abilities; its collectors
-     * judge no door, first time or limit.
+     * and those perpetually granted to it, one list for each ability (one object on the stack, CR 603.3), or none
+     * while cards in graveyards have lost all abilities; its collectors judge no door, first time or limit.
      */
-    private List<CardEffect> graveyardMiscEffects(GameData gameData, Card card, MiscWatch watch) {
-        return MiscAbilityReader.effects(WatchedAbilities.withWatchedTrigger(
+    private List<List<CardEffect>> graveyardMiscAbilities(GameData gameData, Card card, MiscWatch watch) {
+        return byAbility(WatchedAbilities.withWatchedTrigger(
                 gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card), watch.trigger(),
-                watch.zone()), watch.trigger());
+                watch.zone()), abilities -> MiscAbilityReader.effects(abilities, watch.trigger()));
     }
 
     /**
@@ -11984,9 +12007,15 @@ public class TriggerCollectionService {
      * (e.g. it sacrificed itself).
      */
     public void checkExploitTriggers(GameData gameData, Card sourceCard, UUID controllerId, UUID sourcePermanentId) {
-        List<CardEffect> effects = ActionAbilityReader.printedEffects(sourceCard, ActionWatch.ON_EXPLOIT);
-        if (effects.isEmpty()) return;
+        // Each "when this exploits a creature" ability is one object of all its effects (CR 603.3).
+        for (List<CardEffect> effects : ActionAbilityReader.printedEffectsByAbility(sourceCard,
+                ActionWatch.ON_EXPLOIT)) {
+            queueExploitAbility(gameData, sourceCard, controllerId, sourcePermanentId, effects);
+        }
+    }
 
+    private void queueExploitAbility(GameData gameData, Card sourceCard, UUID controllerId, UUID sourcePermanentId,
+                                     List<CardEffect> effects) {
         StackEntry originalEntry = gameData.pendingEffectResolutionEntry;
 
         boolean targetsStack = effects.stream().anyMatch(EffectResolution::targetsSpellOnStack);
@@ -12233,31 +12262,33 @@ public class TriggerCollectionService {
             if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
             TriggerJudge judge = conditionEvaluationService.judge(gameData,
                     ConditionContext.forPermanent(perm, clashingPlayerId), outcome);
-            List<CardEffect> effects = ActionAbilityReader.printedEffects(perm.getCard(),
-                    ActionWatch.ON_CONTROLLER_CLASHES, judge);
-            if (effects.isEmpty()) continue;
-
-            // Targeting clash triggers (Entangling Trap) route through the ClashTriggerTarget
-            // interaction to pick an opponent's creature; non-targeting ones (Rebellion of the
-            // Flamekin) go straight onto the stack as a triggered ability.
-            boolean needsTarget = effects.stream()
-                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-            if (needsTarget) {
-                gameData.queueInteraction(new PermanentChoiceContext.ClashTriggerTarget(
-                        perm.getCard(), clashingPlayerId, effects, perm.getId(), outcome));
-                log.info("Game {} - {} clash trigger queued", gameData.id, perm.getCard().getName());
-            } else {
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        clashingPlayerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(effects),
-                        null,
-                        perm.getId());
-                entry.setEventValue(outcome);
-                gameData.stack.add(entry);
-                log.info("Game {} - {} clash trigger pushed to stack", gameData.id, perm.getCard().getName());
+            // Each ability is one object of all its effects (CR 603.3).
+            for (List<CardEffect> effects : byAbility(judge.filter(ActionAbilityReader.printed(perm.getCard(),
+                    ActionWatch.ON_CONTROLLER_CLASHES)), abilities -> ActionAbilityReader.effects(abilities,
+                    ActionWatch.ON_CONTROLLER_CLASHES.trigger()))) {
+                // Targeting clash triggers (Entangling Trap) route through the ClashTriggerTarget
+                // interaction to pick an opponent's creature; non-targeting ones (Rebellion of the
+                // Flamekin) go straight onto the stack as a triggered ability.
+                boolean needsTarget = effects.stream()
+                        .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                if (needsTarget) {
+                    gameData.queueInteraction(new PermanentChoiceContext.ClashTriggerTarget(
+                            perm.getCard(), clashingPlayerId, effects, perm.getId(), outcome));
+                    log.info("Game {} - {} clash trigger queued", gameData.id, perm.getCard().getName());
+                } else {
+                    StackEntry entry = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            clashingPlayerId,
+                            perm.getCard().getName() + "'s ability",
+                            new ArrayList<>(effects),
+                            null,
+                            perm.getId());
+                    entry.setEventValue(outcome);
+                    gameData.stack.add(entry);
+                    log.info("Game {} - {} clash trigger pushed to stack", gameData.id, perm.getCard().getName());
+                }
             }
         }
 
@@ -14101,13 +14132,14 @@ public class TriggerCollectionService {
         if (graveyard == null) return;
 
         for (Card card : new ArrayList<>(graveyard)) {
-            for (CardEffect effect : graveyardMiscEffects(gameData, card, MiscWatch.GRAVEYARD_ON_DAY_NIGHT_CHANGE)) {
+            for (List<CardEffect> effects : graveyardMiscAbilities(gameData, card,
+                    MiscWatch.GRAVEYARD_ON_DAY_NIGHT_CHANGE)) {
                 StackEntry triggerEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         card,
                         controllerId,
                         card.getName() + "'s ability",
-                        new ArrayList<>(List.of(effect))
+                        new ArrayList<>(effects)
                 );
                 // CR 400.7: the ability refers to this graveyard object, not a later one.
                 triggerEntry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
@@ -14948,14 +14980,15 @@ public class TriggerCollectionService {
         UUID controllerId = gameQueryService.findPermanentController(gameData, enchantedPermanentId);
         if (controllerId == null) return;
 
-        for (CardEffect effect : MiscAbilityReader.printedEffects(enchanted.getCard(),
+        // Each ability is one object of all its effects (CR 603.3).
+        for (List<CardEffect> effects : MiscAbilityReader.printedEffectsByAbility(enchanted.getCard(),
                 MiscWatch.ON_AURA_ATTACHED_TO_SELF)) {
             gameData.enqueueTrigger(new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     enchanted.getCard(),
                     controllerId,
                     enchanted.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(effect)),
+                    new ArrayList<>(effects),
                     null,
                     enchanted.getId()
             ));
@@ -14979,12 +15012,12 @@ public class TriggerCollectionService {
             if (alliedBattlefield != null) {
                 for (Permanent watcher : List.copyOf(alliedBattlefield)) {
                     if (gameQueryService.hasLostAllAbilities(gameData, watcher)) continue;
-                    for (CardEffect effect : MiscAbilityReader.printedEffects(watcher.getCard(),
+                    for (List<CardEffect> effects : MiscAbilityReader.printedEffectsByAbility(watcher.getCard(),
                             MiscWatch.ON_ALLY_AURA_ATTACHED_TO_ALLY_CREATURE)) {
                         StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                                 watcher.getCard(), auraControllerId,
                                 watcher.getCard().getName() + "'s ability",
-                                new ArrayList<>(List.of(effect)), null, watcher.getId());
+                                new ArrayList<>(effects), null, watcher.getId());
                         trigger.setNonTargeting(true);
                         gameData.enqueueTrigger(trigger);
                         gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
@@ -15001,11 +15034,11 @@ public class TriggerCollectionService {
         if (battlefield == null) return;
         for (Permanent watcher : List.copyOf(battlefield)) {
             if (gameQueryService.hasLostAllAbilities(gameData, watcher)) continue;
-            for (CardEffect effect : MiscAbilityReader.printedEffects(watcher.getCard(),
+            for (List<CardEffect> effects : MiscAbilityReader.printedEffectsByAbility(watcher.getCard(),
                     MiscWatch.ON_ALLY_AURA_ATTACHED_TO_OPPONENT_NONLAND_PERMANENT)) {
                 StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
                         watcher.getCard(), auraControllerId, watcher.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)), enchanted.getId(), aura.getId());
+                        new ArrayList<>(effects), enchanted.getId(), aura.getId());
                 trigger.setNonTargeting(true);
                 gameData.enqueueTrigger(trigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
@@ -15033,6 +15066,8 @@ public class TriggerCollectionService {
             // "This ability triggers only once each turn" (Inchblade Companion) is judged and marked by the ability.
             if (reads.getFirst().limitReached(gameData, equipment.getId())) continue;
             boolean triggered = false;
+            // The ability's effects but its as-attaches choices are one object on the stack (CR 603.3).
+            List<CardEffect> stackEffects = new ArrayList<>();
             for (MiscAbilityReader.MiscEffect read : reads) {
                 CardEffect effect = read.effect();
 
@@ -15069,10 +15104,13 @@ public class TriggerCollectionService {
                     continue;
                 }
 
-                if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+                stackEffects.add(effect);
+            }
+            if (!stackEffects.isEmpty()) {
+                if (stackEffects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                            equipment.getCard(), controllerId, new ArrayList<>(List.of(effect)),
+                            equipment.getCard(), controllerId, stackEffects,
                             equipment.getId(), equipment.getCard().getTargetFilter(), equipped.getId()));
                 } else {
                     StackEntry entry = new StackEntry(
@@ -15080,7 +15118,7 @@ public class TriggerCollectionService {
                             equipment.getCard(),
                             controllerId,
                             equipment.getCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(effect)),
+                            stackEffects,
                             null,
                             equipment.getId());
                     entry.setTriggeringPermanentId(equipped.getId());
@@ -17089,20 +17127,22 @@ public class TriggerCollectionService {
     }
 
     public void checkPlotTriggers(GameData gameData, UUID plottingPlayerId, Card plottedCard) {
-        List<CardEffect> effects = ActionAbilityReader.printedEffects(plottedCard, ActionWatch.ON_SELF_BECOMES_PLOTTED);
-        if (effects.isEmpty()) return;
-        boolean needsAnyTarget = effects.stream().anyMatch(effect ->
-                effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-        if (needsAnyTarget) {
-            gameData.queueInteraction(new PermanentChoiceContext.PlotTriggerAnyTarget(
-                    plottedCard, plottingPlayerId, new ArrayList<>(effects)));
-        } else {
-            gameData.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY, plottedCard,
-                    plottingPlayerId, plottedCard.getName() + "'s ability", new ArrayList<>(effects)));
+        // Each ability is one object of all its effects (CR 603.3).
+        for (List<CardEffect> effects : ActionAbilityReader.printedEffectsByAbility(plottedCard,
+                ActionWatch.ON_SELF_BECOMES_PLOTTED)) {
+            boolean needsAnyTarget = effects.stream().anyMatch(effect ->
+                    effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                            || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+            if (needsAnyTarget) {
+                gameData.queueInteraction(new PermanentChoiceContext.PlotTriggerAnyTarget(
+                        plottedCard, plottingPlayerId, new ArrayList<>(effects)));
+            } else {
+                gameData.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY, plottedCard,
+                        plottingPlayerId, plottedCard.getName() + "'s ability", new ArrayList<>(effects)));
+            }
+            gameLogService.append(gameData, GameLog.cardThen(plottedCard,
+                    " became plotted — its ability triggers!"));
         }
-        gameLogService.append(gameData, GameLog.cardThen(plottedCard,
-                " became plotted — its ability triggers!"));
     }
 
     public void processNextPlotTrigger(GameData gameData) {
