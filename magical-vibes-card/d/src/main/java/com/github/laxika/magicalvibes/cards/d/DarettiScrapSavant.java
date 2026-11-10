@@ -66,7 +66,7 @@ public class DarettiScrapSavant extends Card {
                                 Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, Triggers.ARTIFACT,
                                         ObjectRelation.YOU_OWN),
                                 new RegisterDelayedReturnDyingCreatureUnderControlEffect(
-                                        false, null, 0, null, null, false, true, false)),
+                                        false, null, 0, null, null, false, true)),
                         EMBLEM_TEXT)),
                 "−10: You get an emblem with \"" + EMBLEM_TEXT + "\""
         ));

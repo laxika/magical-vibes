@@ -38,6 +38,7 @@ import com.github.laxika.magicalvibes.model.condition.AnOpponentIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtOrBelowHalfStartingLife;
 import com.github.laxika.magicalvibes.model.condition.AnotherCreatureDiedThisTurn;
+import com.github.laxika.magicalvibes.model.condition.AnotherCreatureOnBattlefield;
 import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredLastTurn;
 import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.condition.AnyGraveyardAtLeast;
@@ -678,6 +679,7 @@ public class ConditionEvaluationService {
             case AnotherCreatureDiedThisTurn ignored ->
                     gameData.creaturePermanentIdsDiedThisTurn.stream()
                             .anyMatch(permanentId -> !permanentId.equals(ctx.targetId()));
+            case AnotherCreatureOnBattlefield ignored -> anotherCreatureOnBattlefield(gameData, ctx);
             case CreatureWithDifferentNameDiedThisTurn c ->
                     gameData.creatureNamesDiedThisTurn.stream()
                             .anyMatch(name -> !name.equals(c.excludedName()));
@@ -2824,6 +2826,23 @@ public class ConditionEvaluationService {
                         : gameQueryService.getEffectivePower(gameData, lastKnown),
                 lastKnown.getLastKnownToughness() != null ? lastKnown.getLastKnownToughness()
                         : gameQueryService.getEffectiveToughness(gameData, lastKnown)};
+    }
+
+    /**
+     * {@link AnotherCreatureOnBattlefield}: a creature other than the triggering permanent on the battlefield, or, while
+     * the creatures of one death event are being looked back at (CR 603.10a), one of the others that died with it
+     * (the source excepted).
+     */
+    private boolean anotherCreatureOnBattlefield(GameData gameData, ConditionContext ctx) {
+        UUID triggeringPermanentId = ctx.triggeringPermanentId();
+        if (gameData.anyPermanentMatches(permanent -> !permanent.getId().equals(triggeringPermanentId)
+                && gameQueryService.isCreature(gameData, permanent))) {
+            return true;
+        }
+        return gameData.simultaneousDyingCreatures.entrySet().stream()
+                .filter(entry -> !entry.getKey().equals(triggeringPermanentId)
+                        && !entry.getKey().equals(ctx.sourcePermanentId()))
+                .anyMatch(entry -> gameQueryService.isCreature(gameData, entry.getValue()));
     }
 
     private Permanent sourcePermanent(GameData gameData, ConditionContext ctx) {

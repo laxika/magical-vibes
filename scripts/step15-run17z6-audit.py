@@ -67,7 +67,11 @@ BIND = re.compile(r"\.set\w+\((?:effect|e|may|mayPay|marker|trigger)\.")
 # (row 17z13e3; 18 of `DamageTriggerCollectorService` and 7 of `MiscTriggerCollectorService`): two defaults record
 # the damage event whatever the effects are; the permanent-damage and combat handlers left are row 17z13e9's. Run
 # 17z13e9 deleted those (11 of `DamageTriggerCollectorService`): the permanent-damage watches have one default each
-# and the combat damage step's dealt-damage reader goes through the dealt-damage one.
+# and the combat damage step's dealt-damage reader goes through the dealt-damage one. Run 17z13e4 deleted the
+# creature-death watches' class-keyed handlers (22 of `DeathTriggerCollectorService`: `registerCreatureDeath` is
+# gone, each watch has one default keyed by the watch alone) and `LegacyTriggerBindings` with its 12 (the source's own
+# zone-change abilities have one default, `TriggeredAbilityStackService.triggerOwn`), so the `DEATH` and `LEGACY`
+# patterns below find nothing.
 OPEN = {}
 
 

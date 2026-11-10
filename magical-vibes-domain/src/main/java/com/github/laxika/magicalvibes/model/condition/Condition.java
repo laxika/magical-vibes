@@ -29,6 +29,7 @@ public sealed interface Condition permits
         AnotherPermanentEnteredLastTurn,
         AnotherPermanentEnteredThisTurn,
         AnotherCreatureDiedThisTurn,
+        AnotherCreatureOnBattlefield,
         AnOpponentHandEmpty,
         AnOpponentDiscardedCardThisTurn,
         AnOpponentHasMoreCardsInHandThanController,

@@ -5,8 +5,8 @@ Run 17z13's independent check found handlers picked by an effect's class that re
 the ability's only for that class (row 17z13e). `step15-run17z6-audit.py` labels a handler by what it does to the
 effect (rebuild, unwrap, bind a field of the effect); this scan compares what it records. For every watch it lists the
 `CardEffect.class` default and every class-keyed handler (`@Collects...Trigger(value = X.class, watch = W)`,
-`DeathTriggerCollectorService.registerCreatureDeath(W, X.class, ...)`, `LegacyTriggerBindings.register(h, X.class, ...)`)
-with the record tokens its body sets, following the same file's private helpers:
+`DeathTriggerCollectorService.registerCreatureDeath(W, X.class, ...)`, `LegacyTriggerBindings.register(h, X.class, ...)`,
+both gone since run 17z13e4) with the record tokens its body sets, following the same file's private helpers:
 
 - `set:F` an entry, choice or may-ability setter (`.setF(`), `with:F` a choice's wither (`.withF(`);
 - `ctor:target` a `new StackEntry(...)` whose target argument isn't `null`;
@@ -90,7 +90,11 @@ ROWS = [
 # is row 17z13e9's (run 17z13e9: "whenever this is dealt damage", "a permanent you control is dealt damage", "a source
 # you control deals noncombat damage to a creature", "a creature is dealt damage" and the self-combat modal; the
 # combat damage step's dealt-damage reader goes through the same default).
-DONE_ROWS = {"17z13e2", "17z13e3", "17z13e6", "17z13e9"}
+# Row 17z13e4 (run 17z13e4): the creature-death watches have one default each, keyed by the watch alone
+# (`DeathTriggerCollectorService.creatureDeathDefaults`; `registerCreatureDeath` is gone), and `LegacyTriggerBindings`
+# is deleted (the source's own zone-change abilities have one default, `TriggeredAbilityStackService.triggerOwn`), so
+# the `DEATH` and `LEGACY_BLOCK` patterns find nothing and the "CreatureDeathWatch." and "Legacy." rows are empty.
+DONE_ROWS = {"17z13e2", "17z13e3", "17z13e4", "17z13e6", "17z13e9"}
 
 # The reader branches keyed by an effect's class (file, effect class) -> verdict. Row 17z13e's three (the your-upkeep
 # `SurveilEffect`, the your-draw-step `MayEffect` and Haphazard Bombardment's branches) are gone; the rest are row

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -98,6 +99,15 @@ public class GainLifeEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        if (e.recipient() == GainLifeRecipient.SOURCE_REMEMBERED_PLAYER) {
+            UUID rememberedPlayerId = rememberedPlayer(gameData, entry);
+            if (rememberedPlayerId != null && gameData.playerIds.contains(rememberedPlayerId)) {
+                lifeSupport.applyGainLife(gameData, rememberedPlayerId, amount, null,
+                        entry.getCard(), entry.getEntryType());
+            }
+            return;
+        }
+
         if (e.recipient() == GainLifeRecipient.EACH_PLAYER) {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 lifeSupport.applyGainLife(gameData, playerId, amount, null,
@@ -108,6 +118,31 @@ public class GainLifeEffectHandler implements NormalEffectHandlerBean {
 
         lifeSupport.applyGainLife(gameData, entry.getControllerId(), amount, null,
                 entry.getCard(), entry.getEntryType());
+    }
+
+    /**
+     * The player the entry's source remembered as it entered: the live source's, else its snapshot's as it last
+     * existed, else the target of its enters ability still on the stack ({@link RememberTargetPlayerEffect}), so a
+     * source that left before that ability resolved still names the player (Laquatus's Champion's ruling).
+     */
+    private UUID rememberedPlayer(GameData gameData, StackEntry entry) {
+        Permanent source = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        if (source != null && source.getRememberedTargetPlayerId() != null) {
+            return source.getRememberedTargetPlayerId();
+        }
+        UUID sourcePermanentId = entry.getSourcePermanentId();
+        return sourcePermanentId == null ? null : gameData.stack.stream()
+                .filter(pending -> sourcePermanentId.equals(pending.getSourcePermanentId()))
+                .filter(pending -> pending.getEffectsToResolve().stream()
+                        .anyMatch(RememberTargetPlayerEffect.class::isInstance))
+                .map(StackEntry::getTargetId)
+                .filter(gameData.playerIds::contains)
+                .findFirst()
+                .orElse(null);
     }
 
     private UUID controllerOfTarget(GameData gameData, UUID targetId) {

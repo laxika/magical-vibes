@@ -27,7 +27,8 @@ Run 17z13 found two of the step collector's reviewed ROUTE reads recording by cl
 branch, which merged the permanent's upkeep effects into one bare entry, and Haphazard Bombardment's end-step branch,
 which judged its intervening "if" by its effect's class); run 17z13e removed both branches and their labels, and row
 17z13e8 re-reads the step and draw readers' class-keyed branches against what their defaults record
-(`step15-run17z13e-audit.py` lists them). Runs 17z13e2, 17z13e3 and 17z13e9 touched no step or draw reader.
+(`step15-run17z13e-audit.py` lists them). Runs 17z13e2, 17z13e3, 17z13e9 and 17z13e4 touched no step or draw
+reader.
 
 A read with no entry is `UNCLASSIFIED`, with the window heuristic's guess (BIND, REBUILD, UNWRAP or ROUTE): a new read,
 or one a later run moved, to classify. The step's "done" check wants no read in an open row and none unclassified.

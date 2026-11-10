@@ -26,7 +26,7 @@ public class Agyrem extends Card {
         PermanentColorInPredicate white = new PermanentColorInPredicate(Set.of(CardColor.WHITE));
         addTrigger(new TriggerCondition(Triggers.creatureDies(white, ObjectRelation.ANY), AbilityZones.COMMAND),
                 TriggerOptions.DEFAULT, new RegisterDelayedReturnDyingCreatureUnderControlEffect(
-                        false, null, 0, null, null, false, true, false));
+                        false, null, 0, null, null, false, true));
         addTrigger(new TriggerCondition(Triggers.creatureDies(new PermanentNotPredicate(white), ObjectRelation.ANY),
                         AbilityZones.COMMAND),
                 TriggerOptions.DEFAULT, new RegisterDelayedReturnCardFromGraveyardToHandEffect());

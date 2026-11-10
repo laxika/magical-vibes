@@ -594,6 +594,22 @@ public class TriggeredAbilityQueueService {
                 return;
             }
 
+            // "Return up to two target creature cards ... from your graveyard to the battlefield" (Reveillark): the cards
+            // are chosen as the ability goes on the stack (CR 603.3d).
+            ReturnTargetCardsFromGraveyardToBattlefieldEffect battlefieldReturn = pending.effects().stream()
+                    .filter(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::isInstance)
+                    .map(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::cast)
+                    .findFirst().orElse(null);
+            if (battlefieldReturn != null) {
+                gameData.pollPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+                graveyardTargetingService.handleReturnToBattlefieldETBTargeting(gameData, pending.controllerId(),
+                        pending.sourceCard(), pending.effects(), battlefieldReturn, battlefieldReturn.maxTargets());
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+                continue;
+            }
+
             ReturnTargetCardsFromGraveyardToHandEffect gyReturn = pending.effects().stream()
                     .map(this::targetedReturnToHandEffect)
                     .filter(java.util.Objects::nonNull)

@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenWithTotalDyingCrea
 import com.github.laxika.magicalvibes.model.effect.DoubleTargetCreaturePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -23,7 +25,8 @@ public class TheSkullsporeNexus extends Card {
 
     public TheSkullsporeNexus() {
         addStaticEffect(new ReduceOwnCastCostEffect(new GreatestPowerAmongControlled()));
-        addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL),
+        addTrigger(new TriggerCondition(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL)),
+                TriggerOptions.ONE_OR_MORE,
                 new CreateTokenWithTotalDyingCreaturesPowerEffect(
                         new CreateTokenEffect("Fungus Dinosaur", 0, 0, CardColor.GREEN,
                                 List.of(CardSubtype.FUNGUS, CardSubtype.DINOSAUR), Set.of(), Set.of())));

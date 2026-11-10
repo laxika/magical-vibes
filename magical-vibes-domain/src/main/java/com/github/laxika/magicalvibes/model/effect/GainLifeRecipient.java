@@ -21,6 +21,12 @@ public enum GainLifeRecipient {
      * Sliver).
      */
     TRIGGERING_PERMANENT_CONTROLLER,
+    /**
+     * The player the source remembered as it entered ("that player" of Laquatus's Champion's "When this leaves the
+     * battlefield, that player gains 6 life"): read from the source as it last existed, or, while the enters ability
+     * that chooses the player is still on the stack, that ability's target.
+     */
+    SOURCE_REMEMBERED_PLAYER,
     /** Every player in the game. */
     EACH_PLAYER
 }

@@ -45,11 +45,6 @@ public class RegisterDelayedReturnDyingCreatureUnderControlEffectHandler impleme
             return;
         }
         UUID sourcePermanentId = entry.getSourcePermanentId();
-        // "Another creature" is any creature besides the one that died, which has left the battlefield by now.
-        if (e.requireAnotherCreature() && !gameData.anyPermanentMatches(permanent ->
-                gameQueryService.isCreature(gameData, permanent))) {
-            return;
-        }
         // The card must still be the graveyard object the trigger event happened to (CR 400.7).
         long graveyardEntryVersion = entry.getTriggeringCardGraveyardEntryVersion() >= 0
                 ? entry.getTriggeringCardGraveyardEntryVersion()

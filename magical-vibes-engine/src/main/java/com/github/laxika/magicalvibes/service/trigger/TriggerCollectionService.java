@@ -61,6 +61,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingSourceDamage;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasGreaterPowerOrToughnessThanSource;
@@ -163,7 +164,6 @@ import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityS
 import com.github.laxika.magicalvibes.service.trigger.TargetAbilityReader.TargetEffect;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetRedirectionSupport;
-import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEqualToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
@@ -12365,8 +12365,8 @@ public class TriggerCollectionService {
     // ── Death / leaves-battlefield triggers ───────────────────────────
 
     /**
-     * Puts one "whenever [an object] dies" ability of {@code perm} on the stack for {@code death}, binding the event
-     * data its effects need the way the old slot collector of {@code watch} did. The trigger pipeline has already
+     * Puts one "whenever [an object] dies" ability of {@code perm} on the stack for {@code death} through
+     * {@code watch}'s collector, which records the death whatever the effects are. The trigger pipeline has already
      * decided that the ability triggers: its relation, its filter, the zone it functions from and the look-back of
      * the event (CR 603.10a). {@code perm} is the source as the event sees it: on the battlefield, its last-known
      * copy if it left in the same event, or a stand-in for a card in a graveyard or in exile. The pipeline has also
@@ -12419,99 +12419,97 @@ public class TriggerCollectionService {
         };
     }
 
+    /**
+     * "Whenever a creature you control dies": the ability's targeted effects wait for their targets as it goes on the
+     * stack (CR 603.3d), its other effects, a "you may" among them (asked as it resolves, CR 603.5), go on the stack
+     * as one object (CR 603.3), recording the death whatever they are ({@link #recordCreatureDeath}). Effects that make
+     * an ability trigger an additional time add copies, unless it triggers only once each turn.
+     */
     private boolean collectAllyCreatureDeath(GameData gameData, Permanent perm, UUID controllerId,
                                              List<CardEffect> effects, TriggerLimit limit, CreatureDeath death) {
+        if (effects.isEmpty()) {
+            return false;
+        }
         Permanent dyingPermanent = death.permanent();
-        Card dyingCard = dyingPermanent.getCard();
-        int dyingPowerAtDeath = death.power();
-        int dyingToughnessAtDeath = death.toughness();
-        int dyingPower = Math.max(0, dyingPowerAtDeath);
-        var ctx = new TriggerContext.CreatureDeath(dyingCard, death.controllerId(),
-                dyingPower, dyingToughnessAtDeath, dyingPermanent.getId(), dyingPermanent);
-
-        boolean anyEffectFired = false;
+        Card graveyardCard = dyingPermanent.getOriginalCard() != null ? dyingPermanent.getOriginalCard()
+                : dyingPermanent.getCard();
+        int dyingPower = Math.max(0, death.power());
         boolean markOnAcceptance = limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
-        List<CardEffect> stackEffects = new ArrayList<>();
-
-        for (CardEffect effect : effects) {
-            CardEffect resolvedEffect = effect;
-
-            if (resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                    || resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    || resolvedEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
-                // Targeted "another creature you control dies" trigger (e.g. Diregraf Captain): the controller
-                // picks a target as the ability is put on the stack (CR 603.3d). The source card here is the
-                // watching permanent, so its own target filter (e.g. opponent-only) is honoured. The dying
-                // creature's last-known power rides along as the event value, so an amount declared as
-                // EventValue resolves to it (Death's Presence).
-                // The card that went to the graveyard is left out ("another target creature card"): for a copy, the
-                // physical card, not the card it copied.
-                gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                        perm.getCard(), controllerId, new ArrayList<>(List.of(resolvedEffect)),
-                        dyingPower, new Permanent(perm), null, dyingPermanent.getOriginalCard().getId(), true,
-                        markOnAcceptance
-                ).withTriggeringCard(dyingCard.getId(), gameData.graveyardEntryVersion(dyingCard.getId()))
-                        .withTriggeringPermanent(dyingPermanent, death.attachments())
-                        .withTriggeringPermanentController(death.controllerId())
-                        .withGraveyardTargetMaxManaValue(graveyardTargetMaxManaValueAtDeath(
-                                gameData, controllerId, resolvedEffect, dyingPermanent)));
-                anyEffectFired = true;
-            } else if (resolvedEffect instanceof MayPayManaEffect
-                    || resolvedEffect instanceof MayPayLifeEffect
-                    || resolvedEffect instanceof MayEffect) {
-                var match = new TriggerMatchContext(gameData, perm, controllerId, resolvedEffect, perm.getCard(),
-                        markOnAcceptance);
-                dispatchCreatureDeath(match, CreatureDeathWatch.ALLY, resolvedEffect, ctx);
-                anyEffectFired = true;
-            } else {
-                stackEffects.add(resolvedEffect);
+        var context = new TriggerContext.CreatureDeath(dyingPermanent.getCard(), death.controllerId(),
+                dyingPower, death.toughness(), dyingPermanent.getId(), dyingPermanent);
+        int previousCopies = gameData.beginTriggeredAbilityCopies(limit == TriggerLimit.ONCE_EACH_TURN ? 1
+                : 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(gameData, controllerId, perm, false,
+                        context)
+                + gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggers(gameData, controllerId, perm));
+        try {
+            List<CardEffect> stackEffects = new ArrayList<>();
+            for (CardEffect effect : effects) {
+                if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                    // The watching permanent's own target filter (e.g. opponent-only) is honoured; the card that went
+                    // to the graveyard is left out ("another target creature card"): for a copy, the physical card.
+                    gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
+                            perm.getCard(), controllerId, new ArrayList<>(List.of(effect)),
+                            dyingPower, new Permanent(perm), null, graveyardCard.getId(), true,
+                            markOnAcceptance
+                    ).withTriggeringCard(graveyardCard.getId(), gameData.graveyardEntryVersion(graveyardCard.getId()))
+                            .withTriggeringPermanent(dyingPermanent, death.attachments())
+                            .withTriggeringPermanentController(death.controllerId())
+                            .withGraveyardTargetMaxManaValue(graveyardTargetMaxManaValueAtDeath(
+                                    gameData, controllerId, effect, dyingPermanent)));
+                } else {
+                    stackEffects.add(effect);
+                }
             }
-        }
-
-        if (!stackEffects.isEmpty()) {
-            List<CardEffect> entryEffects = stackEffects;
-            Card watcherCard = perm.getOriginalCard() != null
-                    && perm.getOriginalCard().getId().equals(perm.getCard().getId())
-                    && perm.getOriginalCard().getName().equals(perm.getCard().getName())
-                    ? perm.getOriginalCard() : perm.getCard();
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcherCard,
-                    controllerId,
-                    perm.getCard().getName() + "'s ability",
-                    new ArrayList<>(entryEffects),
-                    null,
-                    perm.getId()
-            );
-            entry.setSourcePermanentSnapshot(new Permanent(perm));
-            entry.setTriggeringPermanentId(dyingPermanent.getId());
-            entry.rememberLastKnownPermanentCard(dyingPermanent.getId(), dyingCard);
-            // "That creature's power" is its actual last-known power, which can be negative (CR 107.1b): a comparison
-            // or a mana value bound reads it as it is, an amount counts it as at least 0 unless it allows a negative.
-            entry.setTriggeringPermanentPowerAtTrigger(dyingPowerAtDeath);
-            entry.setTriggeringCard(dyingCard.getId(), gameData.graveyardEntryVersion(dyingCard.getId()));
-            entry.setTriggeringPermanent(dyingPermanent, death.attachments());
-            // "Its toughness" (Proper Burial, South Wind Avatar): its last-known toughness (CR 608.2h).
-            entry.setTriggeringPermanentToughnessAtTrigger(dyingToughnessAtDeath);
-            entry.setEventValue(dyingPower);
-            // "This ability triggers only once each turn" can't be made to trigger an additional time.
-            int additionalCopies = limit == TriggerLimit.ONCE_EACH_TURN ? 0
-                    : gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggers(
-                            gameData, controllerId, perm);
-            int previousCopies = gameData.beginTriggeredAbilityCopies(1 + additionalCopies);
-            try {
+            if (!stackEffects.isEmpty()) {
+                Card watcherCard = perm.getOriginalCard() != null
+                        && perm.getOriginalCard().getId().equals(perm.getCard().getId())
+                        && perm.getOriginalCard().getName().equals(perm.getCard().getName())
+                        ? perm.getOriginalCard() : perm.getCard();
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        watcherCard,
+                        controllerId,
+                        perm.getCard().getName() + "'s ability",
+                        new ArrayList<>(stackEffects),
+                        null,
+                        perm.getId()
+                );
+                entry.setNonTargeting(true);
+                entry.setSourcePermanentSnapshot(new Permanent(perm));
+                entry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
+                recordCreatureDeath(gameData, entry, death);
                 gameData.stack.add(entry);
-            } finally {
-                gameData.restoreTriggeredAbilityCopies(previousCopies);
             }
-            anyEffectFired = true;
+        } finally {
+            gameData.restoreTriggeredAbilityCopies(previousCopies);
         }
+        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+        log.info("Game {} - {} triggers (ally creature died)", gameData.id, perm.getCard().getName());
+        return true;
+    }
 
-        if (anyEffectFired) {
-            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-            log.info("Game {} - {} triggers (ally creature died)", gameData.id, perm.getCard().getName());
-        }
-        return anyEffectFired;
+    /**
+     * Records {@code death} on {@code entry}, whatever the ability's effects are: the card that went to the graveyard
+     * as its triggering card with the graveyard incarnation it has now (CR 400.7), the creature as it last existed on
+     * the battlefield (CR 603.10a) as its triggering permanent with its attachments, its controller, mana value and
+     * toughness then (CR 608.2h), and its power: as it was (which can be negative, CR 107.1b) for a comparison, at
+     * least 0 as the event value an amount reads.
+     */
+    private static void recordCreatureDeath(GameData gameData, StackEntry entry, CreatureDeath death) {
+        Permanent dyingPermanent = death.permanent();
+        Card graveyardCard = dyingPermanent.getOriginalCard() != null ? dyingPermanent.getOriginalCard()
+                : dyingPermanent.getCard();
+        entry.setTriggeringPermanentId(dyingPermanent.getId());
+        entry.rememberLastKnownPermanentCard(dyingPermanent.getId(), dyingPermanent.getCard());
+        entry.setTriggeringPermanentPowerAtTrigger(death.power());
+        entry.setTriggeringCard(graveyardCard.getId(), gameData.graveyardEntryVersion(graveyardCard.getId()));
+        entry.setTriggeringPermanent(dyingPermanent, death.attachments());
+        entry.setTriggeringPermanentControllerId(death.controllerId());
+        entry.setTriggeringPermanentToughnessAtTrigger(death.toughness());
+        entry.setDyingPermanentManaValue(dyingPermanent.getCard().getManaValue());
+        entry.setEventValue(Math.max(0, death.power()));
     }
 
     private boolean collectAnyCreatureDeath(GameData gameData, Permanent perm, UUID playerId,
@@ -12583,56 +12581,47 @@ public class TriggerCollectionService {
                 ctx);
     }
 
+    /**
+     * "Whenever a creature or planeswalker you control dies": the ability's effects, a "you may" among them (asked as
+     * it resolves, CR 603.5), go on the stack as one object (CR 603.3), recording the death whatever they are
+     * ({@link #recordCreatureDeath}). Effects that make a creature's death trigger an ability an additional time
+     * count only for a creature.
+     */
     private boolean collectAllyCreatureOrPlaneswalkerDeath(GameData gameData, Permanent perm, UUID controllerId,
                                                            List<CardEffect> effects, CreatureDeath death) {
+        if (effects.isEmpty()) {
+            return false;
+        }
         Permanent dyingPermanent = death.permanent();
-        Card dyingCard = dyingPermanent.getCard();
-        boolean wasCreature = dyingCard.hasType(CardType.CREATURE);
-        var ctx = new TriggerContext.CreatureDeath(dyingCard, death.controllerId(),
+        boolean wasCreature = dyingPermanent.getCard().hasType(CardType.CREATURE);
+        var context = new TriggerContext.CreatureDeath(dyingPermanent.getCard(), death.controllerId(),
                 death.power(), death.toughness(), dyingPermanent.getId(), dyingPermanent, wasCreature);
-        boolean anyEffectFired = false;
-        List<CardEffect> stackEffects = new ArrayList<>();
-        for (CardEffect effect : effects) {
-            CardEffect resolvedEffect = effect;
-            if (resolvedEffect instanceof MayPayManaEffect
-                    || resolvedEffect instanceof MayPayLifeEffect
-                    || resolvedEffect instanceof MayEffect) {
-                var match = new TriggerMatchContext(gameData, perm, controllerId, resolvedEffect);
-                dispatchCreatureDeath(match, CreatureDeathWatch.ALLY_CREATURE_OR_PLANESWALKER, resolvedEffect, ctx);
-                anyEffectFired = true;
-            } else {
-                stackEffects.add(resolvedEffect);
-            }
+        int previousCopies = gameData.beginTriggeredAbilityCopies(1
+                + gameQueryService.countAdditionalTriggeredAbilityTriggers(gameData, controllerId, perm, false,
+                        context)
+                + (wasCreature
+                ? gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggers(gameData, controllerId, perm)
+                : 0));
+        try {
+            StackEntry entry = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY,
+                    perm.getCard(),
+                    controllerId,
+                    perm.getCard().getName() + "'s ability",
+                    new ArrayList<>(effects),
+                    null,
+                    perm.getId()
+            );
+            entry.setNonTargeting(true);
+            entry.setSourcePermanentSnapshot(new Permanent(perm));
+            recordCreatureDeath(gameData, entry, death);
+            gameData.stack.add(entry);
+        } finally {
+            gameData.restoreTriggeredAbilityCopies(previousCopies);
         }
-
-        if (!stackEffects.isEmpty()) {
-            int previousCopies = gameData.beginTriggeredAbilityCopies(1
-                    + (wasCreature
-                    ? gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggers(
-                            gameData, controllerId, perm)
-                    : 0));
-            try {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        controllerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(stackEffects),
-                        null,
-                        perm.getId()
-                ));
-            } finally {
-                gameData.restoreTriggeredAbilityCopies(previousCopies);
-            }
-            anyEffectFired = true;
-        }
-
-        if (anyEffectFired) {
-            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-            log.info("Game {} - {} triggers (ally creature or planeswalker died)", gameData.id,
-                    perm.getCard().getName());
-        }
-        return anyEffectFired;
+        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+        log.info("Game {} - {} triggers (ally creature or planeswalker died)", gameData.id, perm.getCard().getName());
+        return true;
     }
 
     private boolean collectEquippedCreatureDeath(GameData gameData, Permanent perm, UUID equipmentControllerId,
@@ -12880,50 +12869,47 @@ public class TriggerCollectionService {
     }
 
     /**
-     * "Whenever one or more [other] creatures you control die": one stack object for its plain effects, with the
-     * cards of every death that met its trigger condition, for "return those cards".
+     * "Whenever one or more [other] creatures you control die": the ability's targeted effects wait for their targets
+     * as it goes on the stack (CR 603.3d), its other effects, a "you may" among them (CR 603.5), go on the stack as one
+     * object, whatever they are. The entry records the first death ({@link #recordCreatureDeath}), the cards of every
+     * death that met its trigger condition, for "return those cards", and the total power of those creatures as they
+     * last existed on the battlefield (CR 603.10a) as its event value: The Skullspore Nexus's token.
      */
     private boolean collectAllyCreatureDeaths(GameData gameData, CreatureDeathWatch watch, Permanent watcher,
                                               UUID watcherControllerId, List<CardEffect> effects,
                                               TriggerLimit limit, List<CreatureDeath> deaths) {
         CreatureDeath firstDeath = deaths.getFirst();
         Permanent dyingPermanent = firstDeath.permanent();
-        Card dyingCard = dyingPermanent.getCard();
         int dyingPower = Math.max(0, firstDeath.power());
-        TriggerContext context = new TriggerContext.CreatureDeath(dyingCard, watcherControllerId,
-                dyingPower, firstDeath.toughness(), dyingPermanent.getId(), dyingPermanent);
+        int totalPower = 0;
+        for (CreatureDeath death : deaths) {
+            totalPower = SaturatingMath.add(totalPower, death.power());
+        }
         List<UUID> eventCardIds = deaths.stream().map(death -> death.dyingCard().getId()).toList();
         boolean triggered = false;
         List<CardEffect> stackEffects = new ArrayList<>();
         boolean markOnAcceptance = limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
         for (CardEffect effect : effects) {
-            CardEffect resolved = effect;
-            if (resolved.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                    || resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+            if (effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                    || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                 gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                        watcher.getCard(), watcherControllerId, new ArrayList<>(List.of(resolved)), dyingPower,
+                        watcher.getCard(), watcherControllerId, new ArrayList<>(List.of(effect)), dyingPower,
                         null, null, null, true, markOnAcceptance).withTriggeringPermanent(dyingPermanent));
                 triggered = true;
-            } else if (resolved instanceof MayPayManaEffect
-                    || resolved instanceof MayPayLifeEffect
-                    || resolved instanceof MayEffect) {
-                dispatchCreatureDeath(new TriggerMatchContext(gameData, watcher, watcherControllerId, resolved,
-                        watcher.getCard(), markOnAcceptance), watch, resolved, context);
-                triggered = true;
             } else {
-                stackEffects.add(resolved);
+                stackEffects.add(effect);
             }
         }
         if (stackEffects.isEmpty()) return triggered;
         StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, watcher.getCard(),
                 watcherControllerId, watcher.getCard().getName() + "'s ability",
                 stackEffects, null, watcher.getId());
+        entry.setNonTargeting(true);
         entry.setSourcePermanentSnapshot(new Permanent(watcher));
-        entry.setTriggeringPermanentId(dyingPermanent.getId());
-        entry.setTriggeringPermanentPowerAtTrigger(dyingPower);
+        entry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
+        recordCreatureDeath(gameData, entry, firstDeath);
         entry.setEventCardIds(eventCardIds);
-        entry.setTriggeringCard(dyingCard.getId(), gameData.graveyardEntryVersion(dyingCard.getId()));
-        entry.setTriggeringPermanent(dyingPermanent);
+        entry.setEventValue(Math.max(0, totalPower));
         gameData.stack.add(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
         return true;

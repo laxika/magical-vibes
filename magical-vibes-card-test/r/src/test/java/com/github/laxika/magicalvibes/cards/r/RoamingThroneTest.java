@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.cards.a.Abrade;
 import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GhituJourneymage;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MarketGnome;
 import com.github.laxika.magicalvibes.cards.m.MineshaftSpider;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.z.ZulaportCutthroat;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RoamingThrone.class, GhituJourneymage.class, ElvishVisionary.class, Abrade.class, MineshaftSpider.class, MarketGnome.class, RatchetFieldMedic.class, RipjawRaptor.class, Shock.class,
-        FugitiveWizard.class})
+        FugitiveWizard.class, GrizzlyBears.class, ZulaportCutthroat.class})
 class RoamingThroneTest extends BaseCardTest {
 
     @Test
@@ -222,5 +224,20 @@ class RoamingThroneTest extends BaseCardTest {
         // Combat damage, and the two triggers resolving: a card each.
         harness.assertInGraveyard(player1, "Fugitive Wizard");
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Roaming Throne doubles a chosen-type creature's \"whenever another creature you control dies\"")
+    void doublesAllyCreatureDeathTrigger() {
+        addThrone(CardSubtype.HUMAN);
+        harness.addToBattlefieldAndReturn(player1, new ZulaportCutthroat());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Zulaport Cutthroat")).hasSize(2);
     }
 }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -170,77 +171,6 @@ class DeathTriggerCollectorServiceTest {
         assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
     }
 
-    // ── "when this dies" handlers ──────────────────────────────────────────────
-
-
-
-
-
-
-
-
-
-
-
-
-    @Nested
-    @DisplayName("handleAllyCreatureMayPay")
-    class AllyCreatureMayPay {
-
-        @Test
-        @DisplayName("Queues may ability for MayPayManaEffect")
-        void queuesMayAbility() {
-            Card watcher = createCreature("Pay Watcher", 1, 1);
-            var mayPay = new MayPayManaEffect("{1}", new DrawCardEffect(1), "Pay?");
-            Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 2, 2), PLAYER1_ID, 2, 2);
-
-            svc.handleAllyCreatureMayPay(match(perm, PLAYER1_ID, mayPay), mayPay, ctx);
-
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(MayPayManaEffect.class);
-        }
-    }
-
-    @Nested
-    @DisplayName("handleAllyCreatureMayPayLife")
-    class AllyCreatureMayPayLife {
-
-        @Test
-        @DisplayName("Adds the optional life payment to the stack")
-        void addsLifePaymentToStack() {
-            Card watcher = createCreature("Life Pay Watcher", 1, 1);
-            var mayPay = new MayPayLifeEffect(2, new DrawCardEffect(1), "Pay 2?");
-            Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 2, 2), PLAYER1_ID, 2, 2);
-
-            assertThat(svc.handleAllyCreatureMayPayLife(match(perm, PLAYER1_ID, mayPay), mayPay, ctx)).isTrue();
-
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isEqualTo(mayPay);
-        }
-    }
-
-    @Nested
-    @DisplayName("handleAllyCreatureMay")
-    class AllyCreatureMay {
-
-        @Test
-        @DisplayName("Queues may ability with sourcePermanentId")
-        void queuesMayAbilityWithSourcePermanentId() {
-            Card watcher = createCreature("May Watcher", 1, 1);
-            var may = new MayEffect(new DrawCardEffect(1), "Draw?");
-            Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 2, 2), PLAYER1_ID, 2, 2);
-
-            svc.handleAllyCreatureMay(match(perm, PLAYER1_ID, may), may, ctx);
-
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
-        }
-    }
-
-
     @Nested
     @DisplayName("handleEquippedCreatureDeathDefault")
     class EquippedCreatureDeathDefault {
@@ -339,46 +269,71 @@ class DeathTriggerCollectorServiceTest {
     }
 
     @Nested
-    @DisplayName("handleEquippedCreatureDelayedReturn")
+    @DisplayName("handleEquippedCreatureDeathDefault: a delayed return of the creature that died")
     class EquippedCreatureDelayedReturn {
 
         @Test
-        @DisplayName("Binds the dying card to the delayed return trigger")
+        @DisplayName("Gives the delayed return the dying card, the Equipment as its source and the death recorded")
         void bindsDyingCard() {
             Card equipment = createEquipment("Resurrection Orb");
             Card dying = createCreature("Dying Creature", 2, 2);
+            Permanent dyingPermanent = new Permanent(dying);
             Permanent perm = new Permanent(equipment);
             var effect = new RegisterDelayedReturnDyingCreatureUnderControlEffect(
-                    false, null, 0, null, null, false, true, false);
-            var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, dying);
+                    false, null, 0, null, null, false, true);
+            var ctx = new TriggerContext.EquippedCreatureDeath(dyingPermanent.getId(), PLAYER1_ID, dying, 2,
+                    dyingPermanent);
 
-            assertThat(svc.handleEquippedCreatureDelayedReturn(match(perm, PLAYER1_ID, effect), effect, ctx))
-                    .isTrue();
+            assertThat(svc.dispatchCreatureDeath(CreatureDeathWatch.EQUIPPED, match(perm, PLAYER1_ID, effect),
+                    effect, ctx)).isTrue();
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.getFirst();
             assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
             assertThat(entry.getTriggeringCardId()).isEqualTo(dying.getId());
+            assertThat(entry.getTriggeringPermanentId()).isEqualTo(dyingPermanent.getId());
+            assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(PLAYER1_ID);
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
         }
 
         @Test
-        @DisplayName("Does not fire without a dying card")
-        void noDyingCard() {
+        @DisplayName("Triggers for a token, which leaves no card to return (CR 704.5d)")
+        void triggersForAToken() {
             Card equipment = createEquipment("Resurrection Orb");
             Permanent perm = new Permanent(equipment);
             var effect = new RegisterDelayedReturnDyingCreatureUnderControlEffect(
-                    false, null, 0, null, null, false, true, false);
+                    false, null, 0, null, null, false, true);
             var ctx = new TriggerContext.EquippedCreatureDeath(UUID.randomUUID(), PLAYER1_ID, null);
 
-            assertThat(svc.handleEquippedCreatureDelayedReturn(match(perm, PLAYER1_ID, effect), effect, ctx))
-                    .isFalse();
-            assertThat(gd.stack).isEmpty();
+            assertThat(svc.dispatchCreatureDeath(CreatureDeathWatch.EQUIPPED, match(perm, PLAYER1_ID, effect),
+                    effect, ctx)).isTrue();
+            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack.getFirst().getTriggeringCardId()).isNull();
+        }
+
+        @Test
+        @DisplayName("A target choice carries the dying creature's power, controller and last known information")
+        void targetChoiceCarriesTheDeath() {
+            Card equipment = createEquipment("Target Sword");
+            Card dying = createCreature("Dying Creature", 3, 3);
+            Permanent dyingPermanent = new Permanent(dying);
+            Permanent perm = new Permanent(equipment);
+            var effect = new PutCounterOnTargetPermanentEffect(CounterType.CHARGE);
+            var ctx = new TriggerContext.EquippedCreatureDeath(dyingPermanent.getId(), PLAYER2_ID, dying, 3,
+                    dyingPermanent);
+
+            svc.dispatchCreatureDeath(CreatureDeathWatch.EQUIPPED, match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            assertThat(gd.pendingInteractions).singleElement()
+                    .isInstanceOfSatisfying(PermanentChoiceContext.DeathTriggerTarget.class, target -> {
+                        assertThat(target.eventValue()).isEqualTo(3);
+                        assertThat(target.triggeringCardId()).isEqualTo(dying.getId());
+                        assertThat(target.triggeringPermanent().getId()).isEqualTo(dyingPermanent.getId());
+                        assertThat(target.triggeringPermanentControllerId()).isEqualTo(PLAYER2_ID);
+                        assertThat(target.sourcePermanentSnapshot().getId()).isEqualTo(perm.getId());
+                    });
         }
     }
-
-
-    // ── ON_ENCHANTED_PERMANENT_PUT_INTO_GRAVEYARD handlers ─────────────
 
     @Nested
     @DisplayName("enchanted-death returns")
@@ -505,8 +460,6 @@ class DeathTriggerCollectorServiceTest {
         }
     }
 
-    // ── ON_ENCHANTED_PERMANENT_LEAVES_BATTLEFIELD handlers ─────────────
-
     @Nested
     @DisplayName("handleEnchantedPermanentLeavesDefault")
     class EnchantedPermanentLeavesDefault {
@@ -551,8 +504,6 @@ class DeathTriggerCollectorServiceTest {
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
         }
     }
-
-    // ── ON_ANY_ARTIFACT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD handlers ───
 
     @Nested
     @DisplayName("Artifact graveyard handlers")
@@ -711,7 +662,6 @@ class DeathTriggerCollectorServiceTest {
         }
     }
 
-
     @Nested
     @DisplayName("Any creature death handlers")
     class AnyCreatureDeathHandlers {
@@ -724,7 +674,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
-            svc.handleAnyCreatureDeathPutCounters(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
         }
@@ -737,7 +687,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
-            svc.handleAnyCreatureDeathBoostSelf(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
         }
@@ -750,7 +700,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
-            svc.handleAnyCreatureDeathTap(match(perm, PLAYER1_ID, effect), effect, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, effect), effect, ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
@@ -764,7 +714,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
-            svc.handleAnyCreatureDeathMay(match(perm, PLAYER1_ID, may), may, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, may), may, ctx);
 
             assertThat(gd.stack).hasSize(1);
         }
@@ -778,7 +728,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 4, 4), PLAYER1_ID, 4, 4);
 
-            svc.handleAnyCreatureDeathMay(match(perm, PLAYER1_ID, may), may, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, may), may, ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
@@ -795,7 +745,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 1, 1), PLAYER1_ID, 1, 1);
 
-            svc.handleAnyCreatureDeathMay(match(perm, PLAYER1_ID, may), may, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY, match(perm, PLAYER1_ID, may), may, ctx);
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
@@ -849,7 +799,7 @@ class DeathTriggerCollectorServiceTest {
             var ctx = new TriggerContext.CreatureDeath(
                     dying, PLAYER2_ID, 2, 2, dyingPermanent.getId(), dyingPermanent);
 
-            assertThat(svc.handleAnyCreatureDeathCreateTokenCopy(
+            assertThat(svc.dispatchCreatureDeath(CreatureDeathWatch.ANY,
                     match(perm, PLAYER1_ID, copyEffect), copyEffect, ctx)).isTrue();
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
@@ -906,6 +856,62 @@ class DeathTriggerCollectorServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("Creature-death defaults record the death whatever the effects are")
+    class CreatureDeathRecord {
+
+        @Test
+        @DisplayName("A \"you may\" goes on the stack with the creature as it last existed, its controller, power, toughness and mana value")
+        void mayRecordsTheDeath() {
+            Card watcher = createCreature("Kresh the Bloodbraided", 3, 3);
+            Card dying = createCreature("Dying", 4, 5);
+            Permanent dyingPermanent = new Permanent(dying);
+            var may = new MayEffect(new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE,
+                    new TriggeringPermanentPower()), "Put counters?");
+            Permanent perm = new Permanent(watcher);
+            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER2_ID, 4, 5, dyingPermanent.getId(),
+                    dyingPermanent);
+
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ANY,
+                    new TriggerMatchContext(gd, perm, PLAYER1_ID, may, watcher, true), may, ctx);
+
+            assertThat(gd.stack).hasSize(1);
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getEffectsToResolve()).containsExactly(may);
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getTriggeringCardId()).isEqualTo(dying.getId());
+            assertThat(entry.getTriggeringPermanentId()).isEqualTo(dyingPermanent.getId());
+            assertThat(entry.getTriggeringPermanentSnapshot().getId()).isEqualTo(dyingPermanent.getId());
+            assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(PLAYER2_ID);
+            assertThat(entry.getTriggeringPermanentPowerAtTrigger()).isEqualTo(4);
+            assertThat(entry.getTriggeringPermanentToughnessAtTrigger()).isEqualTo(5);
+            assertThat(entry.getEventValue()).isEqualTo(4);
+            assertThat(entry.getDyingPermanentManaValue()).isEqualTo(dying.getManaValue());
+            assertThat(entry.getSourcePermanentSnapshot().getId()).isEqualTo(perm.getId());
+            assertThat(entry.isMarkSourceOncePerTurnOnAcceptance()).isTrue();
+        }
+
+        @Test
+        @DisplayName("A nontoken creature you control: the same record, the ability controlled by the source's controller")
+        void allyNontokenRecordsTheDeath() {
+            Card watcher = createCreature("Ally Tracker", 1, 1);
+            Card dying = createCreature("Dying", 2, 3);
+            Permanent dyingPermanent = new Permanent(dying);
+            var effect = new DrawCardEffect(1);
+            Permanent perm = new Permanent(watcher);
+            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2, 3, dyingPermanent.getId(),
+                    dyingPermanent);
+
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, match(perm, PLAYER1_ID, effect), effect, ctx);
+
+            StackEntry entry = gd.stack.getFirst();
+            assertThat(entry.getControllerId()).isEqualTo(PLAYER1_ID);
+            assertThat(entry.getTriggeringPermanentId()).isEqualTo(dyingPermanent.getId());
+            assertThat(entry.getTriggeringPermanentPowerAtTrigger()).isEqualTo(2);
+            assertThat(entry.getTriggeringPermanentToughnessAtTrigger()).isEqualTo(3);
+            assertThat(entry.getSourcePermanentSnapshot().getId()).isEqualTo(perm.getId());
+        }
+    }
 
     @Nested
     @DisplayName("Ally nontoken creature death handlers")
@@ -919,7 +925,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(createCreature("Dying", 2, 2), PLAYER1_ID, 2, 2);
 
-            svc.handleAllyNontokenMay(match(perm, PLAYER1_ID, may), may, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, match(perm, PLAYER1_ID, may), may, ctx);
 
             assertThat(gd.stack).hasSize(1);
         }
@@ -949,7 +955,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2, 2);
 
-            svc.handleAllyNontokenMayPay(match(perm, PLAYER1_ID, mayPay), mayPay, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.ALLY_NONTOKEN, match(perm, PLAYER1_ID, mayPay), mayPay, ctx);
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
@@ -957,7 +963,6 @@ class DeathTriggerCollectorServiceTest {
             assertThat(gd.stack.getFirst().getTriggeringCardId()).isEqualTo(dying.getId());
         }
     }
-
 
     @Nested
     @DisplayName("Any nontoken creature death handlers")
@@ -997,10 +1002,35 @@ class DeathTriggerCollectorServiceTest {
         }
     }
 
-
     @Nested
     @DisplayName("Opponent creature death handlers")
     class OpponentCreatureDeathHandlers {
+
+        @Test
+        @DisplayName("A graveyard-targeting \"you may\" waits for its target with the \"do this only once each turn\" mark")
+        void graveyardTargetMayCarriesTheOncePerTurnMark() {
+            Card watcher = createCreature("Glissa, the Traitor", 3, 3);
+            Card dying = createCreature("Dead Creature", 2, 2);
+            Permanent dyingPermanent = new Permanent(dying);
+            var may = new MayEffect(new DrawCardEffect(1), "Return?");
+            Permanent perm = new Permanent(watcher);
+            when(graveyardTargetingSupport.findTarget(List.of(may))).thenReturn(
+                    new com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport.Target(
+                            null, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, "to your hand", 1));
+            var ctx = new TriggerContext.CreatureDeath(dying, PLAYER1_ID, 2, 2, dyingPermanent.getId(),
+                    dyingPermanent);
+
+            svc.dispatchCreatureDeath(CreatureDeathWatch.OPPONENT,
+                    new TriggerMatchContext(gd, perm, PLAYER2_ID, may, watcher, true), may, ctx);
+
+            assertThat(gd.stack).isEmpty();
+            assertThat(gd.pendingInteractions).singleElement()
+                    .isInstanceOfSatisfying(PermanentChoiceContext.DeathTriggerTarget.class, target -> {
+                        assertThat(target.markSourceOncePerTurnOnAcceptance()).isTrue();
+                        assertThat(target.triggeringCardId()).isEqualTo(dying.getId());
+                        assertThat(target.triggeringPermanentControllerId()).isEqualTo(PLAYER1_ID);
+                    });
+        }
 
         @Test
         @DisplayName("MayEffect queues may ability")
@@ -1010,7 +1040,7 @@ class DeathTriggerCollectorServiceTest {
             Permanent perm = new Permanent(watcher);
             var ctx = new TriggerContext.CreatureDeath(null, PLAYER1_ID, 0, 0);
 
-            svc.handleOpponentCreatureDeathMay(match(perm, PLAYER2_ID, may), may, ctx);
+            svc.dispatchCreatureDeath(CreatureDeathWatch.OPPONENT, match(perm, PLAYER2_ID, may), may, ctx);
 
             assertThat(gd.stack).hasSize(1);
         }
@@ -1044,11 +1074,6 @@ class DeathTriggerCollectorServiceTest {
             assertThat(gd.stack.get(0).getTriggeringCardId()).isEqualTo(dying.getId());
         }
     }
-
-    // ── "when this leaves the battlefield" handlers ────────────────────────────
-
-
-    // ── ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD handler ──
 
     @Nested
     @DisplayName("handleAllyAuraOrEquipmentGraveyardDefault: a delayed return")

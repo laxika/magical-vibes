@@ -1197,8 +1197,7 @@ class EnterTriggerCollectorServiceTest {
             + "last-known permanent, and ignores a permanent an opponent owns")
     void emblemPutIntoYourGraveyardFromBattlefieldAbilityRecordsTheCard() {
         RegisterDelayedReturnDyingCreatureUnderControlEffect returnIt =
-                new RegisterDelayedReturnDyingCreatureUnderControlEffect(false, null, 0, null, null, false, true,
-                        false);
+                new RegisterDelayedReturnDyingCreatureUnderControlEffect(false, null, 0, null, null, false, true);
         Card source = emblemSource(new TriggeredAbility(
                 Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, Triggers.ARTIFACT, ObjectRelation.YOU_OWN), returnIt));
         Card artifactCard = new Card();

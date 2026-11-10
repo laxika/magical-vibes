@@ -45,7 +45,7 @@ import java.util.UUID;
  * <p>The abilities of the objects that see another object move (a creature dies) are put on the stack first, those
  * that trigger for each event in event order and then the "one or more" ones, as the old slot collectors queued
  * them while the objects were still moving. The moving objects' own abilities follow, each event's in the order of
- * {@link LegacyTriggerBindings.Kind}: leaves the battlefield, arrives in a zone, dies, sacrificed. Their controller
+ * {@link TriggeredAbilityStackService.OwnZoneChange}: leaves the battlefield, arrives in a zone, dies, sacrificed. Their controller
  * orders them later all the same (CR 603.3b).
  *
  * <p>A permanent entering is seen by every permanent on the battlefield after the event, the newcomers and the
@@ -294,7 +294,7 @@ public class RulesEventPipeline {
                     reportWouldTrigger(gameData, observer, slot, candidate, zoneChange);
                 }
             }
-            matches.sort(Comparator.comparing(match -> LegacyTriggerBindings.kindOf(match.trigger())));
+            matches.sort(Comparator.comparing(match -> TriggeredAbilityStackService.ownZoneChangeOf(match.trigger())));
             for (Match match : matches) {
                 TriggerCandidate candidate = match.candidate();
                 if (candidate.ability().options().multiplicity() == TriggerMultiplicity.EACH

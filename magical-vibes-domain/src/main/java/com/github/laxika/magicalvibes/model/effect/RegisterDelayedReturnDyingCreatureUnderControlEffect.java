@@ -35,8 +35,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
  *                                     that left and came back is a new object and does not count)
  * @param returnUnderOwnersControl      when true, return the card under its owner's control instead
  *                                     of the ability controller's control (Lifeline)
- * @param requireAnotherCreature        when true, the trigger is only collected and resolved while
- *                                     another creature is on the battlefield (Lifeline)
  * @param targetOpponent               when true, the death trigger targets an opponent and that
  *                                     player becomes the controller of the delayed return
  * @param optionalReturn               when true the delayed end-step trigger asks its controller
@@ -52,30 +50,31 @@ public record RegisterDelayedReturnDyingCreatureUnderControlEffect(
         CardSubtype grantSubtype,
         boolean requireSourceOnBattlefield,
         boolean returnUnderOwnersControl,
-        boolean requireAnotherCreature,
         boolean targetOpponent,
         boolean optionalReturn
 ) implements CardEffect {
 
     /** Seraph: plain return linked to the source permanent, no counters and no grants. */
     public RegisterDelayedReturnDyingCreatureUnderControlEffect() {
-        this(true, null, 0, null, null, false, false, false, false, false);
+        this(true, null, 0, null, null, false, false, false, false);
     }
 
     /** Grave Betrayal-style: counter and colour/subtype riders, no source-presence requirement. */
     public RegisterDelayedReturnDyingCreatureUnderControlEffect(boolean sacrificeOnSourceControlLoss,
             CounterType counterType, int counterAmount, CardColor grantColor, CardSubtype grantSubtype) {
         this(sacrificeOnSourceControlLoss, counterType, counterAmount, grantColor, grantSubtype,
-                false, false, false, false, false);
+                false, false, false, false);
     }
 
-    /** Lifeline-style: return under the card's owner's control while another creature remains. */
+    /**
+     * Lifeline-style: return under the card's owner's control (Lifeline's "if another creature is on the battlefield"
+     * is its ability's intervening "if").
+     */
     public RegisterDelayedReturnDyingCreatureUnderControlEffect(boolean sacrificeOnSourceControlLoss,
             CounterType counterType, int counterAmount, CardColor grantColor, CardSubtype grantSubtype,
-            boolean requireSourceOnBattlefield, boolean returnUnderOwnersControl,
-            boolean requireAnotherCreature) {
+            boolean requireSourceOnBattlefield, boolean returnUnderOwnersControl) {
         this(sacrificeOnSourceControlLoss, counterType, counterAmount, grantColor, grantSubtype,
-                requireSourceOnBattlefield, returnUnderOwnersControl, requireAnotherCreature, false, false);
+                requireSourceOnBattlefield, returnUnderOwnersControl, false, false);
     }
 
     /**
@@ -84,13 +83,13 @@ public record RegisterDelayedReturnDyingCreatureUnderControlEffect(
      */
     public static RegisterDelayedReturnDyingCreatureUnderControlEffect optionalWhileSourceRemains() {
         return new RegisterDelayedReturnDyingCreatureUnderControlEffect(
-                false, null, 0, null, null, true, false, false, false, true);
+                false, null, 0, null, null, true, false, false, true);
     }
 
     /** Endless Whispers: the creature's controller chooses an opponent to control the return. */
     public static RegisterDelayedReturnDyingCreatureUnderControlEffect forOpponent() {
         return new RegisterDelayedReturnDyingCreatureUnderControlEffect(
-                false, null, 0, null, null, false, false, false, true, false);
+                false, null, 0, null, null, false, false, true, false);
     }
 
     @Override

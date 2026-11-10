@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -47,10 +48,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
@@ -76,7 +78,7 @@ import static org.mockito.Mockito.when;
  * handler puts toward the stack for the zone change that triggered it.
  */
 @ExtendWith(MockitoExtension.class)
-class LegacyTriggerBindingsTest {
+class TriggeredAbilityStackServiceTest {
 
     @Mock
     private GameQueryService gameQueryService;
@@ -91,24 +93,24 @@ class LegacyTriggerBindingsTest {
     @Mock
     private GraveyardTargetingSupport graveyardTargetingSupport;
     @Mock
-    private GraveyardTargetingService graveyardTargetingService;
+    private TriggerCollectionService triggerCollectionService;
 
-    private LegacyTriggerBindings bindings;
+    private TriggeredAbilityStackService stackService;
 
     private GameData gd;
 
     private static final UUID PLAYER1_ID = UUID.randomUUID();
     private static final UUID PLAYER2_ID = UUID.randomUUID();
 
-    /** The zone change a test triggers an ability for, with the kind of trigger it meets. */
-    private record Triggering(TriggerCandidate candidate, ZoneChangeEvent event, LegacyTriggerBindings.Kind kind) {
+    /** The zone change a test triggers an ability for, with the trigger it meets and the permanent that moved. */
+    private record Triggering(ZoneChangeTrigger trigger, Card card, Permanent permanent, UUID controllerId,
+                              ZoneChangeEvent event) {
     }
 
     @BeforeEach
     void setUp() {
-        bindings = new LegacyTriggerBindings(gameQueryService, predicateEvaluationService, gameLogService,
-                amountEvaluationService, conditionEvaluationService, graveyardTargetingSupport,
-                graveyardTargetingService);
+        stackService = new TriggeredAbilityStackService(conditionEvaluationService, gameQueryService,
+                graveyardTargetingSupport, gameLogService, triggerCollectionService, amountEvaluationService);
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.orderedPlayerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
         gd.playerIdToName.put(PLAYER1_ID, "Player1");
@@ -128,26 +130,22 @@ class LegacyTriggerBindingsTest {
         permanent.setLastKnownPower(power);
         ZoneChangeEvent event = new ZoneChangeEvent(card, controllerId, Zone.BATTLEFIELD, Zone.GRAVEYARD,
                 ZoneChangeCause.DESTROY, permanent, controllerId);
-        return new Triggering(candidate(card, permanent, controllerId, Triggers.dies(ObjectRelation.THIS)), event,
-                LegacyTriggerBindings.Kind.DIES);
+        return new Triggering(Triggers.dies(ObjectRelation.THIS), card, permanent, controllerId, event);
     }
 
     /** {@code permanent} left the battlefield for its owner's graveyard. */
     private Triggering leaves(Permanent permanent, UUID controllerId) {
         ZoneChangeEvent event = new ZoneChangeEvent(permanent.getCard(), controllerId, Zone.BATTLEFIELD,
                 Zone.GRAVEYARD, ZoneChangeCause.OTHER, permanent, controllerId);
-        return new Triggering(candidate(permanent.getCard(), permanent, controllerId,
-                Triggers.leavesBattlefield(ObjectRelation.THIS)), event, LegacyTriggerBindings.Kind.LEAVES);
+        return new Triggering(Triggers.leavesBattlefield(ObjectRelation.THIS), permanent.getCard(), permanent,
+                controllerId, event);
     }
 
-    private static TriggerCandidate candidate(Card card, Permanent permanent, UUID controllerId,
-                                              com.github.laxika.magicalvibes.model.trigger.Trigger trigger) {
-        return new TriggerCandidate(card, permanent, controllerId, Zone.BATTLEFIELD,
-                new TriggeredAbility(trigger, new DrawCardEffect(1)));
-    }
-
-    private boolean trigger(Triggering triggering, CardEffect effect) {
-        return bindings.trigger(gd, triggering.candidate(), triggering.event(), triggering.kind(), effect);
+    /** Triggers the ability of {@code effect} the moving object has for its own zone change. */
+    private void trigger(Triggering triggering, CardEffect effect) {
+        TriggerCandidate candidate = new TriggerCandidate(triggering.card(), triggering.permanent(),
+                triggering.controllerId(), Zone.BATTLEFIELD, new TriggeredAbility(triggering.trigger(), effect));
+        stackService.trigger(gd, candidate, triggering.event(), triggering.trigger());
     }
 
     private Card createCreature(String name, int power, int toughness) {
@@ -185,7 +183,7 @@ class LegacyTriggerBindingsTest {
         var effect = new CreateTokenWithDyingSourcePowerCountersEffect(null);
         var ctx = dies(card, PLAYER1_ID, perm, 2);
 
-        assertThat(trigger(ctx, effect)).isTrue();
+        trigger(ctx, effect);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEventValue()).isEqualTo(2);
@@ -202,7 +200,7 @@ class LegacyTriggerBindingsTest {
         gd.currentStep = TurnStep.COMBAT_DAMAGE;
         var ctx = dies(card, PLAYER1_ID, perm);
 
-        assertThat(trigger(ctx, deathDmg)).isTrue();
+        trigger(ctx, deathDmg);
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -222,7 +220,7 @@ class LegacyTriggerBindingsTest {
         perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         var ctx = dies(card, PLAYER1_ID, perm);
 
-        assertThat(trigger(ctx, effect)).isTrue();
+        trigger(ctx, effect);
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -240,7 +238,7 @@ class LegacyTriggerBindingsTest {
                 PutCounterOnTargetForEachDyingSourceCounterEffect.MODULAR_PROMPT);
         var ctx = dies(card, PLAYER1_ID, perm);
 
-        assertThat(trigger(ctx, effect)).isTrue();
+        trigger(ctx, effect);
 
         var pending = gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
         assertThat(pending.effects()).containsExactly(effect);
@@ -256,7 +254,7 @@ class LegacyTriggerBindingsTest {
                 new PermanentIsCreaturePredicate(), false, null, true);
         var ctx = dies(card, PLAYER1_ID, perm);
 
-        assertThat(trigger(ctx, effect)).isTrue();
+        trigger(ctx, effect);
 
         var pending = gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
         assertThat(pending.effects()).containsExactly(effect);
@@ -272,7 +270,7 @@ class LegacyTriggerBindingsTest {
         Permanent perm = new Permanent(card);
         var ctx = dies(card, PLAYER1_ID, perm);
 
-        assertThat(trigger(ctx, mayPay)).isTrue();
+        trigger(ctx, mayPay);
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isInstanceOf(MayPayManaEffect.class);
     }
@@ -285,7 +283,7 @@ class LegacyTriggerBindingsTest {
         Permanent perm = new Permanent(card);
         var ctx = dies(card, PLAYER1_ID, perm);
 
-        assertThat(trigger(ctx, mayPay)).isTrue();
+        trigger(ctx, mayPay);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.get(0).getEffectsToResolve().get(0)).isEqualTo(mayPay);
@@ -302,7 +300,7 @@ class LegacyTriggerBindingsTest {
         var effect = new ChooseOneAtTriggerTimeEffect(choice);
         var ctx = dies(card, PLAYER1_ID, perm);
 
-        assertThat(trigger(ctx, effect)).isTrue();
+        trigger(ctx, effect);
 
         var pending = gd.peekPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
         assertThat(pending.sourceCard()).isEqualTo(card);
@@ -491,7 +489,7 @@ class LegacyTriggerBindingsTest {
         var effect = new ExileEquippedCreatureEffect();
         var ctx = dies(equipment, PLAYER1_ID, perm);
 
-        assertThat(trigger(ctx, effect)).isTrue();
+        trigger(ctx, effect);
         assertThat(gd.stack).hasSize(1);
     }
 
@@ -534,7 +532,7 @@ class LegacyTriggerBindingsTest {
                 new CountersOnTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE));
         var ctx = leaves(perm, PLAYER1_ID);
 
-        assertThat(trigger(ctx, effect)).isTrue();
+        trigger(ctx, effect);
 
         var pending = gd.peekPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
         assertThat(pending.effects()).containsExactly(effect);
@@ -584,6 +582,61 @@ class LegacyTriggerBindingsTest {
 
         trigger(ctx, effect);
 
-        verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Logged Leaver") && logEntry.plainText().contains("left the battlefield")));
+        verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Logged Leaver")
+                && logEntry.plainText().contains("triggers")));
+    }
+
+    @Test
+    @DisplayName("A \"choose one\" death ability's mode is chosen as it goes on the stack (CR 603.3c)")
+    void chooseOneModeIsChosenAsItTriggers() {
+        Card card = createCreature("Ao, the Dawn Sky", 5, 4);
+        Permanent perm = new Permanent(card);
+        var choice = new ChooseOneEffect(List.of(
+                new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1)),
+                new ChooseOneEffect.ChooseOneOption("Gain life", new GainLifeEffect(1))));
+
+        trigger(dies(card, PLAYER1_ID, perm), choice);
+
+        var pending = gd.peekPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
+        assertThat(pending.effect()).isEqualTo(choice);
+        assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A leaves-the-battlefield entry records the permanent as it last existed whatever the effect is")
+    void leavesEntryRecordsTheLeavingPermanent() {
+        Card card = createCreature("Leaving Dude", 3, 3);
+        Permanent perm = new Permanent(card);
+        perm.setLastKnownPower(3);
+        perm.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
+
+        trigger(leaves(perm, PLAYER1_ID), new DrawCardEffect(1));
+
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.isNonTargeting()).isTrue();
+        assertThat(entry.getSourcePermanentId()).isEqualTo(perm.getId());
+        assertThat(entry.getEventValue()).isEqualTo(3);
+        assertThat(entry.getTriggeringPermanentPowerAtTrigger()).isEqualTo(3);
+        assertThat(entry.triggeringPermanentCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(entry.getTriggeringCardId()).isEqualTo(card.getId());
+        assertThat(entry.getDyingPermanentManaValue()).isEqualTo(card.getManaValue());
+    }
+
+    @Test
+    @DisplayName("The ability Dance of Many gives its token is controlled by the enchantment's controller")
+    void danceOfManyTokenAbilityIsTheEnchantments() {
+        Card token = createCreature("Token Copy", 2, 2);
+        Permanent tokenPermanent = new Permanent(token);
+        UUID enchantmentId = UUID.randomUUID();
+        tokenPermanent.setChosenPermanentId(enchantmentId);
+        when(gameQueryService.findPermanentController(gd, enchantmentId)).thenReturn(PLAYER2_ID);
+        var effect = new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.SACRIFICE_PARTNER);
+
+        trigger(leaves(tokenPermanent, PLAYER1_ID), effect);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(PLAYER2_ID);
+        assertThat(gd.stack.getFirst().getSourcePermanentSnapshot().getChosenPermanentId()).isEqualTo(enchantmentId);
     }
 }

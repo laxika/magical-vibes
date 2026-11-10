@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndRet
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsChosenPermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,7 +28,8 @@ public class DiabolicServitude extends Card {
                 .targetGraveyard(true)
                 .linkToSource(true)
                 .build());
-        addTrigger(Triggers.creatureDies(ObjectRelation.ANY), new ExileTriggeringCreatureAndReturnSourceToHandEffect());
+        addTrigger(Triggers.creatureDies(new PermanentIsChosenPermanentPredicate(), ObjectRelation.ANY),
+                new ExileTriggeringCreatureAndReturnSourceToHandEffect());
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new RemoveLinkedPermanentEffect(RemoveLinkedPermanentEffect.Mode.EXILE));
     }

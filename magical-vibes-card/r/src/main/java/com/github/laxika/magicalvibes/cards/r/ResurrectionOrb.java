@@ -21,7 +21,7 @@ public class ResurrectionOrb extends Card {
         // beginning of the next end step.
         addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED),
                 new RegisterDelayedReturnDyingCreatureUnderControlEffect(
-                        false, null, 0, null, null, false, true, false));
+                        false, null, 0, null, null, false, true));
 
         // Equip {4}.
         addActivatedAbility(new EquipActivatedAbility("{4}"));

@@ -5,6 +5,15 @@ import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
+import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -58,17 +67,16 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>effects that make abilities trigger an additional time (Teysa Karlov's, Panharmonicon-like ones) add
  *       copies.</li>
  * </ul>
- * An ability of one effect goes on the stack through {@link LegacyTriggerBindings}, with the event data its effect
- * needs bound in. Its options are the only trigger-level properties read: the source's own zone-change abilities
- * carry no trigger-only wrapper effects (step 14 of effect-slot-refactor.md). An ability of several
- * effects is one stack object (CR 603.3), with a "when this dies" ability's effects bound to the card that died: if it
- * targets, it waits for its targets as a
- * {@link PermanentChoiceContext.DeathTriggerTarget}, chosen through {@code TriggerTargetCollector} as it goes on
- * the stack and removed if none is legal (CR 603.3d), and otherwise it goes on the stack through
- * {@link GameData#enqueueTrigger}.
+ * An ability of the source's own zone change ("when this dies", "leaves the battlefield", "is put into a graveyard
+ * from anywhere", "when you sacrifice this") goes on the stack through one default, {@link #triggerOwn}, that records
+ * the event whatever its effects are; its options are the only trigger-level properties read (step 14 of
+ * effect-slot-refactor.md). It is one stack object (CR 603.3): a modal one waits for its mode (CR 603.3c), one that
+ * targets for its targets as it goes on the stack and is removed if none is legal (CR 603.3d), and any other goes on
+ * the stack through {@link GameData#enqueueTrigger}.
  * An ability that watches another object die ("whenever a creature you control dies", a relation other than
  * {@code THIS}) goes through {@link #triggerOnce} instead: its options are checked the same way, and its effects go on
- * the stack the way the old slot collector of its {@link CreatureDeathWatch} put them there. So does an ability of
+ * the stack through its {@link CreatureDeathWatch}'s collector, which records the death whatever they are. So does an
+ * ability of
  * one of the other zone-change families step 12a of effect-slot-refactor.md moved, through its
  * {@link ZoneChangeWatch}.
  * APNAP ordering (CR 603.3b) happens later, in {@code TriggeredAbilityQueueService.beginTriggerOrder}.
@@ -81,20 +89,46 @@ public class TriggeredAbilityStackService {
     private final GraveyardTargetingSupport graveyardTargetingSupport;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
-    private final LegacyTriggerBindings legacyTriggerBindings;
+    private final AmountEvaluationService amountEvaluationService;
 
     public TriggeredAbilityStackService(@Lazy ConditionEvaluationService conditionEvaluationService,
                                         @Lazy GameQueryService gameQueryService,
                                         @Lazy GraveyardTargetingSupport graveyardTargetingSupport,
                                         @Lazy GameLogService gameLogService,
                                         @Lazy TriggerCollectionService triggerCollectionService,
-                                        LegacyTriggerBindings legacyTriggerBindings) {
+                                        @Lazy AmountEvaluationService amountEvaluationService) {
         this.triggerCollectionService = triggerCollectionService;
         this.conditionEvaluationService = conditionEvaluationService;
         this.gameQueryService = gameQueryService;
         this.graveyardTargetingSupport = graveyardTargetingSupport;
         this.gameLogService = gameLogService;
-        this.legacyTriggerBindings = legacyTriggerBindings;
+        this.amountEvaluationService = amountEvaluationService;
+    }
+
+    /**
+     * Which kind of the source's own zone change triggered the ability. The constants are in the order the abilities
+     * of one event's moving objects are put on the stack, before their controllers order them (CR 603.3b).
+     */
+    public enum OwnZoneChange {
+        /** Left the battlefield for any zone (CR 603.6c). */
+        LEAVES,
+        /** Arrived in a zone other than the battlefield: a graveyard from anywhere, a hand, a library, the stack. */
+        ARRIVES,
+        /** Put into a graveyard from the battlefield (CR 700.4). */
+        DIES,
+        /** Sacrificed (CR 701.21a). */
+        SACRIFICED
+    }
+
+    /** The kind of the source's own zone change {@code trigger} is. */
+    public static OwnZoneChange ownZoneChangeOf(ZoneChangeTrigger trigger) {
+        if (trigger.causes().contains(ZoneChangeCause.SACRIFICE)) {
+            return OwnZoneChange.SACRIFICED;
+        }
+        if (trigger.from().equals(Set.of(Zone.BATTLEFIELD))) {
+            return trigger.to() == Zone.GRAVEYARD ? OwnZoneChange.DIES : OwnZoneChange.LEAVES;
+        }
+        return OwnZoneChange.ARRIVES;
     }
 
     /**
@@ -120,30 +154,21 @@ public class TriggeredAbilityStackService {
         if (limitReached(gameData, options.limit(), sourceId, limitKey)) {
             return;
         }
-        List<EffectRegistration> registrations = candidate.ability().effects();
-        LegacyTriggerBindings.Kind kind = LegacyTriggerBindings.kindOf(trigger);
-        boolean triggered;
-        if (registrations.size() == 1) {
-            triggered = triggerBound(gameData, candidate, event, kind, registrations.getFirst().effect(),
-                    interveningIf, options.limit());
-        } else {
-            triggered = triggerAll(gameData, candidate, event, kind, registrations, interveningIf, options);
-        }
-        if (triggered) {
-            markLimit(gameData, options.limit(), sourceId, limitKey);
-        }
+        triggerOwn(gameData, candidate, event, ownZoneChangeOf(trigger), interveningIf, options);
+        markLimit(gameData, options.limit(), sourceId, limitKey);
     }
 
     /**
      * Triggers {@code candidate}'s "whenever [an object] dies" ability once for {@code events}, the deaths of one
      * batch that met its trigger condition {@code trigger}: once for the one death of an ability that triggers for
      * each, once for all of them for "one or more" (CR 603.2c). Its options are checked as for any ability; its
-     * effects go on the stack the way the old slot collector of its {@link CreatureDeathWatch} put them there.
+     * effects go on the stack through its {@link CreatureDeathWatch}'s collector, which records the deaths whatever they
+     * are.
      */
     public void triggerOnce(GameData gameData, TriggerCandidate candidate, List<ZoneChangeEvent> events,
                             ZoneChangeTrigger trigger) {
         ZoneChangeWatch zoneChangeWatch = ZoneChangeWatch.of(candidate.ability(), trigger, candidate.zone());
-        if (zoneChangeWatch == null && LegacyTriggerBindings.kindOf(trigger) != LegacyTriggerBindings.Kind.DIES) {
+        if (zoneChangeWatch == null && ownZoneChangeOf(trigger) != OwnZoneChange.DIES) {
             return;
         }
         TriggerOptions options = candidate.ability().options();
@@ -228,77 +253,167 @@ public class TriggeredAbilityStackService {
     }
 
     /**
-     * An ability of one effect, as the old slot collectors put it on the stack: its event data bound and its targets
-     * or mode chosen by {@link LegacyTriggerBindings}.
+     * Puts {@code candidate}'s ability of its source's own zone change {@code event} on the stack as one object
+     * (CR 603.3), recording the event whatever its effects are: the source as it last existed on the battlefield (its
+     * snapshot, how it was cast) and as the triggering permanent with what was attached to it ("its counters", "that
+     * creature", CR 603.10a), its last-known power (the event value, and at least 0 as the power an amount reads), mana
+     * value and controller, the card it left as with the incarnation it has in its new zone ("return it", "if this card
+     * is in your graveyard", CR 400.7: the graveyard's, or the exile zone's for "is put into exile from the
+     * battlefield"), the card its linked ability exiled (CR 607.2a) and the "do this only once each turn" mark
+     * (CR 603.2h). A modal ability waits for its mode (CR 603.3c), one that targets for its targets (CR 603.3d), with
+     * the same record; a "you may" is asked as it resolves (CR 603.5). Effects that make an ability trigger an
+     * additional time add copies, unless it triggers only once each turn.
      */
-    private boolean triggerBound(GameData gameData, TriggerCandidate candidate, ZoneChangeEvent event,
-                                 LegacyTriggerBindings.Kind kind, CardEffect authored, Condition interveningIf,
-                                 TriggerLimit limit) {
-        CardEffect effect = withInterveningIf(interveningIf, authored, false);
-        // "This ability triggers only once each turn" can't be made to trigger an additional time (Clara Oswald).
-        int copies = limit == TriggerLimit.ONCE_EACH_TURN ? 1
+    private void triggerOwn(GameData gameData, TriggerCandidate candidate, ZoneChangeEvent event, OwnZoneChange kind,
+                            Condition interveningIf, TriggerOptions options) {
+        List<CardEffect> effects = new ArrayList<>();
+        for (EffectRegistration registration : candidate.ability().effects()) {
+            effects.add(withInterveningIf(interveningIf, registration.effect(), false));
+        }
+        Card card = candidate.sourceCard();
+        Permanent source = candidate.sourceAsPermanent();
+        UUID sourcePermanentId = candidate.sourcePermanent() == null ? null : candidate.sourceObjectId();
+        Permanent sourceSnapshot = candidate.sourcePermanent() == null ? null
+                : new Permanent(candidate.sourcePermanent());
+        UUID controllerId = abilityControllerId(gameData, candidate, effects);
+        boolean markOnAcceptance = options.limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
+        Permanent lastKnown = event.permanent();
+        int power = lastKnown == null ? 0
+                : lastKnown.getLastKnownPower() != null ? lastKnown.getLastKnownPower() : lastKnown.getEffectivePower();
+        Card movedCard = event.leftBattlefield() && lastKnown != null && lastKnown.getOriginalCard() != null
+                ? lastKnown.getOriginalCard() : card;
+        int copies = options.limit() == TriggerLimit.ONCE_EACH_TURN ? 1
                 : 1 + additionalTriggers(gameData, candidate, event, kind);
         int previousCopies = gameData.beginTriggeredAbilityCopies(copies);
         try {
-            return legacyTriggerBindings.trigger(gameData, candidate, event, kind, effect);
-        } finally {
-            gameData.restoreTriggeredAbilityCopies(previousCopies);
-        }
-    }
-
-    /** An ability of several effects: one stack object (CR 603.3), with targets chosen as it goes on the stack. */
-    private boolean triggerAll(GameData gameData, TriggerCandidate candidate, ZoneChangeEvent event,
-                               LegacyTriggerBindings.Kind kind, List<EffectRegistration> registrations,
-                               Condition interveningIf, TriggerOptions options) {
-        Permanent source = candidate.sourceAsPermanent();
-        UUID sourceId = candidate.sourceObjectId();
-        List<CardEffect> effects = new ArrayList<>(registrations.size());
-        for (EffectRegistration registration : registrations) {
-            effects.add(withInterveningIf(interveningIf, registration.effect(), false));
-        }
-        boolean markOnAcceptance = options.limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
-        int lastKnownPower = event.permanent() != null && event.permanent().getLastKnownPower() != null
-                ? event.permanent().getLastKnownPower() : 0;
-        int previousCopies = gameData.beginTriggeredAbilityCopies(
-                1 + additionalTriggers(gameData, candidate, event, kind));
-        try {
-            if (targets(effects)) {
+            ChooseOneEffect modes = effects.size() == 1 ? modesChosenAsItTriggers(effects.getFirst()) : null;
+            if (modes != null) {
+                gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                        card, controllerId, modes, sourcePermanentId));
+            } else if (targets(effects) && kind == OwnZoneChange.LEAVES) {
+                gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                        card, controllerId, effects, "leaves-the-battlefield", sourcePermanentId, sourceSnapshot
+                ).withTriggeringPermanent(lastKnown));
+            } else if (paidGraveyardTarget(effects)) {
+                // "You may pay {X}. If you do, return target card with mana value X" (Relentless Dead): the card is
+                // chosen with the payment's X as the ability goes on the stack.
+                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        card, controllerId, effects));
+            } else if (targets(effects)) {
                 PermanentChoiceContext.DeathTriggerTarget target = new PermanentChoiceContext.DeathTriggerTarget(
-                        candidate.sourceCard(), candidate.controllerId(), effects, lastKnownPower,
-                        new Permanent(source), null, null, false, markOnAcceptance);
+                        card, controllerId, effects, power, sourceSnapshot, null, null,
+                        effects.size() == 1, markOnAcceptance)
+                        .withGraveyardTargetMaxManaValue(graveyardTargetMaxManaValue(gameData, controllerId, effects,
+                                lastKnown != null ? lastKnown : source));
                 if (event.to() == Zone.GRAVEYARD) {
-                    target = target.withTriggeringCard(event.card().getId(),
-                            gameData.graveyardEntryVersion(event.card().getId()));
+                    target = target.withTriggeringCard(movedCard.getId(),
+                            gameData.graveyardEntryVersion(movedCard.getId()));
                 }
                 gameData.queueInteraction(event.leftBattlefield()
-                        ? target.withTriggeringPermanent(event.permanent(), event.attachments()) : target);
+                        ? target.withTriggeringPermanent(lastKnown, event.attachments()) : target);
             } else {
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, candidate.sourceCard(),
-                        candidate.controllerId(), candidate.sourceCard().getName() + "'s ability", effects,
-                        null, candidate.sourcePermanent() == null ? null : sourceId);
+                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                        card.getName() + "'s ability", effects, null, sourcePermanentId);
                 entry.setNonTargeting(true);
-                entry.setEventValue(lastKnownPower);
                 entry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
-                if (candidate.sourcePermanent() != null) {
-                    entry.setSourcePermanentSnapshot(new Permanent(candidate.sourcePermanent()));
+                if (sourceSnapshot != null) {
+                    entry.setSourcePermanentSnapshot(sourceSnapshot);
+                    // How it was cast, for an "if" read after it left: a blitz-only death trigger.
+                    entry.setAlternateCost(candidate.sourcePermanent().isAlternateCost());
                 }
+                entry.setEventValue(power);
+                entry.setTriggeringPermanentPowerAtTrigger(Math.max(0, power));
+                entry.setDyingPermanentManaValue(lastKnown != null ? lastKnown.getCard().getManaValue()
+                        : card.getManaValue());
                 if (event.to() == Zone.GRAVEYARD) {
-                    // "That card": a graveyard card that leaves and comes back before this resolves is a new object
-                    // (CR 400.7).
-                    entry.setTriggeringCard(event.card().getId(), gameData.graveyardEntryVersion(event.card().getId()));
+                    entry.setTriggeringCard(movedCard.getId(), gameData.graveyardEntryVersion(movedCard.getId()));
                 }
                 if (event.leftBattlefield()) {
-                    // "Its counters", "that creature": the permanent as it last existed on the battlefield
-                    // (CR 603.10a).
-                    entry.setTriggeringPermanent(event.permanent(), event.attachments());
+                    entry.setTriggeringPermanent(lastKnown, event.attachments());
+                    Card imprinted = gameData.getImprintedCard(card);
+                    if (imprinted != null) {
+                        entry.setLinkedExiledCardId(imprinted.getId());
+                    }
+                    if (event.to() == Zone.EXILE && exileOnly(candidate.ability())) {
+                        // "When this is put into exile from the battlefield" refers to the exile object it just
+                        // became (CR 400.7), so a later exile of the card is another object.
+                        entry.setTriggeringCardExileEntryVersion(
+                                gameData.exileEntryVersions.getOrDefault(card.getId(), 0L));
+                    }
                 }
                 gameData.enqueueTrigger(entry);
             }
         } finally {
             gameData.restoreTriggeredAbilityCopies(previousCopies);
         }
-        gameLogService.append(gameData, GameLog.abilityTriggers(candidate.sourceCard()));
-        return true;
+        if (kind == OwnZoneChange.LEAVES || kind == OwnZoneChange.ARRIVES) {
+            gameLogService.append(gameData, GameLog.abilityTriggers(card));
+        }
+    }
+
+    /**
+     * The modal whose mode the controller chooses as {@code effect}'s ability is put on the stack (CR 603.3c): a
+     * trigger-time modal's, or a "choose one" (Ao, the Dawn Sky's "When Ao dies, choose one"); {@code null} for none.
+     */
+    private static ChooseOneEffect modesChosenAsItTriggers(CardEffect effect) {
+        ChooseOneEffect modes = TriggeredModalEffect.choiceMadeAsTriggered(effect);
+        return modes != null ? modes : effect instanceof ChooseOneEffect chooseOne ? chooseOne : null;
+    }
+
+    /**
+     * Whether the ability is a "you may pay" whose paid effect targets only a graveyard card, chosen with the
+     * payment's X as it goes on the stack (Relentless Dead's "you may pay {X}. If you do, return another target
+     * Zombie creature card with mana value X").
+     */
+    private static boolean paidGraveyardTarget(List<CardEffect> effects) {
+        return effects.size() == 1 && effects.getFirst() instanceof MayPayManaEffect mayPay
+                && mayPay.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                && !mayPay.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                && !mayPay.targetSpec().admits(TargetPredicate.Kind.PLAYER);
+    }
+
+    /**
+     * The controller of {@code candidate}'s ability: its source's controller, but for the ability Dance of Many gives
+     * its token ("when the token leaves the battlefield, sacrifice Dance of Many"), which is the enchantment's and
+     * controlled by the enchantment's controller while it is on the battlefield. The engine makes that ability, so it
+     * rides on the token (effect-slot-refactor.md step 16).
+     */
+    private UUID abilityControllerId(GameData gameData, TriggerCandidate candidate, List<CardEffect> effects) {
+        if (effects.size() == 1 && effects.getFirst() instanceof RemoveLinkedPermanentEffect remove
+                && remove.mode() == RemoveLinkedPermanentEffect.Mode.SACRIFICE_PARTNER
+                && candidate.sourcePermanent() != null
+                && candidate.sourcePermanent().getChosenPermanentId() != null) {
+            UUID partnerControllerId = gameQueryService.findPermanentController(gameData,
+                    candidate.sourcePermanent().getChosenPermanentId());
+            if (partnerControllerId != null) {
+                return partnerControllerId;
+            }
+        }
+        return candidate.controllerId();
+    }
+
+    /** Whether every leaves-the-battlefield condition of {@code ability} is a move to exile. */
+    private static boolean exileOnly(TriggeredAbility ability) {
+        return ability.conditions().stream().map(TriggerCondition::trigger)
+                .filter(ZoneChangeTrigger.class::isInstance).map(ZoneChangeTrigger.class::cast)
+                .filter(ZoneChangeTrigger::leavesBattlefield)
+                .allMatch(trigger -> trigger.to() == Zone.EXILE);
+    }
+
+    /**
+     * The mana value limit of the graveyard target of {@code effects} ({@code ReturnCardFromGraveyardEffect
+     * .dynamicMaxManaValue()}), evaluated as the ability triggers with {@code lastKnown}, the object that moved as it
+     * last existed, as the amount's source, so it looks back at the others that died with it (CR 603.10a): Soulshift X
+     * counts the Kodama, "with lesser mana value" is the dying object's. The choice carries it to the stack entry.
+     * {@code null} when the effects have no such limit.
+     */
+    private Integer graveyardTargetMaxManaValue(GameData gameData, UUID controllerId, List<CardEffect> effects,
+                                                Permanent lastKnown) {
+        var target = graveyardTargetingSupport.findTarget(effects);
+        if (target == null || target.maximumManaValue() == null) {
+            return null;
+        }
+        return amountEvaluationService.evaluateAtDeath(gameData, target.maximumManaValue(), controllerId, lastKnown);
     }
 
     /**
@@ -415,7 +530,7 @@ public class TriggeredAbilityStackService {
      * count them. The death of a creature counts the creature-death ones too, except for "when you sacrifice this".
      */
     private int additionalTriggers(GameData gameData, TriggerCandidate candidate, ZoneChangeEvent event,
-                                   LegacyTriggerBindings.Kind kind) {
+                                   OwnZoneChange kind) {
         Permanent source = candidate.sourceAsPermanent();
         boolean creatureDied = event.died() && event.permanent() != null
                 && event.permanent().getCard().hasType(CardType.CREATURE);
@@ -425,7 +540,7 @@ public class TriggeredAbilityStackService {
                 event.controllerId(), 0, 0, event.permanent().getId(), event.permanent()) : null;
         int additional = gameQueryService.countAdditionalTriggeredAbilityTriggers(
                 gameData, candidate.controllerId(), source, false, context);
-        if (creatureDied && kind != LegacyTriggerBindings.Kind.SACRIFICED) {
+        if (creatureDied && kind != OwnZoneChange.SACRIFICED) {
             additional += gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggers(
                     gameData, candidate.controllerId(), source);
         }

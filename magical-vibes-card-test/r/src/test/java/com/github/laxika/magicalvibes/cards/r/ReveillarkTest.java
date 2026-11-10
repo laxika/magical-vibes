@@ -22,7 +22,10 @@ class ReveillarkTest extends BaseCardTest {
 
     private void killReveillark(Permanent reveillark) {
         harness.inMutationScope(
-                () -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, reveillark));
+                () -> {
+                    harness.getPermanentRemovalService().removePermanentToGraveyard(gd, reveillark);
+                    harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd);
+                });
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -213,7 +216,10 @@ class ReveillarkTest extends BaseCardTest {
         Permanent reveillark = harness.addToBattlefieldAndReturn(player1, new Reveillark());
 
         harness.inMutationScope(
-                () -> harness.getPermanentRemovalService().removePermanentToExile(gd, reveillark));
+                () -> {
+                    harness.getPermanentRemovalService().removePermanentToExile(gd, reveillark);
+                    harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd);
+                });
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);

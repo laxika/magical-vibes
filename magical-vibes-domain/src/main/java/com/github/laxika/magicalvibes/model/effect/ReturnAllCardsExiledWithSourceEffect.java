@@ -27,7 +27,8 @@ import java.util.Set;
  * @param grantedSubtype optional subtype added to each returned permanent
  * @param enteringCounterType optional counter put on each returned permanent as it enters
  * @param enterTapped whether returned permanents enter tapped
- * @param useLinkedSource whether the death trigger uses the leaving permanent's linked source
+ * @param useLinkedSource whether the cards are those exiled with the permanent the source is linked to (its chosen
+ *        permanent as the source last existed), not with the source itself
  * @param sacrificeAtEndStep whether returned permanents are sacrificed at the beginning of the next end step
  * @param enterFaceDown whether returned permanents enter face down as 2/2 artifact creatures;
  *                      {@code grantedSubtype}, when present, is included among their face-down subtypes

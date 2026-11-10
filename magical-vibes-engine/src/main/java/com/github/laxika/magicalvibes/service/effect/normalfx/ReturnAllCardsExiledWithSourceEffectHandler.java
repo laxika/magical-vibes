@@ -58,7 +58,11 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
                          ReturnAllCardsExiledWithSourceEffect returnEffect,
                          UUID excludedCardId) {
         UUID sourcePermanentId = entry.getSourcePermanentId();
-        if (sourcePermanentId == null && entry.getCard() != null) {
+        if (returnEffect.useLinkedSource()) {
+            // The cards exiled with the permanent the source is linked to, read from the source as it last existed.
+            Permanent linkingSource = entry.getSourcePermanentSnapshot();
+            sourcePermanentId = linkingSource == null ? null : linkingSource.getChosenPermanentId();
+        } else if (sourcePermanentId == null && entry.getCard() != null) {
             sourcePermanentId = entry.getCard().getId();
         }
         if (sourcePermanentId == null) {
