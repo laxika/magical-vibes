@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -16,7 +17,7 @@ import java.util.List;
 public class SokenzanSpellblade extends Card {
 
     public SokenzanSpellblade() {
-        addTrigger(Triggers.blocks(), new BushidoEffect(1));
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, new BushidoEffect(1));
         addTrigger(Triggers.becomesBlocked(), new BushidoEffect(1));
         addActivatedAbility(new ActivatedAbility(
                 false,

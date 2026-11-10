@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -14,7 +15,7 @@ public class HandOfCruelty extends Card {
 
     public HandOfCruelty() {
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
-        addTrigger(Triggers.blocks(), new BushidoEffect(1));
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, new BushidoEffect(1));
         addTrigger(Triggers.becomesBlocked(), new BushidoEffect(1));
     }
 }

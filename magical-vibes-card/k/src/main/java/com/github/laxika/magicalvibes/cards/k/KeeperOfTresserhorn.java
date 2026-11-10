@@ -14,7 +14,7 @@ public class KeeperOfTresserhorn extends Card {
         // Whenever this creature attacks and isn't blocked, it assigns no combat damage this
         // turn and defending player loses 2 life. The trigger is non-targeting; the defending
         // player is baked in as the stack entry's targetId.
-        addTrigger(Triggers.attacksUnblocked(), new AssignNoCombatDamageEffect());
-        addTrigger(Triggers.attacksUnblocked(), new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.attacksUnblocked(), new AssignNoCombatDamageEffect(),
+                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PLAYER));
     }
 }

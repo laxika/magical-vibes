@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class TakenosCavalry extends Card {
 
     public TakenosCavalry() {
         // Bushido 1
-        addTrigger(Triggers.blocks(), new BushidoEffect(1));
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, new BushidoEffect(1));
         addTrigger(Triggers.becomesBlocked(), new BushidoEffect(1));
 
         // {T}: This creature deals 1 damage to target attacking or blocking Spirit.

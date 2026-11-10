@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -13,7 +14,7 @@ import java.util.Set;
 public class HandOfHonor extends Card {
 
     public HandOfHonor() {
-        addTrigger(Triggers.blocks(), new BushidoEffect(1));
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, new BushidoEffect(1));
         addTrigger(Triggers.becomesBlocked(), new BushidoEffect(1));
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
     }

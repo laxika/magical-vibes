@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEf
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BOK", collectorNumber = "104")
@@ -20,7 +21,7 @@ public class FumikoTheLowblood extends Card {
     public FumikoTheLowblood() {
         // Bushido X, where X is the number of attacking creatures (counted as the trigger resolves).
         var attackingCreatures = new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER);
-        addTrigger(Triggers.blocks(), new BushidoEffect(attackingCreatures));
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, new BushidoEffect(attackingCreatures));
         addTrigger(Triggers.becomesBlocked(), new BushidoEffect(attackingCreatures));
 
         // Creatures your opponents control attack each combat if able.

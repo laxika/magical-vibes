@@ -26,9 +26,7 @@ public class MasterOfCruelties extends Card {
         // the trigger's non-targeting targetId.
         addTrigger(Triggers.attacksUnblocked(),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceAttackingPlayer()),
-                new SetLifeTotalEffect(1, SetLifeTotalRecipient.TARGET_PLAYER));
-        addTrigger(Triggers.attacksUnblocked(),
-                TriggerOptions.DEFAULT.withEventCondition(new SourceAttackingPlayer()),
+                new SetLifeTotalEffect(1, SetLifeTotalRecipient.TARGET_PLAYER),
                 AssignNoCombatDamageEffect.thisCombat());
     }
 }

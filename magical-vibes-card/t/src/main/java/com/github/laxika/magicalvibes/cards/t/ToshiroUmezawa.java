@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "BOK", collectorNumber = "89")
@@ -16,7 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ToshiroUmezawa extends Card {
 
     public ToshiroUmezawa() {
-        addTrigger(Triggers.blocks(), new BushidoEffect(1));
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, new BushidoEffect(1));
         addTrigger(Triggers.becomesBlocked(), new BushidoEffect(1));
         // Whenever a creature an opponent controls dies, you may cast target instant card from your
         // graveyard. If that spell would be put into a graveyard, exile it instead.

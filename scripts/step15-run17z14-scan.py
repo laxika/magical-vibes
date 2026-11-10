@@ -30,6 +30,8 @@ DONE = {
     "MyriadConstruct", "TeysaEnvoyOfGhosts", "RayneAcademyChancellor",
     # Run 17z14e (scripts/step15-run17z14e-cards.py): the attack collectors read each ability whole.
     "KarazikarTheEyeTyrant", "OathOfKaya", "TenuredOilcaster",
+    # Run 17z14f (scripts/step15-run17z14f-cards.py): the block-step collectors read each ability whole.
+    "KeeperOfTresserhorn", "LimDLsPaladin", "MasterOfCruelties",
 }
 # Run 17z14b: read against their Oracle text; their abilities on the listed trigger print apart (Class levels,
 # vanishing beside its own ability, two cast abilities).
@@ -45,6 +47,10 @@ SEPARATE = {
     "AzulaOnTheHunt", "AzulaRuthlessFirebender", "BoilingRockRioter", "ScurryOfSquirrels",
     "AureliaTheLawAbove", "ChampionsFromBeyond", "ReapersTalisman",
     "CatchOfTheDay", "TyphoidMaryFractured", "LuluForgetfulHollyphant",
+    # Run 17z14f: No Quarter prints two abilities, "whenever a creature becomes blocked by a creature with lesser
+    # power, destroy the blocking creature" and "whenever a creature blocks a creature with lesser power, destroy the
+    # attacking creature".
+    "NoQuarter",
 }
 STEP = re.compile(r"Triggers\.(upkeep|drawStep|endStep|beginningOfCombat|precombatMainPhase|postcombatMainPhase"
                   r"|secondMainPhase|endOfCombat)\b")

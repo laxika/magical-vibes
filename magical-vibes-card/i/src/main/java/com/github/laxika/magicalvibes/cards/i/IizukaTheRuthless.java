@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -18,7 +19,7 @@ import java.util.List;
 public class IizukaTheRuthless extends Card {
 
     public IizukaTheRuthless() {
-        addTrigger(Triggers.blocks(), new BushidoEffect(2));
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, new BushidoEffect(2));
         addTrigger(Triggers.becomesBlocked(), new BushidoEffect(2));
 
         addActivatedAbility(new ActivatedAbility(

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SokenzanRenegade extends Card {
 
     public SokenzanRenegade() {
-        addTrigger(Triggers.blocks(), new BushidoEffect(1));
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, new BushidoEffect(1));
         addTrigger(Triggers.becomesBlocked(), new BushidoEffect(1));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new APlayerHasMoreCardsInHandThanEachOtherPlayer()),

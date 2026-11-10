@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.List;
 public class SenseiGoldenTail extends Card {
 
     public SenseiGoldenTail() {
-        addTrigger(Triggers.blocks(), new BushidoEffect(1));
+        addTrigger(Triggers.blocks(), TriggerOptions.ONE_OR_MORE, new BushidoEffect(1));
         addTrigger(Triggers.becomesBlocked(), new BushidoEffect(1));
         addActivatedAbility(new ActivatedAbility(
                 true,
@@ -29,7 +30,7 @@ public class SenseiGoldenTail extends Card {
                 List.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.TRAINING),
                         new GrantEffectToTargetEffect(
-                                new TriggeredAbility(Triggers.blocks(),
+                                new TriggeredAbility(Triggers.blocks(), TriggerOptions.ONE_OR_MORE,
                                 new BushidoEffect(1)),
                                 EffectDuration.PERMANENT,
                                 false),

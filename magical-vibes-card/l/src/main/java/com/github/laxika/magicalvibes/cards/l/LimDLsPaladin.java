@@ -25,7 +25,7 @@ public class LimDLsPaladin extends Card {
         // Whenever this creature attacks and isn't blocked, it assigns no combat damage this
         // turn and defending player loses 4 life. The defending player is the trigger's
         // non-targeting targetId.
-        addTrigger(Triggers.attacksUnblocked(), new AssignNoCombatDamageEffect());
-        addTrigger(Triggers.attacksUnblocked(), new LoseLifeEffect(4, LoseLifeRecipient.TARGET_PLAYER));
+        addTrigger(Triggers.attacksUnblocked(), new AssignNoCombatDamageEffect(),
+                new LoseLifeEffect(4, LoseLifeRecipient.TARGET_PLAYER));
     }
 }
