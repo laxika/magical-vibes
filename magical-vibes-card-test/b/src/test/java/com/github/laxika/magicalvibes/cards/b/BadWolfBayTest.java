@@ -56,6 +56,14 @@ class BadWolfBayTest extends BaseCardTest {
     }
 
     @Test
+    void chaosAbilityIsOneStackObject() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).hasSize(2);
+    }
+
+    @Test
     void chaosPreventsTheDelayedReturnAndPlaneswalks() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 

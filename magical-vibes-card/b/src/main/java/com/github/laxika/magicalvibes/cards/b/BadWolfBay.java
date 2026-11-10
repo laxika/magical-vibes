@@ -15,7 +15,7 @@ public class BadWolfBay extends Card {
     public BadWolfBay() {
         target(TargetFilters.creature(), 0, 1).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new ExileTargetCreatureAndReturnAtNextEndStepEffect());
-        addTrigger(Triggers.chaosEnsues(), new PlaneswalkEffect());
-        addTrigger(Triggers.chaosEnsues(), new ShuffleCreaturesEnteringFromExileEffect());
+        // "When chaos ensues, cards can't enter from exile this turn. Then planeswalk." is one ability.
+        addTrigger(Triggers.chaosEnsues(), new ShuffleCreaturesEnteringFromExileEffect(), new PlaneswalkEffect());
     }
 }

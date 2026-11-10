@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.condition.ExactlyAttackers;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -22,12 +23,14 @@ public class ValorsReach extends Card {
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(new ExactlyAttackers(2)),
                 new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.DECLARED_ATTACKERS));
-        target(TargetFilters.creatureYouControl(), 0, 2)
-                .addTrigger(Triggers.chaosEnsues(),
-                        new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS));
+        // One ability: "untap up to two target creatures your team controls. If it's a main phase, there is an
+        // additional combat phase after this phase, followed by an additional main phase."
+        CardEffect untap = new UntapPermanentsEffect(TapUntapScope.ALL_TARGETS);
         addTrigger(Triggers.chaosEnsues(),
+                untap,
                 new ConditionalEffect(
                         new ControllerMainPhase(),
                         new AdditionalCombatMainPhaseEffect(1)));
+        target(TargetFilters.creatureYouControl(), 0, 2).bindEffect(untap);
     }
 }

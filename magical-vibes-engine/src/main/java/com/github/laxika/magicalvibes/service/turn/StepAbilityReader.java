@@ -27,9 +27,9 @@ import java.util.UUID;
  * intervening "if" (CR 603.4) are true in the reader's {@link ConditionContext} (its source, its controller and, for
  * "that player", the player whose step it is), and while "this ability triggers only once" hasn't been used up; the
  * intervening "if" is wrapped around each of its effects as a {@link ConditionalEffect}, which checks it again as the
- * ability resolves. Each ability that triggers is a {@link Read}, which the step readers route whole, as one stack
- * object (CR 603.3): to its target choice with all its effects, or onto the stack as written. The event condition
- * isn't checked again.
+ * ability resolves. Each ability that triggers is a {@link Read}, which the step readers and the planar reader route
+ * whole, as one stack object (CR 603.3): to its target choice with all its effects, or onto the stack as written. The
+ * event condition isn't checked again.
  */
 public final class StepAbilityReader {
 
@@ -72,18 +72,6 @@ public final class StepAbilityReader {
     }
 
     /**
-     * The effects of the abilities of {@code abilities} that trigger now, in order, judged in {@code context} as
-     * {@link #triggeredEffects(GameData, TriggeredAbility, ConditionContext)} says.
-     */
-    public List<CardEffect> effects(GameData gameData, List<TriggeredAbility> abilities, ConditionContext context) {
-        List<CardEffect> effects = new ArrayList<>();
-        for (Read read : reads(gameData, abilities, context)) {
-            effects.addAll(read.effects());
-        }
-        return effects;
-    }
-
-    /**
      * One triggered ability as it triggers now: the ability, which names its granting permanent
      * ({@link TriggeredAbility#grantingPermanentId()}) and its own target filter ({@link TriggeredAbility#targetFilter()}),
      * and the effects it puts on the stack as one object (CR 603.3), its intervening "if" wrapped around each.
@@ -98,8 +86,9 @@ public final class StepAbilityReader {
 
     /**
      * Each ability of {@code abilities} that triggers now, in order, with the effects it puts on the stack, judged in
-     * {@code context} as {@link #triggeredEffects(GameData, TriggeredAbility, ConditionContext)} says. A step reader
-     * routes each one whole: to its target choice with all its effects when it targets, or onto the stack as written.
+     * {@code context} as {@link #triggeredEffects(GameData, TriggeredAbility, ConditionContext)} says. A step reader (or
+     * the planar reader) routes each one whole: to its target choice with all its effects when it targets, or onto the
+     * stack as written.
      */
     public List<Read> reads(GameData gameData, List<TriggeredAbility> abilities, ConditionContext context) {
         List<Read> reads = new ArrayList<>();

@@ -356,96 +356,121 @@ public class PlanechaseService {
     }
 
     /**
-     * Puts the planar object's abilities with {@code trigger} on the stack, under {@code controller}. A step or phase
-     * ability's options are judged as it triggers ({@link StepAbilityReader}), and so are a planar ability's
+     * Puts the planar object's abilities with {@code trigger} on the stack, under {@code controller}, each one whole as
+     * one stack object of its declared effects (CR 603.3), in the order they were written. A step or phase ability's
+     * options are judged as it triggers ({@link StepAbilityReader}), and so are a planar ability's
      * ({@link MiscAbilityReader}) intervening "if" and event condition (CR 603.4, CR 603.2).
      */
     public void trigger(GameData game, PlanarObject object, Trigger trigger, UUID controller) {
         Card card = object.getCard();
         ConditionContext context = ConditionContext.forCard(card, controller);
-        List<CardEffect> effects = trigger instanceof StepTrigger
-                ? new StepAbilityReader(conditionEvaluationService).effects(game, card.getTriggeredAbilities(trigger),
-                        context)
-                : MiscAbilityReader.effects(conditionEvaluationService.judge(game, context)
-                        .filter(card.getTriggeredAbilities(trigger)), trigger);
-        trigger(game, object, effects, controller);
+        for (List<CardEffect> ability : triggeredAbilities(game, card, trigger, context)) {
+            triggerAbility(game, object, ability, controller);
+        }
     }
 
-    private void trigger(GameData game, PlanarObject object, List<CardEffect> effects, UUID controller) {
+    /** The effects of each ability of {@code card} with {@code trigger} that triggers now, one list per ability. */
+    private List<List<CardEffect>> triggeredAbilities(GameData game, Card card, Trigger trigger,
+                                                      ConditionContext context) {
+        if (trigger instanceof StepTrigger) {
+            return new StepAbilityReader(conditionEvaluationService)
+                    .reads(game, card.getTriggeredAbilities(trigger), context).stream()
+                    .map(StepAbilityReader.Read::effects).toList();
+        }
+        List<List<CardEffect>> abilities = new ArrayList<>();
+        for (TriggeredAbility ability : conditionEvaluationService.judge(game, context)
+                .filter(card.getTriggeredAbilities(trigger))) {
+            List<CardEffect> effects = MiscAbilityReader.effects(List.of(ability), trigger);
+            if (!effects.isEmpty()) {
+                abilities.add(effects);
+            }
+        }
+        return abilities;
+    }
+
+    /**
+     * Puts one triggered ability of the planar object, {@code effects}, on the stack as one object (CR 603.3): its
+     * targets are chosen as it is put on the stack, with all its effects (CR 603.3d) — a plane whose target groups take
+     * several or optional targets walks the ability's groups slot by slot, a graveyard target goes to the graveyard
+     * choice, any other to the any-target choice — and an untargeted ability goes on the stack as written.
+     */
+    private void triggerAbility(GameData game, PlanarObject object, List<CardEffect> effects, UUID controller) {
         Card card = object.getCard();
         boolean needsSlotBySlotTargetSelection = card.getTargetGroups().size() > 1
                 || card.getTargetGroups().stream().anyMatch(target -> target.getMaxTargets() > 1
                 || target.getMinTargets() == 0 || target.getDynamicMinTargets() != null);
-        boolean batchesWholeAbility = needsSlotBySlotTargetSelection
-                && effects.stream().anyMatch(effect -> card.getEffectTargetIndex(effect) >= 0);
-        List<CardEffect> multiTargetEffects = batchesWholeAbility ? effects : List.of();
-        boolean multiTargetQueued = false;
-
-        for (CardEffect effect : effects) {
-            if (batchesWholeAbility && card.getEffectTargetIndex(effect) < 0) {
-                continue;
-            }
-            if (needsSlotBySlotTargetSelection && card.getEffectTargetIndex(effect) >= 0) {
-                if (isStandaloneSingleTargetEffect(card, effect, effects)) {
-                    int targetGroupIndex = card.getEffectTargetIndex(effect);
-                    TargetFilter targetFilter = card.getTargetGroups().get(targetGroupIndex).getFilter();
-                    boolean playerTargetOnly = effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                            && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
-                    game.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            card, controller, List.of(effect), playerTargetOnly, targetFilter,
-                            0, null, null, false, null, null, controller, object.copy()));
-                    continue;
-                }
-                if (multiTargetQueued) {
-                    continue;
-                }
+        if (needsSlotBySlotTargetSelection && effects.stream().anyMatch(card::hasEffectTargetIndex)) {
+            if (isStandaloneSingleTargetAbility(card, effects)) {
+                queueAnyTarget(game, object, effects, controller,
+                        card.getTargetGroups().get(card.getEffectTargetIndex(effects.getFirst())).getFilter());
+            } else {
                 game.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        card, controller, multiTargetEffects, null, List.of(), 0, 0,
+                        card, controller, effects, null, List.of(), 0, 0,
                         List.of(), 0, List.of(), false, null, null, 0, object.copy()));
-                multiTargetQueued = true;
-                continue;
             }
-            boolean targetsGraveyard = effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD);
-            boolean targetsOtherZone = effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                    || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    || effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD)
-                    || effect.targetSpec().admits(TargetPredicate.Kind.SPELL);
-            if (targetsGraveyard && !targetsOtherZone) {
-                game.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        card, controller, List.of(effect), null, 1));
-                continue;
-            }
-            if (effect.targetSpec().targetPredicate() != null) {
-                boolean playerTargetOnly = effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                        && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
-                int targetGroupIndex = card.getEffectTargetIndex(effect);
-                TargetFilter targetFilter = targetGroupIndex >= 0
-                        ? card.getTargetGroups().get(targetGroupIndex).getFilter()
-                        : card.getTargetGroups().stream()
-                                .noneMatch(target -> card.bindsEffectToTargetGroup(target.getIndex()))
-                                ? card.getTargetFilter() : null;
-                game.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        card, controller, List.of(effect), playerTargetOnly, targetFilter,
-                        0, null, null, false, null, null, controller, object.copy()));
-                continue;
-            }
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controller,
-                    card.getName() + "'s ability", List.of(effect));
-            // "Select target player at random" is a target chosen when the ability is put on the stack.
-            if (effect instanceof RandomPlayerDiscardsAndLosesLifeIfLandEffect && !game.playerIds.isEmpty()) {
-                List<UUID> players = new ArrayList<>(game.playerIds);
-                entry.setTargetId(players.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(players.size())));
-            }
-            entry.setSourcePlanarObject(object.copy());
-            game.enqueueTrigger(entry);
+            return;
         }
+        boolean targetsGraveyard = effects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+        boolean targetsOtherZone = effects.stream().anyMatch(effect ->
+                effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.SPELL));
+        if (targetsGraveyard && !targetsOtherZone) {
+            game.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    card, controller, effects, null, 1));
+            return;
+        }
+        CardEffect targeted = effects.stream().filter(effect -> effect.targetSpec().targetPredicate() != null)
+                .findFirst().orElse(null);
+        if (targeted != null) {
+            int targetGroupIndex = card.getEffectTargetIndex(targeted);
+            TargetFilter targetFilter = targetGroupIndex >= 0
+                    ? card.getTargetGroups().get(targetGroupIndex).getFilter()
+                    : card.getTargetGroups().stream()
+                            .noneMatch(target -> card.bindsEffectToTargetGroup(target.getIndex()))
+                            ? card.getTargetFilter() : null;
+            queueAnyTarget(game, object, effects, controller, targetFilter);
+            return;
+        }
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controller,
+                card.getName() + "'s ability", effects);
+        // "Select target player at random" is a target chosen when the ability is put on the stack.
+        if (effects.stream().anyMatch(RandomPlayerDiscardsAndLosesLifeIfLandEffect.class::isInstance)
+                && !game.playerIds.isEmpty()) {
+            List<UUID> players = new ArrayList<>(game.playerIds);
+            entry.setTargetId(players.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(players.size())));
+        }
+        entry.setSourcePlanarObject(object.copy());
+        game.enqueueTrigger(entry);
     }
 
-    private boolean isStandaloneSingleTargetEffect(Card card, CardEffect effect, List<CardEffect> effects) {
-        if (effects.size() != 1 || effect.targetSpec() == TargetSpec.NONE) {
+    /**
+     * Queues the any-target choice of the planar ability {@code effects}, a player alone offered when every effect that
+     * targets admits only a player.
+     */
+    private void queueAnyTarget(GameData game, PlanarObject object, List<CardEffect> effects, UUID controller,
+                                TargetFilter targetFilter) {
+        List<CardEffect> targeting = effects.stream()
+                .filter(effect -> effect.targetSpec() != TargetSpec.NONE).toList();
+        boolean playerTargetOnly = !targeting.isEmpty() && targeting.stream().allMatch(effect ->
+                effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        game.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                object.getCard(), controller, effects, playerTargetOnly, targetFilter,
+                0, null, null, false, null, null, controller, object.copy()));
+    }
+
+    /**
+     * Whether {@code effects}, one ability of a plane whose targets are chosen slot by slot, is one effect with one
+     * target of its own bound group, which the any-target choice takes.
+     */
+    private boolean isStandaloneSingleTargetAbility(Card card, List<CardEffect> effects) {
+        if (effects.size() != 1 || effects.getFirst().targetSpec() == TargetSpec.NONE) {
             return false;
         }
-        int targetGroupIndex = card.getEffectTargetIndex(effect);
+        int targetGroupIndex = card.getEffectTargetIndex(effects.getFirst());
         if (targetGroupIndex < 0 || targetGroupIndex >= card.getTargetGroups().size()) {
             return false;
         }

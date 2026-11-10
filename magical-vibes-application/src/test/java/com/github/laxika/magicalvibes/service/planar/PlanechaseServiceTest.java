@@ -142,6 +142,48 @@ class PlanechaseServiceTest extends BaseCardTest {
     }
 
     @Test
+    void planeswalkAbilityOfTwoEffectsIsOneStackObject() {
+        Card plane = fixture("Test plane", CardType.PLANE);
+        plane.addTrigger(Triggers.planeswalkToThis(), new DrawCardEffect(1), new GainLifeEffect(2));
+        gd.planechase.deck.addFirst(plane);
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.inMutationScope(() -> planar.reveal(gd, true));
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
+    void upkeepAbilityOfTwoEffectsIsOneStackObject() {
+        Card plane = fixture("Test plane", CardType.PLANE);
+        plane.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DrawCardEffect(1), new GainLifeEffect(2));
+        faceUp(plane);
+        var steps = GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.service.turn.StepTriggerService.class);
+        harness.inMutationScope(() -> steps.handleUpkeepTriggers(gd));
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).hasSize(2);
+    }
+
+    @Test
+    void targetedChaosAbilityTakesItsUntargetedEffectOntoOneStackObject() {
+        Card plane = fixture("Test plane", CardType.PLANE);
+        plane.addTrigger(Triggers.chaosEnsues(), new DealDamageToAnyTargetEffect(2), new GainLifeEffect(2));
+        faceUp(plane);
+        harness.inMutationScope(() -> planar.chaos(gd));
+        assertThat(gd.stack).isEmpty();
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class).processNextSpellTargetTrigger(gd));
+        harness.handlePermanentChosen(player1, player2.getId());
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).hasSize(2);
+        harness.passBothPriorities();
+        harness.assertLife(player2, 18);
+        harness.assertLife(player1, 22);
+    }
+
+    @Test
     void targetedEncounterIsNotSkippedWhileWaitingForItsTarget() {
         gd.planechase.deck.addFirst(fixture("Test phenomenon", CardType.PHENOMENON,
                 Triggers.encounterThis(), new DealDamageToAnyTargetEffect(2)));

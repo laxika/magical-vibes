@@ -15,7 +15,6 @@ public class WindriddlePalaces extends Card {
     public WindriddlePalaces() {
         addStaticEffect(PlayWithTopCardRevealedEffect.forAllPlayers());
         addStaticEffect(new AllowPlayFromAnyLibraryTopEffect());
-        addTrigger(Triggers.chaosEnsues(), new MillEffect(1, MillRecipient.CONTROLLER));
-        addTrigger(Triggers.chaosEnsues(), new MillEffect(1, MillRecipient.EACH_OPPONENT));
+        addTrigger(Triggers.chaosEnsues(), new MillEffect(1, MillRecipient.EACH_PLAYER));
     }
 }

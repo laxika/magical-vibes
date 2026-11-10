@@ -67,6 +67,16 @@ class WindriddlePalacesTest extends BaseCardTest {
     }
 
     @Test
+    void chaosAbilityIsOneStackObject() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears()));
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
     void chaosMakesEachPlayerMillOne() {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setLibrary(player2, List.of(new GrizzlyBears()));

@@ -110,8 +110,14 @@ ROWS = [
 # and routes it as one stack object; the readers' merges by target kind and their per-effect splits are gone, and so
 # are the beginning-of-combat reader's untargeted "you may" branch and its Equipment skip. The audit sees no grouping:
 # the run's Findings list what was read.
+# Row 17z13e8d (run 17z14): the planar reader (`PlanechaseService.trigger`) reads each ability whole
+# (`StepAbilityReader.reads`, one `MiscAbilityReader` read per planeswalk, encounter or chaos ability) and routes it as
+# one stack object; `StepAbilityReader.effects` is gone. Run 17z14's independent verification found the combat, block,
+# combat-damage and other collectors outside this audit's scope splitting and merging abilities (its Findings and rows
+# 17z14b on): this audit reads class-keyed handlers and reader branches, not how a collector groups an ability's
+# effects onto the stack.
 DONE_ROWS = {"17z13e2", "17z13e3", "17z13e4", "17z13e5", "17z13e5b", "17z13e6", "17z13e7", "17z13e8", "17z13e8b",
-             "17z13e8c", "17z13e9"}
+             "17z13e8c", "17z13e8d", "17z13e9"}
 
 # The reader branches keyed by an effect's class (file, effect class) -> verdict. Row 17z13e's three (the your-upkeep
 # `SurveilEffect`, the your-draw-step `MayEffect` and Haphazard Bombardment's branches) are gone. Run 17z13e8 read the

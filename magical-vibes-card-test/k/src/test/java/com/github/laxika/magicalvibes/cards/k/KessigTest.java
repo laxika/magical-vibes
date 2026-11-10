@@ -44,6 +44,14 @@ class KessigTest extends BaseCardTest {
     }
 
     @Test
+    void chaosAbilityIsOneStackObject() {
+        harness.inMutationScope(() -> planar.chaos(gd));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).hasSize(3);
+    }
+
+    @Test
     void chaosBoostsYourCreaturesAndMakesThemWerewolvesUntilEndOfTurn() {
         Permanent attacker = addAttacker(player1);
         harness.setLife(player2, 20);

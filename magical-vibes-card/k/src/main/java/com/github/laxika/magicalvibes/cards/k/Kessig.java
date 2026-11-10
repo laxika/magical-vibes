@@ -20,10 +20,9 @@ public class Kessig extends Card {
         addStaticEffect(new PreventAllCombatDamageByCreaturesExceptEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.WEREWOLF)));
 
-        addTrigger(Triggers.chaosEnsues(), new BoostAllOwnCreaturesEffect(2, 2));
         addTrigger(Triggers.chaosEnsues(),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
-        addTrigger(Triggers.chaosEnsues(),
+                new BoostAllOwnCreaturesEffect(2, 2),
+                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES),
                 new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.WEREWOLF, GrantScope.OWN_CREATURES));
     }
 }
