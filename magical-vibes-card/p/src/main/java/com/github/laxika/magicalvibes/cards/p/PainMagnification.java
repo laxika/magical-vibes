@@ -13,7 +13,7 @@ public class PainMagnification extends Card {
 
     public PainMagnification() {
         addTrigger(Triggers.opponentDealtDamage(),
-                TriggerOptions.DEFAULT.withInterveningIf(new EventValueAtLeast(3)),
+                TriggerOptions.DEFAULT.withEventCondition(new EventValueAtLeast(3)),
                 new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER));
     }
 }

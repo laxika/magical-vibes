@@ -71,7 +71,12 @@ HAND = {
 ROWS = [
     ("TapWatch.ON_ANY_PLAYER_TAPS_LAND", "17z13e2"), ("TapWatch.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA", "17z13e2"),
     ("TapWatch.ON_CONTROLLER_TAPS_", "17z13e2"), ("TapWatch.ON_CONTROLLER_UNTAPS", "17z13e2"),
-    ("DamageWatch.", "17z13e3"), ("CombatWatch.", "17z13e3"),
+    # Run 17z13e3 did the damage-to-a-player watches (`DamageWatch` ON_CONTROLLER_DEALT_DAMAGE,
+    # ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT, ON_OPPONENT_DEALT_DAMAGE, ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT / _PLAYER,
+    # ON_SOURCE_DEALS_DAMAGE_TO_ITS_CONTROLLER_PLANAR, ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT,
+    # ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT: no class-keyed
+    # handler left) and split the permanent-damage and combat ones into row 17z13e9.
+    ("DamageWatch.", "17z13e9"), ("CombatWatch.", "17z13e9"),
     ("CreatureDeathWatch.", "17z13e4"), ("Legacy.", "17z13e4"),
     ("ZoneChangeWatch.", "17z13e5"),
     ("LibraryWatch.", "17z13e6"),
@@ -79,9 +84,10 @@ ROWS = [
     ("MiscWatch.", "17z13e7"), ("TapWatch.ON_ENCHANTED_PERMANENT_TAPPED", "17z13e7"),
 ]
 
-# The rows done since run 17z13e (run 17z13e2's Findings): their watches have one default each and no class-keyed
-# handler; `--summary` reports what is left on their watches, which must be none.
-DONE_ROWS = {"17z13e2", "17z13e6"}
+# The rows done since run 17z13e (runs 17z13e2's and 17z13e3's Findings): their watches have one default each and no
+# class-keyed handler; `--summary` reports what is left on their watches, which must be none. Row 17z13e3's watches are
+# the damage-to-a-player ones above; what was left of its family is row 17z13e9's.
+DONE_ROWS = {"17z13e2", "17z13e3", "17z13e6"}
 
 # The reader branches keyed by an effect's class (file, effect class) -> verdict. Row 17z13e's three (the your-upkeep
 # `SurveilEffect`, the your-draw-step `MayEffect` and Haphazard Bombardment's branches) are gone; the rest are row

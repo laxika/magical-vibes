@@ -9,36 +9,29 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * resolution time (e.g. {@code XValue} for "{X}: Put X tower counters on this enchantment").
  * For a planar ability, the source object is the face-up {@code PlanarObject} rather than a
  * battlefield permanent.
- * The optional damage-source exclusion is used by outbound damage triggers whose wording says
- * "another source".
  */
 public record PutCountersOnSelfEffect(CounterType counterType, int count, DynamicAmount amount,
-                                      boolean targetsPlayer, boolean excludeDamageSource,
-                                      boolean hasExternalPermanentTarget)
+                                      boolean targetsPlayer, boolean hasExternalPermanentTarget)
         implements CardEffect {
 
     public PutCountersOnSelfEffect(CounterType counterType) {
-        this(counterType, 1, null, false, false, false);
+        this(counterType, 1, null, false, false);
     }
 
     public PutCountersOnSelfEffect(CounterType counterType, int count) {
-        this(counterType, count, null, false, false, false);
+        this(counterType, count, null, false, false);
     }
 
     public PutCountersOnSelfEffect(CounterType counterType, DynamicAmount amount) {
-        this(counterType, 0, amount, false, false, false);
+        this(counterType, 0, amount, false, false);
     }
 
     public PutCountersOnSelfEffect(CounterType counterType, DynamicAmount amount, boolean targetsPlayer) {
-        this(counterType, 0, amount, targetsPlayer, false, false);
-    }
-
-    public PutCountersOnSelfEffect(CounterType counterType, boolean excludeDamageSource) {
-        this(counterType, 1, null, false, excludeDamageSource, false);
+        this(counterType, 0, amount, targetsPlayer, false);
     }
 
     public static PutCountersOnSelfEffect targeted(CounterType counterType) {
-        return new PutCountersOnSelfEffect(counterType, 1, null, false, false, true);
+        return new PutCountersOnSelfEffect(counterType, 1, null, false, true);
     }
 
     @Override

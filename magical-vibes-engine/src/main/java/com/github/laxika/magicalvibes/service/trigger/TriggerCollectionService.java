@@ -3787,9 +3787,14 @@ public class TriggerCollectionService {
         List<Permanent> sourceControllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
         if (sourceControllerBattlefield == null) return;
 
-        var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount, sourcePermanentId);
+        var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount, sourcePermanentId,
+                sourceControllerId);
         for (Permanent perm : List.copyOf(sourceControllerBattlefield)) {
             if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
+            // The ability's event condition and intervening "if", with the damage and its source (Dragonborn
+            // Champion's "5 or more damage", Talon of Pain's "other than this artifact", CR 603.4).
+            ConditionContext conditionContext = ConditionContext.forPermanent(perm, sourceControllerId)
+                    .withTriggeringPermanentId(sourcePermanentId);
             for (DamageWatch watch : List.of(DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT,
                     DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_PLAYER)) {
                 if (watch == DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT
@@ -3801,6 +3806,10 @@ public class TriggerCollectionService {
                     if (read.filter() != null && !damageFilterMatches(gameData, perm, sourceControllerId,
                             read.filter(), sourcePermanentId == null ? null
                                     : gameQueryService.findPermanentById(gameData, sourcePermanentId))) {
+                        continue;
+                    }
+                    if (!conditionEvaluationService.triggerConditionsMet(gameData, read.ability().options(),
+                            conditionContext, amount)) {
                         continue;
                     }
                     var match = new TriggerMatchContext(gameData, perm, sourceControllerId, read.effect());
@@ -3918,7 +3927,9 @@ public class TriggerCollectionService {
         if (sourceCard == null || sourceControllerId == null || recipients == null || recipients.isEmpty()) return;
 
         for (SourceDamageRecipient recipient : recipients) {
-            if (recipient == null || recipient.damagedPlayerId() == null) continue;
+            // "A source an opponent controls": the damage dealt to its controller or their permanents doesn't count.
+            if (recipient == null || recipient.damagedPlayerId() == null
+                    || sourceControllerId.equals(recipient.damagedPlayerId())) continue;
             UUID damagedPlayerId = recipient.damagedPlayerId();
             List<Permanent> battlefield = gameData.playerBattlefields.get(damagedPlayerId);
             if (battlefield == null) continue;

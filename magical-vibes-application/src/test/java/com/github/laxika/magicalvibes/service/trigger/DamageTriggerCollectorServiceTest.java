@@ -21,7 +21,10 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSour
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
@@ -50,6 +53,7 @@ import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -537,8 +541,6 @@ class DamageTriggerCollectorServiceTest {
         }
     }
 
-    // ===== ON_CONTROLLER_DEALT_DAMAGE — PutCountersOnSelfEffect =====
-
     @Nested
     @DisplayName("ON_CONTROLLER_DEALT_DAMAGE — PutCountersOnSelfEffect")
     class ControllerDealtDamagePutCounters {
@@ -630,37 +632,120 @@ class DamageTriggerCollectorServiceTest {
     }
 
     @Nested
-    @DisplayName("ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT source exclusion")
-    class AllySourceDealtDamageToOpponentSourceExclusion {
+    @DisplayName("The damage-to-a-player defaults record the event whatever the effect is")
+    class PlayerDamageDefaults {
 
         @Test
-        @DisplayName("does not trigger when the excluded watcher is the damage source")
-        void excludesTheDamageSource() {
+        @DisplayName("a source you control dealing damage to an opponent: the damage, the player and the source")
+        void allySourceDamageToOpponentRecordsTheEvent() {
             Permanent talon = createPermanent("Talon of Pain");
-            var effect = new PutCountersOnSelfEffect(CounterType.CHARGE, true);
-            var ctx = new TriggerContext.DamageToControllerAmount(player2Id, 2, talon.getId());
-
-            boolean result = registry.dispatch(
-                    match(talon, player1Id, effect),
-                    DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT, effect, ctx);
-
-            assertThat(result).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
-
-        @Test
-        @DisplayName("triggers when another source deals the damage")
-        void acceptsAnotherDamageSource() {
-            Permanent talon = createPermanent("Talon of Pain");
-            var effect = new PutCountersOnSelfEffect(CounterType.CHARGE, true);
-            var ctx = new TriggerContext.DamageToControllerAmount(player2Id, 2, UUID.randomUUID());
+            UUID sourceId = UUID.randomUUID();
+            var effect = new PutCountersOnSelfEffect(CounterType.CHARGE);
+            var ctx = new TriggerContext.DamageToControllerAmount(player2Id, 2, sourceId, player1Id);
 
             boolean result = registry.dispatch(
                     match(talon, player1Id, effect),
                     DamageWatch.ON_ALLY_SOURCE_DEALS_DAMAGE_TO_OPPONENT, effect, ctx);
 
             assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+                assertThat(entry.getEventValue()).isEqualTo(2);
+                assertThat(entry.getTriggeringPlayerId()).isEqualTo(player2Id);
+                assertThat(entry.getTargetId()).isEqualTo(player2Id);
+                assertThat(entry.isNonTargeting()).isTrue();
+                assertThat(entry.getTriggeringPermanentId()).isEqualTo(sourceId);
+                assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player1Id);
+                assertThat(entry.getSourcePermanentSnapshot()).isNotNull();
+            });
+        }
+
+        @Test
+        @DisplayName("an opponent dealt noncombat damage: the damage and the player, whatever the effect is")
+        void opponentDealtNoncombatDamageRecordsTheEvent() {
+            Permanent spitfire = createPermanent("Chandra's Spitfire");
+            var effect = new BoostSelfEffect(3, 0);
+            var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player1Id, 4);
+
+            boolean result = registry.dispatch(
+                    match(spitfire, player1Id, effect),
+                    DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+                assertThat(entry.getEventValue()).isEqualTo(4);
+                assertThat(entry.getTriggeringPlayerId()).isEqualTo(player2Id);
+                assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player1Id);
+            });
+        }
+
+        @Test
+        @DisplayName("a source you control dealing noncombat damage to an opponent: a \"you may\" goes on the stack")
+        void allySourceNoncombatDamageMayGoesOnTheStack() {
+            Permanent thor = createPermanent("Thor, Guardian of Midgard");
+            var effect = new MayEffect(new DrawCardEffect(), "Draw a card?");
+            var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(thor, player1Id, effect),
+                    DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+                assertThat(entry.getEventValue()).isEqualTo(3);
+                assertThat(entry.getTriggeringPlayerId()).isEqualTo(player2Id);
+            });
+        }
+
+        @Test
+        @DisplayName("a targeted noncombat-damage ability: the target choice judges \"that player controls\" with the opponent")
+        void allySourceNoncombatDamageTargetChoiceCarriesThePlayerAndTheDamage() {
+            Card card = createCard("Chandra's Incinerator");
+            var filter = new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(
+                    new PermanentIsCreaturePredicate(), new PermanentControlledByTriggeringPlayerPredicate())),
+                    "Target must be a creature that player controls");
+            var effect = new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue());
+            card.target(filter).addTrigger(Triggers.sourceYouControlDealsNoncombatDamageToOpponent(), effect);
+            Permanent incinerator = new Permanent(card);
+            var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player1Id, 3);
+
+            boolean result = registry.dispatch(
+                    match(incinerator, player1Id, effect),
+                    DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).isEmpty();
+            var choice = gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
+            assertThat(choice.effects()).containsExactly(effect);
+            assertThat(choice.sourcePermanentId()).isEqualTo(incinerator.getId());
+            assertThat(choice.triggeringPlayerId()).isEqualTo(player2Id);
+            assertThat(choice.eventValue()).isEqualTo(3);
+            assertThat(choice.xValue()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("a source an opponent controls: \"that player\" is the source's controller")
+        void opponentSourceThatPlayerIsTheSourcesController() {
+            Permanent norn = createPermanent("Elesh Norn");
+            UUID sourceId = UUID.randomUUID();
+            var effect = new LoseLifeUnlessPaysEffect(2, 1);
+            var ctx = new TriggerContext.SourceDamageToYouOrYourPermanent(
+                    createCard("Shock"), player2Id, sourceId, player1Id, null);
+
+            boolean result = registry.dispatch(
+                    match(norn, player1Id, effect),
+                    DamageWatch.ON_OPPONENT_SOURCE_DEALS_DAMAGE_TO_YOU_OR_YOUR_PERMANENT, effect, ctx);
+
+            assertThat(result).isTrue();
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getTargetId()).isEqualTo(player2Id);
+                assertThat(entry.isNonTargeting()).isTrue();
+                assertThat(entry.getTriggeringPlayerId()).isEqualTo(player1Id);
+                assertThat(entry.getTriggeringPermanentId()).isEqualTo(sourceId);
+                assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
+            });
         }
     }
 

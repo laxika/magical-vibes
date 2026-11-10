@@ -31,7 +31,7 @@ public class ChandrasIncinerator extends Card {
                                 new PermanentIsPlaneswalkerPredicate())),
                         new PermanentControlledByTriggeringPlayerPredicate())),
                 "Target must be a creature or planeswalker that player controls"))
-                .addTrigger(Triggers.opponentDealtNoncombatDamage(),
+                .addTrigger(Triggers.sourceYouControlDealsNoncombatDamageToOpponent(),
                         new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()));
     }
 }

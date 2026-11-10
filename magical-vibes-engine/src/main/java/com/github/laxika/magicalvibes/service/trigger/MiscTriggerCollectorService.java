@@ -8,53 +8,28 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyReferencedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentUnlessDiscardForEachLifeLostEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.PayXManaDrawXCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.KayaSpiritsJusticeEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
-import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -76,7 +51,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -515,7 +489,6 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-
     @CollectsWatchTrigger(value = StealDyingOpponentPermanentUnlessPaysLifeEffect.class,
             watch = ZoneChangeWatch.ON_OPPONENT_NONTOKEN_PERMANENT_SACRIFICED)
     private boolean handleOpponentNontokenPermanentSacrificeSteal(
@@ -540,7 +513,6 @@ public class MiscTriggerCollectorService {
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         return true;
     }
-
 
     /**
      * "Whenever enchanted permanent becomes tapped": the ability is the Aura's (CR 113.7), and its entry records the
@@ -599,7 +571,6 @@ public class MiscTriggerCollectorService {
                 match.gameData().id, match.permanent().getCard().getName());
         return true;
     }
-
 
     @CollectsActionTrigger(value = CreateTokenEffect.class, watch = ActionWatch.ON_OPPONENT_PAYS_TAX)
     private boolean handleOpponentTaxPayment(TriggerMatchContext match,
@@ -733,7 +704,6 @@ public class MiscTriggerCollectorService {
         log.info("Game {} - {} triggers on proliferate", gameData.id, sourceCard.getName());
         return true;
     }
-
 
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_WINS_COIN_FLIP)
     private boolean handleCoinFlipWonDefault(TriggerMatchContext match,
@@ -1199,8 +1169,6 @@ public class MiscTriggerCollectorService {
         return true;
     }
 
-    // ── ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE ──────────────────────────────
-
     @CollectsWatchTrigger(value = PutCounterOnEachControlledPermanentEffect.class,
             watch = ZoneChangeWatch.ON_OPPONENT_MILLS)
     private boolean handlePutCountersOnOpponentMill(TriggerMatchContext match,
@@ -1293,66 +1261,6 @@ public class MiscTriggerCollectorService {
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on nonland cards being milled",
                 gameData.id, sourceCard.getName());
-        return true;
-    }
-
-    @CollectsDamageTrigger(value = BoostSelfEffect.class, watch = DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
-    private boolean handleNoncombatDamageBoostSelf(TriggerMatchContext match,
-            BoostSelfEffect effect, TriggerContext ctx) {
-        return enqueueNoncombatDamageTrigger(match, effect);
-    }
-
-    @CollectsDamageTrigger(value = BoostAllOwnCreaturesEffect.class, watch = DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
-    private boolean handleNoncombatDamageBoostAllOwnCreatures(TriggerMatchContext match,
-            BoostAllOwnCreaturesEffect effect, TriggerContext ctx) {
-        return enqueueNoncombatDamageTrigger(match, effect);
-    }
-
-    private boolean enqueueNoncombatDamageTrigger(TriggerMatchContext match, CardEffect effect) {
-        var gameData = match.gameData();
-        String cardName = match.permanent().getCard().getName();
-
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                cardName + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()
-        ));
-
-        gameLogService.append(gameData, GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers on noncombat damage to opponent", gameData.id, cardName);
-        return true;
-    }
-
-    @CollectsDamageTrigger(value = DrawCardEffect.class, watch = DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
-    private boolean handleNoncombatDamageDraw(TriggerMatchContext match,
-            DrawCardEffect effect, TriggerContext ctx) {
-        TriggerContext.NoncombatDamageToOpponent damage = (TriggerContext.NoncombatDamageToOpponent) ctx;
-        if (damage.sourceControllerId() == null
-                || !damage.sourceControllerId().equals(match.controllerId())) {
-            return false;
-        }
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId()
-        );
-        if (effect.amount() instanceof EventValue) {
-            entry.setEventValue(damage.damageAmount());
-        }
-        entry.setNonTargeting(true);
-        match.gameData().enqueueTrigger(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers on controlled-source noncombat damage ({} damage)",
-                match.gameData().id, match.permanent().getCard().getName(), damage.damageAmount());
         return true;
     }
 
@@ -1544,71 +1452,6 @@ public class MiscTriggerCollectorService {
         match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers for a controlled creature mutating",
-                match.gameData().id, sourceCard.getName());
-        return true;
-    }
-
-    @CollectsDamageTrigger(value = SequenceEffect.class,
-            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
-    private boolean handleAllySourceDealtNoncombatDamageToOpponent(TriggerMatchContext match,
-            SequenceEffect effect, TriggerContext ctx) {
-        return enqueueNoncombatDamageTrigger(match, effect);
-    }
-
-    @CollectsDamageTrigger(value = CreateTokenEffect.class,
-            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
-    private boolean handleAllySourceDealtNoncombatDamageToOpponentToken(TriggerMatchContext match,
-            CreateTokenEffect effect, TriggerContext ctx) {
-        if (!(ctx instanceof TriggerContext.NoncombatDamageToOpponent damage)
-                || match.permanent() == null
-                || !match.controllerId().equals(damage.sourceControllerId())) {
-            return false;
-        }
-        return enqueueNoncombatDamageTrigger(match, effect);
-    }
-
-    @CollectsDamageTrigger(value = MayEffect.class,
-            watch = DamageWatch.ON_ALLY_SOURCE_DEALS_NONCOMBAT_DAMAGE_TO_OPPONENT)
-    private boolean handleAllySourceDealtNoncombatDamageToOpponentMay(TriggerMatchContext match,
-            MayEffect effect, TriggerContext ctx) {
-        TriggerContext.NoncombatDamageToOpponent damage = (TriggerContext.NoncombatDamageToOpponent) ctx;
-        if (match.permanent() == null || !match.controllerId().equals(damage.sourceControllerId())) {
-            return false;
-        }
-
-        match.gameData().queueMayAbility(match.permanent().getCard(), match.controllerId(), effect,
-                null, match.permanent().getId(), damage.damageAmount());
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-        log.info("Game {} - {} triggers on noncombat damage to opponent (may ability)",
-                match.gameData().id, match.permanent().getCard().getName());
-        return true;
-    }
-
-    @CollectsDamageTrigger(value = DealDamageToTargetCreatureOrPlaneswalkerEffect.class,
-            watch = DamageWatch.ON_OPPONENT_DEALT_NONCOMBAT_DAMAGE)
-    private boolean handleNoncombatDamageToDamagedPlayerPermanent(TriggerMatchContext match,
-            DealDamageToTargetCreatureOrPlaneswalkerEffect effect, TriggerContext ctx) {
-        TriggerContext.NoncombatDamageToOpponent damage = (TriggerContext.NoncombatDamageToOpponent) ctx;
-        if (!match.controllerId().equals(damage.sourceControllerId())) return false;
-
-        Card sourceCard = match.permanent().getCard();
-        int targetGroupIndex = sourceCard.getEffectTargetIndex(effect);
-        TargetFilter targetFilter = targetGroupIndex >= 0
-                ? sourceCard.getTargetGroups().get(targetGroupIndex).getFilter()
-                : sourceCard.getTargetFilter();
-        // "That player controls" is the card's own PermanentControlledByTriggeringPlayerPredicate, judged against
-        // the opponent dealt damage as the choice's triggering player and again from the entry as it resolves.
-        match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                sourceCard,
-                match.controllerId(),
-                new ArrayList<>(List.of(effect)),
-                false,
-                targetFilter,
-                damage.damageAmount(),
-                match.permanent().getId()
-        ).withTriggeringPlayer(damage.damagedPlayerId()));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on noncombat damage to opponent and awaits a target",
                 match.gameData().id, sourceCard.getName());
         return true;
     }

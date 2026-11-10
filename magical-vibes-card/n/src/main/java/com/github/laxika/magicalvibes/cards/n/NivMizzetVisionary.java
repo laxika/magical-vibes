@@ -15,7 +15,7 @@ public class NivMizzetVisionary extends Card {
 
     public NivMizzetVisionary() {
         addStaticEffect(new NoMaximumHandSizeEffect());
-        addTrigger(Triggers.opponentDealtNoncombatDamage(),
+        addTrigger(Triggers.sourceYouControlDealsNoncombatDamageToOpponent(),
                 new DrawCardEffect(new EventValue()));
     }
 }
