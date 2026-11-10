@@ -25,6 +25,9 @@ DONE = {
     "ObeliskSpider", "AuntieOolCursewretch", "ObNixilisUnshackled", "CoolButRude",
     # Run 17z14c (scripts/step15-run17z14c-cards.py): the self-cycled collector reads each ability whole.
     "YidaroWanderingMonster", "MangarasBlessing",
+    # Run 17z14c2 (scripts/step15-run17z14c2-cards.py): the damage and becomes-the-target collectors read each ability
+    # whole.
+    "MyriadConstruct", "TeysaEnvoyOfGhosts", "RayneAcademyChancellor",
 }
 # Run 17z14b: read against their Oracle text; their abilities on the listed trigger print apart (Class levels,
 # vanishing beside its own ability, two cast abilities).

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M20", collectorNumber = "148")
@@ -17,6 +18,7 @@ public class LeylineOfCombustion extends Card {
                 "Begin the game with Leyline of Combustion on the battlefield?"
         ));
         addTrigger(Triggers.youOrPermanentYouControlBecomesTargetOfOpponentSpellOrAbility(),
+                TriggerOptions.ONE_OR_MORE,
                 new DealDamageToPlayersEffect(2, DamageRecipient.TARGET_PLAYER));
     }
 }

@@ -143,6 +143,23 @@ public final class CombatAbilityReader {
         return effects;
     }
 
+    /**
+     * The effects of {@code abilities}, one list for each ability that has any, in order, as their collector reads them
+     * for the condition watched as {@code watched}: each list is one object on the stack (CR 603.3), whose
+     * trigger-level parts (filter, limit, multiplicity, options) every read of it shares. Two equal abilities, or one
+     * ability a permanent has twice, are two lists.
+     */
+    public static List<List<CombatEffect>> readByAbility(List<TriggeredAbility> abilities, Trigger watched) {
+        List<List<CombatEffect>> byAbility = new ArrayList<>(abilities.size());
+        for (TriggeredAbility ability : abilities) {
+            List<CombatEffect> effects = read(ability, watched);
+            if (!effects.isEmpty()) {
+                byAbility.add(effects);
+            }
+        }
+        return byAbility;
+    }
+
     /** The effects of {@code ability}, as its collector reads them for the condition watched as {@code watched}. */
     public static List<CombatEffect> read(TriggeredAbility ability, Trigger watched) {
         PermanentPredicate filter = filter(ability, watched);

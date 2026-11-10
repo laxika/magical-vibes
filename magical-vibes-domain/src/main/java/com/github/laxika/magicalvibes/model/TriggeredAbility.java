@@ -228,7 +228,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                 if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof CounterTrigger)) {
                     throw new IllegalArgumentException("No counter collector reads \"one or more\" for " + conditions);
                 }
-                if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof TargetTrigger)) {
+                // "You and/or at least one permanent you control becomes the target" (Leyline of Combustion) is the
+                // one becomes-the-target condition read once for the spell or ability.
+                if (conditions.stream().anyMatch(condition -> condition.trigger() instanceof TargetTrigger target
+                        && target.event() != TargetTrigger.TargetEvent.YOU_OR_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY)) {
                     throw new IllegalArgumentException("No becomes-the-target collector reads \"one or more\" for "
                             + conditions);
                 }

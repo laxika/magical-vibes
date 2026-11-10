@@ -13,8 +13,7 @@ public class RayneAcademyChancellor extends Card {
 
     public RayneAcademyChancellor() {
         addTrigger(Triggers.youOrPermanentYouControlBecomesTargetOfOpponentSpellOrAbility(),
-                new MayEffect(new DrawCardEffect(), "Draw a card?"));
-        addTrigger(Triggers.youOrPermanentYouControlBecomesTargetOfOpponentSpellOrAbility(),
+                new MayEffect(new DrawCardEffect(), "Draw a card?"),
                 new ConditionalEffect(new Enchanted(),
                         new MayEffect(new DrawCardEffect(), "Draw an additional card?")));
     }

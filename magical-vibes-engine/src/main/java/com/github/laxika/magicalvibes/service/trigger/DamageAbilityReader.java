@@ -176,11 +176,6 @@ public final class DamageAbilityReader {
     }
 
     /**
-     * The effects of {@code abilities}, one list for each ability, in order, as their collector reads them for the
-     * condition watched as {@code watched}: each list is one object on the stack (CR 603.3), whose trigger-level parts
-     * (filter, limit, multiplicity, options) every read of it shares.
-     */
-    /**
      * {@code reads}, a flat list of abilities' reads in order, one list for each ability: the consecutive reads of one
      * ability object, each list one object on the stack (CR 603.3).
      */
@@ -197,6 +192,11 @@ public final class DamageAbilityReader {
         return byAbility;
     }
 
+    /**
+     * The effects of {@code abilities}, one list for each ability, in order, as their collector reads them for the
+     * condition watched as {@code watched}: each list is one object on the stack (CR 603.3), whose trigger-level parts
+     * (filter, limit, multiplicity, options) every read of it shares.
+     */
     public static List<List<DamageEffect>> readByAbility(List<TriggeredAbility> abilities, Trigger watched) {
         List<List<DamageEffect>> byAbility = new ArrayList<>(abilities.size());
         for (TriggeredAbility ability : abilities) {

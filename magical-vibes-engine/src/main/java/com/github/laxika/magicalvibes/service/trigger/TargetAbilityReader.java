@@ -41,6 +41,13 @@ import java.util.UUID;
  */
 public final class TargetAbilityReader {
 
+    /**
+     * The watched trigger of the one collector that reads "one or more" ({@link TargetEffect#oneOrMore()}): "you and/or
+     * at least one permanent you control becomes the target".
+     */
+    private static final Trigger ONE_OR_MORE_READER =
+            TargetWatch.ON_ALLY_PERMANENT_OR_PLAYER_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY.trigger();
+
     /** The watched trigger of the one collector that reads a {@link TargetTrigger#source()}. */
     private static final Trigger SOURCE_READER =
             TargetWatch.ON_ANY_CREATURE_BECOMES_TARGET_OF_SPELL_OR_ABILITY.trigger();
@@ -73,6 +80,15 @@ public final class TargetAbilityReader {
 
         public TriggerLimit limit() {
             return ability.options().limit();
+        }
+
+        /**
+         * "Whenever you and/or at least one permanent you control becomes the target of a spell or ability" (Leyline of
+         * Combustion): once for the spell or ability however many of them it targets, where the default triggers once
+         * for each such target (CR 603.2c).
+         */
+        public boolean oneOrMore() {
+            return ability.options().multiplicity() == TriggerMultiplicity.ONE_OR_MORE;
         }
 
         /**
@@ -151,18 +167,42 @@ public final class TargetAbilityReader {
     }
 
     /**
+     * The effects of {@code abilities}, one list for each ability that has any, in order, as their collector reads them
+     * for the condition watched as {@code watched}: each list is one object on the stack (CR 603.3), whose
+     * trigger-level parts (filter, event, source, limit) every read of it shares. Two equal abilities, or one ability
+     * a permanent has twice (its own ward and a granted one), are two lists.
+     */
+    public static List<List<TargetEffect>> readByAbility(List<TriggeredAbility> abilities, Trigger watched) {
+        List<List<TargetEffect>> byAbility = new ArrayList<>(abilities.size());
+        for (TriggeredAbility ability : abilities) {
+            List<TargetEffect> effects = read(ability, watched);
+            if (!effects.isEmpty()) {
+                byAbility.add(effects);
+            }
+        }
+        return byAbility;
+    }
+
+    /** {@link #readByAbility(List, Trigger)} of the abilities of {@code card} that {@code watch} reads. */
+    public static List<List<TargetEffect>> readPrintedByAbility(Card card, TargetWatch watch) {
+        return readByAbility(printed(card, watch), watch.trigger());
+    }
+
+    /**
      * The effects of {@code ability}, as its collector reads it for the condition watched as {@code watched}. The
      * becomes-the-target collectors trigger once for each targeting spell or ability and each permanent it targets, or
      * once for each ability for "one or more creatures you control become the target of an activated ability", by the
-     * event; they read no multiplicity, and of the limits "triggers only once each turn" and "this ability triggers
-     * only once".
+     * event; of the multiplicities only the "you or a permanent you control becomes the target" collector reads one
+     * ("one or more": "you and/or at least one permanent you control"), and of the limits they read "triggers only once
+     * each turn" and "this ability triggers only once".
      */
     public static List<TargetEffect> read(TriggeredAbility ability, Trigger watched) {
         TargetTrigger condition = watchedCondition(ability, watched);
         TriggerOptions options = ability.options();
-        if (options.multiplicity() != TriggerMultiplicity.EACH) {
-            throw new IllegalStateException("No becomes-the-target collector reads " + options.multiplicity() + ": "
-                    + ability);
+        if (options.multiplicity() != TriggerMultiplicity.EACH
+                && !(options.multiplicity() == TriggerMultiplicity.ONE_OR_MORE && watched.equals(ONE_OR_MORE_READER))) {
+            throw new IllegalStateException("The becomes-the-target collector of " + watched + " reads no "
+                    + options.multiplicity() + ": " + ability);
         }
         if (options.limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN
                 || options.limit() == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {

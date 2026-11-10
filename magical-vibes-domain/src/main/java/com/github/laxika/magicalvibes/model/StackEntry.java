@@ -953,10 +953,10 @@ public class StackEntry {
         }
     }
 
-    public boolean markNoncombatExcessDamageTriggerFired(UUID sourcePermanentId, CardEffect effect) {
+    public boolean markNoncombatExcessDamageTriggerFired(UUID sourcePermanentId, int abilityIndex) {
         return noncombatExcessDamageTriggerEffectsFired
                 .computeIfAbsent(sourcePermanentId, ignored -> new HashSet<>())
-                .add(Arrays.asList(getResolvingDamageEvent(), effect));
+                .add(Arrays.asList(getResolvingDamageEvent(), abilityIndex));
     }
 
     /**

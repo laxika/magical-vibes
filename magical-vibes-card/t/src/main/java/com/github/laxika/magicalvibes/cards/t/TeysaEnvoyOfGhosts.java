@@ -26,8 +26,8 @@ public class TeysaEnvoyOfGhosts extends Card {
         // white and black Spirit creature token with flying. The trigger's stack entry binds the
         // damaging creature as its (untargeted) subject, so DestroyTargetPermanentEffect resolves
         // as "that creature".
-        addTrigger(Triggers.creatureDealsCombatDamageToYou(), new DestroyTargetPermanentEffect());
-        addTrigger(Triggers.creatureDealsCombatDamageToYou(), new CreateTokenEffect(
+        addTrigger(Triggers.creatureDealsCombatDamageToYou(), new DestroyTargetPermanentEffect(),
+                new CreateTokenEffect(
                 1, "Spirit", 1, 1, CardColor.WHITE,
                 Set.of(CardColor.WHITE, CardColor.BLACK), List.of(CardSubtype.SPIRIT),
                 Set.of(Keyword.FLYING), Set.of()));

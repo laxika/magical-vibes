@@ -962,12 +962,12 @@ public class CombatDamageService {
                                 ignored -> new LinkedHashMap<>()).merge(source, damage, Integer::sum)));
         // Sources of "whenever your opponents are dealt combat damage" (one or more creatures, any opponents) that
         // already triggered in this combat damage step: once for the step however many players were dealt damage.
-        Set<UUID> firedOncePerStepSources = new HashSet<>();
+        Set<String> firedOncePerStepAbilities = new HashSet<>();
         playerDamageByRecipientAndController.forEach((recipientId, damageByController) ->
                 damageByController.forEach((controllerId, damageBySource) -> {
                     processCombatDamageToPlayerTriggers(gameData, damageBySource, controllerId, recipientId,
                             attachedDamageSources, allyDamageWatchers.getOrDefault(controllerId, List.of()),
-                            departedWatchersByController, firedOncePerStepSources);
+                            departedWatchersByController, firedOncePerStepAbilities);
                     triggerCollectionService.checkEmblemCombatDamageTriggers(
                             gameData, controllerId, recipientId, damageBySource);
                     processDelayedCombatDamageLootTriggers(gameData, damageBySource, controllerId);
@@ -2026,11 +2026,14 @@ public class CombatDamageService {
                                                      UUID attackerId, UUID defenderId, Map<Permanent, UUID> attachedDamageSources,
                                                      List<TriggerCollectionService.AllyDamageTriggerSnapshot> allyDamageWatchers,
                                                      Map<UUID, List<Permanent>> departedWatchersByController,
-                                                     Set<UUID> firedOncePerStepSources) {
+                                                     Set<String> firedOncePerStepAbilities) {
         // Sources of batched ally triggers ("whenever one or more ... deal combat damage to a
         // player") that already fired in this damage step against this player, so they fire once
         // for the whole batch instead of once per dealer.
         Set<UUID> firedBatchedAllyTriggerSources = new HashSet<>();
+        // The planes' "one or more creatures you control deal combat damage to a player" abilities that already
+        // triggered in this damage step against this player, each by its place among the plane's abilities.
+        Set<String> firedBatchedPlanarAbilities = new HashSet<>();
         triggerCollectionService.checkControllerDealtCombatDamageTriggers(gameData, defenderId,
                 combatDamageDealtToPlayer.values().stream().mapToInt(Integer::intValue).sum());
         triggerCollectionService.checkGoadedCreatureCombatDamageToOpponentTriggers(
@@ -2380,9 +2383,9 @@ public class CombatDamageService {
             checkSameNameCreatureCombatDamageToPlayerTriggers(
                     gameData, creature, attackerId, defenderId, damageDealt);
             triggerCollectionService.checkPlanarAllyCreatureCombatDamageToPlayerTriggers(
-                    gameData, creature, attackerId, defenderId, damageDealt, firedBatchedAllyTriggerSources);
+                    gameData, creature, attackerId, defenderId, damageDealt, firedBatchedPlanarAbilities);
             triggerCollectionService.checkAnyCreatureCombatDamageToOpponentTriggers(
-                    gameData, creature, attackerId, defenderId, damageDealt, firedOncePerStepSources);
+                    gameData, creature, attackerId, defenderId, damageDealt, firedOncePerStepAbilities);
             triggerCollectionService.checkAnyCreatureCombatDamageToOwnerTriggers(
                     gameData, creature, attackerId, defenderId, damageDealt);
         }
@@ -3766,7 +3769,8 @@ public class CombatDamageService {
     private void processDealtDamageTriggers(GameData gameData, List<DealtDamageTriggerData> triggerData) {
         for (DealtDamageTriggerData data : triggerData) {
             if (data.dealtDamageEffects().isEmpty()) continue;
-            triggerCollectionService.collectDealtDamageAbilities(gameData, data.dealtDamageEffects(),
+            triggerCollectionService.collectDealtDamageAbilities(gameData,
+                    DamageAbilityReader.byAbility(data.dealtDamageEffects()),
                     DamageWatch.ON_DEALT_DAMAGE, data.sourceSnapshot(), data.controllerId(),
                     new TriggerContext.DamageToCreature(data.sourceSnapshot(), data.damageDealt(),
                             data.sourceControllerId(), data.sourceCard(), data.sourcePermanentId(),

@@ -37,8 +37,7 @@ public class MyriadConstruct extends Card {
         addStaticEffect(new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE,
                         new PermanentCount(nonbasicLand, CountScope.OPPONENTS))));
-        addTrigger(Triggers.becomesTargetOfSpell(), new SacrificeSelfEffect());
-        addTrigger(Triggers.becomesTargetOfSpell(), new CreateTokenEffect(
+        addTrigger(Triggers.becomesTargetOfSpell(), new SacrificeSelfEffect(), new CreateTokenEffect(
                 CardType.CREATURE, new SourcePower(), "Construct", 1, 1, null, null,
                 List.of(CardSubtype.CONSTRUCT), Set.of(), Set.of(CardType.ARTIFACT),
                 false, false, List.of(), List.of(), false, false, false, 0, Set.of()));

@@ -1490,7 +1490,11 @@ public final class Triggers {
                 ObjectRelation.YOU_CONTROL, CREATURE);
     }
 
-    /** "Whenever you or a permanent you control becomes the target of a spell or ability an opponent controls" */
+    /**
+     * "Whenever you or a permanent you control becomes the target of a spell or ability an opponent controls": once for
+     * each such target (CR 603.2c). With {@link TriggerOptions#ONE_OR_MORE} it is "whenever you and/or at least one
+     * permanent you control becomes the target ..." (Leyline of Combustion): once for the spell or ability.
+     */
     public static TargetTrigger youOrPermanentYouControlBecomesTargetOfOpponentSpellOrAbility() {
         return new TargetTrigger(TargetTrigger.TargetEvent.YOU_OR_PERMANENT_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY,
                 ObjectRelation.YOU_CONTROL);
