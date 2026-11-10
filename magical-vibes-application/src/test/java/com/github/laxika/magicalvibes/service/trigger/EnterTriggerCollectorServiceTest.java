@@ -76,7 +76,6 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -134,7 +133,6 @@ class EnterTriggerCollectorServiceTest {
     @Mock private ValidTargetService validTargetService;
     @Mock private GameLogService gameLogService;
     @Mock private ETBTokenTargetService etbTokenTargetService;
-    @Mock private GraveyardTargetingService graveyardTargetingService;
 
     private TriggerCollectionService service;
     private TriggerCollectorRegistry registry;
@@ -168,10 +166,8 @@ class EnterTriggerCollectorServiceTest {
         lenient().when(gameQueryService.computeStaticBonus(any(GameData.class), any(Permanent.class), isNull()))
                 .thenReturn(EMPTY_BONUS);
         registry = new TriggerCollectorRegistry();
-        TriggerCollectorRegistry.scanBean(new EnterTriggerCollectorService(gameLogService, gameQueryService,
-                graveyardTargetingService,
-                predicateEvaluationService,
-                new ConditionEvaluationService(gameQueryService, predicateEvaluationService)), registry);
+        TriggerCollectorRegistry.scanBean(new EnterTriggerCollectorService(gameLogService, gameQueryService),
+                registry);
 
         service = new TriggerCollectionService(registry, gameOutcomeService, playerInputService,
                 triggeredAbilityQueueService, gameQueryService, predicateEvaluationService,
@@ -718,17 +714,53 @@ class EnterTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("Ally-creature scan queues a graveyard target choice for optional exile")
+    @DisplayName("Ally-creature scan queues a graveyard target choice for optional exile, with the entering creature")
     void allyCreatureQueuesGraveyardTargeting() {
         var effect = ExileGraveyardCardsEffect.upToOneTargetFromOpponentGraveyard();
         addAllyCreatureTrigger(ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, effect);
+        Permanent source = gd.playerBattlefields.get(player1Id).getFirst();
+        Card entering = enteringCreature(2, 2);
+        Permanent enteringPermanent = new Permanent(entering);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
 
-        enter(player1Id, enteringCreature(2, 2));
-        service.checkAllyCreatureEntersTriggers(gd, player1Id, enteringCreature(2, 2), 0);
+        enter(player1Id, entering);
 
         assertThat(gd.stack).isEmpty();
-        verify(graveyardTargetingService).handleGraveyardCardsExileETBTargeting(
-                eq(gd), eq(player1Id), any(Card.class), eq(List.of(effect)), eq(effect));
+        PermanentChoiceContext.SpellGraveyardTargetTrigger choice =
+                gd.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
+        assertThat(choice.effects()).containsExactly(effect);
+        assertThat(choice.controllerId()).isEqualTo(player1Id);
+        assertThat(choice.sourcePermanentId()).isEqualTo(source.getId());
+        assertThat(choice.triggeringPermanentId()).isEqualTo(enteringPermanent.getId());
+    }
+
+    @Test
+    @DisplayName("A command-zone \"you may pay\" goes on the stack through the watch's default, recording the entering creature (Inalla)")
+    void commandZoneMayPayRecordsTheEnteringCreature() {
+        MayPayManaEffect authored = new MayPayManaEffect("{1}",
+                new com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect(true, true)
+                        .ofTriggeringPermanent(), "Pay {1}?");
+        Card commander = new Card();
+        commander.setName("Commander");
+        addWatched(commander, ZoneChangeWatch.COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD, authored);
+        Card entering = enteringCreature(2, 2);
+        Permanent enteringPermanent = new Permanent(entering);
+        gd.playerBattlefields.get(player1Id).add(enteringPermanent);
+
+        TriggerCandidate candidate = new TriggerCandidate(commander, null, player1Id, Zone.COMMAND,
+                commander.getTriggeredAbilities().getFirst());
+        service.triggerZoneChange(gd, ZoneChangeWatch.COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD,
+                candidate, List.of(authored), List.of(new ZoneChangeEvent(entering, player1Id, Zone.HAND,
+                        Zone.BATTLEFIELD, ZoneChangeCause.OTHER, new Permanent(enteringPermanent), player1Id)));
+
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).containsExactly(authored);
+            assertThat(entry.getCard()).isSameAs(commander);
+            assertThat(entry.getSourcePermanentId()).isNull();
+            assertThat(entry.getTriggeringPermanentId()).isEqualTo(enteringPermanent.getId());
+            assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player1Id);
+            assertThat(entry.isNonTargeting()).isTrue();
+        });
     }
 
     @Test

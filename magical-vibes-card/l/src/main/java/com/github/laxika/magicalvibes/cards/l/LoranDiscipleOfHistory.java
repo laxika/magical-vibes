@@ -22,6 +22,7 @@ public class LoranDiscipleOfHistory extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))),
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
-                ReturnTargetCardsFromGraveyardToHandEffect.exactlyOne(new CardTypePredicate(CardType.ARTIFACT)));
+                ReturnTargetCardsFromGraveyardToHandEffect.exactlyOneForTriggeredAbility(
+                        new CardTypePredicate(CardType.ARTIFACT)));
     }
 }

@@ -31,9 +31,14 @@ public class ExileTriggeringCreatureUntilSourceLeavesEffectHandler implements No
         return ExileTriggeringCreatureUntilSourceLeavesEffect.class;
     }
 
+    /**
+     * Exiles the triggering creature if it is still on the battlefield (Portcullis's ruling: if it isn't, the ability
+     * does nothing) and links it to the source, which returns it when it leaves the battlefield. Portcullis's
+     * intervening "if" is checked around this as the ability resolves (CR 603.4).
+     */
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        resolve(gameData, entry, (ExileTriggeringCreatureUntilSourceLeavesEffect) effect);
+        resolveExile(gameData, entry);
     }
 
     /**
@@ -67,14 +72,12 @@ public class ExileTriggeringCreatureUntilSourceLeavesEffectHandler implements No
         returnHandler.returnAllCardsExiledWithSourceExcept(gameData, entry, excludedCardId);
     }
 
-    private void resolve(GameData gameData, StackEntry entry,
-                         ExileTriggeringCreatureUntilSourceLeavesEffect exileEffect) {
+    private void resolveExile(GameData gameData, StackEntry entry) {
         UUID enteringPermanentId = entry.getTriggeringPermanentId();
         Permanent enteringPermanent = enteringPermanentId == null
                 ? null
                 : gameQueryService.findPermanentById(gameData, enteringPermanentId);
-        if (enteringPermanent == null
-                || countOtherCreatures(gameData, enteringPermanentId) < exileEffect.minimumOtherCreatures()) {
+        if (enteringPermanent == null) {
             return;
         }
 
@@ -101,16 +104,5 @@ public class ExileTriggeringCreatureUntilSourceLeavesEffectHandler implements No
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
-    }
-
-    private int countOtherCreatures(GameData gameData, UUID enteringPermanentId) {
-        int[] count = {0};
-        gameData.forEachPermanent((playerId, permanent) -> {
-            if (!permanent.getId().equals(enteringPermanentId)
-                    && gameQueryService.isCreature(gameData, permanent)) {
-                count[0]++;
-            }
-        });
-        return count[0];
     }
 }

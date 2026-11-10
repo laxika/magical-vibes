@@ -185,4 +185,29 @@ class SuturePriestTest extends BaseCardTest {
         harness.assertLife(player1, 21);
         assertThat(gd.stack).isEmpty();
     }
+
+    @Test
+    @DisplayName("\"That player\" isn't a target: an opponent with hexproof still loses 1 life")
+    void hexproofOpponentStillLosesLife() {
+        harness.addToBattlefield(player1, new SuturePriest());
+        harness.addToBattlefield(player2, new com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity());
+        harness.setLife(player2, 20);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.setHand(player2, List.of(new SuturePriest()));
+        harness.addMana(player2, ManaColor.WHITE, 2);
+        harness.castCreature(player2, 0);
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertLife(player2, 19);
+    }
 }

@@ -679,7 +679,7 @@ public class ConditionEvaluationService {
             case AnotherCreatureDiedThisTurn ignored ->
                     gameData.creaturePermanentIdsDiedThisTurn.stream()
                             .anyMatch(permanentId -> !permanentId.equals(ctx.targetId()));
-            case AnotherCreatureOnBattlefield ignored -> anotherCreatureOnBattlefield(gameData, ctx);
+            case AnotherCreatureOnBattlefield another -> otherCreatureCount(gameData, ctx) >= another.count();
             case CreatureWithDifferentNameDiedThisTurn c ->
                     gameData.creatureNamesDiedThisTurn.stream()
                             .anyMatch(name -> !name.equals(c.excludedName()));
@@ -2829,20 +2829,25 @@ public class ConditionEvaluationService {
     }
 
     /**
-     * {@link AnotherCreatureOnBattlefield}: a creature other than the triggering permanent on the battlefield, or, while
-     * the creatures of one death event are being looked back at (CR 603.10a), one of the others that died with it
-     * (the source excepted).
+     * {@link AnotherCreatureOnBattlefield}: how many creatures other than the triggering permanent are on the
+     * battlefield, with, while the creatures of one death event are being looked back at (CR 603.10a), the others that
+     * died with it (the source excepted).
      */
-    private boolean anotherCreatureOnBattlefield(GameData gameData, ConditionContext ctx) {
+    private long otherCreatureCount(GameData gameData, ConditionContext ctx) {
         UUID triggeringPermanentId = ctx.triggeringPermanentId();
-        if (gameData.anyPermanentMatches(permanent -> !permanent.getId().equals(triggeringPermanentId)
-                && gameQueryService.isCreature(gameData, permanent))) {
-            return true;
-        }
-        return gameData.simultaneousDyingCreatures.entrySet().stream()
-                .filter(entry -> !entry.getKey().equals(triggeringPermanentId)
-                        && !entry.getKey().equals(ctx.sourcePermanentId()))
-                .anyMatch(entry -> gameQueryService.isCreature(gameData, entry.getValue()));
+        Set<UUID> others = new HashSet<>();
+        gameData.forEachPermanent((playerId, permanent) -> {
+            if (!permanent.getId().equals(triggeringPermanentId) && gameQueryService.isCreature(gameData, permanent)) {
+                others.add(permanent.getId());
+            }
+        });
+        gameData.simultaneousDyingCreatures.forEach((id, creature) -> {
+            if (!id.equals(triggeringPermanentId) && !id.equals(ctx.sourcePermanentId())
+                    && gameQueryService.isCreature(gameData, creature)) {
+                others.add(id);
+            }
+        });
+        return others.size();
     }
 
     private Permanent sourcePermanent(GameData gameData, ConditionContext ctx) {
