@@ -52,9 +52,10 @@ public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHand
         SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffect auraSearch =
                 (SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffect) effect;
 
-        // The host is the recorded source permanent when wrapped in MayEffect (Sovereigns and
-        // Light-Paws); a mandatory (non-may) use would instead record it as the non-targeting targetId.
-        UUID hostId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
+        // "Attached to it": Light-Paws itself, the ability's source; for "that creature" (Sovereigns of Lost
+        // Alara), the creature whose attack triggered the ability, the entry's triggering permanent.
+        UUID hostId = auraSearch.restrictToTriggeringAura() ? entry.getSourcePermanentId()
+                : entry.getTriggeringPermanentId() != null ? entry.getTriggeringPermanentId() : entry.getTargetId();
         Permanent host = hostId == null ? null : gameQueryService.findPermanentById(gameData, hostId);
         if (host == null && auraSearch.restrictToTriggeringAura()) {
             // The host left the battlefield, so no Aura can be put onto it; the search still ends in a shuffle.

@@ -105,8 +105,10 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
             return;
         }
 
-        if (e.scope() == GrantScope.SELF) {
-            Permanent target = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        if (e.scope() == GrantScope.SELF || e.scope() == GrantScope.TRIGGERING_PERMANENT) {
+            // "It becomes [color]": the permanent whose event triggered the ability (Shadow Puppeteers).
+            Permanent target = gameQueryService.findPermanentById(gameData, e.scope() == GrantScope.SELF
+                    ? entry.getSourcePermanentId() : entry.getTriggeringPermanentId());
             if (target == null) {
                 return;
             }

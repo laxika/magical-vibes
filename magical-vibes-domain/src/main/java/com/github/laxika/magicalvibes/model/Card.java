@@ -1830,7 +1830,7 @@ public class Card {
      * Adds {@code ability} as it is, for an ability with several trigger conditions or simultaneous effects.
      * An ability with a {@link LegacySlotTrigger} is added the way its slot groups registrations instead. A Saga's
      * chapter ability ({@link ChapterTrigger}) joins the card's ability of the same chapter when it has one, since a
-     * Saga has one chapter ability per chapter number (CR 714.2b): its effects follow that ability's, and the chapter
+     * Saga has one chapter ability per chapter number (CR 715.2b): its effects follow that ability's, and the chapter
      * keeps its targets, or takes {@code ability}'s when it has none.
      */
     public void addTriggeredAbility(TriggeredAbility ability) {
@@ -1844,7 +1844,7 @@ public class Card {
                 && ability.conditions().getFirst().trigger() instanceof ChapterTrigger chapter
                 ? indexOfChapterAbility(chapter) : -1;
         if (chapterIndex >= 0) {
-            // A Saga has one chapter ability per chapter number (CR 714.2b), so a chapter's effects join it.
+            // A Saga has one chapter ability per chapter number (CR 715.2b), so a chapter's effects join it.
             // Copy code re-adds a chapter ability whole or one effect at a time, each piece holding the chapter's
             // targets: the chapter keeps its own targets, or takes the added ability's when it has none.
             TriggeredAbility chapterAbility = (TriggeredAbility) abilities.get(chapterIndex);
@@ -2853,7 +2853,7 @@ public class Card {
 
     /**
      * The Saga's final chapter number: the greatest value among its chapter abilities, or 0 when it has none
-     * (CR 714.2d). 3 for a three-chapter Saga.
+     * (CR 715.2d). 3 for a three-chapter Saga.
      */
     public int getSagaFinalChapter() {
         int finalChapter = 0;

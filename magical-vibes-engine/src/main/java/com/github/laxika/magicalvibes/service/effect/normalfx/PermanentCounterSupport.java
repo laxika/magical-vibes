@@ -960,7 +960,7 @@ public class PermanentCounterSupport {
             fireLoyaltyCountersPutOnPlaneswalkerTriggers(gameData, target, count);
         }
 
-        // Lore counters on Sagas trigger chapter abilities (MTG Rule 714.3b)
+        // Lore counters on Sagas trigger chapter abilities (CR 715.2b)
         if (entry != null && counterType == CounterType.LORE && card.isSaga()) {
             int finalLoreCount = target.getCounterCount(CounterType.LORE);
             for (int loreCount = previousLoreCount + 1; loreCount <= finalLoreCount; loreCount++) {

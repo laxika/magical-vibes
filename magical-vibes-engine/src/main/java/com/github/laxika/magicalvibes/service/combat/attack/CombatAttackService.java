@@ -2392,15 +2392,13 @@ public class CombatAttackService {
                 // ability on the stack.
                 gameData.queueMayAbilityForPlayer(attackCard, playerId, may, null,
                         attacker.getId(), playerId, new Permanent(attacker));
+                logSelfAttackTrigger(gameData, attacker);
             } else {
-                // The creatures declared as attackers with this one are the event's ("that creature",
-                // the other one you attacked with: Creepy Puppeteer), read as the ability resolves.
-                StackEntry mayEntry = gameData.queueGrantedMayAbility(attackCard, playerId, may,
-                        null, attacker.getId(), attacker.getAttackTarget(), triggered.grantingPermanentId());
-                mayEntry.setDefendingPlayerId(defendingPlayerId);
-                mayEntry.setAttackingPermanentSnapshots(declaredAttackerSnapshots.get());
+                // Asked as the ability resolves (CR 603.5): the entry is the one any untargeted ability gets, with
+                // the same record of the attack.
+                putUntargetedSelfAttackAbilityOnStack(gameData, playerId, attacker, triggered, effects,
+                        attackerIndices, defendingPlayerId, declaredAttackerSnapshots);
             }
-            logSelfAttackTrigger(gameData, attacker);
             return;
         }
 
@@ -2494,9 +2492,23 @@ public class CombatAttackService {
             return;
         }
 
-        // The attacked player, planeswalker or battle, the defending player (Nemesis of Reason's
-        // MillDefendingPlayerEffect), the number of attackers as X (MinimumAttackers) and the creatures declared as
-        // attackers are the event's, recorded whatever the effects are.
+        putUntargetedSelfAttackAbilityOnStack(gameData, playerId, attacker, triggered, effects, attackerIndices,
+                defendingPlayerId, declaredAttackerSnapshots);
+    }
+
+    /**
+     * Puts an untargeted "whenever this creature attacks" ability of {@code attacker} on the stack as one object of
+     * {@code effects}, a lone "you may" included, and tells the "an attacking creature's ability triggers" watchers.
+     * The attacked player, planeswalker or battle, the defending player (Nemesis of Reason's
+     * MillDefendingPlayerEffect), the number of attackers as X (MinimumAttackers), the attacker as it attacked and
+     * the creatures declared as attackers ("that creature", the other one you attacked with: Creepy Puppeteer) are
+     * the event's, recorded whatever the effects are.
+     */
+    private void putUntargetedSelfAttackAbilityOnStack(GameData gameData, UUID playerId, Permanent attacker,
+                                                       TriggeredAbility triggered, List<CardEffect> effects,
+                                                       List<Integer> attackerIndices, UUID defendingPlayerId,
+                                                       Supplier<List<Permanent>> declaredAttackerSnapshots) {
+        Card attackCard = attacker.getCard();
         StackEntry attackTrigger = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 attackCard,
@@ -2539,10 +2551,10 @@ public class CombatAttackService {
      * stack as one object of all its effects (CR 603.3). A mode chosen as the ability triggers is its one effect
      * (CR 603.3c). An ability that is only a "you may" goes on the stack to be asked as it resolves (CR 603.5): a
      * targeted one chooses its target with the ability's owner as its source and the attacking creature as the
-     * triggering permanent, which "have that creature deal 1 damage" (Rage Forger) reads as the damage source; an
-     * untargeted one has the attacking creature as its source permanent. Any other ability has its owner as its
-     * source and records the attacked player, planeswalker or battle (Hellrider's DealDamageToAttackedTargetEffect)
-     * and the attacking creature as its non-targeting "that creature".
+     * triggering permanent, which "have that creature deal 1 damage" (Rage Forger) reads as the damage source. An
+     * untargeted ability, a lone "you may" included, has its owner as its source and records the attacked player,
+     * planeswalker or battle (Hellrider's DealDamageToAttackedTargetEffect) and the attacking creature as its
+     * triggering permanent and non-targeting "that creature" (Shadow Puppeteers' "have it become").
      */
     private void putAllyCreatureAttackAbilityOnStack(GameData gameData, UUID playerId, Permanent perm,
                                                      Permanent attacker, List<CardEffect> effects) {
@@ -2577,17 +2589,12 @@ public class CombatAttackService {
         }
 
         UUID attackedTargetId = attacker.getAttackTarget();
-        if (lone instanceof MayEffect may) {
-            if (may.targetSpec().declaredTarget() != null) {
-                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                        perm.getCard(), playerId, effects, perm.getId(), playerId,
-                        attackedTargetId, attacker.getId()));
-            } else {
-                gameData.queueMayAbility(perm.getCard(), playerId, may, null,
-                        attacker.getId(), attackedTargetId);
-            }
+        if (lone instanceof MayEffect may && may.targetSpec().declaredTarget() != null) {
+            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                    perm.getCard(), playerId, effects, perm.getId(), playerId,
+                    attackedTargetId, attacker.getId()));
         } else {
-            boolean needsTarget = effects.stream()
+            boolean needsTarget = !(lone instanceof MayEffect) && effects.stream()
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                             || perm.getCard().getEffectTargetIndex(e) >= 0
                             || e instanceof MayEffect && e.targetSpec().declaredTarget() != null);

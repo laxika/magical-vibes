@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -42,9 +43,10 @@ public class ShadowPuppeteers extends Card {
                 new MayEffect(
                         SequenceEffect.of(
                                 new AnimatePermanentsEffect(4, 4,
-                                        List.of(CardSubtype.DRAGON), Set.of()),
+                                        List.of(CardSubtype.DRAGON), Set.of(), null, Set.of(),
+                                        GrantScope.TRIGGERING_PERMANENT, EffectDuration.UNTIL_END_OF_TURN),
                                 new GrantColorUntilEndOfTurnEffect(
-                                        CardColor.RED, true, GrantScope.SELF)),
+                                        CardColor.RED, true, GrantScope.TRIGGERING_PERMANENT)),
                         "Have it become a red Dragon with base power and toughness 4/4 until end of turn?"));
     }
 }

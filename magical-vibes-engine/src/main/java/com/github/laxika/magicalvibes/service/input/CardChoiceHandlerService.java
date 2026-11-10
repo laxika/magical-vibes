@@ -3217,7 +3217,7 @@ public class CardChoiceHandlerService {
             permanent.setPutOntoBattlefieldWithAbilitySourcePermanentId(triggeringSourcePermanentId);
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, playerId, permanent);
-        // Saga ETB: place the first lore counter and trigger chapter I (CR 714.3a).
+        // Saga ETB: place the first lore counter and trigger chapter I (CR 715.3a).
         if (!permanent.isFaceDown() && card.isSaga()) {
             sagaChapterService.initializeSaga(gameData, permanent, card, playerId);
         }

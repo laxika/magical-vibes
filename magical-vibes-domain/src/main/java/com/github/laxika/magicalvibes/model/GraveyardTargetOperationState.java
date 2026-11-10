@@ -89,7 +89,7 @@ public class GraveyardTargetOperationState {
     public boolean castWithAdventure;
     /** Whether the pending spell's optional kicker-style cost was paid. */
     public boolean kicked;
-    /** Source permanent ID for saga chapter graveyard targets (used in SBA check CR 714.4). */
+    /** Source permanent ID for saga chapter graveyard targets (used in SBA check CR 715.4). */
     public UUID sourcePermanentId;
     /** Whether accepting the pending triggered ability's may effect consumes its once-per-turn limit. */
     public boolean markSourceOncePerTurnOnAcceptance;

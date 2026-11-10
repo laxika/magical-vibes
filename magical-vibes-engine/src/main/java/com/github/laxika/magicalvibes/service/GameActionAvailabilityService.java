@@ -376,7 +376,7 @@ public class GameActionAvailabilityService {
      * {@link #getPlayableCardIndices} membership — timing, casting permissions, spell limits,
      * affordability with every cost modifier and alternative-cost route, target availability
      * (CR 601.2c), graveyard-exile additional costs (CR 601.2b) and the legendary-sorcery rule
-     * (CR 714.1) — but not the status/awaiting-input/priority gating (callers such as the AI
+     * (CR 205.4e) — but not the status/awaiting-input/priority gating (callers such as the AI
      * check priority themselves and may evaluate hypothetical pools). Never mutates game state.
      *
      * @param pool                  the pool to check affordability against (the AI passes a
@@ -720,7 +720,7 @@ public class GameActionAvailabilityService {
                 && canPayLandPlayCost(card, pool);
         boolean spellPlayable = isPlayableAsSpell(gameData, playerId, card, pool, extraConvokeMana, additionalGenericCost, ctx);
 
-        // The 601.2c/601.2b/714.1 filters below never apply to land plays
+        // The 601.2c/601.2b/205.4e filters below never apply to land plays
         if (card.hasType(CardType.LAND)) {
             return landPlayable || spellPlayable;
         }
@@ -830,7 +830,7 @@ public class GameActionAvailabilityService {
             }
         }
 
-        // MTG rule 714.1: can't cast a legendary sorcery unless you control a legendary creature or planeswalker
+        // CR 205.4e: can't cast a legendary sorcery unless you control a legendary creature or planeswalker
         if (card.getSupertypes().contains(CardSupertype.LEGENDARY)
                 && card.hasType(CardType.SORCERY)
                 && !castingPermissionService.controlsLegendaryCreatureOrPlaneswalker(gameData, playerId)) {

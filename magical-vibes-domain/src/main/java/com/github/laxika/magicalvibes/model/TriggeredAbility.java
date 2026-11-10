@@ -104,7 +104,7 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
         if (!options.equals(TriggerOptions.DEFAULT)
                 && conditions.stream().anyMatch(condition -> condition.trigger() instanceof ChapterTrigger)) {
             // "{rN}—[Effect]" is "when one or more lore counters are put onto this Saga, if the number of lore
-            // counters on it was less than N and became at least N, [effect]" (CR 714.2b): the threshold is the
+            // counters on it was less than N and became at least N, [effect]" (CR 715.2b): the threshold is the
             // chapter's only intervening "if", and an "if" in its effect is a condition of the effect.
             throw new IllegalArgumentException("A chapter ability takes no options: " + conditions + " with "
                     + options);

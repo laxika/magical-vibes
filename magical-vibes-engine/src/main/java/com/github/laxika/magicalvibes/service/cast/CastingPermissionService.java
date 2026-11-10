@@ -186,7 +186,7 @@ public class CastingPermissionService {
         if (isAdditionalNonPhyrexianSpellRestricted(gameData, playerId, card)) return false;
         if (isSpellCastingRestrictedByMostRecentSpell(gameData, card)) return false;
         if (isSpellCastingRestrictedByTopLibraryCard(gameData, card)) return false;
-        // MTG rule 714.1: legendary sorceries require controlling a legendary creature or planeswalker
+        // CR 205.4e: legendary sorceries require controlling a legendary creature or planeswalker
         if (card.getSupertypes().contains(CardSupertype.LEGENDARY)
                 && card.hasType(CardType.SORCERY)
                 && !controlsLegendaryCreatureOrPlaneswalker(gameData, playerId)) return false;

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * <p>When {@code predicate} is {@code null}, this is a targeting effect — the permanent is
  * chosen as a target when the spell or ability is cast. For lore counters on Sagas, this also
- * triggers the appropriate chapter ability per MTG Rule 714.3b. In that mode, {@code targetPredicate}
+ * triggers the appropriate chapter ability per CR 715.2b. In that mode, {@code targetPredicate}
  * may further restrict which permanents are legal targets (honoured by the saga-chapter and
  * end-step targeting pipelines).</p>
  *

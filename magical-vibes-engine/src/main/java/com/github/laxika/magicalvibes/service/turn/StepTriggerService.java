@@ -2897,7 +2897,7 @@ public class StepTriggerService {
         collectEmblemStepTriggers(gameData, StepTrigger.Moment.PRECOMBAT_MAIN_PHASE, ActivePlayer.YOU);
         handleRadCounterTrigger(gameData);
 
-        // Saga lore counters: add a lore counter to each Saga the active player controls (MTG Rule 714.3b)
+        // Saga lore counters: add a lore counter to each Saga the active player controls (CR 715.3c)
         handleSagaLoreCounters(gameData);
 
         handlePrecombatMainBattlefieldTriggers(gameData);
@@ -3372,7 +3372,7 @@ public class StepTriggerService {
 
     /**
      * Adds a lore counter to each Saga the active player controls and triggers
-     * the appropriate chapter ability (MTG Rule 714.3b).
+     * the appropriate chapter ability (CR 715.3c, 715.2b).
      * Called at the beginning of the active player's precombat main phase.
      */
     private void handleSagaLoreCounters(GameData gameData) {

@@ -2369,14 +2369,10 @@ public class CombatDamageService {
                         targetChooserId);
                 return;
             }
-            // The player dealt damage is the event's player and the entry's non-targeting "that player": a
-            // reflexive "when you do, destroy target creature that player controls" (Dokuchi Silencer) is targeted
-            // against it.
-            gameData.queueMayAbility(card, attackerId, may, defenderId, creature.getId(),
-                    damageDealt, false, null, ability.ability().grantingPermanentId())
-                    .setTriggeringPlayerId(defenderId);
-            gameLogService.append(gameData, GameLog.cardThen(card, "'s combat damage trigger fires."));
-            return;
+            // An untargeted "you may" goes on the stack as any untargeted ability does, below, with the same record
+            // of the damage. The player dealt damage is the event's player and the entry's non-targeting "that
+            // player": a reflexive "when you do, destroy target creature that player controls" (Dokuchi Silencer)
+            // is targeted against it.
         }
 
         // "exile up to N target cards from that player's graveyard" (Skullsnatcher): the
@@ -2388,8 +2384,17 @@ public class CombatDamageService {
                 .filter(GraveyardCardChoosingEffect::choosesGraveyardCards)
                 .findFirst().orElse(null);
         if (graveyardChoice != null) {
-            graveyardTargetingService.handleCombatDamageGraveyardChoiceTargeting(gameData, attackerId,
-                    card, effects, creature.getId(), defenderId, graveyardChoice, damageDealt);
+            if (gameData.interaction.isAwaitingInput()) {
+                // Another ability is already choosing its graveyard targets: this one, an ability of its own with
+                // its own targets (CR 603.3b), prompts after that choice instead of overwriting it.
+                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        card, attackerId, effects, defenderId, 0, damageDealt,
+                        graveyardChoice.graveyardChoiceMaxTargets(damageDealt), null, false, null,
+                        creature.getId()));
+            } else {
+                graveyardTargetingService.handleCombatDamageGraveyardChoiceTargeting(gameData, attackerId,
+                        card, effects, creature.getId(), defenderId, graveyardChoice, damageDealt);
+            }
             return;
         }
 

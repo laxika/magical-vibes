@@ -2153,7 +2153,7 @@ public class GraveyardChoiceHandlerService {
 
             StackEntry triggeredEntry;
             if (pendingSourcePermanentId != null) {
-                // Saga chapter: include sourcePermanentId for SBA check (CR 714.4)
+                // Saga chapter: include sourcePermanentId for SBA check (CR 715.4)
                 triggeredEntry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         pendingCard,

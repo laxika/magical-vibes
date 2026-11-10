@@ -648,7 +648,7 @@ class StateBasedActionServiceTest {
     }
 
     @Nested
-    @DisplayName("Saga sacrifice — CR 714.4")
+    @DisplayName("Saga sacrifice — CR 715.4")
     class SagaSacrifice {
 
         @Test

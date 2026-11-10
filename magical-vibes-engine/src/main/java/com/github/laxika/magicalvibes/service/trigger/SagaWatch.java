@@ -20,7 +20,7 @@ import java.util.List;
  * {@link SagaAbilityReader}: "triggers only once each turn" comes from the ability, and the legacy view gives none of
  * them, so {@link #effectsOf} and {@link #registrationsOf} throw. A Saga's own chapter abilities are not read through a
  * watch: {@code SagaChapterService} and {@code StepTriggerService} read them by their chapter trigger, and they take
- * no options (CR 714.2b).
+ * no options (CR 715.2b).
  */
 public enum SagaWatch implements TriggerWatch {
     /** "Whenever the final chapter ability of a Saga you control resolves". */

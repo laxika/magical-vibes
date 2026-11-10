@@ -9132,59 +9132,12 @@ public class GameData {
         ));
     }
 
-    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID triggeringCardId) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                controllerId,
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(may))
-        );
-        entry.setTriggeringCardId(triggeringCardId);
-        if (triggeringCardId != null) {
-            entry.setTriggeringCardGraveyardEntryVersion(graveyardEntryVersion(triggeringCardId));
-        }
-        stack.add(entry);
-    }
-
     /**
      * CR 603.5 — Puts a "you may" triggered ability with source permanent and target context
      * directly onto the stack.  The may choice happens at resolution time, not trigger time.
      */
     public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId, UUID sourcePermanentId) {
         queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, 0, false);
-    }
-
-    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
-                                UUID sourcePermanentId, boolean markSourceOncePerTurnOnAcceptance) {
-        queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, 0,
-                markSourceOncePerTurnOnAcceptance);
-    }
-
-    /** Queues an enter-triggered may ability with last-known toughness context. */
-    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
-                                UUID sourcePermanentId, boolean markSourceOncePerTurnOnAcceptance,
-                                Integer triggeringPermanentToughnessAtTrigger) {
-        queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, 0,
-                markSourceOncePerTurnOnAcceptance, triggeringPermanentToughnessAtTrigger);
-    }
-
-    /** Queues a resolution-time may ability while preserving its active-player context; returns its entry. */
-    public StackEntry queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
-                                      UUID sourcePermanentId, UUID activePlayerId, Permanent sourcePermanentSnapshot) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                controllerId,
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(may)),
-                targetCardId,
-                sourcePermanentId
-        );
-        entry.setActivePlayerId(activePlayerId);
-        entry.setSourcePermanentSnapshot(sourcePermanentSnapshot);
-        stack.add(entry);
-        return entry;
     }
 
     /** Queues a may ability while keeping its controller distinct from the choosing player. */
@@ -9207,16 +9160,6 @@ public class GameData {
                 choicePlayerId,
                 sourcePermanentSnapshot
         ));
-    }
-
-    /** Queues a may ability while retaining the controller of the permanent that caused the trigger. */
-    public void queueMayAbilityForPlayer(Card sourceCard, UUID controllerId, MayEffect may,
-                                         UUID targetCardId, UUID sourcePermanentId, UUID choicePlayerId,
-                                         Permanent sourcePermanentSnapshot, UUID sourceControllerId,
-                                         UUID triggeringPermanentId) {
-        queueMayAbilityForPlayer(sourceCard, controllerId, may, targetCardId, sourcePermanentId,
-                choicePlayerId, sourcePermanentSnapshot, sourceControllerId, triggeringPermanentId,
-                null);
     }
 
     /** Queues a may ability with the triggering permanent's last-known power snapshot. */
@@ -9246,47 +9189,6 @@ public class GameData {
                 triggeringPermanentPowerAtTrigger,
                 null
         ));
-    }
-
-    /**
-     * Puts a resolution-time May ability on the stack while preserving the combat target that
-     * defines a non-targeting defending-player effect.
-     */
-    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
-                                UUID sourcePermanentId, UUID attackedTargetId) {
-        queueGrantedMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, attackedTargetId, null);
-    }
-
-    /**
-     * {@link #queueMayAbility(Card, UUID, MayEffect, UUID, UUID, UUID)} for a triggered ability {@code
-     * grantingPermanentId} granted ({@link StackEntry#getGrantingPermanentId()}), or {@code null}; returns the entry
-     * it put on the stack.
-     */
-    public StackEntry queueGrantedMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
-                                       UUID sourcePermanentId, UUID attackedTargetId, UUID grantingPermanentId) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                controllerId,
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(may)),
-                targetCardId,
-                sourcePermanentId
-        );
-        entry.setAttackedTargetId(attackedTargetId);
-        entry.setGrantingPermanentId(grantingPermanentId);
-        stack.add(entry);
-        return entry;
-    }
-
-    /**
-     * Same as {@link #queueMayAbility(Card, UUID, MayEffect, UUID, UUID)} but also snapshots an
-     * {@code eventValue} (e.g. combat damage dealt) onto the stack entry so that the wrapped effect
-     * can reference "that many" via an {@code EventValue} amount at resolution time (e.g.
-     * Cold-Eyed Selkie's "you may draw that many cards").
-     */
-    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId, UUID sourcePermanentId, int eventValue) {
-        queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, eventValue, false);
     }
 
     public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
@@ -9335,16 +9237,6 @@ public class GameData {
         }
         stack.add(entry);
         return entry;
-    }
-
-    /**
-     * CR 603.5 — Puts a "you may pay" triggered ability directly onto the stack with the
-     * MayPayManaEffect wrapper intact.  The may choice happens at resolution time.
-     * The targetCardId (e.g. the entering permanent for Mirrorworks) is preserved on the
-     * stack entry so that the wrapped effect can reference it at resolution time.
-     */
-    public void queueMayAbility(Card sourceCard, UUID controllerId, MayPayManaEffect mayPay, UUID targetCardId) {
-        queueMayAbility(sourceCard, controllerId, mayPay, targetCardId, null);
     }
 
     public void queueMayAbility(Card sourceCard, UUID controllerId, MayPayManaEffect mayPay,

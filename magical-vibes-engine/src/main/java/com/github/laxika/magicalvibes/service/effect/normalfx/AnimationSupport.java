@@ -1134,8 +1134,9 @@ public class AnimationSupport {
 
     /**
      * Puts {@code self}'s "when this transforms into [this face]" ability, of {@code effects}, on the stack, as the
-     * trigger pipeline matched it: a "may" ability without targets waits for its choice; a targeted one chooses its
-     * targets now; otherwise all of it goes on the stack as one ability.
+     * trigger pipeline matched it, as one object of all its effects (CR 603.3): an ability with a target chooses it
+     * now, once for every effect (CR 603.3d); any other goes on the stack as written, a "you may" among its effects
+     * asked as it resolves (CR 603.5).
      *
      * @return whether it triggered
      */
@@ -1145,14 +1146,9 @@ public class AnimationSupport {
         if (controllerId == null) {
             return false;
         }
+        // The route is read from all the ability's effects; the first that needs a choice of its own decides it.
         for (CardEffect e : effects) {
-            if (e instanceof MayEffect may
-                    && !e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    && !e.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                gameData.queueMayAbility(triggerCard, controllerId, may, null, self.getId());
-                gameLogService.append(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));
-                log.info("Game {} - {} transform trigger queued (may ability)", gameData.id, triggerCard.getName());
-            } else if (e instanceof DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect splitDamage) {
+            if (e instanceof DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect splitDamage) {
                 gameData.interaction.setPermanentChoiceContext(
                         new PermanentChoiceContext.TransformOpponentThenCreatureTarget(
                                 triggerCard, controllerId, effects, self.getId()));
@@ -1216,21 +1212,24 @@ public class AnimationSupport {
                         "'s transform ability triggers - choose a target."));
                 log.info("Game {} - {} transform trigger awaiting target", gameData.id, triggerCard.getName());
                 return true;
-            } else {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        triggerCard,
-                        controllerId,
-                        triggerCard.getName() + "'s transform ability",
-                        effects,
-                        null,
-                        self.getId()
-                ));
-                gameLogService.append(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));
-                log.info("Game {} - {} transform trigger pushed onto stack", gameData.id, triggerCard.getName());
-                return true;
             }
         }
+        if (effects.isEmpty()) {
+            return true;
+        }
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                triggerCard,
+                controllerId,
+                triggerCard.getName() + "'s transform ability",
+                effects,
+                null,
+                self.getId()
+        );
+        entry.setSourcePermanentSnapshot(new Permanent(self));
+        gameData.stack.add(entry);
+        gameLogService.append(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));
+        log.info("Game {} - {} transform trigger pushed onto stack", gameData.id, triggerCard.getName());
         return true;
     }
 }

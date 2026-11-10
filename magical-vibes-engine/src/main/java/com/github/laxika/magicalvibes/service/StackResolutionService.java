@@ -1187,7 +1187,7 @@ public class StackResolutionService {
                 return;
             }
 
-            // Saga ETB: place first lore counter and trigger chapter I (MTG Rule 714.3a)
+            // Saga ETB: place first lore counter and trigger chapter I (CR 715.3a)
             if (enteredCard.isSaga()) {
                 sagaChapterService.initializeSaga(gameData, enchPerm, enteredCard, controllerId);
             }

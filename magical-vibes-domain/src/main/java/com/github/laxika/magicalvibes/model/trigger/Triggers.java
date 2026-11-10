@@ -1878,7 +1878,7 @@ public final class Triggers {
 
     /**
      * A Saga's chapter ability "{rN}—": when lore counters put on this Saga make their number reach {@code chapter}
-     * (CR 714.2b). Every effect added with the same chapter joins one ability.
+     * (CR 715.2b). Every effect added with the same chapter joins one ability.
      */
     public static ChapterTrigger chapter(int chapter) {
         return new ChapterTrigger(chapter);

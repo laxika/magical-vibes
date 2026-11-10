@@ -9,6 +9,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
  * previous colors (Distorting Lens, Grand Architect). It is {@code true} for "becomes [color] in
  * addition to its other colors" (Indigo Faerie), which adds the color instead of replacing.
  *
+ * <p>{@link GrantScope#TRIGGERING_PERMANENT} is "it becomes [color]" of the permanent whose event triggered the
+ * ability, read from the stack entry (Shadow Puppeteers).
+ *
  * <p>Group scopes such as {@link GrantScope#ALL_CREATURES} apply the change to the matching
  * permanents that exist when the effect resolves.
  *
@@ -42,7 +45,8 @@ public record GrantColorUntilEndOfTurnEffect(CardColor color, boolean additive, 
     public TargetSpec targetSpec() {
         return switch (scope) {
             case TARGET_PLAYERS_CREATURES -> TargetSpec.benign(TargetPredicates.player());
-            case OWN_CREATURES, ALL_OWN_CREATURES, ALL_CREATURES, ALL_CREATURES_INCLUDING_SELF -> TargetSpec.NONE;
+            case OWN_CREATURES, ALL_OWN_CREATURES, ALL_CREATURES, ALL_CREATURES_INCLUDING_SELF,
+                 TRIGGERING_PERMANENT -> TargetSpec.NONE;
             case SELF -> new TargetSpec(null, false, null, true, 1);
             default -> TargetSpec.benign(TargetPredicates.permanent());
         };
