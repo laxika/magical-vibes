@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TriggerCollectorRegistryTest {
 
@@ -131,6 +132,34 @@ class TriggerCollectorRegistryTest {
 
             assertThat(result).isFalse();
             assertThat(called[0]).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("register")
+    class Register {
+
+        @Test
+        @DisplayName("Throws on a second handler for the same watch and effect class")
+        void rejectsDuplicateKey() {
+            registry.register(LifeWatch.ON_CONTROLLER_GAINS_LIFE, DrawCardEffect.class,
+                    (match, inner, context) -> true);
+
+            assertThatThrownBy(() -> registry.register(LifeWatch.ON_CONTROLLER_GAINS_LIFE, DrawCardEffect.class,
+                    (match, inner, context) -> false))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("DrawCardEffect");
+        }
+
+        @Test
+        @DisplayName("Accepts the same effect class on another watch")
+        void acceptsSameClassOnAnotherWatch() {
+            registry.register(LifeWatch.ON_CONTROLLER_GAINS_LIFE, DrawCardEffect.class,
+                    (match, inner, context) -> true);
+            registry.register(LifeWatch.ON_CONTROLLER_LOSES_LIFE, DrawCardEffect.class,
+                    (match, inner, context) -> true);
+
+            assertThat(registry.size()).isEqualTo(2);
         }
     }
 

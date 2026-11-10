@@ -188,7 +188,6 @@ import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupp
 import com.github.laxika.magicalvibes.service.effect.GrantedUpkeepEffectSupport;
 import com.github.laxika.magicalvibes.model.effect.MonarchEndStepTriggeredEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageIfFewCardsInHandEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDelayedCurseAttachedToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDelayedGraveyardCardUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnGraveyardCardsToBattlefieldUnderControlEffect;
@@ -225,7 +224,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndReturnCardsEx
 import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardsToTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
-import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -1276,23 +1274,6 @@ public class StepTriggerService {
                     // so this always triggers as long as it's on the battlefield.
                     gameData.queueInteraction(new PermanentChoiceContext.CapriciousEfreetOwnTarget(
                             perm.getCard(), activePlayerId, perm.getId()));
-                } else if (effect instanceof SurveilEffect) {
-                    // Surveil is part of a compound triggered ability (e.g. "surveil 1, then if...").
-                    // Group ALL upkeep effects into a single stack entry so they resolve sequentially.
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            activePlayerId,
-                            perm.getCard().getName() + "'s upkeep ability",
-                            new ArrayList<>(upkeepEffects),
-                            (UUID) null,
-                            perm.getId()
-                    ));
-
-                    gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
-                    log.info("Game {} - {} upkeep trigger pushed onto stack (surveil compound)",
-                            gameData.id, perm.getCard().getName());
-                    break; // All effects grouped into one entry
                 } else if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                     // Generic targeted-permanent upkeep trigger (e.g. Weed-Pruner Poplar's
                     // "target creature other than this creature gets -1/-1"). Target is chosen
@@ -2888,9 +2869,9 @@ public class StepTriggerService {
                         // stack (CR 603.3d); only the may decision waits for resolution.
                         gameData.queueInteraction(new PermanentChoiceContext.UpkeepPermanentTargetTrigger(
                                 perm.getCard(), activePlayerId, new ArrayList<>(List.of(effect)), perm.getId()));
-                    } else if (effect instanceof MayEffect may) {
-                        gameData.queueMayAbility(perm.getCard(), activePlayerId, may);
                     } else {
+                        // "That player" is the active player and the source is recorded as it was, whatever the
+                        // effect is; an untargeted "you may" is asked as the ability resolves (CR 603.5).
                         StackEntry triggerEntry = new StackEntry(
                                 StackEntryType.TRIGGERED_ABILITY,
                                 perm.getCard(),
@@ -5721,41 +5702,6 @@ public class StepTriggerService {
                             log.info("Game {} - {} controller end-step targeting may-pay trigger queued",
                                     gameData.id, perm.getCard().getName());
                         }
-                    } else if (effect instanceof DestroyRandomOpponentPermanentWithCounterEffect destroyRandom) {
-                        // Intervening-if: only trigger if enough opponent permanents have the counter
-                        int count = 0;
-                        for (UUID pid : gameData.orderedPlayerIds) {
-                            if (pid.equals(activePlayerId)) continue;
-                            List<Permanent> opponentBf = gameData.playerBattlefields.get(pid);
-                            if (opponentBf == null) continue;
-                            for (Permanent p : opponentBf) {
-                                int counterCount = switch (destroyRandom.counterType()) {
-                                    case AIM -> p.getCounterCount(CounterType.AIM);
-                                    case CHARGE -> p.getCounterCount(CounterType.CHARGE);
-                                    default -> 0;
-                                };
-                                if (counterCount > 0) count++;
-                            }
-                        }
-                        if (count < destroyRandom.minRequired()) {
-                            log.info("Game {} - {} end-step trigger skipped (only {} permanents with {} counters, need {})",
-                                    gameData.id, perm.getCard().getName(), count,
-                                    destroyRandom.counterType().name().toLowerCase(), destroyRandom.minRequired());
-                            continue;
-                        }
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                activePlayerId,
-                                perm.getCard().getName() + "'s end step ability",
-                                new ArrayList<>(List.of(effect)),
-                                null,
-                                perm.getId()
-                        ));
-
-                        gameLogService.append(gameData,
-                                GameLog.cardThen(perm.getCard(), "'s end step ability triggers."));
-                        log.info("Game {} - {} controller end-step trigger pushed onto stack", gameData.id, perm.getCard().getName());
                     } else if (effect instanceof ConditionalEffect conditional
                             && !conditional.wrapped().targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                             && (conditional.wrapped().targetSpec().admits(TargetPredicate.Kind.PERMANENT)

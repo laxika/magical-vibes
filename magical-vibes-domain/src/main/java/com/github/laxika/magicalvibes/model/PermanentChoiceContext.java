@@ -2971,17 +2971,28 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /**
+     * The target choice of a life gain, loss or payment ability (a {@code LifeWatch}'s), made as it goes on the stack
+     * (CR 603.3d). It carries the life event's record into the entry: the life gained, lost or paid as
+     * {@code eventValue} and the player it happened to as {@code triggeringPlayerId}.
+     */
     record LifeGainTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                    UUID sourcePermanentId, boolean creaturesOnly, Integer eventValue)
+                                    UUID sourcePermanentId, boolean creaturesOnly, Integer eventValue,
+                                    UUID triggeringPlayerId)
             implements PermanentChoiceContext {
         /** Any-target (creature or player) life-gain trigger — the historical Firesong/Sunspeaker form. */
         public LifeGainTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, false, null);
+            this(sourceCard, controllerId, effects, sourcePermanentId, false, null, null);
         }
 
         public LifeGainTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                         UUID sourcePermanentId, boolean creaturesOnly) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, creaturesOnly, null);
+            this(sourceCard, controllerId, effects, sourcePermanentId, creaturesOnly, null, null);
+        }
+
+        public LifeGainTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                        UUID sourcePermanentId, boolean creaturesOnly, Integer eventValue) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, creaturesOnly, eventValue, null);
         }
     }
 

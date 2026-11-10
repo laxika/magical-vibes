@@ -1981,6 +1981,12 @@ public class PermanentChoiceTriggerHandlerService {
         if (lgt.eventValue() != null) {
             entry.setEventValue(lgt.eventValue());
         }
+        entry.setTriggeringPlayerId(lgt.triggeringPlayerId());
+        Permanent source = lgt.sourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, lgt.sourcePermanentId());
+        if (source != null) {
+            entry.setSourcePermanentSnapshot(new Permanent(source));
+        }
         pushTriggeredEntry(gameData, entry);
 
         String targetName = getTargetDisplayName(gameData, targetId);

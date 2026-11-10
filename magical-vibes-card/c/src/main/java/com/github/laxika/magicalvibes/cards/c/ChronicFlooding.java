@@ -14,6 +14,6 @@ public class ChronicFlooding extends Card {
         target(TargetFilters.land());
         // Whenever enchanted land becomes tapped, its controller mills three cards.
         addTrigger(Triggers.enchantedPermanentBecomesTapped(),
-                new MillEffect(3, MillRecipient.TARGET_PLAYER));
+                new MillEffect(3, MillRecipient.TRIGGERING_PERMANENT_CONTROLLER));
     }
 }

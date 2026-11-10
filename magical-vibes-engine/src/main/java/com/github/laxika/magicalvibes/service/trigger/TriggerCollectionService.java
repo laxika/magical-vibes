@@ -16115,7 +16115,13 @@ public class TriggerCollectionService {
             case TriggerContext.DamageToControllerAmount damage -> conditionEvaluationService.judge(gameData, context,
                     damage.amount());
             case TriggerContext.LifeGain lifeGain -> conditionEvaluationService.judge(gameData,
-                    context.withTargetId(lifeGain.gainingPlayerId()));
+                    context.withTargetId(lifeGain.gainingPlayerId()), lifeGain.lifeGainedAmount());
+            // "Whenever an opponent loses exactly 1 life" (Ob Nixilis, Captive Kingpin): the life lost is the event's
+            // value, which an event condition reads.
+            case TriggerContext.LifeLoss lifeLoss -> conditionEvaluationService.judge(gameData,
+                    context.withTargetId(lifeLoss.losingPlayerId()), lifeLoss.lifeLostAmount());
+            case TriggerContext.LifePayment lifePayment -> conditionEvaluationService.judge(gameData,
+                    context.withTargetId(lifePayment.payingPlayerId()), lifePayment.lifePaidAmount());
             case null, default -> conditionEvaluationService.judge(gameData, context);
         };
     }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -21,10 +22,11 @@ public class GraveResearcherReanimate extends Card {
 
         // At the beginning of your upkeep, surveil 1. Then if there are three or more creature
         // cards in your graveyard, this creature becomes prepared.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SurveilEffect(1));
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new ConditionalEffect(
-                new GraveyardCardThreshold(3, new CardTypePredicate(CardType.CREATURE)),
-                new BecomePreparedEffect()));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.of(
+                new SurveilEffect(1),
+                new ConditionalEffect(
+                        new GraveyardCardThreshold(3, new CardTypePredicate(CardType.CREATURE)),
+                        new BecomePreparedEffect())));
     }
 
     @Override

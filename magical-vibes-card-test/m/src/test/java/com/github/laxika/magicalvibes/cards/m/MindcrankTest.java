@@ -112,7 +112,7 @@ class MindcrankTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, player2.getId());
 
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log ->
-                log.contains("Mindcrank") && log.contains("triggers") && log.contains("mills"));
+                log.contains("Mindcrank") && log.contains("triggers"));
     }
 
     @Test

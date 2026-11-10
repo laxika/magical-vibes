@@ -18,7 +18,7 @@ public class PoolingVenom extends Card {
     public PoolingVenom() {
         target(TargetFilters.land())
                 .addTrigger(Triggers.enchantedPermanentBecomesTapped(),
-                        new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
+                        new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{B}",

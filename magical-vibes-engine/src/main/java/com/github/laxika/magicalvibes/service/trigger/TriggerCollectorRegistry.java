@@ -23,8 +23,16 @@ public class TriggerCollectorRegistry {
 
     private final Map<TriggerKey, TriggerCollectorHandler> handlers = new LinkedHashMap<>();
 
+    /**
+     * Registers {@code handler} for {@code effectClass} on {@code slot}. A key has one handler: registering a second
+     * one for the same slot and class throws, so two collectors can't silently replace each other's handler.
+     */
     public void register(Object slot, Class<? extends CardEffect> effectClass, TriggerCollectorHandler handler) {
-        handlers.put(new TriggerKey(slot, effectClass), handler);
+        TriggerKey key = new TriggerKey(slot, effectClass);
+        if (handlers.putIfAbsent(key, handler) != null) {
+            throw new IllegalStateException("A trigger collector handler is already registered for "
+                    + effectClass.getSimpleName() + " on " + slot);
+        }
     }
 
     /**

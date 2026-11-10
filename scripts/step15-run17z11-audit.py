@@ -23,6 +23,12 @@ run 17z12c closed 17z12c, run 17z12f closed 17z12f, run 17z12d closed 17z12d, ru
 none of this scan's reads is in them. Run 17z12e's `EtbTriggerService` and `StepTriggerService` modal reads keep
 their ROUTE label: the card's modal goes to the mode choice as written, the event's bounds ride on the choice.
 
+Run 17z13 found two of the step collector's reviewed ROUTE reads recording by class (the your-upkeep `SurveilEffect`
+branch, which merged the permanent's upkeep effects into one bare entry, and Haphazard Bombardment's end-step branch,
+which judged its intervening "if" by its effect's class); run 17z13e removed both branches and their labels, and row
+17z13e8 re-reads the step and draw readers' class-keyed branches against what their defaults record
+(`step15-run17z13e-audit.py` lists them).
+
 A read with no entry is `UNCLASSIFIED`, with the window heuristic's guess (BIND, REBUILD, UNWRAP or ROUTE): a new read,
 or one a later run moved, to classify. The step's "done" check wants no read in an open row and none unclassified.
 
@@ -198,14 +204,14 @@ REVIEWED_ROUTE = {
     "StepTriggerService.java": {
         "AdditionalUpkeepStepEffect", "BecomeCopyOfTargetCreatureEffect", "ChooseCardTypeOnEnterEffect",
         "ChooseOneAtTriggerTimeEffect", "DealDamageIfFewCardsInHandEffect", "DestroyOneOfTargetsAtRandomEffect",
-        "DestroyRandomOpponentPermanentWithCounterEffect", "DrawCardEffect",
+        "DrawCardEffect",
         "ExchangeControlOfTargetPermanentsEffect", "ExileGraveyardCardsEffect", "MaySkipDrawReplacementEffect",
         "MonarchEndStepTriggeredEffect", "OpponentDrawStepOnlyEffect",
         "PlayerWithMostLifeGainsControlOfSourceCreatureEffect", "PutCounterOnReturnedPermanentsEffect",
         "PutOrRemoveCounterIfBlockedSinceLastUpkeepEffect", "RemoveCounterAndSacrificeSelfOnLastEffect",
         "RemoveScreamCounterFromExiledCardEffect", "ReturnCardFromGraveyardEffect",
         "ReturnTargetCardsFromGraveyardToHandEffect", "SacrificeSelfAndReturnCardsExiledWithSourceEffect",
-        "SkipDrawStepEffect", "SoulEchoUpkeepEffect", "SurveilEffect",
+        "SkipDrawStepEffect", "SoulEchoUpkeepEffect",
         "TargetPlayerGainsControlOfEnchantedPermanentEffect", "TemporaryCopyEffect", "UpkeepPlayerDependentEffect",
     },
     "TriggerCollectionService.java": {

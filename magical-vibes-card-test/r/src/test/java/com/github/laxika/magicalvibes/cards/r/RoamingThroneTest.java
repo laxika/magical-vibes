@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RoamingThrone.class, GhituJourneymage.class, ElvishVisionary.class, Abrade.class, MineshaftSpider.class, MarketGnome.class})
+@CardUsed({RoamingThrone.class, GhituJourneymage.class, ElvishVisionary.class, Abrade.class, MineshaftSpider.class, MarketGnome.class, RatchetFieldMedic.class})
 class RoamingThroneTest extends BaseCardTest {
 
     @Test
@@ -167,5 +167,19 @@ class RoamingThroneTest extends BaseCardTest {
         Permanent throne = harness.addToBattlefieldAndReturn(player1, new RoamingThrone());
         throne.setChosenSubtype(chosenSubtype);
         return throne;
+    }
+
+    @Test
+    @DisplayName("Roaming Throne doubles a \"whenever you gain life, you may\" ability of a creature of the chosen type (CR 603.2d)")
+    void doublesChosenTypeCreatureLifeGainMayTrigger() {
+        harness.forceActivePlayer(player1);
+        addThrone(CardSubtype.ROBOT);
+        harness.addToBattlefieldAndReturn(player1, new RatchetFieldMedic());
+
+        harness.inMutationScope(() -> harness.getTriggerCollectionService()
+                .checkLifeGainTriggers(gd, player1.getId(), 1));
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Ratchet, Field Medic"))
+                .hasSize(2);
     }
 }

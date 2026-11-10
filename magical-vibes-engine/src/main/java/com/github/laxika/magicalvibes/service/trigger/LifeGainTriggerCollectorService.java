@@ -7,9 +7,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostRandomCreatureCardInHandEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +16,21 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
+/**
+ * The collectors of the life gain, loss and payment abilities ({@link LifeWatch}): "whenever you gain life", "whenever
+ * an opponent gains life", "whenever you lose life", "whenever an opponent loses life" and "whenever you pay life".
+ * <p>
+ * Each watch has one default, and every ability it reads records the event whatever its effects are: the life gained,
+ * lost or paid as the event's value ("that much", "that many"), the player it happened to as the triggering player
+ * (and, for an ability that chooses no target, its non-targeting "that player", which the {@code TRIGGERING_PLAYER}
+ * recipients read), the source as it was when the ability triggered, and the ability's "do this only once each turn"
+ * marked as its action is taken (CR 603.2h). The effects go on the stack as written; a "you may" is asked as the
+ * ability resolves (CR 603.5). A target is chosen as the ability goes on the stack (CR 603.3d), by what the effect's
+ * target admits, and the choice carries the same record into the entry. The collectors in
+ * {@code TriggerCollectionService} judged the ability's event condition and intervening "if" as it triggered.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -27,29 +39,42 @@ public class LifeGainTriggerCollectorService {
     private final GameLogService gameLogService;
 
     /**
-     * "Whenever you gain life, you may …": the ability goes on the stack as written and asks as it resolves (CR 603.5),
-     * with the life gained as the event's value ("that many", Nykthos Paragon) and a "do this only once each turn" used
-     * up as it is accepted (CR 603.2h).
+     * The default of every life watch: the ability goes on the stack, or to its target choice, with the life event
+     * recorded (see the type's documentation).
      */
-    @CollectsLifeTrigger(value = MayEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
-    private boolean handleLifeGainMay(TriggerMatchContext match, MayEffect may, TriggerContext ctx) {
+    @CollectsLifeTrigger(value = CardEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
+    @CollectsLifeTrigger(value = CardEffect.class, watch = LifeWatch.ON_OPPONENT_GAINS_LIFE)
+    @CollectsLifeTrigger(value = CardEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
+    @CollectsLifeTrigger(value = CardEffect.class, watch = LifeWatch.ON_OPPONENT_LOSES_LIFE)
+    @CollectsLifeTrigger(value = CardEffect.class, watch = LifeWatch.ON_CONTROLLER_PAYS_LIFE)
+    private boolean handleLifeDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
+        LifeEvent event = LifeEvent.of(ctx);
         Card sourceCard = match.permanent().getCard();
-        StackEntry entry = match.gameData().queueMayAbility(sourceCard, match.controllerId(), may,
-                null, match.permanent().getId(), ((TriggerContext.LifeGain) ctx).lifeGainedAmount(),
-                match.markSourceOncePerTurnOnAcceptance(), null, null);
-        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on life gain and queues a may ability",
-                match.gameData().id, sourceCard.getName());
-        return true;
-    }
+        if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+            queueGraveyardTarget(match, effect, 0, 0);
+            return true;
+        }
+        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            // "Up to X target creatures, where X is the life gained" (Heroic Feast): the targets are chosen group by
+            // group, with the life gained as the count.
+            if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                    && sourceCard.getTargetGroups().stream().anyMatch(group -> group.getDynamicMaxTargets() != null)) {
+                match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        sourceCard, match.controllerId(), List.of(effect), match.permanent().getId(),
+                        List.of(), 0, 0, List.of(), 0, List.of(), false, null, null, event.amount()));
+            } else {
+                match.gameData().queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
+                        sourceCard, match.controllerId(), List.of(effect), match.permanent().getId(),
+                        !effect.targetSpec().admits(TargetPredicate.Kind.PLAYER), event.amount(),
+                        event.playerId()));
+            }
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+            log.info("Game {} - {} triggers on a life event and needs a target",
+                    match.gameData().id, sourceCard.getName());
+            return true;
+        }
 
-    @CollectsLifeTrigger(value = PerpetuallyBoostRandomCreatureCardInHandEffect.class,
-            watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
-    private boolean handleLifeGainRandomCreatureBoost(TriggerMatchContext match,
-                                                       PerpetuallyBoostRandomCreatureCardInHandEffect effect,
-                                                       TriggerContext ctx) {
-        Card sourceCard = match.permanent().getCard();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -58,100 +83,56 @@ public class LifeGainTriggerCollectorService {
                 new ArrayList<>(List.of(effect)),
                 null,
                 match.permanent().getId());
-        entry.setEventValue(((TriggerContext.LifeGain) ctx).lifeGainedAmount());
+        if (effect.targetSpec().declaredTarget() == null) {
+            entry.setTargetId(event.playerId());
+            entry.setNonTargeting(true);
+        }
+        entry.setEventValue(event.amount());
+        entry.setTriggeringPlayerId(event.playerId());
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
         match.gameData().enqueueTrigger(entry);
 
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on life gain (random creature card boost)",
-                match.gameData().id, sourceCard.getName());
+        log.info("Game {} - {} triggers on a life event ({} life)",
+                match.gameData().id, sourceCard.getName(), event.amount());
         return true;
     }
 
     /**
-     * "Whenever you gain life, …", for an effect no handler of its own collects: the ability goes on the stack as written,
-     * with the life gained as the event's value ("that much", "a +1/+1 counter for each 1 life you gained"). A target is
-     * chosen as it goes on the stack (CR 603.3d), by what the effect's target admits: a card in a graveyard; a player or a
-     * permanent through the ability's target filter ("target opponent loses that much life": Sanguine Bond), else the
-     * declared target ("target creature or player": Firesong and Sunspeaker; a "you may pay" whose effect targets no
-     * player offers creatures: Cradle of Vitality's "target creature"). A "you may" or "you may pay" is asked as the
-     * ability resolves (CR 603.5).
+     * "Whenever one or more opponents lose life, you may cast target instant or sorcery card from your graveyard"
+     * (Emet-Selch of the Third Seat): the default's graveyard target choice, needing one target (with none the ability
+     * isn't put on the stack, CR 603.3d); the record is the default's.
      */
-    @CollectsLifeTrigger(value = CardEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE)
-    private boolean handleLifeGainDefault(TriggerMatchContext match, CardEffect effect, TriggerContext ctx) {
-        Card sourceCard = match.permanent().getCard();
-        int lifeGained = ((TriggerContext.LifeGain) ctx).lifeGainedAmount();
-        if (effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    sourceCard, match.controllerId(), List.of(effect)));
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-            log.info("Game {} - {} triggers on life gain and needs a graveyard target",
-                    match.gameData().id, sourceCard.getName());
-            return true;
-        }
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
-                    sourceCard,
-                    match.controllerId(),
-                    List.of(effect),
-                    match.permanent().getId(),
-                    !effect.targetSpec().admits(TargetPredicate.Kind.PLAYER),
-                    lifeGained));
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-            log.info("Game {} - {} triggers on life gain and needs a target",
-                    match.gameData().id, sourceCard.getName());
-            return true;
-        }
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId());
-        entry.setEventValue(lifeGained);
-        match.gameData().enqueueTrigger(entry);
-
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on life gain", match.gameData().id, sourceCard.getName());
+    @CollectsLifeTrigger(value = CastTargetInstantOrSorceryFromGraveyardEffect.class,
+            watch = LifeWatch.ON_OPPONENT_LOSES_LIFE)
+    private boolean handleOpponentLifeLossCastFromGraveyard(TriggerMatchContext match,
+            CastTargetInstantOrSorceryFromGraveyardEffect effect, TriggerContext ctx) {
+        queueGraveyardTarget(match, effect, 1, 1);
         return true;
     }
 
-    @CollectsLifeTriggers({
-            @CollectsLifeTrigger(value = SequenceEffect.class, watch = LifeWatch.ON_CONTROLLER_GAINS_LIFE),
-            @CollectsLifeTrigger(value = SequenceEffect.class, watch = LifeWatch.ON_CONTROLLER_LOSES_LIFE)
-    })
-    private boolean handleLifeGainSequence(TriggerMatchContext match,
-                                            SequenceEffect effect, TriggerContext ctx) {
+    private void queueGraveyardTarget(TriggerMatchContext match, CardEffect effect, int minCount, int maxCount) {
         Card sourceCard = match.permanent().getCard();
-        if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.LifeGainTriggerAnyTarget(
-                    sourceCard,
-                    match.controllerId(),
-                    List.of(effect),
-                    match.permanent().getId()));
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-            log.info("Game {} - {} sequence trigger needs a target",
-                    match.gameData().id, sourceCard.getName());
-            return true;
-        }
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                null,
-                match.permanent().getId());
-        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        match.gameData().enqueueTrigger(entry);
-
+        match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                sourceCard, match.controllerId(), List.of(effect), null, minCount, 0, maxCount, null, false, null,
+                match.permanent().getId(), match.markSourceOncePerTurnOnAcceptance(), List.of()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on life gain (sequence)", match.gameData().id, sourceCard.getName());
-        return true;
+        log.info("Game {} - {} triggers on a life event and needs a graveyard target",
+                match.gameData().id, sourceCard.getName());
+    }
+
+    /** The player a life gain, loss or payment happened to, and how much. */
+    private record LifeEvent(UUID playerId, int amount) {
+
+        static LifeEvent of(TriggerContext ctx) {
+            return switch (ctx) {
+                case TriggerContext.LifeGain gain -> new LifeEvent(gain.gainingPlayerId(), gain.lifeGainedAmount());
+                case TriggerContext.LifeLoss loss -> new LifeEvent(loss.losingPlayerId(), loss.lifeLostAmount());
+                case TriggerContext.LifePayment payment ->
+                        new LifeEvent(payment.payingPlayerId(), payment.lifePaidAmount());
+                default -> throw new IllegalArgumentException("Not a life gain, loss or payment: " + ctx);
+            };
+        }
     }
 }

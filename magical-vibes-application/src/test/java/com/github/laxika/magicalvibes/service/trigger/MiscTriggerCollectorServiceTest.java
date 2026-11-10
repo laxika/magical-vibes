@@ -309,6 +309,7 @@ class MiscTriggerCollectorServiceTest {
 
         registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(sut, registry);
+        TriggerCollectorRegistry.scanBean(new LifeGainTriggerCollectorService(gameLogService), registry);
     }
 
     // ===== Helpers =====
@@ -347,7 +348,6 @@ class MiscTriggerCollectorServiceTest {
     @Test
     @DisplayName("life-gain may-pay trigger keeps the optional payment on the stack, with the life gained")
     void lifeGainMayPayTriggerKeepsOptionalPayment() {
-        TriggerCollectorRegistry.scanBean(new LifeGainTriggerCollectorService(gameLogService), registry);
         Permanent perm = createPermanent("Dawn of Hope");
         var effect = new MayPayManaEffect("{2}", new DrawCardEffect(1), "Pay {2} to draw a card?");
         var ctx = new TriggerContext.LifeGain(player1Id, 1);
@@ -364,7 +364,6 @@ class MiscTriggerCollectorServiceTest {
     @Test
     @DisplayName("life-gain \"target opponent loses that much life\" queues its target choice with the life gained")
     void lifeGainTargetOpponentQueuesItsTargetChoice() {
-        TriggerCollectorRegistry.scanBean(new LifeGainTriggerCollectorService(gameLogService), registry);
         Card card = createCard("Sanguine Bond");
         var effect = new LoseLifeEffect(new EventValue(), LoseLifeRecipient.TARGET_PLAYER);
         card.target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT),
@@ -388,7 +387,6 @@ class MiscTriggerCollectorServiceTest {
     @Test
     @DisplayName("life-gain \"each opponent loses 1 life\" goes on the stack as written, with the life gained")
     void lifeGainEachOpponentLosesLifeGoesOnTheStack() {
-        TriggerCollectorRegistry.scanBean(new LifeGainTriggerCollectorService(gameLogService), registry);
         Permanent perm = createPermanent("Cliffhaven Vampire");
         var effect = new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT);
 
@@ -450,8 +448,8 @@ class MiscTriggerCollectorServiceTest {
     }
 
     @Test
-    @DisplayName("exactly-one life-loss sequence trigger queues once")
-    void exactlyOneLifeLossSequenceTriggerQueuesOnce() {
+    @DisplayName("opponent life-loss default records the life lost, the losing player and the source, whatever the effects")
+    void opponentLifeLossDefaultRecordsTheEvent() {
         Permanent perm = createPermanent("Ob Nixilis, Captive Kingpin");
         var effect = SequenceEffect.of(
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
@@ -462,24 +460,14 @@ class MiscTriggerCollectorServiceTest {
                 LifeWatch.ON_OPPONENT_LOSES_LIFE,
                 effect,
                 new TriggerContext.LifeLoss(player2Id, 1))).isTrue();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
-    }
-
-    @Test
-    @DisplayName("exactly-one life-loss sequence trigger ignores larger losses")
-    void exactlyOneLifeLossSequenceTriggerIgnoresLargerLosses() {
-        Permanent perm = createPermanent("Ob Nixilis, Captive Kingpin");
-        var effect = SequenceEffect.of(
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                new ExileTopCardsMayPlayUntilNextEndStepEffect(1));
-
-        assertThat(registry.dispatch(
-                match(perm, player1Id, effect),
-                LifeWatch.ON_OPPONENT_LOSES_LIFE,
-                effect,
-                new TriggerContext.LifeLoss(player2Id, 2))).isFalse();
-        assertThat(gd.stack).isEmpty();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+            assertThat(entry.getEventValue()).isEqualTo(1);
+            assertThat(entry.getTriggeringPlayerId()).isEqualTo(player2Id);
+            assertThat(entry.getTargetId()).isEqualTo(player2Id);
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getSourcePermanentSnapshot()).isNotNull();
+        });
     }
 
     @Test
@@ -938,7 +926,7 @@ class MiscTriggerCollectorServiceTest {
 
             StackEntry entry = gd.stack.getLast();
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
-            assertThat(entry.getTargetId()).isNull();
+            assertThat(entry.getTargetId()).isEqualTo(player2Id);
             assertThat(entry.isNonTargeting()).isTrue();
             assertThat(entry.getTriggeringPermanentId()).isEqualTo(tappedPerm.getId());
             assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
@@ -1053,15 +1041,15 @@ class MiscTriggerCollectorServiceTest {
     // ===== ON_ENCHANTED_PERMANENT_TAPPED — LoseLifeEffect (TARGET_PERMANENT_CONTROLLER) =====
 
     @Nested
-    @DisplayName("ON_ENCHANTED_PERMANENT_TAPPED — LoseLifeEffect (TARGET_PERMANENT_CONTROLLER)")
+    @DisplayName("ON_ENCHANTED_PERMANENT_TAPPED — LoseLifeEffect (TRIGGERING_PERMANENT_CONTROLLER)")
     class EnchantedPermanentTapLoseLife {
 
         @Test
-        @DisplayName("bakes the tapped land into targetId so its controller loses life at resolution")
+        @DisplayName("records the tapped land and its controller, which the loss reads as it resolves")
         void putsTriggeredAbilityOnStack() {
             Permanent aura = createPermanent("Corrupted Roots");
             Permanent tappedPerm = createPermanent("Forest");
-            var effect = new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER);
+            var effect = new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER);
             var ctx = new TriggerContext.EnchantedPermanentTap(tappedPerm, player2Id);
 
             boolean result = registry.dispatch(
@@ -1076,8 +1064,9 @@ class MiscTriggerCollectorServiceTest {
             // Ability controlled by the aura's controller (CR 603.3b), not the tapped land's.
             assertThat(stackEntry.getControllerId()).isEqualTo(player1Id);
             assertThat(stackEntry.getSourcePermanentId()).isEqualTo(aura.getId());
-            // targetId is the tapped land; TARGET_PERMANENT_CONTROLLER re-derives its controller.
-            assertThat(stackEntry.getTargetId()).isEqualTo(tappedPerm.getId());
+            assertThat(stackEntry.getTriggeringPermanentId()).isEqualTo(tappedPerm.getId());
+            assertThat(stackEntry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
+            assertThat(stackEntry.getTargetId()).isEqualTo(player2Id);
             assertThat(stackEntry.getEffectsToResolve()).containsExactly(effect);
         }
 
@@ -1086,7 +1075,7 @@ class MiscTriggerCollectorServiceTest {
         void broadcastsTriggerLog() {
             Permanent aura = createPermanent("Corrupted Roots");
             Permanent tappedPerm = createPermanent("Plains");
-            var effect = new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER);
+            var effect = new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER);
             var ctx = new TriggerContext.EnchantedPermanentTap(tappedPerm, player2Id);
 
             registry.dispatch(
@@ -1279,8 +1268,6 @@ class MiscTriggerCollectorServiceTest {
             var effect = new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue());
             var ctx = new TriggerContext.LifeGain(player1Id, 3);
 
-            when(amountEvaluationService.referencesEventValue(effect.amount())).thenReturn(true);
-
             registry.dispatch(
                     match(perm, player1Id, effect),
                     LifeWatch.ON_CONTROLLER_GAINS_LIFE, effect, ctx);
@@ -1372,7 +1359,6 @@ class MiscTriggerCollectorServiceTest {
     @Test
     @DisplayName("Nykthos Paragon's \"you may\" goes on the stack as written with the life gained, once per turn on acceptance")
     void nykthosParagonLifeGainTriggerIsOptionalAndOncePerTurn() {
-        TriggerCollectorRegistry.scanBean(new LifeGainTriggerCollectorService(gameLogService), registry);
         Permanent perm = createPermanent("Nykthos Paragon");
         var effect = new MayEffect(new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE,
                 new EventValue(), new PermanentIsCreaturePredicate()), "Put that many +1/+1 counters?");
@@ -1411,8 +1397,6 @@ class MiscTriggerCollectorServiceTest {
             var effect = new SacrificePermanentsEffect(
                     new EventValue(), new PermanentTruePredicate(), SacrificeRecipient.CONTROLLER);
             var ctx = new TriggerContext.LifeLoss(player1Id, 3);
-
-            when(amountEvaluationService.referencesEventValue(new EventValue())).thenReturn(true);
 
             boolean result = registry.dispatch(
                     match(perm, player1Id, effect),

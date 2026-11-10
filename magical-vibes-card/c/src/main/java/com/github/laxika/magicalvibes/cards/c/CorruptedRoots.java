@@ -21,6 +21,6 @@ public class CorruptedRoots extends Card {
         ));
         // Whenever enchanted land becomes tapped, its controller loses 2 life.
         addTrigger(Triggers.enchantedPermanentBecomesTapped(),
-                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
+                new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER));
     }
 }

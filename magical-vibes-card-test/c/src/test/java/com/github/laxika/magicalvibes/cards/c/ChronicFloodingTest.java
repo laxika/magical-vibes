@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.cards.d.DryadArbor;
+import com.github.laxika.magicalvibes.cards.r.RayOfCommand;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ChronicFlooding.class, Mountain.class, GrizzlyBears.class, LeylineOfSanctity.class})
+@CardUsed({ChronicFlooding.class, Mountain.class, GrizzlyBears.class, LeylineOfSanctity.class, DryadArbor.class, RayOfCommand.class})
 class ChronicFloodingTest extends BaseCardTest {
 
     @Test
@@ -174,5 +176,27 @@ class ChronicFloodingTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("Its controller as the ability resolves mills, after the land changed control (CR 608.2h)")
+    void landsControllerAsTheAbilityResolvesMills() {
+        harness.forceActivePlayer(player1);
+        Permanent arbor = harness.addToBattlefieldAndReturn(player2, new DryadArbor());
+        arbor.setSummoningSick(false);
+        Permanent aura = harness.addToBattlefieldAndReturn(player1, new ChronicFlooding());
+        aura.setAttachedTo(arbor.getId());
+        harness.setLibrary(player1, library(6));
+        harness.setLibrary(player2, library(6));
+        harness.setHand(player1, List.of(new RayOfCommand()));
+        harness.addMana(player1, ManaColor.BLUE, 4);
+
+        harness.tapPermanent(player2, 0);
+        harness.castAndResolveInstant(player1, 0, arbor.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(arbor);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
+        assertThat(gd.playerDecks.get(player2.getId())).hasSize(6);
     }
 }

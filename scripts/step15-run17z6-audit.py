@@ -58,7 +58,10 @@ BIND = re.compile(r"\.set\w+\((?:effect|e|may|mayPay|marker|trigger)\.")
 # land-tap handler is gone (the card writes `ReturnToHandEffect.triggering()`, which the land-tap default puts on the
 # stack with the tapped land as its triggering permanent), and Relic Bind's handler is the enchanted-tap watch's
 # `ChooseOneEffect` route (the card's own modal goes to the mode choice as written, ROUTE). Row 17z13e's sites are
-# reader branches and handlers to scope first; none is listed here.
+# reader branches and handlers to scope first; none is listed here. Run 17z13e scoped them with
+# `step15-run17z13e-audit.py`, which compares what each handler records with its watch's default (this scan's labels
+# only see what a handler does to the effect): the life and enchanted-permanent-tapped handlers are gone, and the
+# handlers left are that audit's rows 17z13e2 to 17z13e7, listed there by watch.
 OPEN = {}
 
 

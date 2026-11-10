@@ -16,6 +16,6 @@ public class ContaminatedGround extends Card {
     public ContaminatedGround() {
         target(TargetFilters.land()).addStaticEffect(new EnchantedPermanentBecomesTypeEffect(CardSubtype.SWAMP));
         addTrigger(Triggers.enchantedPermanentBecomesTapped(),
-                new LoseLifeEffect(2, LoseLifeRecipient.TARGET_PERMANENT_CONTROLLER));
+                new LoseLifeEffect(2, LoseLifeRecipient.TRIGGERING_PERMANENT_CONTROLLER));
     }
 }
