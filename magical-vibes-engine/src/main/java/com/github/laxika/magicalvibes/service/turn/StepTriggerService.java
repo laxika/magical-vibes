@@ -155,7 +155,6 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolveRadCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.UpkeepPlayerDependentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
@@ -1237,7 +1236,10 @@ public class StepTriggerService {
         // Check all battlefields and face-up schemes (CR 314.4) for Triggers.upkeep(ActivePlayer.ANY) effects
         BiConsumer<UUID, Permanent> eachUpkeep = (playerId, perm) -> {
             if (gameQueryService.hasLostAllAbilities(gameData, perm)) return;
-            ConditionContext eachUpkeepContext = ConditionContext.forPermanent(perm, playerId);
+            // "That player" of an event condition is the player whose upkeep it is ("at the beginning of that player's
+            // upkeep", the ability Takklemaggot gains).
+            ConditionContext eachUpkeepContext = ConditionContext.forPermanent(perm, playerId)
+                    .withTargetId(activePlayerId);
             List<Read> eachUpkeepReads = new ArrayList<>(
                     printedReads(gameData, perm.getCard(), EACH_UPKEEP, Zone.BATTLEFIELD, eachUpkeepContext));
             eachUpkeepReads.addAll(durationGrantedReads(gameData, perm, EACH_UPKEEP, eachUpkeepContext));
@@ -1246,10 +1248,6 @@ public class StepTriggerService {
 
             for (Read read : eachUpkeepReads) {
                 List<CardEffect> effects = new ArrayList<>(read.effects());
-                if (effects.stream().anyMatch(effect -> effect instanceof UpkeepPlayerDependentEffect playerDependent
-                        && !playerDependent.triggersFor(activePlayerId))) {
-                    continue;
-                }
 
                 // A player the card declares no target for is "that player", the player whose upkeep it is (Pillar
                 // Tombs of Aku's "that player may sacrifice a creature"), which the entry records whatever the effect

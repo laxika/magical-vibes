@@ -61,7 +61,8 @@ public class DealDamageToRandomOpponentOrTheirPlaneswalkerEffectHandler implemen
                 .getOrDefault(chosenOpponent, List.of()).stream()
                 .anyMatch(permanent -> gameQueryService.isPlaneswalker(gameData, permanent));
         if (hasPlaneswalker) {
-            var targetEffect = new DealDamageToTargetPlayerOrPlaneswalkerEffect(damage);
+            // The damage is the effect's amount, read from the entry the choice builds as from this one.
+            var targetEffect = new DealDamageToTargetPlayerOrPlaneswalkerEffect(e.damage());
             var targetFilter = new AnyTargetPredicateTargetFilter(
                     new PermanentAllOfPredicate(List.of(
                             new PermanentIsPlaneswalkerPredicate(),

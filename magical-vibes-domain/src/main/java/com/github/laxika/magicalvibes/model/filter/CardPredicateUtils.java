@@ -196,6 +196,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardManaValueEqualsEventValuePredicate) {
             return "card with mana value equal to the event's value";
         }
+        if (predicate instanceof CardManaValueAtMostEventValuePredicate) {
+            return "card with mana value less than or equal to the event's value";
+        }
         if (predicate instanceof CardMinManaValuePredicate p) {
             return "card with mana value " + p.minManaValue() + " or greater";
         }

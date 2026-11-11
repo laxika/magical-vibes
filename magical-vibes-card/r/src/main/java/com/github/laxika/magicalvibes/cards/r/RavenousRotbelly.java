@@ -36,9 +36,7 @@ public class RavenousRotbelly extends Card {
                                         new SacrificePermanentsEffect(
                                                 new EventValue(),
                                                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())),
-                                                SacrificeRecipient.EACH_OPPONENT),
-                                        false,
-                                        true))),
+                                                SacrificeRecipient.EACH_OPPONENT)))),
                 "Sacrifice up to three Zombies?"));
     }
 }

@@ -203,6 +203,7 @@ public sealed interface PermanentPredicate permits
         PermanentMaxManaValueColorsSpentToCastPredicate,
         PermanentMaxManaValuePredicate,
         PermanentMaxManaValueXPredicate,
+        PermanentManaValueAtMostEventValuePredicate,
         PermanentMinManaValuePredicate,
         PermanentNamedPredicate,
         PermanentHasNoNamePredicate,

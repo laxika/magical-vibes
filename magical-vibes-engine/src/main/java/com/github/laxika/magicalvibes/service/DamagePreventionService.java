@@ -98,7 +98,6 @@ import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamage
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageWithMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectAllDamageToEnchantedCreatureControllerEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -1710,7 +1709,7 @@ public class DamagePreventionService {
                 card,
                 playerId,
                 card.getName() + "'s triggered ability",
-                List.of(new GainLifeEffect(new Fixed(damage))),
+                List.of(new GainLifeEffect(new EventValue())),
                 (UUID) null,
                 (UUID) null);
         // "That much" is the event's value: the damage prevented.
@@ -1898,8 +1897,8 @@ public class DamagePreventionService {
                 card,
                 shield.playerId(),
                 card.getName() + "'s triggered ability",
-                List.of(new DealDamageToAnyTargetEffect(new Fixed(damage), false, false, -1, null, false, false),
-                        new DrawCardEffect(new Fixed(damage))),
+                List.of(new DealDamageToAnyTargetEffect(new EventValue(), false, false, -1, null, false, false),
+                        new DrawCardEffect(new EventValue())),
                 sourceControllerId,
                 (UUID) null);
         // "That much" and "that many" are the event's value: the damage prevented.

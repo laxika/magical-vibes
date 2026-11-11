@@ -102,7 +102,7 @@ public class EachPlayerExilesCardFromGraveyardThenEffectHandler implements Norma
             throw new IllegalStateException("Each-player graveyard exile effect is not on the stack entry");
         }
         entry.insertEffectsToResolve(effectIndex + 1,
-                List.of(new QueueReflexiveAbilityEffect(context.thenEffect(), false, true)));
+                List.of(new QueueReflexiveAbilityEffect(context.thenEffect())));
     }
 
     private void exileCard(GameData gameData, UUID playerId, Card card) {

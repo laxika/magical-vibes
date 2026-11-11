@@ -62,7 +62,7 @@ public class PayAnyAmountOfColorManaToDealDamageToAnyTargetEffectHandler impleme
                             + " for " + cardName + "."));
             entry.setEventValue(amount);
             queueReflexiveAbilityEffectHandler.resolve(gameData, entry,
-                    new QueueReflexiveAbilityEffect(new DealDamageToAnyTargetEffect(new EventValue()), false, true));
+                    new QueueReflexiveAbilityEffect(new DealDamageToAnyTargetEffect(new EventValue())));
             return;
         }
 

@@ -18,7 +18,7 @@ public class AncientBronzeDragon extends Card {
         PutCounterOnTargetPermanentEffect putCounters = new PutCounterOnTargetPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new EventValue());
         QueueReflexiveAbilityEffect putCountersAfterRoll =
-                new QueueReflexiveAbilityEffect(putCounters, false, true);
+                new QueueReflexiveAbilityEffect(putCounters);
 
         // Whenever this creature deals combat damage to a player, roll a d20. When you do, put X
         // +1/+1 counters on each of up to two target creatures, where X is the result.

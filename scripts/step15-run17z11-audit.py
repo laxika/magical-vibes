@@ -154,9 +154,8 @@ CLASSIFIED = {
     # `MayEffect`) and the read is gone. Darigaaz Reincarnated's egg-counter ability below is made by the engine for a
     # card exiled with egg counters (the card declares no effect there), so nothing a card wrote is rewritten.
     ("StepTriggerService.java", "RemoveEggCounterFromExileAndReturnEffect"): "ENGINE",
-    # Run 17z13e8: the each-upkeep `UpkeepPlayerDependentEffect` read judges the engine-made ability of an Aura that
-    # returned as a non-Aura enchantment ("at the beginning of that player's upkeep"); no card declares it.
-    ("StepTriggerService.java", "UpkeepPlayerDependentEffect"): "ENGINE",
+    # Run 17z16c3: the each-upkeep `UpkeepPlayerDependentEffect` read (run 17z13e8) is gone: the ability an Aura that
+    # returned as a non-Aura enchantment gains has its player in the trigger's event condition.
     ("StepTriggerService.java", "ChooseOneEffect"): "ROUTE",
     ("TriggerCollectionService.java", "EnterBattlefieldOnDiscardEffect"): "ROUTE",
     ("TriggerCollectionService.java", "ChooseOneEffect"): "ROUTE",

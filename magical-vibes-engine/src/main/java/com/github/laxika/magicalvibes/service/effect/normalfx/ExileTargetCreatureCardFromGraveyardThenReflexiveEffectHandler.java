@@ -63,6 +63,6 @@ public class ExileTargetCreatureCardFromGraveyardThenReflexiveEffectHandler impl
             throw new IllegalStateException("Could not locate graveyard exile effect on stack entry");
         }
         entry.insertEffectsToResolve(effectIndex + 1,
-                List.of(new QueueReflexiveAbilityEffect(effect.reflexiveEffect(), false, true)));
+                List.of(new QueueReflexiveAbilityEffect(effect.reflexiveEffect())));
     }
 }

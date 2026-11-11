@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -79,13 +80,14 @@ public class PayManaAnyNumberOfTimesPutCountersOnSelfEffectHandler implements No
 
             if (e.thenEffect() != null) {
                 CardEffect reflexive = SequenceEffect.of(
-                        new PutCountersOnSelfEffect(e.counterType(), chosenPayments), e.thenEffect());
+                        new PutCountersOnSelfEffect(e.counterType(), new XValue()), e.thenEffect());
                 queueReflexiveTargetedAbility(gameData, entry, reflexive, chosenPayments);
             } else {
                 // "When you pay this cost one or more times, put that many counters on it" is a
-                // reflexive triggered ability (CR 603.12): it goes on the stack separately.
+                // reflexive triggered ability (CR 603.12): it goes on the stack separately, with the number of
+                // payments as its X.
                 StackEntry reflexive = ReflexiveAbilitySupport.record(gameData, entry,
-                        List.of(new PutCountersOnSelfEffect(e.counterType(), chosenPayments)));
+                        List.of(new PutCountersOnSelfEffect(e.counterType(), new XValue())));
                 reflexive.setXValue(chosenPayments);
                 gameData.stack.add(reflexive);
             }

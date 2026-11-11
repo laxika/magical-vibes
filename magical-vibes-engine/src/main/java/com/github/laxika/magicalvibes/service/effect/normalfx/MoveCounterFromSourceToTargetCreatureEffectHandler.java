@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +23,7 @@ public class MoveCounterFromSourceToTargetCreatureEffectHandler implements Norma
 
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,7 +38,12 @@ public class MoveCounterFromSourceToTargetCreatureEffectHandler implements Norma
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (source == null || target == null || source.getId().equals(target.getId())
-                || moveEffect.amount() <= 0 || source.getCounterCount(counterType) <= 0) {
+                || source.getCounterCount(counterType) <= 0) {
+            return;
+        }
+        int amount = amountEvaluationService.evaluate(gameData, moveEffect.amount(),
+                AmountContext.forStackEntry(entry, source));
+        if (amount <= 0) {
             return;
         }
         if (gameQueryService.cantHaveCounters(gameData, target)
@@ -46,7 +54,7 @@ public class MoveCounterFromSourceToTargetCreatureEffectHandler implements Norma
             return;
         }
 
-        int moved = Math.min(moveEffect.amount(), source.getCounterCount(counterType));
+        int moved = Math.min(amount, source.getCounterCount(counterType));
         source.setCounterCount(counterType, source.getCounterCount(counterType) - moved);
         if (counterType == CounterType.OIL) {
             gameData.recordOilCounterRemoved(source, moved);

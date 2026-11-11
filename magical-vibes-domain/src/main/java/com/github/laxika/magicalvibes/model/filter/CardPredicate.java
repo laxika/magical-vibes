@@ -100,6 +100,7 @@ public sealed interface CardPredicate permits
         CardSharesNameWithTriggeringSpellPredicate,
         CardManaValueEqualsTriggeringSpellPredicate,
         CardManaValueEqualsEventValuePredicate,
+        CardManaValueAtMostEventValuePredicate,
         CardSharesNameWithTriggeringPermanentPredicate,
         CardSharesNameWithLegendaryControlledPermanentPredicate,
         CardSubtypePredicate,

@@ -11,10 +11,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
@@ -188,9 +185,6 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
                 return;
             }
         }
-        List<CardEffect> snapshottedPaidEffects = paidEffects.stream()
-                .map(effect -> snapshotPaidEffectXValue(effect, xValue))
-                .toList();
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
         int pendingIndex = gameData.pendingEffectResolutionIndex;
         boolean echoPayment = forcedCost instanceof PayEchoCost
@@ -203,11 +197,11 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
                 && pendingEntry.getCard().getId().equals(sourceCard.getId())
                 && pendingIndex >= 0
                 && pendingIndex <= pendingEntry.getEffectsToResolve().size()) {
-            pendingEntry.insertEffectsToResolve(pendingIndex, snapshottedPaidEffects);
+            pendingEntry.insertEffectsToResolve(pendingIndex, paidEffects);
             return;
         }
         StackEntry entry = ReflexiveAbilitySupport.recordFor(gameData, resolving, sourceCard, controllerId,
-                snapshottedPaidEffects, sourceCard.getName() + "'s ability", sourcePermanentId);
+                paidEffects, sourceCard.getName() + "'s ability", sourcePermanentId);
         entry.setXValue(xValue);
         if (sourcePermanentSnapshot != null) {
             entry.setSourcePermanentSnapshot(sourcePermanentSnapshot);
@@ -224,15 +218,6 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
             return;
         }
         gameData.enqueueTrigger(entry);
-    }
-
-    private CardEffect snapshotPaidEffectXValue(CardEffect effect, int xValue) {
-        if (effect instanceof BoostSelfEffect boost) {
-            return new BoostSelfEffect(
-                    boost.powerBoost() instanceof XValue ? new Fixed(xValue) : boost.powerBoost(),
-                    boost.toughnessBoost() instanceof XValue ? new Fixed(xValue) : boost.toughnessBoost());
-        }
-        return effect;
     }
 
     /**

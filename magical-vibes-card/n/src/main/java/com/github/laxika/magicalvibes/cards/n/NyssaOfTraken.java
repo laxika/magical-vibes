@@ -33,8 +33,6 @@ public class NyssaOfTraken extends Card {
                                 new QueueReflexiveAbilityEffect(
                                         SequenceEffect.of(
                                                 new TapPermanentsEffect(TapUntapScope.TARGET),
-                                                new DrawCardEffect(new EventValue())),
-                                        false,
-                                        true))));
+                                                new DrawCardEffect(new EventValue()))))));
     }
 }

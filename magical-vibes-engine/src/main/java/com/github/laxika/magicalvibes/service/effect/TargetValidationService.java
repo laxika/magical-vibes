@@ -385,7 +385,7 @@ public class TargetValidationService {
         if (ctx.triggeringPlayerId() != null) {
             filterContext = filterContext.withTriggeringPlayerId(ctx.triggeringPlayerId());
         }
-        filterContext = filterContext.withXValue(ctx.xValue());
+        filterContext = filterContext.withXValue(ctx.xValue()).withEventValue(ctx.eventValue());
         return filterContext;
     }
 

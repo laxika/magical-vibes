@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -110,9 +111,12 @@ public class PayXManaDealXDamageToAnyTargetEffectHandler implements NormalEffect
 
     private void queueReflexiveDamage(GameData gameData, StackEntry entry,
                                       PayXManaDealXDamageToAnyTargetEffect e, int damage) {
+        // "When you do, it deals X damage to ...": the X paid is the X of the resolving ability, which its reflexive
+        // ability records.
+        entry.setXValue(damage);
         CardEffect reflexiveDamage = e.targetRestriction().admits(TargetPredicate.Kind.PERMANENT)
-                ? new DealDamageToAnyTargetEffect(damage)
-                : new DealDamageToPlayersEffect(damage, DamageRecipient.TARGET_PLAYER);
+                ? new DealDamageToAnyTargetEffect(new XValue())
+                : new DealDamageToPlayersEffect(new XValue(), DamageRecipient.TARGET_PLAYER);
         queueReflexiveAbilityEffectHandler.resolve(gameData, entry, new QueueReflexiveAbilityEffect(reflexiveDamage));
     }
 

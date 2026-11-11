@@ -34,7 +34,7 @@ public class SwashbucklerExtraordinaire extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.TREASURE)),
                         new ConditionalEffect(
                                 new EventValueAtLeast(1),
-                                new QueueReflexiveAbilityEffect(grantDoubleStrike, false, true))),
+                                new QueueReflexiveAbilityEffect(grantDoubleStrike))),
                 "Sacrifice one or more Treasures?"));
     }
 }

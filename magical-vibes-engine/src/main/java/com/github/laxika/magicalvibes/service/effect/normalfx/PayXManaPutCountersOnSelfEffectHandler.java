@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnReferencedPermanentEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -11,7 +15,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaPutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
@@ -77,12 +80,15 @@ public class PayXManaPutCountersOnSelfEffectHandler implements NormalEffectHandl
                     : entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
             if (e.reflexive()) {
                 if (selfId != null) {
-                    // The ability records what the resolving entry was about, with the X paid as its X.
-                    StackEntry reflexive = ReflexiveAbilitySupport.record(gameData, entry,
-                            List.of(new PutCounterOnTargetPermanentEffect(e.counterType(), chosenValue)));
+                    // "When you do, put X +1/+1 counters on this creature" (or "on that creature", the one that
+                    // entered): the ability targets nothing and records what the resolving entry was about, with
+                    // the X paid as its X.
+                    CardEffect putCounters = e.useTriggeringPermanent() && entry.getTriggeringPermanentId() != null
+                            ? new PutCounterOnReferencedPermanentEffect(
+                                    PermanentReference.TRIGGERING, e.counterType(), new XValue())
+                            : new PutCountersOnSelfEffect(e.counterType(), new XValue());
+                    StackEntry reflexive = ReflexiveAbilitySupport.record(gameData, entry, List.of(putCounters));
                     reflexive.setXValue(chosenValue);
-                    reflexive.setTargetId(selfId);
-                    reflexive.setNonTargeting(false);
                     gameData.enqueueTrigger(reflexive);
                 }
                 return;

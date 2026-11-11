@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CemeteryDesecratorEffect;
@@ -34,6 +35,21 @@ public class CemeteryDesecratorEffectHandler implements NormalEffectHandlerBean 
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final PlayerInputService playerInputService;
+
+    /**
+     * "When you do, choose one — remove X counters from target permanent; or target creature an opponent controls
+     * gets -X/-X until end of turn", X being the mana value of the exiled card: the reflexive ability's event value.
+     */
+    private static final ChooseOneEffect MODAL = new ChooseOneEffect(List.of(
+            new ChooseOneEffect.ChooseOneOption(
+                    REMOVE_COUNTERS_MODE,
+                    new RemoveChosenCountersFromTargetPermanentEffect(new EventValue(), true),
+                    TargetFilters.permanent()),
+            new ChooseOneEffect.ChooseOneOption(
+                    DEBUFF_MODE,
+                    new BoostTargetCreatureEffect(new Scaled(new EventValue(), -1), new Scaled(new EventValue(), -1),
+                            TargetFilters.creatureAnOpponentControls().predicate()),
+                    TargetFilters.creatureAnOpponentControls())));
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -102,26 +118,15 @@ public class CemeteryDesecratorEffectHandler implements NormalEffectHandlerBean 
             return;
         }
 
-        int manaValue = chosen.getManaValue();
-        var opponentCreatureFilter = TargetFilters.creatureAnOpponentControls();
-        ChooseOneEffect modal = new ChooseOneEffect(List.of(
-                new ChooseOneEffect.ChooseOneOption(
-                        REMOVE_COUNTERS_MODE,
-                        new RemoveChosenCountersFromTargetPermanentEffect(new Fixed(manaValue), true),
-                        TargetFilters.permanent()),
-                new ChooseOneEffect.ChooseOneOption(
-                        DEBUFF_MODE,
-                        new BoostTargetCreatureEffect(-manaValue, -manaValue,
-                                opponentCreatureFilter.predicate()),
-                        opponentCreatureFilter)));
-
         gameLogService.append(gameData,
                 GameLog.textCardText(entry.getCard().getName() + " exiles ", chosen,
                         " from a graveyard."));
         // "When you do" is an ability of its own: whichever mode it has, it records what the resolving entry was about.
-        ReflexiveAbilitySupport.route(gameData,
-                ReflexiveAbilitySupport.record(gameData, entry, List.of(modal)),
+        // "X is the mana value of the exiled card" is the record's event value, which both modes read.
+        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(MODAL));
+        record.setEventValue(chosen.getManaValue());
+        ReflexiveAbilitySupport.route(gameData, record,
                 () -> gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                        entry.getCard(), entry.getControllerId(), modal, entry.getSourcePermanentId())));
+                        entry.getCard(), entry.getControllerId(), MODAL, entry.getSourcePermanentId())));
     }
 }

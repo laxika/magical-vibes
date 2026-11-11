@@ -1498,9 +1498,9 @@ public class StackEntry {
      * Gives this entry, one a choice made as its ability went on the stack built (a mode, CR 603.3c; a target, CR
      * 603.3d), what {@code record} holds: the entry its collector builds for an ability that needs no choice. The
      * trigger event ({@link #copyTriggerEventFrom}), the source as it triggered and how it was cast (CR 608.2h: its
-     * alternative cost, whether it was kicked, the optional and repeated costs paid, a promised gift), the "do this
-     * only once each turn" mark (CR 603.2h) and the event's X are the same whichever way the ability reaches the
-     * stack. An entry of an ability with no target to choose also takes the record's non-targeting "that player" or
+     * alternative cost, whether it was kicked, the optional and repeated costs paid, a promised gift), the card
+     * discarded for it, the "do this only once each turn" mark (CR 603.2h) and the event's X are the same whichever
+     * way the ability reaches the stack. An entry of an ability with no target to choose also takes the record's non-targeting "that player" or
      * "that creature".
      */
     public void carryTriggerRecord(StackEntry record) {
@@ -1538,6 +1538,9 @@ public class StackEntry {
             this.convokeCreatureIds = record.convokeCreatureIds;
         }
         this.onceEachTurnActionKey = record.onceEachTurnActionKey;
+        if (this.discardedCardSnapshot == null) {
+            this.discardedCardSnapshot = record.discardedCardSnapshot;
+        }
         if (this.xValue == 0) {
             // The X the event gave the ability (the number of attackers of an attack ability), unless the choice set one.
             this.xValue = record.xValue;

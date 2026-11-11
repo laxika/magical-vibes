@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MillEachOpponentThenIfMilledE
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardMaxManaValueXPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostEventValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -34,8 +34,8 @@ public class SarumanOfManyColors extends Card {
                         2,
                         new QueueReflexiveAbilityEffect(
                                 new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
-                                        new CardAllOfPredicate(List.of(noncreatureSpell, new CardMaxManaValueXPredicate())),
-                                        GraveyardSearchScope.OPPONENT_GRAVEYARD),
-                                false, true)));
+                                        new CardAllOfPredicate(List.of(noncreatureSpell,
+                                                new CardManaValueAtMostEventValuePredicate())),
+                                        GraveyardSearchScope.OPPONENT_GRAVEYARD))));
     }
 }

@@ -50,9 +50,7 @@ public class CampsiteCuisine extends Card {
                                         new QueueReflexiveAbilityEffect(
                                                 SequenceEffect.of(
                                                         new BoostTargetCreatureEffect(3, 3),
-                                                        grantKeywords),
-                                                false,
-                                                true))),
+                                                        grantKeywords)))),
                         "Sacrifice one or more Foods?"));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -18,8 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFro
 import com.github.laxika.magicalvibes.model.effect.PayXManaCastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -44,6 +43,17 @@ public class PayXManaCastTargetInstantOrSorceryFromGraveyardEffectHandler
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
     private final PredicateEvaluationService predicateEvaluationService;
+
+    /** "Instant or sorcery card with mana value X": X is the X paid, which the reflexive ability's entry has. */
+    private static final CardPredicate INSTANT_OR_SORCERY_WITH_MANA_VALUE_X = new CardAllOfPredicate(List.of(
+            new CardAnyOfPredicate(List.of(
+                    new CardTypePredicate(CardType.INSTANT),
+                    new CardTypePredicate(CardType.SORCERY))),
+            new CardManaValueEqualsXPredicate()));
+
+    private static final CastTargetInstantOrSorceryFromGraveyardEffect CAST_WITH_MANA_VALUE_X =
+            new CastTargetInstantOrSorceryFromGraveyardEffect(
+                    GraveyardSearchScope.ALL_GRAVEYARDS, true, true, INSTANT_OR_SORCERY_WITH_MANA_VALUE_X);
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -83,10 +93,8 @@ public class PayXManaCastTargetInstantOrSorceryFromGraveyardEffectHandler
     private void beginReflexiveTrigger(GameData gameData, StackEntry entry,
                                        UUID controllerId, int chosenX) {
         Card sourceCard = entry.getCard();
-        CardPredicate filter = manaValueInstantOrSorceryFilter(chosenX);
-        CastTargetInstantOrSorceryFromGraveyardEffect castEffect =
-                new CastTargetInstantOrSorceryFromGraveyardEffect(
-                        GraveyardSearchScope.ALL_GRAVEYARDS, true, true, filter);
+        CardPredicate filter = INSTANT_OR_SORCERY_WITH_MANA_VALUE_X;
+        CastTargetInstantOrSorceryFromGraveyardEffect castEffect = CAST_WITH_MANA_VALUE_X;
 
         List<Card> cardPool = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -98,7 +106,8 @@ public class PayXManaCastTargetInstantOrSorceryFromGraveyardEffectHandler
 
         List<Integer> matchingIndices = new ArrayList<>();
         for (int i = 0; i < cardPool.size(); i++) {
-            if (predicateEvaluationService.matchesCardPredicate(cardPool.get(i), filter, sourceCard.getId())) {
+            if (predicateEvaluationService.matchesCardPredicate(cardPool.get(i), filter, sourceCard.getId(),
+                    gameData, controllerId, entry.getSourcePermanentId(), null, chosenX)) {
                 matchingIndices.add(i);
             }
         }
@@ -180,12 +189,4 @@ public class PayXManaCastTargetInstantOrSorceryFromGraveyardEffectHandler
                 + pool.getMyrOnlyColorless() + pool.getXCostOnlyColorless();
     }
 
-    private static CardPredicate manaValueInstantOrSorceryFilter(int manaValue) {
-        return new CardAllOfPredicate(List.of(
-                new CardAnyOfPredicate(List.of(
-                        new CardTypePredicate(CardType.INSTANT),
-                        new CardTypePredicate(CardType.SORCERY))),
-                new CardMaxManaValuePredicate(manaValue),
-                new CardMinManaValuePredicate(manaValue)));
-    }
 }

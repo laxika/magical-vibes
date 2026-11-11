@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GarenbrigSquire;
 import com.github.laxika.magicalvibes.cards.g.GiftOfTheFae;
 import com.github.laxika.magicalvibes.cards.m.MaraleafRider;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -88,6 +89,22 @@ class WildbornPreserverTest extends BaseCardTest {
 
         assertThat(preserver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The reflexive ability has no target: a Wildborn Preserver with shroud gets its counters")
+    void reflexiveAbilityPutsCountersOnAPreserverWithShroud() {
+        Permanent preserver = harness.addToBattlefieldAndReturn(player1, new WildbornPreserver());
+        preserver.getGrantedKeywords().add(Keyword.SHROUD);
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castFromHand(player1, new MaraleafRider(), "{1}{G}");
+        resolveAllTriggers();
+        harness.handleXValueChosen(player1, 2);
+        assertThat(gd.stack).hasSize(1);
+
+        harness.passBothPriorities();
+
+        assertThat(preserver.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test

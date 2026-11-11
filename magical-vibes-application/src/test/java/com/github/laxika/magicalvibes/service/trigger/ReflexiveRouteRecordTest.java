@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -24,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEf
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostEventValuePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -64,7 +68,7 @@ import static org.assertj.core.api.Assertions.fail;
  * removed, cards are exiled or drawn) and the choice handlers' follow-ups (after a card is discarded, a permanent is
  * returned to its owner's hand, another creature is sacrificed, a permanent is exiled).</p>
  */
-@CardUsed({GrizzlyBears.class})
+@CardUsed({GrizzlyBears.class, AirElemental.class})
 class ReflexiveRouteRecordTest extends BaseCardTest {
 
     private static final Pattern RECORD_FIELD_NAME = Pattern.compile("^(triggering|event)[A-Z].*|.*AtTrigger$");
@@ -239,6 +243,82 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).as("damage equal to the spell's mana value").isEqualTo(lifeBefore - 2);
+    }
+
+    @Test
+    @DisplayName("A reflexive ability's target restricted by \"that much\" is chosen and judged against the event's value, not an X")
+    void reflexiveTargetRestrictedByTheEventValue() {
+        Card fixture = new Card();
+        fixture.setName("Reflexive Event Value Fixture");
+        fixture.setType(CardType.CREATURE);
+        fixture.setManaCost("{1}");
+        fixture.setPower(2);
+        fixture.setToughness(2);
+        fixture.addTrigger(Triggers.dealsCombatDamageToPlayer(), new QueueReflexiveAbilityEffect(
+                new DestroyTargetPermanentEffect(new PermanentManaValueAtMostEventValuePredicate())));
+        Permanent cheap = addCreatureReady(player2, new GrizzlyBears());
+        Permanent costly = addCreatureReady(player2, new AirElemental());
+        cheap.tap();
+        costly.tap();
+        Permanent source = addCreatureReady(player1, fixture);
+        source.setAttacking(true);
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
+        assertThat(entriesOf(fixture)).as("the combat damage ability on the stack").hasSize(1);
+        assertThat(entriesOf(fixture).getFirst().getEventValue()).as("the damage dealt").isEqualTo(2);
+
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).as("the reflexive ability asks for its target").isTrue();
+        var choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).as("a permanent choice").isNotNull();
+        assertThat(choice.validPermanentIds()).as("mana value 2 or less: the damage dealt")
+                .contains(cheap.getId()).doesNotContain(costly.getId());
+        harness.handlePermanentChosen(player1, cheap.getId());
+        List<StackEntry> reflexive = entriesOf(fixture);
+        assertThat(reflexive).as("the reflexive ability on the stack").hasSize(1);
+        assertThat(reflexive.getFirst().getXValue()).as("the ability has no X").isZero();
+        assertThat(reflexive.getFirst().getEventValue()).as("that much").isEqualTo(2);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).as("the target within the value is destroyed")
+                .doesNotContain(cheap).contains(costly);
+    }
+
+    @Test
+    @DisplayName("\"That card's mana value\" of a \"when you do\" after a discard is the discarded card's, whatever is discarded before it resolves")
+    void discardFollowUpReadsTheCardDiscardedForIt() {
+        Card fixture = new Card();
+        fixture.setName("Reflexive Discard Fixture");
+        fixture.setType(CardType.CREATURE);
+        fixture.setManaCost("{1}");
+        fixture.setPower(2);
+        fixture.setToughness(2);
+        fixture.addTrigger(Triggers.dealsCombatDamageToPlayer(), new DiscardCardThenEffect(
+                null, new DealDamageToAnyTargetEffect(new LastDiscardedCardManaValue()), "a card"));
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        Permanent source = addCreatureReady(player1, fixture);
+        source.setAttacking(true);
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
+        harness.passBothPriorities();
+        for (int round = 0; round < 4 && gd.interaction.isAwaitingInput(); round++) {
+            try {
+                harness.handleCardChosen(player1, 0);
+            } catch (RuntimeException | AssertionError notACardChoice) {
+                harness.handlePermanentChosen(player1, player2.getId());
+            }
+        }
+        List<StackEntry> reflexive = entriesOf(fixture);
+        assertThat(reflexive).as("the reflexive ability on the stack; the game is waiting for %s",
+                gd.interaction.activeInteraction()).hasSize(1);
+        assertThat(reflexive.getFirst().getTargetId()).isEqualTo(player2.getId());
+        int lifeBefore = gd.getLife(player2.getId());
+
+        // Another card is discarded before the ability resolves.
+        gd.lastDiscardedCardManaValue = 7;
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player2.getId())).as("damage equal to the mana value of the card discarded for it")
+                .isEqualTo(lifeBefore - 2);
     }
 
     private void answerOnce() {

@@ -1005,7 +1005,9 @@ public class AmountEvaluationService {
                             ? ctx.stackEntry().getDiscardedCardSnapshot().getManaValue()
                             : gameData.lastDiscardedCardManaValue;
             case LastDiscardedCardTypeCount ignored ->
-                    gameData.lastDiscardedCardTypes.size();
+                    ctx.stackEntry() != null && ctx.stackEntry().getDiscardedCardSnapshot() != null
+                            ? cardTypeCount(ctx.stackEntry().getDiscardedCardSnapshot())
+                            : gameData.lastDiscardedCardTypes.size();
             case GreatestDiscardedCardManaValue ignored ->
                     gameData.greatestDiscardedCardManaValue;
             case LastMilledCardColorSymbols a ->
@@ -1119,6 +1121,16 @@ public class AmountEvaluationService {
     }
 
     /** The chosen number of the first permanent created earlier in the resolving entry; 0 if none. */
+    /** The number of card types {@code card} has, its additional types among them. */
+    private static int cardTypeCount(Card card) {
+        java.util.Set<CardType> types = java.util.EnumSet.noneOf(CardType.class);
+        if (card.getType() != null) {
+            types.add(card.getType());
+        }
+        types.addAll(card.getAdditionalTypes());
+        return types.size();
+    }
+
     private int chosenNumberOnCreatedPermanent(GameData gameData, AmountContext ctx) {
         if (ctx.stackEntry() == null) return 0;
         for (UUID permanentId : ctx.stackEntry().getCreatedPermanentIds()) {

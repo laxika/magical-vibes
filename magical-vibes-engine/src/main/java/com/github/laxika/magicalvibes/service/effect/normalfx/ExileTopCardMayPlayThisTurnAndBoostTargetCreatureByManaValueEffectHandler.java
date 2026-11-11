@@ -55,7 +55,6 @@ public class ExileTopCardMayPlayThisTurnAndBoostTargetCreatureByManaValueEffectH
         entry.setEventValue(topCard.getManaValue());
         queueReflexiveAbilityEffectHandler.resolve(gameData, entry, new QueueReflexiveAbilityEffect(
                 new BoostTargetCreatureEffect(new EventValue(), new Fixed(0),
-                        new PermanentControlledBySourceControllerPredicate()),
-                false, true));
+                        new PermanentControlledBySourceControllerPredicate())));
     }
 }

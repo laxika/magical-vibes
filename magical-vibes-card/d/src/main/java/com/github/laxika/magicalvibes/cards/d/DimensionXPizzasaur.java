@@ -31,7 +31,6 @@ public class DimensionXPizzasaur extends Card {
                 new PutCountersOnTargetPermanentThenReflexiveEffect(
                         CounterType.PLUS_ONE_PLUS_ONE,
                         2,
-                        null,
                         new DestroyTargetPermanentEffect(eligibleDestructionTarget),
                         true));
 

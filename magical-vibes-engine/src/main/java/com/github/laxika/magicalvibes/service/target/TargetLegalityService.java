@@ -4012,6 +4012,7 @@ public class TargetLegalityService {
                                                 entry.getCard() != null ? entry.getCard().getId() : null,
                                                 entry.getControllerId(), defendingPlayerId(gameData, entry))
                                                 .withXValue(entry.getXValue())
+                                                .withEventValue(eventValueOf(entry))
                                                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
                                                 .withTriggeringPermanentId(entry.getTriggeringPermanentId())
                                                 .withTriggeringPlayerId(entry.getTriggeringPlayerId())
@@ -4322,7 +4323,8 @@ public class TargetLegalityService {
                     new TargetValidationContext(gameData, targetId, Zone.GRAVEYARD,
                             entry.getCard(), entry.getXValue(), entry.getControllerId(),
                             entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
-                            entry.getTriggeringPermanentPowerAtTrigger()), entry.isTeamworkCostPaid()).isEmpty();
+                            entry.getTriggeringPermanentPowerAtTrigger())
+                            .withEventValue(eventValueOf(entry)), entry.isTeamworkCostPaid()).isEmpty();
         }
         if (entry.getTargetZone() == Zone.HAND) {
             return isHandTargetLegalOnResolution(gameData, entry, targetId);
@@ -4519,6 +4521,7 @@ public class TargetLegalityService {
                 predicateEvaluationService.validateTargetFilter(targetFilter, target,
                         filterContext(gameData, entry.getCard() != null ? entry.getCard().getId() : null,
                                 entry.getControllerId(), defendingPlayerId(gameData, entry)).withXValue(entry.getXValue())
+                                .withEventValue(eventValueOf(entry))
                                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
                                 .withActivatedAbilitySource(entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY)
                                 .withMadness(entry.isMadness())
@@ -4534,7 +4537,8 @@ public class TargetLegalityService {
                 new TargetValidationContext(gameData, targetId, entry.getTargetZone(), entry.getCard(), entry.getXValue(),
                         entry.getControllerId(), entry.getSourcePermanentSnapshot(), false, entry.getSourcePermanentId(),
                         entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry),
-                        entry.getTriggeringPermanentId()).withTriggeringPlayerId(entry.getTriggeringPlayerId()),
+                        entry.getTriggeringPermanentId()).withTriggeringPlayerId(entry.getTriggeringPlayerId())
+                        .withEventValue(eventValueOf(entry)),
                         entry.isTeamworkCostPaid())
                 .isPresent()) {
             return false;

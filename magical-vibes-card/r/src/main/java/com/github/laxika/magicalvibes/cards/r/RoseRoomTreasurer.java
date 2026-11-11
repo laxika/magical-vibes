@@ -38,8 +38,6 @@ public class RoseRoomTreasurer extends Card {
                                 SequenceEffect.of(
                                         new PayXManaEffect(),
                                         new QueueReflexiveAbilityEffect(
-                                                new DealDamageToAnyTargetEffect(new EventValue()),
-                                                false,
-                                                true)))));
+                                                new DealDamageToAnyTargetEffect(new EventValue()))))));
     }
 }

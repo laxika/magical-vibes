@@ -81,16 +81,12 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
                     queueEffect.sourcePermanentId());
             sourceContext.setSourcePermanentSnapshot(reflexiveSource == null ? null : new Permanent(reflexiveSource));
             resolve(gameData, sourceContext, new QueueReflexiveAbilityEffect(queueEffect.effect(),
-                    queueEffect.optionalTarget(), queueEffect.useEventValueAsX(),
-                    queueEffect.useEntryTargetAsTriggeringPermanent()));
+                    queueEffect.optionalTarget(), queueEffect.useEntryTargetAsTriggeringPermanent(), null));
             return;
         }
-        // What the ability records is the same whichever route it takes: the resolving entry's event, source and
-        // "that player", with the X the continuation names.
+        // What the ability records is the same whichever route it takes: the resolving entry's X, event, source and
+        // "that player". "That much" and "that many" are the event value, read as such, never the ability's X.
         StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(queueEffect.effect()));
-        if (queueEffect.useEventValueAsX()) {
-            record.setXValue(entry.getEventValue());
-        }
         if (queueEffect.useEntryTargetAsTriggeringPermanent() && entry.getTargetId() != null) {
             record.setTriggeringPermanentId(entry.getTargetId());
         }
@@ -116,13 +112,12 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                     entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect()),
                     entry.getSourcePermanentId(), entry.getControllerId(), entry.getAttackedTargetId(),
-                    null, queueEffect.useEventValueAsX() ? entry.getEventValue() : entry.getXValue()));
+                    null, entry.getXValue()));
             triggeredAbilityQueueService.processNextAttackTriggerTarget(gameData);
             return;
         }
         if (isMultiTargetGroup(entry, targetGroupIndex)) {
-            int reflexiveXValue = queueEffect.useEventValueAsX()
-                    ? entry.getEventValue() : entry.getXValue();
+            int reflexiveXValue = entry.getXValue();
             List<Integer> precedingGroupSizes = new ArrayList<>();
             for (int i = 0; i < targetGroupIndex; i++) {
                 precedingGroupSizes.add(0);
@@ -137,16 +132,16 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         }
         if (graveyardTargetingSupport.findTarget(List.of(queueEffect.effect())) != null
                 || queueEffect.effect().targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
-            int xValue = queueEffect.useEventValueAsX() ? entry.getEventValue() : 0;
+            // The choice has the record's X; a card restricted by the event's value is chosen against the record.
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect()), null, 0, xValue));
+                    entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect()), null, 0,
+                    record.getXValue()));
             if (!gameData.interaction.isAwaitingInput()) {
                 triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
             }
             return;
         }
-        if (beginTargetChoice(gameData, entry, queueEffect.effect(), queueEffect.optionalTarget(),
-                queueEffect.useEventValueAsX())) {
+        if (beginTargetChoice(gameData, entry, queueEffect.effect(), queueEffect.optionalTarget())) {
             return;
         }
         gameData.stack.add(record);
@@ -176,7 +171,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
     }
 
     private boolean beginTargetChoice(GameData gameData, StackEntry entry, CardEffect effect,
-                                      boolean optionalTarget, boolean useEventValueAsX) {
+                                      boolean optionalTarget) {
         TargetSpec targetSpec = effect.targetSpec();
         if (!targetSpec.admits(TargetPredicate.Kind.PERMANENT)
                 && !targetSpec.admits(TargetPredicate.Kind.PLAYER)
@@ -185,14 +180,15 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         }
 
         TargetPredicate predicate = targetSpec.targetPredicate();
-        int xValue = useEventValueAsX ? entry.getEventValue() : entry.getXValue();
+        int xValue = entry.getXValue();
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
                 .withSourcePermanentId(entry.getSourcePermanentId())
                 .withDefendingPlayerId(defendingPlayerId(gameData, entry.getAttackedTargetId()))
-                .withXValue(xValue);
+                .withXValue(xValue)
+                .withEventValue(entry.getEventValue());
         TargetFilter groupFilter = targetGroupFilter(entry, effect);
 
         List<UUID> validPermanentIds = new ArrayList<>();

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.Collections;
@@ -30,6 +30,9 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
     private final GameOutcomeService gameOutcomeService;
     private final LibraryRevealSupport libraryRevealSupport;
     private final GameQueryService gameQueryService;
+
+    /** "When you reveal a nonland card this way, [this] deals damage equal to that card's mana value to any target." */
+    private static final CardEffect REFLEXIVE_DAMAGE = new DealDamageToAnyTargetEffect(new EventValue(), false, false);
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -147,9 +150,9 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
             libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, revealed);
         }
         if (nonland != null && reflexive) {
-            List<CardEffect> damageEffects = List.of(new DealDamageToAnyTargetEffect(
-                    new Fixed(nonland.getManaValue()), false, false));
-            // The ability records what the resolving entry was about whichever way it reaches the stack.
+            // "Damage equal to that card's mana value": the ability records what the resolving entry was about, the
+            // revealed card's mana value as its event value, whichever way it reaches the stack.
+            List<CardEffect> damageEffects = List.of(REFLEXIVE_DAMAGE);
             ReflexiveAbilitySupport.route(gameData, ReflexiveAbilitySupport.record(gameData, entry, damageEffects),
                     () -> gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             entry.getCard(), entry.getControllerId(), damageEffects, false, null, 0,

@@ -19,8 +19,7 @@ public class IncineratorOfTheGuilty extends Card {
                 SequenceEffect.of(
                         CollectEvidenceEffect.withChosenX(),
                         new QueueReflexiveAbilityEffect(
-                                new DealDamageToEachCreatureAndPlaneswalkerDamagedPlayerControlsEffect(),
-                                false, true)),
+                                new DealDamageToEachCreatureAndPlaneswalkerDamagedPlayerControlsEffect())),
                 "Collect evidence X?"));
     }
 }

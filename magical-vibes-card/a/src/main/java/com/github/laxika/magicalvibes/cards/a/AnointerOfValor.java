@@ -16,9 +16,9 @@ public class AnointerOfValor extends Card {
     public AnointerOfValor() {
         addTrigger(Triggers.creatureAttacks(), new MayPayManaEffect(
                 "{3}",
-                new QueueReflexiveAbilityEffect(new PutCounterOnEachMatchingPermanentEffect(
+                QueueReflexiveAbilityEffect.aboutEntryTarget(new PutCounterOnEachMatchingPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsTriggeringPermanentPredicate(),
-                        EachPermanentScope.ALL_PLAYERS), false, false, true),
+                        EachPermanentScope.ALL_PLAYERS)),
                 "Pay {3} to put a +1/+1 counter on the attacking creature?"));
     }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -39,6 +41,16 @@ public class PayXManaReanimateCreaturesWithTotalManaValueXEffectHandler implemen
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
     private final PredicateEvaluationService predicateEvaluationService;
+
+    /**
+     * "Any number of target creature cards with total mana value X or less": X is the X paid, which the reflexive
+     * ability's entry has as its X.
+     */
+    private static final ReturnTargetCardsFromGraveyardToBattlefieldEffect RETURN_WITHIN_TOTAL_MANA_VALUE_X =
+            new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
+                    new CardTypePredicate(CardType.CREATURE), 0, false, false,
+                    null, 0, new XValue(), null, null, null, 0,
+                    GraveyardSearchScope.ALL_GRAVEYARDS, false, false, false, 0, 0);
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -94,9 +106,7 @@ public class PayXManaReanimateCreaturesWithTotalManaValueXEffectHandler implemen
                                        UUID controllerId, int x) {
         UUID damagedPlayerId = entry.getTargetId();
         Card sourceCard = entry.getCard();
-        ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect =
-                ReturnTargetCardsFromGraveyardToBattlefieldEffect.withinTotalManaValueFromAllGraveyards(
-                        new CardTypePredicate(CardType.CREATURE), x);
+        ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect = RETURN_WITHIN_TOTAL_MANA_VALUE_X;
 
         List<Card> candidates = reanimationCandidates(gameData, entry, controllerId, x);
         // The ability records what the resolving entry was about, with the X paid as its X, whether it targets no

@@ -120,7 +120,7 @@ ROWS = [
 DONE_ROWS = {"17z13e2", "17z13e3", "17z13e4", "17z13e5", "17z13e5b", "17z13e6", "17z13e7", "17z13e8", "17z13e8b",
              "17z13e8c", "17z13e8d", "17z13e9", "17z14b", "17z14b2", "17z14c", "17z14c2", "17z14c3", "17z14d",
              "17z14e", "17z14f", "17z14g", "17z14h", "17z15", "17z15b", "17z15c", "17z15d", "17z15e", "17z16",
-             "17z16b", "17z16b2", "17z16c", "17z16c2"}
+             "17z16b", "17z16b2", "17z16c", "17z16c2", "17z16c3"}
 
 # The reader branches keyed by an effect's class (file, effect class) -> verdict. Row 17z13e's three (the your-upkeep
 # `SurveilEffect`, the your-draw-step `MayEffect` and Haphazard Bombardment's branches) are gone. Run 17z13e8 read the
@@ -163,10 +163,10 @@ READERS = {
     ("StepTriggerService.java", "BecomeCopyOfTargetCreatureEffect"): ROUTE,
     ("StepTriggerService.java", "ReturnTargetCardsFromGraveyardToHandEffect"): ROUTE,
     ("StepTriggerService.java", "ExileGraveyardCardsEffect"): ROUTE,
-    # The engine's abilities: the "returns as a non-Aura enchantment" one (`ReturnSourceAuraToCreatureOrNonAuraOnDeath
-    # EffectHandler` grants `DealDamageToPlayerAtUpkeepEffect`, "at the beginning of that player's upkeep") and the
-    # egg-counter return of a card exiled with egg counters (run 17z12).
-    ("StepTriggerService.java", "UpkeepPlayerDependentEffect"): ENGINE,
+    # The engine's ability: the egg-counter return of a card exiled with egg counters (run 17z12). Run 17z16c3: the
+    # "returns as a non-Aura enchantment" ability Takklemaggot gains is `Triggers.upkeep(ActivePlayer.ANY)` with the
+    # event condition `TargetPlayerIs` and `DealDamageToPlayersEffect`, so the `UpkeepPlayerDependentEffect` read is
+    # gone.
     ("StepTriggerService.java", "RemoveEggCounterFromExileAndReturnEffect"): ENGINE,
     # No triggered ability: a static draw (Teferi, Who Slows the Sunset's emblem), draw-step replacements and skips,
     # an as-enters choice of a returning card, a floating copy effect ending.

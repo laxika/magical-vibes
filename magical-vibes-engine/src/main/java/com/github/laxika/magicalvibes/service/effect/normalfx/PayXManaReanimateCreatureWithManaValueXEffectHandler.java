@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -16,8 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaReanimateCreatureWithManaValueXEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -50,6 +49,11 @@ public class PayXManaReanimateCreatureWithManaValueXEffectHandler implements Nor
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
     private final PredicateEvaluationService predicateEvaluationService;
+
+    /** "Creature card with mana value X": X is the X paid, which the reflexive ability's entry has as its X. */
+    private static final CardPredicate CREATURE_WITH_MANA_VALUE_X = new CardAllOfPredicate(List.of(
+            new CardTypePredicate(CardType.CREATURE),
+            new CardManaValueEqualsXPredicate()));
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -113,7 +117,7 @@ public class PayXManaReanimateCreatureWithManaValueXEffectHandler implements Nor
         Card sourceCard = entry.getCard();
         ReturnCardFromGraveyardEffect returnEffect = ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                .filter(manaValueCreatureFilter(x))
+                .filter(CREATURE_WITH_MANA_VALUE_X)
                 .targetGraveyard(true)
                 .enterWithCounter(e.enterWithCounter())
                 .enterWithCounterCount(e.enterWithCounter() == null ? 0 : 1)
@@ -135,7 +139,8 @@ public class PayXManaReanimateCreatureWithManaValueXEffectHandler implements Nor
         if (graveyard != null) {
             for (int i = 0; i < graveyard.size(); i++) {
                 if (predicateEvaluationService.matchesCardPredicate(
-                        graveyard.get(i), returnEffect.filter(), sourceCard.getId())) {
+                        graveyard.get(i), returnEffect.filter(), sourceCard.getId(), gameData, controllerId,
+                        entry.getSourcePermanentId(), null, x)) {
                     matchingIndices.add(i);
                 }
             }
@@ -170,13 +175,6 @@ public class PayXManaReanimateCreatureWithManaValueXEffectHandler implements Nor
                 .build());
     }
 
-    /** "Creature card with mana value X" — an exact mana value expressed as at-most AND at-least X. */
-    private static CardPredicate manaValueCreatureFilter(int x) {
-        return new CardAllOfPredicate(List.of(
-                new CardTypePredicate(CardType.CREATURE),
-                new CardMaxManaValuePredicate(x),
-                new CardMinManaValuePredicate(x)));
-    }
 
     private void beginXPrompt(GameData gameData, UUID controllerId, String cardName) {
         int maxX = maxPotentialX(gameData, controllerId);

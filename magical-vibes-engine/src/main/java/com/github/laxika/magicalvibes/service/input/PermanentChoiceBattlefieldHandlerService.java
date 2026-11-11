@@ -31,6 +31,8 @@ import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageRedirectShield
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.WarpWorldEnchantmentPlacement;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -2665,10 +2667,8 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         // Capture effective power before removing from battlefield so static bonuses still apply.
         int power = Math.max(0, gameQueryService.getEffectivePower(gameData, toSacrifice));
-        if (ctx.doubleDamageIfGiant()
-                && gameQueryService.hasEffectiveSubtype(gameData, toSacrifice, CardSubtype.GIANT)) {
-            power *= 2;
-        }
+        boolean twiceThatMuch = ctx.doubleDamageIfGiant()
+                && gameQueryService.hasEffectiveSubtype(gameData, toSacrifice, CardSubtype.GIANT);
 
         UUID sourcePermanentId = gameData.playerBattlefields.get(ctx.controllerId()).stream()
                 .filter(permanent -> permanent.getOriginalCard().getId().equals(ctx.sourceCard().getId()))
@@ -2676,17 +2676,26 @@ public class PermanentChoiceBattlefieldHandlerService {
                 .findFirst()
                 .orElse(null);
 
+        Permanent sacrificed = new Permanent(toSacrifice);
         destructionSupport.sacrificeAndLog(gameData, toSacrifice, ctx.controllerId());
 
         queuePowerDamageReflexiveTrigger(
-                gameData, ctx.controllerId(), ctx.sourceCard(), sourcePermanentId, power,
+                gameData, ctx.controllerId(), ctx.sourceCard(), sourcePermanentId, sacrificed, power, twiceThatMuch,
                 ctx.reflexiveFollowUps(), ctx.targetPredicate());
     }
 
     private void queuePowerDamageReflexiveTrigger(GameData gameData, UUID controllerId,
                                                    Card sourceCard, UUID sourcePermanentId,
-                                                   int power, List<CardEffect> reflexiveFollowUps, PermanentPredicate targetRestriction) {
-        CardEffect damageEffect = targetRestriction == null ? new DealDamageToAnyTargetEffect(power) : new DealDamageToTargetCreatureEffect(power, targetRestriction);
+                                                   Permanent sacrificed, int power, boolean twiceThatMuch,
+                                                   List<CardEffect> reflexiveFollowUps,
+                                                   PermanentPredicate targetRestriction) {
+        // "Damage equal to that creature's power" ("twice that much" for a sacrificed Giant, Surtland Flinger): the
+        // power the creature had as it was sacrificed is on the reflexive ability's entry, which the damage reads.
+        DynamicAmount damage = twiceThatMuch
+                ? new Scaled(new SacrificedPermanentPower(), 2) : new SacrificedPermanentPower();
+        CardEffect damageEffect = targetRestriction == null
+                ? new DealDamageToAnyTargetEffect(damage)
+                : new DealDamageToTargetCreatureEffect(damage, false, targetRestriction);
         TargetSpec targetSpec = damageEffect.targetSpec();
         List<CardEffect> reflexiveEffects = new ArrayList<>();
         reflexiveEffects.add(damageEffect);
@@ -2722,10 +2731,13 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         // "When you do" is an ability of its own (CR 603.12): the entry its target is chosen for records what the
         // resolving entry was about.
-        ReflexiveAbilitySupport.route(gameData, ReflexiveAbilitySupport.recordFor(gameData,
+        StackEntry record = ReflexiveAbilitySupport.recordFor(gameData,
                 ReflexiveAbilitySupport.resolvingEntryOf(gameData, sourceCard, sourcePermanentId),
                 sourceCard, controllerId, reflexiveEffects, sourceCard.getName() + "'s reflexive ability",
-                sourcePermanentId), () -> {
+                sourcePermanentId);
+        record.setSacrificedPermanentSnapshot(sacrificed);
+        record.setSacrificedPower(power);
+        ReflexiveAbilitySupport.route(gameData, record, () -> {
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.MayAbilityTriggerTarget(
                             sourceCard, controllerId, reflexiveEffects, sourcePermanentId, null));
@@ -3216,19 +3228,22 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         destructionSupport.sacrificeAndLog(gameData, target, ctx.controllerId());
 
-        // Create one token whose power and toughness are each equal to the sacrificed creature's power
+        // One token whose power and toughness are each the sacrificed creature's power, which the entry records.
         CreateTokenEffect t = ctx.tokenTemplate();
         CreateTokenEffect sized = new CreateTokenEffect(
-                t.primaryType(), 1, t.tokenName(), power, power,
+                t.primaryType(), new Fixed(1), t.tokenName(),
+                new SacrificedPermanentPower(), new SacrificedPermanentPower(),
                 t.color(), t.colors(), t.subtypes(), t.keywords(), t.additionalTypes(),
                 t.tappedAndAttacking(), t.tapped(), t.tokenEffects(), t.tokenAbilities(),
                 t.exileAtEndOfCombat(), t.exileAtEndStep(), t.legendary(), t.initialPlusOnePlusOneCounters(),
                 t.grantedKeywordsUntilEndOfTurn(), t.supertypes());
-        // The ability records what the entry that asked for the sacrifice was about.
-        gameData.stack.add(ReflexiveAbilitySupport.recordFor(gameData,
+        // The ability records what the entry that asked for the sacrifice was about, and the power sacrificed.
+        StackEntry tokenEntry = ReflexiveAbilitySupport.recordFor(gameData,
                 ReflexiveAbilitySupport.resolvingEntryOf(gameData, ctx.sourceCard(), null),
                 ctx.sourceCard(), ctx.controllerId(), List.of(sized), ctx.sourceCard().getName() + "'s effect",
-                null));
+                null);
+        tokenEntry.setSacrificedPower(power);
+        gameData.stack.add(tokenEntry);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

@@ -77,7 +77,7 @@ public class NihiloorTapAndStealEffectHandler implements NormalEffectHandlerBean
                 queueReflexiveAbilityEffectHandler.resolve(
                         gameData,
                         context.resolvingEntry(),
-                        new QueueReflexiveAbilityEffect(controlEffect, false, true));
+                        new QueueReflexiveAbilityEffect(controlEffect));
             }
         }
 

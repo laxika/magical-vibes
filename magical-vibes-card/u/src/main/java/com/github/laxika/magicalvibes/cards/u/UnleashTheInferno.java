@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueXPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostEventValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -38,10 +38,10 @@ public class UnleashTheInferno extends Card {
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsEnchantmentPredicate())),
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
-                new PermanentMaxManaValueXPredicate()));
+                new PermanentManaValueAtMostEventValuePredicate()));
         addSpellEffect(new ConditionalEffect(
                 new EventValueAtLeast(1),
                 new QueueReflexiveAbilityEffect(
-                        new DestroyTargetPermanentEffect(artifactOrEnchantmentOpponentControls), false, true)));
+                        new DestroyTargetPermanentEffect(artifactOrEnchantmentOpponentControls))));
     }
 }

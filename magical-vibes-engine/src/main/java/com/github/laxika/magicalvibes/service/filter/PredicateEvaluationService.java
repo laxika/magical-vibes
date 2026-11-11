@@ -98,6 +98,7 @@ import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsSourceCoun
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostEventValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsEventValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
@@ -321,6 +322,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentManaValueLessThanXPr
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueColorsSpentToCastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostEventValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValueXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNameInPredicate;
@@ -634,6 +636,7 @@ public class PredicateEvaluationService {
 
     /**
      * {@code filter} with "mana value equal to [the event's value]" ({@link CardManaValueEqualsEventValuePredicate})
+     * and "mana value less than or equal to" it ({@link CardManaValueAtMostEventValuePredicate})
      * read from {@code eventValue}; with none it matches no card. A filter without the predicate is returned as it is.
      */
     public static CardPredicate bindEventValue(CardPredicate filter, Integer eventValue) {
@@ -643,6 +646,9 @@ public class PredicateEvaluationService {
                     ? new CardNotPredicate(new CardTruePredicate())
                     : new CardAllOfPredicate(List.of(new CardMinManaValuePredicate(eventValue, false),
                             new CardMaxManaValuePredicate(eventValue, false)));
+            case CardManaValueAtMostEventValuePredicate ignored -> eventValue == null
+                    ? new CardNotPredicate(new CardTruePredicate())
+                    : new CardMaxManaValuePredicate(eventValue, false);
             case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
                     .map(part -> bindEventValue(part, eventValue)).toList());
             case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
@@ -1335,6 +1341,7 @@ public class PredicateEvaluationService {
             case CardManaValueEqualsTriggeringSpellPredicate ignored -> false;
             // Bound to the event's value by the matchesCardPredicate overload that is given one (bindEventValue).
             case CardManaValueEqualsEventValuePredicate ignored -> false;
+            case CardManaValueAtMostEventValuePredicate ignored -> false;
             case CardSharesNameWithLegendaryControlledPermanentPredicate ignored -> {
                 if (gameData == null || cardOwnerId == null
                         || !card.getSupertypes().contains(CardSupertype.LEGENDARY)) {
@@ -2352,6 +2359,11 @@ public class PredicateEvaluationService {
                 }
                 yield (permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue()) <= filterContext.xValue();
             }
+            case PermanentManaValueAtMostEventValuePredicate ignored ->
+                    // "That amount" is the event's value; with none given the restriction can't be met.
+                    filterContext != null && filterContext.eventValue() != null
+                            && (permanent.isFaceDown() ? 0 : permanent.getCard().getManaValue())
+                            <= filterContext.eventValue();
             case PermanentMaxManaValueColorsSpentToCastPredicate ignored -> {
                 // During casting the colored-mana snapshot does not exist yet, so the target is
                 // potentially legal. Resolution-time checks use the snapshot taken during payment.

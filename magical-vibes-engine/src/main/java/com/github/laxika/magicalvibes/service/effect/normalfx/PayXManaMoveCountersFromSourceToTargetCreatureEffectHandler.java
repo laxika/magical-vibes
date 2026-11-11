@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
@@ -41,6 +42,9 @@ public class PayXManaMoveCountersFromSourceToTargetCreatureEffectHandler impleme
     private final PlayerInputService playerInputService;
     private final PotentialManaService potentialManaService;
     private final TargetLegalityService targetLegalityService;
+
+    private static final CardEffect MOVE_X_COUNTERS =
+            new MoveCounterFromSourceToTargetCreatureEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue());
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -85,9 +89,8 @@ public class PayXManaMoveCountersFromSourceToTargetCreatureEffectHandler impleme
     }
 
     private void queueReflexiveTargetChoice(GameData gameData, StackEntry entry, int counterCount) {
-        List<CardEffect> moveEffects = List.of(new MoveCounterFromSourceToTargetCreatureEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, counterCount));
-        // The ability records what the resolving entry was about, with the X paid as its X.
+        // "Move X +1/+1 counters": the ability records what the resolving entry was about, with the X paid as its X.
+        List<CardEffect> moveEffects = List.of(MOVE_X_COUNTERS);
         StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, moveEffects);
         record.setXValue(counterCount);
         ReflexiveAbilitySupport.route(gameData, record, () -> chooseReflexiveTarget(gameData, entry, moveEffects));

@@ -46,7 +46,7 @@ public class EachPlayerMayPutCountersOnCreatureEffectHandler implements NormalEf
                     ? new CreaturesCantAttackControllerUntilNextTurnEffect(playerId, true)
                     : counterEffect.acceptedFollowUp();
             CardEffect counterThenRestriction = new PutCountersOnTargetPermanentThenReflexiveEffect(
-                    counterEffect.counterType(), counterEffect.count(), null, acceptedFollowUp,
+                    counterEffect.counterType(), counterEffect.count(), acceptedFollowUp,
                     false, targetPredicate, counterEffect.acceptedFollowUp() != null);
             String counterText = counterEffect.count() + " "
                     + counterEffect.counterType().name().toLowerCase().replace('_', ' ')

@@ -1681,44 +1681,6 @@ public class CardChoiceHandlerService {
                         discardedCard, followUp.thenEffectCondition(), followUp.thenEffectSourceCard().getId());
         if (thenEffectConditionMet && selectedThenEffect != null && followUp.thenEffectSourceCard() != null) {
             CardEffect thenEffect = selectedThenEffect;
-            if (discardedCard != null
-                    && thenEffect instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect typeCountDamage
-                    && typeCountDamage.damage() instanceof com.github.laxika.magicalvibes.model.amount.LastDiscardedCardTypeCount) {
-                java.util.Set<com.github.laxika.magicalvibes.model.CardType> discardedTypes =
-                        java.util.EnumSet.noneOf(com.github.laxika.magicalvibes.model.CardType.class);
-                if (discardedCard.getType() != null) {
-                    discardedTypes.add(discardedCard.getType());
-                }
-                discardedTypes.addAll(discardedCard.getAdditionalTypes());
-                thenEffect = typeCountDamage.withDamage(
-                        new com.github.laxika.magicalvibes.model.amount.Fixed(discardedTypes.size()));
-            }
-            if (discardedCard != null
-                    && thenEffect instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect manaValueDamage
-                    && manaValueDamage.damage() instanceof com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue) {
-                // The reflexive trigger's damage is that card's mana value as it was discarded; a card
-                // discarded later (in response) must not change it.
-                thenEffect = new com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect(
-                        new com.github.laxika.magicalvibes.model.amount.Fixed(discardedCard.getManaValue()),
-                        manaValueDamage.targetRestriction(), manaValueDamage.exileInsteadOfDie());
-            }
-            if (discardedCard != null
-                    && thenEffect instanceof com.github.laxika.magicalvibes.model.effect.MillEffect mill
-                    && mill.count() instanceof com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue) {
-                // "Mill cards equal to its mana value": the amount is the discarded card's mana value as it was
-                // discarded, so a card discarded later (in response) must not change it.
-                thenEffect = new com.github.laxika.magicalvibes.model.effect.MillEffect(
-                        new com.github.laxika.magicalvibes.model.amount.Fixed(discardedCard.getManaValue()),
-                        mill.recipient());
-            }
-            if (discardedCard != null
-                    && thenEffect instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect playerDamage
-                    && playerDamage.amount() instanceof com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue) {
-                thenEffect = new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(
-                        new com.github.laxika.magicalvibes.model.amount.Fixed(discardedCard.getManaValue()),
-                        playerDamage.recipient(), playerDamage.attachedCountFilter(), playerDamage.unpreventable(),
-                        playerDamage.recordDamageDealt(), playerDamage.triggeredTargetFilter());
-            }
             Card sourceCard = followUp.thenEffectSourceCard();
 
             // Discard follow-ups that belong to the resolving spell or ability resume that
@@ -1727,6 +1689,10 @@ public class CardChoiceHandlerService {
                     && gameData.pendingEffectResolutionEntry != null) {
                 StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
                 copyDiscardFollowUpContext(gameData, pendingEntry, discardedCard, followUp);
+                if (discardedCard != null) {
+                    // "The discarded card" of the follow-up is the card just discarded.
+                    pendingEntry.setDiscardedCardSnapshot(discardedCard.createCardCopy());
+                }
                 pendingEntry.setTriggeringCards(discardedCards(gameData, followUp));
                 pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(thenEffect));
                 resumeRemainingEffectsAfterDiscard(gameData);
@@ -1831,6 +1797,11 @@ public class CardChoiceHandlerService {
             record.setTriggeringPlayerId(followUp.thenEffectTriggeringPlayerId());
         }
         copyDiscardFollowUpContext(gameData, record, discardedCard, followUp);
+        if (discardedCard != null) {
+            // "That card's mana value" and its card types are the discarded card's as it was discarded, whatever is
+            // discarded before the ability resolves.
+            record.setDiscardedCardSnapshot(discardedCard.createCardCopy());
+        }
         return record;
     }
 

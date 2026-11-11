@@ -30,9 +30,8 @@ public class AncestralKatana extends Card {
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new MayPayManaEffect(
                         "{1}",
-                        new QueueReflexiveAbilityEffect(
-                                AttachSourceEquipmentToTargetCreatureEffect.forTriggeringCreature(),
-                                false, false, true),
+                        QueueReflexiveAbilityEffect.aboutEntryTarget(
+                                AttachSourceEquipmentToTargetCreatureEffect.forTriggeringCreature()),
                         "Pay {1} to attach Ancestral Katana to it?"));
 
         addActivatedAbility(new EquipActivatedAbility("{3}"));

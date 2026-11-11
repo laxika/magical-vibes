@@ -24,7 +24,7 @@ public class SpectacularShowdown extends Card {
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new PutCountersOnTargetPermanentThenReflexiveEffect(
-                        CounterType.DOUBLE_STRIKE, 1, null,
+                        CounterType.DOUBLE_STRIKE, 1,
                         new GoadTriggeringCreatureUntilNextTurnEffect(), false, null, true),
                 new PutCounterOnEachMatchingPermanentThenGoadEffect(
                         CounterType.DOUBLE_STRIKE, 1, new PermanentIsCreaturePredicate(),

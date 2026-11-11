@@ -32,7 +32,6 @@ public class YunasWhistle extends Card {
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentControlledBySourceControllerPredicate())),
-                                false, null),
-                        false, true))));
+                                false, null)))));
     }
 }

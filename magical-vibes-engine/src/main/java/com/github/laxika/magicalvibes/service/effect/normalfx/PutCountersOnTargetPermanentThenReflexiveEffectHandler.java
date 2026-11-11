@@ -8,8 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetPermanentThenReflexiveEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.AmountContext;
-import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +21,6 @@ public class PutCountersOnTargetPermanentThenReflexiveEffectHandler implements N
 
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
-    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,12 +30,6 @@ public class PutCountersOnTargetPermanentThenReflexiveEffectHandler implements N
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var counterThen = (PutCountersOnTargetPermanentThenReflexiveEffect) effect;
-        Permanent source = entry.getSourcePermanentId() == null
-                ? entry.getSourcePermanentSnapshot()
-                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null) {
-            source = entry.getSourcePermanentSnapshot();
-        }
 
         List<UUID> targetIds = entry.targetsForEffect(effect);
         if (targetIds.isEmpty() && entry.getTargetId() != null) {
@@ -61,13 +52,6 @@ public class PutCountersOnTargetPermanentThenReflexiveEffectHandler implements N
             return;
         }
 
-        boolean useEventValueAsX = counterThen.reflexiveXValue() != null;
-        if (useEventValueAsX) {
-            entry.setEventValue(amountEvaluationService.evaluate(
-                    gameData,
-                    counterThen.reflexiveXValue(),
-                    AmountContext.forStackEntry(entry, source)));
-        }
 
         int effectIndex = entry.getEffectsToResolve().indexOf(effect);
         if (effectIndex < 0) {
@@ -76,7 +60,7 @@ public class PutCountersOnTargetPermanentThenReflexiveEffectHandler implements N
         }
         entry.insertEffectsToResolve(effectIndex + 1,
                 List.of(new QueueReflexiveAbilityEffect(
-                        counterThen.reflexiveEffect(), counterThen.reflexiveOptionalTarget(), useEventValueAsX,
-                        counterThen.reflexiveUsesTargetAsTriggeringPermanent())));
+                        counterThen.reflexiveEffect(), counterThen.reflexiveOptionalTarget(),
+                        counterThen.reflexiveUsesTargetAsTriggeringPermanent(), null)));
     }
 }

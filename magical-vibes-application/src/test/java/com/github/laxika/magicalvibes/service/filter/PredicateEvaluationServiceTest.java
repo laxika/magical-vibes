@@ -135,6 +135,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTransformedPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostEventValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostEventValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -2752,6 +2754,42 @@ class PredicateEvaluationServiceTest {
 
             assertThat(evaluator.matchesStaticFilter(cheap, predicate, ctx())).isTrue();
             assertThat(evaluator.matchesStaticFilter(expensive, predicate, ctx())).isFalse();
+        }
+
+        @Test
+        @DisplayName("\"mana value less than or equal to that amount\" matches against the context's event value and nothing without one")
+        void manaValueAtMostEventValueMatches() {
+            Card cheapCard = createCreature("Cheap Creature", 2, 2, CardColor.GREEN);
+            cheapCard.setManaCost("{3}");
+            Card expensiveCard = createCreature("Expensive Creature", 4, 4, CardColor.GREEN);
+            expensiveCard.setManaCost("{4}");
+            Permanent cheap = addPermanent(player1Id, cheapCard);
+            Permanent expensive = addPermanent(player1Id, expensiveCard);
+
+            var predicate = new PermanentManaValueAtMostEventValuePredicate();
+
+            assertThat(evaluator.matchesPermanentPredicate(cheap, predicate, ctx().withEventValue(3))).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(expensive, predicate, ctx().withEventValue(3))).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(cheap, predicate, ctx().withXValue(5)))
+                    .as("an X is not the event's value").isFalse();
+        }
+
+        @Test
+        @DisplayName("a card's \"equal or lesser mana value\" than the event's value matches only when the value is given")
+        void cardManaValueAtMostEventValueMatches() {
+            Card cheapCard = createCreature("Cheap Creature", 2, 2, CardColor.GREEN);
+            cheapCard.setManaCost("{3}");
+            Card expensiveCard = createCreature("Expensive Creature", 4, 4, CardColor.GREEN);
+            expensiveCard.setManaCost("{4}");
+            var predicate = new CardManaValueAtMostEventValuePredicate();
+
+            assertThat(evaluator.matchesCardPredicate(cheapCard, predicate, null, gd, player1Id, null, null, null,
+                    null, 3)).isTrue();
+            assertThat(evaluator.matchesCardPredicate(expensiveCard, predicate, null, gd, player1Id, null, null, null,
+                    null, 3)).isFalse();
+            assertThat(evaluator.matchesCardPredicate(cheapCard, predicate, null, gd, player1Id, null, null, 5,
+                    null, null)).as("an X is not the event's value").isFalse();
+            assertThat(evaluator.matchesCardPredicate(cheapCard, predicate, null)).isFalse();
         }
 
         @Test

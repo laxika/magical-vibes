@@ -1,20 +1,17 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.Objects;
 
 /**
  * Puts counters on a target permanent and, when at least one counter was placed, queues a
- * reflexive triggered ability. The optional dynamic amount is evaluated after the counters are
- * placed and carried to the reflexive ability as its X value.
+ * reflexive triggered ability, which records what the resolving ability was about.
  */
 public record PutCountersOnTargetPermanentThenReflexiveEffect(
         CounterType counterType,
         int count,
-        DynamicAmount reflexiveXValue,
         CardEffect reflexiveEffect,
         boolean reflexiveOptionalTarget,
         PermanentPredicate targetPredicate,
@@ -23,29 +20,13 @@ public record PutCountersOnTargetPermanentThenReflexiveEffect(
 
     public PutCountersOnTargetPermanentThenReflexiveEffect(CounterType counterType, int count,
                                                            CardEffect reflexiveEffect) {
-        this(counterType, count, null, reflexiveEffect, false, null, false);
+        this(counterType, count, reflexiveEffect, false, null, false);
     }
 
     public PutCountersOnTargetPermanentThenReflexiveEffect(CounterType counterType, int count,
-                                                           DynamicAmount reflexiveXValue,
-                                                           CardEffect reflexiveEffect) {
-        this(counterType, count, reflexiveXValue, reflexiveEffect, false, null, false);
-    }
-
-    public PutCountersOnTargetPermanentThenReflexiveEffect(CounterType counterType, int count,
-                                                           DynamicAmount reflexiveXValue,
                                                            CardEffect reflexiveEffect,
                                                            boolean reflexiveOptionalTarget) {
-        this(counterType, count, reflexiveXValue, reflexiveEffect, reflexiveOptionalTarget, null, false);
-    }
-
-    public PutCountersOnTargetPermanentThenReflexiveEffect(CounterType counterType, int count,
-                                                           DynamicAmount reflexiveXValue,
-                                                           CardEffect reflexiveEffect,
-                                                           boolean reflexiveOptionalTarget,
-                                                           PermanentPredicate targetPredicate) {
-        this(counterType, count, reflexiveXValue, reflexiveEffect, reflexiveOptionalTarget,
-                targetPredicate, false);
+        this(counterType, count, reflexiveEffect, reflexiveOptionalTarget, null, false);
     }
 
     public PutCountersOnTargetPermanentThenReflexiveEffect {
