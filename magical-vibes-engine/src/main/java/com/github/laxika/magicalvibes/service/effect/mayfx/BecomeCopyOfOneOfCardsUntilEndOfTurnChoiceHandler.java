@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -69,13 +70,18 @@ public class BecomeCopyOfOneOfCardsUntilEndOfTurnChoiceHandler implements MayEff
         for (int i = 0; i < effect.cards().size(); i++) {
             validIndices.add(i);
         }
-        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
-                .builder(ability.controllerId(), validIndices,
-                        GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD,
-                        "Choose an artifact or creature card that left your graveyard to copy.")
-                .cardPool(effect.cards())
-                .mayAbilityContext(ability.sourceCard(), ability.controllerId(),
-                        List.of(effect), ability.sourcePermanentId())
-                .build());
+        // The entry the chosen card's copy effect is put on the stack as records what the resolving entry was about.
+        ReflexiveAbilitySupport.route(gameData, ReflexiveAbilitySupport.recordFor(gameData,
+                ReflexiveAbilitySupport.resolvingEntryOf(gameData, ability.sourceCard(), ability.sourcePermanentId()),
+                ability.sourceCard(), ability.controllerId(), List.of(effect),
+                ability.sourceCard().getName() + "'s ability", ability.sourcePermanentId()),
+                () -> interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                        .builder(ability.controllerId(), validIndices,
+                                GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD,
+                                "Choose an artifact or creature card that left your graveyard to copy.")
+                        .cardPool(effect.cards())
+                        .mayAbilityContext(ability.sourceCard(), ability.controllerId(),
+                                List.of(effect), ability.sourcePermanentId())
+                        .build()));
     }
 }

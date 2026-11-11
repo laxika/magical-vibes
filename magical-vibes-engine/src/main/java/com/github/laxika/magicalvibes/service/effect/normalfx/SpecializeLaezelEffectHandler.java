@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.cards.l.LaezelGithyankiWarrior;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -111,17 +112,19 @@ public class SpecializeLaezelEffectHandler implements NormalEffectHandlerBean {
 
     private void enqueueSpecializationTrigger(GameData gameData, StackEntry sourceEntry, Card sourceCard,
                                               CardEffect effect) {
-        if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect) {
-            graveyardTargetingService.handleReturnToBattlefieldETBTargeting(gameData,
-                    sourceEntry.getControllerId(), sourceCard, List.of(effect), returnEffect,
-                    returnEffect.maxTargets(),
-                    returnEffect.hasTotalManaValueCap() ? returnEffect.maxTotalManaValue() : null,
-                    0, sourceEntry.getSourcePermanentId());
-            return;
-        }
         StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard,
                 sourceEntry.getControllerId(), sourceCard.getName() + "'s ability", List.of(effect), 0,
                 sourceEntry.getSourcePermanentId());
+        if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect) {
+            // The ability's entry when it chooses nothing is its record whichever way it reaches the stack.
+            ReflexiveAbilitySupport.route(gameData, trigger,
+                    () -> graveyardTargetingService.handleReturnToBattlefieldETBTargeting(gameData,
+                            sourceEntry.getControllerId(), sourceCard, List.of(effect), returnEffect,
+                            returnEffect.maxTargets(),
+                            returnEffect.hasTotalManaValueCap() ? returnEffect.maxTotalManaValue() : null,
+                            0, sourceEntry.getSourcePermanentId()));
+            return;
+        }
         trigger.setNonTargeting(effect.targetSpec() == TargetSpec.NONE);
         gameData.enqueueTrigger(trigger);
     }

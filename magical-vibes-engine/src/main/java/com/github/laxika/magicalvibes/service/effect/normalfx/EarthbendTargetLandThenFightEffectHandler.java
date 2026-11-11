@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -59,17 +60,22 @@ public class EarthbendTargetLandThenFightEffectHandler implements NormalEffectHa
             return;
         }
 
-        if (controlledCreatures.isEmpty()) {
-            beginOpponentChoice(gameData, sourceCard, controllerId, opponentCreatures,
-                    null, entry.getSourcePermanentId());
-            return;
-        }
-
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.EarthbendThenFightTarget(
-                sourceCard, controllerId, entry.getSourcePermanentId(), null, false));
-        List<UUID> validPlayerIds = List.of(controllerId);
-        playerInputService.beginAnyTargetChoice(gameData, controllerId, controlledCreatures, validPlayerIds,
-                sourceCard.getName() + " - Choose up to one creature you control to fight (choose yourself to decline).");
+        // "When you do" is an ability of its own (CR 603.12): its targets are chosen as it goes on the stack, and the
+        // entry they are chosen for records what the resolving entry was about.
+        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of());
+        ReflexiveAbilitySupport.route(gameData, record, () -> {
+            if (controlledCreatures.isEmpty()) {
+                beginOpponentChoice(gameData, sourceCard, controllerId, opponentCreatures,
+                        null, entry.getSourcePermanentId());
+                return;
+            }
+            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.EarthbendThenFightTarget(
+                    sourceCard, controllerId, entry.getSourcePermanentId(), null, false));
+            List<UUID> validPlayerIds = List.of(controllerId);
+            playerInputService.beginAnyTargetChoice(gameData, controllerId, controlledCreatures, validPlayerIds,
+                    sourceCard.getName()
+                            + " - Choose up to one creature you control to fight (choose yourself to decline).");
+        });
     }
 
     public void handleTargetChoice(GameData gameData, UUID chosenId,

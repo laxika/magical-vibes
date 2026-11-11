@@ -11,7 +11,11 @@ asks a trigger choice:
   copies  what the method copies from the resolving entry by hand (`x.setFoo(entry.getFoo())`)
   record  whether it uses the shared record (`ReflexiveAbilitySupport`, `copyTriggerEventFrom`,
           `carryTriggerRecord`, `handOffTriggerRecord`), in the method itself or in the method of the same file that
-          routes it (the summary counts a file as using it when any of its methods does)
+          routes it (the summary counts a file as using it when any of its methods does). A method that names no
+          record and was read by hand in run 17z16c2 prints why that is right instead of `NONE` (`EXPLAINED`
+          below): `through the hand` (its choice was begun with a record handed off, and the hand gives it to the
+          entry the method builds) or `none to record` (an ability of its own event with one route). An
+          explanation whose method no longer builds an entry or choice is reported as stale.
   class   `instanceof ...Effect` tests in the method (a path or a record picked by an effect's class)
   rebuild `new ...Effect(` constructions in the method (an effect rebuilt with data bound in)
 
@@ -46,7 +50,72 @@ TRIGGER_CHOICES = (
     "AttackTriggerTarget", "ETBTokenMultiTargetTrigger", "SpellGraveyardTargetTrigger", "MayAbilityTriggerTarget",
     "SpellTargetTriggerAnyTarget", "EntersTriggerTarget", "TriggeredModalTrigger", "ETBSpellTargetTrigger",
     "DeathTriggerTarget", "SelfTriggeredAbilityTarget", "DiscardTriggerAnyTarget", "ReflexiveTriggerTarget",
+    "ChampionedTriggerTarget", "EarthbendThenFightTarget",
 )
+HAND = "through the hand"
+OWN = "none to record"
+EXPLAINED = {
+    ("effect/normalfx/AbandonSchemeAndSetTriggeringSchemeInMotionAgainEffectHandler.java", "resolve"):
+        (OWN, "the scheme set in motion again is another card's ability with an event of its own; one route"),
+    ("effect/normalfx/EarthbendTargetLandThenFightEffectHandler.java", "handleTargetChoice"):
+        (HAND, "resolve() routes the resolving entry's record around both target prompts"),
+    ("effect/normalfx/EvolveEffectHandler.java", "fireEvolvesTriggers"):
+        (OWN, "'whenever this creature evolves' (CR 702.100b) is the creature's own ability; one route, no event data"),
+    ("effect/normalfx/ExplosionOfRichesEffectHandler.java", "queueDamageTriggers"):
+        (OWN, "'whenever a card is drawn this way': one route (a random opponent), its event has no data"),
+    ("effect/normalfx/RemoveCounterAndSacrificeSelfOnLastEffectHandler.java", "resolve"):
+        (OWN, "vanishing's 'when the last time counter is removed' (CR 702.63a) is the permanent's own ability; one route"),
+    ("effect/normalfx/RemoveRefineCounterFromExiledCardEffectHandler.java", "resolve"):
+        (OWN, "the exiled card's own cast ability; one route, the card is its target"),
+    ("effect/normalfx/RemoveTimeCounterFromExiledCardEffectHandler.java", "queueCastTrigger"):
+        (OWN, "suspend's 'when the last time counter is removed' (CR 702.62a) is the exiled card's own ability; one route"),
+    ("effect/normalfx/SpecializeGutEffectHandler.java", "resolve"):
+        (OWN, "the specialized face's 'when this creature specializes'; one route, no event data"),
+    ("effect/normalfx/SpecializeKarlachEffectHandler.java", "resolve"):
+        (OWN, "the specialized card's return from the graveyard; one route, no event data"),
+    ("effect/normalfx/SpecializeKlementEffectHandler.java", "enqueueSpecializationTrigger"):
+        (OWN, "the specialized face's 'when this creature specializes'; one route, no event data"),
+    ("effect/normalfx/SpecializeLukaminaEffectHandler.java", "queueSpecializationTrigger"):
+        (OWN, "the untargeted faces' 'when this creature specializes'; one route (the targeted face routes its own)"),
+    ("effect/normalfx/SpecializeSarevokEffectHandler.java", "enqueueSpecializationTrigger"):
+        (OWN, "the specialized face's 'when this creature specializes'; one route, no event data"),
+    ("effect/normalfx/SpecializeVhalEffectHandler.java", "enqueueNonTargetingTrigger"):
+        (OWN, "the untargeted faces' ability with the counters removed as its event value, as the routed record has"),
+    ("effect/normalfx/SpecializeWyllEffectHandler.java", "resolve"):
+        (OWN, "the specialized face's 'when this creature specializes'; one route, no event data"),
+    ("effect/normalfx/TakeInitiativeEffectHandler.java", "resolve"):
+        (OWN, "'whenever a player takes the initiative' (CR 727.2) has no source and no event data; one route"),
+    ("effect/normalfx/UnattachTriggerSupport.java", "triggerDestroyOnUnattachIfNeeded"):
+        (OWN, "a collector: the entry it builds is the record (the creature it left as triggering permanent); one route"),
+    ("effect/mayfx/MiracleRevealHandler.java", "handle"):
+        (OWN, "miracle's linked ability (CR 702.94a) of the revealed card; one route, no event data"),
+    ("effect/manafx/MillControllerManaAbilityEffectHandler.java", "resolve"):
+        (OWN, "a mana ability's rider: no entry resolves; one route (its stack split is row 17z16c4)"),
+    ("input/ChoiceHandlerService.java", "handleMultipleChooseModeChoice"):
+        (HAND, "resumePendingMayResolution: the walk sets the targets of the entry still resolving, no entry is built"),
+    ("input/ChoiceHandlerService.java", "handleSagaChapterCounterAssignment"):
+        (HAND, "the chapter collectors hand off chapterEntry before the target and counter prompts"),
+    ("input/GraveyardChoiceHandlerService.java", "handleGraveyardCardChosen"):
+        (HAND, "MAY_ABILITY_TARGET and COPY_FROM_LEAVING_GRAVEYARD prompts are begun inside a route"),
+    ("input/MayAbilityHandlerService.java", "handleResolutionTimeTargetSelection"):
+        (HAND, "resolvedMayTargetingEntry: the target is set on the entry still resolving, no entry is built"),
+    ("input/MultiPermanentChoiceHandlerService.java", "handleSagaChapterTargetSelection"):
+        (HAND, "the chapter collectors hand off chapterEntry before the target prompt"),
+    ("input/MultiPermanentChoiceHandlerService.java", "handleCapriciousEfreetOpponentTargets"):
+        (HAND, "the upkeep collector hands off; PendingCapriciousEfreetState is queued with the record and polled here"),
+    ("input/PermanentChoiceTriggerHandlerService.java", "handleTransformTriggerTarget"):
+        (HAND, "AnimationSupport hands off the transform ability's entry before the target prompt"),
+    ("input/PermanentChoiceTriggerHandlerService.java", "handleSagaChapterTarget"):
+        (HAND, "the chapter collectors hand off chapterEntry before the target prompt"),
+    ("DamagePreventionService.java", "preventDamageAndSacrificeAttachedEquipment"):
+        (OWN, "'when damage is prevented this way': no entry resolves; one route, no event data read"),
+    ("DamagePreventionService.java", "queuePreventedDamageLifeGainTrigger"):
+        (OWN, "'whenever damage is prevented this way': the entry records the damage prevented as its event value; one route"),
+    ("DamagePreventionService.java", "queuePreventedDamageReflexiveTrigger"):
+        (OWN, "'when damage is prevented this way': the entry records the damage prevented as its event value; one route"),
+    ("battlefield/CloneService.java", "completeCloneEntry"):
+        (OWN, "abilities made as the copy enters: no entry resolves; one route each, the card to exile is its triggering card"),
+}
 
 
 def java_files():
@@ -145,6 +214,7 @@ def scan(path, show_all):
             continue
         copies = sorted({m.group(2) for m in COPY.finditer(body) if m.group(2) == m.group(4)})
         found.append({
+            "file": os.path.relpath(path, SERVICE),
             "file_record": name in routed,
             "method": name,
             "line": start + 1,
@@ -157,16 +227,34 @@ def scan(path, show_all):
     return found
 
 
+def record_text(method):
+    if method["record"]:
+        return ", ".join(method["record"])
+    if method["file_record"]:
+        return "in the method that routes this one"
+    explained = EXPLAINED.get((method["file"], method["method"]))
+    return "%s (%s)" % explained if explained else "NONE"
+
+
 def main():
     show_all = "--all" in sys.argv
     summary = "--summary" in sys.argv
     files = stacked = choices = with_record = class_keyed = rebuilds = 0
+    unexplained = by_hand = no_record = 0
+    seen = set()
     for path in java_files():
         found = scan(path, show_all)
         if not found:
             continue
         files += 1
         relative = os.path.relpath(path, SERVICE)
+        for method in found:
+            if not method["record"] and not method["file_record"]:
+                kind = EXPLAINED.get((method["file"], method["method"]), (None,))[0]
+                seen.add((method["file"], method["method"]))
+                unexplained += kind is None
+                by_hand += kind == HAND
+                no_record += kind == OWN
         file_sites = [site for method in found for site in method["sites"]]
         stacked += sum(1 for _, kind, _ in file_sites if kind == "STACK")
         choices += sum(1 for _, kind, _ in file_sites if kind == "CHOICE")
@@ -189,8 +277,7 @@ def main():
             for line, kind, what in method["sites"]:
                 print("    %-7s %5d  %s" % (kind, line, what))
             print("    copies : %s" % (", ".join(method["copies"]) or "-"))
-            print("    record : %s" % (", ".join(method["record"])
-                                       or ("in the method that routes this one" if method["file_record"] else "NONE")))
+            print("    record : %s" % record_text(method))
             if method["class"]:
                 print("    class  : %s" % ", ".join(method["class"]))
             if method["rebuild"]:
@@ -199,6 +286,10 @@ def main():
     print("%d files; %d stacked entries, %d trigger choices; %d files use the shared record, %d don't; "
           "%d files test an effect's class in such a method, %d construct an effect there"
           % (files, stacked, choices, with_record, files - with_record, class_keyed, rebuilds))
+    print("methods that name no record: %d unexplained, %d through the hand, %d with none to record"
+          % (unexplained, by_hand, no_record))
+    for key in sorted(set(EXPLAINED) - seen):
+        print("stale explanation (the method names a record or builds no entry or choice now): %s %s" % key)
 
 
 if __name__ == "__main__":

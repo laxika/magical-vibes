@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -1739,191 +1741,283 @@ public class CardChoiceHandlerService {
                 effectResolutionService.resolveEffectsFrom(gameData, inlineEntry, 0);
                 return;
             }
-            int thenEffectTargetGroup = thenEffect.targetGroup();
-            if (followUp.thenEffectTargetId() == null
-                    && thenEffectTargetGroup >= 0
-                    && thenEffectTargetGroup < sourceCard.getTargetGroups().size()) {
-                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        sourceCard, playerId, List.of(thenEffect), followUp.thenEffectSourcePermanentId(),
-                        List.of(), 0, 0, List.of(), followUp.thenEffectEventValue(), List.of()));
-                triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
-                if (gameData.interaction.isAwaitingInput()) {
-                    return;
+            boolean hasPreboundTarget = followUp.thenEffectTargetId() != null;
+            if (hasPreboundTarget && thenEffect instanceof MayEffect && gameData.pendingEffectResolutionEntry != null) {
+                StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
+                int pendingIndex = gameData.pendingEffectResolutionIndex;
+                pendingEntry.insertEffectsToResolve(pendingIndex, List.of(thenEffect));
+                effectResolutionService.resolveEffectsFrom(gameData, pendingEntry, pendingIndex);
+                if (!gameData.pendingMayAbilities.isEmpty()) {
+                    playerInputService.processNextMayAbility(gameData);
                 }
-                resumeRemainingEffectsAfterDiscard(gameData);
                 return;
             }
-            TargetSpec targetSpec = thenEffect.targetSpec();
-            boolean hasPreboundTarget = followUp.thenEffectTargetId() != null;
-            int thenEffectXValue = followUp.thenEffectUsesDiscardedManaValue() && discardedCard != null
-                    ? discardedCard.getManaValue() : 0;
-            GraveyardTargetingSupport.Target graveyardTarget = graveyardTargetingSupport.findTarget(List.of(thenEffect));
-            if (!hasPreboundTarget && graveyardTarget != null) {
-                List<Card> matchingCards = new ArrayList<>();
-                for (UUID graveyardOwnerId : graveyardTarget.scope().graveyardOwners(
-                        gameData.orderedPlayerIds, playerId)) {
-                    List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
-                    if (graveyard == null) {
-                        continue;
-                    }
-                    for (Card card : graveyard) {
-                        if (predicateEvaluationService.matchesCardPredicate(
-                                card, graveyardTarget.filter(), sourceCard.getId())) {
-                            matchingCards.add(card);
+            // "When you do" is an ability of its own (CR 603.12). Whichever way it reaches the stack (a target
+            // group, a graveyard card, a permanent or player target, a target named beforehand, nothing to choose)
+            // it records what the resolving entry was about and the card discarded.
+            CardEffect followUpEffect = thenEffect;
+            DiscardFollowUp discardFollowUp = followUp;
+            StackEntry record = discardFollowUpRecord(gameData, sourceCard, playerId, followUpEffect, discardedCard,
+                    followUp);
+            boolean resolvedForEachPlayer = followUp.eachPlayerControllerId() != null;
+            DiscardFollowUpRoute route = hasPreboundTarget ? DiscardFollowUpRoute.NOTHING_TO_CHOOSE
+                    : ReflexiveAbilitySupport.route(gameData, record, () -> {
+                        DiscardFollowUpRoute taken = chooseForDiscardFollowUp(gameData, player, playerId,
+                                discardFollowUp, discardedCard, followUpEffect, sourceCard);
+                        if (taken == DiscardFollowUpRoute.NOTHING_TO_CHOOSE && !resolvedForEachPlayer) {
+                            gameData.stack.add(record);
                         }
-                    }
-                }
-                if (!matchingCards.isEmpty() || graveyardTarget.minTargets() == 0) {
-                    gameData.graveyardTargetOperation.card = sourceCard;
-                    gameData.graveyardTargetOperation.controllerId = playerId;
-                    gameData.graveyardTargetOperation.effects = List.of(thenEffect);
-                    gameData.graveyardTargetOperation.entryType = null;
-                    gameData.graveyardTargetOperation.xValue = 0;
-                    gameData.graveyardTargetOperation.anyNumber = false;
-                    gameData.graveyardTargetOperation.singleGraveyard = false;
-                    gameData.graveyardTargetOperation.targetPlayerId = null;
-                    gameData.graveyardTargetOperation.flashback = false;
-                    gameData.graveyardTargetOperation.sourcePermanentId = null;
-                    gameData.graveyardTargetOperation.chapterName = null;
-                    gameData.graveyardTargetOperation.permanentTargetIds = null;
-
-                    String zoneLabel = switch (graveyardTarget.scope()) {
-                        case CONTROLLERS_GRAVEYARD -> "your graveyard";
-                        case OPPONENT_GRAVEYARD -> "an opponent's graveyard";
-                        case ALL_GRAVEYARDS -> "a graveyard";
-                    };
-                    int maxTargets = graveyardTarget.maxTargets();
-                    if (graveyardTarget.dynamicMaxTargets() != null) {
-                        maxTargets = Math.max(0, amountEvaluationService.evaluate(gameData,
-                                graveyardTarget.dynamicMaxTargets(),
-                                new AmountContext(playerId, followUp.thenEffectSourcePermanentSnapshot(), null,
-                                        thenEffectXValue, followUp.thenEffectEventValue())));
-                    }
-                    maxTargets = Math.min(maxTargets, matchingCards.size());
-                    playerInputService.beginMultiGraveyardChoice(gameData, playerId, matchingCards,
-                            maxTargets, graveyardTarget.minTargets(),
-                            sourceCard.getName() + " — Choose target card from " + zoneLabel + " "
-                                    + graveyardTarget.destination() + ".");
-                    return;
-                }
+                        return taken;
+                    });
+            if (route == DiscardFollowUpRoute.CHOOSING) {
+                return;
             }
-            boolean needsTarget = !hasPreboundTarget && (targetSpec.admits(TargetPredicate.Kind.PERMANENT)
-                    || targetSpec.admits(TargetPredicate.Kind.PLAYER));
-            if (needsTarget) {
-                List<UUID> validPermanentTargets = new ArrayList<>();
-                if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
-                    FilterContext filterContext = FilterContext.of(gameData)
-                            .withSourceCardId(sourceCard.getId())
-                            .withSourceControllerId(playerId);
-                    if (followUp.thenEffectUsesDiscardedManaValue() && discardedCard != null) {
-                        filterContext = filterContext.withXValue(thenEffectXValue);
-                    }
-                    filterContext = filterContext.withTriggeringPlayerId(followUp.thenEffectTriggeringPlayerId());
-                    TargetPredicate targetPredicate = targetSpec.targetPredicate();
-                    for (UUID targetPlayerId : gameData.orderedPlayerIds) {
-                        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
-                        if (battlefield == null) {
-                            continue;
-                        }
-                        for (Permanent permanent : battlefield) {
-                            if (targetPredicateEvaluationService.matchesPermanent(
-                                    targetPredicate, permanent, filterContext)) {
-                                try {
-                                    var targeting = new com.github.laxika.magicalvibes.model.ActivatedAbility(
-                                            false, null, List.of(thenEffect), "");
-                                    targetLegalityService.validateActivatedAbilityTargeting(gameData, playerId,
-                                            targeting, List.of(thenEffect), permanent.getId(), null,
-                                            sourceCard, thenEffectXValue, followUp.thenEffectTriggeringPlayerId());
-                                } catch (IllegalStateException invalidTarget) {
-                                    continue;
-                                }
-                                validPermanentTargets.add(permanent.getId());
-                            }
-                        }
-                    }
-                }
-                List<UUID> validPlayerTargets = targetSpec.admits(TargetPredicate.Kind.PLAYER)
-                        ? gameData.orderedPlayerIds.stream()
-                                .filter(targetId -> targetPredicateEvaluationService.matchesPlayer(
-                                        targetSpec.targetPredicate(), targetId, playerId, gameData))
-                                .toList()
-                        : List.of();
-                if (validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty()) {
-                    gameLogService.append(gameData, GameLog.cardThen(sourceCard,
-                            "'s ability has no valid targets."));
-                } else {
-                    var context = new PermanentChoiceContext.MayAbilityTriggerTarget(
-                            sourceCard, playerId, List.of(thenEffect),
-                            followUp.thenEffectSourcePermanentId(),
-                            followUp.thenEffectSourcePermanentSnapshot(),
-                            followUp.thenEffectEventValue(), thenEffectXValue)
-                            .withTriggeringPlayer(followUp.thenEffectTriggeringPlayerId());
-                    var targetChoice = new PendingInteraction.PermanentChoice(playerId,
-                            validPermanentTargets, validPlayerTargets, context,
-                            sourceCard.getName() + " ? Choose a target for the reflexive trigger.");
-                    if (gameData.pendingEffectResolutionEntry != null) {
-                        gameData.queueInteraction(targetChoice);
-                        resumeRemainingEffectsAfterDiscard(gameData);
-                    } else {
-                        interactionHandlerRegistry.begin(gameData, targetChoice);
-                    }
-                    log.info("Game {} - {} discard-then rider awaiting target for {}",
-                            gameData.id, player.getUsername(), sourceCard.getName());
-                    return;
-                }
-            } else if (hasPreboundTarget) {
-                if (thenEffect instanceof MayEffect && gameData.pendingEffectResolutionEntry != null) {
-                    StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-                    int pendingIndex = gameData.pendingEffectResolutionIndex;
-                    pendingEntry.insertEffectsToResolve(pendingIndex, List.of(thenEffect));
-                    effectResolutionService.resolveEffectsFrom(gameData, pendingEntry, pendingIndex);
-                    if (!gameData.pendingMayAbilities.isEmpty()) {
-                        playerInputService.processNextMayAbility(gameData);
-                    }
-                    return;
-                }
-                StackEntry thenEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        sourceCard,
-                        playerId,
-                        sourceCard.getName() + "'s effect",
-                        List.of(thenEffect),
-                        followUp.thenEffectTargetId(),
-                        followUp.thenEffectSourcePermanentId());
-                thenEntry.setSourcePermanentSnapshot(followUp.thenEffectSourcePermanentSnapshot());
+            if (route == DiscardFollowUpRoute.NOTHING_TO_CHOOSE && hasPreboundTarget) {
+                record.setTargetId(followUp.thenEffectTargetId());
                 StackEntry resolvingEntry = gameData.pendingEffectResolutionEntry;
                 if (resolvingEntry != null && resolvingEntry.getCard() == sourceCard) {
                     // A back face cast from a DFC is still the front card physically (e.g. "return
                     // this spell to its owner's hand" must find the front card in the graveyard).
-                    thenEntry.setPhysicalCard(resolvingEntry.getPhysicalCard());
+                    record.setPhysicalCard(resolvingEntry.getPhysicalCard());
                 }
-                thenEntry.setNonTargeting(true);
-                copyDiscardFollowUpContext(gameData, thenEntry, discardedCard, followUp);
-                gameData.stack.add(thenEntry);
-            } else {
-                UUID thenEffectControllerId = followUp.eachPlayerControllerId() != null
-                        ? followUp.eachPlayerControllerId() : playerId;
-                StackEntry reflexiveEntry = followUp.thenEffectSourcePermanentId() == null
-                        ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, thenEffectControllerId,
-                                sourceCard.getName() + "'s effect", List.of(thenEffect))
-                        : new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, thenEffectControllerId,
-                                sourceCard.getName() + "'s effect", List.of(thenEffect),
-                                (UUID) null, followUp.thenEffectSourcePermanentId());
-                reflexiveEntry.setSourcePermanentSnapshot(followUp.thenEffectSourcePermanentSnapshot());
-                reflexiveEntry.setEventValue(followUp.thenEffectEventValue() > 0
-                        ? followUp.thenEffectEventValue() : followUp.eachPlayerNoDiscardCount());
-                copyDiscardFollowUpContext(gameData, reflexiveEntry, discardedCard, followUp);
-                if (followUp.eachPlayerControllerId() != null) {
-                    effectResolutionService.resolveEffects(gameData, reflexiveEntry);
-                } else {
-                    gameData.stack.add(reflexiveEntry);
-                }
+                record.setNonTargeting(true);
+                gameData.stack.add(record);
+            } else if (route == DiscardFollowUpRoute.NOTHING_TO_CHOOSE && resolvedForEachPlayer) {
+                // The follow-up of an each-player discard is resolved here, for that effect's controller, as it was.
+                effectResolutionService.resolveEffects(gameData, discardFollowUpRecord(gameData, sourceCard,
+                        followUp.eachPlayerControllerId(), followUpEffect, discardedCard, followUp));
             }
-            log.info("Game {} - {} discard-then rider pushed for {}",
-                    gameData.id, player.getUsername(), sourceCard.getName());
+            if (route != DiscardFollowUpRoute.NO_LEGAL_TARGET) {
+                log.info("Game {} - {} discard-then rider pushed for {}",
+                        gameData.id, player.getUsername(), sourceCard.getName());
+            }
         }
 
         resumeRemainingEffectsAfterDiscard(gameData);
+    }
+
+    /** How the discard follow-up's reflexive ability went toward the stack ({@link #chooseForDiscardFollowUp}). */
+    private enum DiscardFollowUpRoute {
+        /** A choice for it is being asked: the answer puts it on the stack. */
+        CHOOSING,
+        /** Its choice is queued, or was settled without a question: the resolving entry goes on. */
+        QUEUED,
+        /** It has a target and no legal one, so it is removed (CR 603.3d). */
+        NO_LEGAL_TARGET,
+        /** It chooses nothing: its record is the entry. */
+        NOTHING_TO_CHOOSE
+    }
+
+    /**
+     * The entry of the discard follow-up's reflexive ability when it chooses nothing: what the entry that asked for
+     * the discard was about ({@link ReflexiveAbilitySupport#recordFor}), the source as the follow-up kept it, and
+     * the card discarded as its triggering card.
+     */
+    private StackEntry discardFollowUpRecord(GameData gameData, Card sourceCard, UUID controllerId,
+                                             CardEffect thenEffect, Card discardedCard, DiscardFollowUp followUp) {
+        StackEntry record = ReflexiveAbilitySupport.recordFor(gameData,
+                ReflexiveAbilitySupport.resolvingEntryOf(gameData, sourceCard, followUp.thenEffectSourcePermanentId()),
+                sourceCard, controllerId, List.of(thenEffect), sourceCard.getName() + "'s effect",
+                followUp.thenEffectSourcePermanentId());
+        if (followUp.thenEffectSourcePermanentSnapshot() != null) {
+            record.setSourcePermanentSnapshot(followUp.thenEffectSourcePermanentSnapshot());
+        }
+        int eventValue = followUp.thenEffectEventValue() > 0
+                ? followUp.thenEffectEventValue() : followUp.eachPlayerNoDiscardCount();
+        if (eventValue > 0) {
+            record.setEventValue(eventValue);
+        }
+        if (followUp.thenEffectTriggeringPlayerId() != null) {
+            record.setTriggeringPlayerId(followUp.thenEffectTriggeringPlayerId());
+        }
+        copyDiscardFollowUpContext(gameData, record, discardedCard, followUp);
+        return record;
+    }
+
+    /**
+     * Takes the discard follow-up's reflexive ability to its choice, with its record handed off: a target group
+     * walk, a graveyard card, or a permanent or player target. Returns {@link
+     * DiscardFollowUpRoute#NOTHING_TO_CHOOSE} when the ability has no choice to make.
+     */
+    private DiscardFollowUpRoute chooseForDiscardFollowUp(GameData gameData, Player player, UUID playerId,
+                                                          DiscardFollowUp followUp, Card discardedCard,
+                                                          CardEffect thenEffect, Card sourceCard) {
+        int thenEffectTargetGroup = thenEffect.targetGroup();
+        if (thenEffectTargetGroup >= 0
+                && thenEffectTargetGroup < sourceCard.getTargetGroups().size()) {
+            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                    sourceCard, playerId, List.of(thenEffect), followUp.thenEffectSourcePermanentId(),
+                    List.of(), 0, 0, List.of(), followUp.thenEffectEventValue(), List.of()));
+            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
+            return gameData.interaction.isAwaitingInput()
+                    ? DiscardFollowUpRoute.CHOOSING : DiscardFollowUpRoute.QUEUED;
+        }
+        TargetSpec targetSpec = thenEffect.targetSpec();
+        int thenEffectXValue = followUp.thenEffectUsesDiscardedManaValue() && discardedCard != null
+                ? discardedCard.getManaValue() : 0;
+        GraveyardTargetingSupport.Target graveyardTarget = graveyardTargetingSupport.findTarget(List.of(thenEffect));
+        if (graveyardTarget != null) {
+            List<Card> matchingCards = new ArrayList<>();
+            for (UUID graveyardOwnerId : graveyardTarget.scope().graveyardOwners(
+                    gameData.orderedPlayerIds, playerId)) {
+                List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
+                if (graveyard == null) {
+                    continue;
+                }
+                for (Card card : graveyard) {
+                    if (predicateEvaluationService.matchesCardPredicate(
+                            card, graveyardTarget.filter(), sourceCard.getId())) {
+                        matchingCards.add(card);
+                    }
+                }
+            }
+            if (!matchingCards.isEmpty() || graveyardTarget.minTargets() == 0) {
+                // One graveyard target choice is made at a time: behind a choice in progress this one waits its
+                // turn instead of writing over it.
+                beginDiscardFollowUpGraveyardChoice(gameData, playerId, sourceCard, thenEffect, followUp,
+                        thenEffectXValue, graveyardTarget, matchingCards);
+                return gameData.interaction.isAwaitingInput()
+                        ? DiscardFollowUpRoute.CHOOSING : DiscardFollowUpRoute.QUEUED;
+            }
+        }
+        boolean needsTarget = targetSpec.admits(TargetPredicate.Kind.PERMANENT)
+                || targetSpec.admits(TargetPredicate.Kind.PLAYER);
+        if (needsTarget) {
+            List<UUID> validPermanentTargets = new ArrayList<>();
+            if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
+                FilterContext filterContext = FilterContext.of(gameData)
+                        .withSourceCardId(sourceCard.getId())
+                        .withSourceControllerId(playerId);
+                if (followUp.thenEffectUsesDiscardedManaValue() && discardedCard != null) {
+                    filterContext = filterContext.withXValue(thenEffectXValue);
+                }
+                filterContext = filterContext.withTriggeringPlayerId(followUp.thenEffectTriggeringPlayerId());
+                TargetPredicate targetPredicate = targetSpec.targetPredicate();
+                for (UUID targetPlayerId : gameData.orderedPlayerIds) {
+                    List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
+                    if (battlefield == null) {
+                        continue;
+                    }
+                    for (Permanent permanent : battlefield) {
+                        if (targetPredicateEvaluationService.matchesPermanent(
+                                targetPredicate, permanent, filterContext)) {
+                            try {
+                                var targeting = new com.github.laxika.magicalvibes.model.ActivatedAbility(
+                                        false, null, List.of(thenEffect), "");
+                                targetLegalityService.validateActivatedAbilityTargeting(gameData, playerId,
+                                        targeting, List.of(thenEffect), permanent.getId(), null,
+                                        sourceCard, thenEffectXValue, followUp.thenEffectTriggeringPlayerId());
+                            } catch (IllegalStateException invalidTarget) {
+                                continue;
+                            }
+                            validPermanentTargets.add(permanent.getId());
+                        }
+                    }
+                }
+            }
+            List<UUID> validPlayerTargets = targetSpec.admits(TargetPredicate.Kind.PLAYER)
+                    ? gameData.orderedPlayerIds.stream()
+                            .filter(targetId -> targetPredicateEvaluationService.matchesPlayer(
+                                    targetSpec.targetPredicate(), targetId, playerId, gameData))
+                            .toList()
+                    : List.of();
+            if (validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty()) {
+                gameLogService.append(gameData, GameLog.cardThen(sourceCard,
+                        "'s ability has no valid targets."));
+                return DiscardFollowUpRoute.NO_LEGAL_TARGET;
+            } else {
+                var context = new PermanentChoiceContext.MayAbilityTriggerTarget(
+                        sourceCard, playerId, List.of(thenEffect),
+                        followUp.thenEffectSourcePermanentId(),
+                        followUp.thenEffectSourcePermanentSnapshot(),
+                        followUp.thenEffectEventValue(), thenEffectXValue)
+                        .withTriggeringPlayer(followUp.thenEffectTriggeringPlayerId());
+                var targetChoice = new PendingInteraction.PermanentChoice(playerId,
+                        validPermanentTargets, validPlayerTargets, context,
+                        sourceCard.getName() + " ? Choose a target for the reflexive trigger.");
+                log.info("Game {} - {} discard-then rider awaiting target for {}",
+                        gameData.id, player.getUsername(), sourceCard.getName());
+                if (gameData.pendingEffectResolutionEntry != null) {
+                    gameData.queueInteraction(targetChoice);
+                    return DiscardFollowUpRoute.QUEUED;
+                }
+                interactionHandlerRegistry.begin(gameData, targetChoice);
+                return DiscardFollowUpRoute.CHOOSING;
+            }
+        }
+        return DiscardFollowUpRoute.NOTHING_TO_CHOOSE;
+    }
+
+    /**
+     * Begins the graveyard target choice of the discard follow-up's reflexive ability, or, while another choice is
+     * being made, queues the ability so this call begins it when its turn comes ({@link
+     * GraveyardTargetingService#waitsForChoiceInProgress}).
+     */
+    private void beginDiscardFollowUpGraveyardChoice(GameData gameData, UUID playerId, Card sourceCard,
+                                                     CardEffect thenEffect, DiscardFollowUp followUp,
+                                                     int thenEffectXValue,
+                                                     GraveyardTargetingSupport.Target graveyardTarget,
+                                                     List<Card> matchingCards) {
+        if (GraveyardTargetingService.waitsForChoiceInProgress(gameData, playerId, sourceCard, List.of(thenEffect),
+                followUp.thenEffectSourcePermanentId(),
+                game -> beginDiscardFollowUpGraveyardChoice(game, playerId, sourceCard, thenEffect, followUp,
+                        thenEffectXValue, graveyardTarget,
+                        discardFollowUpGraveyardCandidates(game, playerId, sourceCard, graveyardTarget)))) {
+            return;
+        }
+        if (matchingCards.isEmpty() && graveyardTarget.minTargets() > 0) {
+            return;
+        }
+        gameData.graveyardTargetOperation.card = sourceCard;
+        gameData.graveyardTargetOperation.controllerId = playerId;
+        gameData.graveyardTargetOperation.effects = List.of(thenEffect);
+        gameData.graveyardTargetOperation.entryType = null;
+        gameData.graveyardTargetOperation.xValue = 0;
+        gameData.graveyardTargetOperation.anyNumber = false;
+        gameData.graveyardTargetOperation.singleGraveyard = false;
+        gameData.graveyardTargetOperation.targetPlayerId = null;
+        gameData.graveyardTargetOperation.flashback = false;
+        gameData.graveyardTargetOperation.sourcePermanentId = null;
+        gameData.graveyardTargetOperation.chapterName = null;
+        gameData.graveyardTargetOperation.permanentTargetIds = null;
+
+        String zoneLabel = switch (graveyardTarget.scope()) {
+            case CONTROLLERS_GRAVEYARD -> "your graveyard";
+            case OPPONENT_GRAVEYARD -> "an opponent's graveyard";
+            case ALL_GRAVEYARDS -> "a graveyard";
+        };
+        int maxTargets = graveyardTarget.maxTargets();
+        if (graveyardTarget.dynamicMaxTargets() != null) {
+            maxTargets = Math.max(0, amountEvaluationService.evaluate(gameData,
+                    graveyardTarget.dynamicMaxTargets(),
+                    new AmountContext(playerId, followUp.thenEffectSourcePermanentSnapshot(), null,
+                            thenEffectXValue, followUp.thenEffectEventValue())));
+        }
+        maxTargets = Math.min(maxTargets, matchingCards.size());
+        playerInputService.beginMultiGraveyardChoice(gameData, playerId, matchingCards,
+                maxTargets, graveyardTarget.minTargets(),
+                sourceCard.getName() + " — Choose target card from " + zoneLabel + " "
+                        + graveyardTarget.destination() + ".");
+    }
+
+    /** The graveyard cards the discard follow-up's reflexive ability can target, as the graveyards are now. */
+    private List<Card> discardFollowUpGraveyardCandidates(GameData gameData, UUID playerId, Card sourceCard,
+                                                          GraveyardTargetingSupport.Target graveyardTarget) {
+        List<Card> matchingCards = new ArrayList<>();
+        for (UUID graveyardOwnerId : graveyardTarget.scope().graveyardOwners(
+                gameData.orderedPlayerIds, playerId)) {
+            List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
+            if (graveyard == null) {
+                continue;
+            }
+            for (Card card : graveyard) {
+                if (predicateEvaluationService.matchesCardPredicate(
+                        card, graveyardTarget.filter(), sourceCard.getId())) {
+                    matchingCards.add(card);
+                }
+            }
+        }
+        return matchingCards;
     }
 
     private List<Card> discardedCardsStillInGraveyard(GameData gameData, DiscardFollowUp followUp) {

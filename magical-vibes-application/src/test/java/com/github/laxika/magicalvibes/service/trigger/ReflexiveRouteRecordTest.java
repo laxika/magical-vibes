@@ -12,6 +12,10 @@ import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExilePermanentThenExileMatchingPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandThenEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -19,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -55,7 +60,9 @@ import static org.assertj.core.api.Assertions.fail;
  * <p>Each case puts a fixture creature with "Whenever this creature deals combat damage to a player, [continuation]"
  * on the battlefield, lets it deal combat damage, keeps a copy of the triggered ability's entry, resolves it, answers
  * the choices the reflexive ability asks, and compares the reflexive entry's record of the trigger event, field by
- * field, with the entry that made it.</p>
+ * field, with the entry that made it. The continuations are the effect handlers' ("when you do" after a counter is
+ * removed, cards are exiled or drawn) and the choice handlers' follow-ups (after a card is discarded, a permanent is
+ * returned to its owner's hand, another creature is sacrificed, a permanent is exiled).</p>
  */
 @CardUsed({GrizzlyBears.class})
 class ReflexiveRouteRecordTest extends BaseCardTest {
@@ -67,6 +74,9 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
             "combatOpponentToughnessAtTrigger", "grantingPermanentId", "dyingPermanentManaValue", "linkedExiledCardId",
             "attachedPermanentSnapshot", "sourceGraveyardEntryVersion", "sourcePermanentSnapshot", "xValue",
             "alternateCost", "producedManaColors");
+
+    private static final Set<String> DISCARDED_CARD_FIELDS =
+            Set.of("triggeringCardId", "triggeringCardGraveyardEntryVersion");
 
     private static final List<Field> RECORD_FIELDS = Arrays.stream(StackEntry.class.getDeclaredFields())
             .filter(field -> !Modifier.isStatic(field.getModifiers()) && !field.isSynthetic())
@@ -80,7 +90,14 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
         QUEUE_REFLEXIVE(QueueReflexiveAbilityEffect::new),
         REMOVE_COUNTER(effect -> new RemoveCounterFromSourceThenEffect(CounterType.PLUS_ONE_PLUS_ONE, effect)),
         EXILE_GRAVEYARD_CARDS(effect -> new ExileNCardsFromGraveyardThenEffect(1, effect)),
-        DRAW_THEN(effect -> new DrawCardsThenEffect(1, effect));
+        DRAW_THEN(effect -> new DrawCardsThenEffect(1, effect)),
+        DISCARD_THEN(effect -> new DiscardCardThenEffect(
+                new CardTypePredicate(CardType.CREATURE), effect, "a creature card")),
+        BOUNCE_THEN(effect -> new ReturnPermanentControlledByPlayerToHandThenEffect(
+                new PermanentIsCreaturePredicate(), effect, "a creature")),
+        SACRIFICE_FOR_POWER_DAMAGE(effect -> new SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect()),
+        EXILE_THEN_EXILE_MATCHING(effect -> new ExilePermanentThenExileMatchingPermanentsEffect(
+                new PermanentIsCreaturePredicate(), new PermanentIsCreaturePredicate(), "creature"));
 
         private final Function<CardEffect, CardEffect> wrap;
 
@@ -115,10 +132,17 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
                 Arguments.of(Continuation.REMOVE_COUNTER, Route.GRAVEYARD_CARD),
                 Arguments.of(Continuation.EXILE_GRAVEYARD_CARDS, Route.PLAIN),
                 Arguments.of(Continuation.EXILE_GRAVEYARD_CARDS, Route.GRAVEYARD_CARD),
-                Arguments.of(Continuation.DRAW_THEN, Route.TARGET));
+                Arguments.of(Continuation.DRAW_THEN, Route.TARGET),
+                Arguments.of(Continuation.DISCARD_THEN, Route.PLAIN),
+                Arguments.of(Continuation.DISCARD_THEN, Route.TARGET),
+                Arguments.of(Continuation.DISCARD_THEN, Route.GRAVEYARD_CARD),
+                Arguments.of(Continuation.BOUNCE_THEN, Route.TARGET),
+                Arguments.of(Continuation.SACRIFICE_FOR_POWER_DAMAGE, Route.TARGET),
+                Arguments.of(Continuation.EXILE_THEN_EXILE_MATCHING, Route.PLAIN));
     }
 
     private Permanent target;
+    private Permanent fodder;
 
     @ParameterizedTest(name = "{0} / {1}")
     @MethodSource("cases")
@@ -137,8 +161,11 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
             graveyard.add(new GrizzlyBears());
         }
         harness.setGraveyard(player1, graveyard);
+        Card inHand = new GrizzlyBears();
+        harness.setHand(player1, List.of(inHand));
         target = addCreatureReady(player2, new GrizzlyBears());
         target.tap();
+        fodder = addCreatureReady(player1, new GrizzlyBears());
         Permanent source = addCreatureReady(player1, fixture);
         source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         source.setAttacking(true);
@@ -169,6 +196,11 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
 
         Map<String, String> expected = record(parent);
         Map<String, String> actual = record(entry);
+        if (continuation == Continuation.DISCARD_THEN) {
+            // "That card" of a "when you do" after a discard is the card discarded, on every route.
+            assertThat(entry.getTriggeringCardId()).as("the card discarded").isEqualTo(inHand.getId());
+            DISCARDED_CARD_FIELDS.forEach(expected::remove);
+        }
         List<String> differences = new ArrayList<>();
         expected.forEach((field, value) -> {
             if (!value.equals(actual.get(field))) {
@@ -211,7 +243,11 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
 
     private void answerOnce() {
         List<Runnable> answers = new ArrayList<>();
+        // A creature of its controller's is what a "return", "sacrifice" or "exile a creature you control" asks for;
+        // once it is gone the opponent's creature is the target.
+        answers.add(() -> harness.handlePermanentChosen(player1, fodder.getId()));
         answers.add(() -> harness.handlePermanentChosen(player1, target.getId()));
+        answers.add(() -> harness.handleCardChosen(player1, 0));
         answers.add(() -> harness.handleMultiplePermanentsChosen(player1, List.of(target.getId())));
         List<UUID> graveyardCreature = gd.playerGraveyards.get(player1.getId()).stream()
                 .filter(card -> card.hasType(CardType.CREATURE))

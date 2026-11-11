@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
@@ -113,13 +114,10 @@ public class ExileCastTargetSupport {
             transformSelfEffectHandler.resolve(gameData, resolving, afterCastEffect);
             return;
         }
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                controllerId,
-                sourceCard.getName() + "'s ability",
-                List.of(afterCastEffect),
-                null,
+        // The ability records what the entry that let the spell be cast was about.
+        StackEntry entry = ReflexiveAbilitySupport.recordFor(gameData,
+                ReflexiveAbilitySupport.resolvingEntryOf(gameData, sourceCard, sourcePermanentId),
+                sourceCard, controllerId, List.of(afterCastEffect), sourceCard.getName() + "'s ability",
                 sourcePermanentId);
         entry.setNonTargeting(true);
         gameData.stack.add(entry);

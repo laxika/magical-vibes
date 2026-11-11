@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -22,6 +24,11 @@ import java.util.function.Supplier;
  * as the ability goes on the stack (a queued choice, a prompt, the entry a choice handler builds) carries the same
  * record ({@link StackEntry#carryTriggerRecord}). A handler never copies single fields of the resolving entry by
  * hand: what a reflexive ability reads is on the record.</p>
+ *
+ * <p>A choice handler that builds such an ability once the resolving entry's question is answered has no entry in its
+ * hands: {@link #resolvingEntryOf} finds the entry still resolving, and {@link #recordFor} builds the record from it
+ * for the source card and controller the handler names. An ability accepted through a "you may" asked before it was
+ * on the stack records what the question kept of the trigger event ({@link #mayAbilityRecord}).</p>
  */
 public final class ReflexiveAbilitySupport {
 
@@ -58,11 +65,17 @@ public final class ReflexiveAbilitySupport {
                 new ArrayList<>(effects),
                 resolving.getXValue(),
                 sourcePermanentId);
+        recordResolving(gameData, record, resolving);
+        return record;
+    }
+
+    private static void recordResolving(GameData gameData, StackEntry record, StackEntry resolving) {
         record.copyTriggerEventFrom(resolving);
         // The limit a graveyard target of the resolving entry was chosen against is that target's.
         record.setGraveyardTargetMaxManaValue(null);
         Permanent sourceSnapshot = resolving.getSourcePermanentSnapshot();
-        if (sourceSnapshot != null && Objects.equals(sourcePermanentId, resolving.getSourcePermanentId())) {
+        if (sourceSnapshot != null
+                && Objects.equals(record.getSourcePermanentId(), resolving.getSourcePermanentId())) {
             record.setSourcePermanentSnapshot(sourceSnapshot);
         }
         record.setActivePlayerId(resolving.getActivePlayerId());
@@ -71,6 +84,97 @@ public final class ReflexiveAbilitySupport {
             record.setTargetId(resolving.getTargetId());
             record.setNonTargeting(true);
         }
+    }
+
+    /**
+     * The entry whose resolution is waiting for an answer ({@link GameData#pendingEffectResolutionEntry}) when it is
+     * an entry of {@code sourceCard} or of the permanent {@code sourcePermanentId}, else {@code null}: the entry a
+     * choice handler's follow-up ability is a reflexive ability of.
+     */
+    public static StackEntry resolvingEntryOf(GameData gameData, Card sourceCard, UUID sourcePermanentId) {
+        StackEntry resolving = gameData.pendingEffectResolutionEntry;
+        if (resolving == null) {
+            return null;
+        }
+        Card resolvingCard = resolving.getCard();
+        boolean sameCard = resolvingCard == sourceCard || resolvingCard != null && sourceCard != null
+                && resolvingCard.getId() != null && resolvingCard.getId().equals(sourceCard.getId());
+        boolean samePermanent = sourcePermanentId != null
+                && sourcePermanentId.equals(resolving.getSourcePermanentId());
+        return sameCard || samePermanent ? resolving : null;
+    }
+
+    /**
+     * {@link #record(GameData, StackEntry, List, String, UUID)} for an ability whose handler names its source card
+     * and controller itself (a choice handler's follow-up, the payer of a cost who isn't the source's controller):
+     * the same record of {@code resolving} with {@code sourceCard} and {@code controllerId}, or, with no resolving
+     * entry, an entry that records no event.
+     */
+    public static StackEntry recordFor(GameData gameData, StackEntry resolving, Card sourceCard, UUID controllerId,
+                                       List<CardEffect> effects, String description, UUID sourcePermanentId) {
+        StackEntry record = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                controllerId,
+                description,
+                new ArrayList<>(effects),
+                resolving == null ? 0 : resolving.getXValue(),
+                sourcePermanentId);
+        if (resolving != null) {
+            recordResolving(gameData, record, resolving);
+        }
+        return record;
+    }
+
+    /**
+     * The entry of an ability accepted through a "you may" that was asked before the ability was on the stack, when
+     * it chooses nothing: what the question kept of the trigger event (the event's value, player, card, spell and
+     * permanent, the source as it was), the object the event was about as its non-targeting target, and {@code
+     * xValuePaid} as its X when the ability has no permanent source and the question recorded no X.
+     */
+    public static StackEntry mayAbilityRecord(PendingMayAbility ability, List<CardEffect> effects,
+                                              String description, UUID sourcePermanentId, int xValuePaid) {
+        return mayAbilityRecord(ability, ability.sourceCard(), effects, description, sourcePermanentId, xValuePaid);
+    }
+
+    /**
+     * {@link #mayAbilityRecord(PendingMayAbility, List, String, UUID, int)} with {@code sourceCard} as the ability's
+     * source: the card of the source permanent as it is now, when the question's card is the one it was asked with.
+     */
+    public static StackEntry mayAbilityRecord(PendingMayAbility ability, Card sourceCard, List<CardEffect> effects,
+                                              String description, UUID sourcePermanentId, int xValuePaid) {
+        StackEntry record = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                ability.controllerId(),
+                description,
+                new ArrayList<>(effects),
+                ability.targetCardId(),
+                sourcePermanentId);
+        if (ability.sourcePermanentId() == null) {
+            record.setXValue(xValuePaid);
+        }
+        if (ability.targetCardId() != null) {
+            record.setNonTargeting(true);
+        }
+        record.setActivePlayerId(ability.activePlayerId());
+        record.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+        record.setEventValue(ability.eventValue());
+        record.setTriggeringPermanentId(ability.triggeringPermanentId());
+        record.setGrantingPermanentId(ability.grantingPermanentId());
+        record.setTriggeringSpell(ability.triggeringSpellSnapshot());
+        if (ability.sourceControllerId() != null) {
+            record.setTriggeringPermanentControllerId(ability.sourceControllerId());
+        }
+        record.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());
+        record.setTriggeringPermanentToughnessAtTrigger(ability.triggeringPermanentToughnessAtTrigger());
+        record.setTriggeringCardId(ability.triggeringCardId());
+        record.setTriggeringCardGraveyardEntryVersion(ability.triggeringCardGraveyardEntryVersion());
+        record.setSourceGraveyardEntryVersion(ability.sourceGraveyardEntryVersion());
+        if (ability.xValue() != null) {
+            record.setXValue(ability.xValue());
+        }
+        record.setAttackedTargetId(ability.attackedTargetId());
         return record;
     }
 

@@ -1705,14 +1705,17 @@ public class DamagePreventionService {
             lifeSupport.applyGainLife(gameData, playerId, damage, "prevented damage");
             return;
         }
-        gameData.enqueueTrigger(new StackEntry(
+        StackEntry lifeGain = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 card,
                 playerId,
                 card.getName() + "'s triggered ability",
                 List.of(new GainLifeEffect(new Fixed(damage))),
                 (UUID) null,
-                (UUID) null));
+                (UUID) null);
+        // "That much" is the event's value: the damage prevented.
+        lifeGain.setEventValue(damage);
+        gameData.enqueueTrigger(lifeGain);
     }
 
     /**
@@ -1890,7 +1893,7 @@ public class DamagePreventionService {
             return;
         }
         Card card = shield.damageSourceControllerCard();
-        gameData.enqueueTrigger(new StackEntry(
+        StackEntry reflexive = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 card,
                 shield.playerId(),
@@ -1898,7 +1901,10 @@ public class DamagePreventionService {
                 List.of(new DealDamageToAnyTargetEffect(new Fixed(damage), false, false, -1, null, false, false),
                         new DrawCardEffect(new Fixed(damage))),
                 sourceControllerId,
-                (UUID) null));
+                (UUID) null);
+        // "That much" and "that many" are the event's value: the damage prevented.
+        reflexive.setEventValue(damage);
+        gameData.enqueueTrigger(reflexive);
     }
 
     /**

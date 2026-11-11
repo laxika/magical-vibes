@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -4357,14 +4358,8 @@ public class LibraryChoiceHandlerService {
         StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
         CardEffect followUpEffect = followUp.createEffect(selectedPermanentIds);
         if (followUp.optional()) {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceEntry.getCard(),
-                    sourceEntry.getControllerId(),
-                    sourceEntry.getCard().getName() + "'s reflexive ability",
-                    List.of(new MayEffect(followUpEffect, followUp.prompt())),
-                    null,
-                    sourceEntry.getSourcePermanentId()));
+            gameData.stack.add(ReflexiveAbilitySupport.record(gameData, sourceEntry,
+                    List.of(new MayEffect(followUpEffect, followUp.prompt()))));
         } else {
             sourceEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(followUpEffect));
         }

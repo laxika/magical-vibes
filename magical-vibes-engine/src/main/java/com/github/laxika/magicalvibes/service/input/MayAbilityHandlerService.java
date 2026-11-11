@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -250,21 +251,19 @@ public class MayAbilityHandlerService {
                         else triggeredEffects.add(step);
                     }
                 }
-                StackEntry exert = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                        ability.sourceCard(), ability.controllerId(), ability.sourceCard().getName() + " is exerted",
-                        exertCosts, null, ability.sourcePermanentId());
-                exert.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
-                exert.setAttackedTargetId(ability.attackedTargetId());
+                // What the question kept of the attack is on the entry the exertion resolves as, which the
+                // reflexive abilities below record, and on the ability exerting it puts on the stack.
+                StackEntry exert = ReflexiveAbilitySupport.mayAbilityRecord(ability, exertCosts,
+                        ability.sourceCard().getName() + " is exerted", ability.sourcePermanentId(), 0);
+                exert.setTargetId(null);
+                exert.setNonTargeting(false);
                 effectResolutionService.resolveEffects(gameData, exert);
                 triggerCollectionService.checkExertTriggers(
                         gameData, ability.controllerId(), ability.sourcePermanentId());
                 if (!triggeredEffects.isEmpty()) {
-                    StackEntry triggered = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                            ability.sourceCard(), ability.controllerId(), ability.sourceCard().getName() + "'s exert ability",
-                            triggeredEffects, null, ability.sourcePermanentId());
-                    triggered.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
-                    triggered.setTargetId(ability.targetCardId());
-                    triggered.setAttackedTargetId(ability.attackedTargetId());
+                    StackEntry triggered = ReflexiveAbilitySupport.mayAbilityRecord(ability, triggeredEffects,
+                            ability.sourceCard().getName() + "'s exert ability", ability.sourcePermanentId(), 0);
+                    triggered.setNonTargeting(false);
                     gameData.stack.add(triggered);
                 }
                 // "When you do, <targeted effect>": the reflexive trigger goes on the stack now and
@@ -408,47 +407,9 @@ public class MayAbilityHandlerService {
             boolean isPreTargetedPlayer = gameData.playerIds.contains(ability.targetCardId());
             Permanent target = isPreTargetedPlayer ? null : gameQueryService.findPermanentById(gameData, ability.targetCardId());
             if (target != null || isPreTargetedPlayer) {
-                StackEntry entry;
-                if (ability.sourcePermanentId() != null) {
-                    entry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            ability.sourceCard(),
-                            ability.controllerId(),
-                            ability.sourceCard().getName() + "'s ability",
-                            new ArrayList<>(ability.effects()),
-                            null,
-                            ability.sourcePermanentId()
-                    );
-                } else {
-                    entry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            ability.sourceCard(),
-                            ability.controllerId(),
-                            ability.sourceCard().getName() + "'s ability",
-                            new ArrayList<>(ability.effects()),
-                            0
-                    );
-                }
-                entry.setTargetId(ability.targetCardId());
-                entry.setAttackedTargetId(ability.attackedTargetId());
-                entry.setActivePlayerId(ability.activePlayerId());
-            entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
-            entry.setEventValue(ability.eventValue());
-            entry.setTriggeringPermanentId(ability.triggeringPermanentId());
-            entry.setGrantingPermanentId(ability.grantingPermanentId());
-            entry.setTriggeringSpell(ability.triggeringSpellSnapshot());
-            if (ability.sourceControllerId() != null) {
-                entry.setTriggeringPermanentControllerId(ability.sourceControllerId());
-            }
-            entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());
-            entry.setTriggeringPermanentToughnessAtTrigger(ability.triggeringPermanentToughnessAtTrigger());
-            entry.setTriggeringCardId(ability.triggeringCardId());
-            entry.setTriggeringCardGraveyardEntryVersion(ability.triggeringCardGraveyardEntryVersion());
-            entry.setSourceGraveyardEntryVersion(ability.sourceGraveyardEntryVersion());
-            if (ability.xValue() != null) {
-                entry.setXValue(ability.xValue());
-            }
-            gameData.stack.add(entry);
+                StackEntry entry = mayAbilityRecord(gameData, ability, xValuePaid);
+                entry.setNonTargeting(false);
+                gameData.stack.add(entry);
 
                 if (isPreTargetedPlayer) {
                     String targetName = gameData.playerIdToName.get(ability.targetCardId());
@@ -475,57 +436,23 @@ public class MayAbilityHandlerService {
             return;
         }
 
+        // A graveyard card or a target chosen as the accepted ability goes on the stack: the entry it is chosen for
+        // records what the ability's entry records when it chooses nothing.
         if (accepted && isTargetedGraveyardEffect) {
-            handleGraveyardTargetedMayAbility(gameData, player, ability);
+            ReflexiveAbilitySupport.route(gameData, mayAbilityRecord(gameData, ability, xValuePaid),
+                    () -> handleGraveyardTargetedMayAbility(gameData, player, ability));
             return;
         }
 
         if (accepted && isTargetedEffect) {
-            handleTargetedMayAbilityAccepted(gameData, player, ability);
+            StackEntry record = mayAbilityRecord(gameData, ability, xValuePaid);
+            ReflexiveAbilitySupport.route(gameData, record,
+                    () -> handleTargetedMayAbilityAccepted(gameData, player, ability, record.getSourcePermanentId()));
             return;
         }
 
         if (accepted) {
-            // The entry records its source and the event's object whatever its effects are: the source permanent the
-            // pending ability names, else the permanent of its source card, and the object the event was about as a
-            // non-targeting referent (a targeted effect chose its target above).
-            UUID sourcePermanentId = ability.sourcePermanentId() != null
-                    ? ability.sourcePermanentId() : sourcePermanentOnBattlefield(gameData, ability);
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(),
-                    ability.controllerId(),
-                    ability.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(ability.effects()),
-                    ability.targetCardId(),
-                    sourcePermanentId
-            );
-            if (ability.sourcePermanentId() == null) {
-                entry.setXValue(xValuePaid);
-            }
-            if (ability.targetCardId() != null) {
-                entry.setNonTargeting(true);
-            }
-            entry.setActivePlayerId(ability.activePlayerId());
-            entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
-            entry.setEventValue(ability.eventValue());
-            entry.setTriggeringPermanentId(ability.triggeringPermanentId());
-            entry.setGrantingPermanentId(ability.grantingPermanentId());
-            entry.setTriggeringSpell(ability.triggeringSpellSnapshot());
-            if (ability.sourceControllerId() != null) {
-                entry.setTriggeringPermanentControllerId(ability.sourceControllerId());
-            }
-            entry.setTriggeringPermanentPowerAtTrigger(ability.sourcePowerAtTrigger());
-            entry.setTriggeringPermanentToughnessAtTrigger(ability.triggeringPermanentToughnessAtTrigger());
-            entry.setTriggeringCardId(ability.triggeringCardId());
-            entry.setTriggeringCardGraveyardEntryVersion(ability.triggeringCardGraveyardEntryVersion());
-            entry.setSourceGraveyardEntryVersion(ability.sourceGraveyardEntryVersion());
-            if (ability.xValue() != null) {
-                entry.setXValue(ability.xValue());
-            }
-
-            entry.setAttackedTargetId(ability.attackedTargetId());
-
+            StackEntry entry = mayAbilityRecord(gameData, ability, xValuePaid);
             gameData.stack.add(entry);
 
             gameLogService.append(gameData, GameLog.textCardText(
@@ -543,7 +470,21 @@ public class MayAbilityHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleTargetedMayAbilityAccepted(GameData gameData, Player player, PendingMayAbility ability) {
+    /**
+     * The entry of an accepted "you may" ability that was asked before it was on the stack, when it chooses nothing
+     * ({@link ReflexiveAbilitySupport#mayAbilityRecord}): its source is the permanent the question names, else the
+     * permanent of its source card. Every way the ability reaches the stack (a target named beforehand, a permanent
+     * or player target, a graveyard card, nothing to choose) records this.
+     */
+    private StackEntry mayAbilityRecord(GameData gameData, PendingMayAbility ability, int xValuePaid) {
+        UUID sourcePermanentId = ability.sourcePermanentId() != null
+                ? ability.sourcePermanentId() : sourcePermanentOnBattlefield(gameData, ability);
+        return ReflexiveAbilitySupport.mayAbilityRecord(ability, ability.effects(),
+                ability.sourceCard().getName() + "'s ability", sourcePermanentId, xValuePaid);
+    }
+
+    private void handleTargetedMayAbilityAccepted(GameData gameData, Player player, PendingMayAbility ability,
+                                                  UUID sourcePermanentId) {
         // Collect valid permanent targets from all battlefields using the may-ability's target filter
         List<UUID> validPermanents = new ArrayList<>();
         List<UUID> validPlayers = new ArrayList<>();
@@ -573,7 +514,7 @@ public class MayAbilityHandlerService {
 
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
                 ability.sourceCard(), ability.controllerId(), new ArrayList<>(ability.effects()),
-                ability.sourcePermanentId(), ability.sourcePermanentSnapshot(), ability.eventValue()
+                sourcePermanentId, ability.sourcePermanentSnapshot(), ability.eventValue()
         ));
         String targetDescription;
         if (!canTargetPermanent && canTargetPlayer) {

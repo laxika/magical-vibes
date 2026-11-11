@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfSourceAndTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 
 @Component
 @RequiredArgsConstructor
@@ -39,16 +38,10 @@ public class ExchangeControlOfSourceAndTriggeringSpellHandler implements MayEffe
             return;
         }
 
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ability.sourceCard(),
-                ability.controllerId(),
-                ability.sourceCard().getName() + "'s ability",
-                new ArrayList<>(ability.effects()),
-                null,
-                ability.sourcePermanentId());
+        // The accepted ability records what the question kept of the spell cast.
+        StackEntry entry = ReflexiveAbilitySupport.mayAbilityRecord(ability, ability.effects(),
+                ability.sourceCard().getName() + "'s ability", ability.sourcePermanentId(), 0);
         entry.setNonTargeting(true);
-        entry.setTriggeringCardId(ability.triggeringCardId());
         gameData.stack.add(entry);
 
         gameLogService.append(gameData, GameLog.builder()

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -33,11 +34,22 @@ public class AttachTargetEquipmentToTargetCreatureHandler implements MayEffectHa
             return;
         }
 
-        gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                ability.sourceCard(), ability.controllerId(), new ArrayList<>(ability.effects()),
-                ability.sourcePermanentId(), List.of(), 0, 0, List.of(), 0,
-                gameData.pendingEffectResolutionEntry != null));
-        etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
+        // With an entry resolving, the targets are that entry's. Otherwise the accepted ability goes on the stack with
+        // them, and that entry records what the question kept of the trigger event.
+        boolean targetsOfResolvingEntry = gameData.pendingEffectResolutionEntry != null;
+        Runnable targetWalk = () -> {
+            gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                    ability.sourceCard(), ability.controllerId(), new ArrayList<>(ability.effects()),
+                    ability.sourcePermanentId(), List.of(), 0, 0, List.of(), 0, targetsOfResolvingEntry));
+            etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
+        };
+        if (targetsOfResolvingEntry) {
+            targetWalk.run();
+        } else {
+            ReflexiveAbilitySupport.route(gameData, ReflexiveAbilitySupport.mayAbilityRecord(ability,
+                    ability.effects(), ability.sourceCard().getName() + "'s ability", ability.sourcePermanentId(),
+                    0), targetWalk);
+        }
 
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

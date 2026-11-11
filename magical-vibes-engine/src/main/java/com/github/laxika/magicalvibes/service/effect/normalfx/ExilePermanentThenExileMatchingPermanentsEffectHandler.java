@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -51,23 +52,24 @@ public class ExilePermanentThenExileMatchingPermanentsEffectHandler implements N
             return;
         }
 
-        if (matchingIds.size() == 1) {
-            exileChosenAndMatching(gameData, matchingIds.getFirst(), new PermanentChoiceContext
-                    .ExilePermanentThenExileMatchingPermanents(
-                            entry.getCard(), entry.getSourcePermanentId(), controllerId,
-                            exileEffect.choiceFilter(), exileEffect.matchingFilter(),
-                            exileEffect.choiceLabel()));
-            return;
-        }
-
         PermanentChoiceContext.ExilePermanentThenExileMatchingPermanents context =
                 new PermanentChoiceContext.ExilePermanentThenExileMatchingPermanents(
                         entry.getCard(), entry.getSourcePermanentId(), controllerId,
                         exileEffect.choiceFilter(), exileEffect.matchingFilter(),
                         exileEffect.choiceLabel());
-        gameData.interaction.setPermanentChoiceContext(context);
-        playerInputService.beginPermanentChoice(gameData, controllerId, matchingIds, context,
-                entry.getCard().getName() + " — choose a " + exileEffect.choiceLabel() + " to exile.");
+        // The "when you do" ability records what the resolving entry was about whether the permanent is the only
+        // one or is chosen: the entry built once it is exiled takes this record.
+        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry,
+                List.of(new ExileAllPermanentsEffect(exileEffect.matchingFilter())));
+        ReflexiveAbilitySupport.route(gameData, record, () -> {
+            if (matchingIds.size() == 1) {
+                exileChosenAndMatching(gameData, matchingIds.getFirst(), context);
+                return;
+            }
+            gameData.interaction.setPermanentChoiceContext(context);
+            playerInputService.beginPermanentChoice(gameData, controllerId, matchingIds, context,
+                    entry.getCard().getName() + " — choose a " + exileEffect.choiceLabel() + " to exile.");
+        });
     }
 
     public void completeChoice(GameData gameData, UUID permanentId,
@@ -88,6 +90,9 @@ public class ExilePermanentThenExileMatchingPermanentsEffectHandler implements N
         if (chosen == null) {
             return;
         }
+        // The record handed off for the "when you do" ability waits out the exile: an ability of this card the
+        // exile triggers is not that ability.
+        StackEntry record = gameData.handOffTriggerRecord(null);
         exileSupport.exilePermanentAndLog(gameData, chosen, context.sourceCard().getName());
 
         // "When you do" is a reflexive trigger (CR 603.12): the matching exile goes on the stack above
@@ -103,6 +108,9 @@ public class ExilePermanentThenExileMatchingPermanentsEffectHandler implements N
                 context.sourcePermanentId());
         reflexiveEntry.setNonTargeting(true);
         reflexiveEntry.setReflexiveTrigger(true);
+        if (record != null) {
+            reflexiveEntry.carryTriggerRecord(record);
+        }
         gameData.stack.add(reflexiveEntry);
     }
 

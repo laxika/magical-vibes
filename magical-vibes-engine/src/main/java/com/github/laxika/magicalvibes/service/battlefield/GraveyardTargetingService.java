@@ -273,7 +273,7 @@ public class GraveyardTargetingService {
      * ({@code TriggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger}). The queued choice keeps the
      * trigger record its collector handed off.
      */
-    private boolean waitsForChoiceInProgress(GameData gameData, UUID controllerId, Card card,
+    public static boolean waitsForChoiceInProgress(GameData gameData, UUID controllerId, Card card,
                                              List<CardEffect> effects, UUID sourcePermanentId,
                                              java.util.function.Consumer<GameData> targeting) {
         if (!gameData.interaction.isAwaitingInput()) {

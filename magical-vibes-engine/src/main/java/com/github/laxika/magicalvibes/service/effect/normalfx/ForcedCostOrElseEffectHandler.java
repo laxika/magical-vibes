@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -136,7 +137,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
 
     public void resolvePaidEffects(GameData gameData, StackEntry entry, ForcedCostOrElseEffect effect,
             int xValue) {
-        enqueuePaidEffects(gameData, entry.getCard(), entry.getControllerId(), entry.getSourcePermanentId(),
+        enqueuePaidEffects(gameData, entry, entry.getCard(), entry.getControllerId(), entry.getSourcePermanentId(),
                 entry.getSourcePermanentSnapshot(), effect.paidEffects(), xValue, effect.forcedCost(), false);
     }
 
@@ -144,7 +145,9 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
             int xValue) {
         boolean payerIsNotSourceController = ability.sourceControllerId() != null
                 && !ability.sourceControllerId().equals(ability.controllerId());
-        enqueuePaidEffects(gameData, ability.sourceCard(), ability.controllerId(), ability.sourcePermanentId(),
+        enqueuePaidEffects(gameData,
+                ReflexiveAbilitySupport.resolvingEntryOf(gameData, ability.sourceCard(), ability.sourcePermanentId()),
+                ability.sourceCard(), ability.controllerId(), ability.sourcePermanentId(),
                 ability.sourcePermanentSnapshot(), effect.paidEffects(), xValue, effect.forcedCost(),
                 payerIsNotSourceController);
     }
@@ -155,7 +158,12 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
         }
     }
 
-    private void enqueuePaidEffects(GameData gameData, Card sourceCard, UUID controllerId,
+    /**
+     * Puts the effects of a paid cost on the stack (or into the resolution they are part of). {@code resolving} is
+     * the entry that asked for the cost, or {@code null} when the cost was asked with no entry resolving: the
+     * ability made records what it was about, with the X paid as its X.
+     */
+    private void enqueuePaidEffects(GameData gameData, StackEntry resolving, Card sourceCard, UUID controllerId,
             UUID sourcePermanentId, Permanent sourcePermanentSnapshot, List<CardEffect> paidEffects, int xValue,
             CardEffect forcedCost, boolean payerIsNotSourceController) {
         if (paidEffects.isEmpty()) {
@@ -198,9 +206,12 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
             pendingEntry.insertEffectsToResolve(pendingIndex, snapshottedPaidEffects);
             return;
         }
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId,
-                sourceCard.getName() + "'s ability", new ArrayList<>(snapshottedPaidEffects), xValue, sourcePermanentId);
-        entry.setSourcePermanentSnapshot(sourcePermanentSnapshot);
+        StackEntry entry = ReflexiveAbilitySupport.recordFor(gameData, resolving, sourceCard, controllerId,
+                snapshottedPaidEffects, sourceCard.getName() + "'s ability", sourcePermanentId);
+        entry.setXValue(xValue);
+        if (sourcePermanentSnapshot != null) {
+            entry.setSourcePermanentSnapshot(sourcePermanentSnapshot);
+        }
         if (payerIsNotSourceController && !cumulativeUpkeep && effectResolutionService != null) {
             // "That player may pay {cost}. If they do, they ..." is one resolution of the original
             // ability, not a new trigger; the paying player (not the source's controller) acts.

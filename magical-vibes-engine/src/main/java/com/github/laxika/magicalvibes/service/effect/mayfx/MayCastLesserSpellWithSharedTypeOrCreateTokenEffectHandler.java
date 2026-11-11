@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastLesserSpellWithSharedTypeOrCreateTokenEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.service.input.MayCastHandlerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Component("mayCastLesserSpellWithSharedTypeOrCreateTokenMayEffectHandler")
@@ -78,15 +77,10 @@ public class MayCastLesserSpellWithSharedTypeOrCreateTokenEffectHandler implemen
             sourceCard = source.getCard();
         }
 
-        StackEntry tokenEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                ability.controllerId(),
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(castEffect.tokenEffect())),
-                null,
-                ability.sourcePermanentId());
-        tokenEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
+        // The ability records what the question kept of the spell cast.
+        StackEntry tokenEntry = ReflexiveAbilitySupport.mayAbilityRecord(ability, sourceCard,
+                List.of(castEffect.tokenEffect()), sourceCard.getName() + "'s ability", ability.sourcePermanentId(),
+                0);
         gameData.stack.add(tokenEntry);
         gameData.priorityPassedBy.clear();
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

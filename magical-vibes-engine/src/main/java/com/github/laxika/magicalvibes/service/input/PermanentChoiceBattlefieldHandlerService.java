@@ -1738,12 +1738,17 @@ public class PermanentChoiceBattlefieldHandlerService {
                         gameLogService.append(gameData,
                                 GameLog.cardThen(context.sourceCard(), "'s ability has no valid targets."));
                     } else {
-                        gameData.interaction.setPermanentChoiceContext(
-                                new PermanentChoiceContext.MayAbilityTriggerTarget(
-                                        context.sourceCard(), context.controllerId(), thenEffects));
-                        playerInputService.beginAnyTargetChoice(gameData, context.controllerId(),
-                                validPermanentTargets, validPlayerTargets,
-                                context.sourceCard().getName() + " — Choose any target.");
+                        // The targeted follow-up is an ability of its own: the entry its target is chosen for
+                        // records what the resolving entry was about.
+                        ReflexiveAbilitySupport.route(gameData, bounceFollowUpRecord(gameData, context, thenEffects),
+                                () -> {
+                                    gameData.interaction.setPermanentChoiceContext(
+                                            new PermanentChoiceContext.MayAbilityTriggerTarget(
+                                                    context.sourceCard(), context.controllerId(), thenEffects));
+                                    playerInputService.beginAnyTargetChoice(gameData, context.controllerId(),
+                                            validPermanentTargets, validPlayerTargets,
+                                            context.sourceCard().getName() + " — Choose any target.");
+                                });
                         return;
                     }
                 } else if (gameData.pendingEffectResolutionEntry != null) {
@@ -1752,19 +1757,21 @@ public class PermanentChoiceBattlefieldHandlerService {
                     gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
                             gameData.pendingEffectResolutionIndex, thenEffects);
                 } else {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            context.sourceCard(),
-                            context.controllerId(),
-                            context.sourceCard().getName() + "'s effect",
-                            thenEffects,
-                            null,
-                            context.sourcePermanentId()));
+                    gameData.stack.add(bounceFollowUpRecord(gameData, context, thenEffects));
                 }
             }
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /** The entry of the bounce follow-up's ability when it chooses nothing: what the resolving entry was about. */
+    private StackEntry bounceFollowUpRecord(GameData gameData, PermanentChoiceContext.BouncePermanentThen context,
+                                            List<CardEffect> thenEffects) {
+        return ReflexiveAbilitySupport.recordFor(gameData,
+                ReflexiveAbilitySupport.resolvingEntryOf(gameData, context.sourceCard(), context.sourcePermanentId()),
+                context.sourceCard(), context.controllerId(), thenEffects,
+                context.sourceCard().getName() + "'s effect", context.sourcePermanentId());
     }
 
     public void handleBouncePermanentAndPerpetuallyBecomeAngel(
@@ -1973,7 +1980,13 @@ public class PermanentChoiceBattlefieldHandlerService {
             }
         }
         if (targetedAbility != null) {
-            beginChampionedTrigger(gameData, source, context.controllerId(), new ArrayList<>(targetedAbility));
+            // The entry of the ability when it chooses nothing is its record, handed off before its target choice.
+            List<CardEffect> targetedEffects = new ArrayList<>(targetedAbility);
+            ReflexiveAbilitySupport.route(gameData,
+                    new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), context.controllerId(),
+                            source.getCard().getName() + "'s ability", new ArrayList<>(targetedEffects), null,
+                            source.getId()),
+                    () -> beginChampionedTrigger(gameData, source, context.controllerId(), targetedEffects));
             return;
         }
 
@@ -2707,14 +2720,21 @@ public class PermanentChoiceBattlefieldHandlerService {
             return;
         }
 
-        gameData.interaction.setPermanentChoiceContext(
-                new PermanentChoiceContext.MayAbilityTriggerTarget(
-                        sourceCard, controllerId, reflexiveEffects, sourcePermanentId, null));
-        playerInputService.beginAnyTargetChoice(
-                gameData, controllerId, validPermanentTargets,
-                validPlayerTargets,
-                sourceCard.getName() + " — Choose "
-                        + (targetRestriction == null ? "any target" : "target creature") + ".");
+        // "When you do" is an ability of its own (CR 603.12): the entry its target is chosen for records what the
+        // resolving entry was about.
+        ReflexiveAbilitySupport.route(gameData, ReflexiveAbilitySupport.recordFor(gameData,
+                ReflexiveAbilitySupport.resolvingEntryOf(gameData, sourceCard, sourcePermanentId),
+                sourceCard, controllerId, reflexiveEffects, sourceCard.getName() + "'s reflexive ability",
+                sourcePermanentId), () -> {
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.MayAbilityTriggerTarget(
+                            sourceCard, controllerId, reflexiveEffects, sourcePermanentId, null));
+            playerInputService.beginAnyTargetChoice(
+                    gameData, controllerId, validPermanentTargets,
+                    validPlayerTargets,
+                    sourceCard.getName() + " — Choose "
+                            + (targetRestriction == null ? "any target" : "target creature") + ".");
+        });
         gameLogService.append(gameData,
                 GameLog.cardThen(sourceCard, " — choose a target for the reflexive trigger."));
     }
@@ -3204,13 +3224,11 @@ public class PermanentChoiceBattlefieldHandlerService {
                 t.tappedAndAttacking(), t.tapped(), t.tokenEffects(), t.tokenAbilities(),
                 t.exileAtEndOfCombat(), t.exileAtEndStep(), t.legendary(), t.initialPlusOnePlusOneCounters(),
                 t.grantedKeywordsUntilEndOfTurn(), t.supertypes());
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ctx.sourceCard(),
-                ctx.controllerId(),
-                ctx.sourceCard().getName() + "'s effect",
-                new ArrayList<>(List.of(sized))
-        ));
+        // The ability records what the entry that asked for the sacrifice was about.
+        gameData.stack.add(ReflexiveAbilitySupport.recordFor(gameData,
+                ReflexiveAbilitySupport.resolvingEntryOf(gameData, ctx.sourceCard(), null),
+                ctx.sourceCard(), ctx.controllerId(), List.of(sized), ctx.sourceCard().getName() + "'s effect",
+                null));
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
