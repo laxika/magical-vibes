@@ -10,7 +10,10 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -26,6 +29,10 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
+
+    @Autowired
+    @Lazy
+    private TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -55,9 +62,12 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
         }
 
         source.setSkipUntapCount(Math.max(source.getSkipUntapCount(), e.untapSteps()));
-        if (e.controllerStepOnly()) source.setSkipUntapControllerId(entry.getControllerId());
+        if (e.controllerStepOnly()) {
+            // Exert (CR 701.43a): the creature is exerted now, which is what "whenever you exert a creature" watches.
+            source.setSkipUntapControllerId(entry.getControllerId());
+            triggerCollectionService.checkExertTriggers(gameData, entry.getControllerId(), source.getId());
+        }
 
-        
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " won't untap during its controller's next untap step."));
         log.info("Game {} - {} skip next untap set (self)", gameData.id, source.getCard().getName());
     }

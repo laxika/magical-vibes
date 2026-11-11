@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * @param spellFilter which hand cards are eligible ({@code null} = any nonland)
  * @param maxManaValue maximum eligible mana value ({@code null} = no maximum)
- * @param afterSuccessfulCastEffect optional follow-up queued after a successful cast
+ * @param afterSuccessfulCastEffect optional "if you do" follow-up, resolved as part of this ability once the spell is cast
  */
 public record MayCastAnySpellFromHandWithoutPayingManaCostEffect(CardPredicate spellFilter,
                                                                   DynamicAmount maxManaValue,

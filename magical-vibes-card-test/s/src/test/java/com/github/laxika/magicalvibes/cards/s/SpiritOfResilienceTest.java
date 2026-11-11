@@ -161,6 +161,22 @@ class SpiritOfResilienceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Choosing one of several cards copies it as the ability resolves, with nothing put on the stack")
+    void choosingAmongSeveralCardsCopiesAsTheAbilityResolves() {
+        Permanent spirit = addSpirit();
+        MindStone stone = new MindStone();
+        PerpetualTimepiece timepiece = new PerpetualTimepiece();
+        shuffleCardsFromGraveyard(stone, timepiece);
+
+        resolveTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleGraveyardCardChosen(player1, 0);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(spirit.getCard().getName()).isEqualTo("Mind Stone");
+    }
+
+    @Test
     void laterBatchCannotCopyCardsFromAnEarlierBatch() {
         Permanent spirit = addSpirit();
         shuffleCardsFromGraveyard(new MindStone());

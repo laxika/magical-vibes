@@ -1078,7 +1078,7 @@ public class MayCastHandlerService {
                         copySupport.copyGraveyardCastSpell(gameData, freeCast, cardToCast, player.getId(),
                                 copyCount);
 
-                        exileCastTargetSupport.queueAfterSuccessfulCast(gameData, cardToCast, player.getId(),
+                        exileCastTargetSupport.resolveAfterSuccessfulCast(gameData, cardToCast, player.getId(),
                                 ability.sourcePermanentId(), afterSuccessfulCastEffect);
 
                         gameData.recordSpellCast(player.getId(), cardToCast);
@@ -1315,7 +1315,7 @@ public class MayCastHandlerService {
             return;
         }
         gameData.stack.add(stackEntry);
-        exileCastTargetSupport.queueAfterSuccessfulCast(gameData, cardToCast, player.getId(),
+        exileCastTargetSupport.resolveAfterSuccessfulCast(gameData, cardToCast, player.getId(),
                 ability.sourcePermanentId(), castEffect.afterSuccessfulCastEffect());
         Card castCharacteristics = castAsAdventure
                 ? cardToCast.createRuntimeCopyWithFace(spellCard)
@@ -3175,7 +3175,7 @@ public class MayCastHandlerService {
             triggerCollectionService.checkSpellCastTriggers(gameData, card, playerId,
                     "madness".equals(costLabel) ? Zone.EXILE : Zone.HAND);
         }
-        exileCastTargetSupport.queueAfterSuccessfulCast(gameData, card, playerId,
+        exileCastTargetSupport.resolveAfterSuccessfulCast(gameData, card, playerId,
                 afterCastSourcePermanentId, afterSuccessfulCastEffect);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

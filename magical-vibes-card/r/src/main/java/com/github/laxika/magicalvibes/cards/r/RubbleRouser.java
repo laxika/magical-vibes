@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -33,7 +34,8 @@ public class RubbleRouser extends Card {
                 List.of(
                         new ExileCardFromGraveyardCost((CardType) null),
                         new AwardManaEffect(ManaColor.RED, 1),
-                        new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT)
+                        new QueueReflexiveAbilityEffect(
+                                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))
                 ),
                 "{T}, Exile a card from your graveyard: Add {R}. When you do, this creature deals 1 damage to each opponent."
         ));

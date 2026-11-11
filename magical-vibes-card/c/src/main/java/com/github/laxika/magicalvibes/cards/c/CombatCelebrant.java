@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceExertedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -28,8 +29,9 @@ public class CombatCelebrant extends Card {
                 new MayEffect(
                         SequenceEffect.of(
                                 new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
-                                new UntapPermanentsEffect(TapUntapScope.OTHER_CONTROLLED_CREATURES),
-                                new AdditionalCombatPhaseEffect(1)
+                                new QueueReflexiveAbilityEffect(SequenceEffect.of(
+                                        new UntapPermanentsEffect(TapUntapScope.OTHER_CONTROLLED_CREATURES),
+                                        new AdditionalCombatPhaseEffect(1)))
                         ),
                         "Exert Combat Celebrant as it attacks? (Untap all other creatures you control and take an additional combat phase.)"
                 ));

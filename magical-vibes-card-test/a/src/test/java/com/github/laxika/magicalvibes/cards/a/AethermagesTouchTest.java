@@ -99,10 +99,12 @@ class AethermagesTouchTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.CardOrder(List.of(0, 1, 2)));
+        // The opponent's graft ability goes on the stack and its "you may move a +1/+1 counter" is asked as it
+        // resolves (CR 603.5).
+        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player2, false);
-        harness.passBothPriorities();
 
         Permanent entered = findPermanent(player1, "Cytoplast Manipulator");
         harness.forceActivePlayer(player2);

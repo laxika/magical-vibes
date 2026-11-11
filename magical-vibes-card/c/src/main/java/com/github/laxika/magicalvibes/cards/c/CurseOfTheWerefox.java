@@ -28,7 +28,8 @@ public class CurseOfTheWerefox extends Card {
                 .addSpellEffect(new CreateTokenAttachedToTargetThenEffect(
                         monsterRoleToken(),
                         new EnteringCreatureFightsTargetCreatureEffect(
-                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))));
+                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
+                                true)));
     }
 
     private static CreateTokenEffect monsterRoleToken() {

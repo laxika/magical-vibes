@@ -1,22 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.AttachCreatedEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -24,15 +12,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Resolves "create a token. When you do, ..." (CR 603.12): the tokens are created, then the follow-up is put on the
+ * stack as one reflexive ability, or, for a follow-up the card writes as about "that token", one for each token
+ * created, with that token as the permanent it acts for.
+ */
 @Component
 @RequiredArgsConstructor
 public class CreateTokenThenEffectHandler implements NormalEffectHandlerBean {
 
     private final CreateTokenEffectHandler createTokenEffectHandler;
-    private final GraveyardTargetingSupport graveyardTargetingSupport;
-    private final TargetPredicateEvaluationService targetPredicateEvaluationService;
-    private final ValidTargetService validTargetService;
-    private final PlayerInputService playerInputService;
+    private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,95 +42,24 @@ public class CreateTokenThenEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (createThen.thenEffect() instanceof AttachCreatedEquipmentToTargetCreatureEffect
-                || createThen.thenEffect() instanceof ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect
-                || createThen.thenEffect() instanceof ReturnCardFromGraveyardEffect ret && ret.attachToSource()) {
-            // A replacement effect that doubles the tokens makes "that token" refer to each created token in turn.
-            for (UUID createdId : List.copyOf(entry.getCreatedPermanentIds()
-                    .subList(createdBefore, entry.getCreatedPermanentIds().size()))) {
-                queueTargetedReflexiveAbility(gameData, entry, createThen.thenEffect(), createdId, false);
-            }
-        } else {
-            queueTargetedReflexiveAbility(gameData, entry, createThen.thenEffect());
-        }
-    }
-
-    void queueTargetedReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect) {
-        queueTargetedReflexiveAbility(gameData, entry, thenEffect, null, false);
-    }
-
-    void queueTargetedReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect,
-                                       UUID sourcePermanentId, boolean optionalTarget) {
-        // The ability records what the resolving entry was about whichever way it reaches the stack.
-        ReflexiveAbilitySupport.route(gameData,
-                ReflexiveAbilitySupport.record(gameData, entry, List.of(thenEffect),
-                        entry.getCard().getName() + "'s reflexive ability", sourcePermanentId),
-                () -> chooseReflexiveAbilityTarget(gameData, entry, thenEffect, sourcePermanentId, optionalTarget));
-    }
-
-    private void chooseReflexiveAbilityTarget(GameData gameData, StackEntry entry, CardEffect thenEffect,
-                                       UUID sourcePermanentId, boolean optionalTarget) {
-        if (graveyardTargetingSupport.findTarget(List.of(thenEffect)) != null) {
-            GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(List.of(thenEffect));
-            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    entry.getCard(), entry.getControllerId(), List.of(thenEffect), null,
-                    target.minTargets(), 0, target.maxTargets(), null, false, null, sourcePermanentId));
+        if (!createThen.aboutThatToken()) {
+            queueReflexiveAbilityEffectHandler.resolve(gameData, entry,
+                    new QueueReflexiveAbilityEffect(createThen.thenEffect()));
             return;
         }
-
-        TargetSpec targetSpec = thenEffect.targetSpec();
-        TargetPredicate targetPredicate = targetSpec.targetPredicate();
-        List<UUID> validPermanentTargets = new ArrayList<>();
-        if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
-            FilterContext filterContext = FilterContext.of(gameData)
-                    .withSourceCardId(entry.getCard().getId())
-                    .withSourceControllerId(entry.getControllerId());
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                if (battlefield == null) {
-                    continue;
-                }
-                for (Permanent permanent : battlefield) {
-                    if (targetPredicateEvaluationService.matchesPermanent(targetPredicate, permanent, filterContext)
-                            && !validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, permanent,
-                                    entry.getControllerId())) {
-                        validPermanentTargets.add(permanent.getId());
-                    }
-                }
-            }
+        // A replacement effect that makes more tokens makes "that token" each created token in turn. Each ability
+        // is put on the stack as a step of this resolution, so one's target is chosen before the next one's is asked.
+        List<CardEffect> abilities = new ArrayList<>();
+        for (UUID createdId : List.copyOf(entry.getCreatedPermanentIds()
+                .subList(createdBefore, entry.getCreatedPermanentIds().size()))) {
+            abilities.add(new QueueReflexiveAbilityEffect(createThen.thenEffect(), createdId));
         }
-
-        List<UUID> validPlayerTargets = targetSpec.admits(TargetPredicate.Kind.PLAYER)
-                ? gameData.orderedPlayerIds.stream()
-                        .filter(playerId -> targetPredicateEvaluationService.matchesPlayer(
-                                targetPredicate, playerId, entry.getControllerId(), gameData))
-                        .collect(java.util.stream.Collectors.toCollection(ArrayList::new))
-                : new ArrayList<>();
-        if (validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty()) {
-            if (optionalTarget) {
-                gameData.stack.add(new StackEntry(
-                        com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
-                        entry.getCard(), entry.getControllerId(),
-                        entry.getCard().getName() + "'s reflexive ability",
-                        List.of(thenEffect), (UUID) null, sourcePermanentId));
-            }
+        if (entry.getResolvingEffectIndex() >= 0) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, abilities);
             return;
         }
-
-        if (optionalTarget) {
-            validPlayerTargets.add(entry.getControllerId());
-        }
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
-                entry.getCard(), entry.getControllerId(), List.of(thenEffect),
-                sourcePermanentId, null, 0, 0, optionalTarget));
-        if (validPlayerTargets.isEmpty()) {
-            playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), validPermanentTargets,
-                    entry.getCard().getName() + "'s reflexive ability - Choose target.");
-        } else {
-            playerInputService.beginAnyTargetChoice(gameData, entry.getControllerId(), validPermanentTargets,
-                    validPlayerTargets, optionalTarget
-                            ? entry.getCard().getName() + "'s reflexive ability - Choose up to one target (choose yourself to decline)."
-                            : entry.getCard().getName() + "'s reflexive ability - Choose target.");
+        for (CardEffect ability : abilities) {
+            queueReflexiveAbilityEffectHandler.resolve(gameData, entry, ability);
         }
     }
 }

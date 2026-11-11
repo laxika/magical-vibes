@@ -36,7 +36,7 @@ public class RatonhnhakTon extends Card {
                 "Assassin", 1, 1, CardColor.BLACK,
                 List.of(CardSubtype.ASSASSIN), Set.of(Keyword.MENACE), Set.of());
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new CreateTokenThenEffect(assassin,
+                CreateTokenThenEffect.aboutThatToken(assassin,
                         new ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect()));
     }
 }

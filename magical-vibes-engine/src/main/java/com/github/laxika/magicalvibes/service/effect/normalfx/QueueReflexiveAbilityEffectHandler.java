@@ -69,24 +69,19 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         QueueReflexiveAbilityEffect queueEffect = (QueueReflexiveAbilityEffect) effect;
-        if (queueEffect.sourcePermanentId() != null) {
-            Permanent reflexiveSource = gameQueryService.findPermanentById(gameData, queueEffect.sourcePermanentId());
-            StackEntry sourceContext = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    entry.getCard(),
-                    entry.getControllerId(),
-                    entry.getCard().getName() + "'s reflexive ability",
-                    List.of(),
-                    0,
-                    queueEffect.sourcePermanentId());
-            sourceContext.setSourcePermanentSnapshot(reflexiveSource == null ? null : new Permanent(reflexiveSource));
-            resolve(gameData, sourceContext, new QueueReflexiveAbilityEffect(queueEffect.effect(),
-                    queueEffect.optionalTarget(), queueEffect.useEntryTargetAsTriggeringPermanent(), null));
-            return;
-        }
         // What the ability records is the same whichever route it takes: the resolving entry's X, event, source and
         // "that player". "That much" and "that many" are the event value, read as such, never the ability's X.
-        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(queueEffect.effect()));
+        StackEntry record;
+        if (queueEffect.sourcePermanentId() != null) {
+            // The permanent the ability's effect acts for ("when a creature is put onto the battlefield this way, it
+            // deals damage ...") is the ability's source permanent, as it is now.
+            record = ReflexiveAbilitySupport.record(gameData, entry, List.of(queueEffect.effect()),
+                    entry.getCard().getName() + "'s reflexive ability", queueEffect.sourcePermanentId());
+            Permanent reflexiveSource = gameQueryService.findPermanentById(gameData, queueEffect.sourcePermanentId());
+            record.setSourcePermanentSnapshot(reflexiveSource == null ? null : new Permanent(reflexiveSource));
+        } else {
+            record = ReflexiveAbilitySupport.record(gameData, entry, List.of(queueEffect.effect()));
+        }
         if (queueEffect.useEntryTargetAsTriggeringPermanent() && entry.getTargetId() != null) {
             record.setTriggeringPermanentId(entry.getTargetId());
         }
@@ -111,7 +106,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
             // ability is put on the stack (CR 603.12, CR 603.3d).
             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                     entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect()),
-                    entry.getSourcePermanentId(), entry.getControllerId(), entry.getAttackedTargetId(),
+                    record.getSourcePermanentId(), entry.getControllerId(), entry.getAttackedTargetId(),
                     null, entry.getXValue()));
             triggeredAbilityQueueService.processNextAttackTriggerTarget(gameData);
             return;
@@ -124,7 +119,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
             }
             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                     entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect()),
-                    entry.getSourcePermanentId(), List.of(), targetGroupIndex, 0,
+                    record.getSourcePermanentId(), List.of(), targetGroupIndex, 0,
                     precedingGroupSizes, reflexiveXValue, List.of(), false,
                     null, null, entry.getEventValue()));
             etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
@@ -135,13 +130,13 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
             // The choice has the record's X; a card restricted by the event's value is chosen against the record.
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     entry.getCard(), entry.getControllerId(), List.of(queueEffect.effect()), null, 0,
-                    record.getXValue()));
+                    record.getXValue(), 0, null, false, null, record.getSourcePermanentId()));
             if (!gameData.interaction.isAwaitingInput()) {
                 triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
             }
             return;
         }
-        if (beginTargetChoice(gameData, entry, queueEffect.effect(), queueEffect.optionalTarget())) {
+        if (beginTargetChoice(gameData, entry, record, queueEffect.effect(), queueEffect.optionalTarget())) {
             return;
         }
         gameData.stack.add(record);
@@ -170,7 +165,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
                 || group.getDynamicMaxTargets() != null;
     }
 
-    private boolean beginTargetChoice(GameData gameData, StackEntry entry, CardEffect effect,
+    private boolean beginTargetChoice(GameData gameData, StackEntry entry, StackEntry record, CardEffect effect,
                                       boolean optionalTarget) {
         TargetSpec targetSpec = effect.targetSpec();
         if (!targetSpec.admits(TargetPredicate.Kind.PERMANENT)
@@ -184,8 +179,8 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(entry.getCard().getId())
                 .withSourceControllerId(entry.getControllerId())
-                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot())
-                .withSourcePermanentId(entry.getSourcePermanentId())
+                .withSourcePermanentSnapshot(record.getSourcePermanentSnapshot())
+                .withSourcePermanentId(record.getSourcePermanentId())
                 .withDefendingPlayerId(defendingPlayerId(gameData, entry.getAttackedTargetId()))
                 .withXValue(xValue)
                 .withEventValue(entry.getEventValue());
@@ -210,7 +205,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
             for (StackEntry stackEntry : gameData.stack) {
                 if (isSpellStackEntry(stackEntry)
                         && targetPredicateEvaluationService.matchesSpell(
-                        predicate, stackEntry, entry.getControllerId(), entry.getSourcePermanentSnapshot(),
+                        predicate, stackEntry, entry.getControllerId(), record.getSourcePermanentSnapshot(),
                         filterContext)) {
                     validPermanentIds.add(stackEntry.getTargetableId());
                 }
@@ -230,7 +225,15 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
                         gameData, groupFilter, validPlayerIds, entry.getControllerId());
             }
         }
-        if (optionalTarget && !validPlayerIds.contains(entry.getControllerId())) {
+        // "Up to one target", as the effect itself declares it: with nothing to target the ability goes on the stack
+        // with no target, and with something to target its controller may still choose none.
+        boolean upToOneTarget = effect.hasOptionalTarget();
+        if (upToOneTarget && validPermanentIds.isEmpty() && validPlayerIds.isEmpty()) {
+            gameData.stack.add(record);
+            return true;
+        }
+        boolean mayChooseNone = optionalTarget || upToOneTarget;
+        if (mayChooseNone && !validPlayerIds.contains(entry.getControllerId())) {
             validPlayerIds.add(entry.getControllerId());
         }
 
@@ -241,8 +244,8 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         }
 
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
-                entry.getCard(), entry.getControllerId(), List.of(effect), entry.getSourcePermanentId(),
-                entry.getSourcePermanentSnapshot(), entry.getEventValue(), xValue, optionalTarget,
+                entry.getCard(), entry.getControllerId(), List.of(effect), record.getSourcePermanentId(),
+                record.getSourcePermanentSnapshot(), entry.getEventValue(), xValue, mayChooseNone,
                 entry.getAttackedTargetId()));
         playerInputService.beginAnyTargetChoice(gameData, entry.getControllerId(), validPermanentIds,
                 validPlayerIds, entry.getCard().getName() + "'s reflexive ability - Choose a target.");

@@ -16,7 +16,7 @@ import java.util.UUID;
  *                                  the spell can't be cast
  * @param ownerId                   the owner of the zone the card is cast from
  * @param maxManaValue              the largest mana value the cast half may have
- * @param afterSuccessfulCastEffect effect queued once the spell is cast, or null
+ * @param afterSuccessfulCastEffect effect resolved, as part of the ability that let it be cast, once the spell is cast, or null
  * @param sourcePermanentId         the permanent whose ability lets the card be cast, or null
  * @param payManaCost               whether the caster pays the chosen half's mana cost
  * @param anyManaType               whether that cost may be paid with mana of any type

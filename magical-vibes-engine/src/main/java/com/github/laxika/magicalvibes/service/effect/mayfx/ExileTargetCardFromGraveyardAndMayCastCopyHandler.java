@@ -191,7 +191,7 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyHandler implements MayEff
         try {
             spellCastingService.playCardFromExileAsResolutionCast(
                     gameData, player, copy.getId(), xValue, (UUID) null, true);
-            exileCastTargetSupport.queueAfterSuccessfulCast(gameData, copy, player.getId(),
+            exileCastTargetSupport.resolveAfterSuccessfulCast(gameData, copy, player.getId(),
                     ability.sourcePermanentId(), effect.afterSuccessfulCastEffect());
             applyLifeLoss(gameData, player, copy, effect.lifeLossOnCast());
         } catch (IllegalStateException ex) {

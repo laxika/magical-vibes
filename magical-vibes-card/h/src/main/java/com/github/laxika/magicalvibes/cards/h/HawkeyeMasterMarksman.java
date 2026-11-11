@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 
 @CardRegistration(set = "MSH", collectorNumber = "130")
 public class HawkeyeMasterMarksman extends Card {
@@ -43,6 +45,7 @@ public class HawkeyeMasterMarksman extends Card {
                 new ChooseOneEffect.ChooseOneOption("Boomerang", boomerang)
         ), false, 0, 3, false);
 
-        addTrigger(Triggers.becomesTapped(), new PayManaUpToNTimesEffect("{1}", 3, arrowModes));
+        addTrigger(Triggers.becomesTapped(), new PayManaUpToNTimesEffect("{1}", 3,
+                new ChooseOneAtTriggerTimeEffect(arrowModes, new XValue())));
     }
 }

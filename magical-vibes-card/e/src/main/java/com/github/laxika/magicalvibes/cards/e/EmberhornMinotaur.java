@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -21,9 +22,10 @@ public class EmberhornMinotaur extends Card {
         // Choosing to exert also keeps the creature tapped through its next untap step.
         addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
-                        new BoostSelfEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF),
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                        new QueueReflexiveAbilityEffect(SequenceEffect.of(
+                                new BoostSelfEffect(1, 1),
+                                new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)))
                 ),
                 "Exert Emberhorn Minotaur as it attacks? (It gets +1/+1 and gains menace until end of turn.)"
         ));

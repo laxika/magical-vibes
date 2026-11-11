@@ -23,7 +23,7 @@ import java.util.Set;
 public class ForumFilibuster extends Card {
 
     public ForumFilibuster() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CreateTokenThenEffect(
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), CreateTokenThenEffect.aboutThatToken(
                 new CreateTokenEffect(
                         1, "Inkling", 2, 1, CardColor.WHITE,
                         Set.of(CardColor.WHITE, CardColor.BLACK), List.of(CardSubtype.INKLING),

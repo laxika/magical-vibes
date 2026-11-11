@@ -74,7 +74,6 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private TargetLegalityService targetLegalityService;
     @Mock private ValidTargetService validTargetService;
-    @Mock private SchemeAbandonSupport schemeAbandonSupport;
     @InjectMocks
     private ExileSupport exileSupport;
     private GameData gd;
@@ -103,8 +102,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
         gd.playerDecks.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         ReflectionTestUtils.setField(exileSupport, "exileCastTargetSupport", new ExileCastTargetSupport(
-                gameQueryService, predicateEvaluationService, targetLegalityService, validTargetService,
-                schemeAbandonSupport));
+                gameQueryService, predicateEvaluationService, targetLegalityService, validTargetService));
         InteractionHandlerRegistry registry = new InteractionHandlerRegistry(
                 () -> mock(com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         registry.register(new KnowledgePoolCastChoiceInteractionHandler(exileSupport));

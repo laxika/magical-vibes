@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveModalChoiceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -39,6 +40,7 @@ import java.util.stream.IntStream;
 public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final ReflexiveModalChoiceService reflexiveModalChoiceService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final GameLogService gameLogService;
     private final GraveyardTargetingSupport graveyardTargetingSupport;
@@ -114,10 +116,7 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
     }
 
     private void putOnStackOrChoose(GameData gameData, StackEntry entry, CardEffect thenEffect, StackEntry record) {
-        if (thenEffect instanceof ChooseOneEffect modal) {
-            // CR 700.2b: the reflexive trigger's mode is chosen as it is put onto the stack.
-            playerInputService.beginChooseModeChoice(gameData, entry.getControllerId(), entry.getCard(),
-                    modal, true, entry.getSourcePermanentId());
+        if (reflexiveModalChoiceService.beginModeChoice(gameData, record, thenEffect)) {
             return;
         }
 

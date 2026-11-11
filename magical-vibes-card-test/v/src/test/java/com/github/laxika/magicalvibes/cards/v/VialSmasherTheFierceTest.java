@@ -70,6 +70,21 @@ class VialSmasherTheFierceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The damage is dealt as the ability resolves, once that player or their planeswalker is chosen")
+    void theChoiceIsMadeAsTheAbilityResolves() {
+        harness.addToBattlefield(player1, new VialSmasherTheFierce());
+        Permanent planeswalker = harness.enterBattlefieldAndReturn(player2, new NicolBolasPlaneswalker());
+        castGrizzlyBears();
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, planeswalker.getId());
+
+        assertThat(planeswalker.getCounterCount(CounterType.LOYALTY)).isEqualTo(3);
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
+    }
+
+    @Test
     @DisplayName("Can damage the opponent even when they control a planeswalker")
     void canChooseOpponentInsteadOfPlaneswalker() {
         harness.addToBattlefield(player1, new VialSmasherTheFierce());

@@ -11,7 +11,7 @@ import java.util.UUID;
  * @param revealCardOnDecline whether declining the cast publicly identifies the card
  * @param exileInsteadOfGraveyard whether the spell is exiled instead of going to a graveyard
  *                                after this free cast
- * @param afterSuccessfulCastEffect optional follow-up queued after a successful cast
+ * @param afterSuccessfulCastEffect optional "if you do" follow-up, resolved as part of this ability once the spell is cast
  * @param castableSplitModes for a split card, the modes of its modal spell (its halves, or its
  *                           fused spell) the permission lets it be cast as, or null for any. A
  *                           permission for a spell with certain characteristics considers only the

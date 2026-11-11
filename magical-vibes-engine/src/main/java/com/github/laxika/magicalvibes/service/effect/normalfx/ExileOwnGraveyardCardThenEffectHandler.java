@@ -1,23 +1,26 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Zone;
+import java.util.Map;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +30,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 /** Resolves an optional graveyard exile and queues its reflexive follow-up ability. */
@@ -39,7 +41,9 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
     private final PermanentRemovalService permanentRemovalService;
     private final ExileService exileService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final GraveyardTargetingSupport graveyardTargetingSupport;
     private final PlayerInputService playerInputService;
     @Autowired
     @Lazy
@@ -143,31 +147,31 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
         effectResolutionService.resolveEffects(gameData, inlineAbility);
     }
 
+    /**
+     * "When you do": a reflexive ability whose targets are chosen as it goes on the stack (CR 603.12). One whose
+     * target is a single card in its controller's own graveyard is asked for here, as one card of that graveyard
+     * (the only legal card is the target); every other ability takes the shared routes.
+     */
     private void queueReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect) {
+        GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(List.of(thenEffect));
+        if (target == null || target.scope() != GraveyardSearchScope.CONTROLLERS_GRAVEYARD
+                || target.maxTargets() != 1 || target.minTargets() != 1) {
+            queueReflexiveAbilityEffectHandler.resolve(gameData, entry, new QueueReflexiveAbilityEffect(thenEffect));
+            return;
+        }
         // The ability records what the resolving entry was about whichever way it reaches the stack.
         ReflexiveAbilitySupport.route(gameData,
                 ReflexiveAbilitySupport.record(gameData, entry, List.of(thenEffect)),
-                () -> putReflexiveAbilityOnStackOrChoose(gameData, entry, thenEffect));
+                () -> chooseOwnGraveyardTarget(gameData, entry, thenEffect, target));
     }
 
-    private void putReflexiveAbilityOnStackOrChoose(GameData gameData, StackEntry entry, CardEffect thenEffect) {
-        if (!(thenEffect instanceof ReturnCardFromGraveyardEffect)) {
-            UUID targetId = thenEffect.targetSpec() == TargetSpec.NONE
-                    ? null : entry.getTargetId();
-            StackEntry reflexiveAbility = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    entry.getCard(),
-                    entry.getControllerId(),
-                    entry.getCard().getName() + "'s reflexive ability",
-                    new ArrayList<>(List.of(thenEffect)),
-                    targetId,
-                    entry.getSourcePermanentId()
-            );
-            gameData.stack.add(reflexiveAbility);
-            return;
-        }
-
-        List<Card> targets = matchingReturnTargets(gameData, entry, thenEffect);
+    private void chooseOwnGraveyardTarget(GameData gameData, StackEntry entry, CardEffect thenEffect,
+                                          GraveyardTargetingSupport.Target target) {
+        List<Card> graveyard = gameData.playerGraveyards.getOrDefault(entry.getControllerId(), List.of());
+        UUID sourceCardId = entry.getCard().getId();
+        List<Card> targets = graveyard.stream()
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(card, target.filter(), sourceCardId))
+                .toList();
         if (targets.isEmpty()) {
             gameLogService.append(gameData,
                     GameLog.cardThen(entry.getCard(), "'s reflexive ability has no legal targets."));
@@ -176,7 +180,7 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
 
         UUID sourcePermanentId = entry.getSourcePermanentId();
         if (targets.size() == 1) {
-            Card target = targets.getFirst();
+            Card only = targets.getFirst();
             StackEntry reflexiveAbility = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     entry.getCard(),
@@ -184,7 +188,7 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
                     entry.getCard().getName() + "'s reflexive ability",
                     new ArrayList<>(List.of(thenEffect)),
                     0,
-                    target.getId(),
+                    only.getId(),
                     sourcePermanentId,
                     Map.of(),
                     Zone.GRAVEYARD,
@@ -194,12 +198,11 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
             gameData.stack.add(reflexiveAbility);
             gameLogService.append(gameData,
                     GameLog.builder().card(entry.getCard()).text("'s reflexive ability targets ")
-                            .card(target).text(" in its graveyard.").build());
+                            .card(only).text(" in its graveyard.").build());
             return;
         }
 
         List<Integer> matchingIndices = new ArrayList<>();
-        List<Card> graveyard = gameData.playerGraveyards.get(entry.getControllerId());
         for (int i = 0; i < graveyard.size(); i++) {
             if (targets.contains(graveyard.get(i))) {
                 matchingIndices.add(i);
@@ -209,23 +212,8 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
         gameData.rerunCurrentEffectAfterInteraction = false;
         interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
                 .builder(entry.getControllerId(), matchingIndices, GraveyardChoiceDestination.MAY_ABILITY_TARGET,
-                        entry.getCard().getName() + "'s reflexive ability — Choose an instant or sorcery card from your graveyard to return to your hand.")
+                        entry.getCard().getName() + "'s reflexive ability — Choose a target card from your graveyard.")
                 .mayAbilityContext(entry.getCard(), entry.getControllerId(), List.of(thenEffect), sourcePermanentId)
                 .build());
-    }
-
-    private List<Card> matchingReturnTargets(GameData gameData, StackEntry entry, CardEffect thenEffect) {
-        if (!(thenEffect instanceof ReturnCardFromGraveyardEffect returnEffect)) {
-            return List.of();
-        }
-        List<Card> graveyard = gameData.playerGraveyards.get(entry.getControllerId());
-        if (graveyard == null) {
-            return List.of();
-        }
-        UUID sourceCardId = entry.getCard().getId();
-        return graveyard.stream()
-                .filter(card -> predicateEvaluationService.matchesCardPredicate(
-                        card, returnEffect.filter(), sourceCardId))
-                .toList();
     }
 }

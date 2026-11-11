@@ -1014,8 +1014,8 @@ public class ActivatedAbilityExecutionService {
                 activatedPermanentControllerId);
         snapshotEffects = snapshotActivationCountConditions(gameData, permanent, snapshotEffects);
         // CR 605.1a: A mana ability doesn't require a target, could add mana, isn't a loyalty ability,
-        // and its cost and effect don't move cards to or from a library, except for a
-        // controller-only MillEffect used as an inline reflexive mana-ability rider.
+        // and its cost and effect don't move cards to or from a library. A "when you do" the card writes
+        // after the mana is a reflexive ability of its own, not part of the mana ability (CR 605.5a).
         // Pain lands (e.g. Adarkar Wastes) include a DealDamageToPlayersEffect(CONTROLLER) alongside mana production
         // and are still mana abilities — they resolve immediately without using the stack.
         boolean isManaAbility = AbilityActivationService.isManaAbility(ability, abilityEffects);
@@ -1969,13 +1969,6 @@ public class ActivatedAbilityExecutionService {
                         playerId, permanent.getId());
                 damageSupport.dealDamageToPlayer(gameData, damageEntry, playerId,
                         damage);
-            } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.recipient() == DamageRecipient.EACH_OPPONENT) {
-                // Reflexive "When you do" rider on a mana ability, e.g. Rubble Rouser: "Add {R}. When
-                // you do, this creature deals 1 damage to each opponent." A reflexive trigger that
-                // can't add mana is not a mana ability, so it waits for the stack (CR 603.12, 605.5a).
-                gameData.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                        permanent.getCard(), playerId, permanent.getCard().getName() + "'s ability",
-                        new ArrayList<>(List.of(dmg)), null, permanent.getId()));
             } else if (effect instanceof RegisterDrawCardsAtNextUpkeepEffect draw) {
                 // "Draw a card at the beginning of the next turn's upkeep." rider on a mana ability (Barbed Sextant).
                 gameData.queueDelayedAction(new DrawCardsAtNextUpkeep(playerId, draw.count(), permanent.getCard(),

@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,9 +10,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -26,6 +22,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -48,13 +45,9 @@ public class ExileCastTargetSupport {
     private final PredicateEvaluationService predicateEvaluationService;
     private final TargetLegalityService targetLegalityService;
     private final ValidTargetService validTargetService;
-    private final SchemeAbandonSupport schemeAbandonSupport;
     @Autowired
     @Lazy
-    private PutCountersOnSourceEffectHandler putCountersOnSourceEffectHandler;
-    @Autowired
-    @Lazy
-    private TransformSelfEffectHandler transformSelfEffectHandler;
+    private EffectResolutionService effectResolutionService;
 
     public StackEntryType mapCardTypeToSpellType(Card card) {
         return switch (card.getType()) {
@@ -69,58 +62,24 @@ public class ExileCastTargetSupport {
         };
     }
 
-    public void queueAfterSuccessfulCast(GameData gameData, Card fallbackSourceCard, UUID controllerId,
+    public void resolveAfterSuccessfulCast(GameData gameData, Card fallbackSourceCard, UUID controllerId,
                                          UUID sourcePermanentId, CardEffect afterCastEffect) {
         if (afterCastEffect == null || sourcePermanentId == null) {
             return;
         }
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        Card scheme = sourcePermanent == null
-                ? gameData.findFaceUpSchemeBySourceId(sourcePermanentId) : sourcePermanent.getCard();
-        if (scheme != null && scheme.hasType(CardType.SCHEME) && afterCastEffect instanceof SacrificeSelfEffect) {
-            // "If you do, abandon this scheme" happens as the ability resolves, before anyone can
-            // respond to the spell (CR 701.33b).
-            schemeAbandonSupport.abandon(gameData, scheme, sourcePermanentId);
-            return;
-        }
-        Card sourceCard = sourcePermanent == null ? fallbackSourceCard : sourcePermanent.getCard();
-        if (afterCastEffect instanceof PutCountersOnSourceEffect && sourcePermanent != null) {
-            // "If you cast a spell this way, put a +1/+1 counter on [source]" is part of the resolving
-            // ability, so the counter is placed before anyone can respond to the spell.
-            StackEntry resolving = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    controllerId,
-                    sourceCard.getName() + "'s ability",
-                    List.of(afterCastEffect),
-                    null,
-                    sourcePermanentId);
-            resolving.setNonTargeting(true);
-            putCountersOnSourceEffectHandler.resolve(gameData, resolving, afterCastEffect);
-            return;
-        }
-        if (afterCastEffect instanceof TransformSelfEffect && sourcePermanent != null) {
-            // "If you do, convert/transform [source]" is part of the resolving ability, so it happens
-            // before anyone can respond to the spell that was just cast.
-            StackEntry resolving = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    controllerId,
-                    sourceCard.getName() + "'s ability",
-                    List.of(afterCastEffect),
-                    null,
-                    sourcePermanentId);
-            resolving.setNonTargeting(true);
-            transformSelfEffectHandler.resolve(gameData, resolving, afterCastEffect);
-            return;
-        }
-        // The ability records what the entry that let the spell be cast was about.
-        StackEntry entry = ReflexiveAbilitySupport.recordFor(gameData,
+        Card scheme = sourcePermanent == null ? gameData.findFaceUpSchemeBySourceId(sourcePermanentId) : null;
+        Card sourceCard = sourcePermanent != null ? sourcePermanent.getCard()
+                : scheme != null ? scheme : fallbackSourceCard;
+        // "If you do" and "if you cast a spell this way" are part of the ability that let the spell be cast (CR
+        // 608.2c), so the effect happens as that ability resolves, before anyone can respond to the spell. It
+        // reads what that ability's entry recorded.
+        StackEntry resolving = ReflexiveAbilitySupport.recordFor(gameData,
                 ReflexiveAbilitySupport.resolvingEntryOf(gameData, sourceCard, sourcePermanentId),
                 sourceCard, controllerId, List.of(afterCastEffect), sourceCard.getName() + "'s ability",
                 sourcePermanentId);
-        entry.setNonTargeting(true);
-        gameData.stack.add(entry);
+        resolving.setNonTargeting(true);
+        effectResolutionService.resolveEffects(gameData, resolving);
     }
 
     /**

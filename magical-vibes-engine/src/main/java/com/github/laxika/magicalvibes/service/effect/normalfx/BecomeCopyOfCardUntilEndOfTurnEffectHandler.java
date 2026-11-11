@@ -38,13 +38,30 @@ public class BecomeCopyOfCardUntilEndOfTurnEffectHandler implements NormalEffect
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         BecomeCopyOfCardUntilEndOfTurnEffect copyEffect = (BecomeCopyOfCardUntilEndOfTurnEffect) effect;
+        becomeCopy(gameData, entry.getCard(), entry.getControllerId(), entry.getSourcePermanentId(), copyEffect);
+    }
+
+    /**
+     * Makes the permanent {@code permanentId} a copy of {@code card} until end of turn, as part of the resolution of
+     * an ability of {@code abilitySource} controlled by {@code controllerId}: the card a player chose while that
+     * ability resolved, with no stack object of its own.
+     */
+    public void becomeCopy(GameData gameData, Card abilitySource, UUID controllerId, UUID permanentId, Card card,
+                           java.util.Set<com.github.laxika.magicalvibes.model.Keyword> additionalKeywords) {
+        becomeCopy(gameData, abilitySource, controllerId, permanentId,
+                new BecomeCopyOfCardUntilEndOfTurnEffect(card, java.util.Set.of(), java.util.Set.of(),
+                        additionalKeywords));
+    }
+
+    private void becomeCopy(GameData gameData, Card abilitySource, UUID controllerId, UUID permanentId,
+                            BecomeCopyOfCardUntilEndOfTurnEffect copyEffect) {
         Card card = copyEffect.card();
         if (card == null || (!card.hasType(CardType.CREATURE)
                 && !card.hasType(CardType.ARTIFACT))) {
             return;
         }
 
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent source = gameQueryService.findPermanentById(gameData, permanentId);
         if (source == null) {
             return;
         }
@@ -75,8 +92,8 @@ public class BecomeCopyOfCardUntilEndOfTurnEffectHandler implements NormalEffect
         // The copy has a new set of abilities, so a once-each-turn ability it now has has not triggered yet.
         gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(source.getId());
         gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), entry.getCard().getName(), source.getId(),
-                entry.getControllerId(), new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(), source.getId(),
+                UUID.randomUUID(), abilitySource.getName(), source.getId(),
+                controllerId, new BecomeCopyOfTargetCreatureUntilEndOfTurnEffect(), source.getId(),
                 null, null, EffectDuration.UNTIL_END_OF_TURN, 0));
 
         gameLogService.append(gameData,

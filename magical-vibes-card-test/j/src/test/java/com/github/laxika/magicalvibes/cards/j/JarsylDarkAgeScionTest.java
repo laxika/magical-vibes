@@ -72,6 +72,23 @@ class JarsylDarkAgeScionTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(darkRitual);
     }
 
+    @Test
+    void intensifiesAsTheAbilityResolvesBeforeTheSpellCastResolves() {
+        JarsylDarkAgeScion jarsylCard = new JarsylDarkAgeScion();
+        Permanent jarsyl = harness.addToBattlefieldAndReturn(player1, jarsylCard);
+        DarkRitual darkRitual = new DarkRitual();
+        harness.setGraveyard(player1, List.of(darkRitual));
+
+        triggerBeginningOfCombat(player1);
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
+
+        // "If you do, Jarsyl intensifies by 1" is part of the ability that let the spell be cast.
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(darkRitual.getId());
+        assertThat(gd.getCardIntensity(jarsyl.getCard().getId())).isEqualTo(2);
+    }
+
     private void triggerBeginningOfCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.BEGINNING_OF_COMBAT);

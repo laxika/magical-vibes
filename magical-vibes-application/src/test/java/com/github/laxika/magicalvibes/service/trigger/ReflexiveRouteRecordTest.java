@@ -14,6 +14,9 @@ import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentThenExileMatchingPermanentsEffect;
@@ -101,7 +104,12 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
                 new PermanentIsCreaturePredicate(), effect, "a creature")),
         SACRIFICE_FOR_POWER_DAMAGE(effect -> new SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect()),
         EXILE_THEN_EXILE_MATCHING(effect -> new ExilePermanentThenExileMatchingPermanentsEffect(
-                new PermanentIsCreaturePredicate(), new PermanentIsCreaturePredicate(), "creature"));
+                new PermanentIsCreaturePredicate(), new PermanentIsCreaturePredicate(), "creature")),
+        CREATE_TOKEN_THEN(effect -> new CreateTokenThenEffect(CreateTokenEffect.ofTreasureToken(1), effect)),
+        CREATE_TOKEN_ABOUT_THAT_TOKEN(effect -> CreateTokenThenEffect.aboutThatToken(
+                CreateTokenEffect.ofTreasureToken(1), effect)),
+        EXILE_OWN_GRAVEYARD_CARD(effect -> new ExileOwnGraveyardCardThenEffect(
+                new CardTypePredicate(CardType.CREATURE), effect));
 
         private final Function<CardEffect, CardEffect> wrap;
 
@@ -142,7 +150,15 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
                 Arguments.of(Continuation.DISCARD_THEN, Route.GRAVEYARD_CARD),
                 Arguments.of(Continuation.BOUNCE_THEN, Route.TARGET),
                 Arguments.of(Continuation.SACRIFICE_FOR_POWER_DAMAGE, Route.TARGET),
-                Arguments.of(Continuation.EXILE_THEN_EXILE_MATCHING, Route.PLAIN));
+                Arguments.of(Continuation.EXILE_THEN_EXILE_MATCHING, Route.PLAIN),
+                Arguments.of(Continuation.CREATE_TOKEN_THEN, Route.PLAIN),
+                Arguments.of(Continuation.CREATE_TOKEN_THEN, Route.TARGET),
+                Arguments.of(Continuation.CREATE_TOKEN_THEN, Route.GRAVEYARD_CARD),
+                Arguments.of(Continuation.CREATE_TOKEN_ABOUT_THAT_TOKEN, Route.PLAIN),
+                Arguments.of(Continuation.CREATE_TOKEN_ABOUT_THAT_TOKEN, Route.TARGET),
+                Arguments.of(Continuation.EXILE_OWN_GRAVEYARD_CARD, Route.PLAIN),
+                Arguments.of(Continuation.EXILE_OWN_GRAVEYARD_CARD, Route.TARGET),
+                Arguments.of(Continuation.EXILE_OWN_GRAVEYARD_CARD, Route.GRAVEYARD_CARD));
     }
 
     private Permanent target;
@@ -204,6 +220,13 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
             // "That card" of a "when you do" after a discard is the card discarded, on every route.
             assertThat(entry.getTriggeringCardId()).as("the card discarded").isEqualTo(inHand.getId());
             DISCARDED_CARD_FIELDS.forEach(expected::remove);
+        }
+        if (continuation == Continuation.CREATE_TOKEN_ABOUT_THAT_TOKEN) {
+            // "That token" is the permanent the reflexive ability acts for; everything else is the maker's record.
+            Permanent token = gd.playerBattlefields.get(player1.getId()).stream()
+                    .filter(permanent -> permanent.getCard().isToken()).findFirst().orElseThrow();
+            assertThat(entry.getSourcePermanentId()).as("the created token").isEqualTo(token.getId());
+            expected.remove("sourcePermanentSnapshot");
         }
         List<String> differences = new ArrayList<>();
         expected.forEach((field, value) -> {

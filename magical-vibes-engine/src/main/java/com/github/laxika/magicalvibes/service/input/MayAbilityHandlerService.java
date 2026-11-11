@@ -55,8 +55,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RagingRiverEffectHandler;
-import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.service.effect.normalfx.QueueReflexiveAbilityEffectHandler;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
@@ -111,9 +109,6 @@ public class MayAbilityHandlerService {
 
     @Autowired @Lazy
     private PermanentChoiceHandlerService permanentChoiceHandlerService;
-
-    @Autowired @Lazy
-    private QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
 
     public MayAbilityHandlerService(InputCompletionService inputCompletionService,
                                     MayCastHandlerService mayCastHandlerService,
@@ -238,40 +233,14 @@ public class MayAbilityHandlerService {
                                 && skip.controllerStepOnly()));
         if (exertChoice) {
             if (accepted) {
-                List<CardEffect> exertCosts = new ArrayList<>();
-                List<CardEffect> triggeredEffects = new ArrayList<>();
-                List<QueueReflexiveAbilityEffect> reflexiveEffects = new ArrayList<>();
-                for (CardEffect effect : ability.effects()) {
-                    List<CardEffect> steps = effect instanceof SequenceEffect sequence
-                            ? sequence.steps() : List.of(effect);
-                    for (CardEffect step : steps) {
-                        if (step instanceof com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect skip
-                                && skip.controllerStepOnly()) exertCosts.add(step);
-                        else if (step instanceof QueueReflexiveAbilityEffect reflexive) reflexiveEffects.add(reflexive);
-                        else triggeredEffects.add(step);
-                    }
-                }
-                // What the question kept of the attack is on the entry the exertion resolves as, which the
-                // reflexive abilities below record, and on the ability exerting it puts on the stack.
-                StackEntry exert = ReflexiveAbilitySupport.mayAbilityRecord(ability, exertCosts,
+                // Exerting is done as the creature attacks, not by an ability on the stack (CR 701.43a): the card's
+                // steps are carried out as written, the exertion and then its "when you do", a reflexive ability
+                // (CR 603.12) that records what the question kept of the attack.
+                StackEntry exert = ReflexiveAbilitySupport.mayAbilityRecord(ability, ability.effects(),
                         ability.sourceCard().getName() + " is exerted", ability.sourcePermanentId(), 0);
                 exert.setTargetId(null);
                 exert.setNonTargeting(false);
                 effectResolutionService.resolveEffects(gameData, exert);
-                triggerCollectionService.checkExertTriggers(
-                        gameData, ability.controllerId(), ability.sourcePermanentId());
-                if (!triggeredEffects.isEmpty()) {
-                    StackEntry triggered = ReflexiveAbilitySupport.mayAbilityRecord(ability, triggeredEffects,
-                            ability.sourceCard().getName() + "'s exert ability", ability.sourcePermanentId(), 0);
-                    triggered.setNonTargeting(false);
-                    gameData.stack.add(triggered);
-                }
-                // "When you do, <targeted effect>": the reflexive trigger goes on the stack now and
-                // picks its target as it does, rather than waiting behind a wrapper trigger.
-                for (QueueReflexiveAbilityEffect reflexive : reflexiveEffects) {
-                    queueReflexiveAbilityEffectHandler.resolve(gameData, exert, reflexive);
-                }
-
             }
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;

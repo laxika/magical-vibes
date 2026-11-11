@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -23,7 +24,7 @@ public class ChampionOfRhonas extends Card {
         addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
                         new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
-                        new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature")
+                        new QueueReflexiveAbilityEffect(new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature"))
                 ),
                 "Exert Champion of Rhonas as it attacks? (You may put a creature card from your hand onto the battlefield.)"
         ));

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -19,6 +20,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.amount.XValue;
 
 @CardRegistration(set = "MAT", collectorNumber = "24")
 @CardRegistration(set = "MAT", collectorNumber = "74")
@@ -46,6 +48,6 @@ public class TranquilFrillback extends Card {
                 new ChooseOneEffect.ChooseOneOption("You gain 4 life", new GainLifeEffect(4))
         ), false, 0, 3, false, null);
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PayManaUpToNTimesEffect("{G}", 3, modes));
+                new PayManaUpToNTimesEffect("{G}", 3, new ChooseOneAtTriggerTimeEffect(modes, new XValue())));
     }
 }

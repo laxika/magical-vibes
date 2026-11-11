@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetThenEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +16,7 @@ import java.util.UUID;
 public class CreateTokenAttachedToTargetThenEffectHandler implements NormalEffectHandlerBean {
 
     private final CreateTokenAttachedToTargetEffectHandler createTokenAttachedToTargetEffectHandler;
-    private final CreateTokenThenEffectHandler createTokenThenEffectHandler;
+    private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -38,7 +39,8 @@ public class CreateTokenAttachedToTargetThenEffectHandler implements NormalEffec
             return;
         }
 
-        createTokenThenEffectHandler.queueTargetedReflexiveAbility(
-                gameData, entry, createThen.thenEffect(), targetId, true);
+        // "That creature" is the permanent the reflexive ability's effect acts for.
+        queueReflexiveAbilityEffectHandler.resolve(gameData, entry,
+                new QueueReflexiveAbilityEffect(createThen.thenEffect(), targetId));
     }
 }

@@ -35,7 +35,7 @@ public class DainIronfoot extends Card {
                 false, false, axeEffects, List.of(new EquipActivatedAbility("{2}")),
                 false, false, false, 0, Set.of());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new CreateTokenThenEffect(axe, new AttachCreatedEquipmentToTargetCreatureEffect()));
+                CreateTokenThenEffect.aboutThatToken(axe, new AttachCreatedEquipmentToTargetCreatureEffect()));
 
         var equippedAttackingCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

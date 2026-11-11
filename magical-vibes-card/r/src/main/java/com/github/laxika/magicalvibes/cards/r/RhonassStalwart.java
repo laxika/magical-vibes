@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -23,12 +24,13 @@ public class RhonassStalwart extends Card {
         // Choosing to exert also keeps the creature tapped through its next untap step.
         addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
-                        new BoostSelfEffect(1, 1),
-                        new MakeCreatureBlockableOnlyByFilterThisTurnEffect(
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                        new QueueReflexiveAbilityEffect(SequenceEffect.of(
+                                new BoostSelfEffect(1, 1),
+                                new MakeCreatureBlockableOnlyByFilterThisTurnEffect(
                                 new PermanentPowerAtLeastPredicate(3),
                                 "creatures with power 3 or greater",
-                                true),
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)
+                                true)))
                 ),
                 "Exert Rhonas's Stalwart as it attacks? (It gets +1/+1 until end of turn and can't be blocked by creatures with power 2 or less this turn.)"
         ));

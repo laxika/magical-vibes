@@ -89,8 +89,8 @@ EXPLAINED = {
         (OWN, "a collector: the entry it builds is the record (the creature it left as triggering permanent); one route"),
     ("effect/mayfx/MiracleRevealHandler.java", "handle"):
         (OWN, "miracle's linked ability (CR 702.94a) of the revealed card; one route, no event data"),
-    ("effect/manafx/MillControllerManaAbilityEffectHandler.java", "resolve"):
-        (OWN, "a mana ability's rider: no entry resolves; one route (its stack split is row 17z16c4)"),
+    ("effect/manafx/ReflexiveManaAbilityRiderEffectHandler.java", "resolve"):
+        (OWN, "a mana ability's \"when you do\", written by the card: no entry resolves; one route"),
     ("input/ChoiceHandlerService.java", "handleMultipleChooseModeChoice"):
         (HAND, "resumePendingMayResolution: the walk sets the targets of the entry still resolving, no entry is built"),
     ("input/ChoiceHandlerService.java", "handleSagaChapterCounterAssignment"):

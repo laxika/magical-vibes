@@ -367,7 +367,7 @@ public class PermanentChoiceSpellHandlerService {
                             new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId())),
                             ect.cardToCast().getId(), ect.xValue(), permanentId, ect.copy(),
                             ect.putOnBottomOfOwnersLibraryInsteadOfGraveyard());
-                    exileCastTargetSupport.queueAfterSuccessfulCast(gameData, ect.cardToCast(), ect.controllerId(),
+                    exileCastTargetSupport.resolveAfterSuccessfulCast(gameData, ect.cardToCast(), ect.controllerId(),
                             ect.sourcePermanentId(), ect.afterSuccessfulCastEffect());
                     // "If you do, you lose N life" follows the cast as a step of its own (CR 608.2c, CR 616.1).
                     lifeSupport.loseLifeAsStepOfParkedResolution(gameData,
@@ -577,7 +577,7 @@ public class PermanentChoiceSpellHandlerService {
                 spellCastingService.playCardFromExileAsResolutionCast(gameData,
                         new Player(ect.controllerId(), gameData.playerIdToName.get(ect.controllerId())),
                         card.getId(), ect.xValue(), chosen, ect.copy());
-                exileCastTargetSupport.queueAfterSuccessfulCast(gameData, card, ect.controllerId(),
+                exileCastTargetSupport.resolveAfterSuccessfulCast(gameData, card, ect.controllerId(),
                         ect.sourcePermanentId(), ect.afterSuccessfulCastEffect());
                 // "If you do, you lose N life" follows the cast as a step of its own (CR 608.2c, CR 616.1).
                 lifeSupport.loseLifeAsStepOfParkedResolution(gameData,
@@ -758,7 +758,7 @@ public class PermanentChoiceSpellHandlerService {
             copySupport.copyGraveyardCastSpell(gameData, entry, gct.cardToCast(), gct.controllerId(),
                     gct.copyCount());
 
-            exileCastTargetSupport.queueAfterSuccessfulCast(gameData, gct.cardToCast(), gct.controllerId(),
+            exileCastTargetSupport.resolveAfterSuccessfulCast(gameData, gct.cardToCast(), gct.controllerId(),
                     gct.sourcePermanentId(), gct.afterSuccessfulCastEffect());
 
             Card castCharacteristics = gct.castWithAdventure()
@@ -888,7 +888,7 @@ public class PermanentChoiceSpellHandlerService {
                         hct.castForMadnessCost() ? Zone.EXILE : Zone.HAND);
             }
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
-            exileCastTargetSupport.queueAfterSuccessfulCast(gameData, hct.cardToCast(), hct.controllerId(),
+            exileCastTargetSupport.resolveAfterSuccessfulCast(gameData, hct.cardToCast(), hct.controllerId(),
                     hct.sourcePermanentId(), hct.afterSuccessfulCastEffect());
         } else {
             if (hct.sourceZone() == Zone.COMMAND) {
@@ -978,7 +978,7 @@ public class PermanentChoiceSpellHandlerService {
         triggerCollectionService.checkSpellCastTriggers(gameData, context.cardToCast(), context.controllerId(),
                 context.castForMadnessCost() ? Zone.EXILE : context.sourceZone());
         triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
-        exileCastTargetSupport.queueAfterSuccessfulCast(gameData, context.cardToCast(), context.controllerId(),
+        exileCastTargetSupport.resolveAfterSuccessfulCast(gameData, context.cardToCast(), context.controllerId(),
                 context.sourcePermanentId(), context.afterSuccessfulCastEffect());
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

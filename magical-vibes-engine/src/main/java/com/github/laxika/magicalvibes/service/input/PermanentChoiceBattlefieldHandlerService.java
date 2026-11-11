@@ -136,6 +136,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentCrea
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveModalChoiceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -160,9 +161,11 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchS
 @RequiredArgsConstructor
 public class PermanentChoiceBattlefieldHandlerService {
     private final CreateTokensAndAttachEquipmentSupport createTokensAndAttachEquipmentSupport;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenEffectHandler createTokenEffectHandler;
     private final PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler sacrificedEquipmentSupport;
 
     private final InputCompletionService inputCompletionService;
+    private final ReflexiveModalChoiceService reflexiveModalChoiceService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.VillainousChoiceSupport villainousChoiceSupport;
     private final ExquisiteArchangelLossReplacer exquisiteArchangelLossReplacer;
     private final GameQueryService gameQueryService;
@@ -2965,11 +2968,9 @@ public class PermanentChoiceBattlefieldHandlerService {
             GameData gameData, PermanentChoiceContext.SacrificePermanentThen ctx, StackEntry record,
             UUID sourcePermanentId, Permanent sourcePermanentSnapshot, Permanent sacrificedSnapshot,
             int sacrificedPower, int sacrificedColorCount, int sacrificedToughness) {
-        if (ctx.thenEffect() instanceof com.github.laxika.magicalvibes.model.effect.ChooseOneEffect modal) {
-            // A modal reflexive trigger ("When you do, choose two —") has its modes and their
-            // targets chosen as it's put on the stack, before anyone gets priority.
-            playerInputService.beginTriggeredModalChoice(gameData, ctx.controllerId(), ctx.sourceCard(),
-                    modal, sourcePermanentId);
+        if (reflexiveModalChoiceService.beginModeChoice(gameData, record, ctx.thenEffect())) {
+            // A modal reflexive ability ("When you do, choose two —") has its modes and their targets chosen as
+            // it's put on the stack, before anyone gets priority.
             return true;
         }
         {
@@ -3237,13 +3238,14 @@ public class PermanentChoiceBattlefieldHandlerService {
                 t.tappedAndAttacking(), t.tapped(), t.tokenEffects(), t.tokenAbilities(),
                 t.exileAtEndOfCombat(), t.exileAtEndStep(), t.legendary(), t.initialPlusOnePlusOneCounters(),
                 t.grantedKeywordsUntilEndOfTurn(), t.supertypes());
-        // The ability records what the entry that asked for the sacrifice was about, and the power sacrificed.
+        // "If you do" is part of the ability that asked for the sacrifice (CR 608.2c): the token is created as that
+        // ability resolves, sized by the power the sacrifice recorded, and never as a stack object of its own.
         StackEntry tokenEntry = ReflexiveAbilitySupport.recordFor(gameData,
                 ReflexiveAbilitySupport.resolvingEntryOf(gameData, ctx.sourceCard(), null),
                 ctx.sourceCard(), ctx.controllerId(), List.of(sized), ctx.sourceCard().getName() + "'s effect",
                 null);
         tokenEntry.setSacrificedPower(power);
-        gameData.stack.add(tokenEntry);
+        createTokenEffectHandler.resolve(gameData, tokenEntry, sized);
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

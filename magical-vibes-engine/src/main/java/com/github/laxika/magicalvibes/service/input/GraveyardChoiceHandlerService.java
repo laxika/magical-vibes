@@ -82,6 +82,8 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class GraveyardChoiceHandlerService {
 
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.BecomeCopyOfCardUntilEndOfTurnEffectHandler becomeCopyHandler;
+
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final BattlefieldEntryService battlefieldEntryService;
@@ -592,18 +594,14 @@ public class GraveyardChoiceHandlerService {
                     }
                 }
                 case COPY_FROM_LEAVING_GRAVEYARD -> {
-                    StackEntry entry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            mayAbilitySourceCard,
-                            mayAbilityControllerId,
-                            mayAbilitySourceCard.getName() + "'s ability",
-                            new ArrayList<>(List.of(new BecomeCopyOfCardUntilEndOfTurnEffect(card))),
-                            null,
-                            mayAbilitySourcePermanentId);
-                    gameData.stack.add(entry);
+                    // "... then you may have this creature become a copy of [one of those cards]" is part of the
+                    // ability that asked (CR 608.2c): the copy happens as that ability resolves, whichever of the
+                    // cards is chosen, and no player can respond to it.
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " chooses ", card, " for "
                                     + mayAbilitySourceCard.getName() + "'s copy ability."));
+                    becomeCopyHandler.becomeCopy(gameData, mayAbilitySourceCard, mayAbilityControllerId,
+                            mayAbilitySourcePermanentId, card, Set.of());
                 }
                 case SHUFFLE_INTO_OWNERS_LIBRARY -> {
                     // Card already removed from the graveyard above; shuffle it into the owner's library.
@@ -1062,17 +1060,9 @@ public class GraveyardChoiceHandlerService {
                 return;
             }
 
-            StackEntry copyEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    pendingEntry.getCard(),
-                    controllerId,
-                    pendingEntry.getCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(new BecomeCopyOfCardUntilEndOfTurnEffect(
-                            chosenCard, Set.of(), Set.of(), Set.of(Keyword.FLYING)))),
-                    null,
-                    tokenId);
-            copyEntry.setTargetId(tokenId);
-            effectResolutionService.resolveEffects(gameData, copyEntry);
+            // The token becomes the copy as the ability that chose the card resolves.
+            becomeCopyHandler.becomeCopy(gameData, pendingEntry.getCard(), controllerId, tokenId, chosenCard,
+                    Set.of(Keyword.FLYING));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

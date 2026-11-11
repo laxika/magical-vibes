@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -21,9 +22,10 @@ public class RhetCropSpearmaster extends Card {
         // Walker). Choosing to exert also keeps the creature tapped through its next untap step.
         addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
-                        new BoostSelfEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF),
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                        new QueueReflexiveAbilityEffect(SequenceEffect.of(
+                                new BoostSelfEffect(1, 0),
+                                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)))
                 ),
                 "Exert Rhet-Crop Spearmaster as it attacks? (It gets +1/+0 and gains first strike until end of turn.)"
         ));

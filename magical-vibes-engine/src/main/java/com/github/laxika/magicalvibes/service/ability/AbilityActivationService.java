@@ -11007,7 +11007,7 @@ public class AbilityActivationService {
         // Registering a delayed upkeep draw does not move a card during this ability's resolution.
         return (effect instanceof CardDrawingEffect
                 && !(effect instanceof RegisterDrawCardsAtNextUpkeepEffect))
-                || (effect instanceof MillEffect mill && mill.recipient() != MillRecipient.CONTROLLER)
+                || effect instanceof MillEffect
                 || effect instanceof DrawCardsCost
                 || effect instanceof ExileTopCardOfLibraryCost
                 || effect instanceof MillControllerCost

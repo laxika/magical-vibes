@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
+import com.github.laxika.magicalvibes.cards.p.ParallelLives;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DainIronfoot.class, GrizzlyBears.class, LeoninScimitar.class})
+@CardUsed({DainIronfoot.class, GrizzlyBears.class, LeoninScimitar.class, ParallelLives.class})
 class DainIronfootTest extends BaseCardTest {
 
     @Test
@@ -43,6 +44,30 @@ class DainIronfootTest extends BaseCardTest {
         Permanent axe = findPermanent(player1, "Axe");
         assertThat(axe.getAttachedTo()).isEqualTo(bears.getId());
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("With two Axes created, each has its own reflexive ability and its own target")
+    void eachCreatedAxeIsAttachedByItsOwnAbility() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new ParallelLives());
+        harness.setHand(player1, List.of(new DainIronfoot()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent dain = findPermanent(player1, "Dáin Ironfoot");
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, dain.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player1, "Axe")).hasSize(2)
+                .extracting(Permanent::getAttachedTo)
+                .containsExactlyInAnyOrder(bears.getId(), dain.getId());
     }
 
     @Test

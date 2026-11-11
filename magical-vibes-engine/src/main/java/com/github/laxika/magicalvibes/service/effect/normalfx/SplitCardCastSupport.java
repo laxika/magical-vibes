@@ -630,7 +630,7 @@ public class SplitCardCastSupport {
         if (!targets.isEmpty()) {
             triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData);
         }
-        exileCastTargetSupport.queueAfterSuccessfulCast(gameData, card, controllerId,
+        exileCastTargetSupport.resolveAfterSuccessfulCast(gameData, card, controllerId,
                 cast.sourcePermanentId(), cast.afterSuccessfulCastEffect());
         if (exileCast != null && exileCast.lifeLossOnCast() > 0) {
             // "If you do, you lose N life" follows the cast as a step of its own (CR 608.2c, CR 616.1).

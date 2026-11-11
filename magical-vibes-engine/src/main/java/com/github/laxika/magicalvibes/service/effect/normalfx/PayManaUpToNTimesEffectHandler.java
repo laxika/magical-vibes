@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveModalChoiceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -30,6 +31,7 @@ import java.util.UUID;
 public class PayManaUpToNTimesEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final ReflexiveModalChoiceService reflexiveModalChoiceService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
     private final ETBTokenTargetService etbTokenTargetService;
@@ -77,8 +79,7 @@ public class PayManaUpToNTimesEffectHandler implements NormalEffectHandlerBean {
                             + " time(s) for " + cardName + "'s ability."));
 
             if (e.thenEffect() != null) {
-                queueReflexiveTargetedAbility(gameData, entry,
-                        limitModeCount(e.thenEffect(), chosenPayments), chosenPayments);
+                queueReflexiveTargetedAbility(gameData, entry, e.thenEffect(), chosenPayments);
             }
             return;
         }
@@ -111,16 +112,14 @@ public class PayManaUpToNTimesEffectHandler implements NormalEffectHandlerBean {
         // the chosen number as its X.
         StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(thenEffect));
         record.setXValue(paymentCount);
-        ReflexiveAbilitySupport.route(gameData, record, () -> chooseReflexiveAbilityTargets(gameData, entry, thenEffect, paymentCount));
+        ReflexiveAbilitySupport.route(gameData, record,
+                () -> chooseReflexiveAbilityTargets(gameData, entry, record, thenEffect, paymentCount));
     }
 
-    private void chooseReflexiveAbilityTargets(GameData gameData, StackEntry entry,
+    private void chooseReflexiveAbilityTargets(GameData gameData, StackEntry entry, StackEntry record,
                                                CardEffect thenEffect, int paymentCount) {
-        if (thenEffect instanceof ChooseOneEffect modal) {
-            // A modal reflexive ability has its modes, and then their targets, chosen as it is
-            // put on the stack (CR 700.2b), before anyone receives priority.
-            playerInputService.beginTriggeredModalChoice(gameData, entry.getControllerId(), entry.getCard(),
-                    modal, entry.getSourcePermanentId());
+        // "Choose up to that many": the number paid is the record's X, which the mode choice reads.
+        if (reflexiveModalChoiceService.beginModeChoice(gameData, record, thenEffect)) {
             return;
         }
         if (thenEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
@@ -133,15 +132,6 @@ public class PayManaUpToNTimesEffectHandler implements NormalEffectHandlerBean {
                 entry.getCard(), entry.getControllerId(), List.of(thenEffect), entry.getSourcePermanentId(),
                 List.of(), 0, 0, List.of(), paymentCount, List.of(), false));
         etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
-    }
-
-    private CardEffect limitModeCount(CardEffect effect, int paymentCount) {
-        if (effect instanceof ChooseOneEffect choices) {
-            return new ChooseOneEffect(choices.options(), choices.optional(), choices.choicesRequired(),
-                    Math.min(paymentCount, choices.choicesMax()), choices.allModesWhenOptionalCostPaid(),
-                    choices.additionalModesCondition());
-        }
-        return effect;
     }
 
     private int maxPotentialPayments(GameData gameData, UUID playerId,

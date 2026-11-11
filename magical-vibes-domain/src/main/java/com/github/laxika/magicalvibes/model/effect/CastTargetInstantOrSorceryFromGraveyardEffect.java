@@ -19,7 +19,7 @@ import java.util.List;
  * <p>{@code filter} is an optional additional restriction for cards whose oracle text narrows the
  * instant-or-sorcery choice further, such as an instant-only choice. {@code anyManaType} allows
  * the spell's colored mana requirements to be paid with mana of any type for this cast.
- * {@code afterSuccessfulCastEffect} is an optional follow-up queued only after the chosen card is
+ * {@code afterSuccessfulCastEffect} is an optional "if you do" follow-up, resolved as part of this ability only after the chosen card is
  * successfully cast.</p>
  */
 public record CastTargetInstantOrSorceryFromGraveyardEffect(

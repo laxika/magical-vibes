@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -22,9 +23,10 @@ public class GloryBoundInitiate extends Card {
         // Crop-Mate). Choosing to exert also keeps the creature tapped through its next untap step.
         addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
-                        new BoostSelfEffect(1, 3),
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF),
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)
+                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                        new QueueReflexiveAbilityEffect(SequenceEffect.of(
+                                new BoostSelfEffect(1, 3),
+                                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)))
                 ),
                 "Exert Glory-Bound Initiate as it attacks? (It gets +1/+3 and gains lifelink until end of turn.)"
         ));
