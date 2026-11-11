@@ -72,6 +72,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 public class GameData {
 
@@ -123,6 +124,28 @@ public class GameData {
      * trigger belongs to and which effect it was before the collector rewrote it.
      */
     private transient CollectingTrigger collectingTrigger;
+    /**
+     * The record of a trigger event on its way to the triggered ability it belongs to: the entry the ability's
+     * collector builds for an ability that chooses nothing ({@link #handOffTriggerRecord}), taken once by whatever
+     * the ability goes through next. A choice queued ({@link #queueInteraction}) or asked
+     * ({@link InteractionState#beginInteraction}) keeps it until it is taken out or answered, when it is in hand
+     * again; the triggered ability that then reaches the stack or a holding queue is given it
+     * ({@code StackEntry.carryTriggerRecord}). So a mode (CR 603.3c), a target (CR 603.3d) or a graveyard card chosen
+     * as the ability goes on the stack can't lose what the event was.
+     */
+    private StackEntry triggerRecordInHand;
+    /** The record each queued interaction took from the hand, by the interaction's identity. */
+    private final IdentityHashMap<PendingInteraction, StackEntry> queuedTriggerRecords = new IdentityHashMap<>();
+    /** How many collectors are routing an ability right now ({@link #beginTriggerRouting}). */
+    private int triggerRoutingDepth;
+    /** Whether the collector now routing an ability has handed off its record. */
+    private boolean triggerRecordHandedOff;
+    /**
+     * Told of every interaction queued or asked with no trigger record in hand, and whether a collector that is
+     * routing an ability did so without having handed off the ability's record. {@code null} in real games; the test
+     * fixtures set one that fails the test for such a collector.
+     */
+    public transient BiConsumer<PendingInteraction, Boolean> interactionWithoutTriggerRecord;
     public final Map<UUID, List<Card>> playerDecks = new LibraryMap();
     /** The size of each player's deck before the opening hand was drawn. */
     public final Map<UUID, Integer> startingDeckSizes = new ConcurrentHashMap<>();
@@ -648,7 +671,8 @@ public class GameData {
     public final Set<UUID> playersWhoseSpeedIncreasedThisTurn = ConcurrentHashMap.newKeySet();
     /** Players who used Highway Reaver's max-speed free unearth this turn. */
     public final Set<UUID> playersWhoUsedMaxSpeedFreeUnearthThisTurn = ConcurrentHashMap.newKeySet();
-    public final InteractionState interaction = new InteractionState();
+    public final InteractionState interaction = new InteractionState(this::takeTriggerRecordInHand,
+            this::reportInteractionWithoutTriggerRecord);
     public final List<StackEntry> stack = Collections.synchronizedList(new TriggerAwareStackList(this));
     /** CR 603.3 — triggers from mana-ability sacrifices wait here until the next time a player
      *  would receive priority, so they don't block sorcery-speed spell casting. */
@@ -6063,6 +6087,7 @@ public class GameData {
      * (priority grant, auto-pass, {@code SpellCastingService.finishSpellCast}).
      */
     public void enqueueTrigger(StackEntry entry) {
+        giveTriggerRecordInHand(entry);
         if (waitingForSubgame && session.active() != this) {
             observeTrigger(RulesObserver.Route.SUSPENDED_QUEUE, entry);
             suspendedZoneTriggers.add(entry);
@@ -6149,6 +6174,7 @@ public class GameData {
         @Override
         public boolean add(StackEntry entry) {
             gameData.stampSpellEnteringStack(entry);
+            gameData.giveTriggerRecordInHand(entry);
             boolean added = super.add(entry);
             if (added) {
                 gameData.recordStackEntryForCrime(entry);
@@ -6173,6 +6199,7 @@ public class GameData {
         @Override
         public void add(int index, StackEntry entry) {
             gameData.stampSpellEnteringStack(entry);
+            gameData.giveTriggerRecordInHand(entry);
             super.add(index, entry);
             gameData.recordStackEntryForCrime(entry);
             gameData.recordGraveyardTargetVersions(entry);
@@ -6183,6 +6210,7 @@ public class GameData {
         @Override
         public boolean addAll(java.util.Collection<? extends StackEntry> entries) {
             entries.forEach(gameData::stampSpellEnteringStack);
+            entries.forEach(gameData::giveTriggerRecordInHand);
             boolean added = super.addAll(entries);
             if (added) {
                 entries.forEach(gameData::recordStackEntryForCrime);
@@ -6196,6 +6224,7 @@ public class GameData {
         @Override
         public boolean addAll(int index, java.util.Collection<? extends StackEntry> entries) {
             entries.forEach(gameData::stampSpellEnteringStack);
+            entries.forEach(gameData::giveTriggerRecordInHand);
             boolean added = super.addAll(index, entries);
             if (added) {
                 entries.forEach(gameData::recordStackEntryForCrime);
@@ -6241,6 +6270,7 @@ public class GameData {
      */
     public void queueInteraction(PendingInteraction interaction) {
         observeTrigger(RulesObserver.Route.INTERACTION, interaction);
+        keepTriggerRecordWith(interaction);
         pendingInteractions.addLast(interaction);
         for (int i = 1; i < activeTriggeredAbilityCopies; i++) {
             pendingInteractions.addLast(interaction);
@@ -6254,6 +6284,7 @@ public class GameData {
      */
     public void queueInteractionFirst(PendingInteraction interaction) {
         observeTrigger(RulesObserver.Route.INTERACTION, interaction);
+        keepTriggerRecordWith(interaction);
         pendingInteractions.addFirst(interaction);
         for (int i = 1; i < activeTriggeredAbilityCopies; i++) {
             pendingInteractions.addFirst(interaction);
@@ -6291,6 +6322,7 @@ public class GameData {
             PendingInteraction interaction = it.next();
             if (type.isInstance(interaction)) {
                 it.remove();
+                takeQueuedTriggerRecord(interaction);
                 return type.cast(interaction);
             }
         }
@@ -6298,9 +6330,145 @@ public class GameData {
     }
 
     /**
+     * Hands off {@code record}, the entry a collector builds for an ability that chooses nothing, for the ability it
+     * is routing: the choice the ability is queued or asked with, or the entry that reaches the stack for it, takes
+     * it (see {@link #triggerRecordInHand}). Putting {@code record} itself on the stack takes it too. Returns the
+     * record that was in hand, for {@link #restoreTriggerRecordInHand} once the ability is routed.
+     */
+    public StackEntry handOffTriggerRecord(StackEntry record) {
+        StackEntry previous = triggerRecordInHand;
+        triggerRecordInHand = record;
+        if (record != null) {
+            triggerRecordHandedOff = true;
+        }
+        return previous;
+    }
+
+    /** Ends a hand-off: whatever is still in hand is dropped and {@code previous} is in hand again. */
+    public void restoreTriggerRecordInHand(StackEntry previous) {
+        triggerRecordInHand = previous;
+    }
+
+    /**
+     * Marks a collector as routing one ability, with nothing in hand, and returns the state to give
+     * {@link #endTriggerRouting}. While it routes, a choice queued or asked with no record handed off is reported to
+     * {@link #triggerRecordMissing}.
+     */
+    public TriggerRouting beginTriggerRouting() {
+        TriggerRouting previous = new TriggerRouting(triggerRecordInHand, triggerRecordHandedOff);
+        triggerRecordInHand = null;
+        triggerRecordHandedOff = false;
+        triggerRoutingDepth++;
+        return previous;
+    }
+
+    public void endTriggerRouting(TriggerRouting previous) {
+        triggerRoutingDepth--;
+        triggerRecordInHand = previous.recordInHand();
+        triggerRecordHandedOff = previous.handedOff();
+    }
+
+    /**
+     * Runs {@code routing}, a collector putting one triggered ability toward the stack, as one routing
+     * ({@link #beginTriggerRouting}).
+     */
+    public void routeTriggeredAbility(Runnable routing) {
+        TriggerRouting previous = beginTriggerRouting();
+        try {
+            routing.run();
+        } finally {
+            endTriggerRouting(previous);
+        }
+    }
+
+    /** {@link #routeTriggeredAbility(Runnable)} for a collector that returns a result. */
+    public <T> T routeTriggeredAbility(Supplier<T> routing) {
+        TriggerRouting previous = beginTriggerRouting();
+        try {
+            return routing.get();
+        } finally {
+            endTriggerRouting(previous);
+        }
+    }
+
+    /**
+     * Drops the trigger record in hand: nothing is being routed any more (a stack object starts to resolve), so a
+     * record a route left behind (an ability removed for want of a legal target, CR 603.3d) can't reach another
+     * ability.
+     */
+    public void dropTriggerRecordInHand() {
+        triggerRecordInHand = null;
+    }
+
+    /** What was in hand before a collector began routing an ability ({@link #beginTriggerRouting}). */
+    public record TriggerRouting(StackEntry recordInHand, boolean handedOff) {
+    }
+
+    /** Takes the record in hand, leaving none. */
+    StackEntry takeTriggerRecordInHand() {
+        StackEntry record = triggerRecordInHand;
+        triggerRecordInHand = null;
+        return record;
+    }
+
+    private void reportInteractionWithoutTriggerRecord(PendingInteraction interaction) {
+        if (interactionWithoutTriggerRecord != null) {
+            interactionWithoutTriggerRecord.accept(interaction, triggerRoutingDepth > 0 && !triggerRecordHandedOff);
+        }
+    }
+
+    private void keepTriggerRecordWith(PendingInteraction interaction) {
+        StackEntry record = takeTriggerRecordInHand();
+        if (record != null) {
+            queuedTriggerRecords.put(interaction, record);
+        } else {
+            reportInteractionWithoutTriggerRecord(interaction);
+        }
+    }
+
+    private void takeQueuedTriggerRecord(PendingInteraction interaction) {
+        boolean queuedAgain = false;
+        for (PendingInteraction queued : pendingInteractions) {
+            if (queued == interaction) {
+                queuedAgain = true;
+                break;
+            }
+        }
+        triggerRecordInHand = queuedAgain
+                ? queuedTriggerRecords.get(interaction) : queuedTriggerRecords.remove(interaction);
+    }
+
+    private static boolean sameSourceCard(StackEntry record, StackEntry entry) {
+        Card recordCard = record.getCard();
+        Card entryCard = entry.getCard();
+        return recordCard == entryCard || recordCard != null && entryCard != null
+                && recordCard.getId() != null && recordCard.getId().equals(entryCard.getId());
+    }
+
+    /**
+     * Gives {@code entry}, a triggered ability arriving on the stack or in a holding queue, the record in hand when
+     * it is that ability's (the same source card): the first such entry takes it. The record itself arriving is the
+     * ability that chose nothing.
+     */
+    private void giveTriggerRecordInHand(StackEntry entry) {
+        if (entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY || entry.isTriggerRecordSettled()) {
+            return;
+        }
+        StackEntry record = triggerRecordInHand;
+        if (record == entry) {
+            triggerRecordInHand = null;
+        } else if (record != null && sameSourceCard(record, entry)) {
+            triggerRecordInHand = null;
+            entry.carryTriggerRecord(record);
+        }
+        entry.settleTriggerRecord();
+    }
+
+    /**
      * Removes every queued interaction of the given kind (e.g. Karn restart wiping trigger state).
      */
     public void clearPendingInteractions(Class<? extends PendingInteraction> type) {
+        queuedTriggerRecords.keySet().removeIf(type::isInstance);
         pendingInteractions.removeIf(type::isInstance);
     }
 
@@ -10921,16 +11089,25 @@ public class GameData {
         copy.permanentAbilityResolutionsThisTurn.putAll(this.permanentAbilityResolutionsThisTurn);
 
         // --- Deques ---
+        IdentityHashMap<PendingInteraction, PendingInteraction> copiedInteractions = new IdentityHashMap<>();
         this.pendingInteractions.forEach(pending -> copy.pendingInteractions.add(
-                pending instanceof PendingInteraction.LandManaDrainContinuation drain
+                copiedInteractions.computeIfAbsent(pending, original ->
+                original instanceof PendingInteraction.LandManaDrainContinuation drain
                         ? new PendingInteraction.LandManaDrainContinuation(drain.entry(), drain.remainingLandIds(),
                                 drain.delayedColorless())
-                        : pending instanceof PendingInteraction.ColorChoice choice
+                        : original instanceof PendingInteraction.ColorChoice choice
                         ? choice.copyCardTypeOnEnterPermanent()
-                        : pending instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
+                        : original instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
                         ? trigger.copyPlanarSnapshot()
-                        : pending instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger trigger
-                        ? trigger.copyPlanarSnapshot() : pending));
+                        : original instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger trigger
+                        ? trigger.copyPlanarSnapshot() : original)));
+        this.queuedTriggerRecords.forEach((pending, record) -> {
+            PendingInteraction copied = copiedInteractions.get(pending);
+            if (copied != null) {
+                copy.queuedTriggerRecords.put(copied, new StackEntry(record));
+            }
+        });
+        copy.triggerRecordInHand = this.triggerRecordInHand == null ? null : new StackEntry(this.triggerRecordInHand);
         copy.extraTurns.addAll(this.extraTurns);
         copy.extraTurnSkipsUntap.addAll(this.extraTurnSkipsUntap);
         copy.extraTurnPowerUpAbilitiesDisabled.addAll(this.extraTurnPowerUpAbilitiesDisabled);
@@ -11499,6 +11676,7 @@ public class GameData {
         if (source.activeInteraction() != null) {
             target.interaction.beginInteraction(
                     source.activeInteraction(), source.activeDecisionId());
+            target.interaction.keepTriggerRecord(source.activeTriggerRecord());
         }
     }
 

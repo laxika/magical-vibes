@@ -28,6 +28,15 @@ public class DungeonTriggerCollectorService {
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_COMPLETES_DUNGEON)
     private boolean handleDungeonCompletion(TriggerMatchContext match, TriggerContext context) {
         Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                match.stackEffects(),
+                null,
+                match.permanent().getId());
+        match.gameData().handOffTriggerRecord(entry);
         if (match.admits(TargetPredicate.Kind.GRAVEYARD_CARD)
                 && !match.admits(TargetPredicate.Kind.PLAYER)
                 && !match.admits(TargetPredicate.Kind.PERMANENT)) {
@@ -44,14 +53,7 @@ public class DungeonTriggerCollectorService {
             return true;
         }
 
-        match.gameData().enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                match.stackEffects(),
-                null,
-                match.permanent().getId()));
+        match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on dungeon completion", match.gameData().id, sourceCard.getName());
         return true;

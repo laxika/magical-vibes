@@ -2226,7 +2226,8 @@ public class CombatDamageService {
                     gameData, attackerId, creature, false, combatDamageContext));
             try {
                 for (AbilityEffects ability : triggered) {
-                    putDamageToPlayerAbilityOnStack(gameData, creature, attackerId, defenderId, damageDealt, ability);
+                    gameData.routeTriggeredAbility(() -> putDamageToPlayerAbilityOnStack(
+                            gameData, creature, attackerId, defenderId, damageDealt, ability));
                 }
             } finally {
                 gameData.restoreTriggeredAbilityCopies(previousCopies);
@@ -2282,9 +2283,12 @@ public class CombatDamageService {
         se.setAlternateCost(creature.isAlternateCost());
         se.setEventValue(damageDealt);
         se.setTriggeringPlayerId(defenderId);
+        // The damaged player, which "target ... card that player owns" (Time Reaper) is judged against.
+        se.setAttackedTargetId(defenderId);
         se.setEventDamageSource(creature, attackerId);
         se.setGrantingPermanentId(ability.ability().grantingPermanentId());
         se.setNonTargeting(true);
+        gameData.handOffTriggerRecord(se);
 
         // A modal whose mode is chosen as it goes on the stack (CR 603.3c), and "choose one that hasn't been
         // chosen" (Silent Hallcreeper) among the modes its source hasn't chosen. The choice builds the stack object
@@ -2559,8 +2563,9 @@ public class CombatDamageService {
                     gameData, ownerId, perm, creature, attackerId, damageDealt);
             try {
                 for (AbilityEffects ability : abilities) {
-                    putAttachedDamageToPlayerAbilityOnStack(gameData, perm, ownerId, creature, attackerId,
-                            defenderId, damageDealt, new ArrayList<>(ability.effects()));
+                    gameData.routeTriggeredAbility(() -> putAttachedDamageToPlayerAbilityOnStack(
+                            gameData, perm, ownerId, creature, attackerId, defenderId, damageDealt,
+                            new ArrayList<>(ability.effects())));
                 }
             } finally {
                 gameData.restoreTriggeredAbilityCopies(previousCopies);
@@ -2599,6 +2604,7 @@ public class CombatDamageService {
         se.setEventDamageSource(creature, attackerId);
         se.setEventValue(damageDealt);
         se.setNonTargeting(true);
+        gameData.handOffTriggerRecord(se);
         if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     perm.getCard(), ownerId, effects, null, 0, 0, 0, null, false, null, perm.getId())
@@ -2904,6 +2910,8 @@ public class CombatDamageService {
             // "Do this only once each turn" is used up as the action is taken (CR 603.2h), whichever way the
             // ability reaches the stack.
             se.setOnceEachTurnActionKey(read.onceEachTurnActionKey());
+            se.setSourcePermanentSnapshot(new Permanent(perm));
+            gameData.handOffTriggerRecord(se);
             // "Choose one that hasn't been chosen this turn" (Parapet Thrasher): the mode is chosen as the
             // ability goes on the stack (CR 603.3c), among the modes its source hasn't chosen this turn. The
             // choice builds the stack object from the chosen mode, so it is the ability's one effect.
@@ -3000,10 +3008,18 @@ public class CombatDamageService {
                                 gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card),
                                 dealtCombatDamage, Zone.GRAVEYARD), dealtCombatDamage,
                         conditionEvaluationService.judge(gameData, ConditionContext.forCard(card, playerId)))) {
-                    // The target choice carries this graveyard incarnation to the entry (CR 400.7).
+                    // The ability always targets, so there is no entry of one that chooses nothing: the record is
+                    // the bare entry of the ability from this graveyard incarnation, which the target choice
+                    // carries to the entry too (CR 400.7).
+                    List<CardEffect> effects = new ArrayList<>(ability.effects());
+                    StackEntry record = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, playerId,
+                            card.getName() + "'s triggered ability", effects);
+                    record.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
+                    StackEntry recordInHand = gameData.handOffTriggerRecord(record);
                     gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                            card, playerId, new ArrayList<>(ability.effects()), null)
+                            card, playerId, effects, null)
                             .withSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId())));
+                    gameData.restoreTriggerRecordInHand(recordInHand);
                     gameLogService.append(gameData, GameLog.cardThen(card, "'s graveyard trigger triggers."));
                 }
             }
@@ -3915,6 +3931,19 @@ public class CombatDamageService {
                 CardEffect targeting = effects.stream()
                         .filter(effect -> effect.targetSpec().declaredTarget() != null)
                         .findFirst().orElse(null);
+                // The entry of the ability that chooses nothing, and the record of one that chooses a target as it
+                // goes on the stack.
+                StackEntry triggerEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        data.card(),
+                        data.controllerId(),
+                        data.card().getName() + "'s ability",
+                        effects,
+                        null,
+                        data.permanentId()
+                );
+                triggerEntry.setEventValue(data.damageDealt());
+                gameData.handOffTriggerRecord(triggerEntry);
                 if (targeting != null) {
                     TargetFilter targetFilter = data.card().getEffectTargetIndex(targeting) >= 0
                             ? data.card().getTargetFilter() : null;
@@ -3926,16 +3955,6 @@ public class CombatDamageService {
                     continue;
                 }
 
-                StackEntry triggerEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        data.card(),
-                        data.controllerId(),
-                        data.card().getName() + "'s ability",
-                        effects,
-                        null,
-                        data.permanentId()
-                );
-                triggerEntry.setEventValue(data.damageDealt());
                 gameData.stack.add(triggerEntry);
                 gameLogService.append(gameData, GameLog.abilityTriggers(data.card()));
                 log.info("Game {} - {} combat-damage-received trigger fires", gameData.id,

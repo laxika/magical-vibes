@@ -975,13 +975,8 @@ public class CombatBlockService {
             }
             List<CardEffect> effects = CombatAbilityReader.effectsAsJudged(ability);
             gameLogService.append(gameData, GameLog.cardThen(blocker.getCard(), "'s block ability triggers."));
-            if (declaresChosenTarget(blocker.getCard(), effects)) {
-                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                        blocker.getCard(), defenderId, effects, blocker.getId()));
-                log.info("Game {} - {} block trigger queued for target selection", gameData.id,
-                        blocker.getCard().getName());
-                continue;
-            }
+            // The entry of the ability that chooses nothing, and the record of the block one that chooses a target
+            // or a mode as it goes on the stack carries.
             StackEntry blockTrigger = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     blocker.getCard(),
@@ -992,7 +987,17 @@ public class CombatBlockService {
                     blocker.getId());
             recordCombatOpponent(gameData, blockTrigger, attacker);
             blockTrigger.setSourcePermanentSnapshot(new Permanent(blocker));
+            StackEntry recordInHand = gameData.handOffTriggerRecord(blockTrigger);
+            if (declaresChosenTarget(blocker.getCard(), effects)) {
+                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                        blocker.getCard(), defenderId, effects, blocker.getId()));
+                gameData.restoreTriggerRecordInHand(recordInHand);
+                log.info("Game {} - {} block trigger queued for target selection", gameData.id,
+                        blocker.getCard().getName());
+                continue;
+            }
             combatTriggerService.putOnStackOrChooseMode(gameData, blockTrigger);
+            gameData.restoreTriggerRecordInHand(recordInHand);
             log.info("Game {} - {} block trigger pushed onto stack", gameData.id, blocker.getCard().getName());
         }
     }
@@ -1447,8 +1452,8 @@ public class CombatBlockService {
             List<List<CombatAbilityReader.CombatEffect>> unblockedAbilities = plainAbilities(unblockedJudge.filter(
                     watchedAbilities(gameData, attacker, CombatWatch.ON_ATTACKS_UNBLOCKED)), unblocked);
             for (List<CombatAbilityReader.CombatEffect> ability : unblockedAbilities) {
-                putUnblockedAttackAbilityOnStack(gameData, activeId, defenderId, attacker,
-                        CombatAbilityReader.effectsAsJudged(ability));
+                gameData.routeTriggeredAbility(() -> putUnblockedAttackAbilityOnStack(gameData, activeId, defenderId,
+                        attacker, CombatAbilityReader.effectsAsJudged(ability)));
                 pushed++;
             }
             // "Whenever enchanted creature attacks and isn't blocked" (aura) triggers on this attacker.
@@ -1484,6 +1489,10 @@ public class CombatBlockService {
                 attacker.getId());
         // "Defending player" is determined by the combat, not chosen — the trigger can't fizzle.
         trigger.setNonTargeting(true);
+        trigger.setSourcePermanentSnapshot(new Permanent(attacker));
+        // "Target artifact defending player controls" (Floral Spuzzem) reads the defending player from the attack.
+        trigger.setAttackedTargetId(defenderId);
+        gameData.handOffTriggerRecord(trigger);
         if (graveyardChoice != null) {
             // The service owns pushing the entry and its logging; the entry carries what this one records, and waits
             // its turn while another ability's choice is being made.
@@ -1538,14 +1547,8 @@ public class CombatBlockService {
                 List<CardEffect> effects = CombatAbilityReader.effectsAsJudged(ability);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 pushed[0]++;
-                if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
-                    gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                            perm.getCard(), auraOwnerId, effects, attacker.getId(), auraOwnerId,
-                            defenderId, attacker.getId()));
-                    log.info("Game {} - {} enchanted-creature unblocked-attack trigger queued for target selection",
-                            gameData.id, perm.getCard().getName());
-                    continue;
-                }
+                // The entry of the ability that chooses nothing, and the record of one that chooses a target or a
+                // mode as it goes on the stack.
                 StackEntry trigger = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         perm.getCard(),
@@ -1556,6 +1559,22 @@ public class CombatBlockService {
                         attacker.getId());
                 // Enchanted attacker and defending player are determined by the combat — the trigger can't fizzle.
                 trigger.setNonTargeting(true);
+                // The enchanted creature is the triggering permanent: "its controller may" (Farrel's Mantle) is
+                // that creature's controller as the ability triggered.
+                trigger.setAttackedTargetId(defenderId);
+                trigger.setTriggeringPermanentId(attacker.getId());
+                trigger.setAttachedPermanentSnapshot(new Permanent(attacker));
+                trigger.setTriggeringPermanentControllerId(
+                        gameQueryService.findPermanentController(gameData, attacker.getId()));
+                gameData.handOffTriggerRecord(trigger);
+                if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
+                    gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                            perm.getCard(), auraOwnerId, effects, attacker.getId(), auraOwnerId,
+                            defenderId, attacker.getId()));
+                    log.info("Game {} - {} enchanted-creature unblocked-attack trigger queued for target selection",
+                            gameData.id, perm.getCard().getName());
+                    continue;
+                }
                 combatTriggerService.putOnStackOrChooseMode(gameData, trigger);
                 log.info("Game {} - {} enchanted-creature unblocked-attack trigger pushed onto stack (enchanted {})",
                         gameData.id, perm.getCard().getName(), attacker.getCard().getName());
@@ -1885,6 +1904,32 @@ public class CombatBlockService {
      */
     private void putBecomesBlockedAbilityOnStack(GameData gameData, Permanent attacker, UUID controllerId,
                                                  List<CardEffect> regularEffects) {
+        // The entry of the ability that chooses nothing, and the record one that chooses a graveyard card, a target
+        // or a mode as it goes on the stack carries.
+        StackEntry trigger = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                attacker.getCard(),
+                controllerId,
+                attacker.getCard().getName() + "'s becomes-blocked trigger",
+                new ArrayList<>(regularEffects),
+                attacker.getId(),
+                attacker.getId()
+        );
+        trigger.setNonTargeting(true);
+        trigger.setSourcePermanentSnapshot(new Permanent(attacker));
+        trigger.setAttackedTargetId(attacker.getAttackTarget());
+        UUID attackedTarget = attacker.getAttackTarget();
+        if (attackedTarget != null) {
+            // CR 310.9d: "defending player" for an attacked battle is its protector.
+            Permanent attackedPermanent = gameData.playerIds.contains(attackedTarget)
+                    ? null : gameQueryService.findPermanentById(gameData, attackedTarget);
+            trigger.setDefendingPlayerId(gameData.playerIds.contains(attackedTarget)
+                    ? attackedTarget
+                    : attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)
+                    ? attackedPermanent.getProtectorPlayerId()
+                    : gameQueryService.findPermanentController(gameData, attackedTarget));
+        }
+        gameData.handOffTriggerRecord(trigger);
         boolean needsGraveyardTarget = regularEffects.stream()
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         if (needsGraveyardTarget) {
@@ -1908,29 +1953,6 @@ public class CombatBlockService {
             log.info("Game {} - {} becomes-blocked trigger queued for target selection",
                     gameData.id, attacker.getCard().getName());
             return;
-        }
-        StackEntry trigger = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                attacker.getCard(),
-                controllerId,
-                attacker.getCard().getName() + "'s becomes-blocked trigger",
-                new ArrayList<>(regularEffects),
-                attacker.getId(),
-                attacker.getId()
-        );
-        trigger.setNonTargeting(true);
-        trigger.setSourcePermanentSnapshot(new Permanent(attacker));
-        trigger.setAttackedTargetId(attacker.getAttackTarget());
-        UUID attackedTarget = attacker.getAttackTarget();
-        if (attackedTarget != null) {
-            // CR 310.9d: "defending player" for an attacked battle is its protector.
-            Permanent attackedPermanent = gameData.playerIds.contains(attackedTarget)
-                    ? null : gameQueryService.findPermanentById(gameData, attackedTarget);
-            trigger.setDefendingPlayerId(gameData.playerIds.contains(attackedTarget)
-                    ? attackedTarget
-                    : attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)
-                    ? attackedPermanent.getProtectorPlayerId()
-                    : gameQueryService.findPermanentController(gameData, attackedTarget));
         }
         combatTriggerService.putOnStackOrChooseMode(gameData, trigger);
         gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(),
@@ -1982,8 +2004,8 @@ public class CombatBlockService {
                 CombatAbilityReader.CombatEffect read = ability.getFirst();
                 if (!read.eachBlocker() && triggersOnceFor(gameData, read, blockers)
                         && conditionEvaluationService.triggerConditionsMet(gameData, read.options(), attackerContext)) {
-                    putBecomesBlockedAbilityOnStack(gameData, attacker, activeId,
-                            CombatAbilityReader.effectsAsJudged(ability));
+                    gameData.routeTriggeredAbility(() -> putBecomesBlockedAbilityOnStack(gameData, attacker,
+                            activeId, CombatAbilityReader.effectsAsJudged(ability)));
                 }
             }
         }
@@ -2086,6 +2108,20 @@ public class CombatBlockService {
                 }
                 List<CardEffect> matchingEffects = CombatAbilityReader.effectsAsJudged(ability);
 
+                // The entry of the ability that chooses nothing, and the record of one that chooses a target or a
+                // mode as it goes on the stack.
+                StackEntry trigger = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        perm.getCard(),
+                        activeId,
+                        perm.getCard().getName() + "'s becomes-blocked trigger",
+                        matchingEffects,
+                        blockedAttacker.getId(),
+                        perm.getId()
+                );
+                recordBlockedCreature(gameData, trigger, blockedAttacker);
+                trigger.setSourcePermanentSnapshot(new Permanent(perm));
+                gameData.handOffTriggerRecord(trigger);
                 boolean needsTarget = matchingEffects.stream()
                         .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                                 || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
@@ -2100,17 +2136,6 @@ public class CombatBlockService {
                     continue;
                 }
 
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        activeId,
-                        perm.getCard().getName() + "'s becomes-blocked trigger",
-                        matchingEffects,
-                        blockedAttacker.getId(),
-                        perm.getId()
-                );
-                recordBlockedCreature(gameData, trigger, blockedAttacker);
-                trigger.setSourcePermanentSnapshot(new Permanent(perm));
                 combatTriggerService.putOnStackOrChooseMode(gameData, trigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} ON_ALLY_CREATURE_BECOMES_BLOCKED trigger for {} blocked",

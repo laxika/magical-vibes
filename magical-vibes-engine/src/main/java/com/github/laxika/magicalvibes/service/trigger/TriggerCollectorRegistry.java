@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 import java.lang.invoke.MethodHandle;
@@ -55,11 +56,26 @@ public class TriggerCollectorRegistry {
         for (CardEffect effect : match.effects()) {
             TriggerCollectorHandler handler = handlers.get(new TriggerKey(slot, effect.getClass()));
             if (handler != null) {
-                return handler.handle(match, context);
+                return route(handler, match, context);
             }
         }
         TriggerCollectorHandler handler = handlers.get(new TriggerKey(slot, CardEffect.class));
-        return handler != null && handler.handle(match, context);
+        return handler != null && route(handler, match, context);
+    }
+
+    /**
+     * Has {@code handler} route {@code match}'s ability as one routing of the game's trigger record hand-off
+     * ({@code GameData.beginTriggerRouting}): the handler hands off the entry it builds for an ability that chooses
+     * nothing before it queues or asks a choice, and what it leaves in hand is dropped.
+     */
+    private static boolean route(TriggerCollectorHandler handler, TriggerMatchContext match, TriggerContext context) {
+        GameData gameData = match.gameData();
+        GameData.TriggerRouting previous = gameData.beginTriggerRouting();
+        try {
+            return handler.handle(match, context);
+        } finally {
+            gameData.endTriggerRouting(previous);
+        }
     }
 
     /**

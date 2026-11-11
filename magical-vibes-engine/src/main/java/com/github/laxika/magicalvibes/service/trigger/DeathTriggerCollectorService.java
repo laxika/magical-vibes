@@ -133,17 +133,6 @@ public class DeathTriggerCollectorService {
         if (eventValue == null && epd != null) {
             eventValue = Math.max(0, epd.dyingCreaturePower());
         }
-        if (match.admits(TargetPredicate.Kind.PERMANENT) || match.admits(TargetPredicate.Kind.PLAYER)
-                || match.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
-            PermanentChoiceContext.DeathTriggerTarget target = new PermanentChoiceContext.DeathTriggerTarget(
-                    match.permanent().getCard(), match.controllerId(), match.stackEffects(), eventValue,
-                    new Permanent(match.permanent()), false);
-            match.gameData().queueInteraction(epd == null || epd.dyingPermanent() == null ? target
-                    : target.withTriggeringPermanent(epd.dyingPermanent())
-                            .withTriggeringPermanentController(epd.dyingPermanentControllerId()));
-            return null;
-        }
-
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -169,6 +158,18 @@ public class DeathTriggerCollectorService {
         if (epd != null) {
             recordEnchantedPermanent(match.gameData(), entry, epd);
         }
+        match.gameData().handOffTriggerRecord(entry);
+        if (match.admits(TargetPredicate.Kind.PERMANENT) || match.admits(TargetPredicate.Kind.PLAYER)
+                || match.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+            PermanentChoiceContext.DeathTriggerTarget target = new PermanentChoiceContext.DeathTriggerTarget(
+                    match.permanent().getCard(), match.controllerId(), match.stackEffects(), eventValue,
+                    new Permanent(match.permanent()), false);
+            match.gameData().queueInteraction(epd == null || epd.dyingPermanent() == null ? target
+                    : target.withTriggeringPermanent(epd.dyingPermanent())
+                            .withTriggeringPermanentController(epd.dyingPermanentControllerId()));
+            return null;
+        }
+
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
                 "'s ability triggers (enchanted permanent put into graveyard)."));
@@ -594,19 +595,6 @@ public class DeathTriggerCollectorService {
         Permanent source = match.permanent();
         Card sourceCard = source != null ? source.getCard() : match.sourceCard();
         Card graveyardCard = graveyardCardOf(death);
-        if (targets(match)) {
-            PermanentChoiceContext.DeathTriggerTarget target = new PermanentChoiceContext.DeathTriggerTarget(
-                    sourceCard, match.controllerId(), match.stackEffects(),
-                    death.dyingCreaturePower(), source == null ? null : new Permanent(source), targetFilter, null,
-                    creaturesOnly, match.onceEachTurnActionKey())
-                    .withTriggeringPermanent(death.dyingPermanent(), death.attachments())
-                    .withTriggeringPermanentController(death.dyingCreatureControllerId())
-                    .withGraveyardTargetMaxManaValue(graveyardTargetMaxManaValueAtDeath(
-                            gameData, match.controllerId(), match.effects(), death.dyingPermanent()));
-            gameData.queueInteraction(graveyardCard == null ? target : target.withTriggeringCard(
-                    graveyardCard.getId(), gameData.graveyardEntryVersion(graveyardCard.getId())));
-            return;
-        }
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -623,6 +611,20 @@ public class DeathTriggerCollectorService {
         }
         entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
         recordDeath(gameData, entry, death);
+        gameData.handOffTriggerRecord(entry);
+        if (targets(match)) {
+            PermanentChoiceContext.DeathTriggerTarget target = new PermanentChoiceContext.DeathTriggerTarget(
+                    sourceCard, match.controllerId(), match.stackEffects(),
+                    death.dyingCreaturePower(), source == null ? null : new Permanent(source), targetFilter, null,
+                    creaturesOnly, match.onceEachTurnActionKey())
+                    .withTriggeringPermanent(death.dyingPermanent(), death.attachments())
+                    .withTriggeringPermanentController(death.dyingCreatureControllerId())
+                    .withGraveyardTargetMaxManaValue(graveyardTargetMaxManaValueAtDeath(
+                            gameData, match.controllerId(), match.effects(), death.dyingPermanent()));
+            gameData.queueInteraction(graveyardCard == null ? target : target.withTriggeringCard(
+                    graveyardCard.getId(), gameData.graveyardEntryVersion(graveyardCard.getId())));
+            return;
+        }
         gameData.enqueueTrigger(entry);
     }
 

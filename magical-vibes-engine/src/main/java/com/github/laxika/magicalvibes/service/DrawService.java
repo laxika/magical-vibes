@@ -2815,7 +2815,8 @@ public class DrawService {
                     ConditionContext.forPermanent(source, revealingPlayerId).withTargetId(revealingPlayerId))) {
                 continue;
             }
-            queueControllerDrawAbility(gameData, source, revealingPlayerId, reads, drawn);
+            gameData.routeTriggeredAbility(
+                    () -> queueControllerDrawAbility(gameData, source, revealingPlayerId, reads, drawn));
             read.markLimit(gameData, source.getId());
         }
     }
@@ -2875,7 +2876,8 @@ public class DrawService {
                         ConditionContext.forPermanent(perm, drawingPlayerId).withTargetId(drawingPlayerId))) {
                     continue;
                 }
-                queueControllerDrawAbility(gameData, perm, drawingPlayerId, reads, drawn);
+                gameData.routeTriggeredAbility(
+                        () -> queueControllerDrawAbility(gameData, perm, drawingPlayerId, reads, drawn));
                 read.markLimit(gameData, perm.getId());
             }
         }
@@ -2900,6 +2902,7 @@ public class DrawService {
             // Targeted draw trigger: the controller must choose a target before the ability
             // goes on the stack. This includes player-only targets such as "target opponent".
             for (int copy = 0; copy < triggerCopies; copy++) {
+                gameData.handOffTriggerRecord(drawEntry(perm, drawingPlayerId, ability, effects, drawingPlayerId, drawn));
                 gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerAnyTarget(
                         perm.getCard(),
                         drawingPlayerId,
@@ -2918,6 +2921,7 @@ public class DrawService {
             TargetFilter targetFilter = ability.targetFilter() != null
                     ? ability.targetFilter() : perm.getCard().getTargetFilter();
             for (int copy = 0; copy < triggerCopies; copy++) {
+                gameData.handOffTriggerRecord(drawEntry(perm, drawingPlayerId, ability, effects, drawingPlayerId, drawn));
                 gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerPermanentTarget(
                         perm.getCard(),
                         drawingPlayerId,
@@ -2932,29 +2936,40 @@ public class DrawService {
             }
         } else if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
             for (int copy = 0; copy < triggerCopies; copy++) {
+                gameData.handOffTriggerRecord(drawEntry(perm, drawingPlayerId, ability, effects, drawingPlayerId, drawn));
                 gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
                         perm.getCard(), drawingPlayerId, new ArrayList<>(effects), "draw", perm.getId()));
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             }
         } else {
             for (int copy = 0; copy < triggerCopies; copy++) {
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        drawingPlayerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(effects),
-                        drawingPlayerId,
-                        perm.getId()
-                );
-                recordDrawEvent(entry, perm, ability, drawingPlayerId, drawn);
-                gameData.stack.add(entry);
+                gameData.stack.add(drawEntry(perm, drawingPlayerId, ability, effects, drawingPlayerId, drawn));
 
                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                 log.info("Game {} - {} controller-draw trigger pushed onto stack",
                         gameData.id, perm.getCard().getName());
             }
         }
+    }
+
+    /**
+     * The entry of a draw ability of {@code perm} that chooses no target, with the draw recorded
+     * ({@link #recordDrawEvent}). It is also the record an ability that chooses a target as it goes on the stack is
+     * given ({@code GameData.handOffTriggerRecord}).
+     */
+    private static StackEntry drawEntry(Permanent perm, UUID controllerId, TriggeredAbility ability,
+                                        List<CardEffect> effects, UUID drawingPlayerId, Card drawn) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                perm.getCard(),
+                controllerId,
+                perm.getCard().getName() + "'s ability",
+                new ArrayList<>(effects),
+                drawingPlayerId,
+                perm.getId()
+        );
+        recordDrawEvent(entry, perm, ability, drawingPlayerId, drawn);
+        return entry;
     }
 
     /**
@@ -3079,6 +3094,15 @@ public class DrawService {
                 Card source = emblem.sourceCard();
                 String description = source.getName() + "'s emblem";
                 List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect).toList();
+                StackEntry entry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        source,
+                        emblem.controllerId(),
+                        description,
+                        new ArrayList<>(effects));
+                entry.setNonTargeting(true);
+                entry.setTriggeringPlayerId(drawingPlayerId);
+                gameData.handOffTriggerRecord(entry);
                 if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
                     gameData.queueInteraction(new PermanentChoiceContext.EmblemTriggerTarget(
                             description, emblem.controllerId(), new ArrayList<>(effects), source,
@@ -3089,14 +3113,6 @@ public class DrawService {
                     throw new IllegalStateException(description + " has a draw ability whose target its reader "
                             + "doesn't choose: " + ability);
                 }
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        source,
-                        emblem.controllerId(),
-                        description,
-                        new ArrayList<>(effects));
-                entry.setNonTargeting(true);
-                entry.setTriggeringPlayerId(drawingPlayerId);
                 gameData.stack.add(entry);
                 gameLogService.append(gameData, GameLog.text(description + " triggers."));
                 log.info("Game {} - {} triggers when a player draws", gameData.id, description);
@@ -3181,6 +3197,8 @@ public class DrawService {
                     int triggerCopies = 1 + gameQueryService.countAdditionalDrawTriggeredAbilityTriggers(
                             gameData, playerId, perm);
                     for (int copy = 0; copy < triggerCopies; copy++) {
+                        StackEntry trigger = drawEntry(perm, playerId, read.ability(), effects, drawingPlayerId, drawn);
+                        gameData.handOffTriggerRecord(trigger);
                         if (effects.stream().anyMatch(DrawService::targetsPlayerOrAnyTarget)) {
                             gameData.queueInteraction(new PermanentChoiceContext.DrawTriggerAnyTarget(
                                     perm.getCard(),
@@ -3190,16 +3208,6 @@ public class DrawService {
                             ));
 
                         } else {
-                            StackEntry trigger = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s ability",
-                                new ArrayList<>(effects),
-                                drawingPlayerId,
-                                perm.getId()
-                            );
-                            recordDrawEvent(trigger, perm, read.ability(), drawingPlayerId, drawn);
                             gameData.stack.add(trigger);
                         }
 

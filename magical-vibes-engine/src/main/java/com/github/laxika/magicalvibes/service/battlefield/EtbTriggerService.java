@@ -543,7 +543,11 @@ public class EtbTriggerService {
                     modalChoice = modalChoice.withModeCount(minimumChoices, maximumChoices);
                 }
                 for (int i = 0; i < 1 + extraTriggerCopies; i++) {
+                    StackEntry recordInHand = gameData.handOffTriggerRecord(ownEntryRecord(gameData, controllerId,
+                            card, List.of(triggerTimeChoice), xValue, null, repeatedAdditionalCosts,
+                            convokeCreatureIds));
                     gameData.queueInteraction(modalChoice);
+                    gameData.restoreTriggerRecordInHand(recordInHand);
                 }
             }
 
@@ -562,38 +566,53 @@ public class EtbTriggerService {
                 }
                 if (may.wrapped() instanceof ReturnTargetCardsFromGraveyardToHandEffect returnToHand) {
                     for (int i = 0; i < 1 + extraTriggerCopies; i++) {
+                        StackEntry recordInHand = gameData.handOffTriggerRecord(ownEntryRecord(gameData, controllerId,
+                                card, List.of(may), xValue, null, repeatedAdditionalCosts, convokeCreatureIds));
                         graveyardTargetingService.handleReturnToHandETBTargeting(
                                 gameData, controllerId, card, List.of(may), returnToHand);
+                        gameData.restoreTriggerRecordInHand(recordInHand);
                     }
                     continue;
                 }
                 if (may.wrapped() instanceof ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect shuffle) {
                     for (int i = 0; i < 1 + extraTriggerCopies; i++) {
+                        StackEntry recordInHand = gameData.handOffTriggerRecord(ownEntryRecord(gameData, controllerId,
+                                card, List.of(may), xValue, null, repeatedAdditionalCosts, convokeCreatureIds));
                         graveyardTargetingService.handleShuffleIntoLibraryETBTargeting(
                                 gameData, controllerId, card, List.of(may), shuffle);
+                        gameData.restoreTriggerRecordInHand(recordInHand);
                     }
                     continue;
                 }
                 if (may.wrapped() instanceof ExileCardsFromGraveyardEffect exile) {
                     for (int i = 0; i < 1 + extraTriggerCopies; i++) {
+                        StackEntry recordInHand = gameData.handOffTriggerRecord(ownEntryRecord(gameData, controllerId,
+                                card, List.of(may), xValue, null, repeatedAdditionalCosts, convokeCreatureIds));
                         graveyardTargetingService.handleGraveyardExileETBTargeting(
                                 gameData, controllerId, card, List.of(may), triggerSourcePermanentId, exile);
+                        gameData.restoreTriggerRecordInHand(recordInHand);
                     }
                     continue;
                 }
                 if (may.wrapped() instanceof ExchangeControlOfTargetPermanentsEffect exchange
                         && exchange.requireOpponentPowerNotGreater()) {
                     for (int i = 0; i < 1 + extraTriggerCopies; i++) {
+                        StackEntry recordInHand = gameData.handOffTriggerRecord(ownEntryRecord(gameData, controllerId,
+                                card, List.of(may), xValue, null, repeatedAdditionalCosts, convokeCreatureIds));
                         gameData.queueInteraction(new PermanentChoiceContext.PucasMischiefOwnTarget(
                                 card, controllerId, List.of(may), triggerSourcePermanentId));
+                        gameData.restoreTriggerRecordInHand(recordInHand);
                     }
                     continue;
                 }
                 if (may.wrapped() instanceof SacrificePermanentThenEffect
                         && may.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                     for (int i = 0; i < 1 + extraTriggerCopies; i++) {
+                        StackEntry recordInHand = gameData.handOffTriggerRecord(ownEntryRecord(gameData, controllerId,
+                                card, List.of(may), xValue, null, repeatedAdditionalCosts, convokeCreatureIds));
                         gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                                 card, controllerId, List.of(may), xValue));
+                        gameData.restoreTriggerRecordInHand(recordInHand);
                     }
                     continue;
                 }
@@ -1090,6 +1109,124 @@ public class EtbTriggerService {
                                           int etbMode, int xValue,
                                           List<String> repeatedAdditionalCosts,
                                           List<UUID> convokeCreatureIds) {
+        gameData.routeTriggeredAbility(() -> routeMandatoryETBEffects(gameData, controllerId, card, targetId,
+                targetIds, mandatoryEffects, modeTargetFilter, extraTriggerCopies, etbMode, xValue,
+                repeatedAdditionalCosts, convokeCreatureIds));
+        // State-based actions come before a triggered ability's targets are chosen, so a legend rule
+        // violation the entering permanent causes is settled first; the auto-pass that follows the
+        // legend rule choice picks the held-back target choice up.
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)
+                && !gameData.interaction.isAwaitingInput()
+                && (legendRuleService == null || !legendRuleService.hasLegendRuleViolation(gameData, controllerId))) {
+            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            etbTokenTargetService.processNextETBSpellTargetTrigger(gameData);
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);
+        }
+        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)
+                && !gameData.interaction.isAwaitingInput()) {
+            etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
+        }
+    }
+
+    /**
+     * The entry of one "when this enters" ability of {@code card} that is given its targets, {@code targetId} and
+     * {@code activeTargetIds}, by the entering event or has none: the paid X, the costs paid as the permanent was cast,
+     * and the entering permanent and what it is attached to as the ability triggered. With no targets it is also the
+     * record an ability that chooses a mode, a target or a graveyard card as it goes on the stack is given
+     * ({@code GameData.handOffTriggerRecord}).
+     */
+    private StackEntry ownEntryAbilityEntry(GameData gameData, UUID controllerId, Card card,
+                                            List<CardEffect> effects, int xValue, UUID targetId,
+                                            List<UUID> activeTargetIds, Permanent enteringPermanent,
+                                            TargetFilter modeTargetFilter, boolean etbNeedsTarget,
+                                            List<String> repeatedAdditionalCosts, List<UUID> convokeCreatureIds) {
+        UUID sourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
+        // Snapshot the paid X onto the ETB stack entry so DynamicAmount XValue effects read
+        // the cast context on resolution.
+        StackEntry etbEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                card,
+                controllerId,
+                card.getName() + "'s ETB ability",
+                new ArrayList<>(effects),
+                xValue,
+                targetId,
+                sourcePermanentId,
+                Map.of(),
+                null,
+                List.of(),
+                activeTargetIds
+        );
+        if (repeatedAdditionalCosts != null && !repeatedAdditionalCosts.isEmpty()) {
+            etbEntry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
+        }
+        etbEntry.setConvokeCreatureIds(convokeCreatureIds);
+        // Dynamic amounts such as "gain 3 life for each time it was kicked" read the kicked
+        // state from the resolving entry, not from the trigger-time condition context.
+        if (enteringPermanent != null && enteringPermanent.isKicked()) {
+            etbEntry.setKicked(true);
+        }
+        if (enteringPermanent != null && enteringPermanent.isEvoked() && card.hasSeveralOwnEntryAbilities()) {
+            etbEntry.setTriggeringCardId(card.getId());
+        }
+        if (card.isAura() && !etbNeedsTarget
+                && effects.stream().noneMatch(effect -> effect.targetSpec().declaredTarget() != null
+                || EffectResolution.targetsSpellOnStack(effect))) {
+            etbEntry.setNonTargeting(true);
+        }
+        if (targetId != null && effects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
+                && gameQueryService.findStackEntryByCardId(gameData, targetId) != null) {
+            etbEntry.setTargetZone(com.github.laxika.magicalvibes.model.Zone.STACK);
+        }
+        if (modeTargetFilter != null) {
+            etbEntry.setTargetFilter(modeTargetFilter);
+        }
+        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (sourcePermanent != null) {
+            etbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+            etbEntry.setSacrificedToughness(sourcePermanent.getAlternateCostSacrificedToughness());
+            snapshotAttachedPermanent(gameData, etbEntry, sourcePermanent);
+        }
+        etbEntry.setSpectacle(enteringPermanent != null && enteringPermanent.isSpectacle());
+        etbEntry.setCollectEvidenceCostPaid(enteringPermanent != null
+                && enteringPermanent.isCollectEvidenceCostPaid());
+        etbEntry.setWaterbendCostPaid(enteringPermanent != null && enteringPermanent.isWaterbendCostPaid());
+        etbEntry.setRevealCardFromHandCostPaid(enteringPermanent != null
+                && enteringPermanent.isRevealCardFromHandCostPaid());
+        etbEntry.setControlledDragonAsCast(enteringPermanent != null && enteringPermanent.isControlledDragonAsCast());
+        etbEntry.setGiftPromised(enteringPermanent != null && enteringPermanent.isGiftPromised());
+        return etbEntry;
+    }
+
+    /**
+     * The record of one "when this enters" ability of {@code card} that chooses a mode, a target or a graveyard card
+     * as it goes on the stack: the entry {@link #ownEntryAbilityEntry} builds for it with no targets.
+     */
+    private StackEntry ownEntryRecord(GameData gameData, UUID controllerId, Card card, List<CardEffect> effects,
+                                      int xValue, TargetFilter modeTargetFilter,
+                                      List<String> repeatedAdditionalCosts, List<UUID> convokeCreatureIds) {
+        return ownEntryAbilityEntry(gameData, controllerId, card, effects, xValue, null, List.of(),
+                findEnteringPermanent(gameData, card), modeTargetFilter, true, repeatedAdditionalCosts,
+                convokeCreatureIds);
+    }
+
+    /**
+     * The routes of {@link #queueMandatoryETBEffects} for one ability, inside its routing: every choice it queues or
+     * asks, one for each copy of the ability, is handed the ability's record first ({@link #ownEntryAbilityEntry}
+     * with no targets). The pending choices are processed once the ability is routed.
+     */
+    private void routeMandatoryETBEffects(GameData gameData, UUID controllerId, Card card, UUID targetId,
+                                          List<UUID> targetIds, List<CardEffect> mandatoryEffects,
+                                          TargetFilter modeTargetFilter, int extraTriggerCopies,
+                                          int etbMode, int xValue,
+                                          List<String> repeatedAdditionalCosts,
+                                          List<UUID> convokeCreatureIds) {
         Permanent enteringPermanent = findEnteringPermanent(gameData, card);
         // The ability's one route, chosen from all its effects: the first effect whose target is chosen through a
         // choice of its own decides it, and every effect of the ability goes there with it.
@@ -1097,6 +1234,8 @@ public class EtbTriggerService {
                 .filter(e -> OwnEntryRoute.of(card, e) != OwnEntryRoute.STACK).findFirst().orElse(null);
         OwnEntryRoute route = routed == null ? OwnEntryRoute.STACK : OwnEntryRoute.of(card, routed);
         requireOneTargetChoice(card, mandatoryEffects, route);
+        StackEntry triggerRecord = ownEntryAbilityEntry(gameData, controllerId, card, mandatoryEffects, xValue, null,
+                List.of(), enteringPermanent, modeTargetFilter, true, repeatedAdditionalCosts, convokeCreatureIds);
         List<CardEffect> otherEffects = route == OwnEntryRoute.STACK ? mandatoryEffects : List.of();
         List<Permanent> sourceBattlefield = gameData.playerBattlefields.get(controllerId);
         boolean sourceWasCastForSpectacle = enteringPermanent != null
@@ -1172,12 +1311,14 @@ public class EtbTriggerService {
                     int initialGroupIndex = card.isAura() ? 1 : targetId == null ? 0 : 1;
                     List<Integer> initialGroupSizes = card.isAura()
                             ? List.of(0) : targetId == null ? List.of() : List.of(1);
+                    gameData.handOffTriggerRecord(triggerRecord);
                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                             card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId,
                             initialTargets, initialGroupIndex, 0,
                             initialGroupSizes, xValue,
                             repeatedAdditionalCosts == null ? List.of() : List.copyOf(repeatedAdditionalCosts)));
                     for (int i = 0; i < extraTriggerCopies; i++) {
+                        gameData.handOffTriggerRecord(triggerRecord);
                         gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                 card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId,
                                 initialTargets, initialGroupIndex, 0,
@@ -1193,9 +1334,11 @@ public class EtbTriggerService {
                             : card.isAura() && otherEffects.stream().noneMatch(effect -> card.getEffectTargetIndex(effect) >= 0)
                             ? null : card.getTargetFilter();
 
+                    gameData.handOffTriggerRecord(triggerRecord);
                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
                             card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter, xValue));
                     for (int i = 0; i < extraTriggerCopies; i++) {
+                        gameData.handOffTriggerRecord(triggerRecord);
                         gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
                                 card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, etbTargetFilter, xValue));
                     }
@@ -1208,58 +1351,10 @@ public class EtbTriggerService {
                 List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
                 UUID sourcePermanentId = enteringPermanent != null ? enteringPermanent.getId() : null;
 
-                // Snapshot the paid X onto the ETB stack entry so DynamicAmount XValue effects read
-                // the cast context on resolution.
-                StackEntry etbEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        card,
-                        controllerId,
-                        card.getName() + "'s ETB ability",
-                        new ArrayList<>(otherEffects),
-                        xValue,
-                        targetId,
-                        sourcePermanentId,
-                        Map.of(),
-                        null,
-                        List.of(),
-                        activeTargetIds
-                );
-                if (repeatedAdditionalCosts != null && !repeatedAdditionalCosts.isEmpty()) {
-                    etbEntry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
-                }
-                etbEntry.setConvokeCreatureIds(convokeCreatureIds);
-                // Dynamic amounts such as "gain 3 life for each time it was kicked" read the kicked
-                // state from the resolving entry, not from the trigger-time condition context.
-                if (enteringPermanent != null && enteringPermanent.isKicked()) {
-                    etbEntry.setKicked(true);
-                }
-                if (enteringPermanent != null && enteringPermanent.isEvoked() && card.hasSeveralOwnEntryAbilities()) {
-                    etbEntry.setTriggeringCardId(card.getId());
-                }
-                if (card.isAura() && !etbNeedsTarget
-                        && otherEffects.stream().noneMatch(effect -> effect.targetSpec().declaredTarget() != null
-                        || EffectResolution.targetsSpellOnStack(effect))) {
-                    etbEntry.setNonTargeting(true);
-                }
-                if (targetId != null && otherEffects.stream().anyMatch(EffectResolution::targetsSpellOnStack)
-                        && gameQueryService.findStackEntryByCardId(gameData, targetId) != null) {
-                    etbEntry.setTargetZone(com.github.laxika.magicalvibes.model.Zone.STACK);
-                }
-                if (modeTargetFilter != null) {
-                    etbEntry.setTargetFilter(modeTargetFilter);
-                }
+                StackEntry etbEntry = ownEntryAbilityEntry(gameData, controllerId, card, otherEffects, xValue,
+                        targetId, activeTargetIds, enteringPermanent, modeTargetFilter, etbNeedsTarget,
+                        repeatedAdditionalCosts, convokeCreatureIds);
                 Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-                if (sourcePermanent != null) {
-                    etbEntry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
-                    etbEntry.setSacrificedToughness(sourcePermanent.getAlternateCostSacrificedToughness());
-                    snapshotAttachedPermanent(gameData, etbEntry, sourcePermanent);
-                }
-                etbEntry.setSpectacle(sourceWasCastForSpectacle);
-                etbEntry.setCollectEvidenceCostPaid(collectEvidenceCostPaid);
-                etbEntry.setWaterbendCostPaid(waterbendCostPaid);
-                etbEntry.setRevealCardFromHandCostPaid(revealCardFromHandCostPaid);
-                etbEntry.setControlledDragonAsCast(controlledDragonAsCast);
-                etbEntry.setGiftPromised(enteringPermanent != null && enteringPermanent.isGiftPromised());
                 gameData.stack.add(etbEntry);
                 queueTriggeredAbilityCounters(gameData, etbEntry);
                 gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
@@ -1271,6 +1366,7 @@ public class EtbTriggerService {
                 if (extraCopiesChooseTargets) {
                     TargetFilter copyTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
                     for (int i = 0; i < extraTriggerCopies; i++) {
+                        gameData.handOffTriggerRecord(triggerRecord);
                         gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
                                 card, controllerId, new ArrayList<>(otherEffects), sourcePermanentId, copyTargetFilter, xValue));
                     }
@@ -1326,6 +1422,7 @@ public class EtbTriggerService {
                 // The player is the ability's target; the cards are chosen from that player's graveyard next.
                 TargetFilter etbTargetFilter = modeTargetFilter != null ? modeTargetFilter : card.getTargetFilter();
                 for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    gameData.handOffTriggerRecord(triggerRecord);
                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
                             card, controllerId, mandatoryEffects, routedSourcePermanentId, etbTargetFilter, xValue));
                 }
@@ -1334,12 +1431,14 @@ public class EtbTriggerService {
                 ExileCardsFromGraveyardEffect exile = (ExileCardsFromGraveyardEffect) routed;
                 int multikickerPaymentCount = exile.maxTargetsFromMultikicker()
                         ? countMultikickerPayments(card, repeatedAdditionalCosts) : 0;
+                gameData.handOffTriggerRecord(triggerRecord);
                 graveyardTargetingService.handleGraveyardExileETBTargeting(
                         gameData, controllerId, card, mandatoryEffects, routedSourcePermanentId, exile,
                         multikickerPaymentCount);
                 // Each additional copy chooses its own targets, one after another, once the previous
                 // trigger's targets have been chosen (processNextSpellGraveyardTargetTrigger).
                 for (int t = 0; t < extraTriggerCopies; t++) {
+                    gameData.handOffTriggerRecord(triggerRecord);
                     gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                             card, controllerId, new ArrayList<>(mandatoryEffects), null, 0,
                             multikickerPaymentCount, 0, null, false, null, routedSourcePermanentId));
@@ -1352,6 +1451,7 @@ public class EtbTriggerService {
                 int maximumTargets = maximumGraveyardCardExileTargets(card, exile, gameData, controllerId,
                         xValue, repeatedAdditionalCosts);
                 for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    gameData.handOffTriggerRecord(triggerRecord);
                     graveyardTargetingService.handleGraveyardCardsExileETBTargeting(
                             gameData, controllerId, card, mandatoryEffects, exile, maximumTargets);
                 }
@@ -1359,6 +1459,7 @@ public class EtbTriggerService {
             case BATTLEFIELD_AND_GRAVEYARD -> {
                 // One selection across battlefield creatures and graveyard creature cards (Angel of Serenity).
                 for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    gameData.handOffTriggerRecord(triggerRecord);
                     graveyardTargetingService.handleBattlefieldAndGraveyardExileETBTargeting(gameData, controllerId,
                             card, mandatoryEffects, routedSourcePermanentId,
                             (BattlefieldAndGraveyardCardChoosingEffect) routed);
@@ -1366,36 +1467,42 @@ public class EtbTriggerService {
             }
             case GRAVEYARD_CAST -> {
                 for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    gameData.handOffTriggerRecord(triggerRecord);
                     graveyardTargetingService.handleGraveyardCastETBTargeting(gameData, controllerId, card,
                             mandatoryEffects);
                 }
             }
             case GRAVEYARD_FLASHBACK -> {
                 for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    gameData.handOffTriggerRecord(triggerRecord);
                     graveyardTargetingService.handleGrantFlashbackETBTargeting(gameData, controllerId, card,
                             mandatoryEffects);
                 }
             }
             case GRAVEYARD_MAY_PLAY -> {
                 for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    gameData.handOffTriggerRecord(triggerRecord);
                     graveyardTargetingService.handleGraveyardMayPlayETBTargeting(
                             gameData, controllerId, card, mandatoryEffects, routedSourcePermanentId);
                 }
             }
             case OPPONENT_GRAVEYARD_CREATURE -> {
                 for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    gameData.handOffTriggerRecord(triggerRecord);
                     graveyardTargetingService.handlePutCreatureFromOpponentGraveyardETBTargeting(gameData,
                             controllerId, card, mandatoryEffects);
                 }
             }
             case GRAVEYARD_TO_HAND -> {
                 for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    gameData.handOffTriggerRecord(triggerRecord);
                     graveyardTargetingService.handleReturnToHandETBTargeting(gameData, controllerId, card,
                             mandatoryEffects, (ReturnTargetCardsFromGraveyardToHandEffect) routed);
                 }
             }
             case GRAVEYARD_ON_TOP_OF_LIBRARY -> {
                 for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    gameData.handOffTriggerRecord(triggerRecord);
                     graveyardTargetingService.handlePutOnTopOfLibraryETBTargeting(gameData, controllerId, card,
                             mandatoryEffects, (PutTargetCardsFromGraveyardOnTopOfLibraryEffect) routed);
                 }
@@ -1420,6 +1527,7 @@ public class EtbTriggerService {
                                             card)));
                 }
                 for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    gameData.handOffTriggerRecord(triggerRecord);
                     graveyardTargetingService.handleReturnToBattlefieldETBTargeting(gameData, controllerId, card,
                             mandatoryEffects, returnEffect, maxTargets, maxTotalManaValue, xValue,
                             returnEffect.attachToSourceHost() ? routedSourcePermanentId : null);
@@ -1427,6 +1535,7 @@ public class EtbTriggerService {
             }
             case GRAVEYARD_SHUFFLE -> {
                 for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    gameData.handOffTriggerRecord(triggerRecord);
                     graveyardTargetingService.handleShuffleIntoLibraryETBTargeting(gameData, controllerId, card,
                             mandatoryEffects, (ShuffleTargetCardsFromControllerGraveyardIntoLibraryEffect) routed);
                 }
@@ -1449,6 +1558,7 @@ public class EtbTriggerService {
                                         repeatedAdditionalCosts, card)))
                         : 0;
                 for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    gameData.handOffTriggerRecord(triggerRecord);
                     gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                             card, controllerId, mandatoryEffects, null, minimumGraveyardTargets, targetXValue,
                             dynamicMaxTargets));
@@ -1467,31 +1577,12 @@ public class EtbTriggerService {
                     includeAbilities = TriggerCollectionService.predicateContainsHasTarget(sf.predicate());
                 }
                 for (int t = 0; t < 1 + extraTriggerCopies; t++) {
+                    gameData.handOffTriggerRecord(triggerRecord);
                     gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
                             card, controllerId, mandatoryEffects, spellFilter, includeAbilities,
                             routedSourcePermanentId));
                 }
             }
-        }
-        // State-based actions come before a triggered ability's targets are chosen, so a legend rule
-        // violation the entering permanent causes is settled first; the auto-pass that follows the
-        // legend rule choice picks the held-back target choice up.
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)
-                && !gameData.interaction.isAwaitingInput()
-                && (legendRuleService == null || !legendRuleService.hasLegendRuleViolation(gameData, controllerId))) {
-            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
-        }
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)
-                && !gameData.interaction.isAwaitingInput()) {
-            etbTokenTargetService.processNextETBSpellTargetTrigger(gameData);
-        }
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)
-                && !gameData.interaction.isAwaitingInput()) {
-            etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);
-        }
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)
-                && !gameData.interaction.isAwaitingInput()) {
-            etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
         }
     }
 

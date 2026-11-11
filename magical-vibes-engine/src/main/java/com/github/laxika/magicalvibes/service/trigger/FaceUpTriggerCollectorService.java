@@ -34,15 +34,6 @@ public class FaceUpTriggerCollectorService {
         Card sourceCard = match.permanent().getCard();
         boolean untapsTurnedPermanent = match.effects().stream().anyMatch(effect ->
                 effect instanceof UntapPermanentsEffect untap && untap.scope() == TapUntapScope.TARGET);
-        if (!untapsTurnedPermanent && match.declaresTarget()) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                    sourceCard, match.controllerId(), match.stackEffects(),
-                    match.permanent().getId(), faceUp.turnedPermanent().getId()));
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-            log.info("Game {} - {} triggers when {} is turned face up (awaiting target)",
-                    match.gameData().id, sourceCard.getName(), faceUp.turnedPermanent().getCard().getName());
-            return true;
-        }
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -55,6 +46,16 @@ public class FaceUpTriggerCollectorService {
         // This ID records the turn-up event, not a chosen target. The trigger must still
         // resolve if the turned permanent dies before the ability resolves.
         entry.setNonTargeting(true);
+        match.gameData().handOffTriggerRecord(entry);
+        if (!untapsTurnedPermanent && match.declaresTarget()) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                    sourceCard, match.controllerId(), match.stackEffects(),
+                    match.permanent().getId(), faceUp.turnedPermanent().getId()));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+            log.info("Game {} - {} triggers when {} is turned face up (awaiting target)",
+                    match.gameData().id, sourceCard.getName(), faceUp.turnedPermanent().getCard().getName());
+            return true;
+        }
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers when {} is turned face up",

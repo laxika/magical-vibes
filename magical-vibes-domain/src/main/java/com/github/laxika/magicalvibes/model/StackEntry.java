@@ -75,6 +75,8 @@ public class StackEntry {
     private UUID casterId;
     /** The player whose upkeep caused this entry's each-upkeep trigger, when applicable. */
     @Setter private UUID activePlayerId;
+    @Getter(AccessLevel.NONE) private boolean triggerRecordSettled;
+    @Getter(AccessLevel.NONE) private boolean triggerRecordCarried;
     @Setter private String description;
     private List<CardEffect> effectsToResolve;
     /**
@@ -1198,6 +1200,8 @@ public class StackEntry {
         this.casterId = source.casterId;
         this.stackTimestamp = source.stackTimestamp;
         this.activePlayerId = source.activePlayerId;
+        this.triggerRecordSettled = source.triggerRecordSettled;
+        this.triggerRecordCarried = source.triggerRecordCarried;
         this.description = source.description;
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
         this.cardCountsBeforeResolution = source.cardCountsBeforeResolution;
@@ -1515,6 +1519,32 @@ public class StackEntry {
             this.targetId = record.targetId;
             this.nonTargeting = true;
         }
+        // The active player as the ability triggered (the player whose step it is) is the event's too.
+        this.activePlayerId = record.activePlayerId;
+        if (record.entryType == StackEntryType.TRIGGERED_ABILITY && record.copy) {
+            // A copied ability (a copied Saga chapter) is a copy whichever way it reaches the stack.
+            this.copy = true;
+        }
+        this.triggerRecordCarried = true;
+    }
+
+    /** Whether this entry was given its collector's record of the trigger event ({@link #carryTriggerRecord}). */
+    public boolean hasCarriedTriggerRecord() {
+        return triggerRecordCarried;
+    }
+
+    /**
+     * Whether this entry's record of its trigger event is final: it reached the stack or a holding queue, as the entry
+     * its collector built, with that entry's record ({@link #carryTriggerRecord}), or with no record waiting for it. {@code GameData} gives a triggered ability the record handed off for it once, as it
+     * first arrives.
+     */
+    public boolean isTriggerRecordSettled() {
+        return triggerRecordSettled;
+    }
+
+    /** Marks this entry's record of its trigger event final (see {@link #isTriggerRecordSettled}). */
+    public void settleTriggerRecord() {
+        this.triggerRecordSettled = true;
     }
 
     public void addGrantedTriggeredEffectOnEntry(EffectSlot slot, CardEffect effect) {

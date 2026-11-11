@@ -196,6 +196,19 @@ public class SpellCastTriggerCollectorService {
                 .anyMatch(effect -> triggerTargetSpec(effect).admits(TargetPredicate.Kind.PLAYER));
         boolean needsPermanentTarget = resolved.stream()
                 .anyMatch(effect -> triggerTargetSpec(effect).admits(TargetPredicate.Kind.PERMANENT));
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                resolved,
+                spellCopy.copyingPlayerId(),
+                match.permanent().getId());
+        entry.setTriggeringCardId(spellCopy.copiedSpell().getCard().getId());
+        entry.setTriggeringSpell(spellCopy.copiedSpell());
+        entry.setEventValue(copiedSpellManaValue);
+        entry.setNonTargeting(true);
+        match.gameData().handOffTriggerRecord(entry);
         if (needsPlayerTarget || needsPermanentTarget) {
             // "That spell": the copy the event was about, which the entry takes as its triggering spell once the
             // targets are chosen.
@@ -218,18 +231,6 @@ public class SpellCastTriggerCollectorService {
             return true;
         }
 
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                resolved,
-                spellCopy.copyingPlayerId(),
-                match.permanent().getId());
-        entry.setTriggeringCardId(spellCopy.copiedSpell().getCard().getId());
-        entry.setTriggeringSpell(spellCopy.copiedSpell());
-        entry.setEventValue(copiedSpellManaValue);
-        entry.setNonTargeting(true);
         match.gameData().stack.add(entry);
         return true;
     }
@@ -458,6 +459,48 @@ public class SpellCastTriggerCollectorService {
         if (optionalAbility != null) {
             resolved = optionalAbility;
         }
+        // The entry of an ability that chooses nothing, built first: a mode, a target or a graveyard card chosen as the
+        // ability goes on the stack is handed it as the record of the cast.
+        StackEntry entry = abilityX > 0
+                ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
+                    abilityDescription(sourceCard), resolved, abilityX,
+                    null, sourcePermanentId, null, null, null, null)
+                : new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
+                    abilityDescription(sourceCard), resolved, null,
+                    sourcePermanentId);
+        entry.setTargetId(castingPlayerId);
+        entry.setNonTargeting(true);
+        // The player the cast was about, whom "another target player" (The Lord of Pain) excludes.
+        entry.setTriggeringPlayerId(castingPlayerId);
+        // Contextual "it" = the spell that caused the trigger, still on the stack below this
+        // ability (Bloodlord of Vaasgoth's bloodthirst grant), and as it was then once it has left (CR 608.2h).
+        entry.setTriggeringCardId(spellCard.getId());
+        entry.setTriggeringSpell(triggeringSpell);
+        entry.setTriggeringSpellCastIndex(
+                match.gameData().getSpellCastIndexThisTurn(castingPlayerId, spellCard.getId()));
+        entry.setTriggeringSpellTurnCastIndex(match.gameData().getSpellCastOrdinalThisTurn(spellCard.getId()) - 1);
+        // "Its targets" (Bloodlord of Vaasgoth's grant) are the spell's targets as it was cast, kept once it has left.
+        if (triggeringSpell != null) {
+            List<UUID> spellTargets = new ArrayList<>();
+            if (triggeringSpell.getTargetId() != null) {
+                spellTargets.add(triggeringSpell.getTargetId());
+            }
+            spellTargets.addAll(triggeringSpell.getDeclaredTargetIds());
+            entry.setTriggeringSpellTargetIds(List.copyOf(spellTargets));
+        }
+        entry.setTriggeringCardSnapshot(spellCard);
+        entry.setEventValue(triggeringSpellManaValue);
+        if (interveningSpellManaValueCondition) {
+            entry.setEventValue(interveningSpellManaValue);
+        }
+        // The source as the ability goes on the stack, whatever the effects are: its last known information once it
+        // has left the battlefield (CR 608.2h), and what a transform instruction compares (CR 701.27f).
+        if (match.permanent() != null) {
+            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
+        }
+        preservePlanarSource(entry, match);
+        entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
+        match.gameData().handOffTriggerRecord(entry);
         if (resolved.size() == 1 && resolved.getFirst() instanceof ChooseOneAtTriggerTimeEffect atTriggerTime
                 && atTriggerTime.maximumChoices() != null) {
             // "Choose up to X" (Riku of Many Paths): X is read as the ability goes on the stack, where its modes are
@@ -474,6 +517,7 @@ public class SpellCastTriggerCollectorService {
             if (maximumChoices == 0) {
                 gameLogService.append(match.gameData(), GameLog.cardThen(sourceCard,
                         "'s triggered ability has no modes to choose."));
+                match.gameData().handOffTriggerRecord(null);
                 return true;
             }
             match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
@@ -499,7 +543,7 @@ public class SpellCastTriggerCollectorService {
             log.info("Game {} - {} spell-cast graveyard-target trigger queued",
                     match.gameData().id, sourceCard.getName());
         } else if (needsSpellTarget && !needsTargeting) {
-            StackEntry entry = new StackEntry(
+            StackEntry spellTargetEntry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     sourceCard,
                     match.controllerId(),
@@ -513,17 +557,20 @@ public class SpellCastTriggerCollectorService {
                     List.of(),
                     List.of()
             );
-            entry.setTriggeringCardId(spellCard.getId());
-            entry.setTriggeringSpell(triggeringSpell);
-            entry.setTriggeringSpellCastIndex(
+            spellTargetEntry.setTriggeringCardId(spellCard.getId());
+            spellTargetEntry.setTriggeringSpell(triggeringSpell);
+            spellTargetEntry.setTriggeringSpellCastIndex(
                     match.gameData().getSpellCastIndexThisTurn(castingPlayerId, spellCard.getId()));
-            entry.setTriggeringSpellTurnCastIndex(match.gameData().getSpellCastOrdinalThisTurn(spellCard.getId()) - 1);
-            entry.setEventValue(triggeringSpellManaValue);
+            spellTargetEntry.setTriggeringSpellTurnCastIndex(
+                    match.gameData().getSpellCastOrdinalThisTurn(spellCard.getId()) - 1);
+            spellTargetEntry.setEventValue(triggeringSpellManaValue);
             // The caster stays known if the spell leaves the stack (e.g. is countered) before this resolves.
-            entry.setCounteredSpellControllerId(castingPlayerId);
-            preservePlanarSource(entry, match);
-            entry.setNonTargeting(true);
-            match.gameData().stack.add(entry);
+            spellTargetEntry.setCounteredSpellControllerId(castingPlayerId);
+            preservePlanarSource(spellTargetEntry, match);
+            spellTargetEntry.setNonTargeting(true);
+            // This entry chooses nothing either and is its own record.
+            match.gameData().handOffTriggerRecord(spellTargetEntry);
+            match.gameData().stack.add(spellTargetEntry);
         } else if (needsTargeting) {
             // "You may pay {C}. If you do, [targeted effect]" (Malachite Talisman): the target is chosen
             // as the trigger goes on the stack (CR 603.3d), while the payment choice waits for resolution
@@ -564,43 +611,6 @@ public class SpellCastTriggerCollectorService {
             // target, so it still resolves once the spell has left the stack (CR 608.2b removes only an ability whose
             // targets are all illegal). "Enchanted creature" of an Aura's ability is read from the source, or from its
             // snapshot below once it has left the battlefield (CR 608.2h).
-            StackEntry entry = abilityX > 0
-                    ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
-                        abilityDescription(sourceCard), resolved, abilityX,
-                        null, sourcePermanentId, null, null, null, null)
-                    : new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
-                        abilityDescription(sourceCard), resolved, null,
-                        sourcePermanentId);
-            entry.setTargetId(castingPlayerId);
-            entry.setNonTargeting(true);
-            // Contextual "it" = the spell that caused the trigger, still on the stack below this
-            // ability (Bloodlord of Vaasgoth's bloodthirst grant), and as it was then once it has left (CR 608.2h).
-            entry.setTriggeringCardId(spellCard.getId());
-            entry.setTriggeringSpell(triggeringSpell);
-            entry.setTriggeringSpellCastIndex(
-                    match.gameData().getSpellCastIndexThisTurn(castingPlayerId, spellCard.getId()));
-            entry.setTriggeringSpellTurnCastIndex(match.gameData().getSpellCastOrdinalThisTurn(spellCard.getId()) - 1);
-            // "Its targets" (Bloodlord of Vaasgoth's grant) are the spell's targets as it was cast, kept once it has left.
-            if (triggeringSpell != null) {
-                List<UUID> spellTargets = new ArrayList<>();
-                if (triggeringSpell.getTargetId() != null) {
-                    spellTargets.add(triggeringSpell.getTargetId());
-                }
-                spellTargets.addAll(triggeringSpell.getDeclaredTargetIds());
-                entry.setTriggeringSpellTargetIds(List.copyOf(spellTargets));
-            }
-            entry.setTriggeringCardSnapshot(spellCard);
-            entry.setEventValue(triggeringSpellManaValue);
-            if (interveningSpellManaValueCondition) {
-                entry.setEventValue(interveningSpellManaValue);
-            }
-            // The source as the ability goes on the stack, whatever the effects are: its last known information once it
-            // has left the battlefield (CR 608.2h), and what a transform instruction compares (CR 701.27f).
-            if (match.permanent() != null) {
-                entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-            }
-            preservePlanarSource(entry, match);
-            entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
             match.gameData().stack.add(entry);
             // "Whenever a player kicks a spell": once for each time it was kicked.
             for (int kick = 1; (trigger.filter().kicker() == SpellFilter.Kicker.EACH_KICK) && kick < kickCount; kick++) {

@@ -154,7 +154,8 @@ public class TriggeredAbilityStackService {
         if (limitReached(gameData, options.limit(), sourceId, limitKey)) {
             return;
         }
-        triggerOwn(gameData, candidate, event, ownZoneChangeOf(trigger), interveningIf, options);
+        gameData.routeTriggeredAbility(
+                () -> triggerOwn(gameData, candidate, event, ownZoneChangeOf(trigger), interveningIf, options));
         markLimit(gameData, options.limit(), sourceId, limitKey);
     }
 
@@ -318,6 +319,7 @@ public class TriggeredAbilityStackService {
                 }
             }
             ChooseOneEffect modes = effects.size() == 1 ? modesChosenAsItTriggers(effects.getFirst()) : null;
+            gameData.handOffTriggerRecord(entry);
             if (modes != null) {
                 gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                         card, controllerId, modes, sourcePermanentId).withTriggerRecord(entry));

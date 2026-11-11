@@ -365,7 +365,7 @@ public class PlanechaseService {
         Card card = object.getCard();
         ConditionContext context = ConditionContext.forCard(card, controller);
         for (List<CardEffect> ability : triggeredAbilities(game, card, trigger, context)) {
-            triggerAbility(game, object, ability, controller);
+            game.routeTriggeredAbility(() -> triggerAbility(game, object, ability, controller));
         }
     }
 
@@ -396,6 +396,12 @@ public class PlanechaseService {
      */
     private void triggerAbility(GameData game, PlanarObject object, List<CardEffect> effects, UUID controller) {
         Card card = object.getCard();
+        // The entry of the ability that chooses nothing is also the record a target choice is given
+        // (GameData.handOffTriggerRecord).
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controller,
+                card.getName() + "'s ability", effects);
+        entry.setSourcePlanarObject(object.copy());
+        game.handOffTriggerRecord(entry);
         boolean needsSlotBySlotTargetSelection = card.getTargetGroups().size() > 1
                 || card.getTargetGroups().stream().anyMatch(target -> target.getMaxTargets() > 1
                 || target.getMinTargets() == 0 || target.getDynamicMinTargets() != null);
@@ -434,15 +440,12 @@ public class PlanechaseService {
             queueAnyTarget(game, object, effects, controller, targetFilter);
             return;
         }
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controller,
-                card.getName() + "'s ability", effects);
         // "Select target player at random" is a target chosen when the ability is put on the stack.
         if (effects.stream().anyMatch(RandomPlayerDiscardsAndLosesLifeIfLandEffect.class::isInstance)
                 && !game.playerIds.isEmpty()) {
             List<UUID> players = new ArrayList<>(game.playerIds);
             entry.setTargetId(players.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(players.size())));
         }
-        entry.setSourcePlanarObject(object.copy());
         game.enqueueTrigger(entry);
     }
 

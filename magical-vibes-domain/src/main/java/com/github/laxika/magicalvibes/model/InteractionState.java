@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class InteractionState {
 
@@ -13,7 +15,7 @@ public class InteractionState {
      * An interaction set aside, with its stable decision identity, while a nested prompt is
      * answered first (see {@link #openNestedPromptWindow()}).
      */
-    public record SuspendedInteraction(PendingInteraction interaction, UUID decisionId) {
+    public record SuspendedInteraction(PendingInteraction interaction, UUID decisionId, StackEntry triggerRecord) {
     }
 
     // --- Core state ---
@@ -22,6 +24,14 @@ public class InteractionState {
     private PendingInteraction activeInteraction;
     /** Stable identity shared by the initial decision delivery and every reconnect replay. */
     private UUID activeDecisionId;
+    /**
+     * The record of the trigger event the active interaction is a choice for, taken from the game's hand as the
+     * interaction began ({@code GameData.handOffTriggerRecord}), or {@code null}. It is in hand again while the
+     * interaction's answer is handled.
+     */
+    private StackEntry activeTriggerRecord;
+    private final Supplier<StackEntry> triggerRecordInHand;
+    private final Consumer<PendingInteraction> withoutTriggerRecord;
     /** Outer interactions waiting for the nested prompts begun under them, innermost first. */
     private final Deque<SuspendedInteraction> suspendedInteractions = new ArrayDeque<>();
     /** The decision a nested-prompt window is open under, or {@code null} when none is open. */
@@ -41,8 +51,23 @@ public class InteractionState {
     /**
      * Creates a deep copy of this interaction state for AI simulation.
      */
+    public InteractionState() {
+        this(() -> null, interaction -> { });
+    }
+
+    /**
+     * An interaction state that takes the trigger record a game has in hand as an interaction begins, and reports
+     * an interaction begun without one.
+     */
+    public InteractionState(Supplier<StackEntry> triggerRecordInHand,
+                            Consumer<PendingInteraction> withoutTriggerRecord) {
+        this.triggerRecordInHand = triggerRecordInHand;
+        this.withoutTriggerRecord = withoutTriggerRecord;
+    }
+
     public InteractionState deepCopy() {
         InteractionState copy = new InteractionState();
+        copy.activeTriggerRecord = this.activeTriggerRecord == null ? null : new StackEntry(this.activeTriggerRecord);
         copy.activeInteraction = this.activeInteraction;
         if (activeInteraction instanceof PendingInteraction.ColorChoice choice) {
             copy.activeInteraction = choice.copyCardTypeOnEnterPermanent();
@@ -137,10 +162,25 @@ public class InteractionState {
      */
     public void beginInteraction(PendingInteraction interaction, UUID decisionId) {
         if (nestsNewPrompt()) {
-            suspendedInteractions.push(new SuspendedInteraction(activeInteraction, activeDecisionId));
+            suspendedInteractions.push(new SuspendedInteraction(activeInteraction, activeDecisionId,
+                    activeTriggerRecord));
         }
         this.activeInteraction = interaction;
         this.activeDecisionId = decisionId;
+        this.activeTriggerRecord = triggerRecordInHand.get();
+        if (this.activeTriggerRecord == null) {
+            withoutTriggerRecord.accept(interaction);
+        }
+    }
+
+    /** The record of the trigger event the active interaction is a choice for, or {@code null}. */
+    public StackEntry activeTriggerRecord() {
+        return this.activeTriggerRecord;
+    }
+
+    /** Gives the active interaction {@code record} (a simulation copy restoring its state). */
+    public void keepTriggerRecord(StackEntry record) {
+        this.activeTriggerRecord = record;
     }
 
     /**
@@ -173,6 +213,7 @@ public class InteractionState {
     public void clearAwaitingInput() {
         this.activeInteraction = null;
         this.activeDecisionId = null;
+        this.activeTriggerRecord = null;
     }
 
     /**
@@ -216,6 +257,7 @@ public class InteractionState {
         SuspendedInteraction suspended = suspendedInteractions.pop();
         this.activeInteraction = suspended.interaction();
         this.activeDecisionId = suspended.decisionId();
+        this.activeTriggerRecord = suspended.triggerRecord();
         return true;
     }
 

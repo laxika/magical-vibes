@@ -32,6 +32,17 @@ public class CommanderZoneTriggerCollectorService {
         }
 
         Card sourceCard = source.getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                match.stackEffects(),
+                null,
+                source.getId());
+        entry.setSourcePermanentSnapshot(new Permanent(source));
+        entry.setTriggeringPermanent(departedCommander);
+        match.gameData().handOffTriggerRecord(entry);
         if (match.admits(TargetPredicate.Kind.PERMANENT)
                 || match.admits(TargetPredicate.Kind.PLAYER)
                 || match.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
@@ -40,16 +51,6 @@ public class CommanderZoneTriggerCollectorService {
                     "commander put into the command zone", source.getId(), new Permanent(source), null)
                     .withTriggeringPermanent(departedCommander));
         } else {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    match.stackEffects(),
-                    null,
-                    source.getId());
-            entry.setSourcePermanentSnapshot(new Permanent(source));
-            entry.setTriggeringPermanent(departedCommander);
             match.gameData().enqueueTrigger(entry);
         }
         return true;

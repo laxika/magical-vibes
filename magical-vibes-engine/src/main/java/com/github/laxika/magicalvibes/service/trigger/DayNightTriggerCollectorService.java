@@ -26,18 +26,20 @@ public class DayNightTriggerCollectorService {
     @CollectsMiscTrigger(value = CardEffect.class, watch = MiscWatch.ON_DAY_NIGHT_CHANGE)
     private boolean handleDayNightChange(TriggerMatchContext match, TriggerContext context) {
         Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                match.stackEffects(),
+                null,
+                match.permanent().getId());
+        match.gameData().handOffTriggerRecord(entry);
         if (match.admits(TargetPredicate.Kind.PERMANENT)) {
             match.gameData().queueInteraction(new PermanentChoiceContext.DayNightTriggerTarget(
                     sourceCard, match.controllerId(), match.effects(), match.permanent().getId()));
         } else {
-            match.gameData().enqueueTrigger(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    match.stackEffects(),
-                    null,
-                    match.permanent().getId()));
+            match.gameData().enqueueTrigger(entry);
         }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers when day/night changes",

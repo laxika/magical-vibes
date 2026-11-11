@@ -168,6 +168,24 @@ public class DamageTriggerCollectorService {
         Card sourceCard = sourcePermanent.getCard();
         Permanent damaged = dc.damagedCreature();
         Permanent lastKnown = lastKnownDamageSource(gameData, damaged);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                match.stackEffects(),
+                null,
+                sourcePermanent.getId()
+        );
+        entry.setOnceEachTurnActionKey(markOnAcceptance);
+        entry.setTargetId(damaged.getId());
+        entry.setEventValue(dc.damageDealt());
+        entry.setTriggeringPermanentId(damaged.getId());
+        entry.setTriggeringPermanentControllerId(dc.damagedCreatureControllerId());
+        entry.setTriggeringPermanent(lastKnown);
+        entry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+        entry.setNonTargeting(true);
+        gameData.handOffTriggerRecord(entry);
         if (match.admits(TargetPredicate.Kind.PERMANENT)
                 || match.admits(TargetPredicate.Kind.PLAYER)) {
             var choice = new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
@@ -186,23 +204,6 @@ public class DamageTriggerCollectorService {
                     gameData.id, sourceCard.getName());
             return true;
         }
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                match.stackEffects(),
-                null,
-                sourcePermanent.getId()
-        );
-        entry.setOnceEachTurnActionKey(markOnAcceptance);
-        entry.setTargetId(damaged.getId());
-        entry.setEventValue(dc.damageDealt());
-        entry.setTriggeringPermanentId(damaged.getId());
-        entry.setTriggeringPermanentControllerId(dc.damagedCreatureControllerId());
-        entry.setTriggeringPermanent(lastKnown);
-        entry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
-        entry.setNonTargeting(true);
         gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
@@ -230,6 +231,23 @@ public class DamageTriggerCollectorService {
         Permanent damaged = dc.damagedPermanent();
         Permanent lastKnown = lastKnownDamageSource(gameData, damaged);
         int power = gameQueryService.getEffectivePower(gameData, damaged);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                match.stackEffects(),
+                null,
+                sourcePermanent.getId());
+        entry.setEventValue(dc.damageDealt());
+        entry.setTriggeringPermanentId(damaged.getId());
+        entry.setTriggeringCardId(damaged.getCard().getId());
+        entry.setTriggeringPermanentControllerId(dc.damagedPermanentControllerId());
+        entry.setTriggeringPermanent(lastKnown);
+        entry.setTriggeringPermanentPowerAtTrigger(power);
+        entry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+        entry.setNonTargeting(true);
+        gameData.handOffTriggerRecord(entry);
         if (match.admits(TargetPredicate.Kind.PERMANENT)
                 || match.admits(TargetPredicate.Kind.PLAYER)) {
             TargetFilter targetFilter = targetFilterForTriggeredEffect(sourceCard, match.targetingEffect());
@@ -248,22 +266,6 @@ public class DamageTriggerCollectorService {
                     gameData.id, sourceCard.getName());
             return true;
         }
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                match.stackEffects(),
-                null,
-                sourcePermanent.getId());
-        entry.setEventValue(dc.damageDealt());
-        entry.setTriggeringPermanentId(damaged.getId());
-        entry.setTriggeringCardId(damaged.getCard().getId());
-        entry.setTriggeringPermanentControllerId(dc.damagedPermanentControllerId());
-        entry.setTriggeringPermanent(lastKnown);
-        entry.setTriggeringPermanentPowerAtTrigger(power);
-        entry.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
-        entry.setNonTargeting(true);
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers for damage dealt to a permanent you control", gameData.id,
@@ -292,6 +294,22 @@ public class DamageTriggerCollectorService {
         Permanent damaged = dc.damagedCreature();
         UUID damagedControllerId = gameQueryService.findPermanentController(gameData, damaged.getId());
         Permanent lastKnown = lastKnownDamageSource(gameData, damaged);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                match.stackEffects(),
+                null,
+                watcher.getId());
+        entry.setEventValue(dc.damageDealt());
+        entry.setTriggeringPermanentId(damaged.getId());
+        entry.setTriggeringCardId(damaged.getCard().getId());
+        entry.setTriggeringPermanentControllerId(damagedControllerId);
+        entry.setTriggeringPermanent(lastKnown);
+        entry.setSourcePermanentSnapshot(new Permanent(watcher));
+        entry.setNonTargeting(true);
+        gameData.handOffTriggerRecord(entry);
         if (match.admits(TargetPredicate.Kind.PERMANENT)
                 || match.admits(TargetPredicate.Kind.PLAYER)) {
             TargetFilter targetFilter = targetFilterForTriggeredEffect(sourceCard, match.targetingEffect());
@@ -308,21 +326,6 @@ public class DamageTriggerCollectorService {
             gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
             return true;
         }
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                match.stackEffects(),
-                null,
-                watcher.getId());
-        entry.setEventValue(dc.damageDealt());
-        entry.setTriggeringPermanentId(damaged.getId());
-        entry.setTriggeringCardId(damaged.getCard().getId());
-        entry.setTriggeringPermanentControllerId(damagedControllerId);
-        entry.setTriggeringPermanent(lastKnown);
-        entry.setSourcePermanentSnapshot(new Permanent(watcher));
-        entry.setNonTargeting(true);
         gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
@@ -348,6 +351,24 @@ public class DamageTriggerCollectorService {
         Permanent creature = dc.damagedCreature();
         Permanent lastKnown = lastKnownDamageSource(gameData, creature);
         int power = gameQueryService.getEffectivePower(gameData, creature);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                aura.getCard(),
+                match.controllerId(),
+                aura.getCard().getName() + "'s ability",
+                match.stackEffects(),
+                null,
+                aura.getId());
+        entry.setEventValue(dc.damageDealt());
+        entry.setTriggeringPermanentId(creature.getId());
+        entry.setTriggeringCardId(creature.getCard().getId());
+        entry.setTriggeringPermanentControllerId(gameQueryService.findPermanentController(
+                gameData, creature.getId()));
+        entry.setTriggeringPermanent(lastKnown);
+        entry.setTriggeringPermanentPowerAtTrigger(power);
+        entry.setSourcePermanentSnapshot(new Permanent(aura));
+        entry.setNonTargeting(true);
+        gameData.handOffTriggerRecord(entry);
         if (match.admits(TargetPredicate.Kind.PERMANENT)
                 || match.admits(TargetPredicate.Kind.PLAYER)) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
@@ -357,23 +378,6 @@ public class DamageTriggerCollectorService {
                     false, creature.getId(), null, match.controllerId(), null, null, false, null, null, power,
                     (String) null, lastKnown).withEventValue(dc.damageDealt()));
         } else {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    aura.getCard(),
-                    match.controllerId(),
-                    aura.getCard().getName() + "'s ability",
-                    match.stackEffects(),
-                    null,
-                    aura.getId());
-            entry.setEventValue(dc.damageDealt());
-            entry.setTriggeringPermanentId(creature.getId());
-            entry.setTriggeringCardId(creature.getCard().getId());
-            entry.setTriggeringPermanentControllerId(gameQueryService.findPermanentController(
-                    gameData, creature.getId()));
-            entry.setTriggeringPermanent(lastKnown);
-            entry.setTriggeringPermanentPowerAtTrigger(power);
-            entry.setSourcePermanentSnapshot(new Permanent(aura));
-            entry.setNonTargeting(true);
             gameData.enqueueTrigger(entry);
         }
 
@@ -390,6 +394,16 @@ public class DamageTriggerCollectorService {
         GameData gameData = match.gameData();
         Permanent perm = match.permanent();
 
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                perm.getCard(),
+                match.controllerId(),
+                perm.getCard().getName() + "'s ability",
+                match.stackEffects(),
+                null,
+                perm.getId());
+        entry.setEventValue(dc.amount());
+        gameData.handOffTriggerRecord(entry);
         if (match.admits(TargetPredicate.Kind.PLAYER)) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     perm.getCard(), match.controllerId(), match.stackEffects(), true,
@@ -401,15 +415,6 @@ public class DamageTriggerCollectorService {
             return true;
         }
 
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                perm.getCard(),
-                match.controllerId(),
-                perm.getCard().getName() + "'s ability",
-                match.stackEffects(),
-                null,
-                perm.getId());
-        entry.setEventValue(dc.amount());
         gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
@@ -492,18 +497,6 @@ public class DamageTriggerCollectorService {
         if (sourceCard == null) return false;
         UUID sourcePermanentId = watcher == null ? null : watcher.getId();
         boolean thatPlayer = isThatPlayer(sourceCard, match);
-        if (!thatPlayer && (match.admits(TargetPredicate.Kind.PERMANENT)
-                || match.admits(TargetPredicate.Kind.PLAYER))) {
-            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                    sourceCard, match.controllerId(), match.effects(), sourcePermanentId, match.controllerId(),
-                    damage.damagedPlayerId(), damage.sourcePermanentId(), damage.amount())
-                    .withEventValue(damage.amount()).withTriggeringPlayer(damage.damagedPlayerId()));
-            gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-            log.info("Game {} - {} triggers for {} damage to a player and needs a target",
-                    gameData.id, sourceCard.getName(), damage.amount());
-            return true;
-        }
-
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -527,6 +520,19 @@ public class DamageTriggerCollectorService {
             entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
         }
         entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
+        gameData.handOffTriggerRecord(entry);
+        if (!thatPlayer && (match.admits(TargetPredicate.Kind.PERMANENT)
+                || match.admits(TargetPredicate.Kind.PLAYER))) {
+            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                    sourceCard, match.controllerId(), match.effects(), sourcePermanentId, match.controllerId(),
+                    damage.damagedPlayerId(), damage.sourcePermanentId(), damage.amount())
+                    .withEventValue(damage.amount()).withTriggeringPlayer(damage.damagedPlayerId()));
+            gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+            log.info("Game {} - {} triggers for {} damage to a player and needs a target",
+                    gameData.id, sourceCard.getName(), damage.amount());
+            return true;
+        }
+
         gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
@@ -644,6 +650,17 @@ public class DamageTriggerCollectorService {
         Card sourceCard = sd.sourceCard();
         // The source may have died dealing the damage; keep its last-known permanent id when present.
         UUID sourcePermanentId = sd.sourcePermanentId();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                match.stackEffects(),
+                null,
+                sourcePermanentId);
+        // Snapshot the total damage dealt so an EventValue amount ("you gain that much life") reads it.
+        entry.setEventValue(sd.totalDamage());
+        gameData.handOffTriggerRecord(entry);
         if (match.admits(TargetPredicate.Kind.PERMANENT)
                 || match.admits(TargetPredicate.Kind.PLAYER)
                 || match.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
@@ -657,16 +674,6 @@ public class DamageTriggerCollectorService {
             return true;
         }
 
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                match.stackEffects(),
-                null,
-                sourcePermanentId);
-        // Snapshot the total damage dealt so an EventValue amount ("you gain that much life") reads it.
-        entry.setEventValue(sd.totalDamage());
         gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
@@ -721,6 +728,16 @@ public class DamageTriggerCollectorService {
         Card sourceCard = sd.sourceCard();
         ChooseOneAtTriggerTimeEffect modal = match.modal(effect ->
                 effect instanceof ChooseOneAtTriggerTimeEffect triggerTime ? triggerTime : null);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                sd.sourceControllerId(),
+                sourceCard.getName() + "'s ability",
+                match.stackEffects(),
+                null,
+                sd.sourcePermanentId());
+        entry.setEventValue(sd.totalDamage());
+        match.gameData().handOffTriggerRecord(entry);
         if (modal != null) {
             // A modal ability chooses its modes as it goes on the stack (CR 603.3c), as every reader routes one.
             match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
@@ -753,15 +770,6 @@ public class DamageTriggerCollectorService {
                     match.gameData().id, sourceCard.getName());
             return true;
         }
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                sd.sourceControllerId(),
-                sourceCard.getName() + "'s ability",
-                match.stackEffects(),
-                null,
-                sd.sourcePermanentId());
-        entry.setEventValue(sd.totalDamage());
         match.gameData().enqueueTrigger(entry);
 
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
@@ -822,6 +830,22 @@ public class DamageTriggerCollectorService {
         if (sd.totalDamage() <= 0 || match.permanent() == null) return false;
 
         Permanent equipment = match.permanent();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                equipment.getCard(),
+                match.controllerId(),
+                equipment.getCard().getName() + "'s ability",
+                match.stackEffects(),
+                null,
+                equipment.getId());
+        // "That player" is the player dealt damage, if any: the entry's triggering player and non-targeting target.
+        entry.setTargetId(sd.damagedPlayerId());
+        entry.setTriggeringPlayerId(sd.damagedPlayerId());
+        entry.setTriggeringPermanentId(sd.sourcePermanentId());
+        entry.setNonTargeting(true);
+        entry.setEventValue(damage);
+        entry.setSourcePermanentSnapshot(new Permanent(equipment));
+        match.gameData().handOffTriggerRecord(entry);
         if (match.admits(TargetPredicate.Kind.PERMANENT)
                 || match.admits(TargetPredicate.Kind.PLAYER)) {
             boolean optionalTarget = equipment.getCard().getTargetGroups().size() == 1
@@ -850,21 +874,6 @@ public class DamageTriggerCollectorService {
             return true;
         }
 
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                equipment.getCard(),
-                match.controllerId(),
-                equipment.getCard().getName() + "'s ability",
-                match.stackEffects(),
-                null,
-                equipment.getId());
-        // "That player" is the player dealt damage, if any: the entry's triggering player and non-targeting target.
-        entry.setTargetId(sd.damagedPlayerId());
-        entry.setTriggeringPlayerId(sd.damagedPlayerId());
-        entry.setTriggeringPermanentId(sd.sourcePermanentId());
-        entry.setNonTargeting(true);
-        entry.setEventValue(damage);
-        entry.setSourcePermanentSnapshot(new Permanent(equipment));
         match.gameData().enqueueTrigger(entry);
 
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(equipment.getCard()));
@@ -895,6 +904,19 @@ public class DamageTriggerCollectorService {
         Card card = damaged.getCard();
         Permanent lastKnown = dc.damagedLastKnown() != null
                 ? dc.damagedLastKnown() : lastKnownDamageSource(gameData, damaged);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                card,
+                controllerId,
+                card.getName() + "'s ability",
+                match.stackEffects(),
+                null,
+                damaged.getId());
+        entry.setEventValue(dc.damageDealt());
+        entry.setTriggeringPermanentId(dc.sourcePermanentId());
+        entry.setTriggeringPermanentControllerId(dc.damageSourceControllerId());
+        entry.setSourcePermanentSnapshot(lastKnown);
+        gameData.handOffTriggerRecord(entry);
         if (match.admits(TargetPredicate.Kind.PERMANENT)
                 || match.admits(TargetPredicate.Kind.PLAYER)) {
             TargetFilter targetFilter = targetFilterForTriggeredEffect(card, match.targetingEffect());
@@ -913,18 +935,6 @@ public class DamageTriggerCollectorService {
             return true;
         }
 
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                controllerId,
-                card.getName() + "'s ability",
-                match.stackEffects(),
-                null,
-                damaged.getId());
-        entry.setEventValue(dc.damageDealt());
-        entry.setTriggeringPermanentId(dc.sourcePermanentId());
-        entry.setTriggeringPermanentControllerId(dc.damageSourceControllerId());
-        entry.setSourcePermanentSnapshot(lastKnown);
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(card));
         log.info("Game {} - {} dealt-damage trigger fires ({} damage)", gameData.id, card.getName(),

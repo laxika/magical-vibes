@@ -1147,6 +1147,19 @@ public class AnimationSupport {
             return false;
         }
         // The route is read from all the ability's effects; the first that needs a choice of its own decides it.
+        // The entry of an ability that chooses nothing, which is also the record a target or graveyard choice
+        // carries (GameData.handOffTriggerRecord).
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                triggerCard,
+                controllerId,
+                triggerCard.getName() + "'s transform ability",
+                effects,
+                null,
+                self.getId()
+        );
+        entry.setSourcePermanentSnapshot(new Permanent(self));
+        gameData.handOffTriggerRecord(entry);
         for (CardEffect e : effects) {
             if (e instanceof DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect splitDamage) {
                 gameData.interaction.setPermanentChoiceContext(
@@ -1217,16 +1230,6 @@ public class AnimationSupport {
         if (effects.isEmpty()) {
             return true;
         }
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                triggerCard,
-                controllerId,
-                triggerCard.getName() + "'s transform ability",
-                effects,
-                null,
-                self.getId()
-        );
-        entry.setSourcePermanentSnapshot(new Permanent(self));
         gameData.stack.add(entry);
         gameLogService.append(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));
         log.info("Game {} - {} transform trigger pushed onto stack", gameData.id, triggerCard.getName());

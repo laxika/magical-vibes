@@ -39,6 +39,14 @@ public class ExiledCardTriggerCollectorService {
         List<CardEffect> triggeredEffects = match.effects();
 
         GameData gameData = match.gameData();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                card,
+                match.controllerId(),
+                card.getName() + "'s ability",
+                new ArrayList<>(triggeredEffects));
+        entry.setNonTargeting(true);
+        gameData.handOffTriggerRecord(entry);
         if (triggeredEffects.stream().anyMatch(triggeredEffect ->
                 triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
@@ -50,13 +58,6 @@ public class ExiledCardTriggerCollectorService {
             return true;
         }
 
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                match.controllerId(),
-                card.getName() + "'s ability",
-                new ArrayList<>(triggeredEffects));
-        entry.setNonTargeting(true);
         gameData.enqueueTrigger(entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(card));
         log.info("Game {} - {} triggers when a time counter is removed from exile",

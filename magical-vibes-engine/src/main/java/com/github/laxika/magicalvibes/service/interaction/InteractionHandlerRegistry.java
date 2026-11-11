@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
@@ -150,7 +151,14 @@ public class InteractionHandlerRegistry {
         if (handler == null || !handler.acceptsAnswer(active, answer)) {
             return false;
         }
-        handler.handleAnswer(gameData, player, active, answer);
+        // The record of the trigger event the interaction is a choice for is in hand while its answer is handled:
+        // the next choice the ability goes through, or the entry that reaches the stack for it, takes it.
+        StackEntry previous = gameData.handOffTriggerRecord(gameData.interaction.activeTriggerRecord());
+        try {
+            handler.handleAnswer(gameData, player, active, answer);
+        } finally {
+            gameData.restoreTriggerRecordInHand(previous);
+        }
         return true;
     }
 

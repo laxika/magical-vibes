@@ -44,6 +44,20 @@ public class ScryTriggerCollectorService {
         TriggerContext.Scry scry = (TriggerContext.Scry) ctx;
         Card sourceCard = match.permanent().getCard();
         boolean opponentScry = !match.controllerId().equals(scry.scryingPlayerId());
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                match.stackEffects(),
+                opponentScry ? scry.scryingPlayerId() : null,
+                match.permanent().getId());
+        entry.setTriggeringPlayerId(scry.scryingPlayerId());
+        entry.setEventValue(scry.bottomedCardCount());
+        entry.setCardsLookedAtWhileScrying(scry.cardsLookedAt());
+        entry.setNonTargeting(opponentScry);
+        entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
+        match.gameData().handOffTriggerRecord(entry);
         if (!opponentScry && (match.admits(TargetPredicate.Kind.PERMANENT)
                 || match.admits(TargetPredicate.Kind.PLAYER))) {
             TargetSpec targetSpec = match.targetingEffect().targetSpec();
@@ -58,19 +72,6 @@ public class ScryTriggerCollectorService {
                     .withTriggeringPlayer(scry.scryingPlayerId())
                     .withEventValue(scry.bottomedCardCount()));
         } else {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    match.stackEffects(),
-                    opponentScry ? scry.scryingPlayerId() : null,
-                    match.permanent().getId());
-            entry.setTriggeringPlayerId(scry.scryingPlayerId());
-            entry.setEventValue(scry.bottomedCardCount());
-            entry.setCardsLookedAtWhileScrying(scry.cardsLookedAt());
-            entry.setNonTargeting(opponentScry);
-            entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
             match.gameData().enqueueTrigger(entry);
         }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));

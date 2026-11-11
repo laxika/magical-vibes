@@ -191,6 +191,14 @@ public class GraveyardTargetingService {
                                                   List<CardEffect> allEffects, UUID sourcePermanentId,
                                                   ExileCardsFromGraveyardEffect exile,
                                                   int multikickerPaymentCount) {
+        if (gameData.interaction.isAwaitingInput() && queuedChoiceReturnsToEnterExile(card, allEffects, exile)) {
+            // Another ability is already choosing its targets: this one, an object of its own with its own targets,
+            // waits its turn in the queue instead of overwriting that choice, and comes back here when it is taken out.
+            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    card, controllerId, new ArrayList<>(allEffects), null, 0, multikickerPaymentCount, 0, null, false,
+                    null, sourcePermanentId));
+            return;
+        }
         List<Card> matchingCards = new ArrayList<>();
         List<UUID> graveyardOwners = exile.ownGraveyardOnly()
                 ? List.of(controllerId) : gameData.orderedPlayerIds;
@@ -253,6 +261,23 @@ public class GraveyardTargetingService {
                                                   List<CardEffect> allEffects,
                                                   ExileCardsFromGraveyardEffect exile) {
         handleGraveyardExileETBTargeting(gameData, controllerId, card, allEffects, null, exile);
+    }
+
+    /**
+     * Whether a queued {@link PermanentChoiceContext.SpellGraveyardTargetTrigger} with these effects is given back to
+     * {@link #handleGraveyardExileETBTargeting} for {@code exile} when it is taken out of the queue
+     * ({@code TriggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger}): {@code exile} is the first of
+     * the effects that is a graveyard exile of one of the card's own enter abilities. Wrapped in a "you may", it is
+     * not, and the queued choice would be made by other rules than this method's.
+     */
+    private static boolean queuedChoiceReturnsToEnterExile(Card card, List<CardEffect> allEffects,
+                                                           ExileCardsFromGraveyardEffect exile) {
+        return allEffects.stream()
+                .filter(ExileCardsFromGraveyardEffect.class::isInstance)
+                .filter(candidate -> card.getOwnEntryEffects().contains(candidate))
+                .findFirst()
+                .filter(exile::equals)
+                .isPresent();
     }
 
     /**
@@ -789,6 +814,14 @@ public class GraveyardTargetingService {
             List<CardEffect> effects, UUID sourcePermanentId) {
         GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(effects);
         if (target == null) {
+            return;
+        }
+        if (gameData.interaction.isAwaitingInput()) {
+            // Another ability is already choosing its targets: this one, an object of its own with its own targets,
+            // waits its turn in the queue instead of overwriting that choice.
+            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    card, controllerId, new ArrayList<>(effects), null, 0, 0, 0, null, false, null,
+                    sourcePermanentId));
             return;
         }
         CardPredicate filter = target.filter();

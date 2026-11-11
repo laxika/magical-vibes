@@ -1210,9 +1210,11 @@ public class PermanentChoiceTriggerHandlerService {
                 Permanent triggeringCreature = gameQueryService.findPermanentById(
                         gameData, att.triggeringPermanentId());
                 if (triggeringCreature != null) {
-                    entry.setAttachedPermanentSnapshot(new Permanent(triggeringCreature));
-                    entry.setTriggeringPermanentControllerId(
-                            gameQueryService.findPermanentController(gameData, triggeringCreature.getId()));
+                    if (!entry.hasCarriedTriggerRecord()) {
+                        entry.setAttachedPermanentSnapshot(new Permanent(triggeringCreature));
+                        entry.setTriggeringPermanentControllerId(
+                                gameQueryService.findPermanentController(gameData, triggeringCreature.getId()));
+                    }
                     triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
                             gameData, triggeringCreature, entry);
                 }

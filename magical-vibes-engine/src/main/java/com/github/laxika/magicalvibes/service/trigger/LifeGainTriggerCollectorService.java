@@ -51,6 +51,8 @@ public class LifeGainTriggerCollectorService {
     private boolean handleLifeDefault(TriggerMatchContext match, TriggerContext ctx) {
         LifeEvent event = LifeEvent.of(ctx);
         Card sourceCard = match.permanent().getCard();
+        StackEntry entry = lifeEntry(match, event);
+        match.gameData().handOffTriggerRecord(entry);
         if (match.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             queueGraveyardTarget(match, 0, 0);
             return true;
@@ -76,6 +78,21 @@ public class LifeGainTriggerCollectorService {
             return true;
         }
 
+        match.gameData().enqueueTrigger(entry);
+
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on a life event ({} life)",
+                match.gameData().id, sourceCard.getName(), event.amount());
+        return true;
+    }
+
+    /**
+     * The entry of a life ability that chooses nothing: the player whose life changed as its non-targeting "that
+     * player", the amount and the source as it triggered. It is also the record an ability that chooses a target or
+     * a graveyard card as it goes on the stack is given ({@code GameData.handOffTriggerRecord}).
+     */
+    private static StackEntry lifeEntry(TriggerMatchContext match, LifeEvent event) {
+        Card sourceCard = match.permanent().getCard();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -92,12 +109,7 @@ public class LifeGainTriggerCollectorService {
         entry.setTriggeringPlayerId(event.playerId());
         entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
-        match.gameData().enqueueTrigger(entry);
-
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on a life event ({} life)",
-                match.gameData().id, sourceCard.getName(), event.amount());
-        return true;
+        return entry;
     }
 
     /**
@@ -109,6 +121,7 @@ public class LifeGainTriggerCollectorService {
             watch = LifeWatch.ON_OPPONENT_LOSES_LIFE)
     private boolean handleOpponentLifeLossCastFromGraveyard(TriggerMatchContext match,
             CastTargetInstantOrSorceryFromGraveyardEffect effect, TriggerContext ctx) {
+        match.gameData().handOffTriggerRecord(lifeEntry(match, LifeEvent.of(ctx)));
         queueGraveyardTarget(match, 1, 1);
         return true;
     }

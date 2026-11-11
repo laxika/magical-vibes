@@ -102,6 +102,8 @@ public class PlayedCardNameTriggerCollectorService {
         boolean needsPermanentTarget = effects.stream()
                 .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
         if (needsPermanentTarget || boundFilter != null) {
+            match.gameData().handOffTriggerRecord(
+                    landPlayEntry(match, effects, landPlayed.playingPlayerId(), landPlayed.landCard()));
             boolean needsPlayerTarget = effects.stream()
                     .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
@@ -151,6 +153,22 @@ public class PlayedCardNameTriggerCollectorService {
 
     private boolean enqueueLandPlayTrigger(TriggerMatchContext match, List<CardEffect> effects,
                                            UUID playingPlayerId, Card landPlayed) {
+        StackEntry entry = landPlayEntry(match, effects, playingPlayerId, landPlayed);
+        Card sourceCard = entry.getCard();
+        match.gameData().stack.add(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers on playing a land",
+                match.gameData().id, sourceCard.getName());
+        return true;
+    }
+
+    /**
+     * The entry of a land-play ability that chooses nothing: the player who played the land as its non-targeting "that
+     * player", the land as its triggering card and the source as it triggered. It is also the record an ability that
+     * chooses a target as it goes on the stack is given ({@code GameData.handOffTriggerRecord}).
+     */
+    private static StackEntry landPlayEntry(TriggerMatchContext match, List<CardEffect> effects,
+                                            UUID playingPlayerId, Card landPlayed) {
         Card sourceCard = match.permanent() != null ? match.permanent().getCard() : match.sourceCard();
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -175,10 +193,6 @@ public class PlayedCardNameTriggerCollectorService {
         if (match.permanent() != null) {
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         }
-        match.gameData().stack.add(entry);
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on playing a land",
-                match.gameData().id, sourceCard.getName());
-        return true;
+        return entry;
     }
 }

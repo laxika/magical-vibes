@@ -176,6 +176,7 @@ public class StackResolutionService {
         // Everything already on the stack has been through a priority window, so no later trigger
         // batch may reorder it (CR 603.3b).
         TriggeredAbilityQueueService.markTriggersOrdered(gameData);
+        gameData.dropTriggerRecordInHand();
 
         StackEntry entry = gameQueryService.stackUsesFirstInFirstOut(gameData)
                 ? gameData.stack.getFirst()

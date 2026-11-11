@@ -91,6 +91,7 @@ public class CombatTriggerService {
             gameData.stack.add(trigger);
             return;
         }
+        gameData.handOffTriggerRecord(trigger);
         if (effects.size() != 1) {
             throw new IllegalStateException("A mode chosen as a block-step ability triggers is the ability's one "
                     + "effect: " + trigger.getCard().getName());
@@ -229,7 +230,9 @@ public class CombatTriggerService {
                     int previousCopies = slot == CombatWatch.ON_ATTACK
                             ? beginAttackTriggerCopies(gameData, auraOwnerId, perm)
                             : -1;
+                    GameData.TriggerRouting attachedRouting = gameData.beginTriggerRouting();
                     try {
+                        gameData.handOffTriggerRecord(trigger);
                         if (slot == CombatWatch.ON_ATTACK && effectsForStack.size() == 1
                                 && effectsForStack.getFirst() instanceof ChooseOneAtTriggerTimeEffect modal) {
                             // "Whenever equipped creature attacks, choose one —" (Pip-Boy 3000): the mode is chosen as
@@ -318,6 +321,7 @@ public class CombatTriggerService {
                             }
                         }
                     } finally {
+                        gameData.endTriggerRouting(attachedRouting);
                         if (previousCopies >= 0) {
                             gameData.restoreTriggeredAbilityCopies(previousCopies);
                         }

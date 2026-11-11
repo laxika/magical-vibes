@@ -1114,9 +1114,23 @@ public class DamagePreventionService {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "another target")
                 : null;
+        List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(new XValue()));
+        // The ability always targets, so no entry of it chooses nothing: the record is what its target choice's
+        // entry records, the damage prevented as the event's value and the source as it was.
+        StackEntry triggerRecord = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                permanent.getCard(),
+                controllerId,
+                permanent.getCard().getName() + "'s ability",
+                new ArrayList<>(effects),
+                (UUID) null,
+                permanent.getId());
+        triggerRecord.setEventValue(damageAmount);
+        triggerRecord.setSourcePermanentSnapshot(new Permanent(permanent));
+        gameData.handOffTriggerRecord(triggerRecord);
         gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 permanent.getCard(), controllerId,
-                List.of(new DealDamageToAnyTargetEffect(new XValue())),
+                effects,
                 false, targetFilter, damageAmount, permanent.getId(), new Permanent(permanent)));
         gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), "'s ability triggers."));
     }

@@ -184,6 +184,25 @@ public class StateTriggerService {
                         }
                         gameData.stateTriggerOnStack.add(key);
 
+                        // The entry of the ability that chooses nothing is also the record a target choice is given.
+                        StackEntry entry = new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                perm.getCard(),
+                                playerId,
+                                description(trigger, perm.getCard()),
+                                trigger.effects(),
+                                null,
+                                perm.getId()
+                        );
+                        if (referencedPermanent != null) {
+                            entry.setTriggeringPermanentId(referencedPermanent.getId());
+                            entry.setTriggeringPermanentControllerId(playerIdOf(
+                                    gameData, referencedPermanent.getId()));
+                            entry.setTriggeringCardId(referencedPermanent.getCard().getId());
+                            entry.setDamageSourceCard(referencedPermanent.getCard());
+                        }
+                        entry.setStateTriggerEffectIndex(i);
+                        gameData.handOffTriggerRecord(entry);
                         if (hasTargets(perm, trigger)) {
                             PermanentChoiceContext.ETBTokenMultiTargetTrigger pending =
                                     new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
@@ -195,23 +214,6 @@ public class StateTriggerService {
                                 etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
                             }
                         } else {
-                            StackEntry entry = new StackEntry(
-                                    StackEntryType.TRIGGERED_ABILITY,
-                                    perm.getCard(),
-                                    playerId,
-                                    description(trigger, perm.getCard()),
-                                    trigger.effects(),
-                                    null,
-                                    perm.getId()
-                            );
-                            if (referencedPermanent != null) {
-                                entry.setTriggeringPermanentId(referencedPermanent.getId());
-                                entry.setTriggeringPermanentControllerId(playerIdOf(
-                                        gameData, referencedPermanent.getId()));
-                                entry.setTriggeringCardId(referencedPermanent.getCard().getId());
-                                entry.setDamageSourceCard(referencedPermanent.getCard());
-                            }
-                            entry.setStateTriggerEffectIndex(i);
                             gameData.stack.add(entry);
                         }
 

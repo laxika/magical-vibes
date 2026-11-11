@@ -37,6 +37,21 @@ public class DiceRollTriggerCollectorService {
     private boolean handleControllerRollsDice(TriggerMatchContext match, TriggerContext context) {
         Card sourceCard = match.sourceCard() != null ? match.sourceCard() : match.permanent().getCard();
         UUID sourcePermanentId = match.permanent() == null ? null : match.permanent().getId();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                match.stackEffects(),
+                null,
+                sourcePermanentId);
+        if (context instanceof TriggerContext.DiceRoll diceRoll) {
+            entry.setEventValue(diceRoll.result());
+        }
+        if (match.sourcePlanarObject() != null) {
+            entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
+        }
+        match.gameData().handOffTriggerRecord(entry);
         if (match.admits(TargetPredicate.Kind.PERMANENT) || match.admits(TargetPredicate.Kind.PLAYER)) {
             CardEffect targeting = match.targetingEffect();
             int targetGroupIndex = sourceCard.getEffectTargetIndex(targeting);
@@ -66,20 +81,6 @@ public class DiceRollTriggerCollectorService {
             return true;
         }
 
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                match.stackEffects(),
-                null,
-                sourcePermanentId);
-        if (context instanceof TriggerContext.DiceRoll diceRoll) {
-            entry.setEventValue(diceRoll.result());
-        }
-        if (match.sourcePlanarObject() != null) {
-            entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
-        }
         match.gameData().enqueueTrigger(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on controller rolling dice",

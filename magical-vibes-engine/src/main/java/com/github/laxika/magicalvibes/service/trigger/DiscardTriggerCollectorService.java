@@ -94,20 +94,22 @@ public class DiscardTriggerCollectorService {
         GameData gameData = match.gameData();
         Card sourceCard = match.permanent().getCard();
         Discarded discarded = discarded(gameData, ctx);
+        StackEntry entry = recordDiscard(gameData, new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                match.stackEffects(),
+                null,
+                match.permanent().getId()), ctx);
+        gameData.handOffTriggerRecord(entry);
         if (match.admits(TargetPredicate.Kind.PERMANENT) || match.admits(TargetPredicate.Kind.PLAYER)) {
             var choice = new PermanentChoiceContext.DiscardControllerTriggerTarget(sourceCard, match.controllerId(),
                     match.stackEffects(), match.permanent().getId(), discarded.count());
             gameData.queueInteraction(discarded.playerId() == null ? choice
                     : choice.withDiscard(discarded.playerId(), discarded.cards(), discarded.stays()));
         } else {
-            gameData.enqueueTrigger(recordDiscard(gameData, new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    match.stackEffects(),
-                    null,
-                    match.permanent().getId()), ctx));
+            gameData.enqueueTrigger(entry);
         }
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on {}", gameData.id, sourceCard.getName(), event);

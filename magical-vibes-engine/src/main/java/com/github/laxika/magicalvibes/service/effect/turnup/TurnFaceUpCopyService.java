@@ -242,11 +242,20 @@ public class TurnFaceUpCopyService {
                 .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
         boolean targetsPermanent = effects.stream()
                 .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
+        // The entry of an ability that chooses nothing, which is also the record a target choice carries
+        // (GameData.handOffTriggerRecord).
+        java.util.function.Supplier<StackEntry> plainEntry = () -> {
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                    card.getName() + "'s ability", new ArrayList<>(effects), xValue, permanent.getId());
+            entry.setSourcePermanentSnapshot(new Permanent(permanent));
+            return entry;
+        };
         if (targetsGraveyard) {
             int minimumGraveyardTargets = effects.stream()
                     .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
                     .anyMatch(effect -> !effect.hasOptionalTarget()) ? 1 : 0;
             for (int copy = 0; copy < triggerCopies; copy++) {
+                gameData.handOffTriggerRecord(plainEntry.get());
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                         card, controllerId, effects, null, minimumGraveyardTargets, xValue));
             }
@@ -259,6 +268,7 @@ public class TurnFaceUpCopyService {
                 includeAbilities = TriggerCollectionService.predicateContainsHasTarget(filter.predicate());
             }
             for (int copy = 0; copy < triggerCopies; copy++) {
+                gameData.handOffTriggerRecord(plainEntry.get());
                 gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
                         card, controllerId, effects, spellFilter, includeAbilities, permanent.getId()));
             }
@@ -270,6 +280,7 @@ public class TurnFaceUpCopyService {
                     || effects.stream().anyMatch(card::hasEffectTargetIndex)
                     && triggerCollectionService.needsSlotBySlotTargetSelection(card);
             for (int copy = 0; copy < triggerCopies; copy++) {
+                gameData.handOffTriggerRecord(plainEntry.get());
                 if (multiTarget) {
                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                             card, controllerId, effects, permanent.getId(), List.of(), 0, 0));
@@ -281,8 +292,7 @@ public class TurnFaceUpCopyService {
             }
         } else {
             for (int copy = 0; copy < triggerCopies; copy++) {
-                gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
-                        card.getName() + "'s ability", new ArrayList<>(effects), xValue, permanent.getId()));
+                gameData.stack.add(plainEntry.get());
             }
         }
         return true;

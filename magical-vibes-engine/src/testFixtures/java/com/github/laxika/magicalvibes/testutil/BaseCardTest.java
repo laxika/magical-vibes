@@ -66,12 +66,70 @@ public abstract class BaseCardTest {
         // to one. Marking both players AI silently left conn1/conn2 empty, breaking every test that
         // asserts on sent messages. alwaysOfferPriorityWindows buys the priority behavior alone.
         gd.alwaysOfferPriorityWindows = true;
+        watchTriggerRecords();
 
         if (testInfo.getTestMethod().stream().anyMatch(method ->
                 AnnotationSupport.isAnnotated(method, FailOnLegacyDepartureFallback.class))
                 || testInfo.getTestClass().stream().anyMatch(testClass ->
                         AnnotationSupport.isAnnotated(testClass, FailOnLegacyDepartureFallback.class))) {
             LegacyDepartureFallback.watch(gd.id);
+        }
+    }
+
+    private final List<String> routesWithoutTriggerRecord = new java.util.ArrayList<>();
+
+    /**
+     * Watches the game's trigger record hand-off ({@code GameData.handOffTriggerRecord}): a collector that queues or
+     * asks a choice for the ability it is routing without having handed off the ability's record is a route that
+     * records less of the trigger event than the ability that chooses nothing.
+     */
+    private void watchTriggerRecords() {
+        String auditFile = System.getenv("MV_TRIGGER_RECORD_AUDIT");
+        gd.interactionWithoutTriggerRecord = (interaction, routing) -> {
+            if (!routing && auditFile == null) {
+                return;
+            }
+            StringBuilder line = new StringBuilder(routing ? "ROUTING " : "UNSCOPED ")
+                    .append(interaction.getClass().getSimpleName());
+            if (interaction instanceof com.github.laxika.magicalvibes.model.PendingInteraction.PermanentChoice choice
+                    && choice.context() != null) {
+                line.append('/').append(choice.context().getClass().getSimpleName());
+            }
+            int frames = 0;
+            for (StackTraceElement frame : new Throwable().getStackTrace()) {
+                String className = frame.getClassName();
+                if (!className.contains(".service.") || className.endsWith("InteractionHandlerRegistry")) {
+                    continue;
+                }
+                line.append(' ').append(className.substring(className.lastIndexOf('.') + 1)).append('.')
+                        .append(frame.getMethodName()).append(':').append(frame.getLineNumber());
+                if (++frames == 6) {
+                    break;
+                }
+            }
+            if (auditFile != null) {
+                try {
+                    java.nio.file.Files.writeString(java.nio.file.Path.of(auditFile), line + "\n",
+                            java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
+                } catch (java.io.IOException e) {
+                    throw new java.io.UncheckedIOException(e);
+                }
+            } else {
+                routesWithoutTriggerRecord.add(line.toString());
+            }
+        };
+    }
+
+    /**
+     * A test fails when a collector of its game routed an ability through a choice without handing off the
+     * ability's trigger record.
+     */
+    @AfterEach
+    void assertEveryRouteHandedOffItsTriggerRecord() {
+        if (!routesWithoutTriggerRecord.isEmpty()) {
+            throw new AssertionError("A collector queued or asked a choice for a triggered ability without handing "
+                    + "off the entry it builds for an ability that chooses nothing (GameData.handOffTriggerRecord): "
+                    + routesWithoutTriggerRecord);
         }
     }
 

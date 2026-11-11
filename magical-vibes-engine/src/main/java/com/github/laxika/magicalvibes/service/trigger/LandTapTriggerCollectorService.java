@@ -198,6 +198,9 @@ public class LandTapTriggerCollectorService {
      * tap from the entry.
      */
     private void resolveAtOnce(GameData gameData, StackEntry entry) {
+        // A triggered mana ability resolves at once (CR 605.4a): a choice it asks as it resolves is the ability's
+        // own, so the entry is its record.
+        gameData.handOffTriggerRecord(entry);
         for (int i = 0; i < entry.getEffectsToResolve().size(); i++) {
             CardEffect effect = entry.getEffectsToResolve().get(i);
             EffectHandler handler = effectHandlerRegistry.getHandler(effect);
@@ -254,6 +257,9 @@ public class LandTapTriggerCollectorService {
         List<CardEffect> effects = List.copyOf(entry.getEffectsToResolve());
         boolean playerTargetOnly = effects.stream().noneMatch(effect -> effect.targetSpec()
                 .admits(TargetPredicate.Kind.PERMANENT));
+        // The entry is what the ability would be had it chosen nothing: the choice's entry is given its record.
+        entry.setProducedManaColors(producedManaColors == null ? Set.of() : producedManaColors);
+        gameData.handOffTriggerRecord(entry);
         gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 entry.getCard(),
                 entry.getControllerId(),

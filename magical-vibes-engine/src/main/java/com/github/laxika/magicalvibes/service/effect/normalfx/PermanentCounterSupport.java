@@ -1254,6 +1254,13 @@ public class PermanentCounterSupport {
 
         for (List<CardEffect> effects : abilities) {
             boolean needsTarget = effects.stream().anyMatch(e -> e.targetSpec().declaredTarget() != null);
+            // The entry of the ability that chooses nothing, and the record of one that chooses a target as it goes on
+            // the stack.
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                    card.getName() + "'s triggered ability",
+                    new ArrayList<>(effects), null, creature.getId());
+            StackEntry recordInHand = gameData.handOffTriggerRecord(trigger);
             if (needsTarget) {
                 PermanentPredicate targetPredicate = effects.stream()
                         .map(e -> e.targetSpec().predicate())
@@ -1268,12 +1275,10 @@ public class PermanentCounterSupport {
                 gameLogService.append(gameData,
                         GameLog.cardThen(card, "'s triggered ability triggers â€” choose a target."));
             } else {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, card, controllerId,
-                        card.getName() + "'s triggered ability",
-                        new ArrayList<>(effects), null, creature.getId()));
+                gameData.stack.add(trigger);
                 gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
             }
+            gameData.restoreTriggerRecordInHand(recordInHand);
             log.info("Game {} - {} self -1/-1-counter trigger fires", gameData.id, card.getName());
         }
     }
@@ -1320,6 +1325,12 @@ public class PermanentCounterSupport {
 
         for (List<CardEffect> effects : abilities) {
             List<CardEffect> effectsToResolve = new ArrayList<>(effects);
+            // The entry of the ability that chooses nothing, and the record of one that chooses a target or a
+            // graveyard card as it goes on the stack.
+            StackEntry trigger = new StackEntry(
+                    StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                    card.getName() + "'s triggered ability", effectsToResolve, null, permanent.getId());
+            StackEntry recordInHand = gameData.handOffTriggerRecord(trigger);
             if (effectsToResolve.stream().anyMatch(effect ->
                     effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
@@ -1333,11 +1344,10 @@ public class PermanentCounterSupport {
                 gameLogService.append(gameData,
                         GameLog.cardThen(card, "'s triggered ability triggers â€” choose a target."));
             } else {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, card, controllerId,
-                        card.getName() + "'s triggered ability", effectsToResolve, null, permanent.getId()));
+                gameData.stack.add(trigger);
                 gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
             }
+            gameData.restoreTriggerRecordInHand(recordInHand);
             log.info("Game {} - {} {} trigger fires", gameData.id, card.getName(), eventDescription);
         }
     }
@@ -1555,6 +1565,20 @@ public class PermanentCounterSupport {
                             .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
                     boolean targetsPlayer = effectsToResolve.stream()
                             .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                    // The entry of the ability that chooses nothing, and the record of one that chooses a target as
+                    // it goes on the stack.
+                    StackEntry trigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            card,
+                            controllerId,
+                            card.getName() + "'s triggered ability",
+                            effectsToResolve,
+                            null,
+                            source.getId()
+                    );
+                    trigger.setTriggeringPermanentId(creature.getId());
+                    trigger.setTriggeringPermanentControllerId(controllerId);
+                    StackEntry recordInHand = gameData.handOffTriggerRecord(trigger);
                     if (targetsPermanent || targetsPlayer) {
                         gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                                 card, controllerId, effectsToResolve, !targetsPermanent,
@@ -1562,20 +1586,10 @@ public class PermanentCounterSupport {
                         gameLogService.append(gameData,
                                 GameLog.cardThen(card, "'s triggered ability triggers — choose a target."));
                     } else {
-                        StackEntry trigger = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                card,
-                                controllerId,
-                                card.getName() + "'s triggered ability",
-                                effectsToResolve,
-                                null,
-                                source.getId()
-                        );
-                        trigger.setTriggeringPermanentId(creature.getId());
-                        trigger.setTriggeringPermanentControllerId(controllerId);
                         gameData.stack.add(trigger);
                         gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
                     }
+                    gameData.restoreTriggerRecordInHand(recordInHand);
                     log.info("Game {} - {} generic counter watcher fires", gameData.id, card.getName());
                 }
             }
@@ -1685,14 +1699,19 @@ public class PermanentCounterSupport {
                 CounterAbilityReader.requireNoLimit(first, watch.trigger());
                 List<CardEffect> abilityEffects = CounterAbilityReader.effectsOf(ability);
                 for (int i = 0; i < count; i++) {
+                    // The entry of the ability that chooses nothing, and the record of one that chooses a target as
+                    // it goes on the stack.
+                    StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                            card, controllerId, card.getName() + "'s triggered ability",
+                            new ArrayList<>(abilityEffects), null, target.getId());
+                    StackEntry recordInHand = gameData.handOffTriggerRecord(trigger);
                     if (abilityEffects.stream().anyMatch(effect -> effect.targetSpec().declaredTarget() != null)) {
                         gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
                                 card, controllerId, abilityEffects, "+1/+1 counter placement", target.getId()));
                     } else {
-                        gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                                card, controllerId, card.getName() + "'s triggered ability",
-                                new ArrayList<>(abilityEffects), null, target.getId()));
+                        gameData.stack.add(trigger);
                     }
+                    gameData.restoreTriggerRecordInHand(recordInHand);
                 }
             } else if (!first.byController() || controllerId.equals(placingPlayerId)) {
                 // "Whenever you put one or more +1/+1 counters on this" (Exemplar of Light, Blaster) only when its
@@ -1714,6 +1733,18 @@ public class PermanentCounterSupport {
 
         boolean needsTarget = effectsToResolve.stream()
                 .anyMatch(effect -> effect.targetSpec().declaredTarget() != null);
+        // The entry of the ability that chooses nothing, and the record of one that chooses a target as it goes on the
+        // stack.
+        StackEntry trigger = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                card,
+                controllerId,
+                card.getName() + "'s triggered ability",
+                effectsToResolve,
+                null,
+                target.getId()
+        );
+        StackEntry recordInHand = gameData.handOffTriggerRecord(trigger);
         if (needsTarget) {
             gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
                     card, controllerId, effectsToResolve,
@@ -1721,17 +1752,10 @@ public class PermanentCounterSupport {
             gameLogService.append(gameData,
                     GameLog.cardThen(card, "'s triggered ability triggers â€” choose a target."));
         } else {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    controllerId,
-                    card.getName() + "'s triggered ability",
-                    effectsToResolve,
-                    null,
-                    target.getId()
-            ));
+            gameData.stack.add(trigger);
             gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
         }
+        gameData.restoreTriggerRecordInHand(recordInHand);
         log.info("Game {} - {} +1/+1 counter trigger fires", gameData.id, card.getName());
     }
 
@@ -1803,20 +1827,25 @@ public class PermanentCounterSupport {
 
         boolean needsTarget = effectsToResolve.stream()
                 .anyMatch(effect -> effect.targetSpec().declaredTarget() != null);
+        // The entry of the ability that chooses nothing, and the record of one that chooses a target as it goes on the
+        // stack.
+        StackEntry trigger = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                card,
+                controllerId,
+                card.getName() + "'s triggered ability",
+                effectsToResolve,
+                null,
+                target.getId());
+        StackEntry recordInHand = gameData.handOffTriggerRecord(trigger);
         if (needsTarget) {
             gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
                     card, controllerId, effectsToResolve,
                     "counter placement", target.getId()));
         } else {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    controllerId,
-                    card.getName() + "'s triggered ability",
-                    effectsToResolve,
-                    null,
-                    target.getId()));
+            gameData.stack.add(trigger);
         }
+        gameData.restoreTriggerRecordInHand(recordInHand);
         gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
         log.info("Game {} - {} self-counter trigger fires", gameData.id, card.getName());
     }
@@ -2117,7 +2146,21 @@ public class PermanentCounterSupport {
                 boolean targetsPlayer = effectsToResolve.stream()
                         .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                 // Both routes record the number of counters, the source as it triggered and the "do this only once
-                // each turn" mark (CR 603.2h), whatever the effects are.
+                // each turn" mark (CR 603.2h), whatever the effects are: the entry of the ability that chooses
+                // nothing is the record of one that chooses a target.
+                StackEntry triggerEntry = new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        card,
+                        controllerId,
+                        card.getName() + "'s triggered ability",
+                        effectsToResolve,
+                        null,
+                        source.getId()
+                );
+                triggerEntry.setEventValue(count);
+                triggerEntry.setSourcePermanentSnapshot(new Permanent(source));
+                triggerEntry.setOnceEachTurnActionKey(triggering.actionKey());
+                StackEntry recordInHand = gameData.handOffTriggerRecord(triggerEntry);
                 if (targetsPermanent || targetsPlayer) {
                     PermanentChoiceContext.SpellTargetTriggerAnyTarget targetChoice =
                             new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
@@ -2131,20 +2174,9 @@ public class PermanentCounterSupport {
                             new Permanent(source));
                     gameData.queueInteraction(targetChoice.withOnceEachTurnActionKey(triggering.actionKey()));
                 } else {
-                    StackEntry triggerEntry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            card,
-                            controllerId,
-                            card.getName() + "'s triggered ability",
-                            effectsToResolve,
-                            null,
-                            source.getId()
-                    );
-                    triggerEntry.setEventValue(count);
-                    triggerEntry.setSourcePermanentSnapshot(new Permanent(source));
-                    triggerEntry.setOnceEachTurnActionKey(triggering.actionKey());
                     gameData.stack.add(triggerEntry);
                 }
+                gameData.restoreTriggerRecordInHand(recordInHand);
                 triggering.markLimits(gameData, source.getId());
                 gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
                 log.info("Game {} - {} +1/+1 counter-on-controlled-permanent trigger fires", gameData.id,

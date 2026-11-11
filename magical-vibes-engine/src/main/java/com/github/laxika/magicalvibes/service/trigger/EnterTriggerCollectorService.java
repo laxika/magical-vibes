@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -46,7 +47,8 @@ public class EnterTriggerCollectorService {
                 && (may.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 || may.targetSpec().admits(TargetPredicate.Kind.PLAYER)))) {
             // "You may have target player …": the target is chosen as the ability goes on the stack (CR 603.3d).
-            queueTargetChoices(match, pe, false);
+            queueTargetChoices(match, pe, false, () -> match.permanent() == null
+                    ? enterEntry(match, pe.defaultTargetPlayerId(), pe) : anyPermanentEnterEntry(match, pe));
             return true;
         }
         return enqueueAnyPermanentEnter(match, pe);
@@ -55,17 +57,6 @@ public class EnterTriggerCollectorService {
     @CollectsMiscTrigger(value = CardEffect.class, watch = MiscWatch.ON_ALLY_ROOM_FULLY_UNLOCKED)
     private boolean handleRoomFullyUnlockedDefault(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.RoomFullyUnlocked room = (TriggerContext.RoomFullyUnlocked) ctx;
-        if (match.admits(TargetPredicate.Kind.PERMANENT)
-                || match.admits(TargetPredicate.Kind.PLAYER)) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
-                    match.permanent().getCard(), match.controllerId(), match.stackEffects(),
-                    match.permanent().getId(), room.roomPermanentId()));
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
-            log.info("Game {} - {} triggers when a Room is fully unlocked, awaiting target",
-                    match.gameData().id, match.permanent().getCard().getName());
-            return true;
-        }
-
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 match.permanent().getCard(),
@@ -77,6 +68,18 @@ public class EnterTriggerCollectorService {
         entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         entry.setTriggeringPermanentId(room.roomPermanentId());
         entry.setNonTargeting(true);
+        match.gameData().handOffTriggerRecord(entry);
+        if (match.admits(TargetPredicate.Kind.PERMANENT)
+                || match.admits(TargetPredicate.Kind.PLAYER)) {
+            match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
+                    match.permanent().getCard(), match.controllerId(), match.stackEffects(),
+                    match.permanent().getId(), room.roomPermanentId()));
+            gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
+            log.info("Game {} - {} triggers when a Room is fully unlocked, awaiting target",
+                    match.gameData().id, match.permanent().getCard().getName());
+            return true;
+        }
+
         match.gameData().stack.add(entry);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} triggers when a Room is fully unlocked",
@@ -91,6 +94,7 @@ public class EnterTriggerCollectorService {
                 return true;
             }
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().handOffTriggerRecord(anyPermanentEnterEntry(match, pe));
                 match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(
                         match.permanent().getCard(), match.controllerId(),
                         match.stackEffects(), match.permanent().getId(),
@@ -102,27 +106,37 @@ public class EnterTriggerCollectorService {
             return true;
         }
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    match.permanent().getCard(),
-                    match.controllerId(),
-                    match.permanent().getCard().getName() + "'s ability",
-                    match.stackEffects(),
-                    pe.defaultTargetPlayerId() != null ? pe.defaultTargetPlayerId() : pe.enteringControllerId(),
-                    match.permanent().getId());
-            entry.setNonTargeting(true);
-            entry.setTriggeringPermanentId(pe.enteringPermanentId());
-            entry.setTriggeringPermanentControllerId(pe.enteringControllerId());
-            entry.setTriggeringCardId(pe.enteringCard().getId());
-            recordEnteringPermanent(match.gameData(), entry, pe.enteringCard(), pe.enteringPermanentId() == null
-                    ? null : gameQueryService.findPermanentById(match.gameData(), pe.enteringPermanentId()),
-                    pe.enteringControllerId());
-            match.gameData().stack.add(entry);
+            match.gameData().stack.add(anyPermanentEnterEntry(match, pe));
         }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
         log.info("Game {} - {} any-permanent-enters trigger queued", match.gameData().id,
                 match.permanent().getCard().getName());
         return true;
+    }
+
+    /**
+     * The entry of a "whenever a permanent enters" ability that chooses nothing: the entering permanent's controller
+     * as its non-targeting "that player" and the entering permanent recorded ({@link #recordEnteringPermanent}). It is
+     * also the record an ability that chooses a target as it goes on the stack is given
+     * ({@code GameData.handOffTriggerRecord}).
+     */
+    private StackEntry anyPermanentEnterEntry(TriggerMatchContext match, TriggerContext.PermanentEnters pe) {
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                match.permanent().getCard(),
+                match.controllerId(),
+                match.permanent().getCard().getName() + "'s ability",
+                match.stackEffects(),
+                pe.defaultTargetPlayerId() != null ? pe.defaultTargetPlayerId() : pe.enteringControllerId(),
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        entry.setTriggeringPermanentId(pe.enteringPermanentId());
+        entry.setTriggeringPermanentControllerId(pe.enteringControllerId());
+        entry.setTriggeringCardId(pe.enteringCard().getId());
+        recordEnteringPermanent(match.gameData(), entry, pe.enteringCard(), pe.enteringPermanentId() == null
+                ? null : gameQueryService.findPermanentById(match.gameData(), pe.enteringPermanentId()),
+                pe.enteringControllerId());
+        return entry;
     }
 
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
@@ -151,6 +165,7 @@ public class EnterTriggerCollectorService {
         if (modes != null) {
             UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
             for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+                match.gameData().handOffTriggerRecord(enterEntry(match, pe.defaultTargetPlayerId(), pe));
                 match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                         match.sourceCard(), match.controllerId(), modes,
                         match.permanent() == null ? null : match.permanent().getId(), false, false,
@@ -173,7 +188,7 @@ public class EnterTriggerCollectorService {
         boolean needsTargetChoice = match.admits(TargetPredicate.Kind.PERMANENT)
                 || (match.admits(TargetPredicate.Kind.PLAYER) && pe.defaultTargetPlayerId() == null);
         if (needsTargetChoice && (match.permanent() != null || match.sourcePlanarObject() != null)) {
-            queueTargetChoices(match, pe, true);
+            queueTargetChoices(match, pe, true, () -> enterEntry(match, pe.defaultTargetPlayerId(), pe));
             return true;
         }
         enqueue(match, pe.defaultTargetPlayerId(), pe);
@@ -189,6 +204,7 @@ public class EnterTriggerCollectorService {
     private void queueGraveyardTargetChoices(TriggerMatchContext match, TriggerContext.PermanentEnters pe) {
         UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().handOffTriggerRecord(enterEntry(match, pe.defaultTargetPlayerId(), pe));
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     match.sourceCard(), match.controllerId(), match.effects(), null, 0, 0, 0, null, false,
                     enteringPermanentId, match.permanent() == null ? null : match.permanent().getId(),
@@ -202,13 +218,15 @@ public class EnterTriggerCollectorService {
      * as it goes on the stack (CR 603.3d) and judged against the watcher, the ability's source (CR 113.7), and the
      * choice carries the entering permanent, "that creature" for the effects that read it (Gruul Ragebeast's fight).
      * A plane's ability goes to the any-target choice with the plane; a source with several target groups, when
-     * {@code multiTargetGroups}, to the multi-target choice.
+     * {@code multiTargetGroups}, to the multi-target choice. {@code plainEntry} builds the entry the calling collector
+     * puts on the stack for an ability that chooses nothing; each choice is handed one as its record.
      */
     private void queueTargetChoices(TriggerMatchContext match, TriggerContext.PermanentEnters pe,
-                                    boolean multiTargetGroups) {
+                                    boolean multiTargetGroups, Supplier<StackEntry> plainEntry) {
         Card sourceCard = match.sourceCard();
         UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().handOffTriggerRecord(plainEntry.get());
             if (match.sourcePlanarObject() != null) {
                 Permanent entering = enteringPermanentId == null
                         ? null : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
@@ -235,10 +253,6 @@ public class EnterTriggerCollectorService {
     private boolean handleTokenEnterDefault(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
         Card sourceCard = match.permanent().getCard();
-        if (match.targets()) {
-            queueTokenEnterTargetChoices(match, tokensEnter);
-            return true;
-        }
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceCard,
@@ -251,6 +265,10 @@ public class EnterTriggerCollectorService {
         entry.setNonTargeting(true);
         entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
         recordEnteringTokens(match.gameData(), entry, tokensEnter);
+        if (match.targets()) {
+            queueTokenEnterTargetChoices(match, tokensEnter, entry);
+            return true;
+        }
         for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
             match.gameData().enqueueTrigger(entry.copyForNewStackObject());
         }
@@ -284,13 +302,16 @@ public class EnterTriggerCollectorService {
      * targets chosen as it goes on the stack (CR 603.3d). When the event is one token's ("whenever a token enters",
      * triggering for each), that token is the entry's triggering permanent, "it" for the effects that read it ("a token
      * that's a copy of it"), and a target restricted by it ("target player other than its controller") is judged
-     * against it. The choice carries the ability's "do this only once each turn" mark (CR 603.2h) to its entry.
+     * against it. The choice carries the ability's "do this only once each turn" mark (CR 603.2h) to its entry, and
+     * each is handed a copy of {@code plainEntry}, the entry of an ability that chooses nothing, as its record.
      */
-    private void queueTokenEnterTargetChoices(TriggerMatchContext match, TriggerContext.TokensEnter tokensEnter) {
+    private void queueTokenEnterTargetChoices(TriggerMatchContext match, TriggerContext.TokensEnter tokensEnter,
+                                              StackEntry plainEntry) {
         UUID enteringTokenId = tokensEnter.permanentIds().size() == 1 ? tokensEnter.permanentIds().getFirst() : null;
         var choice = new PermanentChoiceContext.EntersTriggerTarget(match.permanent().getCard(), match.controllerId(),
                 match.stackEffects(), match.permanent().getId(), enteringTokenId);
         for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
+            match.gameData().handOffTriggerRecord(plainEntry.copyForNewStackObject());
             match.gameData().queueInteraction(choice.withOnceEachTurnActionKey(match.onceEachTurnActionKey()));
         }
         logTriggered(match);
@@ -300,10 +321,16 @@ public class EnterTriggerCollectorService {
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_CREATURE_ENTERS_BATTLEFIELD)
     private boolean handleAnyCreatureEnterDefault(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
+        if (match.admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                && !match.admits(TargetPredicate.Kind.PLAYER)
+                && !match.admits(TargetPredicate.Kind.PERMANENT)) {
+            queueGraveyardTargetChoices(match, pe);
+            return true;
+        }
         if (match.targets()) {
             // "You may have it deal damage to any target" (Pandemonium, the Immersturm plane): the target is chosen as
             // the ability goes on the stack, the "you may" asked as it resolves (CR 603.5).
-            queueTargetChoices(match, pe, false);
+            queueTargetChoices(match, pe, false, () -> enterEntry(match, pe.defaultTargetPlayerId(), pe));
             return true;
         }
         enqueue(match, pe.defaultTargetPlayerId(), pe);
@@ -327,6 +354,7 @@ public class EnterTriggerCollectorService {
         // "That creature deals damage equal to its power to any target" (Flayer of the Hatebound): the ability is the
         // watcher's, its target judged against it (CR 113.7); its effects read the entry's triggering permanent.
         for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().handOffTriggerRecord(enterEntry(match, null, pe));
             match.gameData().queueInteraction(new PermanentChoiceContext.EntersTriggerTarget(match.permanent().getCard(),
                     match.controllerId(), match.stackEffects(), match.permanent().getId(),
                     enteringPermanentId));
@@ -351,35 +379,45 @@ public class EnterTriggerCollectorService {
      */
     private void enqueue(TriggerMatchContext match, UUID targetPlayerId,
                          TriggerContext.PermanentEnters pe) {
+        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
+            match.gameData().stack.add(enterEntry(match, targetPlayerId, pe));
+        }
+    }
+
+    /**
+     * The entry of an enters ability that chooses nothing, with the permanent the enter event was about recorded on it
+     * ({@link #recordEnteringPermanent}). It is also the record an ability that chooses a mode, a target or a graveyard
+     * card as it goes on the stack is given ({@code GameData.handOffTriggerRecord}).
+     */
+    private StackEntry enterEntry(TriggerMatchContext match, UUID targetPlayerId,
+                                  TriggerContext.PermanentEnters pe) {
         Card sourceCard = match.sourceCard();
         UUID enteringPermanentId = findEnteringPermanentId(match, pe.enteringCard());
         Permanent enteringPermanent = enteringPermanentId == null
                 ? null : gameQueryService.findPermanentById(match.gameData(), enteringPermanentId);
-        for (int i = 0; i < pe.perEffectTriggerCount(); i++) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    sourceCard.getName() + "'s ability",
-                    match.stackEffects(),
-                    targetPlayerId,
-                    match.permanent() == null ? null : match.permanent().getId()
-            );
-            entry.setNonTargeting(!match.targets() || isPlayerFixedByEvent(match, targetPlayerId));
-            entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
-            entry.setSourcePlanarObject(match.sourcePlanarObject() == null
-                    ? null : match.sourcePlanarObject().copy());
-            if (match.permanent() != null) {
-                entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-            }
-            recordEnteringPermanent(match.gameData(), entry, pe.enteringCard(), enteringPermanent,
-                    pe.enteringControllerId());
-            if (enteringPermanent != null) {
-                entry.setTriggeringPermanentIds(List.of(enteringPermanentId));
-                entry.setAttachedPermanentSnapshot(new Permanent(enteringPermanent));
-            }
-            match.gameData().stack.add(entry);
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                match.stackEffects(),
+                targetPlayerId,
+                match.permanent() == null ? null : match.permanent().getId()
+        );
+        entry.setNonTargeting(!match.targets() || isPlayerFixedByEvent(match, targetPlayerId));
+        entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
+        entry.setSourcePlanarObject(match.sourcePlanarObject() == null
+                ? null : match.sourcePlanarObject().copy());
+        if (match.permanent() != null) {
+            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         }
+        recordEnteringPermanent(match.gameData(), entry, pe.enteringCard(), enteringPermanent,
+                pe.enteringControllerId());
+        if (enteringPermanent != null) {
+            entry.setTriggeringPermanentIds(List.of(enteringPermanentId));
+            entry.setAttachedPermanentSnapshot(new Permanent(enteringPermanent));
+        }
+        return entry;
     }
 
     /**
