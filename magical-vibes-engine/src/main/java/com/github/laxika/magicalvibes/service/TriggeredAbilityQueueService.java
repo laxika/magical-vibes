@@ -532,9 +532,9 @@ public class TriggeredAbilityQueueService {
                 ? null : pending.sourcePermanentSnapshot().getEffectivePower();
         gameData.graveyardTargetOperation.targetPlayerId = primaryTargetId;
         gameData.graveyardTargetOperation.graveyardTargetMaxManaValue = pending.graveyardTargetMaxManaValue();
-        if (pending.markSourceOncePerTurnOnAcceptance() && pending.sourcePermanentSnapshot() != null) {
+        if (pending.onceEachTurnActionKey() != null && pending.sourcePermanentSnapshot() != null) {
             gameData.graveyardTargetOperation.sourcePermanentId = pending.sourcePermanentSnapshot().getId();
-            gameData.graveyardTargetOperation.markSourceOncePerTurnOnAcceptance = true;
+            gameData.graveyardTargetOperation.onceEachTurnActionKey = pending.onceEachTurnActionKey();
         }
 
         String zoneLabel = switch (target.scope()) {
@@ -1459,8 +1459,9 @@ public class TriggeredAbilityQueueService {
     /**
      * Puts the chosen modes of a triggered ability on the stack as one object (CR 603.3c), or queues the choice of
      * their targets (CR 603.3d). {@code triggerRecord}, when the collector gave one, is what it records for an ability
-     * of the same trigger that needs no choice: the entry, or a graveyard or single target choice's entry, carries it
-     * whatever the modes' effects are ({@code StackEntry.carryTriggerRecord}).
+     * of the same trigger that needs no choice: the entry, or the entry a graveyard, spell, single-target or
+     * group-by-group target choice makes, carries it whatever the modes' effects are
+     * ({@code StackEntry.carryTriggerRecord}).
      */
     public void queueChosenTriggeredModalTrigger(GameData gameData, Card sourceCard, UUID controllerId,
             UUID sourcePermanentId, List<ChooseOneEffect.ChooseOneOption> chosenModes, UUID triggeringCardId,
@@ -1478,7 +1479,7 @@ public class TriggeredAbilityQueueService {
             gameData.queueInteractionFirst(new PermanentChoiceContext.ETBSpellTargetTrigger(
                     sourceCard, controllerId, effects, spellFilter,
                     spellFilter != null && TriggerCollectionService.predicateContainsHasTarget(spellFilter),
-                    sourcePermanentId));
+                    sourcePermanentId).withTriggerRecord(triggerRecord));
             return;
         }
         boolean needsGraveyardTarget = effects.stream().anyMatch(effect ->
@@ -1499,13 +1500,14 @@ public class TriggeredAbilityQueueService {
                     || etbTokenTargetService.needsSlotBySlotTargetSelection(targetingCard)) {
                 gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         targetingCard, controllerId, effects, sourcePermanentId,
-                        List.of(), 0, 0));
+                        List.of(), 0, 0).withTriggerRecord(triggerRecord));
             } else {
                 TargetFilter targetFilter = targetingCard.getTargetGroups().isEmpty()
                         ? null : targetingCard.getTargetGroups().getFirst().getFilter();
                 if (attackedTargetId == null) {
                     gameData.queueInteractionFirst(new PermanentChoiceContext.EntersTriggerTarget(
-                            targetingCard, controllerId, effects, sourcePermanentId, null, null, targetFilter));
+                            targetingCard, controllerId, effects, sourcePermanentId, null, null, targetFilter)
+                            .withTriggerRecord(triggerRecord));
                 } else {
                     PermanentChoiceContext.AttackTriggerTarget targetChoice =
                             new PermanentChoiceContext.AttackTriggerTarget(targetingCard, controllerId, effects,
@@ -3244,8 +3246,8 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.triggerRecord = pending.triggerRecord();
             gameData.graveyardTargetOperation.attackingPermanentSnapshots = pending.attackingPermanentSnapshots();
             gameData.graveyardTargetOperation.sourcePermanentId = pending.sourcePermanentId();
-            gameData.graveyardTargetOperation.markSourceOncePerTurnOnAcceptance =
-                    pending.markSourceOncePerTurnOnAcceptance();
+            gameData.graveyardTargetOperation.onceEachTurnActionKey =
+                    pending.onceEachTurnActionKey();
             if (gameData.graveyardTargetOperation.sourcePermanentId == null) {
                 // ETB source permanent (for intervening-if / attach); find by card id on the controller's BF
                 List<Permanent> bf = gameData.playerBattlefields.get(pending.controllerId());

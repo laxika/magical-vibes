@@ -350,16 +350,15 @@ class DamageTriggerCollectorServiceTest {
             var ctx = new TriggerContext.AnyCreatureDealtDamage(damaged, player1Id, 2);
 
             assertThat(registry.dispatch(new TriggerMatchContext(gd, watcher, player1Id, List.of(may),
-                    watcher.getCard(), null, true),
+                    watcher.getCard(), null, "once"),
                     DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE, ctx)).isTrue();
 
             assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
                     .isNotNull()
                     .satisfies(pending -> {
                         assertThat(pending.effects()).containsExactly(may);
-                        assertThat(pending.markSourceOncePerTurnOnAcceptance()).isTrue();
+                        assertThat(pending.onceEachTurnActionKey()).isEqualTo("once");
                     });
-            assertThat(gd.oncePerTurnTriggersFiredThisTurn).doesNotContain(watcher.getId());
         }
     }
 

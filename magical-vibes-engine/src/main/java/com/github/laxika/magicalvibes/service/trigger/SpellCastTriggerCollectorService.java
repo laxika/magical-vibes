@@ -284,7 +284,7 @@ public class SpellCastTriggerCollectorService {
             boolean queued = false;
             TriggerMatchContext spellSourced = new TriggerMatchContext(match.gameData(), match.permanent(),
                     match.controllerId(), match.effects(), spellCard, match.sourcePlanarObject(),
-                    match.markSourceOncePerTurnOnAcceptance(), match.triggersOnlyOnceEachTurn());
+                    match.onceEachTurnActionKey(), match.triggersOnlyOnceEachTurn());
             for (CardEffect cascade : trigger.effects()) {
                 queued |= handleGenericSpellCastTrigger(spellSourced, trigger.withEffects(List.of(cascade)),
                         spellCard, castingPlayerId, exiledSourcePermanentId, castZone);
@@ -495,7 +495,7 @@ public class SpellCastTriggerCollectorService {
             // against the triggering spell, which the stack entry keeps for the check as the ability resolves.
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     sourceCard, match.controllerId(), resolved, null, 0, graveyardTargetX, 0, null, false, null,
-                    sourcePermanentId, match.markSourceOncePerTurnOnAcceptance()).withTriggeringSpell(triggeringSpell));
+                    sourcePermanentId, match.onceEachTurnActionKey()).withTriggeringSpell(triggeringSpell));
             log.info("Game {} - {} spell-cast graveyard-target trigger queued",
                     match.gameData().id, sourceCard.getName());
         } else if (needsSpellTarget && !needsTargeting) {
@@ -600,7 +600,7 @@ public class SpellCastTriggerCollectorService {
                 entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
             }
             preservePlanarSource(entry, match);
-            entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+            entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
             match.gameData().stack.add(entry);
             // "Whenever a player kicks a spell": once for each time it was kicked.
             for (int kick = 1; (trigger.filter().kicker() == SpellFilter.Kicker.EACH_KICK) && kick < kickCount; kick++) {

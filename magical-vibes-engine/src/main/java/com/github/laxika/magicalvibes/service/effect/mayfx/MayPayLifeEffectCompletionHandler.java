@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
@@ -52,9 +53,8 @@ public class MayPayLifeEffectCompletionHandler implements MayEffectHandlerBean {
             }
         }
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-        if (accepted && canPay && pendingEntry != null && pendingEntry.isMarkSourceOncePerTurnOnAcceptance()
-                && pendingEntry.getSourcePermanentId() != null) {
-            gameData.oncePerTurnTriggersFiredThisTurn.add(pendingEntry.getSourcePermanentId());
+        if (accepted && canPay && pendingEntry != null) {
+            TriggeredAbilityStackService.markActionTaken(gameData, pendingEntry);
         }
         if (pendingEntry != null && continuation != null) {
             pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,

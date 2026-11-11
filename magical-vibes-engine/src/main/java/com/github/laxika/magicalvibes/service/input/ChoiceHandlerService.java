@@ -6447,6 +6447,10 @@ public class ChoiceHandlerService {
             snapshot.setLastKnownColors(Set.copyOf(gameQueryService.getEffectiveColors(gameData, source)));
             entry.setSourcePermanentSnapshot(snapshot);
         }
+        if (ctx.triggerRecord() != null) {
+            // The collector's record of the trigger event, the same as for an ability of it that chooses nothing.
+            entry.carryTriggerRecord(ctx.triggerRecord());
+        }
         gameData.stack.add(entry);
         gameLogService.append(gameData, GameLog.cardThen(ctx.sourceCard(),
                 ctx.counterType() == null ? "'s damage division is set." : "'s counter distribution is set."));

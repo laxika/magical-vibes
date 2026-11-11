@@ -26,7 +26,8 @@ public class ScourgeOfTheThrone extends Card {
     public ScourgeOfTheThrone() {
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(
-                        new SourceMatchesPermanentPredicate(new PermanentAttacksPlayerWithMostLifePredicate())).withLimit(TriggerLimit.ONCE_EACH_TURN),
+                        new SourceMatchesPermanentPredicate(new PermanentAttacksPlayerWithMostLifePredicate()))
+                        .withLimit(TriggerLimit.FIRST_TIME_EACH_TURN),
                 SequenceEffect.of(
                         new UntapPermanentsEffect(
                                 TapUntapScope.ALL_CREATURES,

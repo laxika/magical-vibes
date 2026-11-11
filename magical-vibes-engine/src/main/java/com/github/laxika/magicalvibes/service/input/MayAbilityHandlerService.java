@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -1060,9 +1061,9 @@ public class MayAbilityHandlerService {
      * no effect is read for it.
      */
     private void markOncePerTurnTriggerOnAcceptance(GameData gameData, PendingMayAbility ability) {
-        if (ability.sourcePermanentId() != null && gameData.pendingEffectResolutionEntry != null
-                && gameData.pendingEffectResolutionEntry.isMarkSourceOncePerTurnOnAcceptance()) {
-            gameData.oncePerTurnTriggersFiredThisTurn.add(ability.sourcePermanentId());
+        if (ability.sourcePermanentId() != null && gameData.pendingEffectResolutionEntry != null) {
+            TriggeredAbilityStackService.markActionTaken(gameData, ability.sourcePermanentId(),
+                    gameData.pendingEffectResolutionEntry.getOnceEachTurnActionKey());
         }
     }
 

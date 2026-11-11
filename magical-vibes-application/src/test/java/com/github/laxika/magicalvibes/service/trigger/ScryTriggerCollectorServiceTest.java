@@ -110,13 +110,13 @@ class ScryTriggerCollectorServiceTest {
         BoostSelfEffect effect = new BoostSelfEffect(1, 0);
 
         boolean triggered = registry.dispatch(
-                new TriggerMatchContext(gameData, permanent, playerId, List.of(effect), card, null, true),
+                new TriggerMatchContext(gameData, permanent, playerId, List.of(effect), card, null, "once"),
                 LibraryWatch.ON_CONTROLLER_SCRIES,
                 new TriggerContext.Scry(playerId));
 
         assertThat(triggered).isTrue();
         assertThat(gameData.stack).singleElement().satisfies(entry -> {
-            assertThat(entry.isMarkSourceOncePerTurnOnAcceptance()).isTrue();
+            assertThat(entry.marksOnceEachTurnAction()).isTrue();
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
         });
     }

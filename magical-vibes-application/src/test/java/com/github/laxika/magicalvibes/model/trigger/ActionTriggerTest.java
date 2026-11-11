@@ -127,7 +127,6 @@ class ActionTriggerTest {
         assertThat(read.limitReached(gameData, sourceId)).isTrue();
         assertThat(gameData.keyedOncePerTurnTriggersFiredThisTurn.get(sourceId))
                 .containsExactly(read.ability().limitKey());
-        assertThat(gameData.oncePerTurnTriggersFiredThisTurn).doesNotContain(sourceId);
     }
 
     @Test

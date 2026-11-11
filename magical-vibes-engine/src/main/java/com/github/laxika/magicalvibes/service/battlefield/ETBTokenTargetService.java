@@ -426,14 +426,8 @@ public class ETBTokenTargetService {
 
             if (chosenInGroup >= effectiveMaxTargets) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
-                gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
-                        pending.chosenTargetsSoFar(), idx + 1, 0,
-                        withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
-                        pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution(), pending.triggeringCardId(),
-                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource())
-                        .withStateTriggerEffectIndex(pending.stateTriggerEffectIndex()));
+                gameData.queueInteractionFirst(pending.withProgress(pending.chosenTargetsSoFar(), idx + 1, 0,
+                        withGroupSize(pending.groupSizes(), chosenInGroup)));
                 continue;
             }
 
@@ -445,14 +439,8 @@ public class ETBTokenTargetService {
             // group can still be chosen and the ability isn't wrongly skipped (CR 603.4).
             if (groupEffects.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
-                gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
-                        pending.chosenTargetsSoFar(), idx + 1, 0,
-                        withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
-                        pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution(), pending.triggeringCardId(),
-                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource())
-                        .withStateTriggerEffectIndex(pending.stateTriggerEffectIndex()));
+                gameData.queueInteractionFirst(pending.withProgress(pending.chosenTargetsSoFar(), idx + 1, 0,
+                        withGroupSize(pending.groupSizes(), chosenInGroup)));
                 continue;
             }
 
@@ -601,14 +589,8 @@ public class ETBTokenTargetService {
                     continue;
                 }
                 gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
-                gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
-                        pending.chosenTargetsSoFar(), idx + 1, 0,
-                        withGroupSize(pending.groupSizes(), chosenInGroup), pending.xValue(),
-                        pending.repeatedAdditionalCosts(),
-                        pending.resumePendingMayResolution(), pending.triggeringCardId(),
-                        pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource())
-                        .withStateTriggerEffectIndex(pending.stateTriggerEffectIndex()));
+                gameData.queueInteractionFirst(pending.withProgress(pending.chosenTargetsSoFar(), idx + 1, 0,
+                        withGroupSize(pending.groupSizes(), chosenInGroup)));
                 continue;
             }
 
@@ -940,7 +922,8 @@ public class ETBTokenTargetService {
                                 card, pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
                                 counterDistribution.counterType(), distributionTargets, Map.of(),
                                 total, 0, counterDistribution.allowsPartialDistribution(), null, null,
-                                pending.chosenTargetsSoFar(), pending.groupSizes()));
+                                pending.chosenTargetsSoFar(), pending.groupSizes())
+                                .withTriggerRecord(pending.triggerRecord()));
                 return;
             }
         }
@@ -958,7 +941,8 @@ public class ETBTokenTargetService {
             playerInputService.beginCounterDistributionAssignmentChoice(gameData, pending.controllerId(),
                     new ChoiceContext.CounterDistributionAssignment(card, pending.controllerId(),
                             pending.effects(), pending.sourcePermanentId(), null,
-                            pending.chosenTargetsSoFar(), Map.of(), total, 0));
+                            pending.chosenTargetsSoFar(), Map.of(), total, 0)
+                            .withTriggerRecord(pending.triggerRecord()));
             return;
         }
         // Shared by ETB token copies, Triggers.youCastThisSpell(), and multi-target ON_ATTACK — keep the label generic.
@@ -1036,6 +1020,10 @@ public class ETBTokenTargetService {
         }
         if (!pending.repeatedAdditionalCosts().isEmpty()) {
             etbEntry.setRepeatedAdditionalCosts(List.copyOf(pending.repeatedAdditionalCosts()));
+        }
+        if (pending.triggerRecord() != null) {
+            // The collector's record of the trigger event, the same as for an ability of it that chooses nothing.
+            etbEntry.carryTriggerRecord(pending.triggerRecord());
         }
         gameData.stack.add(etbEntry);
         if (triggerCollectionService != null) {

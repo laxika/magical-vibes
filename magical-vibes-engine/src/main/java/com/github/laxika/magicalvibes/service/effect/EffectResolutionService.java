@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -652,11 +653,11 @@ public class EffectResolutionService {
 
     private boolean shouldSkipAcceptedOncePerTurnMay(GameData gameData, StackEntry entry, MayEffect may) {
         if (entry.getSourcePermanentId() == null
-                || !entry.isMarkSourceOncePerTurnOnAcceptance()) {
+                || !entry.marksOnceEachTurnAction()) {
             return false;
         }
         return gameData.resolvedMayAccepted == null
-                && gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId());
+                && TriggeredAbilityStackService.actionTaken(gameData, entry);
     }
 
     /** Uses departure controller information for a creature referenced by a nontargeting trigger. */

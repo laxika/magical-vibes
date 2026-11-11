@@ -163,7 +163,7 @@ public class DamageTriggerCollectorService {
         if (dc.damageDealt() <= 0 || match.permanent() == null) return false;
 
         GameData gameData = match.gameData();
-        boolean markOnAcceptance = match.markSourceOncePerTurnOnAcceptance();
+        String markOnAcceptance = match.onceEachTurnActionKey();
         Permanent sourcePermanent = match.permanent();
         Card sourceCard = sourcePermanent.getCard();
         Permanent damaged = dc.damagedCreature();
@@ -176,11 +176,11 @@ public class DamageTriggerCollectorService {
                     targetFilterForTriggeredEffect(sourceCard, match.targetingEffect()), dc.damageDealt(),
                     sourcePermanent.getId(), new Permanent(sourcePermanent), hasOptionalTarget(sourceCard,
                             match.targetingEffect()),
-                    damaged.getId(), null, match.controllerId(), null, null, false, null, null, null, false,
+                    damaged.getId(), null, match.controllerId(), null, null, false, null, null, null, (String) null,
                     lastKnown)
                     .withEventValue(dc.damageDealt())
                     .withTriggeringPermanentController(dc.damagedCreatureControllerId());
-            gameData.queueInteraction(markOnAcceptance ? choice.withMarkSourceOncePerTurnOnAcceptance() : choice);
+            gameData.queueInteraction(choice.withOnceEachTurnActionKey(markOnAcceptance));
             gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} trigger for damage dealt to a creature awaits target",
                     gameData.id, sourceCard.getName());
@@ -195,7 +195,7 @@ public class DamageTriggerCollectorService {
                 null,
                 sourcePermanent.getId()
         );
-        entry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
+        entry.setOnceEachTurnActionKey(markOnAcceptance);
         entry.setTargetId(damaged.getId());
         entry.setEventValue(dc.damageDealt());
         entry.setTriggeringPermanentId(damaged.getId());
@@ -240,7 +240,7 @@ public class DamageTriggerCollectorService {
                     targetFilter, dc.damageDealt(), sourcePermanent.getId(), new Permanent(sourcePermanent),
                     hasOptionalTarget(sourceCard,
                             match.targetingEffect()), damaged.getId(), null, match.controllerId(), null, null,
-                    false, null, null, power, false, lastKnown)
+                    false, null, null, power, (String) null, lastKnown)
                     .withEventValue(dc.damageDealt())
                     .withTriggeringPermanentController(dc.damagedPermanentControllerId()));
             gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
@@ -302,7 +302,7 @@ public class DamageTriggerCollectorService {
                     targetFilter, dc.damageDealt(), watcher.getId(), new Permanent(watcher),
                     hasOptionalTarget(sourceCard,
                             match.targetingEffect()), damaged.getId(), null, match.controllerId(), null, null,
-                    false, null, null, null, false, lastKnown)
+                    false, null, null, null, (String) null, lastKnown)
                     .withEventValue(dc.damageDealt())
                     .withTriggeringPermanentController(damagedControllerId));
             gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
@@ -355,7 +355,7 @@ public class DamageTriggerCollectorService {
                     targetFilterForTriggeredEffect(aura.getCard(),
                             match.targetingEffect()), 0, aura.getId(), new Permanent(aura),
                     false, creature.getId(), null, match.controllerId(), null, null, false, null, null, power,
-                    false, lastKnown).withEventValue(dc.damageDealt()));
+                    (String) null, lastKnown).withEventValue(dc.damageDealt()));
         } else {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -526,7 +526,7 @@ public class DamageTriggerCollectorService {
         if (match.sourcePlanarObject() != null) {
             entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
         }
-        entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+        entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
         gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
@@ -904,7 +904,7 @@ public class DamageTriggerCollectorService {
                             || targetFilter instanceof PlayerPredicateTargetFilter,
                     targetFilter, dc.damageDealt(), damaged.getId(), lastKnown, hasOptionalTarget(card,
                             match.targetingEffect()),
-                    dc.sourcePermanentId(), null, controllerId, null, null, false, null, null, null, false, null)
+                    dc.sourcePermanentId(), null, controllerId, null, null, false, null, null, null, (String) null, null)
                     .withEventValue(dc.damageDealt())
                     .withTriggeringPermanentController(dc.damageSourceControllerId()));
             gameLogService.append(gameData, GameLog.abilityTriggers(card));

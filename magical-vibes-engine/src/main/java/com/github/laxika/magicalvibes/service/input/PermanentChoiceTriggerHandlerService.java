@@ -159,7 +159,7 @@ public class PermanentChoiceTriggerHandlerService {
     }
 
     public void handleSpellTargetTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
-        boolean markOnAcceptance = stt.markSourceOncePerTurnOnAcceptance();
+        String markOnAcceptance = stt.onceEachTurnActionKey();
         List<CardEffect> effects = stt.effects();
         boolean declined = stt.optionalTarget()
                 && stt.targetFilter() != null
@@ -217,7 +217,7 @@ public class PermanentChoiceTriggerHandlerService {
                     .findFirst()
                     .ifPresent(entry::setTriggeringSpell);
         }
-        entry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
+        entry.setOnceEachTurnActionKey(markOnAcceptance);
         entry.setTriggeringPermanentId(stt.triggeringPermanentId());
         if (stt.triggeringPermanentControllerId() != null) {
             entry.setTriggeringPermanentControllerId(stt.triggeringPermanentControllerId());
@@ -1469,7 +1469,7 @@ public class PermanentChoiceTriggerHandlerService {
                             gameQueryService.getEffectiveToughness(gameData, enteringPermanent));
                 }
             }
-            entry.setMarkSourceOncePerTurnOnAcceptance(ett.markSourceOncePerTurnOnAcceptance());
+            entry.setOnceEachTurnActionKey(ett.onceEachTurnActionKey());
             Permanent kickedSource = sourcePermanentId == null ? null
                     : gameQueryService.findPermanentById(gameData, sourcePermanentId);
             if (kickedSource != null && kickedSource.isKicked()) {
@@ -1477,6 +1477,10 @@ public class PermanentChoiceTriggerHandlerService {
             }
             if (ett.triggeringPermanent() != null) {
                 entry.setTriggeringPermanent(ett.triggeringPermanent());
+            }
+            if (ett.triggerRecord() != null) {
+                // The collector's record of the trigger event, the same as for an ability of it that chooses nothing.
+                entry.carryTriggerRecord(ett.triggerRecord());
             }
             pushTriggeredEntry(gameData, entry);
 
@@ -2132,6 +2136,10 @@ public class PermanentChoiceTriggerHandlerService {
                 List.of(),
                 List.of()
         );
+        if (etbStt.triggerRecord() != null) {
+            // The collector's record of the trigger event, the same as for an ability of it that chooses nothing.
+            entry.carryTriggerRecord(etbStt.triggerRecord());
+        }
         pushTriggeredEntry(gameData, entry);
 
         
@@ -2203,13 +2211,8 @@ public class PermanentChoiceTriggerHandlerService {
         // Replace head of the queue with the advanced state; then let the processor decide
         // whether to prompt again (more slots / next group) or push the final ETB.
         gameData.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
-        gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                etbMtt.sourceCard(), etbMtt.controllerId(), etbMtt.effects(), etbMtt.sourcePermanentId(),
-                updatedChosen, nextGroupIdx, nextChosenInGroup, List.copyOf(updatedGroupSizes), etbMtt.xValue(),
-                etbMtt.repeatedAdditionalCosts(),
-                etbMtt.resumePendingMayResolution(), etbMtt.triggeringCardId(),
-                etbMtt.triggeringPermanentId(), etbMtt.eventValue(), etbMtt.planarSource())
-                .withStateTriggerEffectIndex(etbMtt.stateTriggerEffectIndex()));
+        gameData.queueInteractionFirst(etbMtt.withProgress(updatedChosen, nextGroupIdx, nextChosenInGroup,
+                List.copyOf(updatedGroupSizes)));
 
         etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
 
@@ -2257,13 +2260,8 @@ public class PermanentChoiceTriggerHandlerService {
         var pending = context.pending();
         List<UUID> chosen = new ArrayList<>(pending.chosenTargetsSoFar());
         chosen.addAll(targets);
-        var completedGroup = new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                pending.sourceCard(), pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
-                chosen, pending.currentGroupIndex(), pending.chosenInCurrentGroup() + targets.size(),
-                pending.groupSizes(), pending.xValue(), pending.repeatedAdditionalCosts(),
-                pending.resumePendingMayResolution(), pending.triggeringCardId(),
-                pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource())
-                .withStateTriggerEffectIndex(pending.stateTriggerEffectIndex());
+        var completedGroup = pending.withProgress(chosen, pending.currentGroupIndex(),
+                pending.chosenInCurrentGroup() + targets.size(), pending.groupSizes());
         advanceETBTokenMultiTargetTrigger(gameData, completedGroup, null);
     }
 
@@ -2276,13 +2274,8 @@ public class PermanentChoiceTriggerHandlerService {
         }
         List<UUID> chosen = new ArrayList<>(pending.chosenTargetsSoFar());
         chosen.addAll(targets);
-        var completedGroup = new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                pending.sourceCard(), pending.controllerId(), pending.effects(), pending.sourcePermanentId(),
-                chosen, pending.currentGroupIndex(), pending.chosenInCurrentGroup() + targets.size(),
-                pending.groupSizes(), pending.xValue(), pending.repeatedAdditionalCosts(),
-                pending.resumePendingMayResolution(), pending.triggeringCardId(),
-                pending.triggeringPermanentId(), pending.eventValue(), pending.planarSource())
-                .withStateTriggerEffectIndex(pending.stateTriggerEffectIndex());
+        var completedGroup = pending.withProgress(chosen, pending.currentGroupIndex(),
+                pending.chosenInCurrentGroup() + targets.size(), pending.groupSizes());
         advanceETBTokenMultiTargetTrigger(gameData, completedGroup, null);
     }
 

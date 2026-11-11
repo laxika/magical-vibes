@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.trigger.LifeAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.LifeWatch;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -201,7 +202,6 @@ class LifeTriggerTest {
         assertThat(loss.triggersOnlyOnceEachTurn()).isTrue();
         assertThat(gameData.keyedOncePerTurnTriggersFiredThisTurn.get(sourceId))
                 .containsExactly(gain.ability().limitKey());
-        assertThat(gameData.oncePerTurnTriggersFiredThisTurn).doesNotContain(sourceId);
     }
 
     @Test
@@ -219,7 +219,7 @@ class LifeTriggerTest {
         assertThat(read.marksLimitOnAcceptance()).isTrue();
         assertThat(read.triggersOnlyOnceEachTurn()).isTrue();
         assertThat(read.limitReached(gameData, sourceId)).isFalse();
-        gameData.oncePerTurnTriggersFiredThisTurn.add(sourceId);
+        TriggeredAbilityStackService.markActionTaken(gameData, sourceId, read.onceEachTurnActionKey());
         assertThat(read.limitReached(gameData, sourceId)).isTrue();
         assertThatThrownBy(() -> LifeAbilityReader.requireNoLimitOnAcceptance(read,
                 LifeWatch.ON_OPPONENT_LOSES_LIFE.trigger())).isInstanceOf(IllegalStateException.class);

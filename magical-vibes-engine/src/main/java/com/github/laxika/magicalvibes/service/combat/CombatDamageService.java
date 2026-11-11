@@ -68,7 +68,6 @@ import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TakeInitiativeEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
@@ -78,7 +77,6 @@ import com.github.laxika.magicalvibes.model.replacement.DamagePortion;
 import com.github.laxika.magicalvibes.service.effect.replacement.damage.RedirectedDamageRules;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -2203,9 +2201,12 @@ public class CombatDamageService {
                         gameData, creature, attackerId, damageToOpponent), damageToOpponent, damageJudge));
             }
             // Combat-damage-to-player triggers granted until end of turn by one-shot effects
-            // (e.g. Open into Wonder grants "deals combat damage to a player, draw a card").
+            // (e.g. Open into Wonder grants "deals combat damage to a player, draw a card"), and "deals damage to a
+            // player" ones granted the same way: an ability of the creature whatever its duration.
             triggered.addAll(combatAbilities(WatchedAbilities.temporary(creature, combatDamageToPlayer),
                     combatDamageToPlayer, damageJudge));
+            triggered.addAll(damageAbilities(WatchedAbilities.temporary(creature, damageToPlayer),
+                    damageToPlayer, damageJudge));
             if (!lostAllAbilities) {
                 triggered.addAll(combatAbilities(WatchedAbilities.persistent(creature, combatDamageToPlayer),
                         combatDamageToPlayer, damageJudge));
@@ -2229,24 +2230,6 @@ public class CombatDamageService {
                 }
             } finally {
                 gameData.restoreTriggeredAbilityCopies(previousCopies);
-            }
-
-            if (creature.isHasDamageToOpponentCreatureBounce()) {
-                int bouncePreviousCopies = beginCombatDamageTriggerCopies(
-                        gameData, attackerId, creature, creature, attackerId, damageDealt);
-                try {
-                String desc = creature.getCard().getName() + "'s triggered ability";
-                StackEntry bounceSe = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), attackerId,
-                        desc, List.of(new ReturnPermanentsOnCombatDamageToPlayerEffect(new PermanentIsCreaturePredicate(), 1)),
-                        defenderId, (UUID) null);
-                bounceSe.setEventValue(damageDealt);
-                bounceSe.setTriggeringPlayerId(defenderId);
-                bounceSe.setNonTargeting(true);
-                gameData.stack.add(bounceSe);
-                gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s damage-to-opponent bounce trigger goes on the stack."));
-                } finally {
-                    gameData.restoreTriggeredAbilityCopies(bouncePreviousCopies);
-                }
             }
 
             checkAttachedCombatDamageToPlayerTriggers(gameData, creature, attackerId, defenderId, damageDealt,
@@ -2438,8 +2421,8 @@ public class CombatDamageService {
      * Queues the target choice of one "deals combat damage to a player" ability of {@code creature} with every effect
      * of the ability (CR 603.3d): an ability whose effects target through several of the card's target groups ("it
      * deals X damage to any target, target player draws X cards", Niv-Mizzet, Guildpact), or a card whose target
-     * groups are walked one by one, through that walk, any other through the choice that carries {@code record}, what
-     * the collector records for an ability that chooses nothing.
+     * groups are walked one by one, through that walk, any other through the single-target choice; both carry
+     * {@code record}, what the collector records for an ability that chooses nothing.
      */
     private void queueDamageToPlayerTargetChoice(GameData gameData, Permanent creature, UUID attackerId,
                                                  UUID defenderId, int damageDealt, List<CardEffect> effects,
@@ -2452,7 +2435,7 @@ public class CombatDamageService {
         if (targetGroupsOfAbility > 1 || triggerCollectionService.needsSlotBySlotTargetSelection(card)) {
             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                     creature.getCard(), attackerId, effects, creature.getId(), List.of(), 0, 0)
-                    .withEventValue(damageDealt));
+                    .withEventValue(damageDealt).withTriggerRecord(record));
         } else {
             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                     creature.getCard(), attackerId, effects, creature.getId(), targetChooserId, defenderId)
@@ -2543,11 +2526,16 @@ public class CombatDamageService {
             Trigger damageToPlayer = DamageWatch.ON_DAMAGE_TO_PLAYER.trigger();
             Trigger damageToOpponent = DamageWatch.ON_DAMAGE_TO_OPPONENT.trigger();
             List<AbilityEffects> abilities = new ArrayList<>();
-            if (WatchedAbilities.printed(perm.getCard(),
-                    CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER).isEmpty()) {
-                abilities.addAll(combatAbilities(WatchedAbilities.printed(perm.getCard(),
-                        CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER), combatDamageToPlayer, attachedJudge));
-            }
+            // An ability that says "this creature or equipped creature deals combat damage to a player" (Komainu
+            // Battle Armor) triggers for the equipped creature through that condition, which its own collector reads;
+            // read here too it would trigger twice for one event (CR 603.2c). Judged for each ability, from its
+            // conditions.
+            Trigger equippedDealsCombatDamage =
+                    CombatWatch.ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE_TO_PLAYER.trigger();
+            abilities.addAll(combatAbilities(WatchedAbilities.printed(perm.getCard(),
+                            CombatWatch.ON_COMBAT_DAMAGE_TO_PLAYER).stream()
+                    .filter(ability -> !ability.hasWatchedTrigger(equippedDealsCombatDamage)).toList(),
+                    combatDamageToPlayer, attachedJudge));
             abilities.addAll(damageAbilities(DamageAbilityReader.printed(perm.getCard(),
                     DamageWatch.ON_DAMAGE_TO_PLAYER), damageToPlayer, attachedJudge));
             abilities.addAll(combatAbilities(WatchedAbilities.temporary(perm, combatDamageToPlayer),
@@ -2606,6 +2594,8 @@ public class CombatDamageService {
         se.setTriggeringPermanentId(creature.getId());
         se.setTriggeringPermanentControllerId(attackerId);
         se.setTriggeringPermanent(creature);
+        // The creature it is attached to as the ability triggers, as the attached attack collector records it.
+        se.setAttachedPermanentSnapshot(new Permanent(creature));
         se.setEventDamageSource(creature, attackerId);
         se.setEventValue(damageDealt);
         se.setNonTargeting(true);
@@ -2621,7 +2611,7 @@ public class CombatDamageService {
             if (triggerCollectionService.needsSlotBySlotTargetSelection(perm.getCard())) {
                 gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         perm.getCard(), ownerId, effects, perm.getId(), List.of(), 0, 0)
-                        .withEventValue(damageDealt));
+                        .withEventValue(damageDealt).withTriggerRecord(se));
             } else {
                 gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                         perm.getCard(), ownerId, effects, perm.getId(), ownerId, defenderId)
@@ -2913,7 +2903,7 @@ public class CombatDamageService {
             se.setNonTargeting(true);
             // "Do this only once each turn" is used up as the action is taken (CR 603.2h), whichever way the
             // ability reaches the stack.
-            se.setMarkSourceOncePerTurnOnAcceptance(read.marksLimitOnAcceptance());
+            se.setOnceEachTurnActionKey(read.onceEachTurnActionKey());
             // "Choose one that hasn't been chosen this turn" (Parapet Thrasher): the mode is chosen as the
             // ability goes on the stack (CR 603.3c), among the modes its source hasn't chosen this turn. The
             // choice builds the stack object from the chosen mode, so it is the ability's one effect.

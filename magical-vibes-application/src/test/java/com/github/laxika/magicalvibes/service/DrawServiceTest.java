@@ -473,7 +473,6 @@ class DrawServiceTest {
                 .containsExactly(new BoostSelfEffect(1, 1));
         assertThat(gd.keyedOncePerTurnTriggersFiredThisTurn.get(source.getId()))
                 .containsExactly(card.getTriggeredAbilities().getFirst().limitKey());
-        assertThat(gd.oncePerTurnTriggersFiredThisTurn).doesNotContain(source.getId());
     }
 
     @Test

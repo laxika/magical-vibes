@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
 import com.github.laxika.magicalvibes.model.Zone;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -108,7 +107,6 @@ import com.github.laxika.magicalvibes.service.combat.CombatResult;
 import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
 import com.github.laxika.magicalvibes.service.effect.AttackReturnToHandCostService;
 import com.github.laxika.magicalvibes.service.effect.CombatTapCostService;
-import com.github.laxika.magicalvibes.service.effect.OnceOnlyTriggerSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -1353,7 +1351,8 @@ public class CombatAttackService {
             if (sourceAttackerIndices.isEmpty()) continue;
 
             // "Triggers only once each turn" (Akki Battle Squad) and "this ability triggers only once" (Ruby
-            // Collector) are the ability's limit, marked on this permanent as the ability triggers.
+            // Collector) are the ability's limit, marked for this ability of the permanent as it triggers: another
+            // limited ability of the same permanent keeps its own.
             boolean oncePerTurn = read.limit() == TriggerLimit.ONCE_EACH_TURN;
             boolean onceOnly = read.limit() == TriggerLimit.ONCE;
             boolean oncePerTurnForPlayer = read.limit() == TriggerLimit.FIRST_TIME_EACH_TURN;
@@ -1369,10 +1368,7 @@ public class CombatAttackService {
                     ConditionContext.forPermanent(perm, playerId).withXValue(sourceAttackerIndices.size()))) {
                 continue;
             }
-            if (oncePerTurn && gameData.oncePerTurnTriggersFiredThisTurn.contains(perm.getId())) {
-                continue;
-            }
-            if (onceOnly && OnceOnlyTriggerSupport.isFired(gameData, perm)) {
+            if ((oncePerTurn || onceOnly) && read.limitReached(gameData, perm.getId())) {
                 continue;
             }
             // "Whenever you attack with creatures with total power 12 or greater for the first time each turn"
@@ -1409,20 +1405,12 @@ public class CombatAttackService {
                             .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                                     || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
                     if (needsGraveyardTarget) {
-                        if (gameData.interaction.isAwaitingInput()) {
-                            // A previous attack trigger is already choosing its graveyard targets; queue this one
-                            // so it prompts after the first resolves its choice instead of overwriting it.
-                            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                                    perm.getCard(), playerId, filteredEffects, null, 0, 0, 0, null, false, null,
-                                    perm.getId(), false,
-                                    sourceAttackerIndices.stream().map(battlefield::get)
-                                            .map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList()));
-                        } else {
-                            graveyardTargetingService.handleAttackGraveyardTargeting(
-                                    gameData, playerId, perm.getCard(), filteredEffects, perm.getId(), null,
-                                    sourceAttackerIndices.stream().map(battlefield::get)
-                                            .map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList());
-                        }
+                        // The service has an ability that triggers while another choice is being made wait its
+                        // turn (CR 603.3b) instead of overwriting that choice.
+                        graveyardTargetingService.handleAttackGraveyardTargeting(
+                                gameData, playerId, perm.getCard(), filteredEffects, perm.getId(), null,
+                                sourceAttackerIndices.stream().map(battlefield::get)
+                                        .map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList());
                         gameLogService.append(gameData,
                                 GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
                         log.info("Game {} - {} targeted ON_ALLY_CREATURES_ATTACK graveyard trigger queued",
@@ -1495,11 +1483,8 @@ public class CombatAttackService {
                 // The ability triggered, whichever way it reaches the stack: its limit is used.
                 if (oncePerTurnForPlayer) {
                     markFirstQualifyingAttackThisTurn(gameData, playerId);
-                } else if (oncePerTurn) {
-                    gameData.oncePerTurnTriggersFiredThisTurn.add(perm.getId());
-                }
-                if (onceOnly) {
-                    OnceOnlyTriggerSupport.mark(gameData, perm);
+                } else {
+                    read.markLimit(gameData, perm.getId());
                 }
             } finally {
                 gameData.restoreTriggeredAbilityCopies(previousCopies);
@@ -2320,28 +2305,24 @@ public class CombatAttackService {
         // each combat anyway.
         for (List<CombatAbilityReader.CombatEffect> ability : attackAbilities) {
             CombatAbilityReader.CombatEffect read = ability.getFirst();
-            if ((read.limit() != TriggerLimit.NONE && read.limit() != TriggerLimit.ONCE_EACH_TURN)
+            if ((read.limit() != TriggerLimit.NONE && read.limit() != TriggerLimit.ONCE_EACH_TURN
+                    && read.limit() != TriggerLimit.FIRST_TIME_EACH_TURN)
                     || (read.multiplicity() != TriggerMultiplicity.EACH && !read.oneOrMore())) {
                 throw new IllegalStateException("The attack collector reads no " + read.options() + ": "
                         + read.ability());
             }
         }
-        // "Whenever this creature attacks for the first time each turn" (Aurelia, the Warleader) is the
-        // ability's ONCE_EACH_TURN limit: drop those abilities once this permanent has already attacked
-        // this turn, otherwise consume the first-attack marker before any intervening-if or trigger-subject
-        // filter can remove them. The gate is per permanent, so an extra combat phase it grants can't loop.
-        // Attacks made while the creature had lost its abilities still count as its attacks this turn, so
-        // the attack count is checked as well as the marker.
-        Predicate<List<CombatAbilityReader.CombatEffect>> firstTime =
-                ability -> ability.getFirst().limit() == TriggerLimit.ONCE_EACH_TURN;
-        if (attackAbilities.stream().anyMatch(firstTime)) {
-            if (attacker.getAttacksThisTurn() > 1
-                    || gameData.onceEachTurnAttackTriggersFiredThisTurn.contains(attacker.getId())) {
-                attackAbilities.removeIf(firstTime);
-            } else {
-                gameData.onceEachTurnAttackTriggersFiredThisTurn.add(attacker.getId());
-            }
+        // "Whenever this creature attacks for the first time each turn" (Aurelia, the Warleader) is part of the
+        // event (FIRST_TIME_EACH_TURN): the creature's first attack this turn, counting the attacks it made without
+        // the ability, whatever the ability's filter, event condition or intervening "if" then say. A later attack
+        // is not that event, so an extra combat phase the ability grants can't loop.
+        if (attacker.getAttacksThisTurn() > 1) {
+            attackAbilities.removeIf(ability -> ability.getFirst().limit() == TriggerLimit.FIRST_TIME_EACH_TURN);
         }
+        // "This ability triggers only once each turn" (ONCE_EACH_TURN) is the ability's own limit, used up below as
+        // the ability triggers, so another limited ability of the creature keeps its own.
+        attackAbilities.removeIf(ability -> ability.getFirst().limit() == TriggerLimit.ONCE_EACH_TURN
+                && ability.getFirst().limitReached(gameData, attacker.getId()));
         // Filter trigger-subject conditions against this attacking creature.
         attackAbilities.removeIf(ability -> ability.getFirst().filter() != null
                 && !predicateEvaluationService.matchesPermanentPredicate(gameData, attacker,
@@ -2358,6 +2339,9 @@ public class CombatAttackService {
             printedAttackEffects.addAll(CombatAbilityReader.effectsOf(CombatAbilityReader.read(ability, onAttack)));
         }
         for (List<CombatAbilityReader.CombatEffect> ability : attackAbilities) {
+            if (ability.getFirst().limit() == TriggerLimit.ONCE_EACH_TURN) {
+                ability.getFirst().markLimit(gameData, attacker.getId());
+            }
             putSelfAttackAbilityOnStack(gameData, playerId, attacker, ability, printedAttackEffects, attackerIndices,
                     declaredAttackerSnapshots);
         }
@@ -2441,13 +2425,9 @@ public class CombatAttackService {
                 // Archaic) — the scope comes from the effect, not the attacked player.
                 graveyardTargetingService.handleAttackGraveyardCastTargeting(
                         gameData, playerId, attackCard, effects, attacker.getId());
-            } else if (gameData.interaction.isAwaitingInput()) {
-                // Another ability is already choosing its graveyard target: this one, an ability of its own with
-                // its own target, prompts after that choice instead of overwriting it.
-                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        attackCard, playerId, effects, defendingPlayerId, 1, 0, 1, null, false, null,
-                        attacker.getId()));
             } else {
+                // The service has an ability that triggers while another choice is being made wait its turn
+                // (CR 603.3b), with the graveyards and the number of targets its effect says.
                 graveyardTargetingService.handleAttackGraveyardTargeting(
                         gameData, playerId, attackCard, effects, attacker.getId(), defendingPlayerId);
             }

@@ -598,7 +598,7 @@ public class DeathTriggerCollectorService {
             PermanentChoiceContext.DeathTriggerTarget target = new PermanentChoiceContext.DeathTriggerTarget(
                     sourceCard, match.controllerId(), match.stackEffects(),
                     death.dyingCreaturePower(), source == null ? null : new Permanent(source), targetFilter, null,
-                    creaturesOnly, match.markSourceOncePerTurnOnAcceptance())
+                    creaturesOnly, match.onceEachTurnActionKey())
                     .withTriggeringPermanent(death.dyingPermanent(), death.attachments())
                     .withTriggeringPermanentController(death.dyingCreatureControllerId())
                     .withGraveyardTargetMaxManaValue(graveyardTargetMaxManaValueAtDeath(
@@ -621,7 +621,7 @@ public class DeathTriggerCollectorService {
         if (source != null) {
             entry.setSourcePermanentSnapshot(new Permanent(source));
         }
-        entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+        entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
         recordDeath(gameData, entry, death);
         gameData.enqueueTrigger(entry);
     }

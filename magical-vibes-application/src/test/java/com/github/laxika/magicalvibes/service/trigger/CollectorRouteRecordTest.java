@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -18,6 +20,8 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -291,5 +295,88 @@ class CollectorRouteRecordTest extends BaseCardTest {
         int handBefore = gd.playerHands.get(player1.getId()).size();
         harness.passBothPriorities();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
+    }
+
+    @Test
+    @DisplayName("A combat damage ability whose two target groups are chosen one by one records the damage as a plain one does")
+    void combatDamageAbilityWithTwoTargetGroupsRecordsTheDamage() {
+        Card card = creature("Twin Wrecker");
+        CardEffect destroy = new DestroyTargetPermanentEffect();
+        CardEffect boost = new BoostTargetCreatureEffect(1, 1);
+        card.addTrigger(Triggers.dealsCombatDamageToPlayer(), destroy, boost);
+        card.target(TargetFilters.creature()).bindEffect(destroy);
+        card.target(TargetFilters.creature()).bindEffect(boost);
+        Card plain = creature("Plain Wrecker");
+        plain.addTrigger(Triggers.dealsCombatDamageToPlayer(), new GainLifeEffect(1));
+        Permanent wrecker = attacking(card);
+        Permanent plainWrecker = attacking(plain);
+        Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+        bears.tap();
+
+        dealCombatDamage();
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handlePermanentChosen(player1, plainWrecker.getId());
+
+        StackEntry entry = entriesOf("Twin Wrecker").getFirst();
+        StackEntry plainEntry = entriesOf("Plain Wrecker").getFirst();
+        assertThat(entry.getEventValue()).isEqualTo(plainEntry.getEventValue()).isEqualTo(2);
+        assertThat(entry.getTriggeringPlayerId()).isEqualTo(plainEntry.getTriggeringPlayerId())
+                .isEqualTo(player2.getId());
+        assertThat(entry.getEventDamageSource()).isNotNull();
+        assertThat(entry.getEventDamageSource().getId()).isEqualTo(wrecker.getId());
+        assertThat(entry.getTargetIds()).containsExactly(bears.getId(), plainWrecker.getId());
+    }
+
+    @Test
+    @DisplayName("\"When this dies, choose one\" with a targeted mode records the death as a plain dies ability does")
+    void ownDeathModalAbilityWithTargetedModeRecordsTheDeath() {
+        Card modal = creature("Vengeful Martyr");
+        modal.addTrigger(Triggers.dies(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(
+                List.of(new ChooseOneEffect.ChooseOneOption("Destroy target creature",
+                                new DestroyTargetPermanentEffect(), TargetFilters.creature()),
+                        new ChooseOneEffect.ChooseOneOption("You gain 1 life", new GainLifeEffect(1))))));
+        Card plain = creature("Quiet Martyr");
+        plain.addTrigger(Triggers.dies(ObjectRelation.THIS), new GainLifeEffect(1));
+        Permanent modalPermanent = addCreatureReady(player1, modal);
+        Permanent plainPermanent = addCreatureReady(player1, plain);
+        Permanent victim = addCreatureReady(player2, new GrizzlyBears());
+
+        harness.inMutationScope(() -> removal().tryDestroyPermanent(gd, plainPermanent));
+        harness.inMutationScope(() -> removal().tryDestroyPermanent(gd, modalPermanent));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
+                .processNextTriggeredModalTrigger(gd));
+        harness.handleListChoice(player1, "Destroy target creature");
+        harness.handlePermanentChosen(player1, victim.getId());
+
+        StackEntry modalEntry = entriesOf("Vengeful Martyr").getFirst();
+        StackEntry plainEntry = entriesOf("Quiet Martyr").getFirst();
+        assertThat(modalEntry.getTargetId()).isEqualTo(victim.getId());
+        assertThat(modalEntry.getEventValue()).isEqualTo(plainEntry.getEventValue()).isEqualTo(2);
+        assertThat(modalEntry.getTriggeringCardId()).isEqualTo(modal.getId());
+        assertThat(modalEntry.getSourcePermanentSnapshot()).isNotNull();
+        assertThat(modalEntry.getTriggeringPermanentPowerAtTrigger())
+                .isEqualTo(plainEntry.getTriggeringPermanentPowerAtTrigger());
+    }
+
+    @Test
+    @DisplayName("A second \"whenever this attacks, return target creature card from your graveyard\" ability chooses from your graveyard")
+    void secondSelfAttackGraveyardAbilityChoosesFromItsOwnGraveyard() {
+        Card first = creature("First Digger");
+        first.addTrigger(Triggers.attacks(), returnTargetCreatureCardToHand());
+        Card second = creature("Second Digger");
+        second.addTrigger(Triggers.attacks(), returnTargetCreatureCardToHand());
+        addCreatureReady(player1, first);
+        addCreatureReady(player1, second);
+        Card bears = new GrizzlyBears();
+        Card moreBears = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(bears, moreBears));
+        harness.setGraveyard(player2, List.of());
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(player1, List.of(0, 1)));
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(moreBears.getId()));
+
+        assertThat(entriesOf("First Digger")).hasSize(1);
+        assertThat(entriesOf("Second Digger")).hasSize(1);
     }
 }

@@ -23,8 +23,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * "Whenever this Equipment becomes unattached from a permanent" is a triggered ability the card writes
  * ({@code Triggers.becomesUnattachedFromPermanent()}): one object of all its effects (CR 603.3) that records the
- * permanent it was attached to as "that permanent", two abilities two objects, and an Equipment without the ability
- * has none.
+ * permanent it was attached to as "that permanent", two abilities two objects, and an Equipment without the ability,
+ * or one that had lost its abilities as it became unattached (CR 603.10c, 613.1f), has none.
  */
 @CardUsed({GrizzlyBears.class})
 class BecomesUnattachedTriggerTest extends BaseCardTest {
@@ -89,5 +89,19 @@ class BecomesUnattachedTriggerTest extends BaseCardTest {
 
         assertThat(entriesOf("Twin Hook")).hasSize(2);
         assertThat(entriesOf("Plain Hook")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An Equipment that lost its abilities has no \"becomes unattached\" ability to trigger")
+    void equipmentThatLostItsAbilitiesDoesNotTrigger() {
+        Card card = equipment("Dulled Hook");
+        card.addTrigger(Triggers.becomesUnattachedFromPermanent(), new GainLifeEffect(1));
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent hook = attached(card, bears);
+        hook.setLosesAllAbilitiesUntilEndOfTurn(true);
+
+        harness.inMutationScope(() -> removal().tryDestroyPermanent(gd, hook));
+
+        assertThat(entriesOf("Dulled Hook")).isEmpty();
     }
 }

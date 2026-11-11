@@ -32,11 +32,11 @@ public class GodoBanditWarlord extends Card {
                         LibrarySearchDestination.BATTLEFIELD),
                         "Search your library for an Equipment card?"));
 
-        // "Whenever Godo attacks for the first time each turn": every half is limited to once each turn
-        // (TriggerLimit.ONCE_EACH_TURN), so attacking again in the extra combat phase this grants doesn't loop. Godo is
-        // not a Samurai, so untapping itself is a separate SELF scope from the Samurai sweep.
+        // "Whenever Godo attacks for the first time each turn" is its first attack of the turn
+        // (TriggerLimit.FIRST_TIME_EACH_TURN), so attacking again in the extra combat phase this grants doesn't loop.
+        // Godo is not a Samurai, so untapping itself is a separate SELF scope from the Samurai sweep.
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.FIRST_TIME_EACH_TURN),
                 new UntapPermanentsEffect(TapUntapScope.SELF),
                 new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
                         new PermanentHasSubtypePredicate(CardSubtype.SAMURAI)),

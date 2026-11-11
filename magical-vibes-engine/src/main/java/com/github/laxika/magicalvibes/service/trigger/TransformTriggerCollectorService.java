@@ -34,7 +34,7 @@ public class TransformTriggerCollectorService {
                 null,
                 match.permanent().getId());
         trigger.setTriggeringPermanentId(transforms.transformedPermanent().getId());
-        trigger.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+        trigger.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
         match.gameData().enqueueTrigger(trigger);
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers when an ally permanent transforms",

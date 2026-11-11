@@ -70,7 +70,7 @@ public class ScryTriggerCollectorService {
             entry.setEventValue(scry.bottomedCardCount());
             entry.setCardsLookedAtWhileScrying(scry.cardsLookedAt());
             entry.setNonTargeting(opponentScry);
-            entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+            entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
             match.gameData().enqueueTrigger(entry);
         }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));

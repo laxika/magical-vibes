@@ -247,7 +247,6 @@ class MiscTriggerTest {
         read.markLimit(gameData, vehicleId);
 
         assertThat(read.limitReached(gameData, vehicleId)).isTrue();
-        assertThat(gameData.oncePerTurnTriggersFiredThisTurn).contains(vehicleId);
         assertThat(MiscAbilityReader.read(new TriggeredAbility(Triggers.becomesCrewed(), DRAW),
                 Triggers.becomesCrewed()).getFirst().limitReached(gameData, vehicleId)).isFalse();
         assertThatThrownBy(() -> MiscAbilityReader.read(new TriggeredAbility(
@@ -275,7 +274,6 @@ class MiscTriggerTest {
         assertThat(read.limitReached(gameData, sourceId)).isTrue();
         assertThat(gameData.keyedOncePerTurnTriggersFiredThisTurn.get(sourceId))
                 .containsExactly(read.ability().limitKey());
-        assertThat(gameData.oncePerTurnTriggersFiredThisTurn).doesNotContain(sourceId);
         assertThatThrownBy(() -> MiscAbilityReader.printedEffects(equipment, MiscWatch.ON_EQUIPMENT_ATTACHED))
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("judges no door, first time or limit");
     }

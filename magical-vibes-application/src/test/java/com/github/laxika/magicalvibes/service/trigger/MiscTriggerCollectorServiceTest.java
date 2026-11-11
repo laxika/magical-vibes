@@ -634,12 +634,12 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.Surveil(player1Id, true);
 
         boolean result = registry.dispatch(
-                new TriggerMatchContext(gd, perm, player1Id, List.of(effect), perm.getCard(), null, true),
+                new TriggerMatchContext(gd, perm, player1Id, List.of(effect), perm.getCard(), null, "once"),
                 LibraryWatch.ON_CONTROLLER_SURVEILS, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
-            assertThat(entry.isMarkSourceOncePerTurnOnAcceptance()).isTrue();
+            assertThat(entry.marksOnceEachTurnAction()).isTrue();
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
         });
     }
@@ -1636,18 +1636,17 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.LifeGain(player1Id, 3);
 
         boolean result = registry.dispatch(
-                new TriggerMatchContext(gd, perm, player1Id, List.of(effect), perm.getCard(), null, true),
+                new TriggerMatchContext(gd, perm, player1Id, List.of(effect), perm.getCard(), null, "once"),
                 LifeWatch.ON_CONTROLLER_GAINS_LIFE, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
         assertThat(gd.stack.getLast().getEventValue()).isEqualTo(3);
-        assertThat(gd.stack.getLast().isMarkSourceOncePerTurnOnAcceptance()).isTrue();
-        assertThat(gd.oncePerTurnTriggersFiredThisTurn).doesNotContain(perm.getId());
+        assertThat(gd.stack.getLast().marksOnceEachTurnAction()).isTrue();
 
         assertThat(registry.dispatch(
-                new TriggerMatchContext(gd, perm, player1Id, List.of(effect), perm.getCard(), null, true),
+                new TriggerMatchContext(gd, perm, player1Id, List.of(effect), perm.getCard(), null, "once"),
                 LifeWatch.ON_CONTROLLER_GAINS_LIFE,
                 new TriggerContext.LifeGain(player1Id, 4))).isTrue();
         assertThat(gd.stack).hasSize(2);
@@ -1806,14 +1805,14 @@ class MiscTriggerCollectorServiceTest {
         var ctx = new TriggerContext.NonlandCardsMilled(player2Id, 3);
 
         boolean result = registry.dispatch(
-                new TriggerMatchContext(gd, perm, player1Id, List.of(effect), perm.getCard(), null, true),
+                new TriggerMatchContext(gd, perm, player1Id, List.of(effect), perm.getCard(), null, "once"),
                 ZoneChangeWatch.ON_NONLAND_CARDS_MILLED, ctx);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).singleElement().satisfies(entry -> {
             assertThat(entry.getEffectsToResolve()).containsExactly(effect);
             assertThat(entry.getEventValue()).isEqualTo(3);
-            assertThat(entry.isMarkSourceOncePerTurnOnAcceptance()).isTrue();
+            assertThat(entry.marksOnceEachTurnAction()).isTrue();
         });
     }
 

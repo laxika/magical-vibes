@@ -2967,8 +2967,11 @@ public class GameData {
     public int graveyardLeaveNotificationDepth = 0;
     /** Depth counter for tap events that are paid or performed as one batch. */
     public int permanentTapTriggerBatchDepth;
-    /** Tap-trigger registrations that have already fired in the current tap batch, by source permanent. */
-    public final Map<UUID, Set<CardEffect>> permanentTapTriggerBatchFiredEffects = new ConcurrentHashMap<>();
+    /**
+     * The "one or more" tap abilities that have already triggered in the current tap batch, by source permanent: each
+     * by its ability's limit key ({@code TriggeredAbility.limitKey()}).
+     */
+    public final Map<UUID, Set<String>> permanentTapTriggerBatchFiredAbilities = new ConcurrentHashMap<>();
     /** Players who had one or more cards leave their graveyard this turn (cleared at turn cleanup). Used by Wilt in the Heat cost reduction. */
     public final Set<UUID> playersWhoseCardsLeftGraveyardThisTurn = ConcurrentHashMap.newKeySet();
     /** Players whose graveyards had one or more creature cards leave this turn. */
@@ -3994,11 +3997,6 @@ public class GameData {
     /** Tracks which permanents' shared once-each-turn library-top play permissions have been used. */
     public final Set<UUID> oncePerTurnLibraryPlayPermissionsUsedThisTurn = ConcurrentHashMap.newKeySet();
 
-    /** Tracks which source permanents or graveyard cards (by UUID) have used a once-each-turn mark kept for the whole
-     *  source this turn: "do this only once each turn" (CR 603.2h) as the action is taken. Cleared at start of new
-     *  turn; graveyard-card entries are removed when those
-     *  cards leave the graveyard. */
-    public final Set<UUID> oncePerTurnTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Tracks every permanent that has had counters put on it this turn, regardless of which
      *  abilities it had at the time. Used for "for the first time each turn" counter triggers that
@@ -4008,12 +4006,13 @@ public class GameData {
     /** Tracks which controller has used each permanent's first-card-cycled-free permission this turn. */
     public final Map<UUID, Set<UUID>> firstCardCycledFreeUsesThisTurn = new ConcurrentHashMap<>();
 
-    /** Tracks keyed once-per-turn trigger uses independently for each source permanent. */
+    /**
+     * The once-each-turn limits used this turn, by source permanent or graveyard card and then by the limited
+     * ability's key ({@code TriggeredAbility.limitKey()}): "triggers only once each turn" as the ability triggers, "do
+     * this only once each turn" (CR 603.2h) as its action is taken, and the first-time marks derived from an ability's
+     * key. Cleared at the start of a new turn; a graveyard card's entries go when it leaves the graveyard.
+     */
     public final Map<UUID, Set<String>> keyedOncePerTurnTriggersFiredThisTurn = new ConcurrentHashMap<>();
-    /** Tracks source permanent IDs to opponents whose first life loss during their turn has fired. */
-    public final Map<UUID, Set<UUID>> firstOpponentLifeLossTriggersFiredThisTurn = new ConcurrentHashMap<>();
-    /** Tracks source permanent object IDs whose one-shot triggered ability has fired. */
-    public final Set<UUID> onceOnlyTriggersFired = ConcurrentHashMap.newKeySet();
     /**
      * The "triggers only once" abilities that have triggered, by source object id: the trigger pipeline keys each
      * ability of an object separately, for abilities with {@code TriggerLimit.ONCE}.
@@ -4048,12 +4047,6 @@ public class GameData {
     /** Token creation event paused for a once-per-turn replacement choice. */
     public PendingTokenCreationReplacement pendingTokenCreationReplacement;
 
-    /** Tracks which permanents (by UUID) have already fired a once-each-turn
-     *  {@code Triggers.attacks()} ability this turn — "attacks for the first time each turn" (Aurelia, the
-     *  Warleader). Kept separate from {@link #oncePerTurnTriggersFiredThisTurn} so a permanent with
-     *  both a once-each-turn death watcher and a once-each-turn attack trigger doesn't gate one on the
-     *  other. Cleared at start of new turn. */
-    public final Set<UUID> onceEachTurnAttackTriggersFiredThisTurn = ConcurrentHashMap.newKeySet();
 
     /** Permanents (by UUID) exerted this turn, as an attack choice or an activation cost — "if this
      *  creature hasn't been exerted this turn" (Combat Celebrant). Cleared at start of new turn. */
@@ -9137,7 +9130,7 @@ public class GameData {
      * directly onto the stack.  The may choice happens at resolution time, not trigger time.
      */
     public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId, UUID sourcePermanentId) {
-        queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, 0, false);
+        queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, 0, (String) null);
     }
 
     /** Queues a may ability while keeping its controller distinct from the choosing player. */
@@ -9193,28 +9186,28 @@ public class GameData {
 
     public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
                                 UUID sourcePermanentId, int eventValue,
-                                boolean markSourceOncePerTurnOnAcceptance) {
+                                String onceEachTurnActionKey) {
         queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, eventValue,
-                markSourceOncePerTurnOnAcceptance, null);
+                onceEachTurnActionKey, null);
     }
 
     /** Queues a may ability while preserving last-known toughness for an entering permanent. */
     public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
                                 UUID sourcePermanentId, int eventValue,
-                                boolean markSourceOncePerTurnOnAcceptance,
+                                String onceEachTurnActionKey,
                                 Integer triggeringPermanentToughnessAtTrigger) {
         queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, eventValue,
-                markSourceOncePerTurnOnAcceptance, triggeringPermanentToughnessAtTrigger, null);
+                onceEachTurnActionKey, triggeringPermanentToughnessAtTrigger, null);
     }
 
     /**
      * Queues a may ability that {@code grantingPermanentId} granted ({@link StackEntry#getGrantingPermanentId()}), or
      * {@code null}, with the event value and last-known toughness of
-     * {@link #queueMayAbility(Card, UUID, MayEffect, UUID, UUID, int, boolean, Integer)}.
+     * {@link #queueMayAbility(Card, UUID, MayEffect, UUID, UUID, int, String, Integer)}.
      */
     public StackEntry queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
                                 UUID sourcePermanentId, int eventValue,
-                                boolean markSourceOncePerTurnOnAcceptance,
+                                String onceEachTurnActionKey,
                                 Integer triggeringPermanentToughnessAtTrigger, UUID grantingPermanentId) {
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -9226,7 +9219,7 @@ public class GameData {
                 sourcePermanentId
         );
         entry.setEventValue(eventValue);
-        entry.setMarkSourceOncePerTurnOnAcceptance(markSourceOncePerTurnOnAcceptance);
+        entry.setOnceEachTurnActionKey(onceEachTurnActionKey);
         entry.setTriggeringPermanentToughnessAtTrigger(triggeringPermanentToughnessAtTrigger);
         entry.setGrantingPermanentId(grantingPermanentId);
         if (may.targetSpec().declaredTarget() == null) {
@@ -10346,9 +10339,7 @@ public class GameData {
         copy.oneShotExileCastPermissionsUsed.addAll(this.oneShotExileCastPermissionsUsed);
         copy.oncePerTurnLibraryCastPermissionsUsedThisTurn.addAll(this.oncePerTurnLibraryCastPermissionsUsedThisTurn);
         copy.oncePerTurnLibraryPlayPermissionsUsedThisTurn.addAll(this.oncePerTurnLibraryPlayPermissionsUsedThisTurn);
-        copy.oncePerTurnTriggersFiredThisTurn.addAll(this.oncePerTurnTriggersFiredThisTurn);
         copy.permanentsWithCountersPutThisTurn.addAll(this.permanentsWithCountersPutThisTurn);
-        copy.onceOnlyTriggersFired.addAll(this.onceOnlyTriggersFired);
         this.keyedOnceOnlyTriggersFired.forEach((sourceId, keys) -> {
             Set<String> copiedKeys = ConcurrentHashMap.newKeySet();
             copiedKeys.addAll(keys);
@@ -10361,8 +10352,6 @@ public class GameData {
             keys.addAll(v);
             copy.keyedOncePerTurnTriggersFiredThisTurn.put(k, keys);
         });
-        this.firstOpponentLifeLossTriggersFiredThisTurn.forEach((k, v) ->
-                copy.firstOpponentLifeLossTriggersFiredThisTurn.put(k, new HashSet<>(v)));
         this.oncePerCreatureTriggersFiredThisTurn.forEach((k, v) ->
                 copy.oncePerCreatureTriggersFiredThisTurn.put(k, new HashSet<>(v)));
         copy.creaturesThatReceivedCountersThisTurn.addAll(this.creaturesThatReceivedCountersThisTurn);
@@ -10373,7 +10362,6 @@ public class GameData {
             keys.addAll(v);
             copy.firstResolutionTriggerKeysThisTurn.put(k, keys);
         });
-        copy.onceEachTurnAttackTriggersFiredThisTurn.addAll(this.onceEachTurnAttackTriggersFiredThisTurn);
         copy.permanentsExertedThisTurn.addAll(this.permanentsExertedThisTurn);
         this.bendingTypesCompletedThisTurn.forEach((k, v) ->
                 copy.bendingTypesCompletedThisTurn.put(k, new java.util.HashSet<>(v)));
@@ -11174,10 +11162,10 @@ public class GameData {
         copy.graveyardLeaveNotificationDepth = this.graveyardLeaveNotificationDepth;
         copy.discardCostBatchOpen = this.discardCostBatchOpen;
         copy.permanentTapTriggerBatchDepth = this.permanentTapTriggerBatchDepth;
-        this.permanentTapTriggerBatchFiredEffects.forEach((sourceId, effects) -> {
-            Set<CardEffect> copiedEffects = ConcurrentHashMap.newKeySet();
-            copiedEffects.addAll(effects);
-            copy.permanentTapTriggerBatchFiredEffects.put(sourceId, copiedEffects);
+        this.permanentTapTriggerBatchFiredAbilities.forEach((sourceId, abilities) -> {
+            Set<String> copiedAbilities = ConcurrentHashMap.newKeySet();
+            copiedAbilities.addAll(abilities);
+            copy.permanentTapTriggerBatchFiredAbilities.put(sourceId, copiedAbilities);
         });
         copy.playersWhoseCardsLeftGraveyardThisTurn.addAll(this.playersWhoseCardsLeftGraveyardThisTurn);
         copy.playersWhoseCreatureCardsLeftGraveyardThisTurn

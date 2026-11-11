@@ -133,8 +133,6 @@ public class Permanent {
      *  time each turn, counter that spell or ability" trigger (Glyph Keeper) has already fired this
      *  turn, so it won't trigger again until the flag is reset at the next turn start. */
     @Setter private boolean becomeTargetCounterUsedThisTurn;
-    /** Set when this permanent's backup-ability copy trigger has already fired this turn. */
-    @Setter private boolean backupAbilityCopyUsedThisTurn;
     private final List<Integer> blockingTargets = new ArrayList<>();
     private final List<UUID> blockingTargetIds = new ArrayList<>();
     /** Creatures this permanent blocked during the current combat, retained when it leaves combat. */
@@ -445,9 +443,6 @@ public class Permanent {
     @Setter private boolean phasedOutIndirectly;
     /** The id of the exiled prepare-spell copy linked to this permanent while it is prepared (null otherwise). */
     @Setter private UUID preparedSpellCardId;
-    /** If true, this creature has "Whenever this creature deals damage to an opponent, you may return target creature
-     *  that player controls to its owner's hand" until end of turn (e.g. Arm with Aether). Cleared at end of turn. */
-    @Setter private boolean hasDamageToOpponentCreatureBounce;
     /** Soul Echo: set when the targeted opponent chose that, until this permanent's controller's next
      *  upkeep, each 1 damage that would be dealt to that controller instead removes an echo counter
      *  from this permanent. Survives {@link #resetModifiers()} — the duration ends at the next upkeep,
@@ -1064,7 +1059,6 @@ public class Permanent {
         this.attackedOrBlockedSinceLastUpkeep = source.attackedOrBlockedSinceLastUpkeep;
         this.upkeepsStartedSinceAttackOrBlock.putAll(source.upkeepsStartedSinceAttackOrBlock);
         this.becomeTargetCounterUsedThisTurn = source.becomeTargetCounterUsedThisTurn;
-        this.backupAbilityCopyUsedThisTurn = source.backupAbilityCopyUsedThisTurn;
         this.blockingTargets.addAll(source.blockingTargets);
         this.blockingTargetIds.addAll(source.blockingTargetIds);
         this.blockedAttackerIdsThisCombat.addAll(source.blockedAttackerIdsThisCombat);
@@ -1169,7 +1163,6 @@ public class Permanent {
         this.prepared = source.prepared;
         this.phasedOutIndirectly = source.phasedOutIndirectly;
         this.preparedSpellCardId = source.preparedSpellCardId;
-        this.hasDamageToOpponentCreatureBounce = source.hasDamageToOpponentCreatureBounce;
         this.echoDamageRedirectionActive = source.echoDamageRedirectionActive;
         this.cantPhaseOutUntilUpkeepsOf.addAll(source.cantPhaseOutUntilUpkeepsOf);
         this.temporaryAbilities.addAll(source.temporaryAbilities);
@@ -2397,7 +2390,6 @@ public class Permanent {
         this.exileDamagedCreaturesInsteadOfDyingThisTurn = false;
         this.exileInsteadOfDieThisTurn = false;
         this.exileInsteadOfDieSourcePermanentId = null;
-        this.hasDamageToOpponentCreatureBounce = false;
         this.temporaryAbilities.clear();
         this.saddled = false;
         this.animatedUntilEndOfTurn = false;
@@ -2491,7 +2483,6 @@ public class Permanent {
             case EXILE_DAMAGED_CREATURES_INSTEAD_OF_DYING -> exileDamagedCreaturesInsteadOfDyingThisTurn;
             case EXILE_INSTEAD_OF_DIE -> exileInsteadOfDieThisTurn;
             case EXILE_INSTEAD_OF_DIE_SOURCE_PERMANENT_ID -> exileInsteadOfDieSourcePermanentId;
-            case DAMAGE_TO_OPPONENT_CREATURE_BOUNCE -> hasDamageToOpponentCreatureBounce;
             case TEMPORARY_ABILITIES -> temporaryAbilities;
             case SADDLED -> saddled;
             case ANIMATED_UNTIL_END_OF_TURN -> animatedUntilEndOfTurn;
@@ -2580,7 +2571,6 @@ public class Permanent {
             case EXILE_DAMAGED_CREATURES_INSTEAD_OF_DYING -> exileDamagedCreaturesInsteadOfDyingThisTurn = true;
             case EXILE_INSTEAD_OF_DIE -> exileInsteadOfDieThisTurn = true;
             case EXILE_INSTEAD_OF_DIE_SOURCE_PERMANENT_ID -> exileInsteadOfDieSourcePermanentId = (UUID) value;
-            case DAMAGE_TO_OPPONENT_CREATURE_BOUNCE -> hasDamageToOpponentCreatureBounce = true;
             case TEMPORARY_ABILITIES -> temporaryAbilities.addAll((List<Ability>) value);
             case SADDLED -> saddled = true;
             case ANIMATED_UNTIL_END_OF_TURN -> animatedUntilEndOfTurn = true;

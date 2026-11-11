@@ -449,7 +449,12 @@ public class StackEntry {
     @Setter private boolean gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard;
     /** Records the cards actually moved to the graveyard by the current library choice. */
     @Setter private boolean recordLibraryGraveyardCount;
-    @Setter private boolean markSourceOncePerTurnOnAcceptance;
+    /**
+     * The limit key ({@code TriggeredAbility.limitKey()}) of the "do this only once each turn" ability this entry is
+     * of (CR 603.2h), or {@code null}: taking the ability's action as the entry resolves marks that ability of the
+     * source as used this turn, and no other ability of the source.
+     */
+    @Setter private String onceEachTurnActionKey;
     /**
      * The types of mana the tap for mana that triggered this ability produced ("the mana that land produced", "one
      * mana of any type that permanent produced"), set by the tap collector, or by the any-color choice that settles it
@@ -1328,7 +1333,7 @@ public class StackEntry {
         this.causedPileGroupingOrGuessThisTurn = source.causedPileGroupingOrGuessThisTurn;
         this.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard = source.gainLifeEqualToGreatestPowerOfCardsPutIntoGraveyard;
         this.recordLibraryGraveyardCount = source.recordLibraryGraveyardCount;
-        this.markSourceOncePerTurnOnAcceptance = source.markSourceOncePerTurnOnAcceptance;
+        this.onceEachTurnActionKey = source.onceEachTurnActionKey;
         this.awaitingProducedManaColor = source.awaitingProducedManaColor;
         this.acceptedPlayerIds = source.acceptedPlayerIds;
         this.counteredPermanentIdsThisResolution.addAll(source.counteredPermanentIdsThisResolution);
@@ -1480,6 +1485,11 @@ public class StackEntry {
         this.sourcePowerAtTrigger = source.sourcePowerAtTrigger;
     }
 
+    /** Whether taking this entry's action uses up its ability's "do this only once each turn" (CR 603.2h). */
+    public boolean marksOnceEachTurnAction() {
+        return onceEachTurnActionKey != null;
+    }
+
     /**
      * Gives this entry, one a choice made as its ability went on the stack built (a mode, CR 603.3c; a target, CR
      * 603.3d), what {@code record} holds: the entry its collector builds for an ability that needs no choice. The
@@ -1493,7 +1503,7 @@ public class StackEntry {
             this.sourcePermanentSnapshot = new Permanent(record.sourcePermanentSnapshot);
         }
         this.alternateCost = record.alternateCost;
-        this.markSourceOncePerTurnOnAcceptance = record.markSourceOncePerTurnOnAcceptance;
+        this.onceEachTurnActionKey = record.onceEachTurnActionKey;
         if (record.nonTargeting && this.targetId == null
                 && (this.targetCardIds == null || this.targetCardIds.isEmpty())
                 && (this.targetIds == null || this.targetIds.isEmpty())) {

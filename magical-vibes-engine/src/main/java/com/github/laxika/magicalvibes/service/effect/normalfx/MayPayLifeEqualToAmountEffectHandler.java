@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -29,8 +30,7 @@ public class MayPayLifeEqualToAmountEffectHandler implements NormalEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         MayPayLifeEqualToAmountEffect dynamicEffect = (MayPayLifeEqualToAmountEffect) effect;
-        if (entry.isMarkSourceOncePerTurnOnAcceptance() && entry.getSourcePermanentId() != null
-                && gameData.oncePerTurnTriggersFiredThisTurn.contains(entry.getSourcePermanentId())) {
+        if (TriggeredAbilityStackService.actionTaken(gameData, entry)) {
             // "Do this only once each turn": an earlier trigger this turn already paid and created the token.
             return;
         }

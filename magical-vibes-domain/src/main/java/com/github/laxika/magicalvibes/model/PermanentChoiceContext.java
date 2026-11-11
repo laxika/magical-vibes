@@ -1153,8 +1153,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      * @param excludedGraveyardCardId a card excluded by an "other" graveyard target restriction,
      *                                usually the creature that caused the trigger; {@code null}
      *                                when no such restriction applies.
-     * @param markSourceOncePerTurnOnAcceptance whether the once-per-turn limit of the source is used
-     *                                          only when the "you may" is accepted on resolution
+     * @param onceEachTurnActionKey the limit key of the ability when its "do this only once each turn" (CR 603.2h)
+     *                              is used up as the "you may" is accepted on resolution; {@code null} otherwise
      * @param triggeringCardId the card the death event was about ("that card", "it"), which the stack entry
      *                         carries for the effects that read it as they resolve; {@code null} for none
      * @param triggeringCardGraveyardEntryVersion the graveyard incarnation {@code triggeringCardId} had as the
@@ -1177,7 +1177,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                               Integer eventValue, Permanent sourcePermanentSnapshot,
                               TargetFilter targetFilter, UUID excludedGraveyardCardId,
                               boolean creaturesOnly,
-                              boolean markSourceOncePerTurnOnAcceptance,
+                              String onceEachTurnActionKey,
                               UUID triggeringCardId,
                               long triggeringCardGraveyardEntryVersion,
                               Permanent triggeringPermanent,
@@ -1192,12 +1192,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
                                   Integer eventValue, Permanent sourcePermanentSnapshot,
                                   TargetFilter targetFilter, UUID excludedGraveyardCardId,
-                                  boolean creaturesOnly, boolean markSourceOncePerTurnOnAcceptance,
+                                  boolean creaturesOnly, String onceEachTurnActionKey,
                                   UUID triggeringCardId, long triggeringCardGraveyardEntryVersion,
                                   Permanent triggeringPermanent, DepartedAttachments triggeringAttachments,
                                   Integer graveyardTargetMaxManaValue) {
             this(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot, targetFilter,
-                    excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance, triggeringCardId,
+                    excludedGraveyardCardId, creaturesOnly, onceEachTurnActionKey, triggeringCardId,
                     triggeringCardGraveyardEntryVersion, triggeringPermanent, triggeringAttachments,
                     graveyardTargetMaxManaValue, null);
         }
@@ -1205,18 +1205,18 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
                                   Integer eventValue, Permanent sourcePermanentSnapshot,
                                   TargetFilter targetFilter, UUID excludedGraveyardCardId,
-                                  boolean creaturesOnly, boolean markSourceOncePerTurnOnAcceptance,
+                                  boolean creaturesOnly, String onceEachTurnActionKey,
                                   UUID triggeringCardId, long triggeringCardGraveyardEntryVersion,
                                   Permanent triggeringPermanent, DepartedAttachments triggeringAttachments) {
             this(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot, targetFilter,
-                    excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance, triggeringCardId,
+                    excludedGraveyardCardId, creaturesOnly, onceEachTurnActionKey, triggeringCardId,
                     triggeringCardGraveyardEntryVersion, triggeringPermanent, triggeringAttachments, null);
         }
 
         /** This choice with its graveyard target's mana value limit fixed at {@code maxManaValue}. */
         public DeathTriggerTarget withGraveyardTargetMaxManaValue(Integer maxManaValue) {
             return new DeathTriggerTarget(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot,
-                    targetFilter, excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance,
+                    targetFilter, excludedGraveyardCardId, creaturesOnly, onceEachTurnActionKey,
                     triggeringCardId, triggeringCardGraveyardEntryVersion, triggeringPermanent, triggeringAttachments,
                     maxManaValue, triggeringPermanentControllerId);
         }
@@ -1224,16 +1224,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects,
                                   Integer eventValue, Permanent sourcePermanentSnapshot,
                                   TargetFilter targetFilter, UUID excludedGraveyardCardId,
-                                  boolean creaturesOnly, boolean markSourceOncePerTurnOnAcceptance) {
+                                  boolean creaturesOnly, String onceEachTurnActionKey) {
             this(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot, targetFilter,
-                    excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance, null, -1L, null,
+                    excludedGraveyardCardId, creaturesOnly, onceEachTurnActionKey, null, -1L, null,
                     DepartedAttachments.NONE);
         }
 
         /** This choice with {@code cardId} as the triggering card, in its graveyard incarnation {@code version}. */
         public DeathTriggerTarget withTriggeringCard(UUID cardId, long version) {
             return new DeathTriggerTarget(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot,
-                    targetFilter, excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance, cardId,
+                    targetFilter, excludedGraveyardCardId, creaturesOnly, onceEachTurnActionKey, cardId,
                     version, triggeringPermanent, triggeringAttachments, graveyardTargetMaxManaValue,
                     triggeringPermanentControllerId);
         }
@@ -1244,7 +1244,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
          */
         public DeathTriggerTarget withTriggeringPermanent(Permanent lastKnown, DepartedAttachments attachments) {
             return new DeathTriggerTarget(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot,
-                    targetFilter, excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance,
+                    targetFilter, excludedGraveyardCardId, creaturesOnly, onceEachTurnActionKey,
                     triggeringCardId, triggeringCardGraveyardEntryVersion,
                     lastKnown == null ? null : new Permanent(lastKnown), attachments, graveyardTargetMaxManaValue,
                     triggeringPermanentControllerId);
@@ -1253,7 +1253,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         /** This choice with {@code playerId} as the triggering permanent's last-known controller. */
         public DeathTriggerTarget withTriggeringPermanentController(UUID playerId) {
             return new DeathTriggerTarget(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot,
-                    targetFilter, excludedGraveyardCardId, creaturesOnly, markSourceOncePerTurnOnAcceptance,
+                    targetFilter, excludedGraveyardCardId, creaturesOnly, onceEachTurnActionKey,
                     triggeringCardId, triggeringCardGraveyardEntryVersion, triggeringPermanent, triggeringAttachments,
                     graveyardTargetMaxManaValue, playerId);
         }
@@ -1284,7 +1284,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                   TargetFilter targetFilter, UUID excludedGraveyardCardId,
                                   boolean creaturesOnly) {
             this(dyingCard, controllerId, effects, eventValue, sourcePermanentSnapshot, targetFilter,
-                    excludedGraveyardCardId, creaturesOnly, false);
+                    excludedGraveyardCardId, creaturesOnly, (String) null);
         }
 
         public DeathTriggerTarget(Card dyingCard, UUID controllerId, List<CardEffect> effects) {
@@ -1798,19 +1798,38 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      *  {@code enteringPermanentId} is the permanent whose entry caused the trigger; it becomes the
      *  stack entry's {@code triggeringPermanentId} so an effect that acts on "that creature"
      *  (Gruul Ragebeast's fight) can find it. {@code null} when the effect only needs the source.
-     *  {@code markSourceOncePerTurnOnAcceptance} says the ability's "do this only once each turn" (CR 603.2h) is used
-     *  up as its action is taken: the stack entry the choice makes marks its source as the action resolves. */
+     *  {@code onceEachTurnActionKey}, when not {@code null}, is the ability's limit key for a "do this only once each
+     *  turn" (CR 603.2h) used up as its action is taken: the stack entry the choice makes marks that ability of its
+     *  source as the action resolves.
+     *  {@code triggerRecord}, when not {@code null}, is the entry the ability's collector builds for an ability of the
+     *  same trigger that chooses nothing: the entry this choice makes carries what it records
+     *  ({@code StackEntry.carryTriggerRecord}). */
     record EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId,
                                UUID enteringPermanentId, UUID targetSourcePermanentId, TargetFilter targetFilter,
                                UUID choosingPlayerId, Permanent triggeringPermanent,
-                               boolean markSourceOncePerTurnOnAcceptance)
+                               String onceEachTurnActionKey, StackEntry triggerRecord)
             implements PermanentChoiceContext {
+
+        public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                   UUID sourcePermanentId, UUID enteringPermanentId, UUID targetSourcePermanentId,
+                                   TargetFilter targetFilter, UUID choosingPlayerId, Permanent triggeringPermanent,
+                                   String onceEachTurnActionKey) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId, targetSourcePermanentId,
+                    targetFilter, choosingPlayerId, triggeringPermanent, onceEachTurnActionKey, null);
+        }
+
+        /** This choice with a copy of {@code record} as what its collector records for the trigger event. */
+        public EntersTriggerTarget withTriggerRecord(StackEntry record) {
+            return new EntersTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
+                    targetSourcePermanentId, targetFilter, choosingPlayerId, triggeringPermanent,
+                    onceEachTurnActionKey, record == null ? null : new StackEntry(record));
+        }
 
         public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                    UUID sourcePermanentId, UUID enteringPermanentId,
                                    UUID targetSourcePermanentId, TargetFilter targetFilter, UUID choosingPlayerId) {
             this(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
-                    targetSourcePermanentId, targetFilter, choosingPlayerId, null, false);
+                    targetSourcePermanentId, targetFilter, choosingPlayerId, null, (String) null);
         }
 
         /**
@@ -1820,16 +1839,18 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public EntersTriggerTarget withTriggeringPermanent(Permanent lastKnown) {
             return new EntersTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
                     targetSourcePermanentId, targetFilter, choosingPlayerId,
-                    lastKnown == null ? null : new Permanent(lastKnown), markSourceOncePerTurnOnAcceptance);
+                    lastKnown == null ? null : new Permanent(lastKnown), onceEachTurnActionKey,
+                    triggerRecord);
         }
 
         /**
          * This choice for an ability whose "do this only once each turn" (CR 603.2h) is used up as the action is taken:
-         * the stack entry it makes marks its source as the action resolves.
+         * the stack entry it makes marks the ability {@code key} is the limit key of, on its source, as the action
+         * resolves. {@code null} marks nothing.
          */
-        public EntersTriggerTarget withMarkSourceOncePerTurnOnAcceptance() {
+        public EntersTriggerTarget withOnceEachTurnActionKey(String key) {
             return new EntersTriggerTarget(sourceCard, controllerId, effects, sourcePermanentId, enteringPermanentId,
-                    targetSourcePermanentId, targetFilter, choosingPlayerId, triggeringPermanent, true);
+                    targetSourcePermanentId, targetFilter, choosingPlayerId, triggeringPermanent, key, triggerRecord);
         }
 
         public EntersTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
@@ -2046,7 +2067,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        boolean nonTargeting, UUID triggeringCardId,
                                        Permanent triggeringPermanentSnapshot,
                                        Integer triggeringPermanentPowerAtTrigger,
-                                       boolean markSourceOncePerTurnOnAcceptance,
+                                       String onceEachTurnActionKey,
                                        Permanent departedPermanent,
                                        java.util.Set<com.github.laxika.magicalvibes.model.ManaColor> producedManaColors,
                                        UUID triggeringPlayerId, Integer eventValue,
@@ -2068,7 +2089,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            boolean nonTargeting, UUID triggeringCardId,
                                            Permanent triggeringPermanentSnapshot,
                                            Integer triggeringPermanentPowerAtTrigger,
-                                           boolean markSourceOncePerTurnOnAcceptance,
+                                           String onceEachTurnActionKey,
                                            Permanent departedPermanent,
                                            java.util.Set<com.github.laxika.magicalvibes.model.ManaColor> producedManaColors,
                                            UUID triggeringPlayerId) {
@@ -2076,7 +2097,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
                     permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource,
                     nonTargeting, triggeringCardId, triggeringPermanentSnapshot, triggeringPermanentPowerAtTrigger,
-                    markSourceOncePerTurnOnAcceptance, departedPermanent, producedManaColors, triggeringPlayerId,
+                    onceEachTurnActionKey, departedPermanent, producedManaColors, triggeringPlayerId,
                     null, false, null);
         }
 
@@ -2090,7 +2111,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     spellManaSpentX, sourcePermanentId, sourcePermanentSnapshot, optionalTarget,
                     triggeringPermanentId, permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue,
                     planarSource, nonTargeting, triggeringCardId, triggeringPermanentSnapshot,
-                    triggeringPermanentPowerAtTrigger, markSourceOncePerTurnOnAcceptance, departedPermanent,
+                    triggeringPermanentPowerAtTrigger, onceEachTurnActionKey, departedPermanent,
                     producedManaColors, triggeringPlayerId, value, opponentChoosesTarget,
                     triggeringPermanentControllerId);
         }
@@ -2105,14 +2126,14 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            boolean nonTargeting, UUID triggeringCardId,
                                            Permanent triggeringPermanentSnapshot,
                                            Integer triggeringPermanentPowerAtTrigger,
-                                           boolean markSourceOncePerTurnOnAcceptance,
+                                           String onceEachTurnActionKey,
                                            Permanent departedPermanent,
                                            java.util.Set<com.github.laxika.magicalvibes.model.ManaColor> producedManaColors) {
             this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter, spellManaSpentX,
                     sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
                     permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource,
                     nonTargeting, triggeringCardId, triggeringPermanentSnapshot, triggeringPermanentPowerAtTrigger,
-                    markSourceOncePerTurnOnAcceptance, departedPermanent, producedManaColors, null);
+                    onceEachTurnActionKey, departedPermanent, producedManaColors, null);
         }
 
         /**
@@ -2126,7 +2147,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     spellManaSpentX, sourcePermanentId, sourcePermanentSnapshot, optionalTarget,
                     triggeringPermanentId, permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue,
                     planarSource, nonTargeting, triggeringCardId, triggeringPermanentSnapshot,
-                    triggeringPermanentPowerAtTrigger, markSourceOncePerTurnOnAcceptance, departedPermanent,
+                    triggeringPermanentPowerAtTrigger, onceEachTurnActionKey, departedPermanent,
                     producedManaColors, playerId, eventValue, opponentChoosesTarget, triggeringPermanentControllerId);
         }
 
@@ -2140,13 +2161,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            boolean nonTargeting, UUID triggeringCardId,
                                            Permanent triggeringPermanentSnapshot,
                                            Integer triggeringPermanentPowerAtTrigger,
-                                           boolean markSourceOncePerTurnOnAcceptance,
+                                           String onceEachTurnActionKey,
                                            Permanent departedPermanent) {
             this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter, spellManaSpentX,
                     sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
                     permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource,
                     nonTargeting, triggeringCardId, triggeringPermanentSnapshot, triggeringPermanentPowerAtTrigger,
-                    markSourceOncePerTurnOnAcceptance, departedPermanent, java.util.Set.of());
+                    onceEachTurnActionKey, departedPermanent, java.util.Set.of());
         }
 
         /**
@@ -2159,7 +2180,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     spellManaSpentX, sourcePermanentId, sourcePermanentSnapshot, optionalTarget,
                     triggeringPermanentId, permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue,
                     planarSource, nonTargeting, triggeringCardId, triggeringPermanentSnapshot,
-                    triggeringPermanentPowerAtTrigger, markSourceOncePerTurnOnAcceptance, departedPermanent, colors,
+                    triggeringPermanentPowerAtTrigger, onceEachTurnActionKey, departedPermanent, colors,
                     triggeringPlayerId, eventValue, opponentChoosesTarget, triggeringPermanentControllerId);
         }
 
@@ -2173,12 +2194,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            boolean nonTargeting, UUID triggeringCardId,
                                            Permanent triggeringPermanentSnapshot,
                                            Integer triggeringPermanentPowerAtTrigger,
-                                           boolean markSourceOncePerTurnOnAcceptance) {
+                                           String onceEachTurnActionKey) {
             this(sourceCard, controllerId, effects, playerTargetOnly, targetFilter, spellManaSpentX,
                     sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
                     permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource,
                     nonTargeting, triggeringCardId, triggeringPermanentSnapshot, triggeringPermanentPowerAtTrigger,
-                    markSourceOncePerTurnOnAcceptance, null);
+                    onceEachTurnActionKey, null);
         }
 
         public SpellTargetTriggerAnyTarget copyPlanarSnapshot() {
@@ -2187,7 +2208,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
                     permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource.copy(),
                     nonTargeting, triggeringCardId, triggeringPermanentSnapshot,
-                    triggeringPermanentPowerAtTrigger, markSourceOncePerTurnOnAcceptance, departedPermanent,
+                    triggeringPermanentPowerAtTrigger, onceEachTurnActionKey, departedPermanent,
                     producedManaColors, triggeringPlayerId, eventValue, opponentChoosesTarget,
                     triggeringPermanentControllerId);
         }
@@ -2202,7 +2223,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     spellManaSpentX, sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
                     permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource,
                     nonTargeting, triggeringCardId, triggeringPermanentSnapshot, triggeringPermanentPowerAtTrigger,
-                    markSourceOncePerTurnOnAcceptance, lastKnown == null ? null : new Permanent(lastKnown),
+                    onceEachTurnActionKey, lastKnown == null ? null : new Permanent(lastKnown),
                     producedManaColors, triggeringPlayerId, eventValue, opponentChoosesTarget,
                     triggeringPermanentControllerId);
         }
@@ -2220,7 +2241,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     spellManaSpentX, sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
                     permanentTargetControllerId, null, triggeringSpellManaValue, planarSource,
                     nonTargeting, triggeringCardId, triggeringPermanentSnapshot, triggeringPermanentPowerAtTrigger,
-                    markSourceOncePerTurnOnAcceptance, departedPermanent, producedManaColors, triggeringPlayerId,
+                    onceEachTurnActionKey, departedPermanent, producedManaColors, triggeringPlayerId,
                     eventValue, true, triggeringPermanentControllerId);
         }
 
@@ -2235,7 +2256,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     spellManaSpentX, sourcePermanentId, sourcePermanentSnapshot, optionalTarget,
                     triggeringPermanentId, permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue,
                     planarSource, nonTargeting, triggeringCardId, triggeringPermanentSnapshot,
-                    triggeringPermanentPowerAtTrigger, markSourceOncePerTurnOnAcceptance, departedPermanent,
+                    triggeringPermanentPowerAtTrigger, onceEachTurnActionKey, departedPermanent,
                     producedManaColors, triggeringPlayerId, eventValue, opponentChoosesTarget, playerId);
         }
 
@@ -2245,16 +2266,16 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     spellManaSpentX, sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
                     permanentTargetControllerId, playerId, triggeringSpellManaValue, planarSource,
                     nonTargeting, triggeringCardId, triggeringPermanentSnapshot, triggeringPermanentPowerAtTrigger,
-                    markSourceOncePerTurnOnAcceptance, departedPermanent, producedManaColors, triggeringPlayerId,
+                    onceEachTurnActionKey, departedPermanent, producedManaColors, triggeringPlayerId,
                     eventValue, opponentChoosesTarget, triggeringPermanentControllerId);
         }
 
-        public SpellTargetTriggerAnyTarget withMarkSourceOncePerTurnOnAcceptance() {
+        public SpellTargetTriggerAnyTarget withOnceEachTurnActionKey(String key) {
             return new SpellTargetTriggerAnyTarget(sourceCard, controllerId, effects, playerTargetOnly, targetFilter,
                     spellManaSpentX, sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
                     permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource,
                     nonTargeting, triggeringCardId, triggeringPermanentSnapshot, triggeringPermanentPowerAtTrigger,
-                    true, departedPermanent, producedManaColors, triggeringPlayerId, eventValue, opponentChoosesTarget,
+                    key, departedPermanent, producedManaColors, triggeringPlayerId, eventValue, opponentChoosesTarget,
                     triggeringPermanentControllerId);
         }
 
@@ -2272,7 +2293,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     sourcePermanentId, sourcePermanentSnapshot, optionalTarget, triggeringPermanentId,
                     permanentTargetControllerId, choosingPlayerId, triggeringSpellManaValue, planarSource,
                     nonTargeting, triggeringCardId, triggeringPermanentSnapshot, triggeringPermanentPowerAtTrigger,
-                    false);
+                    (String) null);
         }
 
         public SpellTargetTriggerAnyTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -3112,11 +3133,26 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
      * {@code includeAbilities} is true when the card's stack filter includes
      * {@code StackEntryHasTargetPredicate}, so abilities on the stack are legal targets too
      * ("target spell or ability" — Mizzium Meddler). {@code sourcePermanentId} is the permanent
-     * that just entered, for effects that act on the source permanent (target redirection).
+     * that just entered, for effects that act on the source permanent (target redirection). {@code triggerRecord},
+     * when not {@code null}, is the entry the ability's collector builds for an ability of the same trigger that
+     * chooses nothing: the entry this choice makes carries what it records ({@code StackEntry.carryTriggerRecord}).
      */
     record ETBSpellTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                  StackEntryPredicate spellFilter, boolean includeAbilities,
-                                 UUID sourcePermanentId) implements PermanentChoiceContext {}
+                                 UUID sourcePermanentId, StackEntry triggerRecord) implements PermanentChoiceContext {
+
+        public ETBSpellTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                     StackEntryPredicate spellFilter, boolean includeAbilities,
+                                     UUID sourcePermanentId) {
+            this(sourceCard, controllerId, effects, spellFilter, includeAbilities, sourcePermanentId, null);
+        }
+
+        /** This choice with a copy of {@code record} as what its collector records for the trigger event. */
+        public ETBSpellTargetTrigger withTriggerRecord(StackEntry record) {
+            return new ETBSpellTargetTrigger(sourceCard, controllerId, effects, spellFilter, includeAbilities,
+                    sourcePermanentId, record == null ? null : new StackEntry(record));
+        }
+    }
 
     /**
      * Exploit sacrifice choice: controller picks any creature they control (including the exploit
@@ -3204,7 +3240,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                       UUID triggeringPermanentId,
                                       int eventValue,
                                       com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource,
-                                      int stateTriggerEffectIndex)
+                                      int stateTriggerEffectIndex,
+                                      StackEntry triggerRecord)
             implements PermanentChoiceContext {
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -3263,6 +3300,24 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                           int eventValue,
                                           com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource,
                                           int stateTriggerEffectIndex) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
+                    repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
+                    triggeringPermanentId, eventValue, planarSource, stateTriggerEffectIndex, null);
+        }
+
+        public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                          UUID sourcePermanentId, List<UUID> chosenTargetsSoFar,
+                                          int currentGroupIndex, int chosenInCurrentGroup,
+                                          List<Integer> groupSizes, int xValue,
+                                          List<String> repeatedAdditionalCosts,
+                                          boolean resumePendingMayResolution,
+                                          UUID triggeringCardId,
+                                          UUID triggeringPermanentId,
+                                          int eventValue,
+                                          com.github.laxika.magicalvibes.model.planar.PlanarObject planarSource,
+                                          int stateTriggerEffectIndex,
+                                          StackEntry triggerRecord) {
             this.sourceCard = sourceCard;
             this.controllerId = controllerId;
             this.effects = List.copyOf(effects);
@@ -3279,6 +3334,35 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this.eventValue = eventValue;
             this.planarSource = planarSource;
             this.stateTriggerEffectIndex = stateTriggerEffectIndex;
+            this.triggerRecord = triggerRecord;
+        }
+
+        /**
+         * This choice with a copy of {@code record}, the entry the ability's collector builds for an ability of the
+         * same trigger that chooses nothing: the entry the walk ends in carries what it records
+         * ({@code StackEntry.carryTriggerRecord}), whichever groups are chosen on the way.
+         */
+        public ETBTokenMultiTargetTrigger withTriggerRecord(StackEntry record) {
+            return new ETBTokenMultiTargetTrigger(
+                    sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
+                    currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
+                    repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
+                    triggeringPermanentId, eventValue, planarSource, stateTriggerEffectIndex,
+                    record == null ? null : new StackEntry(record));
+        }
+
+        /**
+         * The next step of this walk: the same ability and trigger event, with {@code chosenTargets} chosen so far,
+         * at slot {@code chosenInGroup} of group {@code groupIndex}, the finished groups having taken
+         * {@code finishedGroupSizes} targets each.
+         */
+        public ETBTokenMultiTargetTrigger withProgress(List<UUID> chosenTargets, int groupIndex, int chosenInGroup,
+                                                       List<Integer> finishedGroupSizes) {
+            return new ETBTokenMultiTargetTrigger(
+                    sourceCard, controllerId, effects, sourcePermanentId, chosenTargets,
+                    groupIndex, chosenInGroup, finishedGroupSizes, xValue,
+                    repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
+                    triggeringPermanentId, eventValue, planarSource, stateTriggerEffectIndex, triggerRecord);
         }
 
         public ETBTokenMultiTargetTrigger withStateTriggerEffectIndex(int index) {
@@ -3286,7 +3370,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
                     currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
                     repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
-                    triggeringPermanentId, eventValue, planarSource, index);
+                    triggeringPermanentId, eventValue, planarSource, index, triggerRecord);
         }
 
         /** This choice with {@code eventValue} as the amount of the event the ability triggered on. */
@@ -3295,7 +3379,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
                     currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
                     repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
-                    triggeringPermanentId, eventValue, planarSource, stateTriggerEffectIndex);
+                    triggeringPermanentId, eventValue, planarSource, stateTriggerEffectIndex, triggerRecord);
         }
 
         public ETBTokenMultiTargetTrigger copyPlanarSnapshot() {
@@ -3303,7 +3387,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                     sourceCard, controllerId, effects, sourcePermanentId, chosenTargetsSoFar,
                     currentGroupIndex, chosenInCurrentGroup, groupSizes, xValue,
                     repeatedAdditionalCosts, resumePendingMayResolution, triggeringCardId,
-                    triggeringPermanentId, eventValue, planarSource.copy(), stateTriggerEffectIndex);
+                    triggeringPermanentId, eventValue, planarSource.copy(), stateTriggerEffectIndex, triggerRecord);
         }
 
         public ETBTokenMultiTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -3483,7 +3567,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        boolean sourceAlternateCostAtTrigger,
                                        UUID triggeringPermanentId,
                                        UUID sourcePermanentId,
-                                       boolean markSourceOncePerTurnOnAcceptance,
+                                       String onceEachTurnActionKey,
                                        List<Permanent> attackingPermanentSnapshots,
                                        Integer graveyardTargetMaxManaValue,
                                        StackEntry triggeringSpell,
@@ -3502,13 +3586,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            boolean sourceAlternateCostAtTrigger,
                                            UUID triggeringPermanentId,
                                            UUID sourcePermanentId,
-                                           boolean markSourceOncePerTurnOnAcceptance,
+                                           String onceEachTurnActionKey,
                                            List<Permanent> attackingPermanentSnapshots,
                                            Integer graveyardTargetMaxManaValue,
                                            StackEntry triggeringSpell) {
             this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
                     sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId, sourcePermanentId,
-                    markSourceOncePerTurnOnAcceptance, attackingPermanentSnapshots, graveyardTargetMaxManaValue,
+                    onceEachTurnActionKey, attackingPermanentSnapshots, graveyardTargetMaxManaValue,
                     triggeringSpell, null);
         }
 
@@ -3520,7 +3604,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public SpellGraveyardTargetTrigger withTriggerRecord(StackEntry record) {
             return new SpellGraveyardTargetTrigger(sourceCard, controllerId, effects, graveyardOwnerId, minCount,
                     xValue, maxCount, sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId,
-                    sourcePermanentId, markSourceOncePerTurnOnAcceptance, attackingPermanentSnapshots,
+                    sourcePermanentId, onceEachTurnActionKey, attackingPermanentSnapshots,
                     graveyardTargetMaxManaValue, triggeringSpell, record == null ? null : new StackEntry(record));
         }
 
@@ -3530,12 +3614,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            boolean sourceAlternateCostAtTrigger,
                                            UUID triggeringPermanentId,
                                            UUID sourcePermanentId,
-                                           boolean markSourceOncePerTurnOnAcceptance,
+                                           String onceEachTurnActionKey,
                                            List<Permanent> attackingPermanentSnapshots,
                                            Integer graveyardTargetMaxManaValue) {
             this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
                     sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId, sourcePermanentId,
-                    markSourceOncePerTurnOnAcceptance, attackingPermanentSnapshots, graveyardTargetMaxManaValue, null);
+                    onceEachTurnActionKey, attackingPermanentSnapshots, graveyardTargetMaxManaValue, null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -3544,11 +3628,11 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            boolean sourceAlternateCostAtTrigger,
                                            UUID triggeringPermanentId,
                                            UUID sourcePermanentId,
-                                           boolean markSourceOncePerTurnOnAcceptance,
+                                           String onceEachTurnActionKey,
                                            List<Permanent> attackingPermanentSnapshots) {
             this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
                     sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId, sourcePermanentId,
-                    markSourceOncePerTurnOnAcceptance, attackingPermanentSnapshots, null);
+                    onceEachTurnActionKey, attackingPermanentSnapshots, null);
         }
 
         /**
@@ -3559,7 +3643,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public SpellGraveyardTargetTrigger withGraveyardTargetMaxManaValue(Integer maxManaValue) {
             return new SpellGraveyardTargetTrigger(sourceCard, controllerId, effects, graveyardOwnerId, minCount,
                     xValue, maxCount, sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId,
-                    sourcePermanentId, markSourceOncePerTurnOnAcceptance, attackingPermanentSnapshots, maxManaValue,
+                    sourcePermanentId, onceEachTurnActionKey, attackingPermanentSnapshots, maxManaValue,
                     triggeringSpell, triggerRecord);
         }
 
@@ -3567,7 +3651,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         public SpellGraveyardTargetTrigger withTriggeringSpell(StackEntry spell) {
             return new SpellGraveyardTargetTrigger(sourceCard, controllerId, effects, graveyardOwnerId, minCount,
                     xValue, maxCount, sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId,
-                    sourcePermanentId, markSourceOncePerTurnOnAcceptance, attackingPermanentSnapshots,
+                    sourcePermanentId, onceEachTurnActionKey, attackingPermanentSnapshots,
                     graveyardTargetMaxManaValue, spell, triggerRecord);
         }
 
@@ -3577,10 +3661,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            boolean sourceAlternateCostAtTrigger,
                                            UUID triggeringPermanentId,
                                            UUID sourcePermanentId,
-                                           boolean markSourceOncePerTurnOnAcceptance) {
+                                           String onceEachTurnActionKey) {
             this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
                     sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId,
-                    sourcePermanentId, markSourceOncePerTurnOnAcceptance, List.of());
+                    sourcePermanentId, onceEachTurnActionKey, List.of());
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -3591,7 +3675,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            UUID sourcePermanentId) {
             this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
                     sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId,
-                    sourcePermanentId, false);
+                    sourcePermanentId, (String) null);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,

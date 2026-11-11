@@ -1308,14 +1308,12 @@ public class TurnProgressionService {
         gameData.oncePerTurnExileCastPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnLibraryCastPermissionsUsedThisTurn.clear();
         gameData.oncePerTurnLibraryPlayPermissionsUsedThisTurn.clear();
-        gameData.oncePerTurnTriggersFiredThisTurn.clear();
         gameData.permanentsWithCountersPutThisTurn.clear();
         gameData.departedPermanentSnapshots.clear();
         gameData.departedPermanentControllerIds.clear();
         gameData.firstCardCycledFreeUsesThisTurn.clear();
         gameData.firstNonDrawStepDrawReplacementsUsedThisTurn.clear();
         gameData.keyedOncePerTurnTriggersFiredThisTurn.clear();
-        gameData.firstOpponentLifeLossTriggersFiredThisTurn.clear();
         gameData.oncePerCreatureTriggersFiredThisTurn.clear();
         gameData.creaturesThatReceivedCountersThisTurn.clear();
         gameData.creatureTapCountsThisTurn.clear();
@@ -1324,7 +1322,6 @@ public class TurnProgressionService {
         gameData.permanentsThatReceivedPlusOnePlusOneCountersThisTurn.clear();
         gameData.permanentsWithPlusOneCountersPutByPlayerThisTurn.clear();
         gameData.plusOnePlusOneCountersPutOnControlledCreaturesThisTurn.clear();
-        gameData.onceEachTurnAttackTriggersFiredThisTurn.clear();
         gameData.permanentsExertedThisTurn.clear();
         gameData.bendingTypesCompletedThisTurn.clear();
         gameData.tokenCreationReplacementUsedThisTurn.clear();
@@ -1379,7 +1376,6 @@ public class TurnProgressionService {
             p.setAttacksThisTurn(0);
             p.setBlockedThisTurn(false);
             p.setBecomeTargetCounterUsedThisTurn(false);
-            p.setBackupAbilityCopyUsedThisTurn(false);
             p.getChosenModeLabelsThisTurn().clear();
             p.getPermanentIdsThatDealtDamageThisTurn().clear();
         });

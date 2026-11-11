@@ -34,9 +34,10 @@ public class KomainuBattleArmor extends Card {
         addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
                 EffectDuration.WHILE_ATTACHED));
 
-        addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new GoadCreaturesDamagedPlayerControlsUntilNextTurnEffect());
-        addTrigger(Triggers.equippedCreatureDealsCombatDamageToPlayer(),
+        // "Whenever this creature or equipped creature deals combat damage to a player": one ability of two
+        // trigger conditions.
+        addTrigger(List.of(Triggers.dealsCombatDamageToPlayer(),
+                        Triggers.equippedCreatureDealsCombatDamageToPlayer()),
                 new GoadCreaturesDamagedPlayerControlsUntilNextTurnEffect());
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(

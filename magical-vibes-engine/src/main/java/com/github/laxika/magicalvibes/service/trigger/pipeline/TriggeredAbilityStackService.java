@@ -198,9 +198,9 @@ public class TriggeredAbilityStackService {
         List<CreatureDeath> deaths = events.stream().map(CreatureDeath::of).toList();
         boolean triggered = options.multiplicity() == TriggerMultiplicity.ONE_OR_MORE
                 ? triggerCollectionService.triggerCreatureDeaths(gameData, watch, source, candidate.controllerId(),
-                        effects, options.limit(), deaths)
+                        effects, options.limit(), onceEachTurnActionKey(candidate.ability()), deaths)
                 : triggerCollectionService.triggerCreatureDeath(gameData, watch, source, candidate.controllerId(),
-                        effects, options.limit(), deaths.getFirst());
+                        effects, options.limit(), onceEachTurnActionKey(candidate.ability()), deaths.getFirst());
         if (triggered) {
             markLimit(gameData, options.limit(), sourceId, limitKey);
         }
@@ -276,7 +276,7 @@ public class TriggeredAbilityStackService {
         Permanent sourceSnapshot = candidate.sourcePermanent() == null ? null
                 : new Permanent(candidate.sourcePermanent());
         UUID controllerId = abilityControllerId(gameData, candidate, effects);
-        boolean markOnAcceptance = options.limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
+        String markOnAcceptance = onceEachTurnActionKey(candidate.ability());
         Permanent lastKnown = event.permanent();
         int power = lastKnown == null ? 0
                 : lastKnown.getLastKnownPower() != null ? lastKnown.getLastKnownPower() : lastKnown.getEffectivePower();
@@ -291,7 +291,7 @@ public class TriggeredAbilityStackService {
             StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
                     card.getName() + "'s ability", effects, null, sourcePermanentId);
             entry.setNonTargeting(true);
-            entry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
+            entry.setOnceEachTurnActionKey(markOnAcceptance);
             if (sourceSnapshot != null) {
                 entry.setSourcePermanentSnapshot(sourceSnapshot);
                 // How it was cast, for an "if" read after it left: a blitz-only death trigger.
@@ -455,16 +455,17 @@ public class TriggeredAbilityStackService {
 
     /**
      * Whether {@code limit} stops the ability keyed {@code key} of the source {@code sourceId} from triggering again:
-     * it triggered already this turn ("triggers only once each turn") or ever ("triggers only once"), or the source's
-     * "do this only once each turn" action was taken this turn (CR 603.2h).
+     * it triggered already this turn ("triggers only once each turn") or ever ("triggers only once"), or that
+     * ability's "do this only once each turn" action was taken this turn (CR 603.2h; {@link #markActionTaken}). Every
+     * limit is the ability's own: another limited ability of the same source keeps its own.
      */
     public static boolean limitReached(GameData gameData, TriggerLimit limit, UUID sourceId, String key) {
         return switch (limit) {
             case NONE -> false;
             case ONCE_EACH_TURN -> gameData.keyedOncePerTurnTriggersFiredThisTurn
                     .getOrDefault(sourceId, Set.of()).contains(key);
-            // Taking the action (accepting it) marks the source.
-            case DO_ONLY_ONCE_EACH_TURN -> gameData.oncePerTurnTriggersFiredThisTurn.contains(sourceId);
+            // Taking the action (accepting it) marks the ability.
+            case DO_ONLY_ONCE_EACH_TURN -> actionTaken(gameData, sourceId, key);
             case ONCE -> gameData.keyedOnceOnlyTriggersFired.getOrDefault(sourceId, Set.of()).contains(key);
             case ONCE_EACH_TURN_FOR_EACH_CREATURE -> throw new IllegalStateException(
                     "Once each turn for each creature is read only by the damage and counter collectors");
@@ -486,6 +487,46 @@ public class TriggeredAbilityStackService {
             case NONE, DO_ONLY_ONCE_EACH_TURN, FIRST_TIME_EACH_TURN -> {
             }
         }
+    }
+
+    /**
+     * The key a stack entry of {@code ability} carries when taking its action uses up the ability's "do this only once
+     * each turn" (CR 603.2h): the ability's limit key, or {@code null} for an ability with another limit or none.
+     */
+    public static String onceEachTurnActionKey(TriggeredAbility ability) {
+        return ability.options().limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN ? ability.limitKey() : null;
+    }
+
+    /**
+     * Whether the "do this only once each turn" action of the ability keyed {@code key} of the source
+     * {@code sourceId} was taken this turn (CR 603.2h).
+     */
+    public static boolean actionTaken(GameData gameData, UUID sourceId, String key) {
+        return key != null && sourceId != null
+                && gameData.keyedOncePerTurnTriggersFiredThisTurn.getOrDefault(sourceId, Set.of()).contains(key);
+    }
+
+    /**
+     * Records that the "do this only once each turn" action of the ability keyed {@code key} of the source
+     * {@code sourceId} is taken (CR 603.2h): that ability doesn't trigger again this turn. Nothing for a {@code null}
+     * key or source.
+     */
+    public static void markActionTaken(GameData gameData, UUID sourceId, String key) {
+        if (key == null || sourceId == null) {
+            return;
+        }
+        gameData.keyedOncePerTurnTriggersFiredThisTurn
+                .computeIfAbsent(sourceId, ignored -> ConcurrentHashMap.newKeySet()).add(key);
+    }
+
+    /** {@link #markActionTaken(GameData, UUID, String)} for {@code entry}'s source and ability. */
+    public static void markActionTaken(GameData gameData, StackEntry entry) {
+        markActionTaken(gameData, entry.getSourcePermanentId(), entry.getOnceEachTurnActionKey());
+    }
+
+    /** {@link #actionTaken(GameData, UUID, String)} for {@code entry}'s source and ability. */
+    public static boolean actionTaken(GameData gameData, StackEntry entry) {
+        return actionTaken(gameData, entry.getSourcePermanentId(), entry.getOnceEachTurnActionKey());
     }
 
     /**

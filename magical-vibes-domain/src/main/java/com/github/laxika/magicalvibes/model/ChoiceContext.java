@@ -424,7 +424,31 @@ public sealed interface ChoiceContext {
                                           int nextTargetIndex, boolean allowsPartialDistribution,
                                           PermanentChoiceContext.HandCastSpellTarget spellCast,
                                           UUID stackEntryId, List<UUID> entryTargetIds,
-                                          List<Integer> entryTargetGroupSizes) implements ChoiceContext {
+                                          List<Integer> entryTargetGroupSizes,
+                                          StackEntry triggerRecord) implements ChoiceContext {
+
+        public CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
+                                              UUID sourcePermanentId, CounterType counterType,
+                                              List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
+                                              int nextTargetIndex, boolean allowsPartialDistribution,
+                                              PermanentChoiceContext.HandCastSpellTarget spellCast,
+                                              UUID stackEntryId, List<UUID> entryTargetIds,
+                                              List<Integer> entryTargetGroupSizes) {
+            this(sourceCard, controllerId, effects, sourcePermanentId, counterType, targetIds, assignments,
+                    total, nextTargetIndex, allowsPartialDistribution, spellCast, stackEntryId, entryTargetIds,
+                    entryTargetGroupSizes, null);
+        }
+
+        /**
+         * This division for a triggered ability whose entry carries {@code record}, a copy of the entry its collector
+         * builds for an ability of the same trigger that chooses nothing ({@code StackEntry.carryTriggerRecord}).
+         */
+        public CounterDistributionAssignment withTriggerRecord(StackEntry record) {
+            return new CounterDistributionAssignment(sourceCard, controllerId, effects, sourcePermanentId,
+                    counterType, targetIds, assignments, total, nextTargetIndex, allowsPartialDistribution,
+                    spellCast, stackEntryId, entryTargetIds, entryTargetGroupSizes,
+                    record == null ? null : new StackEntry(record));
+        }
 
         public CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                               UUID sourcePermanentId, CounterType counterType,
@@ -476,7 +500,7 @@ public sealed interface ChoiceContext {
         public CounterDistributionAssignment withProgress(Map<UUID, Integer> newAssignments, int newNextTargetIndex) {
             return new CounterDistributionAssignment(sourceCard, controllerId, effects, sourcePermanentId,
                     counterType, targetIds, newAssignments, total, newNextTargetIndex, allowsPartialDistribution,
-                    spellCast, stackEntryId, entryTargetIds, entryTargetGroupSizes);
+                    spellCast, stackEntryId, entryTargetIds, entryTargetGroupSizes, triggerRecord);
         }
     }
 

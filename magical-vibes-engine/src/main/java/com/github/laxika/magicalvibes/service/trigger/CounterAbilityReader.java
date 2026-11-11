@@ -102,6 +102,14 @@ public final class CounterAbilityReader {
             return limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
         }
 
+        /**
+         * The key the ability's stack entry carries when taking its action uses up "do this only once each turn" (CR
+         * 603.2h): the ability's limit key, or {@code null}.
+         */
+        public String onceEachTurnActionKey() {
+            return TriggeredAbilityStackService.onceEachTurnActionKey(ability);
+        }
+
         /** This effect read as {@code effect} instead, as a collector binds it. */
         public CounterEffect withEffect(CardEffect effect) {
             return new CounterEffect(effect, ability, filter, event, simultaneousWithPrevious, counterKind);

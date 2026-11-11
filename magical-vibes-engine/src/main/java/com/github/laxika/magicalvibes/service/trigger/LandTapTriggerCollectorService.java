@@ -172,7 +172,7 @@ public class LandTapTriggerCollectorService {
         entry.setTriggeringPlayerId(tappingPlayerId);
         entry.setTriggeringPermanentId(tappedPermanentId);
         entry.setTriggeringPermanent(tapped);
-        entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+        entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
         if (match.permanent() != null) {
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         }
@@ -273,7 +273,7 @@ public class LandTapTriggerCollectorService {
                 null,
                 entry.getTriggeringPermanentSnapshot(),
                 null,
-                entry.isMarkSourceOncePerTurnOnAcceptance(),
+                entry.getOnceEachTurnActionKey(),
                 null,
                 producedManaColors == null ? Set.of() : producedManaColors,
                 entry.getTriggeringPlayerId(),

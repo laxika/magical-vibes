@@ -110,7 +110,7 @@ public class CreatureControlService {
     }
 
     public CreatureControlService(GameLogService gameLogService, GameQueryService gameQueryService) {
-        this(gameLogService, gameQueryService, new UnattachTriggerSupport(gameLogService), null);
+        this(gameLogService, gameQueryService, new UnattachTriggerSupport(gameLogService, gameQueryService), null);
     }
 
     /**

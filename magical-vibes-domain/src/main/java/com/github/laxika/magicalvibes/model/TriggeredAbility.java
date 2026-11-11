@@ -172,8 +172,8 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     /**
      * Rejects "for the first time each turn" ({@link TriggerLimit#FIRST_TIME_EACH_TURN}) on an ability with a trigger
      * other than a zone change, a combat event or "this becomes the target of a spell or ability": only the
-     * token-creation and land-to-graveyard collectors of the trigger pipeline, the "whenever you attack" collector and
-     * the "becomes the target of a spell or ability" collector read it.
+     * token-creation and land-to-graveyard collectors of the trigger pipeline, the "whenever you attack" and "whenever
+     * this creature attacks" collectors and the "becomes the target of a spell or ability" collector read it.
      */
     private static void requireFirstTimeReader(List<TriggerCondition> conditions, TriggerOptions options) {
         if (options.limit() == TriggerLimit.FIRST_TIME_EACH_TURN && conditions.stream().map(TriggerCondition::trigger)
@@ -391,9 +391,10 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
     }
 
     /**
-     * The key "triggers only once each turn" marks for this ability on its source, so a limit covers every trigger
-     * condition of the ability and no other ability of the source. Equal abilities of one source share it, but for
-     * their {@link #instance()}.
+     * The key this ability's limit is marked under on its source ("triggers only once each turn", "this ability
+     * triggers only once", "do this only once each turn" as the action is taken, CR 603.2h) and that its "one or more"
+     * marks are derived from, so a limit covers every trigger condition of the ability and no other ability of the
+     * source. Equal abilities of one source share it, but for their {@link #instance()}.
      */
     public String limitKey() {
         return "trigger:" + Integer.toHexString(hashCode());

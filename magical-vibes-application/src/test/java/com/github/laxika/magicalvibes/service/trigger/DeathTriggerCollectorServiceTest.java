@@ -937,7 +937,7 @@ class DeathTriggerCollectorServiceTest {
                     dyingPermanent);
 
             svc.dispatchCreatureDeath(CreatureDeathWatch.ANY,
-                    new TriggerMatchContext(gd, perm, PLAYER1_ID, List.of(may), watcher, null, true), ctx);
+                    new TriggerMatchContext(gd, perm, PLAYER1_ID, List.of(may), watcher, null, "once"), ctx);
 
             assertThat(gd.stack).hasSize(1);
             StackEntry entry = gd.stack.getFirst();
@@ -952,7 +952,7 @@ class DeathTriggerCollectorServiceTest {
             assertThat(entry.getEventValue()).isEqualTo(4);
             assertThat(entry.getDyingPermanentManaValue()).isEqualTo(dying.getManaValue());
             assertThat(entry.getSourcePermanentSnapshot().getId()).isEqualTo(perm.getId());
-            assertThat(entry.isMarkSourceOncePerTurnOnAcceptance()).isTrue();
+            assertThat(entry.marksOnceEachTurnAction()).isTrue();
         }
 
         @Test
@@ -1085,12 +1085,12 @@ class DeathTriggerCollectorServiceTest {
                     dyingPermanent);
 
             svc.dispatchCreatureDeath(CreatureDeathWatch.OPPONENT,
-                    new TriggerMatchContext(gd, perm, PLAYER2_ID, List.of(may), watcher, null, true), ctx);
+                    new TriggerMatchContext(gd, perm, PLAYER2_ID, List.of(may), watcher, null, "once"), ctx);
 
             assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingInteractions).singleElement()
                     .isInstanceOfSatisfying(PermanentChoiceContext.DeathTriggerTarget.class, target -> {
-                        assertThat(target.markSourceOncePerTurnOnAcceptance()).isTrue();
+                        assertThat(target.onceEachTurnActionKey()).isEqualTo("once");
                         assertThat(target.triggeringCardId()).isEqualTo(dying.getId());
                         assertThat(target.triggeringPermanentControllerId()).isEqualTo(PLAYER1_ID);
                     });

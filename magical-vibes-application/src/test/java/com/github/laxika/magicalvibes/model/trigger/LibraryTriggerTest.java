@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -196,12 +197,10 @@ class LibraryTriggerTest {
         assertThat(reads.getFirst().limitReached(gameData, sourceId)).isTrue();
         assertThat(reads.getFirst().limitReached(gameData, UUID.randomUUID())).isFalse();
         assertThat(reads.get(1).limitReached(gameData, sourceId)).isFalse();
-        assertThat(gameData.onceOnlyTriggersFired).doesNotContain(sourceId);
 
         reads.get(1).markLimit(gameData, sourceId);
 
         assertThat(reads.get(1).limitReached(gameData, sourceId)).isTrue();
-        assertThat(gameData.oncePerTurnTriggersFiredThisTurn).doesNotContain(sourceId);
     }
 
     @Test
@@ -221,7 +220,7 @@ class LibraryTriggerTest {
         assertThat(scry.marksLimitOnAcceptance()).isTrue();
         assertThat(scry.limitReached(gameData, sourceId)).isFalse();
 
-        gameData.oncePerTurnTriggersFiredThisTurn.add(sourceId);
+        TriggeredAbilityStackService.markActionTaken(gameData, sourceId, scry.onceEachTurnActionKey());
 
         assertThat(scry.limitReached(gameData, sourceId)).isTrue();
         assertThat(surveil.limitReached(gameData, sourceId)).isTrue();

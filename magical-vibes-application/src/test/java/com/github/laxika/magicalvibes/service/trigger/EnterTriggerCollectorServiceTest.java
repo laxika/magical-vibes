@@ -337,7 +337,6 @@ class EnterTriggerCollectorServiceTest {
         assertThat(dispatchCount).hasValue(1);
         assertThat(gd.keyedOncePerTurnTriggersFiredThisTurn.get(gd.playerBattlefields.get(player1Id).getFirst().getId()))
                 .containsExactly(source.getTriggeredAbilities().getFirst().limitKey());
-        assertThat(gd.oncePerTurnTriggersFiredThisTurn).isEmpty();
     }
 
     @Test

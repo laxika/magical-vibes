@@ -80,12 +80,13 @@ public final class MiscAbilityReader {
         }
 
         /**
-         * Whether the ability can't trigger for {@code sourceId} now: its limit is reached, or the source has already
-         * triggered for "becomes crewed / saddled for the first time each turn" this turn (the unkeyed once-each-turn
-         * mark on the source, as the collectors judged it before).
+         * Whether the ability can't trigger for {@code sourceId} now: its limit is reached, or this ability has already
+         * triggered for "becomes crewed / saddled for the first time each turn" this turn (a mark of the ability's
+         * own, by its {@link TriggeredAbility#limitKey()}, so no other ability of the source uses it up).
          */
         public boolean limitReached(GameData gameData, UUID sourceId) {
-            if (firstTimeEachTurn && gameData.oncePerTurnTriggersFiredThisTurn.contains(sourceId)) {
+            if (firstTimeEachTurn && TriggeredAbilityStackService.limitReached(gameData,
+                    TriggerLimit.ONCE_EACH_TURN, sourceId, firstTimeKey())) {
                 return true;
             }
             return TriggeredAbilityStackService.limitReached(gameData, limit(), sourceId, ability.limitKey());
@@ -94,9 +95,14 @@ public final class MiscAbilityReader {
         /** Marks the ability's limit, or its "for the first time each turn", as used by {@code sourceId}. */
         public void markLimit(GameData gameData, UUID sourceId) {
             if (firstTimeEachTurn) {
-                gameData.oncePerTurnTriggersFiredThisTurn.add(sourceId);
+                TriggeredAbilityStackService.markLimit(gameData, TriggerLimit.ONCE_EACH_TURN, sourceId,
+                        firstTimeKey());
             }
             TriggeredAbilityStackService.markLimit(gameData, limit(), sourceId, ability.limitKey());
+        }
+
+        private String firstTimeKey() {
+            return ability.limitKey() + ":first-time";
         }
 
         /** This read with {@code effect} in place of its effect. */

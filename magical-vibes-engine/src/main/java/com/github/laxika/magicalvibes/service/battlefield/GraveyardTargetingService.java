@@ -690,7 +690,7 @@ public class GraveyardTargetingService {
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     card, controllerId, effects, defendingPlayerOnly ? defendingPlayerId : null, 0, 0, 0,
                     queuedSource == null ? null : gameQueryService.getEffectivePower(gameData, queuedSource),
-                    false, null, sourcePermanentId, false, attackingPermanentSnapshots));
+                    false, null, sourcePermanentId, null, attackingPermanentSnapshots));
             return;
         }
         List<UUID> searchPlayerIds = defendingPlayerOnly

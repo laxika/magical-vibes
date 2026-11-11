@@ -156,7 +156,6 @@ class CounterTriggerTest {
         assertThat(reads.getFirst().limitReached(gameData, sourceId)).isTrue();
         assertThat(reads.getFirst().limitReached(gameData, UUID.randomUUID())).isFalse();
         assertThat(reads.get(1).limitReached(gameData, sourceId)).isFalse();
-        assertThat(gameData.oncePerTurnTriggersFiredThisTurn).doesNotContain(sourceId);
     }
 
     @Test

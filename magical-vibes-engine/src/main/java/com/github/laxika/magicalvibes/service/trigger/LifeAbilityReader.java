@@ -77,6 +77,14 @@ public final class LifeAbilityReader {
         }
 
         /**
+         * The key the ability's stack entry carries when taking its action uses up "do this only once each turn" (CR
+         * 603.2h): the ability's limit key, or {@code null}.
+         */
+        public String onceEachTurnActionKey() {
+            return TriggeredAbilityStackService.onceEachTurnActionKey(ability);
+        }
+
+        /**
          * Whether the ability's limit lets it trigger once a turn at most ("triggers only once each turn", "do this
          * only once each turn"), so nothing makes it trigger additional times. "For the first time each turn" is a
          * count of the player's events, not a limit on the ability.

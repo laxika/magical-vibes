@@ -22,10 +22,10 @@ public class AureliaTheWarleader extends Card {
 
     public AureliaTheWarleader() {
         // Flying, vigilance and haste are auto-loaded keywords. "Whenever Aurelia attacks for the
-        // first time each turn": both halves are limited to once each turn (TriggerLimit.ONCE_EACH_TURN), so
+        // first time each turn" is its first attack of the turn (TriggerLimit.FIRST_TIME_EACH_TURN), so
         // attacking again in the extra combat phase this grants doesn't re-trigger and loop.
         addTrigger(Triggers.attacks(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.FIRST_TIME_EACH_TURN),
                 new UntapPermanentsEffect(TapUntapScope.CONTROLLED, new PermanentIsCreaturePredicate()),
                 new AdditionalCombatPhaseEffect(1));
     }

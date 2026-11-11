@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,9 @@ import java.util.UUID;
  * unattached on the stack ({@code Triggers.becomesUnattachedFromPermanent()}: Captain's Hook, Grafted Wargear,
  * Grafted Exoskeleton, Stitcher's Graft). Each ability is one object of all its effects (CR 603.3) and records the
  * permanent the Equipment was attached to as its triggering permanent, "that permanent", whatever its effects are, so
- * the permanent stays on the battlefield until the ability resolves.
+ * the permanent stays on the battlefield until the ability resolves. The ability is the Equipment's as it was just
+ * before it became unattached (CR 603.10c): a face-down Equipment, or one that had lost its abilities (CR 613.1f),
+ * has no such ability, and nothing triggers (CR 603.2).
  */
 @Slf4j
 @Component
@@ -30,6 +33,7 @@ import java.util.UUID;
 public class UnattachTriggerSupport {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
 
     public void triggerDestroyOnUnattachIfNeeded(GameData gameData, Permanent equipment,
                                                  UUID oldAttachedTo) {
@@ -40,6 +44,9 @@ public class UnattachTriggerSupport {
     public void triggerDestroyOnUnattachIfNeeded(GameData gameData, Permanent equipment,
                                                  UUID oldAttachedTo, UUID controllerId) {
         if (oldAttachedTo == null || controllerId == null) {
+            return;
+        }
+        if (equipment.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, equipment)) {
             return;
         }
         for (List<CardEffect> effects : MiscAbilityReader.printedEffectsByAbility(equipment.getCard(),

@@ -152,7 +152,7 @@ class ArmWithAetherTest extends BaseCardTest {
     @DisplayName("Creature without granted ability does not trigger bounce")
     void noTriggerWithoutGrantedAbility() {
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
-        // NOT setting hasDamageToOpponentCreatureBounce
+        // Arm with Aether is not cast: the creature has no such ability
         attacker.setAttacking(true);
         addCreatureReady(player2, new GrizzlyBears());
 

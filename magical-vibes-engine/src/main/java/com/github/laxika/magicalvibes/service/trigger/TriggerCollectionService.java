@@ -3296,7 +3296,7 @@ public class TriggerCollectionService {
                                                    List<DamageAbilityReader.DamageEffect> reads) {
         DamageAbilityReader.DamageEffect read = reads.getFirst();
         return new TriggerMatchContext(gameData, permanent, controllerId, DamageAbilityReader.effectsOf(reads),
-                permanent.getCard(), null, read.marksLimitOnAcceptance(), read.limit() == TriggerLimit.ONCE_EACH_TURN);
+                permanent.getCard(), null, read.onceEachTurnActionKey(), read.limit() == TriggerLimit.ONCE_EACH_TURN);
     }
 
     public void checkSourceDealsDamageToPlayerTriggers(GameData gameData, Permanent source,
@@ -5112,7 +5112,7 @@ public class TriggerCollectionService {
         Permanent perm = namedSourcePermanent(candidate);
         UUID controllerId = candidate.controllerId();
         Card movedCard = lastKnownCard(event);
-        boolean markOnAcceptance = candidate.ability().options().limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
+        String markOnAcceptance = TriggeredAbilityStackService.onceEachTurnActionKey(candidate.ability());
         boolean triggered = false;
         switch (watch) {
             case ON_ALLY_PERMANENT_SACRIFICED -> triggered = triggerAllyPermanentSacrificed(gameData, perm,
@@ -5790,12 +5790,13 @@ public class TriggerCollectionService {
         UUID controllerId = candidate.controllerId();
         Card sourceCard = candidate.sourceCard();
         TriggerLimit limit = candidate.ability().options().limit();
+        String actionKey = TriggeredAbilityStackService.onceEachTurnActionKey(candidate.ability());
         return switch (watch) {
             case ON_ALLY_CREATURE_ENTERS_BATTLEFIELD, ON_ALLY_CREATURES_ENTERS_BATTLEFIELD,
                  ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD, ON_SELF_OR_ALLY_CREATURES_ENTERS_BATTLEFIELD ->
-                    triggerAllyCreatureEnters(gameData, watch, perm, controllerId, effects, entering, limit);
+                    triggerAllyCreatureEnters(gameData, watch, perm, controllerId, effects, entering, limit, actionKey);
             case ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD, ON_SELF_OR_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD ->
-                    triggerAllyNontokenCreatureEnters(gameData, watch, perm, controllerId, effects, entering, limit);
+                    triggerAllyNontokenCreatureEnters(gameData, watch, perm, controllerId, effects, entering, limit, actionKey);
             case COMMAND_ZONE_ON_ALLY_NONTOKEN_CREATURE_ENTERS_BATTLEFIELD -> {
                 // Panharmonicon-style doublers only multiply triggers of permanents (CR 603.2d), so a command-zone
                 // source is triggered exactly once.
@@ -5804,28 +5805,28 @@ public class TriggerCollectionService {
                 yield dispatch(new TriggerMatchContext(gameData, null, controllerId, effects, sourceCard), watch, ctx);
             }
             case ON_ALLY_ARTIFACT_ENTERS_BATTLEFIELD ->
-                    triggerAllyArtifactEnters(gameData, watch, perm, controllerId, effects, entering, limit);
+                    triggerAllyArtifactEnters(gameData, watch, perm, controllerId, effects, entering, limit, actionKey);
             case ON_SELF_OR_ALLY_ARTIFACT_ENTERS_BATTLEFIELD, ON_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD,
                  ON_SELF_OR_ALLY_NONTOKEN_ARTIFACT_ENTERS_BATTLEFIELD, ON_ALLY_EQUIPMENT_ENTERS_BATTLEFIELD -> {
                 var ctx = new TriggerContext.PermanentEnters(entering.card(), controllerId, null,
                         1 + gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId,
                                 entering.card()), entering.permanentId());
-                yield dispatchEntering(gameData, perm, controllerId, watch, effects, limit, ctx);
+                yield dispatchEntering(gameData, perm, controllerId, watch, effects, limit, actionKey, ctx);
             }
             case ON_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD, ON_SELF_OR_ALLY_ENCHANTMENT_ENTERS_BATTLEFIELD ->
-                    triggerAllyEnchantmentEnters(gameData, perm, controllerId, effects, entering, limit);
+                    triggerAllyEnchantmentEnters(gameData, perm, controllerId, effects, entering, limit, actionKey);
             case ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD, ON_ANY_CREATURE_ENTERS_BATTLEFIELD ->
-                    triggerAnyCreatureEnters(gameData, watch, perm, controllerId, effects, entering, limit);
+                    triggerAnyCreatureEnters(gameData, watch, perm, controllerId, effects, entering, limit, actionKey);
             case ON_OPPONENT_CREATURE_ENTERS_BATTLEFIELD -> {
                 var ctx = new TriggerContext.PermanentEnters(entering.card(), entering.controllerId(),
                         entering.controllerId(), 1 + gameQueryService.countETBExtraTriggers(gameData, controllerId,
                         entering.controllerId(), entering.card()), null);
-                yield dispatchEntering(gameData, perm, controllerId, watch, effects, limit, ctx);
+                yield dispatchEntering(gameData, perm, controllerId, watch, effects, limit, actionKey, ctx);
             }
             case ON_OPPONENT_LAND_ENTERS_BATTLEFIELD ->
                     triggerOpponentLandEnters(gameData, watch, perm, controllerId, effects, entering);
             case ON_ALLY_LAND_ENTERS_BATTLEFIELD ->
-                    triggerAllyLandEnters(gameData, perm, controllerId, effects, entering, oneOrMore, limit,
+                    triggerAllyLandEnters(gameData, perm, controllerId, effects, entering, oneOrMore, limit, actionKey,
                             narrowedLandfall(candidate));
             case GRAVEYARD_ON_ALLY_LAND_ENTERS_BATTLEFIELD ->
                     triggerGraveyardLandEnters(gameData, sourceCard, controllerId, effects, entering);
@@ -5839,7 +5840,7 @@ public class TriggerCollectionService {
                 var ctx = new TriggerContext.PermanentEnters(entering.card(), entering.controllerId(),
                         puttingPlayerId, 1 + gameQueryService.countETBExtraTriggers(gameData, controllerId,
                         entering.controllerId(), entering.card()), entering.permanentId());
-                yield dispatchEntering(gameData, perm, controllerId, watch, effects, limit, ctx);
+                yield dispatchEntering(gameData, perm, controllerId, watch, effects, limit, actionKey, ctx);
             }
             case ON_ALLY_PERMANENT_ENTERS_TRANSFORMED -> dispatchWatchEffects(gameData, candidate, watch, effects,
                     new TriggerContext.PermanentEnters(entering.card(), controllerId, null,
@@ -5849,7 +5850,7 @@ public class TriggerCollectionService {
                 var ctx = new TriggerContext.PermanentEnters(entering.card(), controllerId, null,
                         1 + gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId,
                                 entering.card()), entering.permanentId());
-                yield dispatchEntering(gameData, perm, controllerId, watch, effects, limit, ctx);
+                yield dispatchEntering(gameData, perm, controllerId, watch, effects, limit, actionKey, ctx);
             }
             case GRAVEYARD_ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD -> entering.permanent() != null
                     && queueGraveyardPermanentEntersTriggers(gameData, sourceCard, controllerId, effects,
@@ -5903,22 +5904,22 @@ public class TriggerCollectionService {
      */
     private boolean triggerAllyCreatureEnters(GameData gameData, ZoneChangeWatch watch, Permanent perm,
                                               UUID controllerId, List<CardEffect> effects, Entering entering,
-                                              TriggerLimit limit) {
+                                              TriggerLimit limit, String actionKey) {
         Card enteringCreature = entering.card();
         var ctx = new TriggerContext.PermanentEnters(enteringCreature, controllerId, null,
                 1 + gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId, enteringCreature),
                 entering.permanentId());
-        return dispatchEntering(gameData, perm, controllerId, watch, effects, limit, ctx);
+        return dispatchEntering(gameData, perm, controllerId, watch, effects, limit, actionKey, ctx);
     }
 
     /** "Whenever another nontoken creature you control enters", "this or another". */
     private boolean triggerAllyNontokenCreatureEnters(GameData gameData, ZoneChangeWatch watch, Permanent perm,
                                                       UUID controllerId, List<CardEffect> effects,
-                                                      Entering entering, TriggerLimit limit) {
+                                                      Entering entering, TriggerLimit limit, String actionKey) {
         var ctx = new TriggerContext.PermanentEnters(entering.card(), controllerId, null,
                 1 + gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId, entering.card()),
                 entering.permanentId());
-        return dispatchEntering(gameData, perm, controllerId, watch, effects, limit, ctx);
+        return dispatchEntering(gameData, perm, controllerId, watch, effects, limit, actionKey, ctx);
     }
 
     /**
@@ -5927,17 +5928,17 @@ public class TriggerCollectionService {
      */
     private boolean triggerAllyArtifactEnters(GameData gameData, ZoneChangeWatch watch, Permanent perm,
                                               UUID controllerId, List<CardEffect> effects, Entering entering,
-                                              TriggerLimit limit) {
+                                              TriggerLimit limit, String actionKey) {
         Card enteringCard = entering.card();
         var ctx = new TriggerContext.PermanentEnters(enteringCard, controllerId, null,
                 1 + gameQueryService.countETBExtraTriggers(gameData, controllerId, controllerId, enteringCard),
                 entering.permanentId());
-        return dispatchEntering(gameData, perm, controllerId, watch, effects, limit, ctx);
+        return dispatchEntering(gameData, perm, controllerId, watch, effects, limit, actionKey, ctx);
     }
 
     /** "Whenever an enchantment you control enters" (constellation), "this or another". */
     private boolean triggerAllyEnchantmentEnters(GameData gameData, Permanent perm, UUID controllerId,
-                                                 List<CardEffect> effects, Entering entering, TriggerLimit limit) {
+                                                 List<CardEffect> effects, Entering entering, TriggerLimit limit, String actionKey) {
         if (gameQueryService.areOpponentPermanentETBTriggersSuppressed(gameData, controllerId)) {
             return false;
         }
@@ -5971,7 +5972,7 @@ public class TriggerCollectionService {
             if (enteringPermanent != null) {
                 entry.setTriggeringPermanentId(enteringPermanent.getId());
             }
-            entry.setMarkSourceOncePerTurnOnAcceptance(limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN);
+            entry.setOnceEachTurnActionKey(actionKey);
             if (enteringPermanent != null) {
                 entry.setAttachedPermanentSnapshot(new Permanent(enteringPermanent));
             }
@@ -5984,14 +5985,14 @@ public class TriggerCollectionService {
     /** "Whenever another creature enters", "whenever a creature enters", whoever controls it. */
     private boolean triggerAnyCreatureEnters(GameData gameData, ZoneChangeWatch watch, Permanent perm,
                                              UUID controllerId, List<CardEffect> effects, Entering entering,
-                                             TriggerLimit limit) {
+                                             TriggerLimit limit, String actionKey) {
         Card enteringCreature = entering.card();
         UUID enteringControllerId = entering.controllerId();
         int extraTriggers = gameQueryService.countETBExtraTriggers(gameData, controllerId, enteringControllerId,
                 enteringCreature);
         var ctx = new TriggerContext.PermanentEnters(enteringCreature, enteringControllerId, null, 1 + extraTriggers,
                 null);
-        return dispatchEntering(gameData, perm, controllerId, watch, effects, limit, ctx);
+        return dispatchEntering(gameData, perm, controllerId, watch, effects, limit, actionKey, ctx);
     }
 
     /** "Whenever a land an opponent controls enters". */
@@ -6016,7 +6017,7 @@ public class TriggerCollectionService {
      */
     private boolean triggerAllyLandEnters(GameData gameData, Permanent perm, UUID landControllerId,
                                           List<CardEffect> effects, Entering entering, boolean oneOrMore,
-                                          TriggerLimit limit, boolean narrowed) {
+                                          TriggerLimit limit, String actionKey, boolean narrowed) {
         Card enteringLand = entering.card();
         UUID enteringPermanentId = entering.permanentId();
         if (perm.getId().equals(enteringPermanentId) && enteringLand.hasType(CardType.LAND) && !narrowed) {
@@ -6094,7 +6095,7 @@ public class TriggerCollectionService {
                 entry.setTriggeringCardId(enteringLand.getId());
                 entry.setTriggeringPermanentId(enteringPermanentId);
                 entry.setTriggeringPermanentControllerId(landControllerId);
-                entry.setMarkSourceOncePerTurnOnAcceptance(limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN);
+                entry.setOnceEachTurnActionKey(actionKey);
                 if (oneOrMore && enteringPermanentId != null) {
                     entry.setTriggeringPermanentIds(List.of(enteringPermanentId));
                     entry.rememberLastKnownPermanentCard(enteringPermanentId, enteringLand);
@@ -6310,8 +6311,8 @@ public class TriggerCollectionService {
             return false;
         }
         boolean oncePerTurn = limit == TriggerLimit.ONCE_EACH_TURN || limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
-        boolean markOnAcceptance = limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
-        boolean limitedTrigger = oncePerTurn && !markOnAcceptance && !opponent;
+        String markOnAcceptance = TriggeredAbilityStackService.onceEachTurnActionKey(candidate.ability());
+        boolean limitedTrigger = oncePerTurn && markOnAcceptance == null && !opponent;
         boolean perTokenOccurrences = perToken || effects.stream().anyMatch(CardEffect::hasAbilityResolutionCondition);
         int occurrences = perTokenOccurrences && !perToken ? count : 1;
         TriggerMatchContext match = new TriggerMatchContext(gameData, permanent, controllerId, effects,
@@ -6326,7 +6327,7 @@ public class TriggerCollectionService {
             // The ability, whole (CR 603.3), once for each time it triggers.
             boolean triggered = registry.dispatch(match, watch, effectContext);
             triggeredAny |= triggered;
-            if (triggered && oncePerTurn && !markOnAcceptance) {
+            if (triggered && oncePerTurn && markOnAcceptance == null) {
                 break;
             }
         }
@@ -6399,7 +6400,7 @@ public class TriggerCollectionService {
                                          List<CardEffect> effects, TriggerContext ctx) {
         Permanent perm = namedSourcePermanent(candidate);
         List<TextReplacement> globalWordChange = TextChangeTransformer.globalColorWordReplacements(gameData);
-        boolean markOnAcceptance = candidate.ability().options().limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
+        String markOnAcceptance = TriggeredAbilityStackService.onceEachTurnActionKey(candidate.ability());
         List<CardEffect> changed = effects.stream().map(effect -> TextChangeTransformer.transform(effect,
                 perm.getTextReplacements(), globalWordChange)).toList();
         return !changed.isEmpty()
@@ -6411,7 +6412,7 @@ public class TriggerCollectionService {
      * says whether taking the action uses up "do this only once each turn" (CR 603.2h).
      */
     private boolean triggerAllyPermanentSacrificed(GameData gameData, Permanent perm, UUID controllerId,
-                                                   List<CardEffect> effects, boolean markOnAcceptance,
+                                                   List<CardEffect> effects, String markOnAcceptance,
                                                    ZoneChangeEvent event) {
         var ctx = new TriggerContext.AllySacrificed(event.controllerId(), lastKnownCard(event), event.permanent());
         var match = new TriggerMatchContext(gameData, perm, controllerId, effects, perm.getCard(), null,
@@ -9257,7 +9258,7 @@ public class TriggerCollectionService {
 
     public void beginPermanentTapTriggerBatch(GameData gameData) {
         if (gameData.permanentTapTriggerBatchDepth++ == 0) {
-            gameData.permanentTapTriggerBatchFiredEffects.clear();
+            gameData.permanentTapTriggerBatchFiredAbilities.clear();
         }
     }
 
@@ -9266,7 +9267,7 @@ public class TriggerCollectionService {
             throw new IllegalStateException("No permanent tap trigger batch is active");
         }
         if (--gameData.permanentTapTriggerBatchDepth == 0) {
-            gameData.permanentTapTriggerBatchFiredEffects.clear();
+            gameData.permanentTapTriggerBatchFiredAbilities.clear();
         }
     }
 
@@ -9579,14 +9580,15 @@ public class TriggerCollectionService {
 
     /**
      * Whether {@code read}'s "one or more" ability already triggered on {@code source} for the permanents tapped
-     * together in the open tap batch ({@link #beginPermanentTapTriggerBatch}).
+     * together in the open tap batch ({@link #beginPermanentTapTriggerBatch}): the mark is the ability's
+     * ({@link TriggeredAbility#limitKey()}), so two "one or more" abilities of one permanent each trigger once.
      */
     private static boolean shouldSkipBatchedTapTrigger(GameData gameData, Permanent source,
                                                         TapAbilityReader.TapEffect read) {
         return read.oneOrMore()
                 && gameData.permanentTapTriggerBatchDepth > 0
-                && gameData.permanentTapTriggerBatchFiredEffects.getOrDefault(source.getId(), Set.of())
-                .contains(read.effect());
+                && gameData.permanentTapTriggerBatchFiredAbilities.getOrDefault(source.getId(), Set.of())
+                .contains(read.ability().limitKey());
     }
 
     private static void markBatchedTapTrigger(GameData gameData, Permanent source,
@@ -9594,9 +9596,9 @@ public class TriggerCollectionService {
         if (!read.oneOrMore() || gameData.permanentTapTriggerBatchDepth <= 0) {
             return;
         }
-        gameData.permanentTapTriggerBatchFiredEffects
+        gameData.permanentTapTriggerBatchFiredAbilities
                 .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet())
-                .add(read.effect());
+                .add(read.ability().limitKey());
     }
 
     /**
@@ -10096,7 +10098,7 @@ public class TriggerCollectionService {
                         entry.setNonTargeting(true);
                     }
                     if (activation.marksOnAcceptance()) {
-                        entry.setMarkSourceOncePerTurnOnAcceptance(true);
+                        entry.setOnceEachTurnActionKey(activation.actionKey());
                     }
                     entry.setTriggeringPermanentId(activatedPermanent.getId());
                     entry.setTriggeringPermanentControllerId(activatedPermanentControllerId);
@@ -10219,7 +10221,7 @@ public class TriggerCollectionService {
                         perm.getId()
                 );
                 if (activation.marksOnAcceptance()) {
-                    entry.setMarkSourceOncePerTurnOnAcceptance(true);
+                    entry.setOnceEachTurnActionKey(activation.actionKey());
                 }
                 gameData.enqueueTrigger(entry);
                 markActivationLimit(gameData, perm, activation);
@@ -10434,7 +10436,7 @@ public class TriggerCollectionService {
                         perm.getId());
                 trigger.setNonTargeting(true);
                 if (activation.marksOnAcceptance()) {
-                    trigger.setMarkSourceOncePerTurnOnAcceptance(true);
+                    trigger.setOnceEachTurnActionKey(activation.actionKey());
                 }
                 trigger.setTriggeringPermanentId(activatedPermanent.getId());
                 trigger.setTriggeringPermanentControllerId(activatedPermanentControllerId);
@@ -10488,7 +10490,7 @@ public class TriggerCollectionService {
                 // "That player" is the opponent who activated the ability — set by the event, not chosen.
                 trigger.setNonTargeting(true);
                 if (activation.marksOnAcceptance()) {
-                    trigger.setMarkSourceOncePerTurnOnAcceptance(true);
+                    trigger.setOnceEachTurnActionKey(activation.actionKey());
                 }
                 recordActivatedPermanent(trigger, activatedPermanent, activatedPermanentControllerId);
                 gameData.enqueueTrigger(trigger);
@@ -10562,6 +10564,11 @@ public class TriggerCollectionService {
         /** Whether taking the action uses up the ability's "do this only once each turn" (CR 603.2h). */
         boolean marksOnAcceptance() {
             return ability.options().limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
+        }
+
+        /** The key the ability's stack entry carries for that mark, or {@code null}. */
+        String actionKey() {
+            return TriggeredAbilityStackService.onceEachTurnActionKey(ability);
         }
     }
 
@@ -10729,7 +10736,7 @@ public class TriggerCollectionService {
         if (lifePaid > 0) {
             triggerEntry.setEventValue(lifePaid);
         }
-        triggerEntry.setMarkSourceOncePerTurnOnAcceptance(activation.marksOnAcceptance());
+        triggerEntry.setOnceEachTurnActionKey(activation.actionKey());
         gameData.enqueueTrigger(triggerEntry);
         markActivationLimit(gameData, watcher, activation);
         gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
@@ -10875,7 +10882,7 @@ public class TriggerCollectionService {
                             activationTrigger.setNonTargeting(true);
                         }
                         if (activation.marksOnAcceptance()) {
-                            activationTrigger.setMarkSourceOncePerTurnOnAcceptance(true);
+                            activationTrigger.setOnceEachTurnActionKey(activation.actionKey());
                         }
                         recordActivatedPermanent(activationTrigger, activatedPermanent,
                                 activatedPermanentControllerId);
@@ -10950,7 +10957,7 @@ public class TriggerCollectionService {
                     trigger.setNonTargeting(true);
                 }
                 if (activation.marksOnAcceptance()) {
-                    trigger.setMarkSourceOncePerTurnOnAcceptance(true);
+                    trigger.setOnceEachTurnActionKey(activation.actionKey());
                 }
                 trigger.setTriggeringPermanentId(activatedPermanent.getId());
                 trigger.setTriggeringPermanentControllerId(activatedPermanentControllerId);
@@ -11047,14 +11054,14 @@ public class TriggerCollectionService {
             List<CardEffect> effects = LifeAbilityReader.effectsOf(reads);
             var match = new TriggerMatchContext(gameData, perm, controllerId, effects);
             return dispatch(match, watch, ctx,
-                    () -> collectFirstOpponentLifeLossEachTurn(match, effects, ctx));
+                    () -> collectFirstOpponentLifeLossEachTurn(match, ability, effects, ctx));
         }
         if (!watchJudge(gameData, perm, controllerId, ctx).triggers(ability)
                 || first.limitReached(gameData, perm.getId())) {
             return false;
         }
         var match = new TriggerMatchContext(gameData, perm, controllerId, LifeAbilityReader.effectsOf(reads),
-                perm.getCard(), null, first.marksLimitOnAcceptance(), first.triggersOnlyOnceEachTurn());
+                perm.getCard(), null, first.onceEachTurnActionKey(), first.triggersOnlyOnceEachTurn());
         boolean triggered = dispatch(match, watch, ctx);
         if (triggered) {
             first.markLimit(gameData, perm.getId());
@@ -11065,10 +11072,12 @@ public class TriggerCollectionService {
     /**
      * "Whenever an opponent loses life for the first time during each of their turns" (Valgavoth): the losing player
      * is the active player, it is their first loss of life this turn, counting those before the source was on the
-     * battlefield, and the ability hasn't triggered for them this turn yet. All the ability's effects are one stack
-     * object (CR 603.3).
+     * battlefield, and this ability hasn't triggered for them this turn yet (the mark is the ability's, by its
+     * {@link TriggeredAbility#limitKey()} and the player, so a second such ability of the permanent triggers too). All
+     * the ability's effects are one stack object (CR 603.3).
      */
-    private boolean collectFirstOpponentLifeLossEachTurn(TriggerMatchContext match, List<CardEffect> effects,
+    private boolean collectFirstOpponentLifeLossEachTurn(TriggerMatchContext match, TriggeredAbility ability,
+                                                         List<CardEffect> effects,
                                                          TriggerContext.LifeLoss lifeLoss) {
         GameData gameData = match.gameData();
         if (!lifeLoss.losingPlayerId().equals(gameData.activePlayerId)) {
@@ -11079,9 +11088,9 @@ public class TriggerCollectionService {
         if (lifeLostEarlierThisTurn > 0) {
             return false;
         }
-        Set<UUID> firedForOpponents = gameData.firstOpponentLifeLossTriggersFiredThisTurn.computeIfAbsent(
+        Set<String> firedThisTurn = gameData.keyedOncePerTurnTriggersFiredThisTurn.computeIfAbsent(
                 match.permanent().getId(), ignored -> java.util.concurrent.ConcurrentHashMap.newKeySet());
-        if (!firedForOpponents.add(lifeLoss.losingPlayerId())) {
+        if (!firedThisTurn.add(ability.limitKey() + ":" + lifeLoss.losingPlayerId())) {
             return false;
         }
         Card sourceCard = match.permanent().getCard();
@@ -11156,7 +11165,7 @@ public class TriggerCollectionService {
                     continue;
                 }
                 var match = new TriggerMatchContext(gameData, perm, payingPlayerId,
-                        LifeAbilityReader.effectsOf(reads), perm.getCard(), null, false,
+                        LifeAbilityReader.effectsOf(reads), perm.getCard(), null, (String) null,
                         first.triggersOnlyOnceEachTurn());
                 boolean triggered = dispatch(match, watch, ctx);
                 if (triggered) {
@@ -11249,7 +11258,7 @@ public class TriggerCollectionService {
                         continue;
                     }
                     var match = new TriggerMatchContext(gameData, perm, playerId, LifeAbilityReader.effectsOf(reads),
-                            perm.getCard(), null, first.marksLimitOnAcceptance(), first.triggersOnlyOnceEachTurn());
+                            perm.getCard(), null, first.onceEachTurnActionKey(), first.triggersOnlyOnceEachTurn());
                     boolean triggered = dispatch(match, watch, ctx);
                     if (triggered) {
                         first.markLimit(gameData, perm.getId());
@@ -11563,12 +11572,18 @@ public class TriggerCollectionService {
         if (battlefield == null) return;
 
         for (Permanent source : List.copyOf(battlefield)) {
-            if (source.isBackupAbilityCopyUsedThisTurn()) continue;
-
             TargetWatch watch = TargetWatch.ON_ALLY_CREATURE_BECOMES_TARGET_OF_BACKUP_ABILITY;
-            // Each ability is one object of all its effects (CR 603.3).
-            for (List<CardEffect> effects : targetAbilities(gameData, source, watch)) {
-                source.setBackupAbilityCopyUsedThisTurn(true);
+            List<TriggeredAbility> abilities = new ArrayList<>(TargetAbilityReader.printed(source.getCard(), watch));
+            abilities.addAll(grantedTargetAbilities(gameData, source, watch));
+            // Each ability is one object of all its effects (CR 603.3), and "this ability triggers only once each
+            // turn" (Mirror-Shield Hoplite) is that ability's limit, marked as it triggers.
+            for (List<TargetEffect> reads : TargetAbilityReader.readByAbility(abilities, watch.trigger())) {
+                TargetEffect read = reads.getFirst();
+                TargetAbilityReader.requireWatchedEvent(read, watch.trigger());
+                TargetAbilityReader.requireNoFilter(read, watch.trigger());
+                if (read.limitReached(gameData, source.getId())) continue;
+                read.markLimit(gameData, source.getId());
+                List<CardEffect> effects = TargetAbilityReader.effectsOf(reads);
                 StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         source.getCard(),
@@ -12205,12 +12220,12 @@ public class TriggerCollectionService {
      * @return whether anything was put on the stack or queued for it
      */
     public boolean triggerCreatureDeath(GameData gameData, CreatureDeathWatch watch, Permanent perm,
-                                        UUID controllerId, List<CardEffect> effects, TriggerLimit limit,
+                                        UUID controllerId, List<CardEffect> effects, TriggerLimit limit, String actionKey,
                                         CreatureDeath death) {
         return switch (watch) {
-            case ALLY -> collectAllyCreatureDeath(gameData, perm, controllerId, effects, limit, death);
+            case ALLY -> collectAllyCreatureDeath(gameData, perm, controllerId, effects, limit, actionKey, death);
             case ANY -> collectAnyCreatureDeath(gameData, perm, controllerId, effects, death);
-            case OPPONENT -> collectOpponentCreatureDeath(gameData, perm, controllerId, effects, limit, death);
+            case OPPONENT -> collectOpponentCreatureDeath(gameData, perm, controllerId, effects, limit, actionKey, death);
             case ALLY_NONTOKEN, ANY_NONTOKEN, ENCHANTED_PLAYER_NONTOKEN ->
                     collectNontokenCreatureDeath(gameData, watch, perm, controllerId, effects, death);
             case ALLY_CREATURE_OR_PLANESWALKER ->
@@ -12223,7 +12238,7 @@ public class TriggerCollectionService {
             case GRAVEYARD_OPPONENT -> collectGraveyardOpponentCreatureDeath(gameData, perm.getCard(), controllerId,
                     effects, death);
             case ALLY_ARTIFACT_OR_CREATURE ->
-                    triggerCreatureDeaths(gameData, watch, perm, controllerId, effects, limit, List.of(death));
+                    triggerCreatureDeaths(gameData, watch, perm, controllerId, effects, limit, actionKey, List.of(death));
         };
     }
 
@@ -12235,7 +12250,7 @@ public class TriggerCollectionService {
      * @return whether anything was put on the stack or queued for it
      */
     public boolean triggerCreatureDeaths(GameData gameData, CreatureDeathWatch watch, Permanent perm,
-                                         UUID controllerId, List<CardEffect> effects, TriggerLimit limit,
+                                         UUID controllerId, List<CardEffect> effects, TriggerLimit limit, String actionKey,
                                          List<CreatureDeath> deaths) {
         return switch (watch) {
             case GRAVEYARD_ALLY, GRAVEYARD_OPPONENT ->
@@ -12243,7 +12258,7 @@ public class TriggerCollectionService {
             case ALLY_ARTIFACT_OR_CREATURE -> collectArtifactOrCreatureDeaths(gameData, perm, controllerId, effects,
                     deaths);
             case ANY -> collectAnyCreatureDeaths(gameData, perm, controllerId, effects, deaths);
-            default -> collectAllyCreatureDeaths(gameData, watch, perm, controllerId, effects, limit, deaths);
+            default -> collectAllyCreatureDeaths(gameData, watch, perm, controllerId, effects, limit, actionKey, deaths);
         };
     }
 
@@ -12254,7 +12269,7 @@ public class TriggerCollectionService {
      * make an ability trigger an additional time add copies, unless it triggers only once each turn.
      */
     private boolean collectAllyCreatureDeath(GameData gameData, Permanent perm, UUID controllerId,
-                                             List<CardEffect> effects, TriggerLimit limit, CreatureDeath death) {
+                                             List<CardEffect> effects, TriggerLimit limit, String actionKey, CreatureDeath death) {
         if (effects.isEmpty()) {
             return false;
         }
@@ -12262,7 +12277,6 @@ public class TriggerCollectionService {
         Card graveyardCard = dyingPermanent.getOriginalCard() != null ? dyingPermanent.getOriginalCard()
                 : dyingPermanent.getCard();
         int dyingPower = Math.max(0, death.power());
-        boolean markOnAcceptance = limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
         var context = new TriggerContext.CreatureDeath(dyingPermanent.getCard(), death.controllerId(),
                 dyingPower, death.toughness(), dyingPermanent.getId(), dyingPermanent);
         int previousCopies = gameData.beginTriggeredAbilityCopies(limit == TriggerLimit.ONCE_EACH_TURN ? 1
@@ -12276,7 +12290,7 @@ public class TriggerCollectionService {
                 gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                         perm.getCard(), controllerId, new ArrayList<>(effects),
                         dyingPower, new Permanent(perm), null, graveyardCard.getId(), true,
-                        markOnAcceptance
+                        actionKey
                 ).withTriggeringCard(graveyardCard.getId(), gameData.graveyardEntryVersion(graveyardCard.getId()))
                         .withTriggeringPermanent(dyingPermanent, death.attachments())
                         .withTriggeringPermanentController(death.controllerId())
@@ -12298,7 +12312,7 @@ public class TriggerCollectionService {
                 );
                 entry.setNonTargeting(true);
                 entry.setSourcePermanentSnapshot(new Permanent(perm));
-                entry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
+                entry.setOnceEachTurnActionKey(actionKey);
                 recordCreatureDeath(gameData, entry, death);
                 gameData.stack.add(entry);
             }
@@ -12344,15 +12358,14 @@ public class TriggerCollectionService {
     }
 
     private boolean collectOpponentCreatureDeath(GameData gameData, Permanent perm, UUID playerId,
-                                                 List<CardEffect> effects, TriggerLimit limit, CreatureDeath death) {
+                                                 List<CardEffect> effects, TriggerLimit limit, String actionKey, CreatureDeath death) {
         Permanent dyingPermanent = death.permanent();
         Card dyingCard = dyingPermanent.getCard();
         UUID dyingCreatureControllerId = death.controllerId();
         var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingCreatureControllerId,
                 death.power(), death.toughness(), dyingPermanent.getId(), dyingPermanent);
-        boolean markOnAcceptance = limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
         return dispatchCreatureDeath(new TriggerMatchContext(gameData, perm, playerId, effects, perm.getCard(), null,
-                markOnAcceptance), CreatureDeathWatch.OPPONENT, ctx);
+                actionKey), CreatureDeathWatch.OPPONENT, ctx);
     }
 
     /**
@@ -12614,7 +12627,7 @@ public class TriggerCollectionService {
      */
     private boolean collectAllyCreatureDeaths(GameData gameData, CreatureDeathWatch watch, Permanent watcher,
                                               UUID watcherControllerId, List<CardEffect> effects,
-                                              TriggerLimit limit, List<CreatureDeath> deaths) {
+                                              TriggerLimit limit, String actionKey, List<CreatureDeath> deaths) {
         CreatureDeath firstDeath = deaths.getFirst();
         Permanent dyingPermanent = firstDeath.permanent();
         int dyingPower = Math.max(0, firstDeath.power());
@@ -12624,12 +12637,11 @@ public class TriggerCollectionService {
         }
         List<UUID> eventCardIds = deaths.stream().map(death -> death.dyingCard().getId()).toList();
         if (effects.isEmpty()) return false;
-        boolean markOnAcceptance = limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
         // The ability is one object of all its effects (CR 603.3); with a target, it waits for it (CR 603.3d).
         if (hasDeathTriggerTarget(effects, false)) {
             gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
                     watcher.getCard(), watcherControllerId, new ArrayList<>(effects), dyingPower,
-                    null, null, null, true, markOnAcceptance).withTriggeringPermanent(dyingPermanent));
+                    null, null, null, true, actionKey).withTriggeringPermanent(dyingPermanent));
             return true;
         }
         StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, watcher.getCard(),
@@ -12637,7 +12649,7 @@ public class TriggerCollectionService {
                 new ArrayList<>(effects), null, watcher.getId());
         entry.setNonTargeting(true);
         entry.setSourcePermanentSnapshot(new Permanent(watcher));
-        entry.setMarkSourceOncePerTurnOnAcceptance(markOnAcceptance);
+        entry.setOnceEachTurnActionKey(actionKey);
         recordCreatureDeath(gameData, entry, firstDeath);
         entry.setEventCardIds(eventCardIds);
         entry.setEventValue(Math.max(0, totalPower));
@@ -15118,7 +15130,7 @@ public class TriggerCollectionService {
      */
     private static TriggerMatchContext registeredMatch(GameData gameData, TemporaryGlobalTriggeredAbility watcher) {
         return new TriggerMatchContext(gameData, null, watcher.controllerId(), List.of(watcher.effect()),
-                watcher.sourceCard(), null, false, false, watcher.sourcePermanentId());
+                watcher.sourceCard(), null, null, false, watcher.sourcePermanentId());
     }
 
     /** The exiled voyages that see a land enter under its controller's control. */
@@ -15509,13 +15521,13 @@ public class TriggerCollectionService {
      * turn" marks the source as its "you may" is accepted (CR 603.2h).
      */
     private boolean dispatchEntering(GameData gameData, Permanent perm, UUID controllerId, ZoneChangeWatch watch,
-                                     List<CardEffect> effects, TriggerLimit limit,
+                                     List<CardEffect> effects, TriggerLimit limit, String actionKey,
                                      TriggerContext.PermanentEnters ctx) {
         boolean limited = limit == TriggerLimit.ONCE_EACH_TURN || limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
         var effectCtx = limited ? new TriggerContext.PermanentEnters(ctx.enteringCard(), ctx.enteringControllerId(),
                 ctx.defaultTargetPlayerId(), 1, ctx.enteringPermanentId()) : ctx;
         var match = new TriggerMatchContext(gameData, perm, controllerId, effects,
-                perm != null ? perm.getCard() : null, null, limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN, limited);
+                perm != null ? perm.getCard() : null, null, actionKey, limited);
         return dispatch(match, watch, effectCtx);
     }
 
@@ -15921,7 +15933,7 @@ public class TriggerCollectionService {
             return false;
         }
         boolean triggered = dispatchSlotEffect(gameData, perm, controllerId, watch, ctx,
-                CounterAbilityReader.effectsOf(effects), first.marksLimitOnAcceptance(),
+                CounterAbilityReader.effectsOf(effects), first.onceEachTurnActionKey(),
                 first.limit() == TriggerLimit.ONCE_EACH_TURN);
         if (triggered) {
             first.markLimit(gameData, perm.getId());
@@ -15976,7 +15988,7 @@ public class TriggerCollectionService {
             return false;
         }
         boolean triggered = dispatchSlotEffect(gameData, perm, controllerId, watch, ctx,
-                effects.stream().map(SagaAbilityReader.SagaEffect::effect).toList(), false,
+                effects.stream().map(SagaAbilityReader.SagaEffect::effect).toList(), (String) null,
                 first.triggersOnlyOnceEachTurn());
         if (triggered) {
             first.markLimit(gameData, perm.getId());
@@ -16052,7 +16064,7 @@ public class TriggerCollectionService {
                 ? dispatch(new TriggerMatchContext(gameData, perm, controllerId, abilityEffects), watch, ctx,
                         () -> collectSchemeAbility(gameData, perm, controllerId, abilityEffects,
                                 (TriggerContext.SchemeSetInMotion) ctx))
-                : dispatchSlotEffect(gameData, perm, controllerId, watch, ctx, abilityEffects, false,
+                : dispatchSlotEffect(gameData, perm, controllerId, watch, ctx, abilityEffects, (String) null,
                         first.triggersOnlyOnceEachTurn());
         if (triggered) {
             first.markLimit(gameData, perm.getId());
@@ -16138,7 +16150,7 @@ public class TriggerCollectionService {
             triggered = dispatch(new TriggerMatchContext(gameData, perm, controllerId, abilityEffects), watch, ctx,
                     () -> collectDoorAbility(gameData, perm, controllerId, abilityEffects, first.door()));
         } else {
-            triggered = dispatchSlotEffect(gameData, perm, controllerId, watch, ctx, abilityEffects, false,
+            triggered = dispatchSlotEffect(gameData, perm, controllerId, watch, ctx, abilityEffects, (String) null,
                     first.triggersOnlyOnceEachTurn());
         }
         if (triggered) {
@@ -16363,7 +16375,7 @@ public class TriggerCollectionService {
         boolean triggersOnlyOnceEachTurn = first.limit() == TriggerLimit.ONCE_EACH_TURN
                 || first.limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN || first.firstTimeEachTurn();
         boolean triggered = dispatchSlotEffect(gameData, perm, controllerId, watch, ctx,
-                LibraryAbilityReader.effectsOf(effects), first.marksLimitOnAcceptance(), triggersOnlyOnceEachTurn);
+                LibraryAbilityReader.effectsOf(effects), first.onceEachTurnActionKey(), triggersOnlyOnceEachTurn);
         if (triggered) {
             first.markLimit(gameData, perm.getId());
         }
@@ -16775,7 +16787,7 @@ public class TriggerCollectionService {
             return false;
         }
         TriggerMatchContext match = new TriggerMatchContext(gameData, perm, controllerId, effects, sourceCard,
-                planarObject, limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN,
+                planarObject, TriggeredAbilityStackService.onceEachTurnActionKey(ability),
                 limit == TriggerLimit.ONCE_EACH_TURN || limit == TriggerLimit.DO_ONLY_ONCE_EACH_TURN);
         boolean collected = throughDispatch
                 ? dispatch(match, watch, ctx, () -> collector.test(match), singleCopy)
@@ -16848,16 +16860,16 @@ public class TriggerCollectionService {
 
     private boolean dispatchSlotEffect(GameData gameData, Permanent perm, UUID controllerId,
             Object slot, TriggerContext ctx, List<CardEffect> effects) {
-        return dispatchSlotEffect(gameData, perm, controllerId, slot, ctx, effects, false);
+        return dispatchSlotEffect(gameData, perm, controllerId, slot, ctx, effects, (String) null);
     }
 
     /**
      * {@link #dispatchSlotEffect(GameData, Permanent, UUID, Object, TriggerContext, List)}, where
-     * {@code markOnAcceptance} says whether taking the action uses up the ability's "do this only once each turn"
-     * (CR 603.2h).
+     * {@code markOnAcceptance}, when not {@code null}, is the ability's limit key for a "do this only once each turn"
+     * (CR 603.2h) that taking the action uses up.
      */
     private boolean dispatchSlotEffect(GameData gameData, Permanent perm, UUID controllerId,
-            Object slot, TriggerContext ctx, List<CardEffect> effects, boolean markOnAcceptance) {
+            Object slot, TriggerContext ctx, List<CardEffect> effects, String markOnAcceptance) {
         return dispatchSlotEffect(gameData, perm, controllerId, slot, ctx, effects, markOnAcceptance, false);
     }
 
@@ -16867,7 +16879,7 @@ public class TriggerCollectionService {
      * additional times.
      */
     private boolean dispatchSlotEffect(GameData gameData, Permanent perm, UUID controllerId,
-            Object slot, TriggerContext ctx, List<CardEffect> effects, boolean markOnAcceptance,
+            Object slot, TriggerContext ctx, List<CardEffect> effects, String markOnAcceptance,
             boolean triggersOnlyOnceEachTurn) {
         return dispatch(new TriggerMatchContext(gameData, perm, controllerId, effects,
                         perm != null ? perm.getCard() : null, null, markOnAcceptance, triggersOnlyOnceEachTurn),

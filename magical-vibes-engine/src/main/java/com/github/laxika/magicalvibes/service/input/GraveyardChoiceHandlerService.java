@@ -1991,9 +1991,9 @@ public class GraveyardChoiceHandlerService {
         boolean pendingAdventure = gameData.graveyardTargetOperation.castWithAdventure;
         boolean pendingKicked = gameData.graveyardTargetOperation.kicked;
         UUID pendingSourcePermanentId = gameData.graveyardTargetOperation.sourcePermanentId;
-        boolean pendingMarkSourceOncePerTurnOnAcceptance =
-                gameData.graveyardTargetOperation.markSourceOncePerTurnOnAcceptance;
-        gameData.graveyardTargetOperation.markSourceOncePerTurnOnAcceptance = false;
+        String pendingOnceEachTurnActionKey =
+                gameData.graveyardTargetOperation.onceEachTurnActionKey;
+        gameData.graveyardTargetOperation.onceEachTurnActionKey = null;
         UUID pendingAttackedTargetId = gameData.graveyardTargetOperation.attackedTargetId;
         Integer pendingTriggeringPermanentPowerAtTrigger =
                 gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger;
@@ -2231,8 +2231,9 @@ public class GraveyardChoiceHandlerService {
                 triggeredEntry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(pendingCard.getId()));
             }
             triggeredEntry.setAlternateCost(pendingSourceAlternateCostAtTrigger || triggeredEntry.isAlternateCost());
-            triggeredEntry.setMarkSourceOncePerTurnOnAcceptance(pendingMarkSourceOncePerTurnOnAcceptance
-                    || triggeredEntry.isMarkSourceOncePerTurnOnAcceptance());
+            if (pendingOnceEachTurnActionKey != null) {
+                triggeredEntry.setOnceEachTurnActionKey(pendingOnceEachTurnActionKey);
+            }
             if (mixedZoneEffect != null) {
                 for (UUID cardId : cardIds) {
                     Permanent permanent = findPermanentByCardId(gameData, cardId);

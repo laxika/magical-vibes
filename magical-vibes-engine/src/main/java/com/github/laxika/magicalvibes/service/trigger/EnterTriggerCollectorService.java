@@ -192,7 +192,7 @@ public class EnterTriggerCollectorService {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     match.sourceCard(), match.controllerId(), match.effects(), null, 0, 0, 0, null, false,
                     enteringPermanentId, match.permanent() == null ? null : match.permanent().getId(),
-                    match.markSourceOncePerTurnOnAcceptance()));
+                    match.onceEachTurnActionKey()));
         }
         logTriggered(match);
     }
@@ -249,7 +249,7 @@ public class EnterTriggerCollectorService {
                 match.permanent().getId());
         entry.setEventValue(tokensEnter.count());
         entry.setNonTargeting(true);
-        entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+        entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
         recordEnteringTokens(match.gameData(), entry, tokensEnter);
         for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
             match.gameData().enqueueTrigger(entry.copyForNewStackObject());
@@ -291,8 +291,7 @@ public class EnterTriggerCollectorService {
         var choice = new PermanentChoiceContext.EntersTriggerTarget(match.permanent().getCard(), match.controllerId(),
                 match.stackEffects(), match.permanent().getId(), enteringTokenId);
         for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
-            match.gameData().queueInteraction(match.markSourceOncePerTurnOnAcceptance()
-                    ? choice.withMarkSourceOncePerTurnOnAcceptance() : choice);
+            match.gameData().queueInteraction(choice.withOnceEachTurnActionKey(match.onceEachTurnActionKey()));
         }
         logTriggered(match);
     }
@@ -367,7 +366,7 @@ public class EnterTriggerCollectorService {
                     match.permanent() == null ? null : match.permanent().getId()
             );
             entry.setNonTargeting(!match.targets() || isPlayerFixedByEvent(match, targetPlayerId));
-            entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+            entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
             entry.setSourcePlanarObject(match.sourcePlanarObject() == null
                     ? null : match.sourcePlanarObject().copy());
             if (match.permanent() != null) {

@@ -413,7 +413,7 @@ public class PermanentCounterSupport {
                         null,
                         source.getId());
                 triggerEntry.setEventValue(count);
-                triggerEntry.setMarkSourceOncePerTurnOnAcceptance(triggering.markOnAcceptance());
+                triggerEntry.setOnceEachTurnActionKey(triggering.actionKey());
                 gameData.stack.add(triggerEntry);
                 triggering.markLimits(gameData, source.getId());
                 gameLogService.append(gameData, GameLog.cardThen(
@@ -468,7 +468,7 @@ public class PermanentCounterSupport {
                         null,
                         source.getId());
                 triggerEntry.setEventValue(count);
-                triggerEntry.setMarkSourceOncePerTurnOnAcceptance(triggering.markOnAcceptance());
+                triggerEntry.setOnceEachTurnActionKey(triggering.actionKey());
                 gameData.stack.add(triggerEntry);
                 triggering.markLimits(gameData, source.getId());
                 gameLogService.append(gameData, GameLog.cardThen(
@@ -1348,11 +1348,11 @@ public class PermanentCounterSupport {
      *
      * @param effects          the effects to put on the stack
      * @param read             the same effects as read, whose limits {@link #markLimits} marks once they triggered
-     * @param markOnAcceptance whether one of them is "do this only once each turn", which its stack entry marks as the
-     *                         action is taken
+     * @param actionKey        the limit key of their ability when it is "do this only once each turn", which its stack
+     *                         entry marks as the action is taken (CR 603.2h); {@code null} otherwise
      */
     private record WithinLimits(List<CardEffect> effects, List<CounterAbilityReader.CounterEffect> read,
-                                boolean markOnAcceptance) {
+                                String actionKey) {
 
         /** Marks the limits of {@link #read} as used by {@code sourceId}. */
         void markLimits(GameData gameData, UUID sourceId) {
@@ -1368,16 +1368,18 @@ public class PermanentCounterSupport {
                                              List<CounterAbilityReader.CounterEffect> effects) {
         List<CardEffect> resolved = new ArrayList<>();
         List<CounterAbilityReader.CounterEffect> read = new ArrayList<>();
-        boolean markOnAcceptance = false;
+        String actionKey = null;
         for (CounterAbilityReader.CounterEffect effect : effects) {
             if (effect.limitReached(gameData, sourceId)) {
                 continue;
             }
             resolved.add(effect.effect());
             read.add(effect);
-            markOnAcceptance |= effect.marksLimitOnAcceptance();
+            if (actionKey == null) {
+                actionKey = effect.onceEachTurnActionKey();
+            }
         }
-        return new WithinLimits(resolved, read, markOnAcceptance);
+        return new WithinLimits(resolved, read, actionKey);
     }
 
     /**
@@ -2125,8 +2127,7 @@ public class PermanentCounterSupport {
                             count,
                             source.getId(),
                             new Permanent(source));
-                    gameData.queueInteraction(triggering.markOnAcceptance()
-                            ? targetChoice.withMarkSourceOncePerTurnOnAcceptance() : targetChoice);
+                    gameData.queueInteraction(targetChoice.withOnceEachTurnActionKey(triggering.actionKey()));
                 } else {
                     StackEntry triggerEntry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
@@ -2139,7 +2140,7 @@ public class PermanentCounterSupport {
                     );
                     triggerEntry.setEventValue(count);
                     triggerEntry.setSourcePermanentSnapshot(new Permanent(source));
-                    triggerEntry.setMarkSourceOncePerTurnOnAcceptance(triggering.markOnAcceptance());
+                    triggerEntry.setOnceEachTurnActionKey(triggering.actionKey());
                     gameData.stack.add(triggerEntry);
                 }
                 triggering.markLimits(gameData, source.getId());

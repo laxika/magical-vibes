@@ -317,7 +317,7 @@ public class MiscTriggerCollectorService {
             // comes at resolution. "Do this only once each turn" is used up only by an accepted return.
             // The choice's X is the sacrificed permanent's mana value as it last existed (CR 603.10a), which a
             // target filter's X reads ("target creature card with lesser mana value", Riveteers Ascendancy).
-            boolean markOnAcceptance = match.markSourceOncePerTurnOnAcceptance();
+            String markOnAcceptance = match.onceEachTurnActionKey();
             int sacrificedManaValue = as.sacrificedCard() == null ? 0 : as.sacrificedCard().getManaValue();
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     match.permanent().getCard(), match.controllerId(), match.stackEffects(),
@@ -347,7 +347,7 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId()
         );
         triggerEntry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        triggerEntry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+        triggerEntry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
         triggerEntry.setTriggeringPermanent(sacrificed);
         if (as.sacrificedCard() != null) {
             // CR 400.7: the trigger refers to this stay in the graveyard; if the card leaves and returns before
@@ -488,13 +488,13 @@ public class MiscTriggerCollectorService {
                     DamageTriggerCollectorService.hasOptionalTarget(sourceCard,
                             match.targetingEffect()), triggeringPermanentId, null,
                     match.controllerId(), null, null, false, event.triggeringCardId(), null, null,
-                    match.markSourceOncePerTurnOnAcceptance(), null, Set.of(), event.triggeringPlayerId())
+                    match.onceEachTurnActionKey(), null, Set.of(), event.triggeringPlayerId())
                     .withTriggeringPermanentController(event.triggeringPermanentControllerId());
             gameData.queueInteraction(event.eventValue() == null ? choice : choice.withEventValue(event.eventValue()));
         } else if (match.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     sourceCard, match.controllerId(), match.stackEffects(), null, 0, 0, 0, null, false,
-                    triggeringPermanentId, source.getId(), match.markSourceOncePerTurnOnAcceptance()));
+                    triggeringPermanentId, source.getId(), match.onceEachTurnActionKey()));
         } else {
             StackEntry entry = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
@@ -515,7 +515,7 @@ public class MiscTriggerCollectorService {
                 entry.setTriggeringCardId(event.triggeringCardId());
             }
             entry.setSourcePermanentSnapshot(new Permanent(source));
-            entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+            entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
             gameData.enqueueTrigger(entry);
         }
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
@@ -949,7 +949,7 @@ public class MiscTriggerCollectorService {
             if (match.sourcePlanarObject() != null) {
                 entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
             }
-            entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+            entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
             gameData.enqueueTrigger(entry);
         }
         gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
@@ -1045,7 +1045,7 @@ public class MiscTriggerCollectorService {
             entry.setEventValue(milled.nonlandCardCount());
             entry.setTriggeringPlayerId(milled.milledPlayerId());
             entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-            entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+            entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
             gameData.enqueueTrigger(entry);
         }
 
@@ -1254,7 +1254,7 @@ public class MiscTriggerCollectorService {
         }
         entry.setTriggeringPlayerId(surveilingPlayerId);
         entry.setSourcePermanentSnapshot(new Permanent(source));
-        entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+        entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
         gameData.enqueueTrigger(entry);
 
         gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
@@ -1507,7 +1507,7 @@ public class MiscTriggerCollectorService {
             entry.setTriggeringPermanentPowerAtTrigger(exiled.exiledPowerAtTrigger());
             entry.setEventValue(exiled.exiledPowerAtTrigger());
             entry.setSourcePermanentSnapshot(new Permanent(source));
-            entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+            entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
             match.gameData().enqueueTrigger(entry);
         }
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(source.getCard()));

@@ -27,7 +27,7 @@ import java.util.function.Function;
  *                     "if" wrapped around each, CR 603.4; a "you may" is the effect itself, asked as the ability
  *                     resolves, CR 603.5); an engine-made ability of one effect has that effect alone
  * @param sourceCard   the card whose ability triggered
- * @param markSourceOncePerTurnOnAcceptance whether accepting this trigger's may ability consumes
+ * @param onceEachTurnActionKey whether accepting this trigger's may ability consumes
  *                                           the source's once-per-turn allowance
  * @param triggersOnlyOnceEachTurn whether the ability "triggers only once each turn" ({@code
  *                                 TriggerLimit.ONCE_EACH_TURN}), which nothing can make trigger additional times
@@ -42,7 +42,7 @@ public record TriggerMatchContext(
         List<CardEffect> effects,
         Card sourceCard,
         PlanarObject sourcePlanarObject,
-        boolean markSourceOncePerTurnOnAcceptance,
+        String onceEachTurnActionKey,
         boolean triggersOnlyOnceEachTurn,
         UUID registeringPermanentId
 ) {
@@ -52,30 +52,31 @@ public record TriggerMatchContext(
     }
 
     public TriggerMatchContext(GameData gameData, Permanent permanent, UUID controllerId, List<CardEffect> effects,
-            Card sourceCard, PlanarObject sourcePlanarObject, boolean markSourceOncePerTurnOnAcceptance,
+            Card sourceCard, PlanarObject sourcePlanarObject, String onceEachTurnActionKey,
             boolean triggersOnlyOnceEachTurn) {
         this(gameData, permanent, controllerId, effects, sourceCard, sourcePlanarObject,
-                markSourceOncePerTurnOnAcceptance, triggersOnlyOnceEachTurn, null);
+                onceEachTurnActionKey, triggersOnlyOnceEachTurn, null);
     }
 
     public TriggerMatchContext(GameData gameData, Permanent permanent, UUID controllerId, List<CardEffect> effects,
-            Card sourceCard, PlanarObject sourcePlanarObject, boolean markSourceOncePerTurnOnAcceptance) {
+            Card sourceCard, PlanarObject sourcePlanarObject, String onceEachTurnActionKey) {
         this(gameData, permanent, controllerId, effects, sourceCard, sourcePlanarObject,
-                markSourceOncePerTurnOnAcceptance, false);
+                onceEachTurnActionKey, false);
     }
 
     public TriggerMatchContext(GameData gameData, Permanent permanent, UUID controllerId, List<CardEffect> effects) {
-        this(gameData, permanent, controllerId, effects, permanent != null ? permanent.getCard() : null, null, false);
+        this(gameData, permanent, controllerId, effects, permanent != null ? permanent.getCard() : null, null,
+                (String) null);
     }
 
     public TriggerMatchContext(GameData gameData, Permanent permanent, UUID controllerId, List<CardEffect> effects,
             Card sourceCard) {
-        this(gameData, permanent, controllerId, effects, sourceCard, null, false);
+        this(gameData, permanent, controllerId, effects, sourceCard, null, (String) null);
     }
 
     public TriggerMatchContext(GameData gameData, Permanent permanent, UUID controllerId, List<CardEffect> effects,
             Card sourceCard, PlanarObject sourcePlanarObject) {
-        this(gameData, permanent, controllerId, effects, sourceCard, sourcePlanarObject, false);
+        this(gameData, permanent, controllerId, effects, sourceCard, sourcePlanarObject, (String) null);
     }
 
     /**
@@ -83,10 +84,10 @@ public record TriggerMatchContext(
      * {@link #TriggerMatchContext(GameData, Permanent, UUID, List, Card, PlanarObject, boolean, boolean)} takes them.
      */
     public TriggerMatchContext(GameData gameData, Permanent permanent, UUID controllerId, CardEffect effect,
-            Card sourceCard, PlanarObject sourcePlanarObject, boolean markSourceOncePerTurnOnAcceptance,
+            Card sourceCard, PlanarObject sourcePlanarObject, String onceEachTurnActionKey,
             boolean triggersOnlyOnceEachTurn) {
         this(gameData, permanent, controllerId, List.of(effect), sourceCard, sourcePlanarObject,
-                markSourceOncePerTurnOnAcceptance, triggersOnlyOnceEachTurn, null);
+                onceEachTurnActionKey, triggersOnlyOnceEachTurn, null);
     }
 
     /** An ability of the one effect {@code effect}. */
@@ -202,6 +203,6 @@ public record TriggerMatchContext(
     /** This ability with {@code effects} as its effects. */
     public TriggerMatchContext withEffects(List<CardEffect> effects) {
         return new TriggerMatchContext(gameData, permanent, controllerId, effects, sourceCard, sourcePlanarObject,
-                markSourceOncePerTurnOnAcceptance, triggersOnlyOnceEachTurn, registeringPermanentId);
+                onceEachTurnActionKey, triggersOnlyOnceEachTurn, registeringPermanentId);
     }
 }

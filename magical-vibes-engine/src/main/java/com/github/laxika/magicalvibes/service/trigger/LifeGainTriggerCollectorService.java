@@ -91,7 +91,7 @@ public class LifeGainTriggerCollectorService {
         entry.setEventValue(event.amount());
         entry.setTriggeringPlayerId(event.playerId());
         entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        entry.setMarkSourceOncePerTurnOnAcceptance(match.markSourceOncePerTurnOnAcceptance());
+        entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
         match.gameData().enqueueTrigger(entry);
 
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
@@ -117,7 +117,7 @@ public class LifeGainTriggerCollectorService {
         Card sourceCard = match.permanent().getCard();
         match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                 sourceCard, match.controllerId(), match.effects(), null, minCount, 0, maxCount, null, false, null,
-                match.permanent().getId(), match.markSourceOncePerTurnOnAcceptance(), List.of()));
+                match.permanent().getId(), match.onceEachTurnActionKey(), List.of()));
         gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         log.info("Game {} - {} triggers on a life event and needs a graveyard target",
                 match.gameData().id, sourceCard.getName());

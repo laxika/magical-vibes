@@ -2325,7 +2325,6 @@ public class GraveyardService {
             if (surveilled != null) {
                 surveilled.remove(leavingCard.getId());
             }
-            gameData.oncePerTurnTriggersFiredThisTurn.remove(leavingCard.getId());
             gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(leavingCard.getId());
             firePerpetualTriggeredAbilities(gameData, ownerId, List.of(leavingCard));
         }
@@ -2353,7 +2352,6 @@ public class GraveyardService {
         if (surveilled != null) {
             leavingCards.forEach(card -> surveilled.remove(card.getId()));
         }
-        leavingCards.forEach(card -> gameData.oncePerTurnTriggersFiredThisTurn.remove(card.getId()));
         leavingCards.forEach(card -> gameData.keyedOncePerTurnTriggersFiredThisTurn.remove(card.getId()));
         firePerpetualTriggeredAbilities(gameData, ownerId, leavingCards);
         notifyCardsLeftGraveyard(gameData, ownerId, leavingCards.size(), leavingCards);
