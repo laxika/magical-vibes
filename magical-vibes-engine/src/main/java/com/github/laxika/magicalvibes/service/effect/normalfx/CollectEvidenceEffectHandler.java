@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -89,6 +90,13 @@ public class CollectEvidenceEffectHandler implements NormalEffectHandlerBean {
         if (thenEffect == null) {
             return;
         }
+        // The ability records what the resolving entry was about whichever way it reaches the stack.
+        ReflexiveAbilitySupport.route(gameData,
+                ReflexiveAbilitySupport.record(gameData, entry, List.of(thenEffect)),
+                () -> putReflexiveAbilityOnStackOrChoose(gameData, entry, thenEffect));
+    }
+
+    private void putReflexiveAbilityOnStackOrChoose(GameData gameData, StackEntry entry, CardEffect thenEffect) {
 
         TargetSpec targetSpec = thenEffect.targetSpec();
         if (targetSpec.selfTargeting()) {
@@ -100,8 +108,6 @@ public class CollectEvidenceEffectHandler implements NormalEffectHandlerBean {
                     new ArrayList<>(List.of(thenEffect)),
                     entry.getXValue(),
                     entry.getSourcePermanentId());
-            reflexiveAbility.setEventValue(entry.getEventValue());
-            reflexiveAbility.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
             gameData.stack.add(reflexiveAbility);
             return;
         }

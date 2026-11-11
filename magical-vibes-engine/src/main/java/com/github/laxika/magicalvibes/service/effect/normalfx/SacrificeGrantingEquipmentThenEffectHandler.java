@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -64,6 +65,13 @@ public class SacrificeGrantingEquipmentThenEffectHandler implements NormalEffect
     }
 
     private void beginReflexiveTrigger(GameData gameData, StackEntry entry, CardEffect thenEffect) {
+        // The ability records what the resolving entry was about whichever way it reaches the stack.
+        ReflexiveAbilitySupport.route(gameData,
+                ReflexiveAbilitySupport.record(gameData, entry, List.of(thenEffect), entry.getCard().getName() + "'s ability"),
+                () -> putReflexiveTriggerOnStackOrChoose(gameData, entry, thenEffect));
+    }
+
+    private void putReflexiveTriggerOnStackOrChoose(GameData gameData, StackEntry entry, CardEffect thenEffect) {
         TargetSpec targetSpec = thenEffect.targetSpec();
         if (!targetSpec.admits(TargetPredicate.Kind.PERMANENT)
                 && !targetSpec.admits(TargetPredicate.Kind.PLAYER)) {
@@ -75,7 +83,6 @@ public class SacrificeGrantingEquipmentThenEffectHandler implements NormalEffect
                     List.of(thenEffect),
                     (UUID) null,
                     entry.getSourcePermanentId());
-            reflexiveTrigger.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
             gameData.stack.add(reflexiveTrigger);
             return;
         }

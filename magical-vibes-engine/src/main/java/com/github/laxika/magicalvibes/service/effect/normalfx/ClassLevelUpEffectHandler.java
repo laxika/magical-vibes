@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -52,6 +53,23 @@ public class ClassLevelUpEffectHandler implements NormalEffectHandlerBean {
     private void queueLevelAbility(GameData gameData, StackEntry entry, Permanent source, ClassLevelUpEffect levelUp,
                                    List<CardEffect> levelEffects) {
         List<CardEffect> gainedEffects = new ArrayList<>(levelEffects);
+        // "When this Class becomes level N" is an ability of the Class: the entry it has when it chooses nothing is
+        // its record whichever way it reaches the stack.
+        StackEntry levelAbility = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                source.getCard(),
+                entry.getControllerId(),
+                source.getCard().getName() + "'s level ability",
+                gainedEffects,
+                null,
+                source.getId());
+        ReflexiveAbilitySupport.route(gameData, levelAbility,
+                () -> putLevelAbilityOnStackOrChoose(gameData, entry, source, levelUp, gainedEffects, levelAbility));
+    }
+
+    private void putLevelAbilityOnStackOrChoose(GameData gameData, StackEntry entry, Permanent source,
+                                                ClassLevelUpEffect levelUp, List<CardEffect> gainedEffects,
+                                                StackEntry levelAbility) {
         if (gainedEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     source.getCard(), entry.getControllerId(), gainedEffects));
@@ -61,14 +79,7 @@ public class ClassLevelUpEffectHandler implements NormalEffectHandlerBean {
                     source.getCard(), entry.getControllerId(), gainedEffects,
                     "becomes level " + levelUp.level(), source.getId()));
         } else {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    source.getCard(),
-                    entry.getControllerId(),
-                    source.getCard().getName() + "'s level ability",
-                    gainedEffects,
-                    null,
-                    source.getId()));
+            gameData.stack.add(levelAbility);
         }
     }
 }

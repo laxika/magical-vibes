@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -56,10 +57,9 @@ public class PayEnergyThenDestroyTargetPermanentEffectHandler implements NormalE
                     GameLog.text(playerName + " pays " + energyAmount + " energy counter(s)."));
         }
 
-        StackEntry destruction = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                entry.getCard(), entry.getControllerId(), entry.getCard().getName() + "'s destruction trigger",
-                List.of(new DestroyTargetPermanentEffect()), target.getId(), entry.getSourcePermanentId());
-        destruction.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+        StackEntry destruction = ReflexiveAbilitySupport.record(gameData, entry,
+                List.of(new DestroyTargetPermanentEffect()), entry.getCard().getName() + "'s destruction trigger");
+        destruction.setTargetId(target.getId());
         destruction.setNonTargeting(true);
         gameData.stack.add(destruction);
     }

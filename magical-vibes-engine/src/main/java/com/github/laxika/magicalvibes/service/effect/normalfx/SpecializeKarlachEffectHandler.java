@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.ArrayList;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.cards.k.KarlachRagingTiefling;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -126,8 +128,12 @@ public class SpecializeKarlachEffectHandler implements NormalEffectHandlerBean {
                                               UUID sourcePermanentId, TargetFilter targetFilter,
                                               UUID controllerId, CardEffect triggerEffect) {
         if (targetFilter != null) {
-            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                    sourceCard, controllerId, List.of(triggerEffect), "specialize", sourcePermanentId, (Integer) null));
+            // The ability's entry when it chooses nothing is its record whichever way it reaches the stack.
+            ReflexiveAbilitySupport.route(gameData,
+                    new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId,
+                            sourceCard.getName() + "'s ability", new ArrayList<>(List.of(triggerEffect)), 0, sourcePermanentId),
+                    () -> gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                        sourceCard, controllerId, List.of(triggerEffect), "specialize", sourcePermanentId, (Integer) null)));
             return;
         }
         StackEntry trigger = new StackEntry(

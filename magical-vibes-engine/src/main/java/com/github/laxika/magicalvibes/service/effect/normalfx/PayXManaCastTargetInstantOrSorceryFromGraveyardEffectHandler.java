@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -109,19 +110,25 @@ public class PayXManaCastTargetInstantOrSorceryFromGraveyardEffectHandler
             return;
         }
 
-        if (matchingIndices.size() == 1) {
-            Card targetCard = cardPool.get(matchingIndices.getFirst());
-            addReflexiveTrigger(gameData, entry, castEffect, targetCard, chosenX);
-            return;
-        }
-
-        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
-                .builder(controllerId, matchingIndices, GraveyardChoiceDestination.MAY_ABILITY_TARGET,
-                        "Choose an instant or sorcery card with mana value " + chosenX
-                                + " from a graveyard to cast.")
-                .cardPool(cardPool)
-                .mayAbilityContext(sourceCard, controllerId, List.of(castEffect), entry.getSourcePermanentId())
-                .build());
+        // The ability records what the resolving entry was about, with the X paid as its X, whether its one legal
+        // card is targeted or a card is chosen.
+        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(castEffect),
+                sourceCard.getName() + "'s ability");
+        record.setXValue(chosenX);
+        ReflexiveAbilitySupport.route(gameData, record, () -> {
+            if (matchingIndices.size() == 1) {
+                Card targetCard = cardPool.get(matchingIndices.getFirst());
+                addReflexiveTrigger(gameData, entry, castEffect, targetCard, chosenX);
+                return;
+            }
+            interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                    .builder(controllerId, matchingIndices, GraveyardChoiceDestination.MAY_ABILITY_TARGET,
+                            "Choose an instant or sorcery card with mana value " + chosenX
+                                    + " from a graveyard to cast.")
+                    .cardPool(cardPool)
+                    .mayAbilityContext(sourceCard, controllerId, List.of(castEffect), entry.getSourcePermanentId())
+                    .build());
+        });
     }
 
     private void addReflexiveTrigger(GameData gameData, StackEntry entry,

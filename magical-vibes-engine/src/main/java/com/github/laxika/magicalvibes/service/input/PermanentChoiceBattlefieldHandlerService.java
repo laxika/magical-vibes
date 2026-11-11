@@ -73,6 +73,7 @@ import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.LandEquilibriumSupport;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CipherSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TeachSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
@@ -2891,14 +2892,55 @@ public class PermanentChoiceBattlefieldHandlerService {
         // A null thenEffect means a bare "sacrifice a permanent" with no follow-up.
         // When the rider needs a target (Sorin, Imperious Bloodlord: "When you do, … deals 3 damage
         // to any target"), choose the target as the reflexive trigger goes on the stack.
+        if (ctx.thenEffect() == null) {
+            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        // "When you do" is an ability of its own. Whichever way it reaches the stack (a mode, a target, a graveyard
+        // card, or nothing to choose) it records what the resolving entry was about and the permanent sacrificed.
+        List<CardEffect> recordEffects = new ArrayList<>(List.of(ctx.thenEffect()));
+        List<UUID> recordTargetCardIds = originalEntry == null || originalEntry.getTargetCardIds() == null
+                ? List.of() : new ArrayList<>(originalEntry.getTargetCardIds());
+        StackEntry record;
+        if (originalEntry != null) {
+            record = ReflexiveAbilitySupport.record(gameData, originalEntry, recordEffects,
+                    ctx.sourceCard().getName() + "'s effect", sourcePermanentId);
+        } else {
+            record = new StackEntry(StackEntryType.TRIGGERED_ABILITY, ctx.sourceCard(), ctx.controllerId(),
+                    ctx.sourceCard().getName() + "'s effect", recordEffects, 0, sourcePermanentId);
+        }
+        record.setTargetCardIds(recordTargetCardIds);
+        record.setSacrificedPermanentSnapshot(sacrificedSnapshot);
+        record.setSacrificedPower(sacrificedPower);
+        record.setSacrificedColorCount(sacrificedColorCount);
+        record.setSacrificedToughness(sacrificedToughness);
+        record.setSourcePermanentSnapshot(sourcePermanentSnapshot);
+        UUID reflexiveSourcePermanentId = sourcePermanentId;
+        boolean chosen = ReflexiveAbilitySupport.route(gameData, record, () -> putSacrificeFollowUpOnStackOrChoose(
+                gameData, ctx, record, reflexiveSourcePermanentId, sourcePermanentSnapshot, sacrificedSnapshot,
+                sacrificedPower, sacrificedColorCount, sacrificedToughness));
+        if (chosen) {
+            return;
+        }
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Routes a sacrifice's reflexive follow-up. Returns {@code true} when a choice is awaiting input or the caller
+     * has nothing left to do, {@code false} when the caller goes on to the next pending ability.
+     */
+    private boolean putSacrificeFollowUpOnStackOrChoose(
+            GameData gameData, PermanentChoiceContext.SacrificePermanentThen ctx, StackEntry record,
+            UUID sourcePermanentId, Permanent sourcePermanentSnapshot, Permanent sacrificedSnapshot,
+            int sacrificedPower, int sacrificedColorCount, int sacrificedToughness) {
         if (ctx.thenEffect() instanceof com.github.laxika.magicalvibes.model.effect.ChooseOneEffect modal) {
             // A modal reflexive trigger ("When you do, choose two —") has its modes and their
             // targets chosen as it's put on the stack, before anyone gets priority.
             playerInputService.beginTriggeredModalChoice(gameData, ctx.controllerId(), ctx.sourceCard(),
                     modal, sourcePermanentId);
-            return;
+            return true;
         }
-        if (ctx.thenEffect() != null) {
+        {
             List<CardEffect> thenEffects = new ArrayList<>(List.of(ctx.thenEffect()));
             int targetGroupIndex = ctx.sourceCard().getEffectTargetIndex(ctx.thenEffect());
             if (targetGroupIndex >= 0) {
@@ -2910,11 +2952,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                         ctx.sourceCard(), ctx.controllerId(), thenEffects, sourcePermanentId,
                         List.of(), targetGroupIndex, 0, precedingGroupSizes, 0, List.of(), false));
                 triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
-                if (gameData.interaction.isAwaitingInput()) {
-                    return;
-                }
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-                return;
+                return gameData.interaction.isAwaitingInput();
             }
             var targetSpec = ctx.thenEffect().targetSpec();
             boolean needsGraveyardTarget = targetSpec.admits(TargetPredicate.Kind.GRAVEYARD_CARD);
@@ -2924,10 +2962,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                         ctx.sourceCard(), ctx.controllerId(), thenEffects));
                 triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
-                if (!gameData.interaction.isAwaitingInput()) {
-                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-                }
-                return;
+                return gameData.interaction.isAwaitingInput();
             } else if (needsTarget) {
                 List<UUID> validPermanentTargets = new ArrayList<>();
                 if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
@@ -2989,39 +3024,13 @@ public class PermanentChoiceBattlefieldHandlerService {
                                     " — choose a target for the reflexive trigger."));
                     log.info("Game {} - {} sacrifice-then rider awaiting any-target",
                             gameData.id, ctx.sourceCard().getName());
-                    return;
+                    return true;
                 }
             } else {
-                List<UUID> targetCardIds = originalEntry == null || originalEntry.getTargetCardIds() == null
-                        ? List.of() : new ArrayList<>(originalEntry.getTargetCardIds());
-                StackEntry triggeredEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        ctx.sourceCard(),
-                        ctx.controllerId(),
-                        ctx.sourceCard().getName() + "'s effect",
-                        thenEffects,
-                        0,
-                        null,
-                        sourcePermanentId,
-                        Map.of(),
-                        null,
-                        targetCardIds,
-                        List.of()
-                );
-                triggeredEntry.setSacrificedPermanentSnapshot(sacrificedSnapshot);
-                triggeredEntry.setSacrificedPower(sacrificedPower);
-                triggeredEntry.setSacrificedColorCount(sacrificedColorCount);
-                triggeredEntry.setSacrificedToughness(sacrificedToughness);
-                triggeredEntry.setSourcePermanentSnapshot(sourcePermanentSnapshot);
-                if (originalEntry != null) {
-                    triggeredEntry.setAttackedTargetId(originalEntry.getAttackedTargetId());
-                    triggeredEntry.setActivePlayerId(originalEntry.getActivePlayerId());
-                }
-                gameData.stack.add(triggeredEntry);
+                gameData.stack.add(record);
             }
         }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        return false;
     }
 
     public void handleSacrificePermanentAndReturnTargetCards(

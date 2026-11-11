@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -117,7 +118,10 @@ public class CemeteryDesecratorEffectHandler implements NormalEffectHandlerBean 
         gameLogService.append(gameData,
                 GameLog.textCardText(entry.getCard().getName() + " exiles ", chosen,
                         " from a graveyard."));
-        gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                entry.getCard(), entry.getControllerId(), modal, entry.getSourcePermanentId()));
+        // "When you do" is an ability of its own: whichever mode it has, it records what the resolving entry was about.
+        ReflexiveAbilitySupport.route(gameData,
+                ReflexiveAbilitySupport.record(gameData, entry, List.of(modal)),
+                () -> gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                        entry.getCard(), entry.getControllerId(), modal, entry.getSourcePermanentId())));
     }
 }

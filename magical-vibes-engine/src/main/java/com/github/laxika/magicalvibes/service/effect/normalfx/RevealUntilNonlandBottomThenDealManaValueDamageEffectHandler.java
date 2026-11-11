@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -146,10 +147,13 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
             libraryRevealSupport.reorderRemainingToBottom(gameData, controllerId, revealed);
         }
         if (nonland != null && reflexive) {
-            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    entry.getCard(), entry.getControllerId(), List.of(new DealDamageToAnyTargetEffect(
-                    new Fixed(nonland.getManaValue()), false, false)), false, null, 0,
-                    entry.getSourcePermanentId()));
+            List<CardEffect> damageEffects = List.of(new DealDamageToAnyTargetEffect(
+                    new Fixed(nonland.getManaValue()), false, false));
+            // The ability records what the resolving entry was about whichever way it reaches the stack.
+            ReflexiveAbilitySupport.route(gameData, ReflexiveAbilitySupport.record(gameData, entry, damageEffects),
+                    () -> gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                            entry.getCard(), entry.getControllerId(), damageEffects, false, null, 0,
+                            entry.getSourcePermanentId())));
         }
     }
 }

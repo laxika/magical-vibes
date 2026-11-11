@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -61,18 +62,25 @@ public class ForageFollowUpEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (matchingIndices.size() == 1) {
-            pushTargetedFollowUp(gameData, entry, followUp.thenEffect(),
-                    graveyard.get(matchingIndices.getFirst()));
-            return;
-        }
-
-        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
-                .builder(controllerId, matchingIndices, GraveyardChoiceDestination.MAY_ABILITY_TARGET,
-                        entry.getCard().getName() + "'s forage ability — Choose a permanent card from your graveyard to target.")
-                .mayAbilityContext(entry.getCard(), controllerId,
-                        List.of(followUp.thenEffect()), entry.getSourcePermanentId())
-                .build());
+        // The ability records what the resolving entry was about whether its one legal card is targeted or a card
+        // is chosen.
+        ReflexiveAbilitySupport.route(gameData,
+                ReflexiveAbilitySupport.record(gameData, entry, List.of(followUp.thenEffect()),
+                        entry.getCard().getName() + "'s ability"),
+                () -> {
+                    if (matchingIndices.size() == 1) {
+                        pushTargetedFollowUp(gameData, entry, followUp.thenEffect(),
+                                graveyard.get(matchingIndices.getFirst()));
+                        return;
+                    }
+                    interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                            .builder(controllerId, matchingIndices, GraveyardChoiceDestination.MAY_ABILITY_TARGET,
+                                    entry.getCard().getName()
+                                            + "'s forage ability — Choose a permanent card from your graveyard to target.")
+                            .mayAbilityContext(entry.getCard(), controllerId,
+                                    List.of(followUp.thenEffect()), entry.getSourcePermanentId())
+                            .build());
+                });
     }
 
     private void pushTargetedFollowUp(GameData gameData, StackEntry sourceEntry,
@@ -86,8 +94,6 @@ public class ForageFollowUpEffectHandler implements NormalEffectHandlerBean {
                 targetCard.getId(),
                 Zone.GRAVEYARD,
                 sourceEntry.getSourcePermanentId());
-        followUpEntry.setSourcePermanentSnapshot(sourceEntry.getSourcePermanentSnapshot());
-        followUpEntry.setEventValue(sourceEntry.getEventValue());
         gameData.stack.add(followUpEntry);
     }
 }

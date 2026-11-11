@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
+import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinCopyTriggeringSpellOrDealDamageEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -16,7 +18,6 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +29,13 @@ public class FlipCoinCopyTriggeringSpellOrDealDamageEffectHandler implements Nor
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final TriggerCollectionService triggerCollectionService;
+
+    /** "When you win the flip, copy that spell. You may choose new targets for the copy." */
+    private static final List<CardEffect> WON_FLIP = List.of(new CopyTriggeringSpellEffect());
+
+    /** "When you lose the flip, [this] deals damage equal to that spell's mana value to any target." */
+    private static final List<CardEffect> LOST_FLIP =
+            List.of(new DealDamageToAnyTargetEffect(new TargetSpellManaValue()));
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,28 +60,37 @@ public class FlipCoinCopyTriggeringSpellOrDealDamageEffectHandler implements Nor
             return;
         }
 
-        StackEntry spellSnapshot = new StackEntry(triggeringSpell);
-        int manaValue = triggeringSpell.getSpellManaValue();
         if (wonFlip && result.isActualCoinFlip()) {
             triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
-            CardEffect copyEffect = new CopyControllerCastSpellEffect(
-                    spellSnapshot, triggeringSpell.getControllerId());
-            StackEntry reflexiveTrigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, entry.getCard(), controllerId,
-                    entry.getCard().getName() + "'s coin-flip trigger", new ArrayList<>(List.of(copyEffect)),
-                    null, entry.getSourcePermanentId());
-            reflexiveTrigger.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
-            gameData.enqueueTrigger(reflexiveTrigger);
+            gameData.enqueueTrigger(coinFlipRecord(gameData, entry, WON_FLIP, triggeringSpell));
             return;
         }
 
-        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                entry.getCard(),
-                controllerId,
-                new ArrayList<>(List.of(new DealDamageToAnyTargetEffect(manaValue))),
-                false,
-                null,
-                0,
-                entry.getSourcePermanentId()));
+        List<CardEffect> damageEffects = LOST_FLIP;
+        ReflexiveAbilitySupport.route(gameData,
+                coinFlipRecord(gameData, entry, damageEffects, triggeringSpell),
+                () -> gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                        entry.getCard(),
+                        controllerId,
+                        damageEffects,
+                        false,
+                        null,
+                        0,
+                        entry.getSourcePermanentId())));
+    }
+
+    /**
+     * The entry of the "when you win the flip" or "when you lose the flip" ability: whichever side the coin lands
+     * on, it records what the resolving entry was about, so "that spell" is the spell that entry triggered for, as
+     * it is on the stack or as it last existed there.
+     */
+    private static StackEntry coinFlipRecord(GameData gameData, StackEntry entry, List<CardEffect> effects,
+                                             StackEntry triggeringSpell) {
+        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, effects,
+                entry.getCard().getName() + "'s coin-flip trigger");
+        if (record.getTriggeringSpellSnapshot() == null) {
+            record.setTriggeringSpell(triggeringSpell);
+        }
+        return record;
     }
 }

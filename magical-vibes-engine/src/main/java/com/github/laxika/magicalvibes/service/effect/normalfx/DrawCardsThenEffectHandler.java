@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -65,6 +66,13 @@ public class DrawCardsThenEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void queueTargetedReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect) {
+        // The ability records what the resolving entry was about whichever way it reaches the stack.
+        ReflexiveAbilitySupport.route(gameData,
+                ReflexiveAbilitySupport.record(gameData, entry, List.of(thenEffect)),
+                () -> chooseReflexiveAbilityTarget(gameData, entry, thenEffect));
+    }
+
+    private void chooseReflexiveAbilityTarget(GameData gameData, StackEntry entry, CardEffect thenEffect) {
         TargetSpec targetSpec = thenEffect.targetSpec();
         TargetPredicate targetPredicate = targetSpec.targetPredicate();
         List<UUID> validPermanentTargets = new ArrayList<>();

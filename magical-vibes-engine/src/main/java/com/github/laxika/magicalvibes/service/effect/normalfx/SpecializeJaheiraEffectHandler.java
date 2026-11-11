@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.ArrayList;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.cards.j.JaheiraHarperEmissary;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -50,20 +53,24 @@ public class SpecializeJaheiraEffectHandler implements NormalEffectHandlerBean {
         JaheiraHarperEmissary.installSpecializedTargets(specialized, specializedTrigger, specialize.color());
         source.exchangeCard(specialized);
 
-        gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                specialized,
-                entry.getControllerId(),
-                specializedTrigger,
-                entry.getSourcePermanentId(),
-                List.of(),
-                0,
-                0,
-                List.of(),
-                0,
-                List.of(),
-                false,
-                null,
-                null));
+        // The ability's entry when it chooses nothing is its record whichever way it reaches the stack.
+        ReflexiveAbilitySupport.route(gameData,
+                new StackEntry(StackEntryType.TRIGGERED_ABILITY, specialized, entry.getControllerId(),
+                        specialized.getName() + "'s ability", new ArrayList<>(specializedTrigger), 0, entry.getSourcePermanentId()),
+                () -> gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                    specialized,
+                    entry.getControllerId(),
+                    specializedTrigger,
+                    entry.getSourcePermanentId(),
+                    List.of(),
+                    0,
+                    0,
+                    List.of(),
+                    0,
+                    List.of(),
+                    false,
+                    null,
+                    null)));
     }
 
     private void setFaceCharacteristics(Card card, CardColor color) {

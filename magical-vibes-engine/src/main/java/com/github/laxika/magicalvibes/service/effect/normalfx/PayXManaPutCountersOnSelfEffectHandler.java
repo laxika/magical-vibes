@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -76,14 +77,13 @@ public class PayXManaPutCountersOnSelfEffectHandler implements NormalEffectHandl
                     : entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
             if (e.reflexive()) {
                 if (selfId != null) {
-                    gameData.enqueueTrigger(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            entry.getCard(),
-                            controllerId,
-                            cardName + "'s reflexive ability",
-                            new ArrayList<>(List.of(new PutCounterOnTargetPermanentEffect(e.counterType(), chosenValue))),
-                            selfId,
-                            (UUID) null));
+                    // The ability records what the resolving entry was about, with the X paid as its X.
+                    StackEntry reflexive = ReflexiveAbilitySupport.record(gameData, entry,
+                            List.of(new PutCounterOnTargetPermanentEffect(e.counterType(), chosenValue)));
+                    reflexive.setXValue(chosenValue);
+                    reflexive.setTargetId(selfId);
+                    reflexive.setNonTargeting(false);
+                    gameData.enqueueTrigger(reflexive);
                 }
                 return;
             }

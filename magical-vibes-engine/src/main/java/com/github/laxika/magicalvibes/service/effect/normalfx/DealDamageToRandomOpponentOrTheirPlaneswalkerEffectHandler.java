@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -67,11 +68,15 @@ public class DealDamageToRandomOpponentOrTheirPlaneswalkerEffectHandler implemen
                             new PermanentControlledByPlayerPredicate(chosenOpponent))),
                     new PlayerIdPredicate(chosenOpponent),
                     "Target must be that opponent or a planeswalker they control.");
-            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    entry.getCard(), entry.getControllerId(), List.of(targetEffect), false, targetFilter, 0,
-                    entry.getSourcePermanentId(), entry.getSourcePermanentSnapshot(), false, null, chosenOpponent,
-                    entry.getControllerId(), damage, null, true));
-            triggerCollectionService.processNextSpellTargetTrigger(gameData);
+            // The choice between that opponent and their planeswalkers records what the resolving entry was about.
+            ReflexiveAbilitySupport.route(gameData,
+                    ReflexiveAbilitySupport.record(gameData, entry, List.of(targetEffect)), () -> {
+                        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                                entry.getCard(), entry.getControllerId(), List.of(targetEffect), false, targetFilter, 0,
+                                entry.getSourcePermanentId(), entry.getSourcePermanentSnapshot(), false, null,
+                                chosenOpponent, entry.getControllerId(), damage, null, true));
+                        triggerCollectionService.processNextSpellTargetTrigger(gameData);
+                    });
             return;
         }
 

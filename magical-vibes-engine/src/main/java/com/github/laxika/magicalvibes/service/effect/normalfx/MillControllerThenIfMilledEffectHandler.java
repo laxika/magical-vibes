@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -83,6 +84,13 @@ public class MillControllerThenIfMilledEffectHandler implements NormalEffectHand
     }
 
     private void beginReflexiveTargetChoice(GameData gameData, StackEntry entry, CardEffect effect) {
+        // The ability records what the resolving entry was about whichever way it reaches the stack.
+        ReflexiveAbilitySupport.route(gameData,
+                ReflexiveAbilitySupport.record(gameData, entry, List.of(effect)),
+                () -> chooseReflexiveAbilityTarget(gameData, entry, effect));
+    }
+
+    private void chooseReflexiveAbilityTarget(GameData gameData, StackEntry entry, CardEffect effect) {
         TargetSpec targetSpec = effect.targetSpec();
         TargetPredicate targetPredicate = targetSpec.targetPredicate();
         FilterContext filterContext = FilterContext.of(gameData)

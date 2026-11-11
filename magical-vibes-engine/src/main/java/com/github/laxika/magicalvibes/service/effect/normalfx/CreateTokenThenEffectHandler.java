@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -69,6 +70,15 @@ public class CreateTokenThenEffectHandler implements NormalEffectHandlerBean {
     }
 
     void queueTargetedReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect,
+                                       UUID sourcePermanentId, boolean optionalTarget) {
+        // The ability records what the resolving entry was about whichever way it reaches the stack.
+        ReflexiveAbilitySupport.route(gameData,
+                ReflexiveAbilitySupport.record(gameData, entry, List.of(thenEffect),
+                        entry.getCard().getName() + "'s reflexive ability", sourcePermanentId),
+                () -> chooseReflexiveAbilityTarget(gameData, entry, thenEffect, sourcePermanentId, optionalTarget));
+    }
+
+    private void chooseReflexiveAbilityTarget(GameData gameData, StackEntry entry, CardEffect thenEffect,
                                        UUID sourcePermanentId, boolean optionalTarget) {
         if (graveyardTargetingSupport.findTarget(List.of(thenEffect)) != null) {
             GraveyardTargetingSupport.Target target = graveyardTargetingSupport.findTarget(List.of(thenEffect));

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -76,23 +77,29 @@ public class PutCounterOnSelfThenCastTargetInstantOrSorceryFromGraveyardEffectHa
                 true,
                 e.exileInsteadOfGraveyard(),
                 new CardManaValueEqualsSourceCountersPredicate(e.counterType()));
-        if (matchingCards.size() == 1) {
-            putReflexiveTriggerOnStack(gameData, entry, castEffect, matchingCards.getFirst().getId(), source);
-            return;
-        }
-
-        List<Integer> validIndices = IntStream.range(0, matchingCards.size()).boxed().toList();
-        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
-                .builder(controllerId, validIndices, GraveyardChoiceDestination.MAY_ABILITY_TARGET,
-                        "Choose an instant or sorcery card with mana value " + requiredManaValue
-                                + " from your graveyard to target.")
-                .cardPool(new ArrayList<>(matchingCards))
-                .mayAbilityContext(entry.getCard(), controllerId, List.of(castEffect), sourcePermanentId)
-                .build());
+        // The ability records what the resolving entry was about, and its source with the counter just put on it,
+        // whether its one legal card is targeted or a card is chosen.
+        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(castEffect),
+                entry.getCard().getName() + "'s ability");
+        record.setSourcePermanentSnapshot(new Permanent(source));
+        ReflexiveAbilitySupport.route(gameData, record, () -> {
+            if (matchingCards.size() == 1) {
+                putReflexiveTriggerOnStack(gameData, entry, castEffect, matchingCards.getFirst().getId());
+                return;
+            }
+            List<Integer> validIndices = IntStream.range(0, matchingCards.size()).boxed().toList();
+            interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                    .builder(controllerId, validIndices, GraveyardChoiceDestination.MAY_ABILITY_TARGET,
+                            "Choose an instant or sorcery card with mana value " + requiredManaValue
+                                    + " from your graveyard to target.")
+                    .cardPool(new ArrayList<>(matchingCards))
+                    .mayAbilityContext(entry.getCard(), controllerId, List.of(castEffect), sourcePermanentId)
+                    .build());
+        });
     }
 
     private void putReflexiveTriggerOnStack(GameData gameData, StackEntry entry, CardEffect castEffect,
-                                             UUID targetCardId, Permanent source) {
+                                             UUID targetCardId) {
         StackEntry reflexiveTrigger = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 entry.getCard(),
@@ -106,7 +113,6 @@ public class PutCounterOnSelfThenCastTargetInstantOrSorceryFromGraveyardEffectHa
                 Zone.GRAVEYARD,
                 null,
                 null);
-        reflexiveTrigger.setSourcePermanentSnapshot(new Permanent(source));
         gameData.stack.add(reflexiveTrigger);
     }
 }

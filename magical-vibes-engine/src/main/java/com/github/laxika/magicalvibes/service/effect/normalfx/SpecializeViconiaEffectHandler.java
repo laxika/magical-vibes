@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.cards.v.ViconiaNightsingersDisciple;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -53,20 +55,24 @@ public class SpecializeViconiaEffectHandler implements NormalEffectHandlerBean {
         installSpecializedTargets(specialized, triggers);
         source.exchangeCard(specialized);
 
-        gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                specialized,
-                entry.getControllerId(),
-                new ArrayList<>(triggers),
-                entry.getSourcePermanentId(),
-                List.of(),
-                0,
-                0,
-                List.of(),
-                0,
-                List.of(),
-                false,
-                null,
-                null));
+        // The ability's entry when it chooses nothing is its record whichever way it reaches the stack.
+        ReflexiveAbilitySupport.route(gameData,
+                new StackEntry(StackEntryType.TRIGGERED_ABILITY, specialized, entry.getControllerId(),
+                        specialized.getName() + "'s ability", new ArrayList<>(triggers), 0, entry.getSourcePermanentId()),
+                () -> gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                    specialized,
+                    entry.getControllerId(),
+                    new ArrayList<>(triggers),
+                    entry.getSourcePermanentId(),
+                    List.of(),
+                    0,
+                    0,
+                    List.of(),
+                    0,
+                    List.of(),
+                    false,
+                    null,
+                    null)));
     }
 
     private void installSpecializedTargets(Card specialized,

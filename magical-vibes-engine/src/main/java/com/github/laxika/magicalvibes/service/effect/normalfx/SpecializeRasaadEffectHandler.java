@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.ArrayList;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.cards.r.RasaadMonkOfSelNe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -114,9 +117,13 @@ public class SpecializeRasaadEffectHandler implements NormalEffectHandlerBean {
 
     private void queueSpecializationTrigger(GameData gameData, StackEntry sourceEntry,
                                              Permanent source, Card sourceCard, CardEffect effect) {
-        gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                sourceCard, sourceEntry.getControllerId(), List.of(effect), "specializes",
-                sourceEntry.getSourcePermanentId(), new Permanent(source)));
+        // The ability's entry when it chooses nothing is its record whichever way it reaches the stack.
+        ReflexiveAbilitySupport.route(gameData,
+                new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, sourceEntry.getControllerId(),
+                        sourceCard.getName() + "'s ability", new ArrayList<>(List.of(effect)), 0, sourceEntry.getSourcePermanentId()),
+                () -> gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                    sourceCard, sourceEntry.getControllerId(), List.of(effect), "specializes",
+                    sourceEntry.getSourcePermanentId(), new Permanent(source))));
     }
 
     private void setBaseFaceCharacteristics(Card card) {

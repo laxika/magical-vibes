@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.DungeonProgress;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -145,27 +146,35 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
             });
             sourceCard.setOwnerId(entry.getControllerId());
             List<CardEffect> effects = roomEffects(progress);
-            if (effects.stream().anyMatch(roomEffect -> roomEffect.targetSpec() != com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE)) {
-                var targets = triggerTargetCollector.collect(gameData, effects, null, entry.getControllerId(),
-                        sourceCard, com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector.Options.UPKEEP);
-                if (!targets.validTargets().isEmpty()) {
-                    gameData.queueInteraction(new com.github.laxika.magicalvibes.model.PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            sourceCard, entry.getControllerId(), effects, !targets.canTargetPermanents(),
-                            null, 0, null, null, false, null, null, entry.getControllerId(), null, null, false));
-                }
-                return;
-            }
-            gameData.stack.add(new StackEntry(
+            // A room ability's entry when it chooses nothing is its record whichever way it reaches the stack.
+            StackEntry roomAbility = new StackEntry(
                     StackEntryType.TRIGGERED_ABILITY,
                     sourceCard,
                     entry.getControllerId(),
                     roomName(progress.dungeon(), progress.roomIndex()) + " room ability",
                     effects,
                     0,
-                    (java.util.UUID) null));
+                    (java.util.UUID) null);
+            ReflexiveAbilitySupport.route(gameData, roomAbility,
+                    () -> putRoomAbilityOnStackOrChoose(gameData, entry, sourceCard, effects, roomAbility));
         } finally {
             gameData.restoreTriggeredAbilityCopies(previousCopies);
         }
+    }
+
+    private void putRoomAbilityOnStackOrChoose(GameData gameData, StackEntry entry, Card sourceCard,
+                                               List<CardEffect> effects, StackEntry roomAbility) {
+        if (effects.stream().anyMatch(roomEffect -> roomEffect.targetSpec() != com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE)) {
+            var targets = triggerTargetCollector.collect(gameData, effects, null, entry.getControllerId(),
+                    sourceCard, com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector.Options.UPKEEP);
+            if (!targets.validTargets().isEmpty()) {
+                gameData.queueInteraction(new com.github.laxika.magicalvibes.model.PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                        sourceCard, entry.getControllerId(), effects, !targets.canTargetPermanents(),
+                        null, 0, null, null, false, null, null, entry.getControllerId(), null, null, false));
+            }
+            return;
+        }
+        gameData.stack.add(roomAbility);
     }
 
     private int countAdditionalDungeonRoomTriggers(GameData gameData, java.util.UUID controllerId) {

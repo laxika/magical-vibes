@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -107,6 +108,13 @@ public class BlightEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void queueTargetedReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect) {
+        // The ability records what the resolving entry was about whichever way it reaches the stack.
+        ReflexiveAbilitySupport.route(gameData,
+                ReflexiveAbilitySupport.record(gameData, entry, List.of(thenEffect)),
+                () -> chooseReflexiveAbilityTarget(gameData, entry, thenEffect));
+    }
+
+    private void chooseReflexiveAbilityTarget(GameData gameData, StackEntry entry, CardEffect thenEffect) {
         // State-based actions are checked before the reflexive trigger is put on the stack (CR 704.3), so a
         // creature the blight just put to zero toughness is already gone and can't be targeted.
         stateBasedActionService.performStateBasedActions(gameData);

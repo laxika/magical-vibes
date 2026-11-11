@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -102,6 +103,17 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
     }
 
     private void beginReflexiveTrigger(GameData gameData, StackEntry entry, CardEffect thenEffect) {
+        // Whichever way the ability reaches the stack, it records what the resolving entry was about.
+        StackEntry record = ReflexiveAbilitySupport.record(
+                gameData, entry, List.of(thenEffect), entry.getCard().getName() + "'s ability");
+        if (record.getAttackedTargetId() == null) {
+            // "Defending player" of the ability's target is the player the resolving entry was about.
+            record.setAttackedTargetId(entry.getTargetId());
+        }
+        ReflexiveAbilitySupport.route(gameData, record, () -> putOnStackOrChoose(gameData, entry, thenEffect, record));
+    }
+
+    private void putOnStackOrChoose(GameData gameData, StackEntry entry, CardEffect thenEffect, StackEntry record) {
         if (thenEffect instanceof ChooseOneEffect modal) {
             // CR 700.2b: the reflexive trigger's mode is chosen as it is put onto the stack.
             playerInputService.beginChooseModeChoice(gameData, entry.getControllerId(), entry.getCard(),
@@ -115,7 +127,7 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
                 && thenEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                 && !thenEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                 && !entry.getCard().hasEffectTargetIndex(thenEffect)) {
-            putPlayerTargetedReflexiveTriggerOnStack(gameData, entry, thenEffect, entry.getTargetId());
+            gameData.stack.add(record);
             return;
         }
 
@@ -132,23 +144,7 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
             return;
         }
 
-        StackEntry reflexive = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                entry.getCard(),
-                entry.getControllerId(),
-                entry.getCard().getName() + "'s ability",
-                List.of(thenEffect),
-                0,
-                null,
-                entry.getSourcePermanentId(),
-                null,
-                null,
-                null,
-                null);
-        reflexive.setTriggeringCardId(entry.getTriggeringCardId());
-        reflexive.setTriggeringSpell(entry.getTriggeringSpellSnapshot());
-        carryTriggeringPlayer(gameData, entry, reflexive);
-        gameData.stack.add(reflexive);
+        gameData.stack.add(record);
     }
 
     private void beginBattlefieldReflexiveTrigger(GameData gameData, StackEntry entry,
@@ -253,36 +249,7 @@ public class RemoveCounterFromSourceThenEffectHandler implements NormalEffectHan
                 Zone.GRAVEYARD,
                 null,
                 null);
-        reflexive.setTriggeringCardId(entry.getTriggeringCardId());
-        reflexive.setTriggeringSpell(entry.getTriggeringSpellSnapshot());
         gameData.stack.add(reflexive);
-    }
-
-    private void putPlayerTargetedReflexiveTriggerOnStack(GameData gameData, StackEntry entry,
-                                                           CardEffect thenEffect, UUID targetPlayerId) {
-        StackEntry reflexive = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                entry.getCard(),
-                entry.getControllerId(),
-                entry.getCard().getName() + "'s ability",
-                List.of(thenEffect),
-                targetPlayerId,
-                entry.getSourcePermanentId());
-        reflexive.setNonTargeting(true);
-        reflexive.setTriggeringPlayerId(entry.getTriggeringPlayerId());
-        gameData.stack.add(reflexive);
-    }
-
-    /**
-     * A reflexive ability's "that player" is the player the triggering entry carries (the player dealt damage), its
-     * non-targeting target and triggering player.
-     */
-    private static void carryTriggeringPlayer(GameData gameData, StackEntry entry, StackEntry reflexive) {
-        reflexive.setTriggeringPlayerId(entry.getTriggeringPlayerId());
-        if (entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())) {
-            reflexive.setTargetId(entry.getTargetId());
-            reflexive.setNonTargeting(true);
-        }
     }
 
     private CounterType findCounterType(Permanent source, CounterType requestedType, int count) {

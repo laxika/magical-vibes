@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -118,7 +119,17 @@ public class PayXManaReanimateCreatureWithManaValueXEffectHandler implements Nor
                 .enterWithCounterCount(e.enterWithCounter() == null ? 0 : 1)
                 .exileIfLeavesBattlefield(e.exileIfLeavesBattlefield())
                 .build();
+        // The ability records what the resolving entry was about, with the X paid as its X.
+        StackEntry record = ReflexiveAbilitySupport.record(
+                gameData, entry, List.of(returnEffect), sourceCard.getName() + "'s ability");
+        record.setXValue(x);
+        ReflexiveAbilitySupport.route(gameData, record,
+                () -> chooseReflexiveTarget(gameData, entry, returnEffect, controllerId, x));
+    }
 
+    private void chooseReflexiveTarget(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect returnEffect,
+                                       UUID controllerId, int x) {
+        Card sourceCard = entry.getCard();
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         List<Integer> matchingIndices = new ArrayList<>();
         if (graveyard != null) {

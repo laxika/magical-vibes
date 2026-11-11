@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -143,6 +144,13 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
     }
 
     private void queueReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect) {
+        // The ability records what the resolving entry was about whichever way it reaches the stack.
+        ReflexiveAbilitySupport.route(gameData,
+                ReflexiveAbilitySupport.record(gameData, entry, List.of(thenEffect)),
+                () -> putReflexiveAbilityOnStackOrChoose(gameData, entry, thenEffect));
+    }
+
+    private void putReflexiveAbilityOnStackOrChoose(GameData gameData, StackEntry entry, CardEffect thenEffect) {
         if (!(thenEffect instanceof ReturnCardFromGraveyardEffect)) {
             UUID targetId = thenEffect.targetSpec() == TargetSpec.NONE
                     ? null : entry.getTargetId();
@@ -155,7 +163,6 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
                     targetId,
                     entry.getSourcePermanentId()
             );
-            reflexiveAbility.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
             gameData.stack.add(reflexiveAbility);
             return;
         }
@@ -184,7 +191,6 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
                     null,
                     null
             );
-            reflexiveAbility.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
             gameData.stack.add(reflexiveAbility);
             gameLogService.append(gameData,
                     GameLog.builder().card(entry.getCard()).text("'s reflexive ability targets ")

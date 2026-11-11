@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.ArrayList;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -57,9 +60,13 @@ public class BoostSelfAndTriggerWhenPowerBecomesEffectHandler implements NormalE
         }
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s triggered ability triggers."));
-        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                entry.getCard(), entry.getControllerId(), List.of(e.triggeredEffect()),
-                false, null, 0, sourcePermanentId));
+        // The ability's entry when it chooses nothing is its record whichever way it reaches the stack.
+        ReflexiveAbilitySupport.route(gameData,
+                new StackEntry(StackEntryType.TRIGGERED_ABILITY, entry.getCard(), entry.getControllerId(),
+                        entry.getCard().getName() + "'s ability", new ArrayList<>(List.of(e.triggeredEffect())), 0, sourcePermanentId),
+                () -> gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    entry.getCard(), entry.getControllerId(), List.of(e.triggeredEffect()),
+                    false, null, 0, sourcePermanentId)));
         triggerCollectionService.processNextSpellTargetTrigger(gameData);
     }
 }

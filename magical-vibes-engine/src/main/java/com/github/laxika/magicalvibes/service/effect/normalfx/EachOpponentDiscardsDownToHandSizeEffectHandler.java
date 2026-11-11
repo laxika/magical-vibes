@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -66,12 +67,8 @@ public class EachOpponentDiscardsDownToHandSizeEffectHandler implements NormalEf
         if (thenEffect == null) {
             return;
         }
-        StackEntry completion = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                entry.getCard(),
-                entry.getControllerId(),
-                entry.getCard().getName() + "'s effect",
-                List.of(thenEffect));
+        StackEntry completion = ReflexiveAbilitySupport.record(
+                gameData, entry, List.of(thenEffect), entry.getCard().getName() + "'s effect", null);
         completion.setNonTargeting(true);
         gameData.stack.add(completion);
     }

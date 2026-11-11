@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
@@ -57,15 +58,19 @@ public class ExileSourceCardFromGraveyardThenEffectHandler implements NormalEffe
         }
 
         TargetSpec thenTargetSpec = exileThen.thenEffect().targetSpec();
+        // The ability records what the resolving entry was about whichever way it reaches the stack.
+        StackEntry record = ReflexiveAbilitySupport.record(
+                gameData, entry, List.of(exileThen.thenEffect()), entry.getCard().getName() + "'s ability");
+        // "This creature's power" of a card that left the battlefield is its power as it last existed there.
+        record.setSourcePowerAtTrigger(entry.getTriggeringPermanentPowerAtTrigger());
+        ReflexiveAbilitySupport.route(gameData, record,
+                () -> putOnStackOrChoose(gameData, entry, exileThen, thenTargetSpec, record));
+    }
+
+    private void putOnStackOrChoose(GameData gameData, StackEntry entry, ExileSourceCardFromGraveyardThenEffect exileThen,
+                                    TargetSpec thenTargetSpec, StackEntry record) {
         if (thenTargetSpec.equals(TargetSpec.NONE)) {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    entry.getCard(),
-                    entry.getControllerId(),
-                    entry.getCard().getName() + "'s ability",
-                    List.of(exileThen.thenEffect()),
-                    null,
-                    entry.getSourcePermanentId()));
+            gameData.stack.add(record);
         } else if (thenTargetSpec.admits(TargetPredicate.Kind.PERMANENT)
                 || thenTargetSpec.admits(TargetPredicate.Kind.PLAYER)
                 || thenTargetSpec.admits(TargetPredicate.Kind.SPELL)) {

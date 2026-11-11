@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.ArrayList;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.cards.v.VhalEagerScholar;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -68,21 +70,28 @@ public class SpecializeVhalEffectHandler implements NormalEffectHandlerBean {
         if (specialized.getTargetGroups().isEmpty()) {
             enqueueNonTargetingTrigger(gameData, entry, specialized, specializedTrigger, removedStudyCounters);
         } else {
-            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                    specialized,
-                    entry.getControllerId(),
-                    List.of(specializedTrigger),
-                    entry.getSourcePermanentId(),
-                    List.of(),
-                    0,
-                    0,
-                    List.of(),
-                    color == CardColor.BLACK ? removedStudyCounters : 0,
-                    List.of(),
-                    false,
-                    null,
-                    null,
-                    removedStudyCounters));
+            // The ability's entry when it chooses nothing is its record whichever way it reaches the stack: the
+            // study counters removed are its event value.
+            StackEntry record = new StackEntry(StackEntryType.TRIGGERED_ABILITY, specialized, entry.getControllerId(),
+                    specialized.getName() + "'s ability", new ArrayList<>(List.of(specializedTrigger)),
+                    color == CardColor.BLACK ? removedStudyCounters : 0, entry.getSourcePermanentId());
+            record.setEventValue(removedStudyCounters);
+            ReflexiveAbilitySupport.route(gameData, record,
+                    () -> gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                        specialized,
+                        entry.getControllerId(),
+                        List.of(specializedTrigger),
+                        entry.getSourcePermanentId(),
+                        List.of(),
+                        0,
+                        0,
+                        List.of(),
+                        color == CardColor.BLACK ? removedStudyCounters : 0,
+                        List.of(),
+                        false,
+                        null,
+                        null,
+                        removedStudyCounters)));
         }
     }
 

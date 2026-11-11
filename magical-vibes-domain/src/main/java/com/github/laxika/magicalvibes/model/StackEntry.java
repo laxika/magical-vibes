@@ -1525,6 +1525,12 @@ public class StackEntry {
         if (this.sacrificedToughness == 0) {
             this.sacrificedToughness = record.sacrificedToughness;
         }
+        if (this.sacrificedPermanentSnapshot == null && record.sacrificedPermanentSnapshot != null) {
+            // The permanent sacrificed for the ability ("when you do") as it last existed.
+            this.sacrificedPermanentSnapshot = new Permanent(record.sacrificedPermanentSnapshot);
+            this.sacrificedPower = record.sacrificedPower;
+            this.sacrificedColorCount = record.sacrificedColorCount;
+        }
         if (this.repeatedAdditionalCosts == null || this.repeatedAdditionalCosts.isEmpty()) {
             this.repeatedAdditionalCosts = record.repeatedAdditionalCosts;
         }

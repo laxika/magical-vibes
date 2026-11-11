@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -105,6 +106,15 @@ public class PayManaUpToNTimesEffectHandler implements NormalEffectHandlerBean {
     }
 
     private void queueReflexiveTargetedAbility(GameData gameData, StackEntry entry,
+                                               CardEffect thenEffect, int paymentCount) {
+        // The ability records what the resolving entry was about whichever way it reaches the stack, with
+        // the chosen number as its X.
+        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(thenEffect));
+        record.setXValue(paymentCount);
+        ReflexiveAbilitySupport.route(gameData, record, () -> chooseReflexiveAbilityTargets(gameData, entry, thenEffect, paymentCount));
+    }
+
+    private void chooseReflexiveAbilityTargets(GameData gameData, StackEntry entry,
                                                CardEffect thenEffect, int paymentCount) {
         if (thenEffect instanceof ChooseOneEffect modal) {
             // A modal reflexive ability has its modes, and then their targets, chosen as it is

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -98,7 +99,19 @@ public class PayXManaReanimateCreaturesWithTotalManaValueXEffectHandler implemen
                         new CardTypePredicate(CardType.CREATURE), x);
 
         List<Card> candidates = reanimationCandidates(gameData, entry, controllerId, x);
+        // The ability records what the resolving entry was about, with the X paid as its X, whether it targets no
+        // card or cards are chosen.
+        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(returnEffect),
+                sourceCard.getName() + "'s ability");
+        record.setXValue(x);
+        ReflexiveAbilitySupport.route(gameData, record,
+                () -> putOnStackOrChooseCards(gameData, entry, controllerId, x, returnEffect, candidates));
+    }
 
+    private void putOnStackOrChooseCards(GameData gameData, StackEntry entry, UUID controllerId, int x,
+                                         ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect,
+                                         List<Card> candidates) {
+        Card sourceCard = entry.getCard();
         if (candidates.isEmpty()) {
             putReflexiveTriggerOnStack(gameData, entry, controllerId, x, returnEffect, List.of());
             return;

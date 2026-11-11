@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -111,19 +112,17 @@ public class ExileNCardsFromGraveyardThenEffectHandler implements NormalEffectHa
                 gameData.playerIdToName.get(controllerId) + " exiles " + cards.size()
                         + " cards from their graveyard."));
 
-        if (effect.thenEffect().targetSpec().equals(TargetSpec.NONE)) {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    entry.getCard(),
-                    controllerId,
-                    entry.getCard().getName() + "'s ability",
-                    List.of(effect.thenEffect()),
-                    null,
-                    entry.getSourcePermanentId()));
-        } else {
-            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    entry.getCard(), controllerId, List.of(effect.thenEffect())));
-            triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
-        }
+        // The ability records what the resolving entry was about whichever way it reaches the stack.
+        StackEntry record = ReflexiveAbilitySupport.record(
+                gameData, entry, List.of(effect.thenEffect()), entry.getCard().getName() + "'s ability");
+        ReflexiveAbilitySupport.route(gameData, record, () -> {
+            if (effect.thenEffect().targetSpec().equals(TargetSpec.NONE)) {
+                gameData.stack.add(record);
+            } else {
+                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                        entry.getCard(), controllerId, List.of(effect.thenEffect())));
+                triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
+            }
+        });
     }
 }

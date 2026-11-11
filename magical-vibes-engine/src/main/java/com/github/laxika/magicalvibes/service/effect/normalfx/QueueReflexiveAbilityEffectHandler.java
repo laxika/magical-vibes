@@ -25,6 +25,7 @@ import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -84,6 +85,20 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
                     queueEffect.useEntryTargetAsTriggeringPermanent()));
             return;
         }
+        // What the ability records is the same whichever route it takes: the resolving entry's event, source and
+        // "that player", with the X the continuation names.
+        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(queueEffect.effect()));
+        if (queueEffect.useEventValueAsX()) {
+            record.setXValue(entry.getEventValue());
+        }
+        if (queueEffect.useEntryTargetAsTriggeringPermanent() && entry.getTargetId() != null) {
+            record.setTriggeringPermanentId(entry.getTargetId());
+        }
+        ReflexiveAbilitySupport.route(gameData, record, () -> putOnStackOrChoose(gameData, entry, queueEffect, record));
+    }
+
+    private void putOnStackOrChoose(GameData gameData, StackEntry entry, QueueReflexiveAbilityEffect queueEffect,
+                                    StackEntry record) {
         CardEffect reflexiveEffect = queueEffect.effect();
         if (entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())
                 && reflexiveEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
@@ -91,21 +106,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
                 && !entry.getCard().hasEffectTargetIndex(reflexiveEffect)) {
             // "That player" refers to the player the original trigger carries (the player dealt damage), so a
             // reflexive ability whose player the card declares no target for does not choose a target of its own.
-            StackEntry thatPlayerEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    entry.getCard(),
-                    entry.getControllerId(),
-                    entry.getCard().getName() + "'s reflexive ability",
-                    new ArrayList<>(List.of(queueEffect.effect())),
-                    entry.getTargetId(),
-                    entry.getSourcePermanentId());
-            thatPlayerEntry.setNonTargeting(true);
-            thatPlayerEntry.setTriggeringPlayerId(entry.getTriggeringPlayerId());
-            if (queueEffect.useEventValueAsX()) {
-                thatPlayerEntry.setEventValue(entry.getEventValue());
-            }
-            thatPlayerEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
-            gameData.stack.add(thatPlayerEntry);
+            gameData.stack.add(record);
             return;
         }
         int targetGroupIndex = entry.getCard().getEffectTargetIndex(queueEffect.effect());
@@ -148,30 +149,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
                 queueEffect.useEventValueAsX())) {
             return;
         }
-        int xValue = queueEffect.useEventValueAsX() ? entry.getEventValue() : 0;
-        StackEntry reflexiveEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                entry.getCard(),
-                entry.getControllerId(),
-                entry.getCard().getName() + "'s reflexive ability",
-                new ArrayList<>(List.of(queueEffect.effect())),
-                xValue,
-                entry.getSourcePermanentId());
-        if (queueEffect.useEventValueAsX()) {
-            reflexiveEntry.setEventValue(entry.getEventValue());
-        }
-        reflexiveEntry.setAttackedTargetId(entry.getAttackedTargetId());
-        // "That player" of an untargeted reflexive ability is the player the triggering entry carries.
-        reflexiveEntry.setTriggeringPlayerId(entry.getTriggeringPlayerId());
-        if (entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())) {
-            reflexiveEntry.setTargetId(entry.getTargetId());
-            reflexiveEntry.setNonTargeting(true);
-        }
-        if (queueEffect.useEntryTargetAsTriggeringPermanent() && entry.getTargetId() != null) {
-            reflexiveEntry.setTriggeringPermanentId(entry.getTargetId());
-        }
-        reflexiveEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
-        gameData.stack.add(reflexiveEntry);
+        gameData.stack.add(record);
     }
 
     private boolean isAnyNumberOfTargetsGroup(StackEntry entry, int targetGroupIndex) {

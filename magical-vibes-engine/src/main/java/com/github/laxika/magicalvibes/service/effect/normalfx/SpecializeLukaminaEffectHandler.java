@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.ArrayList;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.cards.l.LukaminaMoonDruid;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -103,9 +105,13 @@ public class SpecializeLukaminaEffectHandler implements NormalEffectHandlerBean 
 
     private void queueTargetedSpecializationTrigger(GameData gameData, StackEntry sourceEntry,
                                                      Permanent source, Card sourceCard, List<CardEffect> effects) {
-        gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                sourceCard, sourceEntry.getControllerId(), effects, "specializes",
-                sourceEntry.getSourcePermanentId(), new Permanent(source)));
+        // The ability's entry when it chooses nothing is its record whichever way it reaches the stack.
+        ReflexiveAbilitySupport.route(gameData,
+                new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, sourceEntry.getControllerId(),
+                        sourceCard.getName() + "'s ability", new ArrayList<>(effects), 0, sourceEntry.getSourcePermanentId()),
+                () -> gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                    sourceCard, sourceEntry.getControllerId(), effects, "specializes",
+                    sourceEntry.getSourcePermanentId(), new Permanent(source))));
     }
 
     private static CreateTokenEffect wolfTokenEffect() {

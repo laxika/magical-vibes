@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -108,18 +109,11 @@ public class ExileOwnCardFromGraveyardThenPutCountersOnSharedTypeCreaturesEffect
                 GameLog.textCardText(gameData.playerIdToName.get(entry.getControllerId()) + " exiles ",
                         card, " from their graveyard."));
 
-        StackEntry reflexive = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                entry.getCard(),
-                entry.getControllerId(),
-                entry.getCard().getName() + "'s reflexive ability",
-                new ArrayList<>(List.of(new PutCountersOnOtherSharedTypeCreaturesWithExiledCardEffect(
-                        effect.counterType(), effect.counterCount()))),
-                null,
-                entry.getSourcePermanentId());
+        StackEntry reflexive = ReflexiveAbilitySupport.record(gameData, entry,
+                List.of(new PutCountersOnOtherSharedTypeCreaturesWithExiledCardEffect(
+                        effect.counterType(), effect.counterCount())));
         reflexive.setNonTargeting(true);
         reflexive.setExiledCostCardSnapshot(card);
-        reflexive.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         gameData.stack.add(reflexive);
     }
 }

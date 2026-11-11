@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -84,6 +85,15 @@ public class PayXManaMoveCountersFromSourceToTargetCreatureEffectHandler impleme
     }
 
     private void queueReflexiveTargetChoice(GameData gameData, StackEntry entry, int counterCount) {
+        List<CardEffect> moveEffects = List.of(new MoveCounterFromSourceToTargetCreatureEffect(
+                CounterType.PLUS_ONE_PLUS_ONE, counterCount));
+        // The ability records what the resolving entry was about, with the X paid as its X.
+        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, moveEffects);
+        record.setXValue(counterCount);
+        ReflexiveAbilitySupport.route(gameData, record, () -> chooseReflexiveTarget(gameData, entry, moveEffects));
+    }
+
+    private void chooseReflexiveTarget(GameData gameData, StackEntry entry, List<CardEffect> moveEffects) {
         UUID sourcePermanentId = entry.getSourcePermanentId();
         List<UUID> validTargets = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
@@ -104,8 +114,6 @@ public class PayXManaMoveCountersFromSourceToTargetCreatureEffectHandler impleme
             return;
         }
 
-        List<CardEffect> moveEffects = List.of(new MoveCounterFromSourceToTargetCreatureEffect(
-                CounterType.PLUS_ONE_PLUS_ONE, counterCount));
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
                 entry.getCard(), entry.getControllerId(), moveEffects, sourcePermanentId, null));
         playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), validTargets,

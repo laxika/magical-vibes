@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -37,6 +38,10 @@ public class PayManaThenMayTapOrUntapTargetCreatureEffectHandler implements Norm
         return PayManaThenMayTapOrUntapTargetCreatureEffect.class;
     }
 
+    /** The reflexive ability the payment makes: "you may tap or untap target creature". */
+    private static final MayEffect MAY_TAP_OR_UNTAP = new MayEffect(
+            new TapOrUntapTargetPermanentEffect(new PermanentIsCreaturePredicate()), "Tap or untap target creature?");
+
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var payThenTap = (PayManaThenMayTapOrUntapTargetCreatureEffect) effect;
@@ -62,8 +67,14 @@ public class PayManaThenMayTapOrUntapTargetCreatureEffectHandler implements Norm
     }
 
     private void queueReflexiveTrigger(GameData gameData, StackEntry entry) {
-        CardEffect tapOrUntap = new TapOrUntapTargetPermanentEffect(new PermanentIsCreaturePredicate());
-        MayEffect mayTapOrUntap = new MayEffect(tapOrUntap, "Tap or untap target creature?");
+        // The ability records what the resolving entry was about whichever way it reaches the stack.
+        ReflexiveAbilitySupport.route(gameData,
+                ReflexiveAbilitySupport.record(gameData, entry, List.of(MAY_TAP_OR_UNTAP)),
+                () -> chooseReflexiveTriggerTarget(gameData, entry));
+    }
+
+    private void chooseReflexiveTriggerTarget(GameData gameData, StackEntry entry) {
+        MayEffect mayTapOrUntap = MAY_TAP_OR_UNTAP;
         TargetSpec targetSpec = mayTapOrUntap.targetSpec();
         TargetPredicate targetPredicate = targetSpec.targetPredicate();
         List<UUID> validTargets = new ArrayList<>();
