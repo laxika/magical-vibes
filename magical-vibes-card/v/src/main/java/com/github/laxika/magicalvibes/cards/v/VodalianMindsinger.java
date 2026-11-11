@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -34,11 +33,7 @@ public class VodalianMindsinger extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentPowerLessThanSourcePowerPredicate()
                 )),
-                "Target must be a creature with power less than Vodalian Mindsinger's power",
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentPowerAtMostPredicate(3)
-                ))
+                "Target must be a creature with power less than Vodalian Mindsinger's power"
         );
         target(targetFilter)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),

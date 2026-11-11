@@ -3571,7 +3571,8 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                        List<Permanent> attackingPermanentSnapshots,
                                        Integer graveyardTargetMaxManaValue,
                                        StackEntry triggeringSpell,
-                                       StackEntry triggerRecord)
+                                       StackEntry triggerRecord,
+                                       java.util.function.Consumer<GameData> deferredTargeting)
     implements PermanentChoiceContext {
 
         public SpellGraveyardTargetTrigger {
@@ -3593,7 +3594,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this(sourceCard, controllerId, effects, graveyardOwnerId, minCount, xValue, maxCount,
                     sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId, sourcePermanentId,
                     onceEachTurnActionKey, attackingPermanentSnapshots, graveyardTargetMaxManaValue,
-                    triggeringSpell, null);
+                    triggeringSpell, null, null);
         }
 
         /**
@@ -3605,7 +3606,21 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             return new SpellGraveyardTargetTrigger(sourceCard, controllerId, effects, graveyardOwnerId, minCount,
                     xValue, maxCount, sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId,
                     sourcePermanentId, onceEachTurnActionKey, attackingPermanentSnapshots,
-                    graveyardTargetMaxManaValue, triggeringSpell, record == null ? null : new StackEntry(record));
+                    graveyardTargetMaxManaValue, triggeringSpell, record == null ? null : new StackEntry(record),
+                    deferredTargeting);
+        }
+
+        /**
+         * This choice standing in for a graveyard target choice that couldn't begin because another choice was being
+         * made: {@code targeting} begins it once this is taken out of the queue
+         * ({@code TriggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger}), by the rules of the method
+         * that queued it and against the graveyards as they are then.
+         */
+        public SpellGraveyardTargetTrigger deferring(java.util.function.Consumer<GameData> targeting) {
+            return new SpellGraveyardTargetTrigger(sourceCard, controllerId, effects, graveyardOwnerId, minCount,
+                    xValue, maxCount, sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId,
+                    sourcePermanentId, onceEachTurnActionKey, attackingPermanentSnapshots,
+                    graveyardTargetMaxManaValue, triggeringSpell, triggerRecord, targeting);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
@@ -3644,7 +3659,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             return new SpellGraveyardTargetTrigger(sourceCard, controllerId, effects, graveyardOwnerId, minCount,
                     xValue, maxCount, sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId,
                     sourcePermanentId, onceEachTurnActionKey, attackingPermanentSnapshots, maxManaValue,
-                    triggeringSpell, triggerRecord);
+                    triggeringSpell, triggerRecord, deferredTargeting);
         }
 
         /** This choice for a spell-cast ability that triggered on {@code spell}, as it was on the stack then. */
@@ -3652,7 +3667,7 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             return new SpellGraveyardTargetTrigger(sourceCard, controllerId, effects, graveyardOwnerId, minCount,
                     xValue, maxCount, sourcePowerAtTrigger, sourceAlternateCostAtTrigger, triggeringPermanentId,
                     sourcePermanentId, onceEachTurnActionKey, attackingPermanentSnapshots,
-                    graveyardTargetMaxManaValue, spell, triggerRecord);
+                    graveyardTargetMaxManaValue, spell, triggerRecord, deferredTargeting);
         }
 
         public SpellGraveyardTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,

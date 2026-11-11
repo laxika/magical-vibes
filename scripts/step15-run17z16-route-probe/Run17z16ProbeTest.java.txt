@@ -10,3 +10,6 @@ one line (SAME, a list of "field: plain -> variant", or NO ENTRY) instead of ass
 file before each run; --rerun is needed when nothing changed since the last run.
   MV_ROUTE_PROBE_OUT=/tmp/route.out bash gradlew :magical-vibes-application:test --rerun \
       --tests '*TriggerRouteRecordTest' -q
+
+Add MV_ROUTE_PROBE_STRICT=1 to also list the one allowed difference besides a chosen target, the X a target
+restricted by the event's value is chosen against (row 17z16b2).

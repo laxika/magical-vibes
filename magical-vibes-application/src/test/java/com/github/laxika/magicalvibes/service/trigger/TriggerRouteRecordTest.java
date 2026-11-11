@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyServic
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.service.turn.DayNightService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -98,9 +99,11 @@ import static org.assertj.core.api.Assertions.fail;
  * <p>Each case builds one world with two fixture cards on the same trigger, a plain one ({@link GainLifeEffect}) and
  * one {@link Variant}, makes the {@link Watch}'s event happen, answers every choice without passing priority, and
  * compares the two stack entries the engine produced field by field (see {@link #RECORD_FIELDS}). Values are compared
- * by role (the source, a player, a target), not by raw id. The only difference allowed is {@code nonTargeting} going
- * from true to false for a variant that chooses a target, as the chosen target replaces the plain ability's
- * non-targeting "that player" or "that creature".
+ * by role (the source, a player, a target), not by raw id. Two differences are allowed, both for a variant that
+ * chooses a target: {@code nonTargeting} going from true to false, as the chosen target replaces the plain ability's
+ * non-targeting "that player" or "that creature", and {@code xValue} going from 0 to the event's value, the X a
+ * target restricted by "that much" is chosen against (the second is not allowed when the environment variable
+ * {@value #STRICT_VARIABLE} is set).
  *
  * <p>Measuring mode: set the environment variable {@value #MEASURE_VARIABLE} to a file path and each case appends one
  * line to that file instead of asserting, {@code <watch> / <variant>: SAME}, {@code <watch> / <variant>: [field: plain
@@ -114,6 +117,7 @@ import static org.assertj.core.api.Assertions.fail;
 class TriggerRouteRecordTest extends BaseCardTest {
 
     private static final String MEASURE_VARIABLE = "MV_ROUTE_PROBE_OUT";
+    private static final String STRICT_VARIABLE = "MV_ROUTE_PROBE_STRICT";
 
     private static final String GAIN_LABEL = "You gain 1 life";
     private static final String DESTROY_LABEL = "Destroy target creature";
@@ -124,7 +128,10 @@ class TriggerRouteRecordTest extends BaseCardTest {
             "attackedTargetId", "attackingPermanentSnapshots", "defendingPlayerId", "combatOpponentPowerAtTrigger",
             "combatOpponentToughnessAtTrigger", "grantingPermanentId", "dyingPermanentManaValue", "linkedExiledCardId",
             "attachedPermanentSnapshot", "sourceGraveyardEntryVersion", "sourcePermanentSnapshot",
-            "onceEachTurnActionKey", "xValue", "activePlayerId", "alternateCost", "producedManaColors");
+            "onceEachTurnActionKey", "xValue", "activePlayerId", "alternateCost", "producedManaColors",
+            "kicked", "spectacle", "collectEvidenceCostPaid", "waterbendCostPaid", "revealCardFromHandCostPaid",
+            "controlledDragonAsCast", "giftPromised", "sacrificedToughness", "repeatedAdditionalCosts",
+            "convokeCreatureIds");
 
     /** The fields of {@link StackEntry} that make up the trigger event's record, besides {@code nonTargeting}. */
     private static final List<Field> RECORD_FIELDS = Arrays.stream(StackEntry.class.getDeclaredFields())
@@ -221,6 +228,8 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         CardSubtype.EQUIPMENT),
                 watch("own enters", () -> Triggers.enters(ObjectRelation.THIS), CardType.CREATURE,
                         TriggerRouteRecordTest::fixturesEnter),
+                watch("own enters, cast with its costs paid", () -> Triggers.enters(ObjectRelation.THIS),
+                        CardType.CREATURE, TriggerRouteRecordTest::fixturesEnterWithCostsPaid),
                 watch("a creature enters", () -> Triggers.enters(Triggers.CREATURE, ObjectRelation.ANY),
                         CardType.ENCHANTMENT, TriggerRouteRecordTest::anotherCreatureEnters),
                 watch("own death", () -> Triggers.dies(ObjectRelation.THIS), CardType.CREATURE,
@@ -612,6 +621,28 @@ class TriggerRouteRecordTest extends BaseCardTest {
         }
     }
 
+    /** The fixtures enter as permanents whose spells were kicked and had their other optional costs paid. */
+    private void fixturesEnterWithCostsPaid(List<Card> cards) {
+        BattlefieldEntryService entry = bean(BattlefieldEntryService.class);
+        TriggerCollectionService collection = bean(TriggerCollectionService.class);
+        for (Card card : cards) {
+            Permanent permanent = new Permanent(card);
+            permanent.setKicked(true);
+            permanent.setSpectacle(true);
+            permanent.setCollectEvidenceCostPaid(true);
+            permanent.setWaterbendCostPaid(true);
+            permanent.setRevealCardFromHandCostPaid(true);
+            permanent.setControlledDragonAsCast(true);
+            permanent.setGiftPromised(true);
+            harness.inMutationScope(() -> {
+                entry.putPermanentOntoBattlefield(gd, player1.getId(), permanent);
+                entry.processCreatureETBEffects(gd, player1.getId(), card, null, false);
+                collection.processNextTriggeredModalTrigger(gd);
+            });
+            answerAll();
+        }
+    }
+
     private void anotherCreatureEnters(List<Card> cards) {
         fixturePermanents(cards);
         harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -932,7 +963,8 @@ class TriggerRouteRecordTest extends BaseCardTest {
                     && field.getValue().equals("true") && "false".equals(otherValue);
             // The X of a chosen target or graveyard card is the event's value: a target restricted by "that much" or
             // "that spell's mana value" is chosen against it, where the plain entry keeps it as its event value only.
-            boolean choiceCarriesEventValue = field.getKey().equals("xValue") && variant.choosesTarget
+            boolean choiceCarriesEventValue = System.getenv(STRICT_VARIABLE) == null
+                    && field.getKey().equals("xValue") && variant.choosesTarget
                     && field.getValue().equals("0") && otherValue != null && otherValue.matches("[1-9]\\d*");
             if (!targetReplacesThatObject && !choiceCarriesEventValue) {
                 differences.add(field.getKey() + ": " + field.getValue() + " -> " + otherValue);

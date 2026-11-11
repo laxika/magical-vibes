@@ -146,6 +146,12 @@ public class GameData {
      * fixtures set one that fails the test for such a collector.
      */
     public transient BiConsumer<PendingInteraction, Boolean> interactionWithoutTriggerRecord;
+    /**
+     * Told of every trigger record that leaves the hand without having been taken by a choice or an ability: the
+     * record of an ability removed for want of a legal choice (CR 603.3d), or of a route that reached the stack
+     * before its record was in hand. {@code null} in real games; the test fixtures' audit sets one.
+     */
+    public transient java.util.function.Consumer<StackEntry> triggerRecordLeftBehind;
     public final Map<UUID, List<Card>> playerDecks = new LibraryMap();
     /** The size of each player's deck before the opening hand was drawn. */
     public final Map<UUID, Integer> startingDeckSizes = new ConcurrentHashMap<>();
@@ -4599,6 +4605,8 @@ public class GameData {
                     "chosenDeathReplacementsForRerun", "rerunMayLibraryChoices", "pendingDeathReplacementChoiceReplay",
                     "deferPlayerLossCheck",
                     "effectResolutionDepth", "restartTurnRequested", "simulation",
+                    "triggerRoutingDepth", "triggerRecordHandedOff", "interactionWithoutTriggerRecord",
+                    "triggerRecordLeftBehind",
                     "alwaysOfferPriorityWindows", "rulesEvents", "rulesObserver" -> true;
             default -> false;
         };
@@ -4622,7 +4630,10 @@ public class GameData {
     private static boolean isImmutableValue(Object value) {
         return value instanceof UUID || value instanceof String || value instanceof Number
                 || value instanceof Boolean || value instanceof Character || value.getClass().isEnum()
-                || value.getClass().getPackageName().startsWith("java.");
+                || value.getClass().getPackageName().startsWith("java.")
+                // A lambda or method reference holds no game state of its own; one bound to this game (the
+                // interaction state's trigger record callbacks) stays bound to it.
+                || value.getClass().isHidden();
     }
 
     private static void restoreObjectState(Object currentValue, Object snapshotValue) {
@@ -6346,6 +6357,9 @@ public class GameData {
 
     /** Ends a hand-off: whatever is still in hand is dropped and {@code previous} is in hand again. */
     public void restoreTriggerRecordInHand(StackEntry previous) {
+        if (triggerRecordInHand != previous) {
+            reportTriggerRecordLeftBehind();
+        }
         triggerRecordInHand = previous;
     }
 
@@ -6363,6 +6377,7 @@ public class GameData {
     }
 
     public void endTriggerRouting(TriggerRouting previous) {
+        reportTriggerRecordLeftBehind();
         triggerRoutingDepth--;
         triggerRecordInHand = previous.recordInHand();
         triggerRecordHandedOff = previous.handedOff();
@@ -6392,11 +6407,12 @@ public class GameData {
     }
 
     /**
-     * Drops the trigger record in hand: nothing is being routed any more (a stack object starts to resolve), so a
-     * record a route left behind (an ability removed for want of a legal target, CR 603.3d) can't reach another
-     * ability.
+     * Drops the trigger record in hand: nothing is being routed any more (a stack object starts to resolve, or a
+     * game action is over), so a record a route left behind (an ability removed for want of a legal target,
+     * CR 603.3d) can't reach another ability.
      */
     public void dropTriggerRecordInHand() {
+        reportTriggerRecordLeftBehind();
         triggerRecordInHand = null;
     }
 
@@ -6409,6 +6425,12 @@ public class GameData {
         StackEntry record = triggerRecordInHand;
         triggerRecordInHand = null;
         return record;
+    }
+
+    private void reportTriggerRecordLeftBehind() {
+        if (triggerRecordInHand != null && triggerRecordLeftBehind != null) {
+            triggerRecordLeftBehind.accept(triggerRecordInHand);
+        }
     }
 
     private void reportInteractionWithoutTriggerRecord(PendingInteraction interaction) {
@@ -6434,6 +6456,7 @@ public class GameData {
                 break;
             }
         }
+        reportTriggerRecordLeftBehind();
         triggerRecordInHand = queuedAgain
                 ? queuedTriggerRecords.get(interaction) : queuedTriggerRecords.remove(interaction);
     }

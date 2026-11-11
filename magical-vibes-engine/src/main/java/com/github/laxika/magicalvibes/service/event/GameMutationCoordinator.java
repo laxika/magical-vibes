@@ -123,6 +123,9 @@ public class GameMutationCoordinator {
                     result = mutation.get();
                     gameData.recordWayBehindState();
                     gameData.discardUnclaimedSpentManaRiders();
+                    // Nothing is being routed once the action is over: a trigger record a route left in hand (an
+                    // ability removed for want of a legal choice) can't reach an ability of a later action.
+                    gameData.dropTriggerRecordInHand();
                     if (cues != null) {
                         cues.actionCompleting(gameData);
                     }

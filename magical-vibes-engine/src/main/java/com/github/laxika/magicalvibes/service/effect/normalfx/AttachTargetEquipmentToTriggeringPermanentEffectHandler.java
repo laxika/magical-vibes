@@ -32,7 +32,9 @@ public class AttachTargetEquipmentToTriggeringPermanentEffectHandler implements 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent host = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
+        // The permanent that caused the trigger of "whenever this enters or attacks" is the ability's own source.
+        Permanent host = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId() != null
+                ? entry.getTriggeringPermanentId() : entry.getSourcePermanentId());
         List<UUID> targetIds = entry.targetsForEffect((AttachTargetEquipmentToTriggeringPermanentEffect) effect);
         if (targetIds.isEmpty()) {
             return;

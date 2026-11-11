@@ -46,7 +46,9 @@ class VodalianMindsingerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.castKickedCreature(player1, 0, target.getId());
+        harness.castKickedCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
         Permanent mindsinger = findPermanent(player1, "Vodalian Mindsinger");
@@ -224,7 +226,9 @@ class VodalianMindsingerTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.castKickedCreature(player2, 0, source.getId());
+        harness.castKickedCreature(player2, 0);
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, source.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(source, target);

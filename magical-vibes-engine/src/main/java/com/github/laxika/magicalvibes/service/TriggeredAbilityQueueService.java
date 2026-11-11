@@ -2932,6 +2932,17 @@ public class TriggeredAbilityQueueService {
             PermanentChoiceContext.SpellGraveyardTargetTrigger pending =
                     gameData.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
 
+            if (pending.deferredTargeting() != null) {
+                // A graveyard target choice that waited for another choice to be made: the method that queued it
+                // begins it now, by its own rules.
+                gameData.pollPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
+                pending.deferredTargeting().accept(gameData);
+                if (gameData.interaction.isAwaitingInput()) {
+                    return;
+                }
+                continue;
+            }
+
             // An additional copy of an entry trigger that exiles target graveyard cards: it chooses its
             // own targets now that the previous copy's targets have been chosen.
             ExileCardsFromGraveyardEffect enterExile = pending.effects().stream()

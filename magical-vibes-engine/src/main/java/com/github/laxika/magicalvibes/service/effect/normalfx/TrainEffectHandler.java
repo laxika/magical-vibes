@@ -61,14 +61,9 @@ public class TrainEffectHandler implements NormalEffectHandlerBean {
                 .map(BattlefieldAndGraveyardCardChoosingEffect.class::cast)
                 .findFirst()
                 .orElse(null);
-        if (mixedZoneTrigger != null) {
-            graveyardTargetingService.handleBattlefieldAndGraveyardExileTargeting(
-                    gameData, entry.getControllerId(), card, trainTriggers, source.getId(),
-                    mixedZoneTrigger, card.getName() + "'s training ability");
-            return;
-        }
-
-        gameData.stack.add(new StackEntry(
+        // The entry of an ability that chooses nothing, which is also the record its target choice carries
+        // (GameData.handOffTriggerRecord).
+        StackEntry trainsEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 card,
                 entry.getControllerId(),
@@ -81,6 +76,15 @@ public class TrainEffectHandler implements NormalEffectHandlerBean {
                 null,
                 List.of(),
                 List.of()
-        ));
+        );
+        gameData.handOffTriggerRecord(trainsEntry);
+        if (mixedZoneTrigger != null) {
+            graveyardTargetingService.handleBattlefieldAndGraveyardExileTargeting(
+                    gameData, entry.getControllerId(), card, trainTriggers, source.getId(),
+                    mixedZoneTrigger, card.getName() + "'s training ability");
+            return;
+        }
+
+        gameData.stack.add(trainsEntry);
     }
 }

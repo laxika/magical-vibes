@@ -112,6 +112,11 @@ public class GraveyardTargetingService {
     private void handleBattlefieldAndGraveyardExileTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, UUID sourcePermanentId,
             BattlefieldAndGraveyardCardChoosingEffect choosingEffect, String abilityDescription, int xValue) {
+        if (waitsForChoiceInProgress(gameData, controllerId, card, effects, sourcePermanentId,
+                game -> handleBattlefieldAndGraveyardExileTargeting(game, controllerId, card, effects,
+                        sourcePermanentId, choosingEffect, abilityDescription, xValue))) {
+            return;
+        }
         PermanentPredicate battlefieldPredicate = choosingEffect.mixedZoneBattlefieldPredicate();
         CardPredicate graveyardPredicate = choosingEffect.mixedZoneGraveyardPredicate();
         List<Card> pool = new ArrayList<>();
@@ -191,12 +196,9 @@ public class GraveyardTargetingService {
                                                   List<CardEffect> allEffects, UUID sourcePermanentId,
                                                   ExileCardsFromGraveyardEffect exile,
                                                   int multikickerPaymentCount) {
-        if (gameData.interaction.isAwaitingInput() && queuedChoiceReturnsToEnterExile(card, allEffects, exile)) {
-            // Another ability is already choosing its targets: this one, an object of its own with its own targets,
-            // waits its turn in the queue instead of overwriting that choice, and comes back here when it is taken out.
-            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    card, controllerId, new ArrayList<>(allEffects), null, 0, multikickerPaymentCount, 0, null, false,
-                    null, sourcePermanentId));
+        if (waitsForChoiceInProgress(gameData, controllerId, card, allEffects, sourcePermanentId,
+                game -> handleGraveyardExileETBTargeting(game, controllerId, card, allEffects, sourcePermanentId,
+                        exile, multikickerPaymentCount))) {
             return;
         }
         List<Card> matchingCards = new ArrayList<>();
@@ -264,20 +266,23 @@ public class GraveyardTargetingService {
     }
 
     /**
-     * Whether a queued {@link PermanentChoiceContext.SpellGraveyardTargetTrigger} with these effects is given back to
-     * {@link #handleGraveyardExileETBTargeting} for {@code exile} when it is taken out of the queue
-     * ({@code TriggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger}): {@code exile} is the first of
-     * the effects that is a graveyard exile of one of the card's own enter abilities. Wrapped in a "you may", it is
-     * not, and the queued choice would be made by other rules than this method's.
+     * Whether a triggered ability's graveyard target choice has to wait because another choice is being made. The
+     * ability is an object of its own with its own targets (CR 603.3b, 603.3d), and the game has one graveyard target
+     * operation, so the ability is queued instead of written over the choice in progress, and {@code targeting}, the
+     * call that got here, begins its choice once it is taken out of the queue
+     * ({@code TriggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger}). The queued choice keeps the
+     * trigger record its collector handed off.
      */
-    private static boolean queuedChoiceReturnsToEnterExile(Card card, List<CardEffect> allEffects,
-                                                           ExileCardsFromGraveyardEffect exile) {
-        return allEffects.stream()
-                .filter(ExileCardsFromGraveyardEffect.class::isInstance)
-                .filter(candidate -> card.getOwnEntryEffects().contains(candidate))
-                .findFirst()
-                .filter(exile::equals)
-                .isPresent();
+    private boolean waitsForChoiceInProgress(GameData gameData, UUID controllerId, Card card,
+                                             List<CardEffect> effects, UUID sourcePermanentId,
+                                             java.util.function.Consumer<GameData> targeting) {
+        if (!gameData.interaction.isAwaitingInput()) {
+            return false;
+        }
+        gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                card, controllerId, new ArrayList<>(effects), null, 0, 0, 0, null, false, null, sourcePermanentId)
+                .deferring(targeting));
+        return true;
     }
 
     /**
@@ -298,6 +303,11 @@ public class GraveyardTargetingService {
     public void handleGraveyardCardsExileETBTargeting(GameData gameData, UUID controllerId, Card card,
                                                       List<CardEffect> allEffects, ExileGraveyardCardsEffect exile,
                                                       int maximumTargets) {
+        if (waitsForChoiceInProgress(gameData, controllerId, card, allEffects, null,
+                game -> handleGraveyardCardsExileETBTargeting(game, controllerId, card, allEffects, exile,
+                        maximumTargets))) {
+            return;
+        }
         CardPredicate filter = exile.filter();
         GraveyardSearchScope scope = exile.targetSpec().graveyardScope().orElseThrow();
 
@@ -427,6 +437,11 @@ public class GraveyardTargetingService {
      */
     public void handleTargetPlayerGraveyardChoiceETBTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, UUID targetPlayerId, GraveyardCardChoosingEffect choosingEffect) {
+        if (waitsForChoiceInProgress(gameData, controllerId, card, effects, null,
+                game -> handleTargetPlayerGraveyardChoiceETBTargeting(game, controllerId, card, effects,
+                        targetPlayerId, choosingEffect))) {
+            return;
+        }
         List<Card> matchingCards = new ArrayList<>();
         List<Card> graveyard = targetableGraveyard(gameData, targetPlayerId, controllerId);
         if (graveyard != null) {
@@ -494,6 +509,12 @@ public class GraveyardTargetingService {
     private void handleControllerGraveyardMultiTargetETB(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, CardPredicate filter, int requestedMaxTargets, int minTargets,
             String promptSuffix, Integer maxTotalManaValue, int xValue, UUID sourcePermanentId) {
+        if (waitsForChoiceInProgress(gameData, controllerId, card, effects, sourcePermanentId,
+                game -> handleControllerGraveyardMultiTargetETB(game, controllerId, card, effects, filter,
+                        requestedMaxTargets, minTargets, promptSuffix, maxTotalManaValue, xValue,
+                        sourcePermanentId))) {
+            return;
+        }
         List<Card> matchingCards = new ArrayList<>();
         List<Card> graveyard = targetableGraveyard(gameData, controllerId, controllerId);
         if (graveyard != null) {
@@ -816,12 +837,9 @@ public class GraveyardTargetingService {
         if (target == null) {
             return;
         }
-        if (gameData.interaction.isAwaitingInput()) {
-            // Another ability is already choosing its targets: this one, an object of its own with its own targets,
-            // waits its turn in the queue instead of overwriting that choice.
-            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    card, controllerId, new ArrayList<>(effects), null, 0, 0, 0, null, false, null,
-                    sourcePermanentId));
+        if (waitsForChoiceInProgress(gameData, controllerId, card, effects, sourcePermanentId,
+                game -> handleBeginningOfCombatGraveyardTargeting(game, controllerId, card, effects,
+                        sourcePermanentId))) {
             return;
         }
         CardPredicate filter = target.filter();
@@ -886,6 +904,10 @@ public class GraveyardTargetingService {
 
     public void handleGraveyardCastETBTargeting(GameData gameData, UUID controllerId, Card card,
                                                  List<CardEffect> effects) {
+        if (waitsForChoiceInProgress(gameData, controllerId, card, effects, null,
+                game -> handleGraveyardCastETBTargeting(game, controllerId, card, effects))) {
+            return;
+        }
         List<Card> matchingCards = collectCastableInstantsAndSorceries(gameData, controllerId, card, effects);
 
         if (matchingCards.isEmpty()) {
@@ -907,6 +929,10 @@ public class GraveyardTargetingService {
      */
     public void handleAttackGraveyardCastTargeting(GameData gameData, UUID controllerId, Card card,
                                                    List<CardEffect> effects, UUID sourcePermanentId) {
+        if (waitsForChoiceInProgress(gameData, controllerId, card, effects, sourcePermanentId,
+                game -> handleAttackGraveyardCastTargeting(game, controllerId, card, effects, sourcePermanentId))) {
+            return;
+        }
         List<Card> matchingCards = collectCastableInstantsAndSorceries(gameData, controllerId, card, effects);
 
         if (matchingCards.isEmpty()) {
@@ -958,6 +984,10 @@ public class GraveyardTargetingService {
 
     public void handleGraveyardMayPlayETBTargeting(GameData gameData, UUID controllerId, Card card,
                                                     List<CardEffect> effects, UUID sourcePermanentId) {
+        if (waitsForChoiceInProgress(gameData, controllerId, card, effects, sourcePermanentId,
+                game -> handleGraveyardMayPlayETBTargeting(game, controllerId, card, effects, sourcePermanentId))) {
+            return;
+        }
         ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect mayPlayEffect = effects.stream()
                 .filter(e -> e instanceof ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect)
                 .map(e -> (ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect) e)
@@ -993,6 +1023,10 @@ public class GraveyardTargetingService {
 
     public void handlePutCreatureFromOpponentGraveyardETBTargeting(GameData gameData, UUID controllerId, Card card,
                                                                     List<CardEffect> effects) {
+        if (waitsForChoiceInProgress(gameData, controllerId, card, effects, null,
+                game -> handlePutCreatureFromOpponentGraveyardETBTargeting(game, controllerId, card, effects))) {
+            return;
+        }
         List<Card> matchingCards = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(controllerId)) continue;
@@ -1019,6 +1053,10 @@ public class GraveyardTargetingService {
 
     public void handleGrantFlashbackETBTargeting(GameData gameData, UUID controllerId, Card card,
                                                   List<CardEffect> effects) {
+        if (waitsForChoiceInProgress(gameData, controllerId, card, effects, null,
+                game -> handleGrantFlashbackETBTargeting(game, controllerId, card, effects))) {
+            return;
+        }
         GrantFlashbackToTargetGraveyardCardEffect flashbackEffect = effects.stream()
                 .filter(e -> e instanceof GrantFlashbackToTargetGraveyardCardEffect)
                 .map(e -> (GrantFlashbackToTargetGraveyardCardEffect) e)

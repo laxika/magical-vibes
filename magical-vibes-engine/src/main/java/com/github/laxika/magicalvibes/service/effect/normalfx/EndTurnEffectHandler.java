@@ -34,7 +34,7 @@ public class EndTurnEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         // Rule 724.1a: Triggered abilities that haven't been put on the stack yet cease to exist
         gameData.pendingMayAbilities.clear();
-        gameData.pendingInteractions.removeIf(PermanentChoiceContext.DeathTriggerTarget.class::isInstance);
+        gameData.clearPendingInteractions(PermanentChoiceContext.DeathTriggerTarget.class);
 
         // The resolving spell stays on the stack while it resolves (an instant or sorcery is removed
         // only at the end of its resolution), so take it off the stack here to keep the stack exile from

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -19,10 +20,12 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class TriggerCollectorRegistryTest {
 
     private TriggerCollectorRegistry registry;
+    private GameData gameData;
 
     @BeforeEach
     void setUp() {
         registry = new TriggerCollectorRegistry();
+        gameData = new GameData(UUID.randomUUID(), "test", UUID.randomUUID(), "Player1");
     }
 
     @Nested
@@ -32,7 +35,7 @@ class TriggerCollectorRegistryTest {
         @Test
         @DisplayName("Returns false when no handler is registered")
         void returnsFalseWhenNoHandler() {
-            var match = new TriggerMatchContext(null, null, UUID.randomUUID(), new DrawCardEffect(1));
+            var match = new TriggerMatchContext(gameData, null, UUID.randomUUID(), new DrawCardEffect(1));
             var ctx = new TriggerContext.LandTap(UUID.randomUUID(), UUID.randomUUID());
 
             boolean result = registry.dispatch(match, TapWatch.ON_ANY_PLAYER_TAPS_LAND, ctx);
@@ -47,7 +50,7 @@ class TriggerCollectorRegistryTest {
             registry.register(TapWatch.ON_ANY_PLAYER_TAPS_LAND, DrawCardEffect.class,
                     (match, context) -> { called[0] = true; return true; });
 
-            var match = new TriggerMatchContext(null, null, UUID.randomUUID(), new DrawCardEffect(1));
+            var match = new TriggerMatchContext(gameData, null, UUID.randomUUID(), new DrawCardEffect(1));
             var ctx = new TriggerContext.LandTap(UUID.randomUUID(), UUID.randomUUID());
 
             boolean result = registry.dispatch(match, TapWatch.ON_ANY_PLAYER_TAPS_LAND, ctx);
@@ -65,7 +68,7 @@ class TriggerCollectorRegistryTest {
             var draw = new DrawCardEffect(1);
             var gainLife = new GainLifeEffect(1);
 
-            boolean result = registry.dispatch(new TriggerMatchContext(null, null, UUID.randomUUID(),
+            boolean result = registry.dispatch(new TriggerMatchContext(gameData, null, UUID.randomUUID(),
                     List.of(draw, gainLife)), LifeWatch.ON_CONTROLLER_GAINS_LIFE,
                     new TriggerContext.LifeGain(UUID.randomUUID(), 1));
 
@@ -84,7 +87,7 @@ class TriggerCollectorRegistryTest {
                     (match, context) -> { defaulted.add(match.effects()); return true; });
             var draw = new DrawCardEffect(1);
 
-            registry.dispatch(new TriggerMatchContext(null, null, UUID.randomUUID(),
+            registry.dispatch(new TriggerMatchContext(gameData, null, UUID.randomUUID(),
                     List.of(new GainLifeEffect(1), draw)), LifeWatch.ON_CONTROLLER_GAINS_LIFE,
                     new TriggerContext.LifeGain(UUID.randomUUID(), 1));
 
@@ -103,7 +106,7 @@ class TriggerCollectorRegistryTest {
                     (match, context) -> { defaultHandled.add(match.effects()); return true; });
 
             var mayEffect = new MayEffect(new DrawCardEffect(1), "Do you want to?");
-            var match = new TriggerMatchContext(null, null, UUID.randomUUID(), mayEffect);
+            var match = new TriggerMatchContext(gameData, null, UUID.randomUUID(), mayEffect);
             var ctx = new TriggerContext.SpellCast(null, UUID.randomUUID(), true);
 
             boolean result = registry.dispatch(match, SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, ctx);
@@ -124,7 +127,7 @@ class TriggerCollectorRegistryTest {
                     (match, context) -> { innerCalled[0] = true; return true; });
 
             var mayEffect = new MayEffect(new DrawCardEffect(1), "prompt");
-            var match = new TriggerMatchContext(null, null, UUID.randomUUID(), mayEffect);
+            var match = new TriggerMatchContext(gameData, null, UUID.randomUUID(), mayEffect);
             var ctx = new TriggerContext.Discard(UUID.randomUUID(), null);
 
             boolean result = registry.dispatch(match, LibraryWatch.ON_OPPONENT_DISCARDS, ctx);
@@ -141,7 +144,7 @@ class TriggerCollectorRegistryTest {
             registry.register(DamageWatch.ON_DEALT_DAMAGE, CardEffect.class,
                     (match, context) -> { defaultCalled[0] = true; return true; });
 
-            var match = new TriggerMatchContext(null, null, UUID.randomUUID(), new DrawCardEffect(1));
+            var match = new TriggerMatchContext(gameData, null, UUID.randomUUID(), new DrawCardEffect(1));
             var ctx = new TriggerContext.DamageToCreature(null, 2, UUID.randomUUID());
 
             boolean result = registry.dispatch(match, DamageWatch.ON_DEALT_DAMAGE, ctx);
@@ -157,7 +160,7 @@ class TriggerCollectorRegistryTest {
             registry.register(TapWatch.ON_ANY_PLAYER_TAPS_LAND, DrawCardEffect.class,
                     (match, context) -> { called[0] = true; return true; });
 
-            var match = new TriggerMatchContext(null, null, UUID.randomUUID(), new DrawCardEffect(1));
+            var match = new TriggerMatchContext(gameData, null, UUID.randomUUID(), new DrawCardEffect(1));
             var ctx = new TriggerContext.LandTap(UUID.randomUUID(), UUID.randomUUID());
 
             // Wrong slot

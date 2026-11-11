@@ -59,8 +59,9 @@ public class ExchangeControlOfTargetPermanentsEffectHandler implements NormalEff
         UUID opponentTargetId;
         if (exchange.triggeringPermanentIsFirstTarget()) {
             opponentTargetId = entry.getTargetId();
+            // The permanent that entered is the ability's own source for "when this enters" (Gilded Drake).
             ownTarget = entry.getTriggeringPermanentId() == null
-                    ? null
+                    ? resolveSourcePermanent(gameData, entry)
                     : gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
         } else if (exchange.sourceIsFirstTarget()) {
             opponentTargetId = targetIds != null && !targetIds.isEmpty() ? targetIds.getFirst() : entry.getTargetId();

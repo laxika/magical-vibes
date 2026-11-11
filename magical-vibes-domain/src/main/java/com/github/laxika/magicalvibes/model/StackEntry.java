@@ -1497,17 +1497,40 @@ public class StackEntry {
     /**
      * Gives this entry, one a choice made as its ability went on the stack built (a mode, CR 603.3c; a target, CR
      * 603.3d), what {@code record} holds: the entry its collector builds for an ability that needs no choice. The
-     * trigger event ({@link #copyTriggerEventFrom}), the source as it triggered and how it was cast (CR 608.2h), and
-     * the "do this only once each turn" mark (CR 603.2h) and the event's X are the same whichever way the ability
-     * reaches the stack. An
-     * entry with no target of its own also takes the record's non-targeting "that player" or "that creature".
+     * trigger event ({@link #copyTriggerEventFrom}), the source as it triggered and how it was cast (CR 608.2h: its
+     * alternative cost, whether it was kicked, the optional and repeated costs paid, a promised gift), the "do this
+     * only once each turn" mark (CR 603.2h) and the event's X are the same whichever way the ability reaches the
+     * stack. An entry of an ability with no target to choose also takes the record's non-targeting "that player" or
+     * "that creature".
      */
     public void carryTriggerRecord(StackEntry record) {
+        // The limit a graveyard target was chosen against is the choice's, as its X is.
+        Integer chosenAgainstMaxManaValue = this.graveyardTargetMaxManaValue;
         copyTriggerEventFrom(record);
+        if (this.graveyardTargetMaxManaValue == null) {
+            this.graveyardTargetMaxManaValue = chosenAgainstMaxManaValue;
+        }
         if (record.sourcePermanentSnapshot != null) {
             this.sourcePermanentSnapshot = new Permanent(record.sourcePermanentSnapshot);
         }
         this.alternateCost = record.alternateCost;
+        // What was paid as the source was cast is the same for every ability of it, whatever the ability chooses.
+        this.kicked |= record.kicked;
+        this.spectacle |= record.spectacle;
+        this.collectEvidenceCostPaid |= record.collectEvidenceCostPaid;
+        this.waterbendCostPaid |= record.waterbendCostPaid;
+        this.revealCardFromHandCostPaid |= record.revealCardFromHandCostPaid;
+        this.controlledDragonAsCast |= record.controlledDragonAsCast;
+        this.giftPromised |= record.giftPromised;
+        if (this.sacrificedToughness == 0) {
+            this.sacrificedToughness = record.sacrificedToughness;
+        }
+        if (this.repeatedAdditionalCosts == null || this.repeatedAdditionalCosts.isEmpty()) {
+            this.repeatedAdditionalCosts = record.repeatedAdditionalCosts;
+        }
+        if (this.convokeCreatureIds.isEmpty()) {
+            this.convokeCreatureIds = record.convokeCreatureIds;
+        }
         this.onceEachTurnActionKey = record.onceEachTurnActionKey;
         if (this.xValue == 0) {
             // The X the event gave the ability (the number of attackers of an attack ability), unless the choice set one.
@@ -1515,7 +1538,8 @@ public class StackEntry {
         }
         if (record.nonTargeting && this.targetId == null
                 && (this.targetCardIds == null || this.targetCardIds.isEmpty())
-                && (this.targetIds == null || this.targetIds.isEmpty())) {
+                && (this.targetIds == null || this.targetIds.isEmpty())
+                && !hasTargetToChoose()) {
             this.targetId = record.targetId;
             this.nonTargeting = true;
         }
@@ -1526,6 +1550,17 @@ public class StackEntry {
             this.copy = true;
         }
         this.triggerRecordCarried = true;
+    }
+
+    /**
+     * Whether one of this entry's effects has a target: an ability of "up to one target" whose controller chose none
+     * has no target, and no "that player" or "that creature" in its place.
+     */
+    private boolean hasTargetToChoose() {
+        return effectsToResolve.stream().anyMatch(effect -> {
+            com.github.laxika.magicalvibes.model.effect.TargetSpec spec = effect.targetSpec();
+            return spec.declaredTarget() != null && !spec.selfTargeting();
+        });
     }
 
     /** Whether this entry was given its collector's record of the trigger event ({@link #carryTriggerRecord}). */

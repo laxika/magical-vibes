@@ -218,8 +218,17 @@ public class TurnFaceUpCopyService {
         int triggerCopies = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
                 gameData, controllerId, permanent, false,
                 new TriggerContext.PermanentTurnsFaceUp(permanent, controllerId));
+        // The entry of an ability that chooses nothing, which is also the record a mode or target choice carries
+        // (GameData.handOffTriggerRecord).
+        java.util.function.Supplier<StackEntry> plainEntry = () -> {
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                    card.getName() + "'s ability", new ArrayList<>(effects), xValue, permanent.getId());
+            entry.setSourcePermanentSnapshot(new Permanent(permanent));
+            return entry;
+        };
         if (effects.size() == 1 && effects.getFirst() instanceof ChooseOneEffect modal) {
             for (int copy = 0; copy < triggerCopies; copy++) {
+                gameData.handOffTriggerRecord(plainEntry.get());
                 gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                         card, controllerId, modal, permanent.getId()));
             }
@@ -230,6 +239,7 @@ public class TurnFaceUpCopyService {
                 .map(BattlefieldAndGraveyardCardChoosingEffect.class::cast)
                 .findFirst().orElse(null);
         if (mixedZoneChoice != null) {
+            gameData.handOffTriggerRecord(plainEntry.get());
             graveyardTargetingService.handleBattlefieldAndGraveyardExileETBTargeting(
                     gameData, controllerId, card, effects, permanent.getId(), mixedZoneChoice, xValue);
             return true;
@@ -242,14 +252,6 @@ public class TurnFaceUpCopyService {
                 .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
         boolean targetsPermanent = effects.stream()
                 .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-        // The entry of an ability that chooses nothing, which is also the record a target choice carries
-        // (GameData.handOffTriggerRecord).
-        java.util.function.Supplier<StackEntry> plainEntry = () -> {
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
-                    card.getName() + "'s ability", new ArrayList<>(effects), xValue, permanent.getId());
-            entry.setSourcePermanentSnapshot(new Permanent(permanent));
-            return entry;
-        };
         if (targetsGraveyard) {
             int minimumGraveyardTargets = effects.stream()
                     .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))

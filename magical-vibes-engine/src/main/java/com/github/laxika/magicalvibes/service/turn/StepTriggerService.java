@@ -4035,6 +4035,9 @@ public class StepTriggerService {
                     delayed.sourcePermanentId());
             entry.setDeclaredTargetIds(delayed.affectedPermanentIds());
             entry.setNonTargeting(true);
+            // "That creature" of the delayed ability is its event's object on every route: an ability that also
+            // chooses a target (Swooping Pteranodon's "target land deals 3 damage to that creature") reads it there.
+            entry.setTriggeringPermanentId(delayed.affectedPermanentId());
             gameData.handOffTriggerRecord(entry);
             if (delayed.targetGroups().isEmpty()) {
                 gameData.enqueueTrigger(entry);

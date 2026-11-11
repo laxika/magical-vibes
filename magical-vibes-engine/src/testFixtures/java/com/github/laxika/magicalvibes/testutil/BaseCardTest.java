@@ -78,10 +78,19 @@ public abstract class BaseCardTest {
 
     private final List<String> routesWithoutTriggerRecord = new java.util.ArrayList<>();
 
+    private static final java.util.Set<String> AUDITED_TRIGGER_RECORD_LINES =
+            java.util.concurrent.ConcurrentHashMap.newKeySet();
+
     /**
      * Watches the game's trigger record hand-off ({@code GameData.handOffTriggerRecord}): a collector that queues or
      * asks a choice for the ability it is routing without having handed off the ability's record is a route that
-     * records less of the trigger event than the ability that chooses nothing.
+     * records less of the trigger event than the ability that chooses nothing, and fails the test.
+     *
+     * <p>Audit mode: with the environment variable {@code MV_TRIGGER_RECORD_AUDIT} set to a file path, every distinct
+     * line of each test JVM is appended to that file as well: {@code ROUTING} (the failure above), {@code UNSCOPED}
+     * (a choice queued or asked with no record in hand outside a collector's routing), {@code LEFT} (a record
+     * that left the hand without reaching a choice or an ability) and {@code MISSED} (such a record while its own
+     * ability, of the same source and effects, is on the stack without one), each with the engine frames it came from.
      */
     private void watchTriggerRecords() {
         String auditFile = System.getenv("MV_TRIGGER_RECORD_AUDIT");
@@ -95,29 +104,55 @@ public abstract class BaseCardTest {
                     && choice.context() != null) {
                 line.append('/').append(choice.context().getClass().getSimpleName());
             }
-            int frames = 0;
-            for (StackTraceElement frame : new Throwable().getStackTrace()) {
-                String className = frame.getClassName();
-                if (!className.contains(".service.") || className.endsWith("InteractionHandlerRegistry")) {
-                    continue;
-                }
-                line.append(' ').append(className.substring(className.lastIndexOf('.') + 1)).append('.')
-                        .append(frame.getMethodName()).append(':').append(frame.getLineNumber());
-                if (++frames == 6) {
-                    break;
-                }
-            }
-            if (auditFile != null) {
-                try {
-                    java.nio.file.Files.writeString(java.nio.file.Path.of(auditFile), line + "\n",
-                            java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
-                } catch (java.io.IOException e) {
-                    throw new java.io.UncheckedIOException(e);
-                }
-            } else {
+            appendEngineFrames(line);
+            auditTriggerRecordLine(auditFile, line.toString());
+            if (routing) {
                 routesWithoutTriggerRecord.add(line.toString());
             }
         };
+        if (auditFile != null) {
+            gd.triggerRecordLeftBehind = record -> {
+                // MISSED: the record's own ability (the same source and effects) is on the stack without a carried
+                // record, so a route put it there before the record was in hand.
+                boolean missed = record.getCard() != null && gd.stack.stream().anyMatch(entry -> entry != record
+                        && entry.getEntryType() == com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY
+                        && !entry.hasCarriedTriggerRecord() && entry.getCard() != null
+                        && record.getCard().getId().equals(entry.getCard().getId())
+                        && entry.getEffectsToResolve().equals(record.getEffectsToResolve()));
+                boolean onStack = gd.stack.contains(record);
+                StringBuilder line = new StringBuilder(missed ? "MISSED [" : onStack ? "LEFT-ON-STACK [" : "LEFT [")
+                        .append(record.getDescription()).append(']');
+                appendEngineFrames(line);
+                auditTriggerRecordLine(auditFile, line.toString());
+            };
+        }
+    }
+
+    private static void appendEngineFrames(StringBuilder line) {
+        int frames = 0;
+        for (StackTraceElement frame : new Throwable().getStackTrace()) {
+            String className = frame.getClassName();
+            if (!className.contains(".service.") || className.endsWith("InteractionHandlerRegistry")) {
+                continue;
+            }
+            line.append(' ').append(className.substring(className.lastIndexOf('.') + 1)).append('.')
+                    .append(frame.getMethodName()).append(':').append(frame.getLineNumber());
+            if (++frames == 6) {
+                break;
+            }
+        }
+    }
+
+    private static void auditTriggerRecordLine(String auditFile, String line) {
+        if (auditFile == null || !AUDITED_TRIGGER_RECORD_LINES.add(line)) {
+            return;
+        }
+        try {
+            java.nio.file.Files.writeString(java.nio.file.Path.of(auditFile), line + "\n",
+                    java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
+        } catch (java.io.IOException e) {
+            throw new java.io.UncheckedIOException(e);
+        }
     }
 
     /**
