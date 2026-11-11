@@ -1785,10 +1785,12 @@ public class PermanentCounterSupport {
             }
             CardEffect effect = read.effect();
             TriggerOptions options = read.ability().options();
+            // "When the [Nth] counter is put on this" is the event (CR 603.2); an intervening "if" about the counters
+            // is the state as they are put (CR 603.4).
             if (!counterTriggerConditionMet(gameData, options.eventCondition(), target, controllerId, counterType,
                     previousCount, currentCount)
-                    || !counterTriggerConditionMet(gameData, options.interveningIf(), target, controllerId,
-                    counterType, previousCount, currentCount)) {
+                    || (options.interveningIf() != null && !conditionEvaluationService.isMet(gameData,
+                    options.interveningIf(), ConditionContext.forPermanent(target, controllerId)))) {
                 continue;
             }
             queued.add(read);
@@ -2177,9 +2179,9 @@ public class PermanentCounterSupport {
     }
 
     /**
-     * Whether {@code condition}, an ability's event condition or intervening "if" ({@code null} for none), holds as
-     * counters are put on {@code target}: a lore- or other counter threshold ("when the [Nth] counter is put on this")
-     * holds only for the counters that cross it, any other condition as it is now.
+     * Whether {@code condition}, an ability's event condition ({@code null} for none), holds as counters are put on
+     * {@code target}: a lore- or other counter threshold ("when the [Nth] counter is put on this") holds only for the
+     * counters that cross it, any other condition as it is now.
      */
     private boolean counterTriggerConditionMet(GameData gameData, Condition condition, Permanent target,
                                                UUID controllerId, CounterType counterType, int previousCount,

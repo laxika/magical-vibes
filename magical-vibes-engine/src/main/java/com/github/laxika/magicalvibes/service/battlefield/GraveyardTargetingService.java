@@ -656,6 +656,19 @@ public class GraveyardTargetingService {
     public void handleAttackGraveyardTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, UUID sourcePermanentId, UUID defendingPlayerId,
             List<Permanent> attackingPermanentSnapshots) {
+        handleAttackGraveyardTargeting(gameData, controllerId, card, effects, sourcePermanentId, defendingPlayerId,
+                attackingPermanentSnapshots, null);
+    }
+
+    /**
+     * As {@link #handleAttackGraveyardTargeting(GameData, UUID, Card, List, UUID, UUID, List)}, with
+     * {@code triggerRecord}, the entry the ability's collector builds for an ability that chooses nothing: the entry
+     * the chosen cards go on the stack as carries it ({@code StackEntry.carryTriggerRecord}), so the attack is
+     * recorded the same whether or not the ability has a graveyard target.
+     */
+    public void handleAttackGraveyardTargeting(GameData gameData, UUID controllerId, Card card,
+            List<CardEffect> effects, UUID sourcePermanentId, UUID defendingPlayerId,
+            List<Permanent> attackingPermanentSnapshots, StackEntry triggerRecord) {
         GraveyardSearchScope scope = effects.stream()
                 .map(e -> e.targetSpec().graveyardScope().orElse(null))
                 .filter(java.util.Objects::nonNull)
@@ -690,7 +703,8 @@ public class GraveyardTargetingService {
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     card, controllerId, effects, defendingPlayerOnly ? defendingPlayerId : null, 0, 0, 0,
                     queuedSource == null ? null : gameQueryService.getEffectivePower(gameData, queuedSource),
-                    false, null, sourcePermanentId, null, attackingPermanentSnapshots));
+                    false, null, sourcePermanentId, null, attackingPermanentSnapshots)
+                    .withTriggerRecord(triggerRecord));
             return;
         }
         List<UUID> searchPlayerIds = defendingPlayerOnly
@@ -729,6 +743,9 @@ public class GraveyardTargetingService {
                         sourcePermanentId);
                 trigger.setNonTargeting(true);
                 trigger.setAttackingPermanentSnapshots(attackingPermanentSnapshots);
+                if (triggerRecord != null) {
+                    trigger.carryTriggerRecord(triggerRecord);
+                }
                 gameData.stack.add(trigger);
                 gameLogService.append(gameData, GameLog.cardThen(card,
                         "'s attack ability triggers with no graveyard targets."));
@@ -743,27 +760,12 @@ public class GraveyardTargetingService {
             return;
         }
 
-        if (matchingCards.isEmpty()) {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    controllerId,
-                    card.getName() + "'s attack trigger",
-                    new ArrayList<>(effects),
-                    0,
-                    sourcePermanentId));
-            gameLogService.append(gameData, GameLog.cardThen(card,
-                    "'s attack trigger has no valid graveyard targets."));
-            log.info("Game {} - {} attack graveyard trigger pushed with 0 targets",
-                    gameData.id, card.getName());
-            return;
-        }
-
         gameData.graveyardTargetOperation.card = card;
         gameData.graveyardTargetOperation.controllerId = controllerId;
         gameData.graveyardTargetOperation.effects = new ArrayList<>(effects);
         gameData.graveyardTargetOperation.sourcePermanentId = sourcePermanentId;
         gameData.graveyardTargetOperation.attackingPermanentSnapshots = attackingPermanentSnapshots;
+        gameData.graveyardTargetOperation.triggerRecord = triggerRecord;
         Permanent attackingSource = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger = attackingSource == null
                 ? null : gameQueryService.getEffectivePower(gameData, attackingSource);

@@ -2397,7 +2397,9 @@ public class CombatAttackService {
             }
             gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                     attackCard, playerId, ((ChooseOneAtTriggerTimeEffect) effects.getFirst()).choice(),
-                    attacker.getId(), false, false, null, null, null, false));
+                    attacker.getId(), false, false, null, null, null, false)
+                    .withTriggerRecord(selfAttackRecord(gameData, playerId, attacker, triggered, effects,
+                            attackerIndices, defendingPlayerId, declaredAttackerSnapshots)));
             return;
         }
 
@@ -2429,7 +2431,9 @@ public class CombatAttackService {
                 // The service has an ability that triggers while another choice is being made wait its turn
                 // (CR 603.3b), with the graveyards and the number of targets its effect says.
                 graveyardTargetingService.handleAttackGraveyardTargeting(
-                        gameData, playerId, attackCard, effects, attacker.getId(), defendingPlayerId);
+                        gameData, playerId, attackCard, effects, attacker.getId(), defendingPlayerId, List.of(),
+                        selfAttackRecord(gameData, playerId, attacker, triggered, effects, attackerIndices,
+                                defendingPlayerId, declaredAttackerSnapshots));
             }
             return;
         }
@@ -2488,6 +2492,22 @@ public class CombatAttackService {
                                                        TriggeredAbility triggered, List<CardEffect> effects,
                                                        List<Integer> attackerIndices, UUID defendingPlayerId,
                                                        Supplier<List<Permanent>> declaredAttackerSnapshots) {
+        StackEntry attackTrigger = selfAttackRecord(gameData, playerId, attacker, triggered, effects,
+                attackerIndices, defendingPlayerId, declaredAttackerSnapshots);
+        gameData.stack.add(attackTrigger);
+        triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(gameData, attacker, attackTrigger);
+        logSelfAttackTrigger(gameData, attacker);
+    }
+
+    /**
+     * The entry of a "whenever this creature attacks" ability of {@code attacker} that chooses nothing, which is also
+     * the record of the attack an ability that chooses a mode or graveyard cards as it goes on the stack carries
+     * ({@code StackEntry.carryTriggerRecord}).
+     */
+    private StackEntry selfAttackRecord(GameData gameData, UUID playerId, Permanent attacker,
+                                        TriggeredAbility triggered, List<CardEffect> effects,
+                                        List<Integer> attackerIndices, UUID defendingPlayerId,
+                                        Supplier<List<Permanent>> declaredAttackerSnapshots) {
         Card attackCard = attacker.getCard();
         StackEntry attackTrigger = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
@@ -2503,9 +2523,7 @@ public class CombatAttackService {
         attackTrigger.setSourcePermanentSnapshot(snapshotAttackingSource(gameData, attacker));
         attackTrigger.setGrantingPermanentId(triggered.grantingPermanentId());
         attackTrigger.setAttackingPermanentSnapshots(declaredAttackerSnapshots.get());
-        gameData.stack.add(attackTrigger);
-        triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(gameData, attacker, attackTrigger);
-        logSelfAttackTrigger(gameData, attacker);
+        return attackTrigger;
     }
 
     /**
@@ -2539,6 +2557,29 @@ public class CombatAttackService {
     private void putAllyCreatureAttackAbilityOnStack(GameData gameData, UUID playerId, Permanent perm,
                                                      Permanent attacker, List<CardEffect> effects) {
         CardEffect lone = effects.size() == 1 ? effects.getFirst() : null;
+        UUID attackedTargetId = attacker.getAttackTarget();
+        // The entry of an ability that chooses nothing, and the record of the attack every other route carries
+        // (StackEntry.carryTriggerRecord).
+        StackEntry attackTrigger = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                perm.getCard(),
+                playerId,
+                perm.getCard().getName() + "'s attack trigger",
+                effects,
+                null,
+                perm.getId()
+        );
+        attackTrigger.setSourcePermanentSnapshot(new Permanent(perm));
+        attackTrigger.setAttackedTargetId(attackedTargetId);
+        attackTrigger.setDefendingPlayerId(gameData.playerIds.contains(attackedTargetId)
+                ? attackedTargetId : gameQueryService.findPermanentController(gameData, attackedTargetId));
+        // Record the triggering attacker as a non-targeting reference so effects that
+        // act on "that creature" can find it.
+        attackTrigger.setTargetId(attacker.getId());
+        attackTrigger.setNonTargeting(true);
+        attackTrigger.setTriggeringPermanentId(attacker.getId());
+        attackTrigger.setTriggeringPermanentOwnerId(
+                gameData.defaultControllerOf(attacker.getId()));
         if (effects.stream().anyMatch(ChooseOneAtTriggerTimeEffect.class::isInstance)) {
             if (lone == null) {
                 throw new IllegalStateException("A mode chosen as a \"whenever a creature you control attacks\" "
@@ -2548,7 +2589,8 @@ public class CombatAttackService {
             // with the attacking creature as the triggering permanent for its mode effects.
             gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                     perm.getCard(), playerId, ((ChooseOneAtTriggerTimeEffect) lone).choice(), perm.getId(), false,
-                    false, null, attacker.getAttackTarget(), attacker.getId(), false));
+                    false, null, attacker.getAttackTarget(), attacker.getId(), false)
+                    .withTriggerRecord(attackTrigger));
             gameLogService.append(gameData,
                     GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
             log.info("Game {} - {} attack trigger queued for mode selection",
@@ -2560,7 +2602,7 @@ public class CombatAttackService {
         if (lone instanceof ChooseOneEffect restrictedModal
                 && restrictedModal.modeRestriction() != ChooseOneEffect.ModeRestriction.NONE) {
             gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                    perm.getCard(), playerId, restrictedModal, perm.getId()));
+                    perm.getCard(), playerId, restrictedModal, perm.getId()).withTriggerRecord(attackTrigger));
             gameLogService.append(gameData,
                     GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
             log.info("Game {} - {} attack trigger queued for mode selection",
@@ -2568,11 +2610,10 @@ public class CombatAttackService {
             return;
         }
 
-        UUID attackedTargetId = attacker.getAttackTarget();
         if (lone instanceof MayEffect may && may.targetSpec().declaredTarget() != null) {
             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                     perm.getCard(), playerId, effects, perm.getId(), playerId,
-                    attackedTargetId, attacker.getId()));
+                    attackedTargetId, attacker.getId()).withTriggerRecord(attackTrigger));
         } else {
             boolean needsTarget = !(lone instanceof MayEffect) && effects.stream()
                     .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
@@ -2581,28 +2622,8 @@ public class CombatAttackService {
             if (needsTarget) {
                 gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                         perm.getCard(), playerId, effects, perm.getId(), playerId,
-                        attackedTargetId, attacker.getId()));
+                        attackedTargetId, attacker.getId()).withTriggerRecord(attackTrigger));
             } else {
-                StackEntry attackTrigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        playerId,
-                        perm.getCard().getName() + "'s attack trigger",
-                        effects,
-                        null,
-                        perm.getId()
-                );
-                attackTrigger.setSourcePermanentSnapshot(new Permanent(perm));
-                attackTrigger.setAttackedTargetId(attackedTargetId);
-                attackTrigger.setDefendingPlayerId(gameData.playerIds.contains(attackedTargetId)
-                        ? attackedTargetId : gameQueryService.findPermanentController(gameData, attackedTargetId));
-                // Record the triggering attacker as a non-targeting reference so effects that
-                // act on "that creature" can find it.
-                attackTrigger.setTargetId(attacker.getId());
-                attackTrigger.setNonTargeting(true);
-                attackTrigger.setTriggeringPermanentId(attacker.getId());
-                attackTrigger.setTriggeringPermanentOwnerId(
-                        gameData.defaultControllerOf(attacker.getId()));
                 gameData.stack.add(attackTrigger);
             }
         }

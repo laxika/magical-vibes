@@ -1854,9 +1854,23 @@ public class Card {
             }
             abilities.set(chapterIndex, merged);
         } else {
-            abilities.add(ability);
+            abilities.add(asItsOwnInstance(ability));
         }
         slotIndex = null;
+    }
+
+    /**
+     * {@code ability} as an instance of its own among this card's abilities: a card that has the same ability more
+     * than once has that many instances, each functioning independently (CR 113.2c), so each keeps its own limit and
+     * "one or more" mark ({@link TriggeredAbility#limitKey()}).
+     */
+    private TriggeredAbility asItsOwnInstance(TriggeredAbility ability) {
+        TriggeredAbility instance = ability;
+        for (int copy = 2; abilities.contains(instance); copy++) {
+            instance = ability.withInstance((ability.instance() == null ? "" : ability.instance() + ":")
+                    + "instance:" + copy);
+        }
+        return instance;
     }
 
     /** The card's triggered abilities in the order they were added, those still held in a slot included. */

@@ -59,7 +59,8 @@ import java.util.UUID;
  * @param instance   which of several equal instances of the ability one object has this is (CR 113.2c: each
  *                   functions independently), or {@code null}: the granting permanent of an ability with a limit
  *                   that several permanents grant one permanent, so each instance keeps its own limit
- *                   ({@link #limitKey()}). A printed ability has none.
+ *                   ({@link #limitKey()}), and the second and later of the equal abilities a card itself
+ *                   has ({@code Card.addTriggeredAbility}). A card's only instance of an ability has none.
  * @param grantingPermanentId the permanent that granted this ability to the object that has it, or {@code null}: the
  *                   Aura or Equipment of an "enchanted / equipped creature has '…'" grant, or the source of a one-shot
  *                   grant ("target creature gains '…' until end of turn"). Effects that name that permanent ("sacrifice

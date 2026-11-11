@@ -192,6 +192,40 @@ public class CombatTriggerService {
                     // target whatever the effects are.
                     boolean thatCreature = slot != CombatWatch.ON_ATTACK && combatOpponent != null;
 
+                    // The entry of an ability that chooses nothing is the record of the event every route carries
+                    // (StackEntry.carryTriggerRecord): a mode, a graveyard card or a target chosen as the ability goes
+                    // on the stack changes nothing about what triggered it.
+                    // An attack ability granted to the enchanted creature (Unquenchable Fury) is an ability
+                    // of that creature, so the creature is its source and its controller controls it
+                    // (CR 113.7, CR 113.8).
+                    boolean grantedToCreature = slot == CombatWatch.ON_ATTACK
+                            && !isOwnAttackTrigger(perm, slot);
+                    StackEntry trigger = new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            perm.getCard(),
+                            grantedToCreature ? finalCreatureControllerId : auraOwnerId,
+                            perm.getCard().getName() + "'s triggered ability",
+                            effectsForStack,
+                            thatCreature ? combatOpponent.getId() : null,
+                            grantedToCreature ? creature.getId() : perm.getId()
+                    );
+                    // No effect of the ability targets, so nothing on its entry is checked as a target:
+                    // "that creature" is its non-targeting target.
+                    trigger.setNonTargeting(true);
+                    // "Its controller" of the enchanted or equipped creature is the triggering permanent's,
+                    // read as the ability resolves.
+                    trigger.setTriggeringPermanentControllerId(finalCreatureControllerId);
+                    // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
+                    // (e.g. equipment-granted Afflict) can resolve.
+                    trigger.setAttackedTargetId(creature.getAttackTarget());
+                    trigger.setDefendingPlayerId(creature.getAttackTarget() == null ? null
+                            : gameData.playerIds.contains(creature.getAttackTarget())
+                                    ? creature.getAttackTarget()
+                                    : gameQueryService.findPermanentController(gameData, creature.getAttackTarget()));
+                    trigger.setTriggeringPermanentId(creature.getId());
+                    trigger.setSourcePermanentSnapshot(new Permanent(grantedToCreature ? creature : perm));
+                    trigger.setAttachedPermanentSnapshot(new Permanent(creature));
+                    trigger.rememberLastKnownPermanentCard(creature.getId(), creature.getCard());
                     int previousCopies = slot == CombatWatch.ON_ATTACK
                             ? beginAttackTriggerCopies(gameData, auraOwnerId, perm)
                             : -1;
@@ -206,7 +240,7 @@ public class CombatTriggerService {
                             gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
                                     perm.getCard(), ownTrigger ? auraOwnerId : finalCreatureControllerId,
                                     modal.choice(), ownTrigger ? perm.getId() : creature.getId(), false, false, null,
-                                    creature.getAttackTarget(), creature.getId(), false));
+                                    creature.getAttackTarget(), creature.getId(), false).withTriggerRecord(trigger));
                             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                             continue;
                         }
@@ -219,7 +253,7 @@ public class CombatTriggerService {
                                             : gameQueryService.findPermanentController(gameData, attackedTargetId);
                             graveyardTargetingService.handleAttackGraveyardTargeting(
                                     gameData, auraOwnerId, perm.getCard(), effectsForStack, perm.getId(),
-                                    defendingPlayerId);
+                                    defendingPlayerId, List.of(), trigger);
                             continue;
                         } else {
                             // Check if any effect needs a permanent target — queue for target selection
@@ -233,7 +267,7 @@ public class CombatTriggerService {
                                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                             perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
                                             List.of(), 1, 0, List.of(0), 0, List.of(), false, null,
-                                            creature.getId()));
+                                            creature.getId()).withTriggerRecord(trigger));
                                 } else if (needsSlotBySlotTargetSelection(perm.getCard(), effectsForStack)) {
                                     int firstGroup = effectsForStack.stream()
                                             .mapToInt(perm.getCard()::getEffectTargetIndex)
@@ -243,7 +277,7 @@ public class CombatTriggerService {
                                             new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                                                     perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
                                                     List.of(), firstGroup, 0, skippedGroups, 0, List.of(), false,
-                                                    null, creature.getId()));
+                                                    null, creature.getId()).withTriggerRecord(trigger));
                                 } else {
                                     UUID attackedTargetId = slot == CombatWatch.ON_ATTACK
                                             ? creature.getAttackTarget() : null;
@@ -262,7 +296,7 @@ public class CombatTriggerService {
                                     UUID targetChooserId = slot == CombatWatch.ON_ATTACK
                                             && perm.getCard().isCombatTriggerTargetChosenByDefendingPlayer()
                                             ? defendingPlayerId : grantedAttackControllerId;
-                                    gameData.queueInteraction(
+                                    gameData.queueInteraction((
                                             slot == CombatWatch.ON_ATTACK
                                                     ? new PermanentChoiceContext.AttackTriggerTarget(
                                                             perm.getCard(), grantedAttackControllerId, effectsForStack,
@@ -270,43 +304,13 @@ public class CombatTriggerService {
                                                             targetChooserId, attackedTargetId, creature.getId())
                                                     : new PermanentChoiceContext.AttackTriggerTarget(
                                                             perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
-                                                            auraOwnerId, null, creature.getId()));
+                                                            auraOwnerId, null, creature.getId()))
+                                            .withTriggerRecord(trigger));
                                 }
                                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                                 log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
                                         gameData.id, perm.getCard().getName(), creature.getCard().getName());
                             } else {
-                                // An attack ability granted to the enchanted creature (Unquenchable Fury) is an ability
-                                // of that creature, so the creature is its source and its controller controls it
-                                // (CR 113.7, CR 113.8).
-                                boolean grantedToCreature = slot == CombatWatch.ON_ATTACK
-                                        && !isOwnAttackTrigger(perm, slot);
-                                StackEntry trigger = new StackEntry(
-                                        StackEntryType.TRIGGERED_ABILITY,
-                                        perm.getCard(),
-                                        grantedToCreature ? finalCreatureControllerId : auraOwnerId,
-                                        perm.getCard().getName() + "'s triggered ability",
-                                        effectsForStack,
-                                        thatCreature ? combatOpponent.getId() : null,
-                                        grantedToCreature ? creature.getId() : perm.getId()
-                                );
-                                // No effect of the ability targets, so nothing on its entry is checked as a target:
-                                // "that creature" is its non-targeting target.
-                                trigger.setNonTargeting(true);
-                                // "Its controller" of the enchanted or equipped creature is the triggering permanent's,
-                                // read as the ability resolves.
-                                trigger.setTriggeringPermanentControllerId(finalCreatureControllerId);
-                                // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
-                                // (e.g. equipment-granted Afflict) can resolve.
-                                trigger.setAttackedTargetId(creature.getAttackTarget());
-                                trigger.setDefendingPlayerId(creature.getAttackTarget() == null ? null
-                                        : gameData.playerIds.contains(creature.getAttackTarget())
-                                                ? creature.getAttackTarget()
-                                                : gameQueryService.findPermanentController(gameData, creature.getAttackTarget()));
-                                trigger.setTriggeringPermanentId(creature.getId());
-                                trigger.setSourcePermanentSnapshot(new Permanent(grantedToCreature ? creature : perm));
-                                trigger.setAttachedPermanentSnapshot(new Permanent(creature));
-                                trigger.rememberLastKnownPermanentCard(creature.getId(), creature.getCard());
                                 putOnStackOrChooseMode(gameData, trigger);
                                 gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                                 log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
