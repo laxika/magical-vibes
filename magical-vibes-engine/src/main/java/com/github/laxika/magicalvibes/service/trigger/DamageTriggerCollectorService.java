@@ -191,7 +191,7 @@ public class DamageTriggerCollectorService {
             var choice = new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     sourceCard, match.controllerId(), match.stackEffects(),
                     !match.admits(TargetPredicate.Kind.PERMANENT),
-                    targetFilterForTriggeredEffect(sourceCard, match.targetingEffect()), dc.damageDealt(),
+                    targetFilterForTriggeredEffect(sourceCard, match.targetingEffect()), 0,
                     sourcePermanent.getId(), new Permanent(sourcePermanent), hasOptionalTarget(sourceCard,
                             match.targetingEffect()),
                     damaged.getId(), null, match.controllerId(), null, null, false, null, null, null, (String) null,
@@ -216,7 +216,7 @@ public class DamageTriggerCollectorService {
      * with": the trigger's filter on the damaged permanent, the relation judged by the collector), whatever the effects
      * are: the ability is the watcher's (CR 113.7), and its entry records the damaged permanent as its triggering
      * permanent with its controller, its power and its last known information with the damage keywords it had ("it
-     * deals that much damage", CR 608.2h), the damage as its event value and X ("that much"), and the source's
+     * deals that much damage", CR 608.2h), the damage as its event value ("that much"), and the source's
      * snapshot. A targeted ability chooses its target as it goes on the stack (CR 603.3d), through a choice that
      * carries the same record.
      */
@@ -255,7 +255,7 @@ public class DamageTriggerCollectorService {
                     sourceCard, match.controllerId(), match.stackEffects(),
                     !match.admits(TargetPredicate.Kind.PERMANENT)
                             || targetFilter instanceof PlayerPredicateTargetFilter,
-                    targetFilter, dc.damageDealt(), sourcePermanent.getId(), new Permanent(sourcePermanent),
+                    targetFilter, 0, sourcePermanent.getId(), new Permanent(sourcePermanent),
                     hasOptionalTarget(sourceCard,
                             match.targetingEffect()), damaged.getId(), null, match.controllerId(), null, null,
                     false, null, null, power, (String) null, lastKnown)
@@ -317,7 +317,7 @@ public class DamageTriggerCollectorService {
                     sourceCard, match.controllerId(), match.stackEffects(),
                     !match.admits(TargetPredicate.Kind.PERMANENT)
                             || targetFilter instanceof PlayerPredicateTargetFilter,
-                    targetFilter, dc.damageDealt(), watcher.getId(), new Permanent(watcher),
+                    targetFilter, 0, watcher.getId(), new Permanent(watcher),
                     hasOptionalTarget(sourceCard,
                             match.targetingEffect()), damaged.getId(), null, match.controllerId(), null, null,
                     false, null, null, null, (String) null, lastKnown)
@@ -408,7 +408,7 @@ public class DamageTriggerCollectorService {
             gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     perm.getCard(), match.controllerId(), match.stackEffects(), true,
                     targetFilterForTriggeredEffect(perm.getCard(),
-                            match.targetingEffect()), dc.amount(), perm.getId()));
+                            match.targetingEffect()), 0, perm.getId()));
             gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             log.info("Game {} - {} controlled-source damage trigger awaits a target", gameData.id,
                     perm.getCard().getName());
@@ -525,7 +525,7 @@ public class DamageTriggerCollectorService {
                 || match.admits(TargetPredicate.Kind.PLAYER))) {
             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                     sourceCard, match.controllerId(), match.effects(), sourcePermanentId, match.controllerId(),
-                    damage.damagedPlayerId(), damage.sourcePermanentId(), damage.amount())
+                    damage.damagedPlayerId(), damage.sourcePermanentId(), null)
                     .withEventValue(damage.amount()).withTriggeringPlayer(damage.damagedPlayerId()));
             gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} triggers for {} damage to a player and needs a target",
@@ -763,7 +763,7 @@ public class DamageTriggerCollectorService {
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     sourceCard, sd.sourceControllerId(), match.stackEffects(),
                     !match.admits(TargetPredicate.Kind.PERMANENT),
-                    targetFilterForTriggeredEffect(sourceCard, match.targetingEffect()), sd.totalDamage(),
+                    targetFilterForTriggeredEffect(sourceCard, match.targetingEffect()), 0,
                     sd.sourcePermanentId(), hasOptionalTarget(sourceCard, match.targetingEffect())));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
             log.info("Game {} - {} ON_SELF_DEALS_COMBAT_DAMAGE trigger awaits target",
@@ -857,7 +857,7 @@ public class DamageTriggerCollectorService {
                     equipment.getCard(), match.controllerId(), match.stackEffects(),
                     !match.admits(TargetPredicate.Kind.PERMANENT),
                     targetFilterForTriggeredEffect(equipment.getCard(),
-                            match.targetingEffect()), damage, equipment.getId(),
+                            match.targetingEffect()), 0, equipment.getId(),
                     optionalTarget));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(equipment.getCard()));
             log.info("Game {} - {} ON_EQUIPPED_CREATURE_DEALS_COMBAT_DAMAGE trigger awaits target",
@@ -889,8 +889,9 @@ public class DamageTriggerCollectorService {
      * one) and that source's controller as it dealt the damage its triggering permanent's controller ("that source's
      * controller"), and the permanent as it was dealt the damage, with the damage keywords it had, its source snapshot
      * ("it deals that much damage" once it has died, CR 608.2h). A targeted ability chooses its target as it goes on the
-     * stack (CR 603.3d), through a choice that carries the same record and the damage as X; its target filter is the
-     * one the card declares for the effect, else the effect's own ({@link #targetFilterForTriggeredEffect}).
+     * stack (CR 603.3d), through a choice that carries the same record (the damage is its event value, never its X);
+     * its target filter is the one the card declares for the effect, else the effect's own
+     * ({@link #targetFilterForTriggeredEffect}).
      */
     @CollectsDamageTrigger(value = CardEffect.class, watch = DamageWatch.ON_DEALT_DAMAGE)
     @CollectsDamageTrigger(value = CardEffect.class, watch = DamageWatch.ON_NONCOMBAT_DAMAGE_TO_SELF)
@@ -924,7 +925,7 @@ public class DamageTriggerCollectorService {
                     card, controllerId, match.stackEffects(),
                     !match.admits(TargetPredicate.Kind.PERMANENT)
                             || targetFilter instanceof PlayerPredicateTargetFilter,
-                    targetFilter, dc.damageDealt(), damaged.getId(), lastKnown, hasOptionalTarget(card,
+                    targetFilter, 0, damaged.getId(), lastKnown, hasOptionalTarget(card,
                             match.targetingEffect()),
                     dc.sourcePermanentId(), null, controllerId, null, null, false, null, null, null, (String) null, null)
                     .withEventValue(dc.damageDealt())

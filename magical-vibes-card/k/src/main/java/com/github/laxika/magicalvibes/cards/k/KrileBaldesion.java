@@ -6,11 +6,15 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsEventValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
+import java.util.List;
 
 @CardRegistration(set = "FIC", collectorNumber = "86")
 @CardRegistration(set = "FIC", collectorNumber = "176")
@@ -24,9 +28,10 @@ public class KrileBaldesion extends Card {
                 new MayEffect(
                         ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.HAND)
-                                .filter(new CardTypePredicate(CardType.CREATURE))
+                                .filter(new CardAllOfPredicate(List.of(
+                                        new CardTypePredicate(CardType.CREATURE),
+                                        new CardManaValueEqualsEventValuePredicate())))
                                 .targetGraveyard(true)
-                                .requiresManaValueEqualsX(true)
                                 .build(),
                         "Return target creature card with mana value equal to that spell's mana value from your graveyard to your hand?"));
     }

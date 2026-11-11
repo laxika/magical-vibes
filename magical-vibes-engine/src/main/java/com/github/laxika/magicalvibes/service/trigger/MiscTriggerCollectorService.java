@@ -341,13 +341,13 @@ public class MiscTriggerCollectorService {
         if (match.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
             // The card is targeted as the trigger is put on the stack (CR 603.3d), so the may choice
             // comes at resolution. "Do this only once each turn" is used up only by an accepted return.
-            // The choice's X is the sacrificed permanent's mana value as it last existed (CR 603.10a), which a
-            // target filter's X reads ("target creature card with lesser mana value", Riveteers Ascendancy).
+            // A target restricted by the sacrificed permanent ("target creature card with lesser mana value",
+            // Riveteers Ascendancy) reads it from the record: the entry's triggering permanent, as it last existed
+            // (CR 603.10a).
             String markOnAcceptance = match.onceEachTurnActionKey();
-            int sacrificedManaValue = as.sacrificedCard() == null ? 0 : as.sacrificedCard().getManaValue();
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     match.permanent().getCard(), match.controllerId(), match.stackEffects(),
-                    null, 0, sacrificedManaValue, 0, null, false, null, match.permanent().getId(), markOnAcceptance));
+                    null, 0, 0, 0, null, false, null, match.permanent().getId(), markOnAcceptance));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(match.permanent().getCard()));
             return true;
         }

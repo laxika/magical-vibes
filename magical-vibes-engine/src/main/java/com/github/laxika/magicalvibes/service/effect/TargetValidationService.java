@@ -258,12 +258,13 @@ public class TargetValidationService {
                 && ctx.sourceCard().getTargetFilter() instanceof GraveyardCardPredicateTargetFilter filter
                 && !predicateEvaluationService.matchesCardPredicate(target, filter.predicate(),
                 sourceCardId, ctx.gameData(), graveyardOwnerId, ctx.sourcePermanentId(),
-                ctx.sourcePowerAtTrigger(), ctx.xValue(), ctx.sourcePermanentSnapshot())) {
+                ctx.sourcePowerAtTrigger(), ctx.xValue(), ctx.sourcePermanentSnapshot(), ctx.eventValue())) {
             throw new IllegalStateException("Target card no longer matches the required predicate");
         }
         if (!predicateEvaluationService.matchesCardPredicate(
                 target, restriction.inner(), sourceCardId, ctx.gameData(), graveyardOwnerId,
-                ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue(), ctx.sourcePermanentSnapshot())) {
+                ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue(), ctx.sourcePermanentSnapshot(),
+                ctx.eventValue())) {
             String description = CardPredicateUtils.describeFilter(restriction.inner());
             throw new IllegalStateException(description.equals("card")
                     ? "Target card does not match the required predicate"

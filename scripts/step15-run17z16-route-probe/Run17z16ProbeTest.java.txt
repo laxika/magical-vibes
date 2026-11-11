@@ -11,5 +11,5 @@ file before each run; --rerun is needed when nothing changed since the last run.
   MV_ROUTE_PROBE_OUT=/tmp/route.out bash gradlew :magical-vibes-application:test --rerun \
       --tests '*TriggerRouteRecordTest' -q
 
-Add MV_ROUTE_PROBE_STRICT=1 to also list the one allowed difference besides a chosen target, the X a target
-restricted by the event's value is chosen against (row 17z16b2).
+MV_ROUTE_PROBE_STRICT is gone with row 17z16b2 (run 17z16b2): the X of a chosen target is no longer an allowed
+difference, so the measuring mode lists it like any other.

@@ -6420,6 +6420,15 @@ public class GameData {
     public record TriggerRouting(StackEntry recordInHand, boolean handedOff) {
     }
 
+    /**
+     * The record kept with {@code interaction}, a queued choice of a triggered ability going on the stack: the entry
+     * its collector built for the ability that chooses nothing, which the choice reads the event from (the damage
+     * dealt, the triggering spell or permanent a target is restricted by); {@code null} when it was queued with none.
+     */
+    public StackEntry queuedTriggerRecord(PendingInteraction interaction) {
+        return queuedTriggerRecords.get(interaction);
+    }
+
     /** Takes the record in hand, leaving none. */
     StackEntry takeTriggerRecordInHand() {
         StackEntry record = triggerRecordInHand;

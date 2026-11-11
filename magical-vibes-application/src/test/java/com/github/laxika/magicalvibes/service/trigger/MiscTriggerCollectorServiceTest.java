@@ -29,7 +29,6 @@ import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PoisonRecipient;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
@@ -91,6 +90,8 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEqualToAmountEffect;
 import com.github.laxika.magicalvibes.model.amount.TriggeringCardManaValue;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -1083,16 +1084,16 @@ class MiscTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("a graveyard target is chosen with the sacrificed permanent's mana value as X, the effect unchanged")
-        void graveyardTargetChoiceHasTheSacrificedManaValueAsX() {
+        @DisplayName("a graveyard target is chosen with no X: the sacrificed card is the record's triggering card")
+        void graveyardTargetChoiceReadsTheSacrificedCardFromTheRecord() {
             Permanent perm = createPermanent("Riveteers Ascendancy");
             Card sacrificed = createCard("Sacrificed creature");
             sacrificed.setType(CardType.CREATURE);
             sacrificed.setManaCost("{2}{B}");
             var effect = new MayEffect(ReturnCardFromGraveyardEffect.builder()
                     .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                    .filter(new CardAllOfPredicate(List.of(
-                            new CardTypePredicate(CardType.CREATURE), new CardManaValueLessThanXPredicate())))
+                    .filter(new CardTypePredicate(CardType.CREATURE))
+                    .dynamicMaxManaValue(new Sum(new TriggeringCardManaValue(), new Fixed(-1)))
                     .targetGraveyard(true)
                     .build(), "Return target creature card with lesser mana value?");
             var ctx = new TriggerContext.AllySacrificed(player1Id, sacrificed);
@@ -1104,7 +1105,9 @@ class MiscTriggerCollectorServiceTest {
             assertThat(result).isTrue();
             var pending = gd.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
             assertThat(pending.effects()).containsExactly(effect);
-            assertThat(pending.xValue()).isEqualTo(3);
+            assertThat(pending.xValue()).isZero();
+            assertThat(gd.queuedTriggerRecord(pending).getXValue()).isZero();
+            assertThat(gd.queuedTriggerRecord(pending).getTriggeringCardId()).isEqualTo(sacrificed.getId());
         }
     }
 

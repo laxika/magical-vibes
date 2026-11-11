@@ -601,7 +601,7 @@ public class GraveyardTargetingService {
             List<CardEffect> effects, UUID sourcePermanentId, UUID defendingPlayerId,
             GraveyardCardChoosingEffect choosingEffect, StackEntry triggerRecord) {
         handleSinglePlayerGraveyardChoiceTargeting(gameData, controllerId, card, effects, sourcePermanentId,
-                defendingPlayerId, choosingEffect, choosingEffect.graveyardChoiceMaxTargets(), 0,
+                defendingPlayerId, choosingEffect, choosingEffect.graveyardChoiceMaxTargets(),
                 "unblocked-attack", "defending player's graveyard", triggerRecord);
     }
 
@@ -617,7 +617,7 @@ public class GraveyardTargetingService {
             List<CardEffect> effects, UUID sourcePermanentId, UUID damagedPlayerId,
             GraveyardCardChoosingEffect choosingEffect, int damageDealt, StackEntry triggerRecord) {
         handleSinglePlayerGraveyardChoiceTargeting(gameData, controllerId, card, effects, sourcePermanentId,
-                damagedPlayerId, choosingEffect, choosingEffect.graveyardChoiceMaxTargets(damageDealt), damageDealt,
+                damagedPlayerId, choosingEffect, choosingEffect.graveyardChoiceMaxTargets(damageDealt),
                 "combat damage", "that player's graveyard", triggerRecord);
     }
 
@@ -625,15 +625,16 @@ public class GraveyardTargetingService {
      * Has {@code controllerId} choose up to {@code choiceMaxTargets} cards in {@code defendingPlayerId}'s graveyard as
      * the ability goes on the stack (CR 603.3d). While another choice is being made, this ability, an object of its
      * own with its own targets (CR 603.3b), waits its turn in the queue instead of overwriting that choice. Every way
-     * it reaches the stack, it carries {@code triggerRecord}.
+     * it reaches the stack, it carries {@code triggerRecord}, and the queued choice has no X of its own, as the choice
+     * begun at once has none: the event's amount is the record's event value.
      */
     private void handleSinglePlayerGraveyardChoiceTargeting(GameData gameData, UUID controllerId, Card card,
             List<CardEffect> effects, UUID sourcePermanentId, UUID defendingPlayerId,
-            GraveyardCardChoosingEffect choosingEffect, int choiceMaxTargets, int eventValue, String triggerLabel,
+            GraveyardCardChoosingEffect choosingEffect, int choiceMaxTargets, String triggerLabel,
             String zoneLabel, StackEntry triggerRecord) {
         if (gameData.interaction.isAwaitingInput()) {
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    card, controllerId, effects, defendingPlayerId, 0, eventValue, choiceMaxTargets, null, false,
+                    card, controllerId, effects, defendingPlayerId, 0, 0, choiceMaxTargets, null, false,
                     null, sourcePermanentId).withTriggerRecord(triggerRecord));
             return;
         }

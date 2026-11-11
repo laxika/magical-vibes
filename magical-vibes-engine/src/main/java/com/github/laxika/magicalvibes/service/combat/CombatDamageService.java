@@ -2354,7 +2354,7 @@ public class CombatDamageService {
                                 ? defenderId : attackerId;
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                         card, attackerId, effects, mayGraveyardOwnerId,
-                        1, damageDealt, 1, null, false, null, creature.getId()).withTriggerRecord(se));
+                        1, 0, 1, null, false, null, creature.getId()).withTriggerRecord(se));
                 gameLogService.append(gameData, GameLog.cardThen(card,
                         "'s combat damage trigger goes on the stack — choose a graveyard target."));
                 return;
@@ -2401,7 +2401,7 @@ public class CombatDamageService {
             UUID graveyardOwnerId = graveyardTargeting.targetSpec().graveyardScope().orElse(null)
                     == GraveyardSearchScope.OPPONENT_GRAVEYARD ? defenderId : null;
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    card, attackerId, effects, graveyardOwnerId, 0, damageDealt, 0, null,
+                    card, attackerId, effects, graveyardOwnerId, 0, 0, 0, null,
                     creature.isAlternateCost(), null, creature.getId()).withTriggerRecord(se));
             gameLogService.append(gameData, GameLog.text(card.getName() + "'s combat damage trigger fires."));
             return;
@@ -2950,7 +2950,7 @@ public class CombatDamageService {
                         == GraveyardSearchScope.OPPONENT_GRAVEYARD ? defenderId : null;
                 gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                         perm.getCard(), attackerId, effects, graveyardOwnerId,
-                        0, triggerDamage, 0, null, false, null, perm.getId()).withTriggerRecord(se));
+                        0, 0, 0, null, false, null, perm.getId()).withTriggerRecord(se));
                 read.markLimit(gameData, perm.getId());
                 gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                         "'s combat damage trigger goes on the stack — choose a graveyard target."));
@@ -3949,7 +3949,7 @@ public class CombatDamageService {
                             ? data.card().getTargetFilter() : null;
                     gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                             data.card(), data.controllerId(), effects, false,
-                            targetFilter, data.damageDealt(), data.permanentId(), data.sourceSnapshot()));
+                            targetFilter, 0, data.permanentId(), data.sourceSnapshot()));
                     gameLogService.append(gameData,
                             GameLog.cardThen(data.card(), "'s combat-damage trigger fires — choose a target."));
                     continue;

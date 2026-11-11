@@ -7,6 +7,12 @@ import com.github.laxika.magicalvibes.model.Zone;
 
 import java.util.UUID;
 
+/**
+ * What a target is validated against. {@code eventValue} is the value of the event a triggered ability triggered on
+ * (the stack entry's as the ability resolves), which a target restricted by it is judged against
+ * ({@code CardManaValueEqualsEventValuePredicate}); {@code null} for a spell, an activated ability and wherever no
+ * event is known.
+ */
 public record TargetValidationContext(
         GameData gameData,
         UUID targetId,
@@ -20,8 +26,26 @@ public record TargetValidationContext(
         Integer sourcePowerAtTrigger,
         UUID defendingPlayerId,
         UUID triggeringPermanentId,
-        UUID triggeringPlayerId
+        UUID triggeringPlayerId,
+        Integer eventValue
 ) {
+    public TargetValidationContext(GameData gameData, UUID targetId, Zone targetZone, Card sourceCard,
+                                   int xValue, UUID sourceControllerId, Permanent sourcePermanentSnapshot,
+                                   boolean deferCostDerivedXValueChecks, UUID sourcePermanentId,
+                                   Integer sourcePowerAtTrigger, UUID defendingPlayerId,
+                                   UUID triggeringPermanentId, UUID triggeringPlayerId) {
+        this(gameData, targetId, targetZone, sourceCard, xValue, sourceControllerId, sourcePermanentSnapshot,
+                deferCostDerivedXValueChecks, sourcePermanentId, sourcePowerAtTrigger, defendingPlayerId,
+                triggeringPermanentId, triggeringPlayerId, null);
+    }
+
+    /** This context with the value of the event the triggered ability triggered on. */
+    public TargetValidationContext withEventValue(Integer eventValue) {
+        return new TargetValidationContext(gameData, targetId, targetZone, sourceCard, xValue, sourceControllerId,
+                sourcePermanentSnapshot, deferCostDerivedXValueChecks, sourcePermanentId, sourcePowerAtTrigger,
+                defendingPlayerId, triggeringPermanentId, triggeringPlayerId, eventValue);
+    }
+
     public TargetValidationContext(GameData gameData, UUID targetId, Zone targetZone, Card sourceCard,
                                    int xValue, UUID sourceControllerId, Permanent sourcePermanentSnapshot,
                                    boolean deferCostDerivedXValueChecks, UUID sourcePermanentId,
@@ -29,14 +53,14 @@ public record TargetValidationContext(
                                    UUID triggeringPermanentId) {
         this(gameData, targetId, targetZone, sourceCard, xValue, sourceControllerId, sourcePermanentSnapshot,
                 deferCostDerivedXValueChecks, sourcePermanentId, sourcePowerAtTrigger, defendingPlayerId,
-                triggeringPermanentId, null);
+                triggeringPermanentId, (UUID) null);
     }
 
     /** This context with the player the triggered ability's event was about ("that player controls"). */
     public TargetValidationContext withTriggeringPlayerId(UUID triggeringPlayerId) {
         return new TargetValidationContext(gameData, targetId, targetZone, sourceCard, xValue, sourceControllerId,
                 sourcePermanentSnapshot, deferCostDerivedXValueChecks, sourcePermanentId, sourcePowerAtTrigger,
-                defendingPlayerId, triggeringPermanentId, triggeringPlayerId);
+                defendingPlayerId, triggeringPermanentId, triggeringPlayerId, eventValue);
     }
 
     public TargetValidationContext(GameData gameData, UUID targetId, Zone targetZone, Card sourceCard) {

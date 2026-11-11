@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.NoncombatDamageDealtToOpponentsThisTurn;
-import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,6 +32,6 @@ public class ChandrasIncinerator extends Card {
                         new PermanentControlledByTriggeringPlayerPredicate())),
                 "Target must be a creature or planeswalker that player controls"))
                 .addTrigger(Triggers.sourceYouControlDealsNoncombatDamageToOpponent(),
-                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue()));
+                        new DealDamageToTargetCreatureOrPlaneswalkerEffect(new EventValue()));
     }
 }

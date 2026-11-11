@@ -526,7 +526,7 @@ class DamageTriggerCollectorServiceTest {
         @DisplayName("A targeted ability's choice carries the damage, the source and its controller, and the snapshot")
         void targetChoiceCarriesTheRecord() {
             Card damagedCard = createCard("Boros Reckoner");
-            var effect = new DealDamageToAnyTargetEffect(new XValue());
+            var effect = new DealDamageToAnyTargetEffect(new EventValue());
             damagedCard.addTrigger(Triggers.dealtDamage(), effect);
             Permanent damagedCreature = new Permanent(damagedCard);
             Permanent source = createPermanent("Grizzly Bears");
@@ -539,8 +539,10 @@ class DamageTriggerCollectorServiceTest {
             assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
                     .satisfies(pending -> {
                         assertThat(pending.effects()).containsExactly(effect);
-                        assertThat(pending.spellManaSpentX()).isEqualTo(3);
+                        assertThat(pending.spellManaSpentX()).isZero();
                         assertThat(pending.eventValue()).isEqualTo(3);
+                        assertThat(gd.queuedTriggerRecord(pending).getEventValue()).isEqualTo(3);
+                        assertThat(gd.queuedTriggerRecord(pending).getXValue()).isZero();
                         assertThat(pending.triggeringPermanentId()).isEqualTo(source.getId());
                         assertThat(pending.triggeringPermanentControllerId()).isEqualTo(player2Id);
                         assertThat(pending.sourcePermanentSnapshot().getId()).isEqualTo(damagedCreature.getId());
@@ -727,7 +729,7 @@ class DamageTriggerCollectorServiceTest {
             var filter = new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(
                     new PermanentIsCreaturePredicate(), new PermanentControlledByTriggeringPlayerPredicate())),
                     "Target must be a creature that player controls");
-            var effect = new DealDamageToTargetCreatureOrPlaneswalkerEffect(new XValue());
+            var effect = new DealDamageToTargetCreatureOrPlaneswalkerEffect(new EventValue());
             card.target(filter).addTrigger(Triggers.sourceYouControlDealsNoncombatDamageToOpponent(), effect);
             Permanent incinerator = new Permanent(card);
             var ctx = new TriggerContext.NoncombatDamageToOpponent(player2Id, player1Id, 3);
@@ -743,7 +745,8 @@ class DamageTriggerCollectorServiceTest {
             assertThat(choice.sourcePermanentId()).isEqualTo(incinerator.getId());
             assertThat(choice.triggeringPlayerId()).isEqualTo(player2Id);
             assertThat(choice.eventValue()).isEqualTo(3);
-            assertThat(choice.xValue()).isEqualTo(3);
+            assertThat(choice.xValue()).isNull();
+            assertThat(gd.queuedTriggerRecord(choice).getXValue()).isZero();
         }
 
         @Test
@@ -934,7 +937,7 @@ class DamageTriggerCollectorServiceTest {
         void queuesPlayerOnlyTargetChoice() {
             Card damagedCard = createCard("Truefire Captain");
             damagedCard.target(TargetFilters.creature());
-            var effect = new DealDamageToTargetPlayerOrPlaneswalkerEffect(new XValue());
+            var effect = new DealDamageToTargetPlayerOrPlaneswalkerEffect(new EventValue());
             damagedCard.target(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"))
                     .addTrigger(Triggers.dealtDamage(), effect);
@@ -949,7 +952,8 @@ class DamageTriggerCollectorServiceTest {
             assertThat(gd.stack).isEmpty();
             var pending = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
             assertThat(pending.playerTargetOnly()).isTrue();
-            assertThat(pending.spellManaSpentX()).isEqualTo(3);
+            assertThat(pending.spellManaSpentX()).isZero();
+            assertThat(gd.queuedTriggerRecord(pending).getEventValue()).isEqualTo(3);
             assertThat(pending.targetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
         }
 
@@ -1008,7 +1012,8 @@ class DamageTriggerCollectorServiceTest {
             var pending = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
             assertThat(pending.controllerId()).isEqualTo(player1Id);
             assertThat(pending.sourcePermanentId()).isEqualTo(damagedCreature.getId());
-            assertThat(pending.spellManaSpentX()).isEqualTo(2);
+            assertThat(pending.spellManaSpentX()).isZero();
+            assertThat(gd.queuedTriggerRecord(pending).getEventValue()).isEqualTo(2);
             assertThat(pending.effects()).containsExactly(effect);
             assertThat(pending.targetFilter()).isEqualTo(sourceCard.getTargetFilter());
         }
@@ -1022,7 +1027,7 @@ class DamageTriggerCollectorServiceTest {
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must not be a Dragon");
-        var damage = new DealDamageToAnyTargetEffect(new XValue());
+        var damage = new DealDamageToAnyTargetEffect(new EventValue());
         watcherCard.target(targetFilter).addTrigger(Triggers.permanentYouControlDealtDamage()
                 .withFilter(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)), damage);
         Permanent watcher = new Permanent(watcherCard);
@@ -1035,7 +1040,8 @@ class DamageTriggerCollectorServiceTest {
         assertThat(result).isTrue();
         var pending = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
         assertThat(pending).isNotNull();
-        assertThat(pending.spellManaSpentX()).isEqualTo(3);
+        assertThat(pending.spellManaSpentX()).isZero();
+        assertThat(gd.queuedTriggerRecord(pending).getEventValue()).isEqualTo(3);
         assertThat(pending.targetFilter()).isEqualTo(targetFilter);
         assertThat(pending.effects()).containsExactly(damage);
     }

@@ -2169,7 +2169,7 @@ public class PermanentCounterSupport {
                             effectsToResolve,
                             targetsPlayer && !targetsPermanent,
                             targetFilterForCounterTrigger(card, effectsToResolve),
-                            count,
+                            0,
                             source.getId(),
                             new Permanent(source));
                     gameData.queueInteraction(targetChoice.withOnceEachTurnActionKey(triggering.actionKey()));

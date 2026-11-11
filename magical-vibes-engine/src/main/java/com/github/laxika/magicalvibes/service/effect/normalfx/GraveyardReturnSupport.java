@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
@@ -642,7 +643,8 @@ public class GraveyardReturnSupport {
                 || predicateEvaluationService.matchesCardPredicate(
                 card, effect.filter(), sourceCardId, gameData, cardOwnerId,
                 entry.getSourcePermanentId(), entry.getTriggeringPermanentPowerAtTrigger(),
-                entry.getXValue(), entry.getSourcePermanentSnapshot());
+                entry.getXValue(), entry.getSourcePermanentSnapshot(),
+                entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY ? entry.getEventValue() : null);
     }
 
     private CardSubtype findSourceChosenSubtype(GameData gameData, StackEntry entry, UUID sourceCardId) {

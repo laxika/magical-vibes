@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -36,6 +36,6 @@ public class TruefireCaptain extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"))
                 .addTrigger(Triggers.dealtDamage(),
-                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(new XValue()));
+                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(new EventValue()));
     }
 }

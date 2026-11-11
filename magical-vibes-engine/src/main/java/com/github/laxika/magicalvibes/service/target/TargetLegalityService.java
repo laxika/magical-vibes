@@ -3927,7 +3927,8 @@ public class TargetLegalityService {
                             new TargetValidationContext(gameData, entry.getTargetId(), Zone.GRAVEYARD,
                                     entry.getCard(), entry.getXValue(), entry.getControllerId(),
                                     entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
-                                    entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry)), entry.isTeamworkCostPaid()).isPresent();
+                                    entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry))
+                                    .withEventValue(eventValueOf(entry)), entry.isTeamworkCostPaid()).isPresent();
                 }
             } else if (entry.getTargetZone() == Zone.HAND) {
                 targetFizzled = !isHandTargetLegalOnResolution(gameData, entry, entry.getTargetId());
@@ -4029,7 +4030,8 @@ public class TargetLegalityService {
                                         entry.getSourcePermanentSnapshot(), false, entry.getSourcePermanentId(),
                                         entry.getTriggeringPermanentPowerAtTrigger(), defendingPlayerId(gameData, entry),
                                         entry.getTriggeringPermanentId())
-                                        .withTriggeringPlayerId(entry.getTriggeringPlayerId()),
+                                        .withTriggeringPlayerId(entry.getTriggeringPlayerId())
+                                        .withEventValue(eventValueOf(entry)),
                                         entry.isTeamworkCostPaid()).isPresent()) {
                             targetFizzled = true;
                         }
@@ -4171,6 +4173,14 @@ public class TargetLegalityService {
         return -1;
     }
 
+    /**
+     * The value of the event {@code entry} triggered on, which a target restricted by it ("mana value equal to the
+     * damage dealt") is judged against as the ability resolves; {@code null} for a spell or an activated ability.
+     */
+    private static Integer eventValueOf(StackEntry entry) {
+        return entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY ? entry.getEventValue() : null;
+    }
+
     private boolean isTargetCardLegalOnResolution(GameData gameData, StackEntry entry, UUID cardId) {
         Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
         if (card != null) {
@@ -4221,7 +4231,8 @@ public class TargetLegalityService {
                                 new TargetValidationContext(gameData, cardId, Zone.GRAVEYARD,
                                         entry.getCard(), entry.getXValue(), entry.getControllerId(),
                                         entry.getSourcePermanentSnapshot(), entry.getSourcePermanentId(),
-                                        entry.getTriggeringPermanentPowerAtTrigger()), entry.isTeamworkCostPaid())
+                                        entry.getTriggeringPermanentPowerAtTrigger())
+                                        .withEventValue(eventValueOf(entry)), entry.isTeamworkCostPaid())
                                 .isEmpty());
             }
 

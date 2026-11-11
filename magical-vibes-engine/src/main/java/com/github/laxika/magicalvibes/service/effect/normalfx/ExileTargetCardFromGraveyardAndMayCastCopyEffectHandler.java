@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -59,7 +60,8 @@ public class ExileTargetCardFromGraveyardAndMayCastCopyEffectHandler
         if (copyEffect.filter() != null
                 && !predicateEvaluationService.matchesCardPredicate(targetCard, copyEffect.filter(),
                 entry.getCard().getId(), gameData, graveyardOwnerId, entry.getSourcePermanentId(),
-                entry.getTriggeringPermanentPowerAtTrigger(), entry.getXValue())) {
+                entry.getTriggeringPermanentPowerAtTrigger(), entry.getXValue(), null,
+                entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY ? entry.getEventValue() : null)) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target is no longer a valid "
                     + CardPredicateUtils.describeFilter(copyEffect.filter()) + ")."));
             return;

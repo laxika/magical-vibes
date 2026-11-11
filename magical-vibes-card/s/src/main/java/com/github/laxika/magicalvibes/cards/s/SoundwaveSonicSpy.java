@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardA
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsEventValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -38,7 +38,8 @@ public class SoundwaveSonicSpy extends Card {
                                 new PermanentIsTokenPredicate()))),
                 TriggerOptions.ONE_OR_MORE,
                 new ExileTargetCardFromGraveyardAndMayCastCopyEffect(
-                        new CardAllOfPredicate(List.of(instantOrSorcery, new CardManaValueEqualsXPredicate())),
+                        new CardAllOfPredicate(List.of(instantOrSorcery,
+                                new CardManaValueEqualsEventValuePredicate())),
                         GraveyardSearchScope.OPPONENT_GRAVEYARD,
                         new TransformSelfEffect()));
     }

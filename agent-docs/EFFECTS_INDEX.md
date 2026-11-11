@@ -3521,10 +3521,10 @@ ReturnCardFromGraveyardEffect.builder()
                                                //   Postmortem Lunge; Shallow Grave uses exileAtEndStep alone
     .topmost(boolean)                          // true = return the topmost matching card of the controller's ordered
                                                //   graveyard with no prompt at all (default: false); Shallow Grave
-    .requiresManaValueEqualsX(boolean)         // true = restrict to cards with MV = X (default: false)
+    .requiresManaValueEqualsX(boolean)         // true = restrict to cards with MV = X (default: false); X is the spell's or ability's own X (CR 107.3), never a trigger event's value: for "equal to the damage dealt / that spell's mana value" put CardManaValueEqualsEventValuePredicate in the filter
     .manaValueXOffset(int)                     // offset added to X for an exact/at-most MV restriction (default: 0)
     .requiresManaValueAtMostX(boolean)         // true = restrict to cards with MV ? X (default: false); e.g. Profane Command
-    .dynamicMaxManaValue(DynamicAmount)        // mana value limit; a death trigger's is evaluated as its target is chosen, with the dying object as it last existed as the amount's source (soulshift X, "lesser mana value"), and kept on the stack entry
+    .dynamicMaxManaValue(DynamicAmount)        // mana value limit; a triggered ability's "X or less, where X is the damage dealt" is new EventValue() and "lesser mana value" than the sacrificed creature new Sum(new TriggeringCardManaValue(), new Fixed(-1)), read from the trigger record as the target is chosen and from the entry as it resolves; a death trigger's is evaluated as its target is chosen, with the dying object as it last existed as the amount's source (soulshift X, "lesser mana value"), and kept on the stack entry
     .maxManaValueEqualsLifeGainedThisTurn(boolean) // true = restrict to cards with MV <= life gained this turn (default: false); e.g. Moseo
     .maxManaValueEqualsLifeLostThisTurn(boolean) // true = restrict to cards with MV <= life lost this turn (default: false); e.g. Betor
     .grantColor(CardColor)                     // non-null = permanently grant this color "in addition to" (default: null)

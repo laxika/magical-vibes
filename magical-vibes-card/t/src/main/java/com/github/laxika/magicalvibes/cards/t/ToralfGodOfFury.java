@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class ToralfGodOfFury extends Card {
         setModalDoubleFaced(true);
 
         addTrigger(Triggers.creatureOrPlaneswalkerOpponentControlsDealtExcessNoncombatDamage(),
-                new DealDamageToAnyTargetEffect(new XValue()));
+                new DealDamageToAnyTargetEffect(new EventValue()));
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Toralf, God of Fury", List.of())
                         .withManaCost("{2}{R}{R}"),

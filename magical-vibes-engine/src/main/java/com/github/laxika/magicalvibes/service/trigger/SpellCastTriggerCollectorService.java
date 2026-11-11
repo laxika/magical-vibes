@@ -531,14 +531,13 @@ public class SpellCastTriggerCollectorService {
                     spellCard.getId()));
             gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
         } else if (needsGraveyardTarget) {
-            // The graveyard target is chosen now, as the ability goes on the stack (CR 603.3d), with the spell's mana
-            // value as the choice's X whatever the effects are: a target restricted by "that spell's mana value" (Krile
-            // Baldesion) is judged against it.
-            int graveyardTargetX = spellManaValue(match.gameData(), spellCard);
+            // The graveyard target is chosen now, as the ability goes on the stack (CR 603.3d), with the X the entry
+            // of an ability that chooses nothing has: a target restricted by "that spell's mana value" (Krile
+            // Baldesion) reads the triggering spell from the record, as the entry does as it resolves.
             // A graveyard target restricted by "that spell" ("the same name as that spell", Harness the Storm) is chosen
             // against the triggering spell, which the stack entry keeps for the check as the ability resolves.
             match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    sourceCard, match.controllerId(), resolved, null, 0, graveyardTargetX, 0, null, false, null,
+                    sourceCard, match.controllerId(), resolved, null, 0, abilityX, 0, null, false, null,
                     sourcePermanentId, match.onceEachTurnActionKey()).withTriggeringSpell(triggeringSpell));
             log.info("Game {} - {} spell-cast graveyard-target trigger queued",
                     match.gameData().id, sourceCard.getName());

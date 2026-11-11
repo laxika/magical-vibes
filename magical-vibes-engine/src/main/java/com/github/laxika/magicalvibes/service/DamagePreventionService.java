@@ -97,7 +97,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEff
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageWithMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectAllDamageToEnchantedCreatureControllerEffect;
-import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -1114,7 +1114,7 @@ public class DamagePreventionService {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "another target")
                 : null;
-        List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(new XValue()));
+        List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(new EventValue()));
         // The ability always targets, so no entry of it chooses nothing: the record is what its target choice's
         // entry records, the damage prevented as the event's value and the source as it was.
         StackEntry triggerRecord = new StackEntry(
@@ -1131,7 +1131,7 @@ public class DamagePreventionService {
         gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                 permanent.getCard(), controllerId,
                 effects,
-                false, targetFilter, damageAmount, permanent.getId(), new Permanent(permanent)));
+                false, targetFilter, 0, permanent.getId(), new Permanent(permanent)));
         gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), "'s ability triggers."));
     }
 

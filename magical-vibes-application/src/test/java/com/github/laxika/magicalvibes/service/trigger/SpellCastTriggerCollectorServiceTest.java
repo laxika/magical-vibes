@@ -115,6 +115,8 @@ import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsEventValuePredicate;
 
 @ExtendWith(MockitoExtension.class)
 class SpellCastTriggerCollectorServiceTest {
@@ -1199,14 +1201,14 @@ class SpellCastTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("chooses a graveyard target restricted by the spell's mana value with that mana value as X")
-        void graveyardTargetChoiceHasTheSpellsManaValueAsX() {
+        @DisplayName("chooses a graveyard target restricted by the spell's mana value with no X: the record has it")
+        void graveyardTargetChoiceReadsTheSpellsManaValueFromTheRecord() {
             Permanent perm = createPermanent("Krile Baldesion");
             ReturnCardFromGraveyardEffect returnEffect = ReturnCardFromGraveyardEffect.builder()
                     .destination(GraveyardChoiceDestination.HAND)
-                    .filter(new CardTypePredicate(CardType.CREATURE))
+                    .filter(new CardAllOfPredicate(List.of(
+                            new CardTypePredicate(CardType.CREATURE), new CardManaValueEqualsEventValuePredicate())))
                     .targetGraveyard(true)
-                    .requiresManaValueEqualsX(true)
                     .build();
             var effect = castAbility(Triggers.youCastSpell().anySpell(), returnEffect);
             Card spellCard = createInstant("Divination");
@@ -1219,7 +1221,9 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(result).isTrue();
             var choice = gd.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
             assertThat(choice).isNotNull();
-            assertThat(choice.xValue()).isEqualTo(3);
+            assertThat(choice.xValue()).isZero();
+            assertThat(gd.queuedTriggerRecord(choice).getXValue()).isZero();
+            assertThat(gd.queuedTriggerRecord(choice).getEventValue()).isEqualTo(3);
             assertThat(choice.effects()).containsExactly(returnEffect);
         }
     }

@@ -3133,14 +3133,25 @@ public class TriggeredAbilityQueueService {
             // "Target card with the same name as that spell" (Harness the Storm) is chosen against the spell the
             // ability triggered on, as it goes on the stack (CR 603.3d).
             filter = AmountEvaluationService.bindTriggeringSpellName(gameData, filter, null, pending.triggeringSpell());
+            // A target restricted by the event ("mana value equal to the damage dealt", "lesser mana value" than the
+            // sacrificed creature) is chosen against the record of the event, the entry the collector built for the
+            // ability that chooses nothing, as it is judged against the entry as the ability resolves; the choice's
+            // X is the ability's own.
+            StackEntry eventRecord = gameData.queuedTriggerRecord(pending) != null
+                    ? gameData.queuedTriggerRecord(pending) : pending.triggerRecord();
+            Integer eventValue = eventRecord == null ? null : eventRecord.getEventValue();
             Integer aggregateManaValueCap = pending.graveyardTargetMaxManaValue() != null
                     ? pending.graveyardTargetMaxManaValue()
                     : describedTarget != null && describedTarget.maximumManaValue() != null
                     && !(describedTarget.maximumManaValue() instanceof com.github.laxika.magicalvibes.model.amount.TotalPowerOfControlledCreatures totalPower
                     && totalPower.declaredAttackersOnly())
                     ? amountEvaluationService.evaluate(gameData, describedTarget.maximumManaValue(),
-                    new AmountContext(pending.controllerId(), null, null,
-                            pending.xValue(), pending.xValue()))
+                    eventRecord == null
+                            ? new AmountContext(pending.controllerId(), null, null,
+                                    pending.xValue(), pending.xValue())
+                            : new AmountContext(pending.controllerId(), null, null,
+                                    pending.xValue(), eventRecord.getEventValue(), false, null, List.of(), null,
+                                    eventRecord, null, null, 0, 0, List.of()))
                     : null;
             // "mana value X or less, where X is the life you gained or lost this turn"
             int maxManaValue = aggregateManaValueCap != null ? aggregateManaValueCap
@@ -3208,10 +3219,10 @@ public class TriggeredAbilityQueueService {
                             predicateEvaluationService.matchesCardPredicate(
                                     graveyardCard, candidateFilter, pending.sourceCard().getId(), gameData, playerId,
                                     null, pending.sourcePowerAtTrigger()))
-                            // An X in the filter ("equal or lesser mana value than that spell") is the choice's X.
+                            // An X in the filter is the choice's X; the event's value is the record's.
                             : filter == null || predicateEvaluationService.matchesCardPredicate(
                             graveyardCard, filter, pending.sourceCard().getId(), gameData, playerId,
-                            null, pending.sourcePowerAtTrigger(), pending.xValue());
+                            null, pending.sourcePowerAtTrigger(), pending.xValue(), null, eventValue);
                     if (matches) {
                         matchingCards.add(graveyardCard);
                     }

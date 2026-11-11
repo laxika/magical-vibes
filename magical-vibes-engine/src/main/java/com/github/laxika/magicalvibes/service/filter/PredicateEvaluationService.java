@@ -98,6 +98,7 @@ import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsSourceCoun
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourceLoyaltyPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanSourcePowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsEventValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
@@ -615,6 +616,40 @@ public class PredicateEvaluationService {
                                         Permanent sourcePermanentSnapshot) {
         return matchesCardPredicateInternal(card, predicate, sourceCardId, gameData, cardOwnerId,
                 sourcePermanentId, sourcePowerAtTrigger, xValue, sourcePermanentSnapshot);
+    }
+
+    /**
+     * Card-predicate matching for the graveyard target of a triggered ability, with {@code eventValue}, the value of
+     * the event the ability triggered on (the trigger record's as the target is chosen, the stack entry's as the
+     * ability resolves), which {@link CardManaValueEqualsEventValuePredicate} compares with; {@code null} where
+     * there is no event.
+     */
+    public boolean matchesCardPredicate(Card card, CardPredicate predicate, UUID sourceCardId,
+                                        GameData gameData, UUID cardOwnerId, UUID sourcePermanentId,
+                                        Integer sourcePowerAtTrigger, Integer xValue,
+                                        Permanent sourcePermanentSnapshot, Integer eventValue) {
+        return matchesCardPredicateInternal(card, bindEventValue(predicate, eventValue), sourceCardId, gameData,
+                cardOwnerId, sourcePermanentId, sourcePowerAtTrigger, xValue, sourcePermanentSnapshot);
+    }
+
+    /**
+     * {@code filter} with "mana value equal to [the event's value]" ({@link CardManaValueEqualsEventValuePredicate})
+     * read from {@code eventValue}; with none it matches no card. A filter without the predicate is returned as it is.
+     */
+    public static CardPredicate bindEventValue(CardPredicate filter, Integer eventValue) {
+        return switch (filter) {
+            case null -> null;
+            case CardManaValueEqualsEventValuePredicate ignored -> eventValue == null
+                    ? new CardNotPredicate(new CardTruePredicate())
+                    : new CardAllOfPredicate(List.of(new CardMinManaValuePredicate(eventValue, false),
+                            new CardMaxManaValuePredicate(eventValue, false)));
+            case CardAllOfPredicate all -> new CardAllOfPredicate(all.predicates().stream()
+                    .map(part -> bindEventValue(part, eventValue)).toList());
+            case CardAnyOfPredicate any -> new CardAnyOfPredicate(any.predicates().stream()
+                    .map(part -> bindEventValue(part, eventValue)).toList());
+            case CardNotPredicate not -> new CardNotPredicate(bindEventValue(not.predicate(), eventValue));
+            default -> filter;
+        };
     }
 
     private boolean matchesCardPredicateInternal(Card card, CardPredicate predicate, UUID sourceCardId,
@@ -1298,6 +1333,8 @@ public class PredicateEvaluationService {
             case CardSharesNameWithTriggeringPermanentPredicate ignored -> false;
             // Bound to the resolving entry's triggering spell by AmountEvaluationService.bindTriggeringSpellManaValue.
             case CardManaValueEqualsTriggeringSpellPredicate ignored -> false;
+            // Bound to the event's value by the matchesCardPredicate overload that is given one (bindEventValue).
+            case CardManaValueEqualsEventValuePredicate ignored -> false;
             case CardSharesNameWithLegendaryControlledPermanentPredicate ignored -> {
                 if (gameData == null || cardOwnerId == null
                         || !card.getSupertypes().contains(CardSupertype.LEGENDARY)) {

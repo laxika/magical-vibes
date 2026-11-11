@@ -8558,7 +8558,7 @@ public class TriggerCollectionService {
                                             new PermanentIsSpecificPermanentPredicate(damagedPermanent.getId())),
                                     new PlayerRelationPredicate(PlayerRelation.ANY),
                                     "Target must be other than the permanent dealt excess damage."),
-                            excessDamage, perm.getId()));
+                            0, perm.getId()));
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
                     log.info("Game {} - {} triggers (opponent permanent dealt excess damage)",
                             gameData.id, perm.getCard().getName());
