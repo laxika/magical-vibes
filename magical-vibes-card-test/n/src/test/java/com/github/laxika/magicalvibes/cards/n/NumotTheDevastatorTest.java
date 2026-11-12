@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({NumotTheDevastator.class, Forest.class, Plains.class})
@@ -23,8 +25,7 @@ class NumotTheDevastatorTest extends BaseCardTest {
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
 
         resolveCombatToTargetChoice();
-        harness.handlePermanentChosen(player1, forest.getId());
-        harness.handlePermanentChosen(player1, plains.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId(), plains.getId()));
         harness.passBothPriorities();
         addPaymentMana();
         harness.handleMayAbilityChosen(player1, true);
@@ -42,8 +43,7 @@ class NumotTheDevastatorTest extends BaseCardTest {
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
 
         resolveCombatToTargetChoice();
-        harness.handlePermanentChosen(player1, forest.getId());
-        harness.handlePermanentChosen(player1, plains.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId(), plains.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -57,7 +57,7 @@ class NumotTheDevastatorTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         resolveCombatToTargetChoice();
-        harness.handlePermanentChosen(player1, forest.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
         harness.passBothPriorities();
         addPaymentMana();
         harness.handleMayAbilityChosen(player1, true);
@@ -72,7 +72,7 @@ class NumotTheDevastatorTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         resolveCombatToTargetChoice();
-        harness.handlePermanentChosen(player1, forest.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -88,8 +88,8 @@ class NumotTheDevastatorTest extends BaseCardTest {
 
         resolveCombatToTargetChoice();
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).contains(forest.getId()).doesNotContain(otherNumot.getId());
     }
@@ -101,7 +101,7 @@ class NumotTheDevastatorTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         resolveCombatToTargetChoice();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
         addPaymentMana();
         harness.handleMayAbilityChosen(player1, true);
@@ -117,8 +117,7 @@ class NumotTheDevastatorTest extends BaseCardTest {
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
 
         resolveCombatToTargetChoice();
-        harness.handlePermanentChosen(player1, forest.getId());
-        harness.handlePermanentChosen(player1, plains.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId(), plains.getId()));
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, forest);
         harness.passBothPriorities();
         addPaymentMana();
@@ -135,7 +134,7 @@ class NumotTheDevastatorTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         resolveCombatToTargetChoice();
-        harness.handlePermanentChosen(player1, forest.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, forest);
         harness.passBothPriorities();
 
@@ -151,7 +150,7 @@ class NumotTheDevastatorTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         resolveCombatToTargetChoice();
-        harness.handlePermanentChosen(player1, forest.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, numot);
         harness.passBothPriorities();
         addPaymentMana();
@@ -168,7 +167,7 @@ class NumotTheDevastatorTest extends BaseCardTest {
 
     private void resolveCombatToTargetChoice() {
         resolveCombat();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
     }
 
     private void addPaymentMana() {

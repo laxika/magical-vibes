@@ -2129,7 +2129,10 @@ public class GraveyardChoiceHandlerService {
         } else if (TriggeredAbilityStackService.parkedAtDoor(pendingTriggerRecord)) {
             // An ability the stack door parked for its graveyard target goes on the stack with the cards chosen.
             List<UUID> chosenCardIds = List.copyOf(cardIds);
+            List<CardEffect> chosenEffects = new ArrayList<>(pendingEffects);
             triggeredAbilityStackService.finishParked(gameData, pendingTriggerRecord, entry -> {
+                // The effects the choice was made for: the chosen modes' when a mode was chosen first.
+                entry.replaceEffectsToResolve(chosenEffects);
                 entry.setTargetId(pendingTargetPlayerId);
                 entry.setNonTargeting(false);
                 entry.setTargetCardIds(new ArrayList<>(chosenCardIds));

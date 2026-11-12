@@ -2977,7 +2977,10 @@ public class TriggeredAbilityQueueService {
                     .filter(exile -> pending.sourceCard().getOwnEntryEffects().contains(exile))
                     .findFirst()
                     .orElse(null);
-            if (enterExile != null) {
+            // An ability the stack door parked (an attack ability sharing the effect, Graveyard Trespasser) goes
+            // through the general choice below, which finishes its record.
+            if (enterExile != null && !com.github.laxika.magicalvibes.service.trigger.pipeline
+                    .TriggeredAbilityStackService.parkedAtDoor(pending.triggerRecord())) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
                 graveyardTargetingService.handleGraveyardExileETBTargeting(
                         gameData, pending.controllerId(), pending.sourceCard(), pending.effects(),
@@ -3294,6 +3297,16 @@ public class TriggeredAbilityQueueService {
             gameData.graveyardTargetOperation.triggerRecord = pending.triggerRecord();
             gameData.graveyardTargetOperation.attackingPermanentSnapshots = pending.attackingPermanentSnapshots();
             gameData.graveyardTargetOperation.sourcePermanentId = pending.sourcePermanentId();
+            // Cards chosen from the one graveyard the choice was narrowed to ("up to two target creature cards from
+            // defending player's graveyard"): that player is the entry's target, whose graveyard the cards must still
+            // be in as the ability resolves.
+            if (com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
+                    .parkedAtDoor(pending.triggerRecord())
+                    && gameData.graveyardTargetOperation.effects.stream().anyMatch(effect ->
+                    effect.graveyardCardChoice() != null
+                    && !effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
+                gameData.graveyardTargetOperation.targetPlayerId = pending.graveyardOwnerId();
+            }
             gameData.graveyardTargetOperation.onceEachTurnActionKey =
                     pending.onceEachTurnActionKey();
             if (gameData.graveyardTargetOperation.sourcePermanentId == null) {
@@ -3397,10 +3410,12 @@ public class TriggeredAbilityQueueService {
     private void pushSpellGraveyardTriggeredAbilityWithoutTargets(
             GameData gameData, PermanentChoiceContext.SpellGraveyardTargetTrigger pending) {
         String description = pending.sourceCard().getName() + "'s ability";
+        List<CardEffect> effects = pending.effects();
         if (com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
                 .parkedAtDoor(pending.triggerRecord())) {
             // An ability the stack door parked for "up to" graveyard targets, with none to choose.
             triggeredAbilityStackService.finishParked(gameData, pending.triggerRecord(), entry -> {
+                entry.replaceEffectsToResolve(effects);
                 entry.setTargetId(null);
                 entry.setNonTargeting(true);
             });
@@ -3418,7 +3433,7 @@ public class TriggeredAbilityQueueService {
                 pending.sourceCard(),
                 pending.controllerId(),
                 description,
-                new ArrayList<>(pending.effects()),
+                new ArrayList<>(effects),
                 pending.xValue(),
                 null,
                 sourcePermanentId,

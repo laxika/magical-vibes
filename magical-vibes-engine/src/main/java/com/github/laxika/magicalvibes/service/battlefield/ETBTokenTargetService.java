@@ -40,6 +40,7 @@ import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -67,6 +68,8 @@ public class ETBTokenTargetService {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     @Autowired
     private ObjectProvider<TriggerCollectionService> triggerCollectionService;
+    @Autowired
+    private ObjectProvider<TriggeredAbilityStackService> triggeredAbilityStackService;
 
     @Autowired
     public ETBTokenTargetService(GameQueryService gameQueryService,
@@ -471,7 +474,9 @@ public class ETBTokenTargetService {
                         for (Permanent p : battlefield) {
                             if (targetAlreadyChosen(pending, p.getId())) continue;
                             if (matchesPermanentTargetFilter(gameData, p, group.getFilter(),
-                                    pending.controllerId(), card, pending.sourcePermanentId(), pending.xValue())
+                                    pending.controllerId(), card, pending.sourcePermanentId(), pending.xValue(),
+                                    pending.triggerRecord() == null ? null
+                                            : pending.triggerRecord().getTriggeringPlayerId())
                                     // Shroud, hexproof and protection still apply (Gilded Drake vs Morphling).
                                     && targetLegalityService.checkTriggeredPermanentTargetableReason(
                                             gameData, p, card, pending.controllerId()).isEmpty()) {
@@ -1021,6 +1026,18 @@ public class ETBTokenTargetService {
         if (!pending.repeatedAdditionalCosts().isEmpty()) {
             etbEntry.setRepeatedAdditionalCosts(List.copyOf(pending.repeatedAdditionalCosts()));
         }
+        if (TriggeredAbilityStackService.parkedAtDoor(pending.triggerRecord())
+                && etbEntry.getEffectsToResolve().equals(pending.triggerRecord().getEffectsToResolve())) {
+            // An ability the stack door parked for its targets goes on the stack as its record, with the targets
+            // chosen group by group. A chosen mode's targets, declared on a copy of the card, keep their own entry.
+            triggeredAbilityStackService.getObject().finishParked(gameData, pending.triggerRecord(), entry -> {
+                entry.replaceEffectsToResolve(etbEntry.getEffectsToResolve());
+                entry.adoptChosenTargets(etbEntry);
+                entry.setNonTargeting(false);
+            });
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s ability triggers."));
+            return;
+        }
         if (pending.triggerRecord() != null) {
             // The collector's record of the trigger event, the same as for an ability of it that chooses nothing.
             etbEntry.carryTriggerRecord(pending.triggerRecord());
@@ -1123,10 +1140,14 @@ public class ETBTokenTargetService {
                 gameData, controllerId, candidatePlayerId, playerFilter.predicate());
     }
 
+    /**
+     * Whether {@code permanent} passes {@code targetFilter}; {@code triggeringPlayerId}, the player the ability's event
+     * was about, is "that player" of "target … that player controls" (Feline Sovereign), or {@code null}.
+     */
     private boolean matchesPermanentTargetFilter(GameData gameData, Permanent permanent,
                                                   TargetFilter targetFilter,
                                                   UUID controllerId, Card sourceCard,
-                                                  UUID sourcePermanentId, int xValue) {
+                                                  UUID sourcePermanentId, int xValue, UUID triggeringPlayerId) {
         if (targetFilter == null) {
             return gameQueryService.isCreature(gameData, permanent);
         }
@@ -1136,6 +1157,9 @@ public class ETBTokenTargetService {
         }
         FilterContext filterContext = new FilterContext(
                 gameData, sourceCard.getId(), controllerId, xValue, null, sourcePermanentId);
+        if (triggeringPlayerId != null) {
+            filterContext = filterContext.withTriggeringPlayerId(triggeringPlayerId);
+        }
         return predicateEvaluationService.checkTargetFilter(targetFilter, permanent, filterContext).isEmpty();
     }
 }

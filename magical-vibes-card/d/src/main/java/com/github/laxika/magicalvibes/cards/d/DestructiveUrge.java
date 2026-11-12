@@ -12,9 +12,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class DestructiveUrge extends Card {
 
     public DestructiveUrge() {
-        target(TargetFilters.creature())
-                .addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                        new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(),
-                                SacrificeRecipient.TARGET_PLAYER));
+        target(TargetFilters.creature());
+        // "That player" is the player dealt damage, which the ability names without targeting.
+        addTrigger(Triggers.dealsCombatDamageToPlayer(),
+                new SacrificePermanentsEffect(1, new PermanentIsLandPredicate(), SacrificeRecipient.TARGET_PLAYER));
     }
 }

@@ -115,6 +115,9 @@ import com.github.laxika.magicalvibes.service.trigger.CombatWatch;
 import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -161,6 +164,7 @@ public class CombatAttackService {
     private final ETBTokenTargetService etbTokenTargetService;
     private final StaticEffectConditionResolver staticEffectConditionResolver;
     private final CardCatalog cardCatalog;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Autowired @Lazy
     private LifeSupport lifeSupport;
@@ -175,12 +179,11 @@ public class CombatAttackService {
                                              boolean mustAttackWithAtLeastOne) {
     }
 
-    private record AttackTriggerSource(Permanent permanent, CombatWatch watch,
-                                       List<CombatAbilityReader.CombatEffect> effects, List<Integer> bandAttackerIndices) {
-        private AttackTriggerSource(Permanent permanent, CombatWatch watch,
-                                    List<CombatAbilityReader.CombatEffect> effects) {
-            this(permanent, watch, effects, null);
-        }
+    /**
+     * One "whenever you attack" ability of {@code permanent} that a declaration may trigger, with the attackers of
+     * the band it triggers for (EACH_BAND), or {@code null} for all the declared attackers.
+     */
+    private record AttackTriggerSource(Permanent permanent, TriggeredAbility ability, List<Integer> bandAttackerIndices) {
     }
 
     /**
@@ -1314,34 +1317,31 @@ public class CombatAttackService {
         List<AttackTriggerSource> attackTriggerSources = new ArrayList<>();
         Trigger youAttack = CombatWatch.ON_ALLY_CREATURES_ATTACK.trigger();
         for (Permanent perm : battlefield) {
-            List<List<CombatAbilityReader.CombatEffect>> youAttackAbilities = new ArrayList<>(
-                    CombatAbilityReader.readByAbility(
-                            WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ALLY_CREATURES_ATTACK), youAttack));
-            youAttackAbilities.addAll(CombatAbilityReader.readByAbility(
-                    grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, youAttack), youAttack));
-            for (List<CombatAbilityReader.CombatEffect> ability : youAttackAbilities) {
+            List<TriggeredAbility> youAttackAbilities = new ArrayList<>(
+                    WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ALLY_CREATURES_ATTACK));
+            youAttackAbilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, youAttack));
+            for (TriggeredAbility ability : youAttackAbilities) {
                 // "Whenever two or more creatures you control attack in a band" (EACH_BAND): an ability of its own for
                 // each declared band of two or more (CR 702.22c), whose attacking creatures are the band's.
-                if (ability.getFirst().multiplicity() == TriggerMultiplicity.EACH_BAND) {
+                if (ability.options().multiplicity() == TriggerMultiplicity.EACH_BAND) {
                     for (List<Integer> members : declaredBands.values()) {
                         if (members.size() >= 2) {
-                            attackTriggerSources.add(new AttackTriggerSource(perm,
-                                    CombatWatch.ON_ALLY_CREATURES_ATTACK, ability, List.copyOf(members)));
+                            attackTriggerSources.add(new AttackTriggerSource(perm, ability, List.copyOf(members)));
                         }
                     }
                     continue;
                 }
-                attackTriggerSources.add(new AttackTriggerSource(perm, CombatWatch.ON_ALLY_CREATURES_ATTACK, ability));
+                attackTriggerSources.add(new AttackTriggerSource(perm, ability, null));
             }
         }
         for (AttackTriggerSource triggerSource : attackTriggerSources) {
             Permanent perm = triggerSource.permanent();
-            List<CombatAbilityReader.CombatEffect> allyAttackAbility = triggerSource.effects();
-            CombatAbilityReader.CombatEffect read = allyAttackAbility.getFirst();
+            TriggeredAbility ability = triggerSource.ability();
+            TriggerOptions options = ability.options();
             // "Whenever you attack with one or more Wraiths": the ability triggers only if a declared attacker matches
             // its filter (CR 603.2), and "they", "those creatures" and "their total power" are the matching attackers
             // as they were declared.
-            PermanentPredicate attackerFilter = read.filter();
+            PermanentPredicate attackerFilter = CombatAbilityReader.filter(ability, youAttack);
             List<Integer> declaredAttackerIndices = triggerSource.bandAttackerIndices() != null
                     ? triggerSource.bandAttackerIndices() : attackerIndices;
             List<Integer> sourceAttackerIndices = attackerFilter == null ? declaredAttackerIndices
@@ -1350,24 +1350,21 @@ public class CombatAttackService {
             if (sourceAttackerIndices.isEmpty()) continue;
 
             // "Triggers only once each turn" (Akki Battle Squad) and "this ability triggers only once" (Ruby
-            // Collector) are the ability's limit, marked for this ability of the permanent as it triggers: another
-            // limited ability of the same permanent keeps its own.
-            boolean oncePerTurn = read.limit() == TriggerLimit.ONCE_EACH_TURN;
-            boolean onceOnly = read.limit() == TriggerLimit.ONCE;
-            boolean oncePerTurnForPlayer = read.limit() == TriggerLimit.FIRST_TIME_EACH_TURN;
-            if ((read.limit() != TriggerLimit.NONE && !oncePerTurn && !onceOnly && !oncePerTurnForPlayer)
-                    || (read.multiplicity() != TriggerMultiplicity.EACH
-                    && read.multiplicity() != TriggerMultiplicity.EACH_BAND)) {
+            // Collector) are the ability's limit, which the stack door judges and marks for this ability of the
+            // permanent: another limited ability of the same permanent keeps its own.
+            boolean oncePerTurnForPlayer = options.limit() == TriggerLimit.FIRST_TIME_EACH_TURN;
+            if ((options.limit() != TriggerLimit.NONE && options.limit() != TriggerLimit.ONCE_EACH_TURN
+                    && options.limit() != TriggerLimit.ONCE && !oncePerTurnForPlayer)
+                    || (options.multiplicity() != TriggerMultiplicity.EACH
+                    && options.multiplicity() != TriggerMultiplicity.EACH_BAND)) {
                 throw new IllegalStateException("The \"whenever you attack\" collector reads no "
-                        + read.options() + ": " + read.ability());
+                        + options + ": " + ability);
             }
             // The ability's event condition (CR 603.2) and intervening "if" (CR 603.4), with the number of
             // attackers.
-            if (!conditionEvaluationService.triggerConditionsMet(gameData, read.options(),
-                    ConditionContext.forPermanent(perm, playerId).withXValue(sourceAttackerIndices.size()))) {
-                continue;
-            }
-            if ((oncePerTurn || onceOnly) && read.limitReached(gameData, perm.getId())) {
+            ConditionContext youAttackContext = ConditionContext.forPermanent(perm, playerId)
+                    .withXValue(sourceAttackerIndices.size());
+            if (!conditionEvaluationService.eventConditionMet(gameData, options, youAttackContext)) {
                 continue;
             }
             // "Whenever you attack with creatures with total power 12 or greater for the first time each turn"
@@ -1376,124 +1373,35 @@ public class CombatAttackService {
             if (oncePerTurnForPlayer && !isFirstQualifyingAttackThisTurn(gameData, playerId)) {
                 continue;
             }
-            List<CardEffect> filteredEffects = CombatAbilityReader.effectsAsJudged(allyAttackAbility);
-
             // "They" / "those creatures" (GrantScope.DECLARED_ATTACKERS) and a band's creatures are the entry's
-            // attacking creatures, recorded whatever the effects are. It is the entry of the ability that chooses
-            // nothing, and the record of one that chooses a mode, a graveyard card or a target as it goes on the stack.
-            StackEntry attackTrigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    perm.getCard(),
-                    playerId,
-                    perm.getCard().getName() + "'s attack trigger",
-                    filteredEffects,
-                    sourceAttackerIndices.size(),
-                    null,
-                    perm.getId(),
-                    null,
-                    null,
-                    null,
-                    null
-            );
-            if (attackerFilter != null) {
-                // "That many" (The Ur-Dragon's "whenever one or more Dragons you control attack, draw that many
-                // cards") is the number of matching attackers.
-                attackTrigger.setEventValue(sourceAttackerIndices.size());
-            }
-            attackTrigger.setAttackingPermanentSnapshots(sourceAttackerIndices.stream()
-                    .map(battlefield::get).map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList());
-            attackTrigger.setSourcePermanentSnapshot(new Permanent(perm));
-            if (attackerFilter != null) {
-                // "Each of them" (Vrestin): the matching attackers are the event's permanents.
-                attackTrigger.setTriggeringPermanentIds(sourceAttackerIndices.stream()
-                        .map(battlefield::get).map(Permanent::getId).toList());
-            }
-
-            int previousCopies = oncePerTurn ? gameData.beginTriggeredAbilityCopies(1)
-                    : beginAttackTriggerCopies(gameData, playerId, perm);
-            GameData.TriggerRouting youAttackRouting = gameData.beginTriggerRouting();
-            try {
-                gameData.handOffTriggerRecord(attackTrigger);
-                if (filteredEffects.stream().anyMatch(ChooseOneAtTriggerTimeEffect.class::isInstance)) {
-                    // The mode is chosen as the ability goes on the stack (CR 603.3c); the choice builds the stack
-                    // object from the chosen modes, so it is the ability's one effect.
-                    if (filteredEffects.size() != 1) {
-                        throw new IllegalStateException("A mode chosen as a \"whenever you attack\" ability triggers "
-                                + "is the ability's one effect: " + read.ability());
-                    }
-                    gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                            perm.getCard(), playerId, ((ChooseOneAtTriggerTimeEffect) filteredEffects.getFirst()).choice(),
-                            perm.getId()));
-                    gameLogService.append(gameData,
-                            GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
-                    log.info("Game {} - {} attack trigger queued for mode selection",
-                            gameData.id, perm.getCard().getName());
-                } else {
-                    boolean needsGraveyardTarget = filteredEffects.stream()
-                            .anyMatch(e -> e instanceof GraveyardCardChoosingEffect choosingEffect
-                                    && choosingEffect.choosesGraveyardCards()
-                                    || e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
-                    boolean needsTarget = filteredEffects.stream()
-                            .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                                    || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-                    if (needsGraveyardTarget) {
-                        // The service has an ability that triggers while another choice is being made wait its
-                        // turn (CR 603.3b) instead of overwriting that choice.
-                        graveyardTargetingService.handleAttackGraveyardTargeting(
-                                gameData, playerId, perm.getCard(), filteredEffects, perm.getId(), null,
-                                sourceAttackerIndices.stream().map(battlefield::get)
-                                        .map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList());
-                        gameLogService.append(gameData,
-                                GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
-                        log.info("Game {} - {} targeted ON_ALLY_CREATURES_ATTACK graveyard trigger queued",
-                                gameData.id, perm.getCard().getName());
-                    } else if (needsTarget) {
-                        Card allyAttackCard = perm.getCard();
-                        // A group no effect is bound to is a bare positional target that a bound effect reads by
-                        // index (Gimli's Reckless Might's attacking creature read by its fight), so it must be
-                        // chosen too and the single-group shortcut cannot apply. A bare group belongs to the
-                        // ability of the next bound group after it, so one read by another ability (Hunter's
-                        // Talent's ETB "creature you control") does not count.
-                        boolean singleBoundTargetGroup = filteredEffects.stream().allMatch(allyAttackCard::hasEffectTargetIndex)
-                                && filteredEffects.stream().map(allyAttackCard::getEffectTargetIndex).distinct().count() == 1
-                                && allyAttackCard.getTargetGroups().stream()
-                                .allMatch(group -> allyAttackCard.bindsEffectToTargetGroup(group.getIndex())
-                                        || !bareGroupBelongsToEffects(allyAttackCard, group.getIndex(), filteredEffects));
-                        if (allyAttackCard.getTargetGroups().size() > 1 && !singleBoundTargetGroup) {
-                            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                                    perm.getCard(), playerId, filteredEffects, perm.getId(),
-                                    List.of(), 0, 0, List.of(), sourceAttackerIndices.size()));
-                        } else {
-                            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                    perm.getCard(), playerId, filteredEffects, perm.getId(), playerId, null,
-                                    null, sourceAttackerIndices.size()));
+            // attacking creatures, recorded whatever the effects are; "that many" (The Ur-Dragon's "whenever one or
+            // more Dragons you control attack, draw that many cards") and "each of them" (Vrestin) are the matching
+            // attackers.
+            boolean sourceAttacked = sourceAttackerIndices.stream().anyMatch(index -> battlefield.get(index) == perm);
+            List<Permanent> attackingSnapshots = sourceAttackerIndices.stream()
+                    .map(battlefield::get).map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList();
+            TriggeredAbilityRequest youAttackRequest = new TriggeredAbilityRequest(ability,
+                    perm.getCard(), perm, playerId, perm.getCard().getName() + "'s attack trigger", youAttackContext,
+                    entry -> {
+                        entry.setXValue(sourceAttackerIndices.size());
+                        if (attackerFilter != null) {
+                            entry.setEventValue(sourceAttackerIndices.size());
+                            entry.setTriggeringPermanentIds(sourceAttackerIndices.stream()
+                                    .map(battlefield::get).map(Permanent::getId).toList());
                         }
-                        gameLogService.append(gameData,
-                                GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
-                        log.info("Game {} - {} targeted ON_ALLY_CREATURES_ATTACK trigger queued for target selection",
-                                gameData.id, perm.getCard().getName());
-                    } else {
-                        gameData.stack.add(attackTrigger);
-                        if (perm.isAttacking()) {
-                            triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
-                                    gameData, perm, attackTrigger);
-                        }
-                        gameLogService.append(gameData,
-                                GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
-                        log.info("Game {} - {} ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
-                                gameData.id, perm.getCard().getName(), sourceAttackerIndices.size());
-                    }
-                }
-                // The ability triggered, whichever way it reaches the stack: its limit is used.
-                if (oncePerTurnForPlayer) {
-                    markFirstQualifyingAttackThisTurn(gameData, playerId);
-                } else {
-                    read.markLimit(gameData, perm.getId());
-                }
-            } finally {
-                gameData.endTriggerRouting(youAttackRouting);
-                gameData.restoreTriggeredAbilityCopies(previousCopies);
+                        entry.setAttackingPermanentSnapshots(attackingSnapshots);
+                        entry.setSourcePermanentSnapshot(new Permanent(perm));
+                    });
+            boolean triggered = triggeredAbilityStackService.put(gameData, sourceAttacked
+                    ? youAttackRequest.causedBySourceAttacking() : youAttackRequest.causedByAttack());
+            if (!triggered) {
+                continue;
             }
+            if (oncePerTurnForPlayer) {
+                markFirstQualifyingAttackThisTurn(gameData, playerId);
+            }
+            gameLogService.append(gameData,
+                    GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
         }
 
         checkCommandZoneAllyCreatureAttackTriggers(gameData, playerId, attackerIndices.size());
@@ -1536,71 +1444,41 @@ public class CombatAttackService {
         for (Map.Entry<CombatWatch, UUID> attackedDefenderSlot : attackedDefenderSlots) {
             CombatWatch attackPlayerSlot = attackedDefenderSlot.getKey();
             UUID attackedPlayerId = attackedDefenderSlot.getValue();
+            Trigger attackPlayer = attackPlayerSlot.trigger();
+            int targetAttackerCount = (int) attackerIndices.stream()
+                    .map(resolvedTargets::get)
+                    .filter(attackedPlayerId::equals)
+                    .count();
             for (Permanent perm : new ArrayList<>(battlefield)) {
-                Trigger attackPlayer = attackPlayerSlot.trigger();
-                int targetAttackerCount = (int) attackerIndices.stream()
-                        .map(resolvedTargets::get)
-                        .filter(attackedPlayerId::equals)
-                        .count();
                 // Each ability's event condition ("with one or more Pirates", "with two or more creatures", a Class's
                 // level; CR 603.2) and intervening "if" (CR 603.4) are judged against the attacked player or
                 // planeswalker and the number of creatures attacking it.
-                TriggerJudge attackedJudge = conditionEvaluationService.judge(gameData,
-                        ConditionContext.forPermanent(perm, playerId).withTargetId(attackedPlayerId)
-                                .withXValue(targetAttackerCount));
-                List<List<CombatAbilityReader.CombatEffect>> attackPlayerAbilities = new ArrayList<>(
-                        CombatAbilityReader.readByAbility(attackedJudge.filter(
-                                WatchedAbilities.printed(perm.getCard(), attackPlayerSlot)), attackPlayer));
-                attackPlayerAbilities.addAll(CombatAbilityReader.readByAbility(attackedJudge.filter(
-                        grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, attackPlayer)),
-                        attackPlayer));
-                if (attackPlayerAbilities.isEmpty()) continue;
-
-                int previousCopies = beginAttackTriggerCopies(gameData, playerId, perm);
-                try {
-                    // Each ability is one object on the stack (CR 603.3), its target chosen for all its effects
-                    // (CR 603.3d).
-                    for (List<CombatAbilityReader.CombatEffect> ability : attackPlayerAbilities) {
-                        CombatAbilityReader.CombatEffect read = ability.getFirst();
-                        CombatAbilityReader.requireNoLimitOrMultiplicity(read, attackPlayer);
-                        if (read.filter() != null) {
-                            throw new IllegalStateException("The collector of " + attackPlayer + " judges no filter: "
-                                    + read.ability());
-                        }
-                        List<CardEffect> matchingEffects = CombatAbilityReader.effectsAsJudged(ability);
-                        boolean needsTarget = matchingEffects.stream()
-                                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-                        // The entry of the ability that chooses nothing, and the record of one that chooses a
-                        // target as it goes on the stack.
-                        StackEntry attackTrigger = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                perm.getCard().getName() + "'s attack trigger",
-                                matchingEffects,
-                                0,
-                                perm.getId());
-                        attackTrigger.setEventValue(targetAttackerCount);
-                        attackTrigger.setAttackedTargetId(attackedPlayerId);
-                        attackTrigger.setNonTargeting(true);
-                        attackTrigger.setSourcePermanentSnapshot(new Permanent(perm));
-                        StackEntry recordInHand = gameData.handOffTriggerRecord(attackTrigger);
-                        if (needsTarget) {
-                            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                    perm.getCard(), playerId, matchingEffects, perm.getId(), playerId,
-                                    attackedPlayerId));
-                        } else {
-                            gameData.stack.add(attackTrigger);
-                        }
-                        gameData.restoreTriggerRecordInHand(recordInHand);
+                ConditionContext attackedContext = ConditionContext.forPermanent(perm, playerId)
+                        .withTargetId(attackedPlayerId).withXValue(targetAttackerCount);
+                List<TriggeredAbility> attackPlayerAbilities = new ArrayList<>(
+                        WatchedAbilities.printed(perm.getCard(), attackPlayerSlot));
+                attackPlayerAbilities.addAll(
+                        grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, attackPlayer));
+                // Each ability is one object on the stack (CR 603.3), its target chosen for all its effects
+                // (CR 603.3d); the entry records the attacked player or planeswalker and the number of creatures
+                // attacking it whatever the effects are.
+                for (TriggeredAbility ability : attackPlayerAbilities) {
+                    requireNoFilterLimitOrMultiplicity(ability, attackPlayer);
+                    if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), attackedContext)) {
+                        continue;
+                    }
+                    boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                            ability, perm.getCard(), perm, playerId, perm.getCard().getName() + "'s attack trigger",
+                            attackedContext, entry -> {
+                                entry.setEventValue(targetAttackerCount);
+                                entry.setAttackedTargetId(attackedPlayerId);
+                                entry.setNonTargeting(true);
+                                entry.setSourcePermanentSnapshot(new Permanent(perm));
+                            }).causedByAttack());
+                    if (triggered) {
                         gameLogService.append(gameData,
                                 GameLog.builder().card(perm.getCard()).text("'s attack ability triggers.").build());
-                        log.info("Game {} - {} attack-player trigger for player {}",
-                                gameData.id, perm.getCard().getName(), attackedPlayerId);
                     }
-                } finally {
-                    gameData.restoreTriggeredAbilityCopies(previousCopies);
                 }
             }
         }
@@ -1612,22 +1490,17 @@ public class CombatAttackService {
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             for (Permanent perm : battlefield) {
-                List<List<CombatAbilityReader.CombatEffect>> allyAttackAbilities = new ArrayList<>();
-                List<TriggeredAbility> printedAllyAttacks = WatchedAbilities.printed(
-                        LayerSystemService.currentCard(gameData, perm), CombatWatch.ON_ALLY_CREATURE_ATTACKS);
-                if (!printedAllyAttacks.isEmpty() && !perm.isFaceDown()
-                        && !gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
-                    allyAttackAbilities.addAll(CombatAbilityReader.readByAbility(printedAllyAttacks, allyAttacks));
+                List<TriggeredAbility> allyAttackAbilities = new ArrayList<>();
+                if (!perm.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
+                    allyAttackAbilities.addAll(WatchedAbilities.printed(
+                            LayerSystemService.currentCard(gameData, perm), CombatWatch.ON_ALLY_CREATURE_ATTACKS));
                 }
-                List<TriggeredAbility> temporaryAllyAttacks = WatchedAbilities.temporary(perm, allyAttacks);
-                List<TriggeredAbility> persistentAllyAttacks = WatchedAbilities.persistent(perm, allyAttacks);
-                if ((!temporaryAllyAttacks.isEmpty() || !persistentAllyAttacks.isEmpty())
-                        && !gameQueryService.hasLostAllAbilities(gameData, perm)) {
-                    allyAttackAbilities.addAll(CombatAbilityReader.readByAbility(temporaryAllyAttacks, allyAttacks));
-                    allyAttackAbilities.addAll(CombatAbilityReader.readByAbility(persistentAllyAttacks, allyAttacks));
+                if (!gameQueryService.hasLostAllAbilities(gameData, perm)) {
+                    allyAttackAbilities.addAll(WatchedAbilities.temporary(perm, allyAttacks));
+                    allyAttackAbilities.addAll(WatchedAbilities.persistent(perm, allyAttacks));
                 }
-                allyAttackAbilities.addAll(CombatAbilityReader.readByAbility(
-                        grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, allyAttacks), allyAttacks));
+                allyAttackAbilities.addAll(
+                        grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, perm, allyAttacks));
                 if (allyAttackAbilities.isEmpty()) continue;
 
                 // Filter by the attacking permanent itself (e.g. Rage Forger — "a creature you control with a
@@ -1636,35 +1509,27 @@ public class CombatAttackService {
                         .withSourceCardId(perm.getOriginalCard().getId())
                         .withSourceControllerId(playerId)
                         .withSourcePermanentId(perm.getId());
-                List<List<CardEffect>> triggeredAbilities = new ArrayList<>();
-                for (List<CombatAbilityReader.CombatEffect> ability : allyAttackAbilities) {
-                    CombatAbilityReader.CombatEffect read = ability.getFirst();
-                    CombatAbilityReader.requireNoLimitOrMultiplicity(read, allyAttacks);
-                    if (read.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
-                            attacker, read.filter(), filterContext)) {
+                // The ability's event condition ("attacks alone", exalted, CR 702.83a) and intervening "if" (CR 603.4:
+                // a Class's level, "if it's the first combat phase", "if no other creatures are attacking that
+                // player"), with the attacking creature.
+                ConditionContext allyAttackContext = ConditionContext.forPermanent(perm, playerId)
+                        .withTriggeringPermanentId(attacker.getId());
+                for (TriggeredAbility ability : allyAttackAbilities) {
+                    if (ability.options().limit() != TriggerLimit.NONE
+                            || ability.options().multiplicity() != TriggerMultiplicity.EACH) {
+                        throw new IllegalStateException("The collector of " + allyAttacks + " reads no "
+                                + ability.options() + ": " + ability);
+                    }
+                    PermanentPredicate filter = CombatAbilityReader.filter(ability, allyAttacks);
+                    if (filter != null && !predicateEvaluationService.matchesPermanentPredicate(
+                            attacker, filter, filterContext)) {
                         continue;
                     }
-                    // The ability's event condition ("attacks alone", exalted, CR 702.83a) and intervening "if"
-                    // (CR 603.4: a Class's level, "if it's the first combat phase", "if no other creatures are attacking
-                    // that player"), with the attacking creature; the intervening "if" stays wrapped for the check as
-                    // the ability resolves (CombatEffect.effectAsJudged).
-                    if (!conditionEvaluationService.triggerConditionsMet(gameData, read.options(),
-                            ConditionContext.forPermanent(perm, playerId).withTriggeringPermanentId(attacker.getId()))) {
+                    if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(),
+                            allyAttackContext)) {
                         continue;
                     }
-                    triggeredAbilities.add(CombatAbilityReader.effectsAsJudged(ability));
-                }
-                if (triggeredAbilities.isEmpty()) continue;
-
-                int previousCopies = beginAttackTriggerCopies(gameData, playerId, perm);
-                try {
-                    // Each ability is one object on the stack (CR 603.3).
-                    for (List<CardEffect> abilityEffects : triggeredAbilities) {
-                        gameData.routeTriggeredAbility(() -> putAllyCreatureAttackAbilityOnStack(
-                                gameData, playerId, perm, attacker, abilityEffects));
-                    }
-                } finally {
-                    gameData.restoreTriggeredAbilityCopies(previousCopies);
+                    putAllyCreatureAttackAbility(gameData, playerId, perm, attacker, ability, allyAttackContext);
                 }
             }
         }
@@ -1709,97 +1574,64 @@ public class CombatAttackService {
         triggerCollectionService.checkPlanarAllyCreaturesAttackTriggers(
                 gameData, playerId, attackerIndices.size());
 
-        // Check for graveyard-based "whenever you attack with N or more creatures" triggers
-        // (GRAVEYARD_ON_ALLY_CREATURES_ATTACK), which fire from the attacking player's graveyard.
+        // Graveyard-based "whenever you attack with N or more creatures" abilities (GRAVEYARD_ON_ALLY_CREATURES_ATTACK),
+        // which trigger from the attacking player's graveyard; each is one object on the stack (CR 603.3). The entry
+        // records the number of attackers as X and the card's graveyard incarnation: a card that leaves and comes back
+        // before the ability resolves is a new object (CR 400.7).
         List<Card> attackingPlayersGraveyard = gameData.playerGraveyards.get(playerId);
         if (attackingPlayersGraveyard != null) {
-            UUID graveyardOwnerId = playerId;
+            Trigger graveyardAttack = CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK.trigger();
             for (Card card : new ArrayList<>(attackingPlayersGraveyard)) {
                 // Each ability's event condition ("with one or more Rats") and intervening "if" ("if there are
                 // seven or more cards in your graveyard"), read from the card and its owner, with the number of
                 // attackers.
-                TriggerJudge graveyardJudge = conditionEvaluationService.judge(gameData,
-                        new ConditionContext(graveyardOwnerId, null, null, card, false, false, false, false, null,
-                                attackerIndices.size(), null, null, false));
-                Trigger graveyardAttack = CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK.trigger();
-                List<List<CombatAbilityReader.CombatEffect>> gyAttackAbilities = CombatAbilityReader.readByAbility(
-                        graveyardJudge.filter(WatchedAbilities.withWatchedTrigger(
-                                gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card),
-                                graveyardAttack, Zone.GRAVEYARD)), graveyardAttack);
-
-                // Each ability is one object on the stack (CR 603.3).
-                for (List<CombatAbilityReader.CombatEffect> ability : gyAttackAbilities) {
-                    CombatAbilityReader.CombatEffect read = ability.getFirst();
-                    CombatAbilityReader.requireNoLimitOrMultiplicity(read, graveyardAttack);
-                    if (read.filter() != null) {
-                        throw new IllegalStateException("The collector of " + graveyardAttack + " judges no filter: "
-                                + read.ability());
+                ConditionContext graveyardContext = new ConditionContext(playerId, null, null, card, false, false,
+                        false, false, null, attackerIndices.size(), null, null, false);
+                for (TriggeredAbility ability : WatchedAbilities.withWatchedTrigger(
+                        gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card),
+                        graveyardAttack, Zone.GRAVEYARD)) {
+                    requireNoFilterLimitOrMultiplicity(ability, graveyardAttack);
+                    if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), graveyardContext)) {
+                        continue;
                     }
-
-                    // The ability's event condition and intervening "if" were judged above; the intervening "if" stays
-                    // wrapped for the check as it resolves (CR 603.4).
-                    StackEntry attackTrigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            card,
-                            playerId,
-                            card.getName() + "'s graveyard attack trigger",
-                            CombatAbilityReader.effectsAsJudged(ability),
-                            attackerIndices.size(),
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null
-                    );
-                    // CR 400.7: a card that leaves and re-enters the graveyard before this trigger resolves is a
-                    // new object, so the trigger must not act on it.
-                    attackTrigger.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
-                    gameData.stack.add(attackTrigger);
-                    gameLogService.append(gameData,
-                            GameLog.builder().card(card).text("'s graveyard attack ability triggers.").build());
-                    log.info("Game {} - {} GRAVEYARD_ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
-                            gameData.id, card.getName(), attackerIndices.size());
+                    long graveyardVersion = gameData.graveyardEntryVersion(card.getId());
+                    boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                            ability, card, null, playerId, card.getName() + "'s graveyard attack trigger",
+                            graveyardContext, entry -> {
+                                entry.setXValue(attackerIndices.size());
+                                entry.setSourceGraveyardEntryVersion(graveyardVersion);
+                            }).causedByAttack());
+                    if (triggered) {
+                        gameLogService.append(gameData,
+                                GameLog.builder().card(card).text("'s graveyard attack ability triggers.").build());
+                    }
                 }
             }
         }
 
-        // Check for exile-based "whenever you attack" triggers. These fire once per combat
-        // while the face-up card is in its owner's exile zone.
+        // Exile-based "whenever you attack" abilities, which trigger once each combat while the face-up card is in
+        // its owner's exile zone; each is one object on the stack (CR 603.3), with the number of attackers as X.
         if (!attackerIndices.isEmpty()) {
+            Trigger exileAttack = CombatWatch.EXILE_ON_ALLY_CREATURES_ATTACK.trigger();
             for (ExiledCardEntry exiled : new ArrayList<>(gameData.exiledCards)) {
                 if (exiled.faceDown() || !playerId.equals(exiled.ownerId())) {
                     continue;
                 }
-                // Each ability is one object on the stack (CR 603.3).
-                Trigger exileAttack = CombatWatch.EXILE_ON_ALLY_CREATURES_ATTACK.trigger();
-                for (List<CombatAbilityReader.CombatEffect> ability : CombatAbilityReader.readByAbility(
-                        WatchedAbilities.printed(exiled.card(), CombatWatch.EXILE_ON_ALLY_CREATURES_ATTACK),
-                        exileAttack)) {
-                    CombatAbilityReader.CombatEffect read = ability.getFirst();
-                    CombatAbilityReader.requireNoLimitOrMultiplicity(read, exileAttack);
-                    if (read.filter() != null) {
-                        throw new IllegalStateException("The collector of " + exileAttack + " judges no filter: "
-                                + read.ability());
+                ConditionContext exileContext = ConditionContext.forCard(exiled.card(), playerId)
+                        .withXValue(attackerIndices.size());
+                for (TriggeredAbility ability
+                        : WatchedAbilities.printed(exiled.card(), CombatWatch.EXILE_ON_ALLY_CREATURES_ATTACK)) {
+                    requireNoFilterLimitOrMultiplicity(ability, exileAttack);
+                    if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), exileContext)) {
+                        continue;
                     }
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            exiled.card(),
-                            playerId,
-                            exiled.card().getName() + "'s exile attack trigger",
-                            new ArrayList<>(CombatAbilityReader.effectsOf(ability)),
-                            attackerIndices.size(),
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null
-                    ));
-                    gameLogService.append(gameData,
-                            GameLog.builder().card(exiled.card()).text("'s exile attack ability triggers.").build());
-                    log.info("Game {} - {} EXILE_ON_ALLY_CREATURES_ATTACK trigger pushed onto stack (attacker count: {})",
-                            gameData.id, exiled.card().getName(), attackerIndices.size());
+                    boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                            ability, exiled.card(), null, playerId, exiled.card().getName() + "'s exile attack trigger",
+                            exileContext, entry -> entry.setXValue(attackerIndices.size())).causedByAttack());
+                    if (triggered) {
+                        gameLogService.append(gameData, GameLog.builder().card(exiled.card())
+                                .text("'s exile attack ability triggers.").build());
+                    }
                 }
             }
         }
@@ -1833,7 +1665,6 @@ public class CombatAttackService {
                         || gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
                     continue;
                 }
-                List<List<CardEffect>> attackedAbilities = new ArrayList<>();
                 List<CombatWatch> watches = new ArrayList<>();
                 if (!battleAttacked) {
                     watches.add(CombatWatch.ON_CREATURE_ATTACKS_YOU);
@@ -1849,51 +1680,40 @@ public class CombatAttackService {
                 ConditionContext attackedContext = ConditionContext.forPermanent(perm, attackedPlayerId)
                         .withTriggeringPermanentId(attacker.getId()).withTargetId(attackedTargetId);
                 for (CombatWatch watch : watches) {
-                    for (List<CombatAbilityReader.CombatEffect> ability : CombatAbilityReader.readByAbility(
-                            WatchedAbilities.printed(perm.getCard(), watch), watch.trigger())) {
-                        CombatAbilityReader.CombatEffect read = ability.getFirst();
-                        CombatAbilityReader.requireNoLimitOrMultiplicity(read, watch.trigger());
+                    for (TriggeredAbility ability : WatchedAbilities.printed(perm.getCard(), watch)) {
+                        if (ability.options().limit() != TriggerLimit.NONE
+                                || ability.options().multiplicity() != TriggerMultiplicity.EACH) {
+                            throw new IllegalStateException("The collector of " + watch.trigger() + " reads no "
+                                    + ability.options() + ": " + ability);
+                        }
                         // The trigger's filter on the attacking creature ("a creature with flying", Raking Canopy),
                         // and the ability's event condition and intervening "if" (Guardian of the Ages' "if this
-                        // creature has defender", CR 603.4), judged as the creature is declared an attacker; the
-                        // intervening "if" stays wrapped for the check as the ability resolves.
-                        if (read.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
-                                attacker, read.filter(), attackedSourceContext)) {
+                        // creature has defender", CR 603.4), judged as the creature is declared an attacker.
+                        PermanentPredicate filter = CombatAbilityReader.filter(ability, watch.trigger());
+                        if (filter != null && !predicateEvaluationService.matchesPermanentPredicate(
+                                attacker, filter, attackedSourceContext)) {
                             continue;
                         }
-                        if (!conditionEvaluationService.triggerConditionsMet(gameData, read.options(), attackedContext)) {
+                        if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(),
+                                attackedContext)) {
                             continue;
                         }
-                        attackedAbilities.add(CombatAbilityReader.effectsAsJudged(ability));
+                        // The attacking creature is "that creature", the entry's non-targeting target, and its
+                        // controller "that creature's controller", whatever the effects are.
+                        boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                                ability, perm.getCard(), perm, attackedPlayerId, perm.getCard().getName() + "'s trigger",
+                                attackedContext, entry -> {
+                                    entry.setTargetId(attacker.getId());
+                                    entry.setNonTargeting(true);
+                                    entry.setTriggeringPermanentId(attacker.getId());
+                                    entry.setTriggeringPermanentControllerId(playerId);
+                                    entry.setSourcePermanentSnapshot(new Permanent(perm));
+                                }).causedByAttack());
+                        if (triggered) {
+                            gameLogService.append(gameData,
+                                    GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
+                        }
                     }
-                }
-                if (attackedAbilities.isEmpty()) continue;
-
-                int previousCopies = beginAttackTriggerCopies(gameData, attackedPlayerId, perm);
-                try {
-                    // Each ability is one object on the stack (CR 603.3).
-                    for (List<CardEffect> abilityEffects : attackedAbilities) {
-                        StackEntry attackedTrigger = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                attackedPlayerId,
-                                perm.getCard().getName() + "'s trigger",
-                                abilityEffects,
-                                attacker.getId(),
-                                perm.getId()
-                        );
-                        attackedTrigger.setNonTargeting(true);
-                        attackedTrigger.setTriggeringPermanentId(attacker.getId());
-                        attackedTrigger.setTriggeringPermanentControllerId(playerId);
-                        attackedTrigger.setSourcePermanentSnapshot(new Permanent(perm));
-                        gameData.stack.add(attackedTrigger);
-                        gameLogService.append(gameData,
-                                GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
-                        log.info("Game {} - {} attacked-player trigger for {} attacking",
-                                gameData.id, perm.getCard().getName(), attacker.getCard().getName());
-                    }
-                } finally {
-                    gameData.restoreTriggeredAbilityCopies(previousCopies);
                 }
             }
         }
@@ -1913,72 +1733,34 @@ public class CombatAttackService {
         for (UUID attackedPlayerId : directlyAttackedPlayerIds) {
             List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(attackedPlayerId);
             if (defenderBattlefield == null) continue;
+            Trigger creaturesAttackYou = CombatWatch.ON_CREATURES_ATTACK_YOU.trigger();
+            List<Permanent> attackingYou = attackerIndices.stream()
+                    .filter(idx -> attackedPlayerId.equals(resolvedTargets.get(idx)))
+                    .map(battlefield::get)
+                    .map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList();
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
-                Trigger creaturesAttackYou = CombatWatch.ON_CREATURES_ATTACK_YOU.trigger();
-                List<List<CombatAbilityReader.CombatEffect>> attackedAbilities = CombatAbilityReader.readByAbility(
-                        conditionEvaluationService.judge(gameData, ConditionContext.forPermanent(perm, attackedPlayerId))
-                                .filter(WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_CREATURES_ATTACK_YOU)),
-                        creaturesAttackYou);
-                if (attackedAbilities.isEmpty()) continue;
-
-                int previousCopies = beginAttackTriggerCopies(gameData, attackedPlayerId, perm);
-                try {
-                    // Each ability is one object on the stack (CR 603.3), its target chosen for all its effects
-                    // (CR 603.3d).
-                    for (List<CombatAbilityReader.CombatEffect> ability : attackedAbilities) {
-                        CombatAbilityReader.CombatEffect read = ability.getFirst();
-                        CombatAbilityReader.requireNoLimitOrMultiplicity(read, creaturesAttackYou);
-                        if (read.filter() != null) {
-                            throw new IllegalStateException("The collector of " + creaturesAttackYou
-                                    + " judges no filter: " + read.ability());
-                        }
-                        List<CardEffect> effects = new ArrayList<>(CombatAbilityReader.effectsOf(ability));
-                        boolean needsTarget = effects.stream()
-                                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-                        // The entry of the ability that chooses nothing, and the record of one that chooses a
-                        // target as it goes on the stack.
-                        StackEntry trigger = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                attackedPlayerId,
-                                perm.getCard().getName() + "'s trigger",
-                                effects,
-                                null,
-                                perm.getId()
-                        );
-                        trigger.setNonTargeting(true);
-                        trigger.setActivePlayerId(playerId);
-                        trigger.setSourcePermanentSnapshot(new Permanent(perm));
-                        trigger.setAttackingPermanentSnapshots(attackerIndices.stream()
-                                .filter(idx -> attackedPlayerId.equals(resolvedTargets.get(idx)))
-                                .map(battlefield::get)
-                                .map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList());
-                        StackEntry recordInHand = gameData.handOffTriggerRecord(trigger);
-                        if (needsTarget) {
-                            UUID targetChooserId = effects.stream()
-                                    .filter(MayEffect.class::isInstance)
-                                    .map(MayEffect.class::cast)
-                                    .anyMatch(may -> may.choicePlayer() == MayChoicePlayer.ACTIVE_PLAYER)
-                                    ? playerId : attackedPlayerId;
-                            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                    perm.getCard(), attackedPlayerId, effects, perm.getId(), targetChooserId,
-                                    attackedPlayerId));
-                            gameLogService.append(gameData,
-                                    GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
-                            log.info("Game {} - {} ON_CREATURES_ATTACK_YOU trigger awaiting target for player {}",
-                                    gameData.id, perm.getCard().getName(), attackedPlayerId);
-                        } else {
-                            gameData.stack.add(trigger);
-                            gameLogService.append(gameData,
-                                    GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
-                            log.info("Game {} - {} ON_CREATURES_ATTACK_YOU trigger for player {}",
-                                    gameData.id, perm.getCard().getName(), attackedPlayerId);
-                        }
-                        gameData.restoreTriggerRecordInHand(recordInHand);
+                ConditionContext attackedContext = ConditionContext.forPermanent(perm, attackedPlayerId);
+                // Each ability is one object on the stack (CR 603.3), its target chosen for all its effects
+                // (CR 603.3d). The entry records the attacking player as the active player and the creatures
+                // attacking this player whatever the effects are.
+                for (TriggeredAbility ability
+                        : WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_CREATURES_ATTACK_YOU)) {
+                    requireNoFilterLimitOrMultiplicity(ability, creaturesAttackYou);
+                    if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), attackedContext)) {
+                        continue;
                     }
-                } finally {
-                    gameData.restoreTriggeredAbilityCopies(previousCopies);
+                    boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                            ability, perm.getCard(), perm, attackedPlayerId, perm.getCard().getName() + "'s trigger",
+                            attackedContext, entry -> {
+                                entry.setNonTargeting(true);
+                                entry.setActivePlayerId(playerId);
+                                entry.setSourcePermanentSnapshot(new Permanent(perm));
+                                entry.setAttackingPermanentSnapshots(attackingYou);
+                            }).causedByAttack());
+                    if (triggered) {
+                        gameLogService.append(gameData,
+                                GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
+                    }
                 }
             }
         }
@@ -2004,41 +1786,27 @@ public class CombatAttackService {
             if (attackedPlayerId == null) continue;
             List<Permanent> defenderBattlefield = gameData.playerBattlefields.get(attackedPlayerId);
             if (defenderBattlefield == null) continue;
+            Trigger attacksPlaneswalker = CombatWatch.ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL.trigger();
             for (Permanent perm : new ArrayList<>(defenderBattlefield)) {
-                // Each ability is one object on the stack (CR 603.3).
-                Trigger attacksPlaneswalker = CombatWatch.ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL.trigger();
-                for (List<CombatAbilityReader.CombatEffect> ability : CombatAbilityReader.readByAbility(
-                        WatchedAbilities.printed(perm.getCard(),
-                                CombatWatch.ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL), attacksPlaneswalker)) {
-                    CombatAbilityReader.CombatEffect read = ability.getFirst();
-                    CombatAbilityReader.requireNoLimitOrMultiplicity(read, attacksPlaneswalker);
-                    if (read.filter() != null) {
-                        throw new IllegalStateException("The collector of " + attacksPlaneswalker
-                                + " judges no filter: " + read.ability());
+                ConditionContext context = ConditionContext.forPermanent(perm, attackedPlayerId);
+                // Each ability is one object on the stack (CR 603.3); "that player" is the attacking player, the
+                // entry's non-targeting target.
+                for (TriggeredAbility ability : WatchedAbilities.printed(perm.getCard(),
+                        CombatWatch.ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL)) {
+                    requireNoFilterLimitOrMultiplicity(ability, attacksPlaneswalker);
+                    if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), context)) {
+                        continue;
                     }
-                    StackEntry trigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            attackedPlayerId,
-                            perm.getCard().getName() + "'s trigger",
-                            new ArrayList<>(CombatAbilityReader.effectsOf(ability)),
-                            playerId,
-                            perm.getId()
-                    );
-                    trigger.setNonTargeting(true);
-                    // The attack causes this trigger, so "triggers an additional time" effects (Isshin) apply.
-                    int previousCopies = gameData.beginTriggeredAbilityCopies(1
-                            + gameQueryService.countAdditionalTriggeredAbilityTriggers(
-                            gameData, attackedPlayerId, perm, true));
-                    try {
-                        gameData.stack.add(trigger);
-                    } finally {
-                        gameData.restoreTriggeredAbilityCopies(previousCopies);
+                    boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                            ability, perm.getCard(), perm, attackedPlayerId, perm.getCard().getName() + "'s trigger",
+                            context, entry -> {
+                                entry.setTargetId(playerId);
+                                entry.setNonTargeting(true);
+                            }).causedByAttack());
+                    if (triggered) {
+                        gameLogService.append(gameData,
+                                GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
                     }
-                    gameLogService.append(gameData,
-                            GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
-                    log.info("Game {} - {} ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL trigger for attacking player {}",
-                            gameData.id, perm.getCard().getName(), playerId);
                 }
             }
         }
@@ -2058,72 +1826,59 @@ public class CombatAttackService {
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             UUID attackedTargetId = attacker.getAttackTarget();
+            Trigger anyAttack = CombatWatch.ON_ANY_CREATURE_ATTACKS.trigger();
             for (Map.Entry<UUID, List<Permanent>> bf : gameData.playerBattlefields.entrySet()) {
                 UUID permController = bf.getKey();
                 for (Permanent perm : new ArrayList<>(bf.getValue())) {
-                    List<List<CombatAbilityReader.CombatEffect>> anyAttackAbilities = CombatAbilityReader.readByAbility(
-                            WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ANY_CREATURE_ATTACKS),
-                            CombatWatch.ON_ANY_CREATURE_ATTACKS.trigger());
                     // A permanent that lost its abilities, or a face-down one, has no printed ability to trigger.
-                    if (anyAttackAbilities.isEmpty() || perm.isFaceDown()
-                            || gameQueryService.hasLostAllAbilities(gameData, perm)
+                    if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)
                             || gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
                         continue;
                     }
-
-                    List<List<CardEffect>> triggeredAbilities = new ArrayList<>();
                     FilterContext sourceContext = FilterContext.of(gameData)
                             .withSourceCardId(perm.getOriginalCard().getId())
                             .withSourceControllerId(permController)
                             .withSourcePermanentId(perm.getId());
                     ConditionContext anyAttackContext = ConditionContext.forPermanent(perm, permController)
                             .withTriggeringPermanentId(attacker.getId()).withTargetId(attackedTargetId);
-                    for (List<CombatAbilityReader.CombatEffect> ability : anyAttackAbilities) {
-                        CombatAbilityReader.CombatEffect read = ability.getFirst();
-                        CombatAbilityReader.requireNoLimitOrMultiplicity(read, CombatWatch.ON_ANY_CREATURE_ATTACKS.trigger());
+                    for (TriggeredAbility ability
+                            : WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ANY_CREATURE_ATTACKS)) {
+                        if (ability.options().limit() != TriggerLimit.NONE
+                                || ability.options().multiplicity() != TriggerMultiplicity.EACH) {
+                            throw new IllegalStateException("The collector of " + anyAttack + " reads no "
+                                    + ability.options() + ": " + ability);
+                        }
                         // The trigger's filter on the attacking creature (Windreader Sphinx), and the ability's event
                         // condition and intervening "if" (M'Baku's "if that player is the monarch", CR 603.4) against
-                        // the attack target; the intervening "if" stays wrapped for the check as the ability resolves,
-                        // against the stack entry's attacked target.
-                        if (read.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
-                                attacker, read.filter(), sourceContext)) {
+                        // the attack target.
+                        PermanentPredicate filter = CombatAbilityReader.filter(ability, anyAttack);
+                        if (filter != null && !predicateEvaluationService.matchesPermanentPredicate(
+                                attacker, filter, sourceContext)) {
                             continue;
                         }
-                        if (!conditionEvaluationService.triggerConditionsMet(gameData, read.options(), anyAttackContext)) {
+                        if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(),
+                                anyAttackContext)) {
                             continue;
                         }
-                        triggeredAbilities.add(CombatAbilityReader.effectsAsJudged(ability));
-                    }
-                    if (triggeredAbilities.isEmpty()) continue;
-
-                    int previousCopies = beginAttackTriggerCopies(gameData, permController, perm);
-                    try {
-                        // Each ability is one object on the stack (CR 603.3).
-                        for (List<CardEffect> abilityEffects : triggeredAbilities) {
-                            StackEntry anyAttackTrigger = new StackEntry(
-                                    StackEntryType.TRIGGERED_ABILITY,
-                                    perm.getCard(),
-                                    permController,
-                                    perm.getCard().getName() + "'s trigger",
-                                    abilityEffects,
-                                    attacker.getId(),
-                                    perm.getId()
-                            );
-                            anyAttackTrigger.setSourcePermanentSnapshot(new Permanent(perm));
-                            anyAttackTrigger.setAttackingPermanentSnapshots(List.of(new Permanent(attacker)));
-                            anyAttackTrigger.setNonTargeting(true);
-                            anyAttackTrigger.setAttackedTargetId(attacker.getAttackTarget());
-                            anyAttackTrigger.setTriggeringPermanentId(attacker.getId());
-                            anyAttackTrigger.setTriggeringPermanentControllerId(
-                                    gameQueryService.findPermanentController(gameData, attacker.getId()));
-                            gameData.stack.add(anyAttackTrigger);
+                        // The attacking creature is "it", the entry's non-targeting target and triggering permanent,
+                        // with its attack target and controller, whatever the effects are.
+                        TriggeredAbilityRequest request = new TriggeredAbilityRequest(ability, perm.getCard(), perm,
+                                permController, perm.getCard().getName() + "'s trigger", anyAttackContext, entry -> {
+                                    entry.setSourcePermanentSnapshot(new Permanent(perm));
+                                    entry.setAttackingPermanentSnapshots(List.of(new Permanent(attacker)));
+                                    entry.setTargetId(attacker.getId());
+                                    entry.setNonTargeting(true);
+                                    entry.setAttackedTargetId(attacker.getAttackTarget());
+                                    entry.setTriggeringPermanentId(attacker.getId());
+                                    entry.setTriggeringPermanentControllerId(
+                                            gameQueryService.findPermanentController(gameData, attacker.getId()));
+                                });
+                        boolean triggered = triggeredAbilityStackService.put(gameData, perm == attacker
+                                ? request.causedBySourceAttacking() : request.causedByAttack());
+                        if (triggered) {
                             gameLogService.append(gameData,
                                     GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
-                            log.info("Game {} - {} ON_ANY_CREATURE_ATTACKS trigger for {} attacking",
-                                    gameData.id, perm.getCard().getName(), attacker.getCard().getName());
                         }
-                    } finally {
-                        gameData.restoreTriggeredAbilityCopies(previousCopies);
                     }
                 }
             }
@@ -2175,74 +1930,40 @@ public class CombatAttackService {
                 // attackers; the intervening "if" stays wrapped for the check as the ability resolves.
                 ConditionContext playerAttackContext = ConditionContext.forPermanent(perm, permController)
                         .withTargetId(playerId).withXValue(attackerIndices.size());
-                List<List<CombatAbilityReader.CombatEffect>> judged = new ArrayList<>();
-                Map<TriggeredAbility, List<Integer>> triggeringAttackersByAbility = new IdentityHashMap<>();
-                for (List<CombatAbilityReader.CombatEffect> playerAttackAbility : CombatAbilityReader.readByAbility(
-                        WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ANY_PLAYER_ATTACKS), playerAttacks)) {
-                    CombatAbilityReader.CombatEffect read = playerAttackAbility.getFirst();
-                    CombatAbilityReader.requireNoLimitOrMultiplicity(read, playerAttacks);
-                    List<Integer> triggeringAttackers = read.filter() == null ? attackerIndices
+                for (TriggeredAbility ability
+                        : WatchedAbilities.printed(perm.getCard(), CombatWatch.ON_ANY_PLAYER_ATTACKS)) {
+                    if (ability.options().limit() != TriggerLimit.NONE
+                            || ability.options().multiplicity() != TriggerMultiplicity.EACH) {
+                        throw new IllegalStateException("The collector of " + playerAttacks + " reads no "
+                                + ability.options() + ": " + ability);
+                    }
+                    PermanentPredicate filter = CombatAbilityReader.filter(ability, playerAttacks);
+                    List<Integer> triggeringAttackers = filter == null ? attackerIndices
                             : matchingAttackerIndices(gameData, battlefield, attackerIndices, perm, permController,
-                            read.filter());
+                            filter);
                     if (triggeringAttackers.isEmpty()
-                            || !conditionEvaluationService.triggerConditionsMet(gameData, read.options(),
+                            || !conditionEvaluationService.eventConditionMet(gameData, ability.options(),
                             playerAttackContext)) {
                         continue;
                     }
-                    triggeringAttackersByAbility.put(read.ability(), triggeringAttackers);
-                    judged.add(playerAttackAbility);
-                }
-                if (judged.isEmpty()) continue;
-
-                int previousCopies = beginAttackTriggerCopies(gameData, permController, perm);
-                try {
-                    for (List<CombatAbilityReader.CombatEffect> ability : judged) {
-                        List<CardEffect> triggerEffects = CombatAbilityReader.effectsAsJudged(ability);
-                        List<Integer> triggeringAttackers = triggeringAttackersByAbility.get(ability.getFirst().ability());
-                        boolean needsTarget = triggerEffects.stream()
-                                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                                        || (perm.getCard().getDeclaredTargetFilter() != null
-                                        && effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)));
-                        // The entry of the ability that chooses nothing, and the record of one that chooses a
-                        // target as it goes on the stack.
-                        StackEntry playerAttackTrigger = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                permController,
-                                perm.getCard().getName() + "'s trigger",
-                                new ArrayList<>(triggerEffects),
-                                attackerIndices.size(),
-                                perm.getId());
-                        playerAttackTrigger.setTargetId(playerId);
-                        playerAttackTrigger.setTriggeringPermanentControllerId(playerId);
-                        playerAttackTrigger.setNonTargeting(true);
-                        playerAttackTrigger.setSourcePermanentSnapshot(new Permanent(perm));
-                        playerAttackTrigger.setAttackingPermanentSnapshots(triggeringAttackers.stream()
-                                .map(battlefield::get)
-                                .map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList());
-                        StackEntry recordInHand = gameData.handOffTriggerRecord(playerAttackTrigger);
-                        if (needsTarget) {
-                            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                                    perm.getCard(), permController, triggerEffects, perm.getId(),
-                                    triggerEffects.stream().anyMatch(effect -> effect instanceof MayEffect may
-                                            && may.choicePlayer() == com.github.laxika.magicalvibes.model.MayChoicePlayer.ACTIVE_PLAYER)
-                                            ? playerId : permController,
-                                    null, null, attackerIndices.size()));
-                            gameLogService.append(gameData,
-                                    GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
-                            log.info("Game {} - {} targeted ON_ANY_PLAYER_ATTACKS trigger queued for target selection",
-                                    gameData.id, perm.getCard().getName());
-                        } else {
-                            gameData.stack.add(playerAttackTrigger);
-                            gameLogService.append(gameData,
-                                    GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
-                            log.info("Game {} - {} ON_ANY_PLAYER_ATTACKS trigger for attacking player {}",
-                                    gameData.id, perm.getCard().getName(), playerId);
-                        }
-                        gameData.restoreTriggerRecordInHand(recordInHand);
+                    // "That player" is the attacking player, the entry's non-targeting target, and "those creatures"
+                    // the attackers that triggered it, whatever the effects are.
+                    List<Permanent> attackingSnapshots = triggeringAttackers.stream().map(battlefield::get)
+                            .map(attacker -> snapshotDeclaredAttacker(gameData, attacker)).toList();
+                    boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                            ability, perm.getCard(), perm, permController, perm.getCard().getName() + "'s trigger",
+                            playerAttackContext, entry -> {
+                                entry.setXValue(attackerIndices.size());
+                                entry.setTargetId(playerId);
+                                entry.setTriggeringPermanentControllerId(playerId);
+                                entry.setNonTargeting(true);
+                                entry.setSourcePermanentSnapshot(new Permanent(perm));
+                                entry.setAttackingPermanentSnapshots(attackingSnapshots);
+                            }).causedByAttack());
+                    if (triggered) {
+                        gameLogService.append(gameData,
+                                GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
                     }
-                } finally {
-                    gameData.restoreTriggeredAbilityCopies(previousCopies);
                 }
             }
         }
@@ -2289,9 +2010,14 @@ public class CombatAttackService {
     /**
      * "Whenever this creature attacks" (ON_ATTACK) of {@code attacker}: its printed abilities, the ones a static
      * ability grants it and the ones it was given until end of turn, until end of combat or for as long as it stays on
-     * the battlefield. Each ability is judged once, from the ability (its limit, the trigger's filter on the creature,
-     * its event condition and intervening "if"; CR 603.2, 603.4), and goes on the stack as one object of all its
-     * effects (CR 603.3); two abilities are two objects, whoever gave them to the creature (CR 603.3b).
+     * the battlefield. Each ability is judged once, from the ability (the trigger's filter on the creature and its
+     * event condition; CR 603.2), and goes on the stack through the stack door as one object of all its effects
+     * (CR 603.3), which judges its limit and intervening "if" (CR 603.2h, 603.4); two abilities are two objects,
+     * whoever gave them to the creature (CR 603.3b). The entry records the attack whatever the effects are: the
+     * attacked player, planeswalker or battle and the defending player (which stays the one the creature attacked if
+     * an attacked planeswalker or battle leaves, CR 508.5), the number of attackers as X, the attacker as it attacked
+     * and its power then ("mana value less than this creature's power" read after it left, Narset, Enlightened
+     * Exile), and the creatures declared as attackers ("the other one you attacked with", Creepy Puppeteer).
      */
     private void collectSelfAttackAbilities(GameData gameData, UUID playerId, Permanent attacker,
                                             List<Integer> attackerIndices,
@@ -2301,251 +2027,96 @@ public class CombatAttackService {
         boolean equipmentAttackTrigger = gameQueryService.hasEffectiveSubtype(gameData, attacker, CardSubtype.EQUIPMENT)
                 && !gameQueryService.hasReconfigure(gameData, attacker);
         Trigger onAttack = CombatWatch.ON_ATTACK.trigger();
-        List<TriggeredAbility> printedAbilities = WatchedAbilities.printed(attacker.getCard(), CombatWatch.ON_ATTACK);
-        List<List<CombatAbilityReader.CombatEffect>> attackAbilities = new ArrayList<>();
+        List<TriggeredAbility> abilities = new ArrayList<>();
         if (!attacker.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, attacker)
                 && !equipmentAttackTrigger) {
-            attackAbilities.addAll(CombatAbilityReader.readByAbility(printedAbilities, onAttack));
+            abilities.addAll(WatchedAbilities.printed(attacker.getCard(), CombatWatch.ON_ATTACK));
         }
         // Continuously granted ON_ATTACK abilities (Thorncaster Sliver giving every Sliver
         // "Whenever this creature attacks, it deals 1 damage to any target").
-        attackAbilities.addAll(CombatAbilityReader.readByAbility(
-                grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, attacker, onAttack), onAttack));
+        abilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, attacker, onAttack));
         // A granted triggered ability is an ability of the creature, so losing all abilities removes it. Temporarily
         // granted attack abilities (Tower Above's "target creature blocks it this turn if able": the attacker is the
         // ability's source, which MustBlockSourceEffect reads from the stack entry); two Tower Aboves are two
         // triggers, each with its own target.
         if (!gameQueryService.hasLostAllAbilities(gameData, attacker)) {
-            attackAbilities.addAll(CombatAbilityReader.readByAbility(
-                    WatchedAbilities.temporary(attacker, onAttack), onAttack));
-            attackAbilities.addAll(CombatAbilityReader.readByAbility(
-                    WatchedAbilities.persistent(attacker, onAttack), onAttack));
+            abilities.addAll(WatchedAbilities.temporary(attacker, onAttack));
+            abilities.addAll(WatchedAbilities.persistent(attacker, onAttack));
         }
-        // "One or more" is an attack-or-block ability's "blocks" once each combat (CR 509.3a); a creature attacks once
-        // each combat anyway.
-        for (List<CombatAbilityReader.CombatEffect> ability : attackAbilities) {
-            CombatAbilityReader.CombatEffect read = ability.getFirst();
-            if ((read.limit() != TriggerLimit.NONE && read.limit() != TriggerLimit.ONCE_EACH_TURN
-                    && read.limit() != TriggerLimit.FIRST_TIME_EACH_TURN)
-                    || (read.multiplicity() != TriggerMultiplicity.EACH && !read.oneOrMore())) {
-                throw new IllegalStateException("The attack collector reads no " + read.options() + ": "
-                        + read.ability());
-            }
-        }
-        // "Whenever this creature attacks for the first time each turn" (Aurelia, the Warleader) is part of the
-        // event (FIRST_TIME_EACH_TURN): the creature's first attack this turn, counting the attacks it made without
-        // the ability, whatever the ability's filter, event condition or intervening "if" then say. A later attack
-        // is not that event, so an extra combat phase the ability grants can't loop.
-        if (attacker.getAttacksThisTurn() > 1) {
-            attackAbilities.removeIf(ability -> ability.getFirst().limit() == TriggerLimit.FIRST_TIME_EACH_TURN);
-        }
-        // "This ability triggers only once each turn" (ONCE_EACH_TURN) is the ability's own limit, used up below as
-        // the ability triggers, so another limited ability of the creature keeps its own.
-        attackAbilities.removeIf(ability -> ability.getFirst().limit() == TriggerLimit.ONCE_EACH_TURN
-                && ability.getFirst().limitReached(gameData, attacker.getId()));
-        // Filter trigger-subject conditions against this attacking creature.
-        attackAbilities.removeIf(ability -> ability.getFirst().filter() != null
-                && !predicateEvaluationService.matchesPermanentPredicate(gameData, attacker,
-                ability.getFirst().filter()));
         // Each ability's event condition (CR 603.2: "attacks while you control a Dinosaur", "attacks alone") and
         // intervening "if" (CR 603.4), read from the attacker with the number of attackers and its attack target.
         ConditionContext attackTriggerContext = ConditionContext.forPermanent(attacker, playerId)
                 .withXValue(attackerIndices.size()).withTargetId(attacker.getAttackTarget());
-        attackAbilities.removeIf(ability -> !conditionEvaluationService
-                .triggerConditionsMet(gameData, ability.getFirst().options(), attackTriggerContext));
-
-        List<CardEffect> printedAttackEffects = new ArrayList<>();
-        for (TriggeredAbility ability : printedAbilities) {
-            printedAttackEffects.addAll(CombatAbilityReader.effectsOf(CombatAbilityReader.read(ability, onAttack)));
-        }
-        for (List<CombatAbilityReader.CombatEffect> ability : attackAbilities) {
-            if (ability.getFirst().limit() == TriggerLimit.ONCE_EACH_TURN) {
-                ability.getFirst().markLimit(gameData, attacker.getId());
-            }
-            gameData.routeTriggeredAbility(() -> putSelfAttackAbilityOnStack(gameData, playerId, attacker, ability,
-                    printedAttackEffects, attackerIndices, declaredAttackerSnapshots));
-        }
-    }
-
-    /**
-     * Puts one "whenever this creature attacks" ability of {@code attacker}, judged by
-     * {@link #collectSelfAttackAbilities}, on the stack as one object of all its effects (CR 603.3). An intervening
-     * "if" stays wrapped around each effect for the check as the ability resolves (CR 603.4), but for one about the
-     * attack as it was declared (pack tactics' total power, Creepy Puppeteer's "exactly one other creature"), whose
-     * wrapper comes off once judged ({@code CombatEffect.effectAsJudged}), so the attackers that leave combat before
-     * then don't undo it. The route is read from all the ability's effects: a mode chosen as the ability triggers
-     * (CR 603.3c), the two-step counter move, a graveyard target or a permanent, player or exiled-card target is one
-     * choice with every effect of the ability (CR 603.3d); an ability that is only a "you may" with no target goes on
-     * the stack to be asked as it resolves (CR 603.5).
-     */
-    private void putSelfAttackAbilityOnStack(GameData gameData, UUID playerId, Permanent attacker,
-                                             List<CombatAbilityReader.CombatEffect> ability,
-                                             List<CardEffect> printedAttackEffects, List<Integer> attackerIndices,
-                                             Supplier<List<Permanent>> declaredAttackerSnapshots) {
-        TriggeredAbility triggered = ability.getFirst().ability();
-        List<CardEffect> effects = CombatAbilityReader.effectsAsJudged(ability);
-        Card attackCard = attacker.getCard();
-        // The defending player stays the one the creature attacked if an attacked planeswalker or battle leaves
-        // before the ability resolves (CR 508.5).
         UUID defendingPlayerId = defendingPlayerOf(gameData, attacker);
-
-        boolean loneUntargetedMay = effects.size() == 1 && effects.getFirst() instanceof MayEffect loneMay
-                && loneMay.targetSpec().declaredTarget() == null;
-        if (loneUntargetedMay && effects.getFirst().exertsAsItAttacks()) {
-            // "You may exert this creature as it attacks" is a choice made as attackers are declared (CR 701.43a),
-            // not an ability on the stack: the answer carries the exertion out at once.
-            gameData.queueMayAbilityForPlayer(attackCard, playerId, (MayEffect) effects.getFirst(), null,
-                    attacker.getId(), playerId, new Permanent(attacker));
-            logSelfAttackTrigger(gameData, attacker);
-            return;
-        }
-
-        // The entry of the ability that chooses nothing, and the record of the attack every choice route carries.
-        StackEntry attackRecord = selfAttackRecord(gameData, playerId, attacker, triggered, effects,
-                attackerIndices, defendingPlayerId, declaredAttackerSnapshots);
-        gameData.handOffTriggerRecord(attackRecord);
-
-        if (loneUntargetedMay) {
-            // Asked as the ability resolves (CR 603.5): the entry is the one any untargeted ability gets, with
-            // the same record of the attack.
-            putUntargetedSelfAttackAbilityOnStack(gameData, attacker, attackRecord);
-            return;
-        }
-
-        if (effects.stream().anyMatch(ChooseOneAtTriggerTimeEffect.class::isInstance)) {
-            // The mode is chosen as the ability goes on the stack (CR 603.3c); the choice builds the stack object
-            // from the chosen modes, so it is the ability's one effect. A granted ability is the creature's own, so
-            // the creature's controller controls it (CR 113.8); "choose one that wasn't chosen during your last
-            // combat" (Yotian Courier) is the modal's restriction, judged as the mode is chosen.
-            if (effects.size() != 1) {
-                throw new IllegalStateException("A mode chosen as an attack ability triggers is the ability's one "
-                        + "effect: " + triggered);
+        for (TriggeredAbility ability : abilities) {
+            TriggerOptions options = ability.options();
+            // "One or more" is an attack-or-block ability's "blocks" once each combat (CR 509.3a); a creature attacks
+            // once each combat anyway.
+            if ((options.limit() != TriggerLimit.NONE && options.limit() != TriggerLimit.ONCE_EACH_TURN
+                    && options.limit() != TriggerLimit.FIRST_TIME_EACH_TURN)
+                    || (options.multiplicity() != TriggerMultiplicity.EACH
+                    && options.multiplicity() != TriggerMultiplicity.ONE_OR_MORE)) {
+                throw new IllegalStateException("The attack collector reads no " + options + ": " + ability);
             }
-            gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                    attackCard, playerId, ((ChooseOneAtTriggerTimeEffect) effects.getFirst()).choice(),
-                    attacker.getId(), false, false, null, null, null, false)
-                    .withTriggerRecord(attackRecord));
-            return;
-        }
-
-        if (effects.stream().anyMatch(AttackCounterMoveEffect.class::isInstance)) {
-            // Two-target "remove a counter from a creature you control, then put one on up
-            // to one creature the defending player controls" (Decimator Beetle). The normal
-            // pipeline collects only one target, so route to the bespoke two-step flow.
-            gameData.queueInteraction(new PermanentChoiceContext.AttackCounterMoveFirstTarget(
-                    attackCard, playerId, effects, attacker.getId(), defendingPlayerId));
-            logSelfAttackTrigger(gameData, attacker);
-            return;
-        }
-
-        boolean needsGraveyardTarget = effects.stream()
-                .filter(e -> !e.targetsChosenByReflexiveAbility())
-                .anyMatch(e -> e instanceof GraveyardCardChoosingEffect choosingEffect
-                        && choosingEffect.choosesGraveyardCards()
-                        || e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
-        if (needsGraveyardTarget) {
-            // "exile target card from defending player's graveyard" (Graven Abomination):
-            // choose as the trigger goes on the stack (same shape as ETB/death GY exile).
-            // Handler owns its own broadcast (including the no-legal-target skip).
-            if (effects.stream().anyMatch(CastTargetInstantOrSorceryFromGraveyardEffect.class::isInstance)) {
-                // "cast target instant or sorcery card from your graveyard" (The Dawning
-                // Archaic) — the scope comes from the effect, not the attacked player.
-                graveyardTargetingService.handleAttackGraveyardCastTargeting(
-                        gameData, playerId, attackCard, effects, attacker.getId());
-            } else {
-                // The service has an ability that triggers while another choice is being made wait its turn
-                // (CR 603.3b), with the graveyards and the number of targets its effect says.
-                graveyardTargetingService.handleAttackGraveyardTargeting(
-                        gameData, playerId, attackCard, effects, attacker.getId(), defendingPlayerId, List.of(),
-                        attackRecord);
+            // "Whenever this creature attacks for the first time each turn" (Aurelia, the Warleader) is part of the
+            // event (FIRST_TIME_EACH_TURN): the creature's first attack this turn, counting the attacks it made
+            // without the ability. A later attack is not that event, so an extra combat phase can't loop.
+            if (options.limit() == TriggerLimit.FIRST_TIME_EACH_TURN && attacker.getAttacksThisTurn() > 1) {
+                continue;
             }
-            return;
-        }
-
-        boolean needsTarget = effects.stream()
-                .filter(e -> !e.targetsChosenByReflexiveAbility())
-                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        || e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                        || e.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
-        if (needsTarget) {
-            // A static single "up to N" group uses the multi-permanent choice
-            // flow, which announces all of the group's targets at once and
-            // records them for that group (CR 601.2c, 603.3d).
-            boolean staticSingleMultiTargetGroup = attackCard.getTargetGroups().size() == 1
-                    && attackCard.getTargetGroups().getFirst().getMaxTargets() > 1
-                    && attackCard.getTargetGroups().getFirst().getDynamicMinTargets() == null
-                    && attackCard.getTargetGroups().getFirst().getDynamicMaxTargets() == null;
-            boolean declaredGroupsTargetOtherAbilities = !attackCard.getTargetGroups().isEmpty()
-                    && attackCard.getTargetGroups().stream().allMatch(group ->
-                    attackCard.bindsEffectToTargetGroup(group.getIndex())
-                            && attackCard.getEffectsBoundToTargetGroup(group.getIndex()).stream()
-                            .noneMatch(printedAttackEffects::contains));
-            if (!declaredGroupsTargetOtherAbilities
-                    && (attackCard.getTargetGroups().size() > 1
-                    || (!staticSingleMultiTargetGroup
-                    && etbTokenTargetService.needsSlotBySlotTargetSelection(attackCard)))) {
-                gameData.queueInteraction(
-                        new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                                attackCard, playerId, effects, attacker.getId(),
-                                List.of(), 0, 0));
-            } else {
-                UUID targetChooserId = attackCard.isCombatTriggerTargetChosenByDefendingPlayer()
-                        ? defendingPlayerId : playerId;
-                gameData.queueInteraction(
-                        new PermanentChoiceContext.AttackTriggerTarget(
-                                attackCard, playerId, effects, attacker.getId(),
-                                targetChooserId, defendingPlayerId, attacker.getId()));
+            PermanentPredicate filter = CombatAbilityReader.filter(ability, onAttack);
+            if (filter != null && !predicateEvaluationService.matchesPermanentPredicate(gameData, attacker, filter)) {
+                continue;
             }
-            logSelfAttackTrigger(gameData, attacker);
-            return;
+            if (!conditionEvaluationService.eventConditionMet(gameData, options, attackTriggerContext)) {
+                continue;
+            }
+            if (exertsAsItAttacks(ability)) {
+                // "You may exert this creature as it attacks" is an optional cost to attack (CR 701.43d), not an
+                // ability on the stack: the answer carries the exertion out at once.
+                if (conditionEvaluationService.triggerConditionsMet(gameData, options, attackTriggerContext)) {
+                    gameData.queueMayAbilityForPlayer(attacker.getCard(), playerId,
+                            (MayEffect) ability.effects().getFirst().effect(), null, attacker.getId(), playerId,
+                            new Permanent(attacker));
+                    logSelfAttackTrigger(gameData, attacker);
+                }
+                continue;
+            }
+            boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
+                    attacker.getCard(), attacker, playerId, attacker.getCard().getName() + "'s attack trigger",
+                    attackTriggerContext, entry -> {
+                        entry.setXValue(attackerIndices.size());
+                        entry.setAttackedTargetId(attacker.getAttackTarget());
+                        entry.setDefendingPlayerId(defendingPlayerId);
+                        entry.setSourcePermanentSnapshot(snapshotAttackingSource(gameData, attacker));
+                        entry.setTriggeringPermanentPowerAtTrigger(
+                                gameQueryService.getEffectivePower(gameData, attacker));
+                        entry.setAttackingPermanentSnapshots(declaredAttackerSnapshots.get());
+                    }).causedBySourceAttacking());
+            if (triggered) {
+                logSelfAttackTrigger(gameData, attacker);
+            }
         }
-
-        putUntargetedSelfAttackAbilityOnStack(gameData, attacker, attackRecord);
     }
 
     /**
-     * Puts {@code attackTrigger}, the {@link #selfAttackRecord} of an untargeted "whenever this creature attacks"
-     * ability of {@code attacker}, a lone "you may" included, on the stack and tells the "an attacking creature's
-     * ability triggers" watchers. The attacked player, planeswalker or battle, the defending player (Nemesis of Reason's
-     * MillDefendingPlayerEffect), the number of attackers as X (MinimumAttackers), the attacker as it attacked and
-     * the creatures declared as attackers ("that creature", the other one you attacked with: Creepy Puppeteer) are
-     * the event's, recorded whatever the effects are.
+     * Throws when {@code ability} has a filter on the creature, a limit or a multiplicity for {@code watched}, which its
+     * collector doesn't read: no card writes one.
      */
-    private void putUntargetedSelfAttackAbilityOnStack(GameData gameData, Permanent attacker,
-                                                       StackEntry attackTrigger) {
-        gameData.stack.add(attackTrigger);
-        triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(gameData, attacker, attackTrigger);
-        logSelfAttackTrigger(gameData, attacker);
+    private static void requireNoFilterLimitOrMultiplicity(TriggeredAbility ability, Trigger watched) {
+        if (CombatAbilityReader.filter(ability, watched) != null
+                || ability.options().limit() != TriggerLimit.NONE
+                || ability.options().multiplicity() != TriggerMultiplicity.EACH) {
+            throw new IllegalStateException("The collector of " + watched + " reads no filter, limit or "
+                    + "multiplicity: " + ability);
+        }
     }
 
-    /**
-     * The entry of a "whenever this creature attacks" ability of {@code attacker} that chooses nothing, which is also
-     * the record of the attack an ability that chooses a mode or graveyard cards as it goes on the stack carries
-     * ({@code StackEntry.carryTriggerRecord}).
-     */
-    private StackEntry selfAttackRecord(GameData gameData, UUID playerId, Permanent attacker,
-                                        TriggeredAbility triggered, List<CardEffect> effects,
-                                        List<Integer> attackerIndices, UUID defendingPlayerId,
-                                        Supplier<List<Permanent>> declaredAttackerSnapshots) {
-        Card attackCard = attacker.getCard();
-        StackEntry attackTrigger = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                attackCard,
-                playerId,
-                attackCard.getName() + "'s attack trigger",
-                effects,
-                attackerIndices.size(),
-                attacker.getId()
-        );
-        attackTrigger.setAttackedTargetId(attacker.getAttackTarget());
-        attackTrigger.setDefendingPlayerId(defendingPlayerId);
-        attackTrigger.setSourcePermanentSnapshot(snapshotAttackingSource(gameData, attacker));
-        // The attacker's power as the ability triggers, which "mana value less than this creature's power" (Narset,
-        // Enlightened Exile) reads once the attacker has left the battlefield.
-        attackTrigger.setTriggeringPermanentPowerAtTrigger(gameQueryService.getEffectivePower(gameData, attacker));
-        attackTrigger.setGrantingPermanentId(triggered.grantingPermanentId());
-        attackTrigger.setAttackingPermanentSnapshots(declaredAttackerSnapshots.get());
-        return attackTrigger;
+    /** Whether {@code ability} is "you may exert this creature as it attacks" (CR 701.43d), its one effect. */
+    private static boolean exertsAsItAttacks(TriggeredAbility ability) {
+        return ability.effects().size() == 1 && ability.options().interveningIf() == null
+                && ability.effects().getFirst().effect() instanceof MayEffect may
+                && may.targetSpec().declaredTarget() == null && may.exertsAsItAttacks();
     }
 
     private void logSelfAttackTrigger(GameData gameData, Permanent attacker) {
@@ -2556,92 +2127,32 @@ public class CombatAttackService {
 
     /**
      * Puts one "whenever a creature you control attacks" ability of {@code perm}, triggered by {@code attacker}, on the
-     * stack as one object of all its effects (CR 603.3). A mode chosen as the ability triggers is its one effect
-     * (CR 603.3c). An ability that is only a "you may" goes on the stack to be asked as it resolves (CR 603.5): a
-     * targeted one chooses its target with the ability's owner as its source and the attacking creature as the
-     * triggering permanent, which "have that creature deal 1 damage" (Rage Forger) reads as the damage source. An
-     * untargeted ability, a lone "you may" included, has its owner as its source and records the attacked player,
-     * planeswalker or battle (Hellrider's DealDamageToAttackedTargetEffect) and the attacking creature as its
-     * triggering permanent and non-targeting "that creature" (Shadow Puppeteers' "have it become").
+     * stack through the stack door as one object of all its effects (CR 603.3). Its source is {@code perm}; the entry
+     * records the attacked player, planeswalker or battle (Hellrider's DealDamageToAttackedTargetEffect), the
+     * defending player, and the attacking creature as its triggering permanent and non-targeting "that creature"
+     * (Shadow Puppeteers' "have it become"), which "have that creature deal 1 damage" (Rage Forger) reads as the damage
+     * source, whatever the effects are.
      */
-    private void putAllyCreatureAttackAbilityOnStack(GameData gameData, UUID playerId, Permanent perm,
-                                                     Permanent attacker, List<CardEffect> effects) {
-        CardEffect lone = effects.size() == 1 ? effects.getFirst() : null;
+    private void putAllyCreatureAttackAbility(GameData gameData, UUID playerId, Permanent perm, Permanent attacker,
+                                              TriggeredAbility ability, ConditionContext ifContext) {
         UUID attackedTargetId = attacker.getAttackTarget();
-        // The entry of an ability that chooses nothing, and the record of the attack every other route carries
-        // (StackEntry.carryTriggerRecord).
-        StackEntry attackTrigger = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                perm.getCard(),
-                playerId,
-                perm.getCard().getName() + "'s attack trigger",
-                effects,
-                null,
-                perm.getId()
-        );
-        attackTrigger.setSourcePermanentSnapshot(new Permanent(perm));
-        attackTrigger.setAttackedTargetId(attackedTargetId);
-        attackTrigger.setDefendingPlayerId(gameData.playerIds.contains(attackedTargetId)
-                ? attackedTargetId : gameQueryService.findPermanentController(gameData, attackedTargetId));
-        // Record the triggering attacker as a non-targeting reference so effects that
-        // act on "that creature" can find it.
-        attackTrigger.setTargetId(attacker.getId());
-        attackTrigger.setNonTargeting(true);
-        attackTrigger.setTriggeringPermanentId(attacker.getId());
-        attackTrigger.setTriggeringPermanentOwnerId(
-                gameData.defaultControllerOf(attacker.getId()));
-        gameData.handOffTriggerRecord(attackTrigger);
-        if (effects.stream().anyMatch(ChooseOneAtTriggerTimeEffect.class::isInstance)) {
-            if (lone == null) {
-                throw new IllegalStateException("A mode chosen as a \"whenever a creature you control attacks\" "
-                        + "ability triggers is the ability's one effect: " + effects);
-            }
-            // A modal choice made while the trigger goes on the stack (CR 603.3c) is prompted now,
-            // with the attacking creature as the triggering permanent for its mode effects.
-            gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                    perm.getCard(), playerId, ((ChooseOneAtTriggerTimeEffect) lone).choice(), perm.getId(), false,
-                    false, null, attacker.getAttackTarget(), attacker.getId(), false)
-                    .withTriggerRecord(attackTrigger));
+        TriggeredAbilityRequest request = new TriggeredAbilityRequest(ability,
+                perm.getCard(), perm, playerId, perm.getCard().getName() + "'s attack trigger", ifContext, entry -> {
+                    entry.setSourcePermanentSnapshot(new Permanent(perm));
+                    entry.setAttackedTargetId(attackedTargetId);
+                    entry.setDefendingPlayerId(gameData.playerIds.contains(attackedTargetId)
+                            ? attackedTargetId : gameQueryService.findPermanentController(gameData, attackedTargetId));
+                    entry.setTargetId(attacker.getId());
+                    entry.setNonTargeting(true);
+                    entry.setTriggeringPermanentId(attacker.getId());
+                    entry.setTriggeringPermanentOwnerId(gameData.defaultControllerOf(attacker.getId()));
+                });
+        boolean triggered = triggeredAbilityStackService.put(gameData,
+                perm == attacker ? request.causedBySourceAttacking() : request.causedByAttack());
+        if (triggered) {
             gameLogService.append(gameData,
                     GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
-            log.info("Game {} - {} attack trigger queued for mode selection",
-                    gameData.id, perm.getCard().getName());
-            return;
         }
-        // "Choose one that hasn't been chosen this turn" (Breeches, Eager Pillager): the mode is chosen as the
-        // ability goes on the stack (CR 603.3c), among the modes its source hasn't chosen this turn.
-        if (lone instanceof ChooseOneEffect restrictedModal
-                && restrictedModal.modeRestriction() != ChooseOneEffect.ModeRestriction.NONE) {
-            gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                    perm.getCard(), playerId, restrictedModal, perm.getId()).withTriggerRecord(attackTrigger));
-            gameLogService.append(gameData,
-                    GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
-            log.info("Game {} - {} attack trigger queued for mode selection",
-                    gameData.id, perm.getCard().getName());
-            return;
-        }
-
-        if (lone instanceof MayEffect may && may.targetSpec().declaredTarget() != null) {
-            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                    perm.getCard(), playerId, effects, perm.getId(), playerId,
-                    attackedTargetId, attacker.getId()).withTriggerRecord(attackTrigger));
-        } else {
-            boolean needsTarget = !(lone instanceof MayEffect) && effects.stream()
-                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                            || perm.getCard().getEffectTargetIndex(e) >= 0
-                            || e instanceof MayEffect && e.targetSpec().declaredTarget() != null);
-            if (needsTarget) {
-                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                        perm.getCard(), playerId, effects, perm.getId(), playerId,
-                        attackedTargetId, attacker.getId()).withTriggerRecord(attackTrigger));
-            } else {
-                gameData.stack.add(attackTrigger);
-            }
-        }
-        gameLogService.append(gameData,
-                GameLog.builder().card(perm.getCard()).text("'s ability triggers.").build());
-        log.info("Game {} - {} ON_ALLY_CREATURE_ATTACKS trigger for {} attacking",
-                gameData.id, perm.getCard().getName(), attacker.getCard().getName());
     }
 
     /**
@@ -2661,96 +2172,68 @@ public class CombatAttackService {
                         .withSourceControllerId(graveyardOwnerId);
                 ConditionContext conditionContext = ConditionContext.forCard(card, graveyardOwnerId)
                         .withTriggeringPermanentId(attacker.getId()).withTargetId(attacker.getAttackTarget());
-                for (List<CombatAbilityReader.CombatEffect> ability : CombatAbilityReader.readByAbility(
-                        WatchedAbilities.withWatchedTrigger(
-                                gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card),
-                                graveyardAttack, Zone.GRAVEYARD), graveyardAttack)) {
-                    CombatAbilityReader.CombatEffect read = ability.getFirst();
-                    CombatAbilityReader.requireNoLimitOrMultiplicity(read, graveyardAttack);
-                    if (read.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
-                            attacker, read.filter(), graveyardContext)) {
+                for (TriggeredAbility ability : WatchedAbilities.withWatchedTrigger(
+                        gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card),
+                        graveyardAttack, Zone.GRAVEYARD)) {
+                    if (ability.options().limit() != TriggerLimit.NONE
+                            || ability.options().multiplicity() != TriggerMultiplicity.EACH) {
+                        throw new IllegalStateException("The collector of " + graveyardAttack + " reads no "
+                                + ability.options() + ": " + ability);
+                    }
+                    PermanentPredicate filter = CombatAbilityReader.filter(ability, graveyardAttack);
+                    if (filter != null && !predicateEvaluationService.matchesPermanentPredicate(
+                            attacker, filter, graveyardContext)) {
                         continue;
                     }
-                    if (!conditionEvaluationService.triggerConditionsMet(gameData, read.options(), conditionContext)) {
+                    if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), conditionContext)) {
                         continue;
                     }
-                    StackEntry attackTrigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            card,
-                            graveyardOwnerId,
-                            card.getName() + "'s graveyard attack trigger",
-                            CombatAbilityReader.effectsAsJudged(ability),
-                            1,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null,
-                            null);
-                    gameData.stack.add(attackTrigger);
-                    gameLogService.append(gameData,
-                            GameLog.builder().card(card).text("'s graveyard attack ability triggers.").build());
-                    log.info("Game {} - {} graveyard creature attack trigger for {} pushed onto stack",
-                            gameData.id, card.getName(), attacker.getCard().getName());
+                    long graveyardVersion = gameData.graveyardEntryVersion(card.getId());
+                    boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                            ability, card, null, graveyardOwnerId, card.getName() + "'s graveyard attack trigger",
+                            conditionContext, entry -> {
+                                entry.setXValue(1);
+                                entry.setSourceGraveyardEntryVersion(graveyardVersion);
+                            }).causedByAttack());
+                    if (triggered) {
+                        gameLogService.append(gameData,
+                                GameLog.builder().card(card).text("'s graveyard attack ability triggers.").build());
+                    }
                 }
             }
         }
     }
 
+    /**
+     * "Whenever you attack" of the face-up cards in {@code playerId}'s command zone (eminence): each ability is one
+     * object on the stack (CR 603.3), with the number of attackers as X; its event condition ("with one or more
+     * Knights"; CR 603.2) and intervening "if" (CR 603.4) are read with that number.
+     */
     private void checkCommandZoneAllyCreatureAttackTriggers(GameData gameData, UUID playerId,
                                                               int attackerCount) {
         List<Card> commandZone = gameData.playerCommandZones.get(playerId);
         if (commandZone == null) {
             return;
         }
+        Trigger commandZoneAttack = CombatWatch.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK.trigger();
         for (Card card : new ArrayList<>(commandZone)) {
             if (gameData.faceDownCommandZoneCards.contains(card.getId())) {
                 continue;
             }
-            // Each ability's event condition ("with one or more Knights", eminence; CR 603.2) and intervening "if"
-            // (CR 603.4), with the number of attackers.
-            Trigger commandZoneAttack = CombatWatch.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK.trigger();
-            for (List<CombatAbilityReader.CombatEffect> ability : CombatAbilityReader.readByAbility(
-                    conditionEvaluationService.judge(gameData,
-                            ConditionContext.forCard(card, playerId).withXValue(attackerCount)).filter(
-                            WatchedAbilities.printed(card, CombatWatch.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK)),
-                    commandZoneAttack)) {
-                CombatAbilityReader.CombatEffect read = ability.getFirst();
-                CombatAbilityReader.requireNoLimitOrMultiplicity(read, commandZoneAttack);
-                if (read.filter() != null) {
-                    throw new IllegalStateException("The collector of " + commandZoneAttack + " judges no filter: "
-                            + read.ability());
+            ConditionContext context = ConditionContext.forCard(card, playerId).withXValue(attackerCount);
+            for (TriggeredAbility ability
+                    : WatchedAbilities.printed(card, CombatWatch.COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK)) {
+                requireNoFilterLimitOrMultiplicity(ability, commandZoneAttack);
+                if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), context)) {
+                    continue;
                 }
-                List<CardEffect> effects = CombatAbilityReader.effectsAsJudged(ability);
-                boolean needsTarget = effects.stream()
-                        .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-                // The entry of the ability that chooses nothing, and the record of one that chooses a target as it
-                // goes on the stack.
-                StackEntry attackTrigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        card,
-                        playerId,
-                        card.getName() + "'s attack trigger",
-                        effects,
-                        attackerCount,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null);
-                StackEntry recordInHand = gameData.handOffTriggerRecord(attackTrigger);
-                if (needsTarget) {
-                    gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                            card, playerId, effects, null, playerId, null, null, attackerCount));
-                } else {
-                    gameData.stack.add(attackTrigger);
+                boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
+                        card, null, playerId, card.getName() + "'s attack trigger", context,
+                        entry -> entry.setXValue(attackerCount)).causedByAttack());
+                if (triggered) {
+                    gameLogService.append(gameData,
+                            GameLog.builder().card(card).text("'s attack ability triggers.").build());
                 }
-                gameData.restoreTriggerRecordInHand(recordInHand);
-                gameLogService.append(gameData,
-                        GameLog.builder().card(card).text("'s attack ability triggers.").build());
-                log.info("Game {} - {} command-zone attack trigger queued", gameData.id, card.getName());
             }
         }
     }
@@ -2906,27 +2389,21 @@ public class CombatAttackService {
      * "Whenever this creature enlists a [filter] creature" abilities of {@code attacker} ({@code Triggers.enlists()};
      * Guardian of New Benalia, Goblin Morale Sergeant, Benalish Knight-Counselor): they trigger as its controller pays
      * its enlist cost by tapping {@code enlisted} (CR 702.154c), the trigger's filter judged on the enlisted creature as
-     * it is then, with its event condition and intervening "if". Each ability goes on the stack as one object of its
-     * effects (CR 603.3) as written, a "you may" asked as it resolves (CR 603.5), the enlisted creature its triggering
-     * permanent ("that creature", read as the ability resolves, else as it last existed, CR 608.2h). An effect that
-     * makes an ability trigger an additional time is judged as for an ability that isn't an attack trigger, as the
-     * records' collectors judged it. A creature that has lost its abilities or is face down has none; an ability with a
-     * target, limit or multiplicity throws (no card has one).
+     * it is then, with its event condition. Each ability goes on the stack through the stack door as one object
+     * (CR 603.3), the enlisted creature its triggering permanent ("that creature", read as the ability resolves, else
+     * as it last existed, CR 608.2h). Enlisting is no attack, so Isshin, Two Heavens as One doesn't apply. A creature
+     * that has lost its abilities or is face down has none.
      */
     private void collectEnlistAbilities(GameData gameData, UUID playerId, Permanent attacker, Permanent enlisted) {
         Trigger enlists = CombatWatch.ON_ENLISTS.trigger();
-        List<List<CombatAbilityReader.CombatEffect>> enlistAbilities = new ArrayList<>();
+        List<TriggeredAbility> enlistAbilities = new ArrayList<>();
         if (!attacker.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, attacker)) {
-            enlistAbilities.addAll(CombatAbilityReader.readByAbility(
-                    WatchedAbilities.printed(attacker.getCard(), CombatWatch.ON_ENLISTS), enlists));
+            enlistAbilities.addAll(WatchedAbilities.printed(attacker.getCard(), CombatWatch.ON_ENLISTS));
         }
         if (!gameQueryService.hasLostAllAbilities(gameData, attacker)) {
-            enlistAbilities.addAll(CombatAbilityReader.readByAbility(
-                    WatchedAbilities.temporary(attacker, enlists), enlists));
-            enlistAbilities.addAll(CombatAbilityReader.readByAbility(
-                    WatchedAbilities.persistent(attacker, enlists), enlists));
-            enlistAbilities.addAll(CombatAbilityReader.readByAbility(
-                    grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, attacker, enlists), enlists));
+            enlistAbilities.addAll(WatchedAbilities.temporary(attacker, enlists));
+            enlistAbilities.addAll(WatchedAbilities.persistent(attacker, enlists));
+            enlistAbilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, attacker, enlists));
         }
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(attacker.getOriginalCard().getId())
@@ -2934,45 +2411,32 @@ public class CombatAttackService {
                 .withSourcePermanentId(attacker.getId());
         ConditionContext conditionContext = ConditionContext.forPermanent(attacker, playerId)
                 .withTriggeringPermanentId(enlisted.getId());
-        for (List<CombatAbilityReader.CombatEffect> ability : enlistAbilities) {
-            CombatAbilityReader.CombatEffect first = ability.getFirst();
-            CombatAbilityReader.requireNoLimitOrMultiplicity(first, enlists);
-            if (first.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
-                    enlisted, first.filter(), filterContext)) {
+        for (TriggeredAbility ability : enlistAbilities) {
+            if (ability.options().limit() != TriggerLimit.NONE
+                    || ability.options().multiplicity() != TriggerMultiplicity.EACH) {
+                throw new IllegalStateException("The collector of " + enlists + " reads no " + ability.options()
+                        + ": " + ability);
+            }
+            PermanentPredicate filter = CombatAbilityReader.filter(ability, enlists);
+            if (filter != null && !predicateEvaluationService.matchesPermanentPredicate(
+                    enlisted, filter, filterContext)) {
                 continue;
             }
-            if (!conditionEvaluationService.triggerConditionsMet(gameData, first.options(), conditionContext)) {
+            if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), conditionContext)) {
                 continue;
             }
-            List<CardEffect> effects = CombatAbilityReader.effectsAsJudged(ability);
-            if (effects.stream().anyMatch(effect -> effect.targetSpec() != TargetSpec.NONE)) {
-                throw new IllegalStateException("The enlist collector chooses no targets: " + first.ability());
+            boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
+                    attacker.getCard(), attacker, playerId, attacker.getCard().getName() + "'s enlist trigger",
+                    conditionContext, entry -> {
+                        entry.setNonTargeting(true);
+                        entry.setSourcePermanentSnapshot(new Permanent(attacker));
+                        entry.setTriggeringPermanentId(enlisted.getId());
+                        entry.setTriggeringPermanentControllerId(playerId);
+                        entry.setTriggeringPermanent(enlisted);
+                    }));
+            if (triggered) {
+                gameLogService.append(gameData, GameLog.abilityTriggers(attacker.getCard()));
             }
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    attacker.getCard(),
-                    playerId,
-                    attacker.getCard().getName() + "'s enlist trigger",
-                    effects,
-                    null,
-                    attacker.getId());
-            entry.setNonTargeting(true);
-            entry.setSourcePermanentSnapshot(new Permanent(attacker));
-            entry.setTriggeringPermanentId(enlisted.getId());
-            entry.setTriggeringPermanentControllerId(playerId);
-            entry.setTriggeringPermanent(enlisted);
-            // An effect that makes an ability trigger an additional time is judged as for an ability that isn't an
-            // attack trigger, as the records' collectors judged it: Isshin, Two Heavens as One doesn't apply.
-            int previousCopies = gameData.beginTriggeredAbilityCopies(1 + gameQueryService
-                    .countAdditionalTriggeredAbilityTriggers(gameData, playerId, attacker, false));
-            try {
-                gameData.enqueueTrigger(entry);
-            } finally {
-                gameData.restoreTriggeredAbilityCopies(previousCopies);
-            }
-            gameLogService.append(gameData, GameLog.abilityTriggers(attacker.getCard()));
-            log.info("Game {} - {} enlist ability triggers for enlisting {}",
-                    gameData.id, attacker.getCard().getName(), enlisted.getCard().getName());
         }
     }
 
@@ -3004,69 +2468,45 @@ public class CombatAttackService {
     private void checkPlayerAttacksYourOpponentTriggers(GameData gameData, UUID sourceControllerId, Permanent source,
                                                         UUID attackingPlayerId, int attackerCount,
                                                         Map<Integer, UUID> resolvedTargets) {
-        List<List<CombatAbilityReader.CombatEffect>> abilities = new ArrayList<>();
+        List<TriggeredAbility> abilities = new ArrayList<>();
         List<CombatWatch> watches = sourceControllerId.equals(attackingPlayerId)
                 ? List.of(CombatWatch.ON_ANY_PLAYER_ATTACKS_YOUR_OPPONENT)
                 : List.of(CombatWatch.ON_ANY_PLAYER_ATTACKS_YOUR_OPPONENT, CombatWatch.ON_OPPONENT_ATTACKS_ANOTHER_OPPONENT);
         for (CombatWatch watch : watches) {
-            for (List<CombatAbilityReader.CombatEffect> ability : CombatAbilityReader.readByAbility(
-                    WatchedAbilities.printed(source.getCard(), watch), watch.trigger())) {
-                CombatAbilityReader.CombatEffect read = ability.getFirst();
-                CombatAbilityReader.requireNoLimitOrMultiplicity(read, watch.trigger());
-                if (read.filter() != null) {
-                    throw new IllegalStateException("The collector of " + watch.trigger() + " judges no filter: "
-                            + read.ability());
-                }
+            for (TriggeredAbility ability : WatchedAbilities.printed(source.getCard(), watch)) {
+                requireNoFilterLimitOrMultiplicity(ability, watch.trigger());
                 abilities.add(ability);
             }
         }
         if (abilities.isEmpty()) {
             return;
         }
+        // One ability for each opponent attacked; "that player" is the attacking player, the entry's non-targeting
+        // target, and the attacked opponent its attacked target, whatever the effects are.
         for (UUID attackedOpponentId : attackedOpponents(gameData, sourceControllerId, resolvedTargets)) {
             ConditionContext attackedOpponentContext = ConditionContext.forPermanent(source, sourceControllerId)
                     .withTargetId(attackingPlayerId).withAttackedTargetId(attackedOpponentId)
                     .withXValue(attackerCount);
-            for (List<CombatAbilityReader.CombatEffect> ability : abilities) {
-                if (!conditionEvaluationService.triggerConditionsMet(gameData, ability.getFirst().options(),
+            for (TriggeredAbility ability : abilities) {
+                if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(),
                         attackedOpponentContext)) {
                     continue;
                 }
-                addPlayerAttackTrigger(gameData, sourceControllerId, source,
-                        CombatAbilityReader.effectsAsJudged(ability), attackerCount, attackingPlayerId,
-                        attackedOpponentId);
+                boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
+                        source.getCard(), source, sourceControllerId, source.getCard().getName() + "'s trigger",
+                        attackedOpponentContext, entry -> {
+                            entry.setXValue(attackerCount);
+                            entry.setTargetId(attackingPlayerId);
+                            entry.setTriggeringPermanentControllerId(attackingPlayerId);
+                            entry.setAttackedTargetId(attackedOpponentId);
+                            entry.setSourcePermanentSnapshot(new Permanent(source));
+                            entry.setNonTargeting(true);
+                        }).causedByAttack());
+                if (triggered) {
+                    gameLogService.append(gameData,
+                            GameLog.builder().card(source.getCard()).text("'s ability triggers.").build());
+                }
             }
-        }
-    }
-
-    private void addPlayerAttackTrigger(GameData gameData, UUID sourceControllerId, Permanent source,
-                                        List<CardEffect> effects, int attackerCount,
-                                        UUID attackingPlayerId, UUID attackedTargetId) {
-        if (effects.isEmpty()) {
-            return;
-        }
-        int previousCopies = beginAttackTriggerCopies(gameData, sourceControllerId, source);
-        try {
-            StackEntry playerAttackTrigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    source.getCard(),
-                    sourceControllerId,
-                    source.getCard().getName() + "'s trigger",
-                    new ArrayList<>(effects),
-                    attackerCount,
-                    source.getId());
-            playerAttackTrigger.setTargetId(attackingPlayerId);
-            playerAttackTrigger.setTriggeringPermanentControllerId(attackingPlayerId);
-            playerAttackTrigger.setAttackedTargetId(attackedTargetId);
-            playerAttackTrigger.setSourcePermanentSnapshot(new Permanent(source));
-            playerAttackTrigger.setNonTargeting(true);
-            gameData.stack.add(playerAttackTrigger);
-            gameLogService.append(gameData,
-                    GameLog.builder().card(source.getCard()).text("'s ability triggers.").build());
-            log.info("Game {} - {} ON_ANY_PLAYER_ATTACKS trigger for attacking player {}",
-                    gameData.id, source.getCard().getName(), attackingPlayerId);
-        } finally {
-            gameData.restoreTriggeredAbilityCopies(previousCopies);
         }
     }
 
@@ -3877,19 +3317,6 @@ public class CombatAttackService {
         Permanent snapshot = new Permanent(attacker);
         snapshot.setLastKnownPower(gameQueryService.getEffectivePower(gameData, attacker));
         return snapshot;
-    }
-
-    /**
-     * Returns whether an unbound target group is read positionally by one of the given effects: it belongs to
-     * the ability of the next bound group after it (or to every ability when no bound group follows it).
-     */
-    private boolean bareGroupBelongsToEffects(Card card, int groupIndex, List<CardEffect> effects) {
-        for (TargetGroup group : card.getTargetGroups()) {
-            if (group.getIndex() > groupIndex && card.bindsEffectToTargetGroup(group.getIndex())) {
-                return effects.stream().anyMatch(effect -> card.isEffectBoundToTargetGroup(effect, group.getIndex()));
-            }
-        }
-        return true;
     }
 
     private Permanent snapshotDeclaredAttacker(GameData gameData, Permanent attacker) {

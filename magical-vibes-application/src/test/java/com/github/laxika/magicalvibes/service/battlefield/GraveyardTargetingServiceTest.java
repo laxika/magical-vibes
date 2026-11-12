@@ -74,56 +74,6 @@ class GraveyardTargetingServiceTest {
     }
 
     @Test
-    @DisplayName("handleAttackGraveyardTargeting keeps the trigger when no graveyard cards are available")
-    void handleAttackGraveyardTargeting_pushesTriggerWhenGraveyardsAreEmpty() {
-        Card card = new Card();
-        card.setName("Restless Cottage");
-        UUID sourcePermanentId = UUID.randomUUID();
-        ExileCardsFromGraveyardEffect exile = new ExileCardsFromGraveyardEffect(1, 0);
-
-        service.handleAttackGraveyardTargeting(
-                gd, player1Id, card, List.of(exile), sourcePermanentId, null);
-
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(exile);
-        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(sourcePermanentId);
-        assertThat(gd.stack.getFirst().getTargetIds()).isEmpty();
-        assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
-    }
-
-    @Test
-    @DisplayName("handleAttackGraveyardTargeting applies a dynamic mana value cap")
-    void handleAttackGraveyardTargeting_appliesDynamicManaValueCap() {
-        Card source = new Card();
-        source.setName("Unforgiving One");
-        Card creature = new Card();
-        creature.setName("Creature");
-        creature.setType(CardType.CREATURE);
-        creature.setManaCost("{1}");
-        Card expensiveCreature = new Card();
-        expensiveCreature.setName("Expensive creature");
-        expensiveCreature.setType(CardType.CREATURE);
-        expensiveCreature.setManaCost("{2}");
-        gd.playerGraveyards.get(player1Id).addAll(List.of(creature, expensiveCreature));
-        ReturnCardFromGraveyardEffect effect = ReturnCardFromGraveyardEffect.builder()
-                .destination(GraveyardChoiceDestination.BATTLEFIELD)
-                .filter(new CardTypePredicate(CardType.CREATURE))
-                .targetGraveyard(true)
-                .dynamicMaxManaValue(new Fixed(1))
-                .build();
-        when(amountEvaluationService.evaluate(any(), eq(new Fixed(1)), any())).thenReturn(1);
-        when(predicateEvaluationService.matchesCardPredicate(
-                any(), eq(effect.filter()), eq(source.getId()), eq(gd), eq(player1Id))).thenReturn(true);
-
-        service.handleAttackGraveyardTargeting(
-                gd, player1Id, source, List.of(effect), UUID.randomUUID(), null);
-
-        verify(playerInputService).beginMultiGraveyardChoice(
-                eq(gd), eq(player1Id), argThat(cards -> cards.contains(creature)
-                        && !cards.contains(expensiveCreature)), eq(1), eq(1), anyString());
-    }
-
-    @Test
     @DisplayName("handleGraveyardExileETBTargeting pushes stack entry with no targets when all graveyards are empty")
     void handleGraveyardExileETBTargeting_pushesEmptyTargetEntryWhenGraveyardsEmpty() {
         Card card = new Card();
@@ -198,30 +148,6 @@ class GraveyardTargetingServiceTest {
         // Only one matching card, so the cap is min(2, 1) = 1
         verify(playerInputService).beginMultiGraveyardChoice(eq(gd), eq(player1Id), org.mockito.ArgumentMatchers.anyList(),
                 eq(1), eq(0), anyString());
-    }
-
-    @Test
-    @DisplayName("combat damage graveyard targeting caps \"up to that many\" at the damage dealt")
-    void handleCombatDamageGraveyardChoiceTargeting_capsAtTheDamageDealt() {
-        Card froghemoth = new Card();
-        froghemoth.setName("Froghemoth");
-        ExileUpToCombatDamageCardsFromGraveyardEffect effect = new ExileUpToCombatDamageCardsFromGraveyardEffect();
-        UUID damagedPlayerId = UUID.randomUUID();
-        List<Card> damagedGraveyard = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
-            Card card = new Card();
-            card.setName("Card " + i);
-            damagedGraveyard.add(card);
-        }
-        gd.playerGraveyards.put(damagedPlayerId, damagedGraveyard);
-
-        service.handleCombatDamageGraveyardChoiceTargeting(gd, player1Id, froghemoth, List.of(effect),
-                UUID.randomUUID(), damagedPlayerId, effect, 2, null);
-
-        assertThat(gd.stack).isEmpty();
-        assertThat(gd.graveyardTargetOperation.targetPlayerId).isEqualTo(damagedPlayerId);
-        verify(playerInputService).beginMultiGraveyardChoice(eq(gd), eq(player1Id),
-                argThat(cards -> cards.size() == 3), eq(2), anyString());
     }
 
     @Test

@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({KitsuneDragonsDaughter.class, GrizzlyBears.class})
@@ -59,9 +61,8 @@ class KitsuneDragonsDaughterTest extends BaseCardTest {
 
         resolveCombat();
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, ownCreature.getId());
-        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownCreature.getId(), opponentCreature.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 

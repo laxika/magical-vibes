@@ -11430,12 +11430,21 @@ public class TriggerCollectionService {
         }
     }
 
+    /**
+     * Whether {@code entry} is a backup ability: the "when this creature enters, put N +1/+1 counters on target
+     * creature" ability of its card (CR 702.165a), not another triggered ability of a creature with backup.
+     */
+    private static boolean isBackupAbility(StackEntry entry) {
+        return entry.getEffectsToResolve().stream().anyMatch(entry.getCard().getOwnEntryEffects()::contains);
+    }
+
     private void collectAllyCreatureBecomesTargetOfBackupAbilityTriggers(
             GameData gameData, Permanent targetPermanent, UUID creatureControllerId, StackEntry triggeringEntry) {
         if (!gameQueryService.isCreature(gameData, targetPermanent)
                 || triggeringEntry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
                 || triggeringEntry.getCard() == null
-                || !triggeringEntry.getCard().getKeywords().contains(Keyword.BACKUP)) {
+                || !triggeringEntry.getCard().getKeywords().contains(Keyword.BACKUP)
+                || !isBackupAbility(triggeringEntry)) {
             return;
         }
 

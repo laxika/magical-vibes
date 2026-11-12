@@ -38,6 +38,11 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
     }
 
     @Override
+    public GraveyardCardChoosingEffect graveyardCardChoice() {
+        return wrapped.graveyardCardChoice();
+    }
+
+    @Override
     public TargetSpec targetSpec() {
         TargetSpec wrappedSpec = wrapped.targetSpec();
         return wrappedSpec != TargetSpec.NONE || elseEffect == null
@@ -49,6 +54,12 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
     @Override
     public AbilityZones staticAbilityZones() {
         return wrapped.staticAbilityZones();
+    }
+
+    /** "That player may … target … of their choice": the active player who answers also chooses the target. */
+    @Override
+    public boolean targetChosenByActivePlayer() {
+        return choicePlayer == MayChoicePlayer.ACTIVE_PLAYER || wrapped.targetChosenByActivePlayer();
     }
 
     @Override

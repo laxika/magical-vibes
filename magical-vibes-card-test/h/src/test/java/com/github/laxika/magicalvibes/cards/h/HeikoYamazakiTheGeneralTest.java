@@ -34,7 +34,7 @@ class HeikoYamazakiTheGeneralTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(1));
         assertThat(gd.interaction.activeInteraction()).isNotNull();
-        harness.handlePermanentChosen(player1, ornithopter.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ornithopter.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -100,7 +100,7 @@ class HeikoYamazakiTheGeneralTest extends BaseCardTest {
 
         declareAttackers(player1, List.of(1));
         assertThat(gd.interaction.activeInteraction()).isNotNull();
-        harness.handlePermanentChosen(player1, ornithopter.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ornithopter.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -122,7 +122,7 @@ class HeikoYamazakiTheGeneralTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         assertThat(gd.interaction.activeInteraction()).isNotNull();
-        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -149,7 +149,7 @@ class HeikoYamazakiTheGeneralTest extends BaseCardTest {
 
         declareAttackers(List.of(1));
         assertThat(gd.interaction.activeInteraction()).isNotNull();
-        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -198,7 +198,7 @@ class HeikoYamazakiTheGeneralTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         assertThat(gd.interaction.activeInteraction()).isNotNull();
-        harness.handlePermanentChosen(player1, target.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -228,7 +228,7 @@ class HeikoYamazakiTheGeneralTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         assertThat(gd.interaction.activeInteraction()).isNotNull();
-        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);

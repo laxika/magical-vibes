@@ -3612,6 +3612,10 @@ public class ChoiceHandlerService {
             triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
             triggerCollectionService.processNextEntersTriggerTarget(gameData);
+        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
+            // The chosen mode's target of an ability about an attack or a damaged player, chosen before the next
+            // ability's mode (CR 603.3c, 603.3d).
+            triggerCollectionService.processNextAttackTriggerTarget(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)) {

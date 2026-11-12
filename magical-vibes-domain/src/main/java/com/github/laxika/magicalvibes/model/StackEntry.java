@@ -87,6 +87,12 @@ public class StackEntry {
      * the door ({@code TriggeredAbilityStackService.finishParked}) rather than building an entry of its own.
      */
     @Getter(AccessLevel.NONE) @Setter private boolean parkedAtStackDoor;
+    /**
+     * Whether this triggered ability's source attacking caused it to trigger (CR 508.3a): "whenever a creature you
+     * control attacking causes a triggered ability of that creature to trigger" (Firebender Ascension) watches its
+     * arrival on the stack, also once its targets are chosen.
+     */
+    @Getter(AccessLevel.NONE) @Setter private boolean triggeredBySourceAttacking;
     @Setter private String description;
     private List<CardEffect> effectsToResolve;
     /**
@@ -1233,6 +1239,7 @@ public class StackEntry {
         this.triggerRecordSettled = source.triggerRecordSettled;
         this.triggerRecordCarried = source.triggerRecordCarried;
         this.parkedAtStackDoor = source.parkedAtStackDoor;
+        this.triggeredBySourceAttacking = source.triggeredBySourceAttacking;
         this.description = source.description;
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
         this.cardCountsBeforeResolution = source.cardCountsBeforeResolution;
@@ -1614,6 +1621,11 @@ public class StackEntry {
             com.github.laxika.magicalvibes.model.effect.TargetSpec spec = effect.targetSpec();
             return spec.declaredTarget() != null && !spec.selfTargeting();
         });
+    }
+
+    /** Whether this ability's source attacking caused it to trigger (see {@link #triggeredBySourceAttacking}). */
+    public boolean isTriggeredBySourceAttacking() {
+        return triggeredBySourceAttacking;
     }
 
     /** Whether the stack door holds this entry while its controller makes a choice (see {@link #parkedAtStackDoor}). */
@@ -2215,6 +2227,24 @@ public class StackEntry {
         this.targetIdsFromAssignments = !this.targetIds.isEmpty();
         this.illegalTargetIndices.clear();
         this.divisionAnnounced = true;
+    }
+
+    /**
+     * Takes the targets {@code chosen}, the entry a target choice built, records: its target and target zone, its flat
+     * targets with their groups, graveyard cards and division, and its constraint between targets. What the trigger event
+     * recorded stays this entry's.
+     */
+    public void adoptChosenTargets(StackEntry chosen) {
+        this.targetId = chosen.targetId;
+        this.targetZone = chosen.targetZone;
+        this.targetIds = chosen.targetIds;
+        this.targetIdsFromAssignments = chosen.targetIdsFromAssignments;
+        this.primaryTargetStoredSeparately = chosen.primaryTargetStoredSeparately;
+        this.damageAssignments = chosen.damageAssignments;
+        this.targetCardIds = chosen.targetCardIds;
+        this.targetGroupSizes = chosen.targetGroupSizes;
+        this.multiTargetConstraint = chosen.multiTargetConstraint;
+        this.illegalTargetIndices.clear();
     }
 
     public void setDeclaredTargetIds(List<UUID> targetIds) {

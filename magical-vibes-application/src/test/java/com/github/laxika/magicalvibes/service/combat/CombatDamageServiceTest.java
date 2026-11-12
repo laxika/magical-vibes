@@ -150,7 +150,17 @@ class CombatDamageServiceTest {
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport.class),
                 stateBasedActionService,
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport.class),
-                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.event.VisualCueService.class));
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.event.VisualCueService.class),
+                new com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService(
+                        conditionEvaluationService, gameQueryService,
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport.class),
+                        gameLogService, triggerCollectionService,
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
+                        predicateEvaluationService));
+        // Abilities without an event condition trigger; the collectors judge only the event condition.
+        org.mockito.Mockito.lenient().when(conditionEvaluationService.eventConditionMet(any(), any(), any()))
+                .thenAnswer(inv -> ((com.github.laxika.magicalvibes.model.trigger.TriggerOptions) inv.getArgument(1))
+                        .eventCondition() == null);
         // No replacement or prevention effects apply: each combat damage event is dealt as collected.
         org.mockito.Mockito.lenient().doAnswer(inv -> {
             combatDamageService.recordCombatDamageEvent(inv.getArgument(0), inv.getArgument(1));

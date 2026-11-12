@@ -46,6 +46,11 @@ public record ConditionalEffect(Condition condition, CardEffect wrapped)
     }
 
     @Override
+    public GraveyardCardChoosingEffect graveyardCardChoice() {
+        return wrapped.graveyardCardChoice();
+    }
+
+    @Override
     public TargetSpec targetSpec() {
         return wrapped.targetSpec();
     }

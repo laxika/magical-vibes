@@ -32,15 +32,13 @@ class BragoKingEternalTest extends BaseCardTest {
 
         resolveCombat();
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validPermanentIds()).contains(bears.getId(), nullRod.getId());
-        assertThat(choice.validPermanentIds()).doesNotContain(opponentBears.getId());
+        assertThat(choice.validIds()).contains(bears.getId(), nullRod.getId());
+        assertThat(choice.validIds()).doesNotContain(opponentBears.getId());
 
-        harness.handlePermanentChosen(player1, bears.getId());
-        harness.handlePermanentChosen(player1, nullRod.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId(), nullRod.getId()));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -58,7 +56,7 @@ class BragoKingEternalTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         resolveCombat();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Grizzly Bears").getId()).isEqualTo(bears.getId());
@@ -73,9 +71,7 @@ class BragoKingEternalTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
 
         resolveCombatToTargetChoice();
-        harness.handlePermanentChosen(player1, firstBear.getId());
-        harness.handlePermanentChosen(player1, secondBear.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstBear.getId(), secondBear.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -98,10 +94,10 @@ class BragoKingEternalTest extends BaseCardTest {
 
         resolveCombatToTargetChoice();
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validPermanentIds())
+        assertThat(choice.validIds())
                 .contains(brago.getId(), ownBear.getId())
                 .doesNotContain(ownForest.getId(), opponentBear.getId());
     }
@@ -120,8 +116,7 @@ class BragoKingEternalTest extends BaseCardTest {
                 gd, harness.getPermanentId(player1, "Grizzly Bears"));
 
         resolveCombatToTargetChoice();
-        harness.handlePermanentChosen(player1, controlledBear.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(controlledBear.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -141,9 +136,7 @@ class BragoKingEternalTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         resolveCombatToTargetChoice();
-        harness.handlePermanentChosen(player1, bears.getId());
-        harness.handlePermanentChosen(player1, warden.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId(), warden.getId()));
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -162,8 +155,7 @@ class BragoKingEternalTest extends BaseCardTest {
         Permanent aura = findPermanent(player1, "Lay Claim");
 
         resolveCombatToTargetChoice();
-        harness.handlePermanentChosen(player1, aura.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(aura.getId()));
         harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =
@@ -183,10 +175,7 @@ class BragoKingEternalTest extends BaseCardTest {
         Permanent brago = addAttackingBrago();
 
         resolveCombatToTargetChoice();
-        harness.handlePermanentChosen(player1, brago.getId());
-        if (gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null) {
-            harness.handlePermanentChosen(player1, player1.getId());
-        }
+        harness.handleMultiplePermanentsChosen(player1, List.of(brago.getId()));
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Brago, King Eternal");
@@ -204,6 +193,6 @@ class BragoKingEternalTest extends BaseCardTest {
 
     private void resolveCombatToTargetChoice() {
         resolveCombat();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
     }
 }

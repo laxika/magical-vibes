@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -22,10 +23,14 @@ import java.util.UUID;
  * @param description      what the stack entry is called
  * @param ifContext        the context the intervening "if" is judged in as the ability triggers (CR 603.4)
  * @param record           stamps what the event was on the stack entry
+ * @param attack           whether creatures attacking caused the ability to trigger, which the "triggers an
+ *                         additional time" effects that count only those read, and whether its source was one of them
+ * @param event            the event as the "triggers an additional time" effects that judge it read it (a combat
+ *                         damage event's source and the damage it dealt to players), or {@code null}
  */
 public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard, Permanent sourcePermanent,
                                       UUID controllerId, String description, ConditionContext ifContext,
-                                      TriggerRecord record) {
+                                      TriggerRecord record, AttackCause attack, TriggerContext event) {
 
     public TriggeredAbilityRequest {
         Objects.requireNonNull(ability, "ability");
@@ -34,6 +39,51 @@ public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard,
         Objects.requireNonNull(description, "description");
         Objects.requireNonNull(ifContext, "ifContext");
         Objects.requireNonNull(record, "record");
+    }
+
+    /** A request for an ability that no attack caused, read by the doublers without its event. */
+    public TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard, Permanent sourcePermanent,
+                                   UUID controllerId, String description, ConditionContext ifContext,
+                                   TriggerRecord record) {
+        this(ability, sourceCard, sourcePermanent, controllerId, description, ifContext, record, AttackCause.NONE,
+                null);
+    }
+
+    /** This request for an ability creatures attacking caused to trigger, its source not among them. */
+    public TriggeredAbilityRequest causedByAttack() {
+        return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
+                record, AttackCause.ATTACK, event);
+    }
+
+    /**
+     * This request for an ability of a creature that its own attacking caused to trigger ("whenever this creature
+     * attacks", "whenever you attack" of an attacker), which "a creature you control attacking causes a triggered
+     * ability of that creature to trigger" watches (Firebender Ascension).
+     */
+    public TriggeredAbilityRequest causedBySourceAttacking() {
+        return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
+                record, AttackCause.SOURCE_ATTACKED, event);
+    }
+
+    /** This request with {@code event} as the event the "triggers an additional time" effects judge. */
+    public TriggeredAbilityRequest withEvent(TriggerContext event) {
+        return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
+                record, attack, event);
+    }
+
+    /** Whether creatures attacking caused the ability to trigger (CR 508.3a). */
+    public boolean attackCaused() {
+        return attack != AttackCause.NONE;
+    }
+
+    /** Whether creatures attacking caused the ability to trigger, and whether its source was one of them. */
+    public enum AttackCause {
+        /** No attack caused it. */
+        NONE,
+        /** Creatures attacking caused it; its source isn't one of them. */
+        ATTACK,
+        /** Its source attacking caused it. */
+        SOURCE_ATTACKED
     }
 
     /** The id of {@link #sourcePermanent}, or {@code null}. */

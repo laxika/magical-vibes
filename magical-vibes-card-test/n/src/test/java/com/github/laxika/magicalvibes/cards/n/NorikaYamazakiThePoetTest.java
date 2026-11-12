@@ -33,7 +33,7 @@ class NorikaYamazakiThePoetTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(anthem, new Shock()));
 
         declareAttackers(player1, List.of(1));
-        harness.handlePermanentChosen(player1, anthem.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(anthem.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -85,7 +85,7 @@ class NorikaYamazakiThePoetTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(anthem));
 
         declareAttackers(player1, List.of(1));
-        harness.handlePermanentChosen(player1, anthem.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(anthem.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -107,7 +107,7 @@ class NorikaYamazakiThePoetTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(fang));
 
         declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, fang.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(fang.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -130,7 +130,7 @@ class NorikaYamazakiThePoetTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(fang));
 
         declareAttackers(List.of(1));
-        harness.handlePermanentChosen(player1, fang.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(fang.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -174,7 +174,7 @@ class NorikaYamazakiThePoetTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(fang));
 
         declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, fang.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(fang.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -198,7 +198,7 @@ class NorikaYamazakiThePoetTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(chosenFang, otherFang));
 
         declareAttackers(List.of(0));
-        harness.handlePermanentChosen(player1, chosenFang.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(chosenFang.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -223,8 +223,8 @@ class NorikaYamazakiThePoetTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(fang));
 
         declareAttackers(List.of(0));
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, fang.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(fang.getId()));
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
-import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,9 +21,10 @@ public class StinkdrinkerBandit extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{B}")),
                 Set.of(CardSubtype.GOBLIN, CardSubtype.ROGUE)));
 
-        // Whenever a Rogue you control attacks and isn't blocked, it gets +2/+1 until end of turn.
+        // Whenever a Rogue you control attacks and isn't blocked, it gets +2/+1 until end of turn: "it" is the event's
+        // unblocked Rogue, which the ability affects without targeting.
         addTrigger(Triggers.creatureYouControlAttacksUnblocked()
                         .withFilter(new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ROGUE))),
-                new BoostSelfEffect(2, 1));
+                new BoostTargetCreatureEffect(2, 1));
     }
 }

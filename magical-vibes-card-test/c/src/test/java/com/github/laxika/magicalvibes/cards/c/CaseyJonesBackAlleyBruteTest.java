@@ -73,7 +73,7 @@ class CaseyJonesBackAlleyBruteTest extends BaseCardTest {
         declareAttackers(List.of(0));
 
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         PendingInteraction.PermanentChoice choice = activePermanentChoice();
         assertThat(choice.validPermanentIds()).containsExactly(casey.getId());
         assertThat(choice.validIds()).doesNotContain(bears.getId());

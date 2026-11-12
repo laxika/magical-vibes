@@ -6,6 +6,10 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
+import com.github.laxika.magicalvibes.model.effect.ExileUpToCombatDamageCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -118,9 +122,11 @@ class TriggeredAbilityStackServiceTest {
     @BeforeEach
     void setUp() {
         stackService = new TriggeredAbilityStackService(conditionEvaluationService, gameQueryService,
-                graveyardTargetingSupport, gameLogService, triggerCollectionService, amountEvaluationService);
+                graveyardTargetingSupport, gameLogService, triggerCollectionService, amountEvaluationService,
+                predicateEvaluationService);
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.orderedPlayerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
+        gd.playerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
         gd.playerIdToName.put(PLAYER1_ID, "Player1");
         gd.playerIdToName.put(PLAYER2_ID, "Player2");
         gd.playerBattlefields.put(PLAYER1_ID, new ArrayList<>());
@@ -721,7 +727,8 @@ class TriggeredAbilityStackServiceTest {
         Card card = createCreature("Blocker", 1, 1);
         Permanent blocker = new Permanent(card);
         Permanent attacker = new Permanent(createCreature("Attacker", 2, 2));
-        when(gameQueryService.countAdditionalTriggeredAbilityTriggers(gd, PLAYER1_ID, blocker)).thenReturn(1);
+        when(gameQueryService.countAdditionalTriggeredAbilityTriggers(gd, PLAYER1_ID, blocker, false, null))
+                .thenReturn(1);
 
         stackService.put(gd, blockRequest(new TriggeredAbility(Triggers.blocks(), new GainLifeEffect(1)),
                 card, blocker, attacker));
@@ -840,5 +847,173 @@ class TriggeredAbilityStackServiceTest {
 
         verify(triggerCollectionService).checkBecomesTargetOfAbilityTriggers(gd);
         verify(triggerCollectionService).checkCrimeTriggers(gd, finished);
+    }
+
+    /** A combat damage record naming the damaged player PLAYER2 as "that player", as the combat collector stamps it. */
+    private TriggeredAbilityRequest damageRequest(TriggeredAbility ability, Card card, Permanent creature) {
+        return new TriggeredAbilityRequest(ability, card, creature, PLAYER1_ID, card.getName() + "'s ability",
+                ConditionContext.forPermanent(creature, PLAYER1_ID), entry -> {
+                    entry.setTargetId(PLAYER2_ID);
+                    entry.setNonTargeting(true);
+                    entry.setTriggeringPlayerId(PLAYER2_ID);
+                    entry.setEventValue(3);
+                });
+    }
+
+    @Test
+    @DisplayName("A player-only effect acts on the player the event names, without a choice")
+    void playerOnlyEffectIsThePlayerTheEventNames() {
+        Card card = createCreature("Raider", 2, 2);
+        Permanent creature = new Permanent(card);
+
+        stackService.put(gd, damageRequest(new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER)), card, creature));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(PLAYER2_ID);
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
+    }
+
+    @Test
+    @DisplayName("An \"any target\" effect chooses its target although the event names a player")
+    void anyTargetEffectChoosesItsTargetBesideThePlayerTheEventNames() {
+        Card card = createCreature("Raider", 2, 2);
+        Permanent creature = new Permanent(card);
+
+        stackService.put(gd, damageRequest(new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                new DealDamageToAnyTargetEffect(1)), card, creature));
+
+        assertThat(gd.stack).isEmpty();
+        var choice = gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
+        assertThat(choice.choosingPlayerId()).isEqualTo(PLAYER1_ID);
+        assertThat(choice.triggeringPlayerId()).isEqualTo(PLAYER2_ID);
+        assertThat(choice.eventValue()).isEqualTo(3);
+        assertThat(choice.triggerRecord().isParkedAtStackDoor()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The defending player chooses the target of a card whose combat ability says so")
+    void defendingPlayerChoosesTheTargetWhenTheCardSaysSo() {
+        Card card = createCreature("Erithizon", 4, 4);
+        card.setCombatTriggerTargetChosenByDefendingPlayer(true);
+        Permanent creature = new Permanent(card);
+        var ability = new TriggeredAbility(Triggers.attacks(), new PutCounterOnTargetPermanentEffect(
+                com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE));
+
+        stackService.put(gd, new TriggeredAbilityRequest(ability, card, creature, PLAYER1_ID, "attack",
+                ConditionContext.forPermanent(creature, PLAYER1_ID), entry -> {
+                    entry.setAttackedTargetId(PLAYER2_ID);
+                    entry.setDefendingPlayerId(PLAYER2_ID);
+                }).causedBySourceAttacking());
+
+        var choice = gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
+        assertThat(choice.choosingPlayerId()).isEqualTo(PLAYER2_ID);
+        assertThat(choice.attackedTargetId()).isEqualTo(PLAYER2_ID);
+    }
+
+    @Test
+    @DisplayName("Targets in two groups are chosen group by group; one group of two targets in one choice")
+    void groupsDecideHowTargetsAreChosen() {
+        Card twoGroups = createCreature("Two groups", 2, 2);
+        CardEffect destroy = new DealDamageToTargetCreatureEffect(1);
+        CardEffect boost = new PutCounterOnTargetPermanentEffect(
+                com.github.laxika.magicalvibes.model.CounterType.PLUS_ONE_PLUS_ONE);
+        twoGroups.target(1, 1).bindEffect(destroy);
+        twoGroups.target(1, 1).bindEffect(boost);
+        stackService.put(gd, new TriggeredAbilityRequest(new TriggeredAbility(Triggers.attacks(), destroy, boost),
+                twoGroups, new Permanent(twoGroups), PLAYER1_ID, "attack",
+                ConditionContext.forCard(twoGroups, PLAYER1_ID), TriggeredAbilityRequest.TriggerRecord.NONE));
+
+        Card oneGroup = createCreature("One group", 2, 2);
+        CardEffect damage = new DealDamageToTargetCreatureEffect(1);
+        oneGroup.target(2, 2).bindEffect(damage);
+        stackService.put(gd, new TriggeredAbilityRequest(new TriggeredAbility(Triggers.attacks(), damage),
+                oneGroup, new Permanent(oneGroup), PLAYER1_ID, "attack",
+                ConditionContext.forCard(oneGroup, PLAYER1_ID), TriggeredAbilityRequest.TriggerRecord.NONE));
+
+        assertThat(gd.peekPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class).sourceCard())
+                .isSameAs(twoGroups);
+        assertThat(gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class).sourceCard())
+                .isSameAs(oneGroup);
+    }
+
+    @Test
+    @DisplayName("An opponent's graveyard of an ability about one player is that player's")
+    void opponentGraveyardOfAnAbilityAboutOnePlayerIsThatPlayers() {
+        Card card = createCreature("Raider", 2, 2);
+        var effect = new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD, null,
+                false, false, false, null, false, false);
+
+        stackService.put(gd, damageRequest(new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(), effect), card,
+                new Permanent(card)));
+        stackService.put(gd, new TriggeredAbilityRequest(new TriggeredAbility(Triggers.attacks(), effect), card,
+                new Permanent(card), PLAYER1_ID, "attack", ConditionContext.forCard(card, PLAYER1_ID),
+                entry -> entry.setDefendingPlayerId(PLAYER2_ID)));
+
+        var choices = gd.pendingInteractions.stream()
+                .filter(PermanentChoiceContext.SpellGraveyardTargetTrigger.class::isInstance)
+                .map(PermanentChoiceContext.SpellGraveyardTargetTrigger.class::cast).toList();
+        assertThat(choices).extracting(PermanentChoiceContext.SpellGraveyardTargetTrigger::graveyardOwnerId)
+                .containsExactly(PLAYER2_ID, null);
+    }
+
+    @Test
+    @DisplayName("Graveyard cards up to the event's amount are chosen from the graveyard of the player it names")
+    void graveyardChoiceReadsTheEventsAmountAndPlayer() {
+        Card card = createCreature("Froghemoth", 4, 4);
+
+        stackService.put(gd, damageRequest(new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
+                new ExileUpToCombatDamageCardsFromGraveyardEffect()), card, new Permanent(card)));
+
+        var choice = gd.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
+        assertThat(choice.graveyardOwnerId()).isEqualTo(PLAYER2_ID);
+        assertThat(choice.maxCount()).isEqualTo(3);
+        assertThat(choice.triggerRecord().isParkedAtStackDoor()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The doublers judge an attack's ability as attack-caused, with the event they read")
+    void doublersReadTheAttackAndTheEvent() {
+        Card card = createCreature("Raider", 2, 2);
+        Permanent creature = new Permanent(card);
+        var event = new com.github.laxika.magicalvibes.service.trigger.TriggerContext.SourceDealsCombatDamage(
+                card, PLAYER1_ID, creature.getId(), 3, 3);
+
+        stackService.put(gd, damageRequest(new TriggeredAbility(Triggers.attacks(), new GainLifeEffect(1)), card,
+                creature).causedByAttack().withEvent(event));
+
+        verify(gameQueryService).countAdditionalTriggeredAbilityTriggers(gd, PLAYER1_ID, creature, true, event);
+    }
+
+    @Test
+    @DisplayName("The entry names the permanent that granted the ability")
+    void entryNamesTheGrantingPermanent() {
+        Card card = createCreature("Equipped", 2, 2);
+        UUID grantingId = UUID.randomUUID();
+        var ability = new TriggeredAbility(Triggers.attacks(), new GainLifeEffect(1))
+                .withGrantingPermanentId(grantingId);
+
+        stackService.put(gd, new TriggeredAbilityRequest(ability, card, new Permanent(card), PLAYER1_ID, "attack",
+                ConditionContext.forCard(card, PLAYER1_ID), TriggeredAbilityRequest.TriggerRecord.NONE));
+
+        assertThat(gd.stack.getFirst().getGrantingPermanentId()).isEqualTo(grantingId);
+    }
+
+    @Test
+    @DisplayName("An ability its attacking source's attack caused is reported as it reaches the stack")
+    void abilityOfTheAttackingSourceIsReported() {
+        Card card = createCreature("Attacker", 2, 2);
+        Permanent attacker = new Permanent(card);
+        attacker.setAttacking(true);
+        when(gameQueryService.findPermanentById(gd, attacker.getId())).thenReturn(attacker);
+
+        stackService.put(gd, new TriggeredAbilityRequest(new TriggeredAbility(Triggers.attacks(),
+                new GainLifeEffect(1)), card, attacker, PLAYER1_ID, "attack",
+                ConditionContext.forPermanent(attacker, PLAYER1_ID), TriggeredAbilityRequest.TriggerRecord.NONE)
+                .causedBySourceAttacking());
+
+        assertThat(gd.stack.getFirst().isTriggeredBySourceAttacking()).isTrue();
+        verify(triggerCollectionService).checkAttackingCreatureTriggeredAbilityTriggers(gd, attacker,
+                gd.stack.getFirst());
     }
 }

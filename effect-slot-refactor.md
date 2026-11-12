@@ -15,7 +15,7 @@ grep its `^#### Run` headings and read that range. The invariants those runs est
 |---|---|---|
 | 1–14 | Ability model, every family off the enum, trigger options | done |
 | S0 | The stack door, the ratchet, the ledger; pilot: block triggers | done |
-| S1 | Combat | open |
+| S1 | Combat | done but: C16, C17, C18, C19, C20, C21, C22 |
 | S2 | Steps, phases, draw step, planar | open |
 | S3 | Spells, abilities, becomes the target | open |
 | S4 | Damage, counters, life, tap | open |
@@ -311,8 +311,6 @@ named, with the Oracle text of the cards involved read first.
 |---|---|---|
 | C1 | S3 | `SpellCastTriggerCollectorService.triggerTargetSpec`: a `MayPayManaEffect` that is not the lone effect gets no target as the ability goes on the stack |
 | C2 | S4 | `TriggerCollectionService.checkEnchantedPermanentTapTriggers`: the same shape as C1 |
-| C3 | S1 | `CombatDamageService.putDamageToPlayerAbilityOnStack`: a lone "you may" graveyard choice takes a minimum and maximum of 1; the plain route takes 0 and the creature's |
-| C4 | S1 | `CombatAbilityReader.effectAsJudged` unwraps a modal effect |
 | C5 | S6 | `EnterTriggerCollectorService.handleAnyPermanentEnterDefault`: a player target is chosen only for a `MayEffect` |
 | C6 | S6 | `EtbTriggerService.processCreatureETBEffects`: a lone "you may" is routed by the wrapped effect's class |
 | C7 | S7 | `TemporaryGlobalTriggeredAbility.effect()` keeps only the ability's first effect |
@@ -321,7 +319,13 @@ named, with the Oracle text of the cards involved read first.
 | C10 | S7 | `SpecializeKarlachEffectHandler` builds its own stacked entry |
 | C11 | S7 | My Laughter Echoes: the replayed scheme keeps its old target |
 | C12 | S7 | `ForcedCostOrElseEffectHandler.enqueuePaidEffects` has a fall-through that would put an "if you do" on the stack |
-| C16 | S1–S7 | The door parks every route, but only the attack-target answers (single, multi, "up to one" with none), the no-target chosen mode and the graveyard target's general answer (cards chosen, or "up to" with none) finish through `finishParked`. The other branches of `processNextSpellGraveyardTargetTrigger` (an own-entry exile copy, a battlefield-or-graveyard target, an opponent-chosen card, independently targeted groups), a mode with a non-attack target (`EntersTriggerTarget`, `ETBTokenMultiTargetTrigger`, `ETBSpellTargetTrigger`), `StackedModalTriggerService`, `StackedDividedDamageTriggerService` and `TriggerTargetCollector` still finish with their own entry and the hand-off carry. No door-routed card reaches them yet; each moves behind the door in the first sweep whose family reaches it |
+| C16 | S2–S7 | The door parks every route; the attack-target answers, the no-target chosen mode, the group-by-group walk of the record's own effects and the graveyard target's general answer finish through `finishParked`. A chosen mode's group-by-group or non-attack target (`EntersTriggerTarget`, `ETBTokenMultiTargetTrigger` on a mode's card copy, `ETBSpellTargetTrigger`), the counter move (`AttackCounterMoveFirstTarget`), the other branches of `processNextSpellGraveyardTargetTrigger`, `StackedModalTriggerService`, `StackedDividedDamageTriggerService` and `TriggerTargetCollector` still finish with their own entry and the hand-off carry; each moves behind the door in the first sweep whose family reaches it |
+| C17 | S7 | The combat files' delayed abilities build their own entries (no `TriggeredAbility` to hand the door): `CombatService`'s end-of-combat actions, the `processDelayed…` readers of `CombatAttackService`, `CombatDamageService` and `CombatBlockService`, `checkDelayedBecomesBlockedTriggers`, Harsh Justice's reflection, Okoye's temporary global watcher |
+| C18 | S8 | Engine-made combat abilities build their own entries: decayed, melee, battle cry, dethrone, training, double team, granted exalted, enlist's own ability, flanking, the monarch and initiative transfers, combat damage put on the stack |
+| C19 | S5 | "You may exert this creature as it attacks" is written as an attack trigger; `CombatAttackService` reads its effect and asks it with `queueMayAbilityForPlayer` (CR 701.43d: it is an optional cost to attack, no ability) |
+| C20 | S2 | Cloak of Confusion's and Farrel's Mantle's effects read the enchanted attacker as the entry's source permanent, so their door request names the attacker as source (CR 113.7: it is the Aura). Rewrite the effects to read the triggering permanent and pass the Aura |
+| C21 | S2 | A trigger record left in hand reaches an end-of-combat delayed ability (Scion of Calamity's myriad exile gets a combat-damage record, in one test or another between runs): a hand-off outside a routing scope |
+| C22 | S2–S7 | Combat-watch collectors in `TriggerCollectionService` still build entries: ally/any creature combat damage to a player, an opponent or its owner and "creatures you control deal damage" (S4), "an ability of an attacking creature you control triggers" (S3), the planar readers (S2), emblems and temporary global abilities (S7) |
 
 **Fixes**
 
@@ -354,6 +358,15 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Probe: over the 1,019 modal-card test classes only Gideon Blackblade's +1 (an activated ability with "up to one" target and none chosen) reaches `beginResolvingModalTargetChoice`, so the door doesn't own it. Open: that ability asks for a target as it resolves (CR 601.2c via 602.2b), outside this plan.
 - Ledger: drop the ` #n` sequence and sort; two players' abilities arrive in map order.
 - C16, graveyard part: Groffskithur's graveyard target finishes through `finishParked`, which now counts graveyard-card targets for the becomes-the-target and crime checks (CR 700.13). Ledger unchanged.
+
+**S1.**
+- Door API: requests carry the attack cause (`causedByAttack`, `causedBySourceAttacking`, CR 508.3a) and the doublers' event (`withEvent`); the door stamps the granting permanent and `StackEntry.isTriggeredBySourceAttacking`, and routes random graveyard targets, graveyard choices (`CardEffect.graveyardCardChoice`, narrowed to the record's triggering player), the defending or active player's target choice and the group-by-group walk. Its rules are in `triggers.md`.
+- Target rule: the object a record names stands in only for an effect that could target nothing but its kind and type; "any target" beside "that creature/player" is chosen. Cards that print "that player" behind a fluent `target(...)` binding must split it (Destructive Urge).
+- Prompt shape: two or more groups, dynamic counts, "up to one" and an Aura's later group are walked group by group; one group of several targets is one choice. Brago, Numot, Kitsune, Casey Jones, Norika and Heiko tests answer the new shape.
+- Rules fix: "a backup ability" is the backup creature's own entering ability (CR 702.165a), not its attack trigger (Mirror-Shield Hoplite; the old route hid the bug by not setting `targetId`).
+- C3 closed: a graveyard target takes the count its effect declares; the "you may" is asked as it resolves (CR 603.5). C4 closed: a mode chosen as it triggers isn't wrapped in the intervening "if"; the one such combat card, Jin Sakai, repeats it in each mode (CR 603.4).
+- Records gained, no behavior change: the unblocked record's triggering player (the defending player), graveyard abilities' graveyard incarnation, Ebony Fly's own power, granting permanents. Stinkdrinker Bandit boosts "it" without targeting (its source is now the Bandit, CR 113.7).
+- Dead code removed: the combat graveyard-targeting helpers of `GraveyardTargetingService`, `CombatTriggerService.putOnStackOrChooseMode`, `GainLifeEqualToDamageDealtEffect`.
 
 ## Prompt
 

@@ -50,6 +50,15 @@ public interface GraveyardCardChoosingEffect extends CardEffect {
         return null;
     }
 
+    /**
+     * Whether the cards are chosen from the graveyard of the player the triggering event is about ("that player's
+     * graveyard" of a combat damage ability, "defending player's graveyard" of an attack ability), rather than from
+     * the graveyards the effect's scope names.
+     */
+    default boolean choosesFromEventPlayersGraveyard() {
+        return false;
+    }
+
     /** The minimum number of selected cards; derived from exact-target choices by default. */
     default int graveyardChoiceMinTargets() {
         return graveyardChoiceExactTargets() ? graveyardChoiceMaxTargets() : 0;

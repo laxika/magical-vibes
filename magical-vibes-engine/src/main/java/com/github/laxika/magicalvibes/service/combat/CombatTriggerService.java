@@ -28,6 +28,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.trigger.CombatWatch;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -52,53 +56,27 @@ public class CombatTriggerService {
     private final GameQueryService gameQueryService;
     private final ETBTokenTargetService etbTokenTargetService;
     private final GraveyardTargetingService graveyardTargetingService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     /**
-     * The attached permanent {@code perm}'s abilities that {@code watch} reads, one list of effects for each ability
-     * (CR 603.3): its own "whenever
-     * equipped / enchanted creature attacks, blocks or becomes blocked", or the ability it grants the creature. A
-     * "blocks" or "becomes blocked" ability may have a filter on the creature on the other side of the block
-     * ("blocks or becomes blocked by a Vampire", Wooden Stake; CR 509.3f), which the collector judges as the ability
-     * triggers. No Aura or Equipment writes another filter or a limit, and this throws on one.
+     * The attached permanent {@code perm}'s abilities that {@code watch} reads, each one object on the stack (CR 603.3):
+     * its own "whenever enchanted / equipped creature attacks, blocks or becomes blocked" abilities and the ones it
+     * grants the creature it's attached to. A "blocks" or "becomes blocked" ability may have a filter on the creature on
+     * the other side of the block ("blocks or becomes blocked by a Vampire", Wooden Stake; CR 509.3f), which the
+     * collector judges as the ability triggers. No Aura or Equipment writes another filter or a limit, and this throws
+     * on one.
      */
-    private static List<List<CombatAbilityReader.CombatEffect>> attachedCombatAbilities(Permanent perm,
-                                                                                         CombatWatch watch) {
-        List<List<CombatAbilityReader.CombatEffect>> abilities = CombatAbilityReader.readByAbility(
-                WatchedAbilities.printed(perm.getCard(), watch), watch.trigger());
+    private static List<TriggeredAbility> attachedCombatAbilities(Permanent perm, CombatWatch watch) {
+        List<TriggeredAbility> abilities = WatchedAbilities.printed(perm.getCard(), watch);
         boolean blockWatch = watch == CombatWatch.ON_BLOCK || watch == CombatWatch.ON_BECOMES_BLOCKED;
-        for (List<CombatAbilityReader.CombatEffect> ability : abilities) {
-            CombatAbilityReader.CombatEffect read = ability.getFirst();
-            if ((read.filter() != null && !blockWatch) || read.limit() != TriggerLimit.NONE) {
+        for (TriggeredAbility ability : abilities) {
+            if ((CombatAbilityReader.filter(ability, watch.trigger()) != null && !blockWatch)
+                    || ability.options().limit() != TriggerLimit.NONE) {
                 throw new IllegalStateException("The attached-permanent combat collector reads no filter or limit: "
-                        + read.ability());
+                        + ability);
             }
         }
         return abilities;
-    }
-
-    /**
-     * Puts {@code trigger}, the entry a block-step collector built for one ability that chooses no target, on the
-     * stack; an ability whose mode is chosen as it triggers (CR 603.3c) instead queues that choice with the entry as
-     * the record of the event, which the entry the chosen modes go on the stack as carries
-     * ({@code StackEntry.carryTriggerRecord}). The choice builds the stack object from the chosen modes, so the modal
-     * is the ability's one effect.
-     */
-    public void putOnStackOrChooseMode(GameData gameData, StackEntry trigger) {
-        List<CardEffect> effects = trigger.getEffectsToResolve();
-        ChooseOneEffect modal = effects.stream().map(TriggeredModalEffect::choiceMadeAsTriggered)
-                .filter(java.util.Objects::nonNull).findFirst().orElse(null);
-        if (modal == null) {
-            gameData.stack.add(trigger);
-            return;
-        }
-        gameData.handOffTriggerRecord(trigger);
-        if (effects.size() != 1) {
-            throw new IllegalStateException("A mode chosen as a block-step ability triggers is the ability's one "
-                    + "effect: " + trigger.getCard().getName());
-        }
-        gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                trigger.getCard(), trigger.getControllerId(), modal, trigger.getSourcePermanentId())
-                .withTriggerRecord(trigger));
     }
 
     private boolean isOwnAttackTrigger(Permanent perm, CombatWatch slot) {
@@ -133,287 +111,155 @@ public class CombatTriggerService {
      * Checks attached triggers while allowing the block collector to suppress each "blocks" once each combat ability
      * of an attached permanent (CR 509.3a) after it triggered in the block declaration:
      * {@code oncePerBlockTriggeredAbilities} holds the abilities that did, each by its permanent and its
-     * {@link com.github.laxika.magicalvibes.model.TriggeredAbility#limitKey()}, marked only once the ability's event
-     * condition, intervening "if" and filter let it trigger, so one whose filter matches only the second creature
-     * blocked triggers for that one, and two such abilities of one permanent each trigger.
+     * {@link TriggeredAbility#limitKey()}, marked only once the ability's event condition, intervening "if" and filter
+     * let it trigger, so one whose filter matches only the second creature blocked triggers for that one, and two such
+     * abilities of one permanent each trigger.
+     *
+     * <p>Each ability goes on the stack through the stack door as one object (CR 603.3), with the event recorded
+     * whatever its effects are: the attached creature as its triggering permanent (with its controller, "its
+     * controller", and its last-known copy), the attacked player, planeswalker or battle and the defending player, and
+     * on a block ability the creature on the other side of the block as "that creature", its non-targeting target
+     * (CR 115.10a). An attack ability granted to the enchanted or equipped creature (Unquenchable Fury) is that
+     * creature's, so the creature is its source and its controller controls it (CR 113.7, 113.8); an Aura's or
+     * Equipment's own "whenever enchanted / equipped creature attacks" ability is the attached permanent's.
      */
     public void checkAuraTriggersForCreature(GameData gameData, Permanent creature, CombatWatch slot,
                                               Permanent combatOpponent,
                                               Set<String> oncePerBlockTriggeredAbilities) {
         UUID creatureControllerId = gameData.findControllerOf(creature);
         if (creatureControllerId == null) return;
-        final UUID finalCreatureControllerId = creatureControllerId;
         final boolean creatureLostAllAbilities = gameQueryService.hasLostAllAbilities(gameData, creature);
 
         gameData.forEachPermanent((auraOwnerId, perm) -> {
-            if (perm.isAttached() && perm.getAttachedTo().equals(creature.getId())) {
-                // An Aura's granted triggered ability is an ability of the enchanted creature, so losing
-                // all abilities (Turn to Frog) stops it from triggering. The Aura's own attack trigger is not.
-                if (creatureLostAllAbilities && perm.getCard().isAura()
-                        && !perm.getCard().isAttackTriggerOwnedByAura()) {
-                    return;
+            if (!perm.isAttached() || !perm.getAttachedTo().equals(creature.getId())) {
+                return;
+            }
+            // An Aura's granted triggered ability is an ability of the enchanted creature, so losing
+            // all abilities (Turn to Frog) stops it from triggering. The Aura's own attack trigger is not.
+            if (creatureLostAllAbilities && perm.getCard().isAura() && !perm.getCard().isAttackTriggerOwnedByAura()) {
+                return;
+            }
+            // The intervening "if" (CR 603.4) and event condition (CR 603.2: "attacks alone", Sigil of Valor) are read
+            // from the creature, against its attack target ("if it's the first combat phase", Genji Glove; "if the
+            // defending player is the monarch").
+            ConditionContext triggerContext = ConditionContext.forPermanent(creature, creatureControllerId)
+                    .withTargetId(slot == CombatWatch.ON_ATTACK ? creature.getAttackTarget() : null);
+            boolean grantedToCreature = slot == CombatWatch.ON_ATTACK && !isOwnAttackTrigger(perm, slot);
+            // "Becomes blocked by a creature" (CR 509.3d) triggers for each blocker, in
+            // checkAttachedPerBlockerTriggers.
+            for (TriggeredAbility ability : attachedCombatAbilities(perm, slot)) {
+                TriggerMultiplicity multiplicity = ability.options().multiplicity();
+                if (multiplicity == TriggerMultiplicity.EACH_BLOCKER) {
+                    continue;
                 }
-                List<List<CombatAbilityReader.CombatEffect>> auraAbilities = attachedCombatAbilities(perm, slot);
-                // Skip per-blocker effects ("becomes blocked by a creature", CR 509.3d) — they are handled by
-                // checkAttachedPerBlockerTriggers. "Blocks" once each combat (CR 509.3a) triggers once for the
-                // declaration, judged for each ability below.
-                List<List<CombatAbilityReader.CombatEffect>> queuedAbilities = auraAbilities.stream()
-                        .filter(ability -> !ability.getFirst().eachBlocker())
-                        .toList();
-                // Each ability is one object on the stack (CR 603.3): Reaper's Talisman's two.
-                // The intervening "if" (CR 603.4) and event condition (CR 603.2: "attacks alone", Sigil of Valor) are read
-                // from the creature, against its attack target ("if it's the first combat phase", Genji Glove;
-                // "if the defending player is the monarch").
-                ConditionContext triggerContext = ConditionContext.forPermanent(creature, finalCreatureControllerId)
-                        .withTargetId(slot == CombatWatch.ON_ATTACK ? creature.getAttackTarget() : null);
-                for (List<CombatAbilityReader.CombatEffect> ability : queuedAbilities) {
-                    String oncePerBlockKey = perm.getId() + ":" + ability.getFirst().ability().limitKey();
-                    if (ability.getFirst().oneOrMore() && oncePerBlockTriggeredAbilities != null
-                            && oncePerBlockTriggeredAbilities.contains(oncePerBlockKey)) {
-                        continue;
-                    }
-                    if (!conditionEvaluationService.triggerConditionsMet(gameData,
-                            ability.getFirst().ability().options(), triggerContext)) {
-                        continue;
-                    }
-                    // The filter on the creature on the other side of the block, as the creature blocks or becomes
-                    // blocked (CR 509.3f).
-                    PermanentPredicate blockFilter = ability.getFirst().filter();
-                    if (blockFilter != null && !matchesCombatOpponent(gameData, creature, combatOpponent, blockFilter)) {
-                        continue;
-                    }
-                    if (ability.getFirst().oneOrMore() && oncePerBlockTriggeredAbilities != null) {
-                        oncePerBlockTriggeredAbilities.add(oncePerBlockKey);
-                    }
-                    List<CardEffect> effectsForStack = CombatAbilityReader.effectsAsJudged(ability);
-                    if (effectsForStack.isEmpty()) continue;
-                    // On a block ability the creature on the other side of the block is "that creature": a permanent
-                    // target the card declares is chosen as the ability goes on the stack (CR 603.3d), and one it
-                    // doesn't declare is that creature (CR 115.10a), which the entry records as its non-targeting
-                    // target whatever the effects are.
-                    boolean thatCreature = slot != CombatWatch.ON_ATTACK && combatOpponent != null;
-
-                    // The entry of an ability that chooses nothing is the record of the event every route carries
-                    // (StackEntry.carryTriggerRecord): a mode, a graveyard card or a target chosen as the ability goes
-                    // on the stack changes nothing about what triggered it.
-                    // An attack ability granted to the enchanted creature (Unquenchable Fury) is an ability
-                    // of that creature, so the creature is its source and its controller controls it
-                    // (CR 113.7, CR 113.8).
-                    boolean grantedToCreature = slot == CombatWatch.ON_ATTACK
-                            && !isOwnAttackTrigger(perm, slot);
-                    StackEntry trigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            grantedToCreature ? finalCreatureControllerId : auraOwnerId,
-                            perm.getCard().getName() + "'s triggered ability",
-                            effectsForStack,
-                            thatCreature ? combatOpponent.getId() : null,
-                            grantedToCreature ? creature.getId() : perm.getId()
-                    );
-                    // No effect of the ability targets, so nothing on its entry is checked as a target:
-                    // "that creature" is its non-targeting target.
-                    trigger.setNonTargeting(true);
-                    // "Its controller" of the enchanted or equipped creature is the triggering permanent's,
-                    // read as the ability resolves.
-                    trigger.setTriggeringPermanentControllerId(finalCreatureControllerId);
-                    // Bake attacked player/planeswalker so DEFENDING_PLAYER effects
-                    // (e.g. equipment-granted Afflict) can resolve.
-                    trigger.setAttackedTargetId(creature.getAttackTarget());
-                    trigger.setDefendingPlayerId(creature.getAttackTarget() == null ? null
-                            : gameData.playerIds.contains(creature.getAttackTarget())
-                                    ? creature.getAttackTarget()
-                                    : gameQueryService.findPermanentController(gameData, creature.getAttackTarget()));
-                    trigger.setTriggeringPermanentId(creature.getId());
-                    trigger.setSourcePermanentSnapshot(new Permanent(grantedToCreature ? creature : perm));
-                    trigger.setAttachedPermanentSnapshot(new Permanent(creature));
-                    trigger.rememberLastKnownPermanentCard(creature.getId(), creature.getCard());
-                    int previousCopies = slot == CombatWatch.ON_ATTACK
-                            ? beginAttackTriggerCopies(gameData, auraOwnerId, perm)
-                            : -1;
-                    GameData.TriggerRouting attachedRouting = gameData.beginTriggerRouting();
-                    try {
-                        gameData.handOffTriggerRecord(trigger);
-                        if (slot == CombatWatch.ON_ATTACK && effectsForStack.size() == 1
-                                && effectsForStack.getFirst() instanceof ChooseOneAtTriggerTimeEffect modal) {
-                            // "Whenever equipped creature attacks, choose one —" (Pip-Boy 3000): the mode is chosen as
-                            // the ability goes on the stack (CR 700.2b); "that creature" is the attacking creature, the
-                            // entry's triggering permanent. The Equipment's own ability is its controller's, a granted
-                            // one the creature's (CR 113.8).
-                            boolean ownTrigger = isOwnAttackTrigger(perm, slot);
-                            gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                                    perm.getCard(), ownTrigger ? auraOwnerId : finalCreatureControllerId,
-                                    modal.choice(), ownTrigger ? perm.getId() : creature.getId(), false, false, null,
-                                    creature.getAttackTarget(), creature.getId(), false).withTriggerRecord(trigger));
-                            gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                            continue;
-                        }
-                        if (slot == CombatWatch.ON_ATTACK && effectsForStack.stream()
-                                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
-                            UUID attackedTargetId = creature.getAttackTarget();
-                            UUID defendingPlayerId = attackedTargetId == null ? null
-                                    : gameData.playerIds.contains(attackedTargetId)
-                                            ? attackedTargetId
-                                            : gameQueryService.findPermanentController(gameData, attackedTargetId);
-                            // The ability's controller and source are the record's: a granted ability is the
-                            // enchanted creature's (CR 113.8), whatever it chooses.
-                            graveyardTargetingService.handleAttackGraveyardTargeting(
-                                    gameData, trigger.getControllerId(), perm.getCard(), effectsForStack,
-                                    trigger.getSourcePermanentId(), defendingPlayerId, List.of(), trigger);
-                            continue;
-                        } else {
-                            // Check if any effect needs a permanent target — queue for target selection
-                            boolean needsTarget = effectsForStack.stream()
-                                    .filter(e -> !thatCreature || perm.getCard().hasEffectTargetIndex(e))
-                                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) || e.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-                            if (needsTarget) {
-                                if (perm.getCard().isAura() && perm.getCard().getTargetGroups().size() > 1
-                                        && effectsForStack.stream().noneMatch(effect ->
-                                        perm.getCard().getEffectTargetIndex(effect) >= 0)) {
-                                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                                            perm.getCard(), trigger.getControllerId(), effectsForStack,
-                                            trigger.getSourcePermanentId(),
-                                            List.of(), 1, 0, List.of(0), 0, List.of(), false, null,
-                                            creature.getId()).withTriggerRecord(trigger));
-                                } else if (needsSlotBySlotTargetSelection(perm.getCard(), effectsForStack)) {
-                                    int firstGroup = effectsForStack.stream()
-                                            .mapToInt(perm.getCard()::getEffectTargetIndex)
-                                            .filter(index -> index >= 0).min().orElse(0);
-                                    List<Integer> skippedGroups = java.util.Collections.nCopies(firstGroup, 0);
-                                    gameData.queueInteraction(
-                                            new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                                                    perm.getCard(), trigger.getControllerId(), effectsForStack,
-                                                    trigger.getSourcePermanentId(),
-                                                    List.of(), firstGroup, 0, skippedGroups, 0, List.of(), false,
-                                                    null, creature.getId()).withTriggerRecord(trigger));
-                                } else {
-                                    UUID attackedTargetId = slot == CombatWatch.ON_ATTACK
-                                            ? creature.getAttackTarget() : null;
-                                    UUID defendingPlayerId = attackedTargetId == null ? null
-                                            : gameData.playerIds.contains(attackedTargetId)
-                                                    ? attackedTargetId
-                                                    : gameQueryService.findPermanentController(gameData, attackedTargetId);
-                                    // An attack trigger granted by an Aura is an ability of the enchanted creature,
-                                    // so its source and controller are that creature (CR 113.7, CR 113.8). An
-                                    // Aura's own "whenever enchanted creature attacks" ability is controlled by the
-                                    // Aura's controller and has the Aura as its source. An Equipment's "whenever
-                                    // equipped creature attacks" ability is likewise the Equipment's own ability.
-                                    boolean permOwnedAttackTrigger = isOwnAttackTrigger(perm, slot);
-                                    UUID grantedAttackControllerId = permOwnedAttackTrigger
-                                            ? auraOwnerId : finalCreatureControllerId;
-                                    UUID targetChooserId = slot == CombatWatch.ON_ATTACK
-                                            && perm.getCard().isCombatTriggerTargetChosenByDefendingPlayer()
-                                            ? defendingPlayerId : grantedAttackControllerId;
-                                    gameData.queueInteraction((
-                                            slot == CombatWatch.ON_ATTACK
-                                                    ? new PermanentChoiceContext.AttackTriggerTarget(
-                                                            perm.getCard(), grantedAttackControllerId, effectsForStack,
-                                                            permOwnedAttackTrigger ? perm.getId() : creature.getId(),
-                                                            targetChooserId, attackedTargetId, creature.getId())
-                                                    : new PermanentChoiceContext.AttackTriggerTarget(
-                                                            perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
-                                                            auraOwnerId, null, creature.getId()))
-                                            .withTriggerRecord(trigger));
-                                }
-                                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                                log.info("Game {} - {} targeted attack trigger queued for target selection (attached to {})",
-                                        gameData.id, perm.getCard().getName(), creature.getCard().getName());
-                            } else {
-                                putOnStackOrChooseMode(gameData, trigger);
-                                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                                log.info("Game {} - {} aura trigger pushed onto stack (enchanted creature {})",
-                                        gameData.id, perm.getCard().getName(), creature.getCard().getName());
-                            }
-                        }
-                    } finally {
-                        gameData.endTriggerRouting(attachedRouting);
-                        if (previousCopies >= 0) {
-                            gameData.restoreTriggeredAbilityCopies(previousCopies);
-                        }
-                    }
+                boolean oneOrMore = multiplicity == TriggerMultiplicity.ONE_OR_MORE;
+                String oncePerBlockKey = perm.getId() + ":" + ability.limitKey();
+                if (oneOrMore && oncePerBlockTriggeredAbilities != null
+                        && oncePerBlockTriggeredAbilities.contains(oncePerBlockKey)) {
+                    continue;
                 }
+                if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), triggerContext)) {
+                    continue;
+                }
+                // The filter on the creature on the other side of the block, as the creature blocks or becomes
+                // blocked (CR 509.3f).
+                PermanentPredicate blockFilter = CombatAbilityReader.filter(ability, slot.trigger());
+                if (blockFilter != null && !matchesCombatOpponent(gameData, creature, combatOpponent, blockFilter)) {
+                    continue;
+                }
+                TriggeredAbilityRequest request = new TriggeredAbilityRequest(ability, perm.getCard(),
+                        grantedToCreature ? creature : perm, grantedToCreature ? creatureControllerId : auraOwnerId,
+                        perm.getCard().getName() + "'s triggered ability", triggerContext,
+                        entry -> recordAttachedCombatEvent(gameData, entry, creature, creatureControllerId,
+                                slot != CombatWatch.ON_ATTACK ? combatOpponent : null,
+                                grantedToCreature ? creature : perm));
+                if (!triggeredAbilityStackService.put(gameData, slot != CombatWatch.ON_ATTACK ? request
+                        : grantedToCreature ? request.causedBySourceAttacking() : request.causedByAttack())) {
+                    continue;
+                }
+                if (oneOrMore && oncePerBlockTriggeredAbilities != null) {
+                    oncePerBlockTriggeredAbilities.add(oncePerBlockKey);
+                }
+                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
             }
         });
     }
 
-    private boolean needsSlotBySlotTargetSelection(Card card, List<CardEffect> effects) {
-        Set<Integer> boundGroups = effects.stream()
-                .map(card::getEffectTargetIndex)
-                .filter(index -> index >= 0)
-                .collect(java.util.stream.Collectors.toSet());
-        if (boundGroups.isEmpty()) {
-            return card.getTargetGroups().size() > 1
-                    || card.getTargetGroups().stream().anyMatch(group -> group.getMaxTargets() > 1
-                            || group.getMinTargets() == 0 || group.getDynamicMinTargets() != null)
-                    || etbTokenTargetService.needsSlotBySlotTargetSelection(card);
+    /**
+     * What an attached permanent's combat ability records of its event, whatever its effects are: {@code creature},
+     * the creature it is attached to, as the triggering permanent with {@code creatureControllerId} ("its
+     * controller") and its last-known copy, its attack target and the defending player, and {@code thatCreature}, the
+     * creature on the other side of a block, as the non-targeting target (CR 115.10a).
+     */
+    private void recordAttachedCombatEvent(GameData gameData, StackEntry entry, Permanent creature,
+                                           UUID creatureControllerId, Permanent thatCreature, Permanent source) {
+        if (thatCreature != null) {
+            entry.setTargetId(thatCreature.getId());
         }
-        return boundGroups.size() > 1 || card.getTargetGroups().stream()
-                .filter(group -> boundGroups.contains(group.getIndex()))
-                .anyMatch(group -> group.getMaxTargets() > 1 || group.getMinTargets() == 0
-                        || group.getDynamicMinTargets() != null);
-    }
-
-    private int beginAttackTriggerCopies(GameData gameData, UUID controllerId, Permanent source) {
-        return gameData.beginTriggeredAbilityCopies(1 +
-                gameQueryService.countAdditionalTriggeredAbilityTriggers(
-                        gameData, controllerId, source, true));
+        entry.setNonTargeting(true);
+        entry.setTriggeringPermanentControllerId(creatureControllerId);
+        UUID attackTarget = creature.getAttackTarget();
+        entry.setAttackedTargetId(attackTarget);
+        entry.setDefendingPlayerId(attackTarget == null ? null
+                : gameData.playerIds.contains(attackTarget) ? attackTarget
+                : gameQueryService.findPermanentController(gameData, attackTarget));
+        entry.setTriggeringPermanentId(creature.getId());
+        entry.setSourcePermanentSnapshot(new Permanent(source));
+        entry.setAttachedPermanentSnapshot(new Permanent(creature));
+        entry.rememberLastKnownPermanentCard(creature.getId(), creature.getCard());
     }
 
     /**
      * For attached permanents (equipment/auras) with abilities that trigger per blocking creature
      * (e.g. Infiltration Lens: "Whenever equipped creature becomes blocked by a creature,
-     * you may draw two cards"), creates one stack entry for each such ability and blocker, with all the ability's
-     * effects (CR 603.3); two abilities are two objects (CR 603.3b). An ability with a filter on the blocker
+     * you may draw two cards"), puts each such ability on the stack through the stack door once for each blocker, as
+     * one object (CR 603.3); two abilities are two objects (CR 603.3b). An ability with a filter on the blocker
      * ("becomes blocked by a Vampire", Wooden Stake) triggers for each blocker it matches as the blocker becomes a
      * blocking creature (CR 509.3d, 509.3f); its event condition and intervening "if" are read from the attacker
-     * (CR 603.2, 603.4).
+     * (CR 603.2, 603.4). "That creature" is the blocker, the entry's non-targeting target, and "it" and "its
+     * controller" the attacking creature, whatever the effects are.
      */
     public void checkAttachedPerBlockerTriggers(GameData gameData, Permanent attacker,
                                                  List<BlockerAssignment> blockerAssignments,
                                                  List<Permanent> defenderBattlefield, int attackerIndex) {
         UUID controllerId = gameData.findControllerOf(attacker);
         if (controllerId == null) return;
-        final UUID finalControllerId = controllerId;
+        ConditionContext attackerContext = ConditionContext.forPermanent(attacker, controllerId);
 
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!perm.isAttached() || !perm.getAttachedTo().equals(attacker.getId())) {
                 return;
             }
-            List<List<CombatAbilityReader.CombatEffect>> perBlockerAbilities =
-                    attachedCombatAbilities(perm, CombatWatch.ON_BECOMES_BLOCKED).stream()
-                            .filter(ability -> ability.getFirst().eachBlocker())
-                            .toList();
+            List<TriggeredAbility> perBlockerAbilities = attachedCombatAbilities(perm, CombatWatch.ON_BECOMES_BLOCKED)
+                    .stream()
+                    .filter(ability -> ability.options().multiplicity() == TriggerMultiplicity.EACH_BLOCKER)
+                    .toList();
             for (BlockerAssignment assignment : blockerAssignments) {
                 if (assignment.attackerIndex() != attackerIndex) {
                     continue;
                 }
                 Permanent blocker = defenderBattlefield.get(assignment.blockerIndex());
-                for (List<CombatAbilityReader.CombatEffect> ability : perBlockerAbilities) {
-                    CombatAbilityReader.CombatEffect read = ability.getFirst();
-                    if ((read.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
-                            gameData, blocker, read.filter()))
-                            || !conditionEvaluationService.triggerConditionsMet(gameData, read.options(),
-                            ConditionContext.forPermanent(attacker, finalControllerId))) {
+                for (TriggeredAbility ability : perBlockerAbilities) {
+                    PermanentPredicate filter = CombatAbilityReader.filter(ability,
+                            CombatWatch.ON_BECOMES_BLOCKED.trigger());
+                    if ((filter != null && !predicateEvaluationService.matchesPermanentPredicate(
+                            gameData, blocker, filter))
+                            || !conditionEvaluationService.eventConditionMet(gameData, ability.options(),
+                            attackerContext)) {
                         continue;
                     }
-                    StackEntry trigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            ownerId,
-                            perm.getCard().getName() + "'s triggered ability",
-                            CombatAbilityReader.effectsAsJudged(ability),
-                            blocker.getId(),
-                            perm.getId()
-                    );
-                    // "That creature" is the blocker, the entry's non-targeting target whatever the effects are.
-                    trigger.setNonTargeting(true);
-                    trigger.setTriggeringPermanentId(attacker.getId());
-                    // "It" and "its controller" are the attacking creature, whatever the effects are.
-                    trigger.setTriggeringPermanentControllerId(finalControllerId);
-                    trigger.setAttachedPermanentSnapshot(new Permanent(attacker));
-                    putOnStackOrChooseMode(gameData, trigger);
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} per-blocker trigger pushed onto stack (attached to {})",
-                            gameData.id, perm.getCard().getName(), attacker.getCard().getName());
+                    boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
+                            perm.getCard(), perm, ownerId, perm.getCard().getName() + "'s triggered ability",
+                            attackerContext, entry -> {
+                                entry.setTargetId(blocker.getId());
+                                entry.setNonTargeting(true);
+                                entry.setTriggeringPermanentId(attacker.getId());
+                                entry.setTriggeringPermanentControllerId(controllerId);
+                                entry.setAttachedPermanentSnapshot(new Permanent(attacker));
+                            }));
+                    if (triggered) {
+                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                    }
                 }
             }
         });

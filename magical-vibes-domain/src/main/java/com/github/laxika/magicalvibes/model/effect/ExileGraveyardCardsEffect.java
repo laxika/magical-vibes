@@ -222,4 +222,9 @@ public record ExileGraveyardCardsEffect(
     public boolean hasOptionalTarget() {
         return choosesGraveyardCards() && !exactTargetCount;
     }
+
+    @Override
+    public boolean choosesFromEventPlayersGraveyard() {
+        return defendingPlayerOnly;
+    }
 }

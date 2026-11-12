@@ -167,4 +167,14 @@ public interface CardEffect {
      * stack (CR 603.3c), or {@code null} for an effect whose ability chooses no mode then.
      */
     default ChooseOneEffect modesChosenAsItTriggers() { return null; }
+
+    /**
+     * The graveyard cards this effect chooses as its ability is put on the stack when they aren't one declared target
+     * ("exile up to two target creature cards from defending player's graveyard"), looking through a "you may" or an
+     * intervening "if" around it; {@code null} for an effect that chooses none.
+     */
+    default GraveyardCardChoosingEffect graveyardCardChoice() {
+        return this instanceof GraveyardCardChoosingEffect choosing && choosing.choosesGraveyardCards()
+                ? choosing : null;
+    }
 }
