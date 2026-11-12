@@ -177,6 +177,11 @@ public class StackResolutionService {
         // batch may reorder it (CR 603.3b).
         TriggeredAbilityQueueService.markTriggersOrdered(gameData);
         gameData.dropTriggerRecordInHand();
+        if (gameData.pendingEffectResolutionEntry == null) {
+            // No resolution is waiting, so none is parked behind a nested one: a nested resolution that was
+            // abandoned leaves nothing for the next object to resume.
+            gameData.parkedOuterResolutions.clear();
+        }
 
         StackEntry entry = gameQueryService.stackUsesFirstInFirstOut(gameData)
                 ? gameData.stack.getFirst()

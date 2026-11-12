@@ -17,7 +17,7 @@ public class AhnCropChampion extends Card {
     public AhnCropChampion() {
         addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                        SkipNextUntapEffect.exert(),
                         new QueueReflexiveAbilityEffect(
                                 new UntapPermanentsEffect(TapUntapScope.OTHER_CONTROLLED_CREATURES))
                 ),

@@ -30,6 +30,7 @@ public class MayCastLesserSpellWithSharedTypeOrCreateTokenEffectHandler implemen
     private final GameQueryService gameQueryService;
     private final com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService additionalSpellCostService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport exileCastTargetSupport;
+    private final com.github.laxika.magicalvibes.service.effect.EffectResolutionService effectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -77,12 +78,15 @@ public class MayCastLesserSpellWithSharedTypeOrCreateTokenEffectHandler implemen
             sourceCard = source.getCard();
         }
 
-        // The ability records what the question kept of the spell cast.
+        // "If you don't, create ..." happens as the ability that asked resolves (CR 608.2c), with what the question
+        // kept of the spell cast.
         StackEntry tokenEntry = ReflexiveAbilitySupport.mayAbilityRecord(ability, sourceCard,
                 List.of(castEffect.tokenEffect()), sourceCard.getName() + "'s ability", ability.sourcePermanentId(),
                 0);
-        gameData.stack.add(tokenEntry);
-        gameData.priorityPassedBy.clear();
+        effectResolutionService.resolveNestedInParkedResolution(gameData, tokenEntry);
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

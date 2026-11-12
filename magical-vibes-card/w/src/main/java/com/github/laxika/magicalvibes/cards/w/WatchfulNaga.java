@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AKH", collectorNumber = "193")
@@ -20,7 +19,7 @@ public class WatchfulNaga extends Card {
         // exert also keeps the creature tapped through its next untap step.
         addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                        SkipNextUntapEffect.exert(),
                         new QueueReflexiveAbilityEffect(new DrawCardEffect(1))
                 ),
                 "Exert Watchful Naga as it attacks? (Draw a card.)"

@@ -61,7 +61,6 @@ class TibaltWickedTormentorTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
         harness.handleCardChosen(player1, 0);
 
@@ -155,7 +154,6 @@ class TibaltWickedTormentorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(undrawn);

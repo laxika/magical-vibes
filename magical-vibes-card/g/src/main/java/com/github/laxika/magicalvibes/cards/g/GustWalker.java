@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AKH", collectorNumber = "17")
@@ -24,7 +23,7 @@ public class GustWalker extends Card {
         // Initiate). Choosing to exert also keeps the creature tapped through its next untap step.
         addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                        SkipNextUntapEffect.exert(),
                         new QueueReflexiveAbilityEffect(SequenceEffect.of(
                                 new BoostSelfEffect(1, 1),
                                 new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)))

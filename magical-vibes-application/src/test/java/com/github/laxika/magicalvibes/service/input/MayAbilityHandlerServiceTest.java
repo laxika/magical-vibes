@@ -66,7 +66,10 @@ import static org.mockito.Mockito.when;
  * {@code PermanentPredicate}. That arm used to be an open-coded target-category switch whose
  * {@code default} rejected every permanent, so a {@code LAND} spec found nothing to target; it now
  * goes through the shared {@code TargetPredicateEvaluationService}, the same evaluation cast-time
- * validation performs.
+ * validation performs. The question is the resolving entry's own (CR 603.5).
+ *
+ * <p>An accepted option that has no handler of its own is carried out at once, in the resolution that asked, by an
+ * entry that keeps what the question recorded; nothing is put on the stack for it.</p>
  */
 class MayAbilityHandlerServiceTest {
 
@@ -174,7 +177,7 @@ class MayAbilityHandlerServiceTest {
         acceptMayAbility(specEffect(TargetPredicates.land()));
 
         verify(playerInputService, org.mockito.Mockito.never())
-                .beginAnyTargetChoice(any(), any(), anyList(), anyList(), anyString());
+                .beginPermanentChoice(any(), any(), anyList(), anyString());
     }
 
     @Test
@@ -258,7 +261,7 @@ class MayAbilityHandlerServiceTest {
     }
 
     @Test
-    @DisplayName("An accepted spell-cast may ability preserves the triggering card ID")
+    @DisplayName("An accepted option resolves at once with the triggering card the question kept")
     void acceptedSpellCastMayAbilityPreservesTriggeringCardId() {
         Card sourceCard = new Card();
         sourceCard.setName("Test Source");
@@ -275,13 +278,12 @@ class MayAbilityHandlerServiceTest {
 
         svc.handleMayAbilityChosen(gd, player1, true);
 
-        assertThat(gd.stack).singleElement()
-                .extracting(StackEntry::getTriggeringCardId)
-                .isEqualTo(triggeringCardId);
+        assertThat(gd.stack).isEmpty();
+        assertThat(acceptedEntry().getTriggeringCardId()).isEqualTo(triggeringCardId);
     }
 
     @Test
-    @DisplayName("An accepted may ability a granted triggered ability asked keeps its granting permanent")
+    @DisplayName("An accepted option a granted ability asked resolves at once with its granting permanent")
     void acceptedGrantedMayAbilityKeepsGrantingPermanent() {
         Card sourceCard = new Card();
         sourceCard.setName("Test Source");
@@ -296,13 +298,12 @@ class MayAbilityHandlerServiceTest {
 
         svc.handleMayAbilityChosen(gd, player1, true);
 
-        assertThat(gd.stack).singleElement()
-                .extracting(StackEntry::getGrantingPermanentId)
-                .isEqualTo(grantingPermanentId);
+        assertThat(gd.stack).isEmpty();
+        assertThat(acceptedEntry().getGrantingPermanentId()).isEqualTo(grantingPermanentId);
     }
 
     @Test
-    @DisplayName("An accepted may ability keeps the triggering spell of the ability that asked it")
+    @DisplayName("An accepted option resolves at once with the triggering spell of the ability that asked it")
     void acceptedMayAbilityKeepsTriggeringSpell() {
         Card sourceCard = new Card();
         sourceCard.setName("Test Source");
@@ -320,13 +321,12 @@ class MayAbilityHandlerServiceTest {
 
         svc.handleMayAbilityChosen(gd, player1, true);
 
-        assertThat(gd.stack).singleElement()
-                .extracting(entry -> entry.getTriggeringSpellSnapshot().getCard())
-                .isSameAs(spellCard);
+        assertThat(gd.stack).isEmpty();
+        assertThat(acceptedEntry().getTriggeringSpellSnapshot().getCard()).isSameAs(spellCard);
     }
 
     @Test
-    @DisplayName("An accepted may ability whose player target was chosen first keeps the triggering card")
+    @DisplayName("An accepted option about a player named beforehand resolves at once for that player")
     void acceptedPreTargetedMayAbilityKeepsTriggeringCard() {
         Card sourceCard = new Card();
         sourceCard.setName("Cloudhoof Kirin");
@@ -342,16 +342,56 @@ class MayAbilityHandlerServiceTest {
 
         svc.handleMayAbilityChosen(gd, player1, true);
 
-        assertThat(gd.stack).singleElement().satisfies(entry -> {
-            assertThat(entry.getTargetId()).isEqualTo(PLAYER2_ID);
-            assertThat(entry.getTriggeringCardId()).isEqualTo(spellCardId);
-        });
+        assertThat(gd.stack).isEmpty();
+        StackEntry accepted = acceptedEntry();
+        assertThat(accepted.getTargetId()).isEqualTo(PLAYER2_ID);
+        assertThat(accepted.isNonTargeting()).isTrue();
+        assertThat(accepted.getTriggeringCardId()).isEqualTo(spellCardId);
     }
 
+    @Test
+    @DisplayName("An option that needs a target the question did not name is refused: targets are chosen on the stack")
+    void acceptedOptionWithoutItsTargetIsRefused() {
+        Card sourceCard = new Card();
+        sourceCard.setName("Test Source");
+        sourceCard.setType(CardType.CREATURE);
+        gd.pendingMayAbilities.add(new PendingMayAbility(sourceCard, PLAYER1_ID,
+                List.of(specEffect(TargetPredicates.creature())), "Test Source — effect?"));
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(
+                PLAYER1_ID, "Test Source — effect?", null));
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> svc.handleMayAbilityChosen(gd, player1, true))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A declined option does nothing")
+    void declinedOptionResolvesNothing() {
+        Card sourceCard = new Card();
+        sourceCard.setName("Test Source");
+        sourceCard.setType(CardType.CREATURE);
+        gd.pendingMayAbilities.add(new PendingMayAbility(sourceCard, PLAYER1_ID, List.of(new CardEffect() { }),
+                "Test Source — effect?"));
+        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(
+                PLAYER1_ID, "Test Source — effect?", null));
+
+        svc.handleMayAbilityChosen(gd, player1, false);
+
+        assertThat(gd.stack).isEmpty();
+        verify(effectResolutionService, org.mockito.Mockito.never()).resolveNestedInParkedResolution(any(), any());
+    }
+
+    /** Accepts the "you may" of an entry on the stack whose effect was given no target as it was put there. */
     private void acceptMayAbility(CardEffect effect) {
         Card sourceCard = new Card();
         sourceCard.setName("Test Source");
         sourceCard.setType(CardType.ENCHANTMENT);
+        gd.pendingEffectResolutionEntry = new StackEntry(
+                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
+                sourceCard, PLAYER1_ID, "Test Source's ability", List.of(new MayEffect(effect, "Test may ability")));
+        gd.pendingEffectResolutionIndex = 0;
+        gd.resolvingMayEffectFromStack = true;
         PendingMayAbility ability =
                 new PendingMayAbility(sourceCard, PLAYER1_ID, List.of(effect), "Test may ability");
         gd.pendingMayAbilities.add(ability);
@@ -364,8 +404,13 @@ class MayAbilityHandlerServiceTest {
     private List<UUID> offeredTargets() {
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<UUID>> captor = ArgumentCaptor.forClass(List.class);
-        verify(playerInputService).beginAnyTargetChoice(eq(gd), eq(PLAYER1_ID), captor.capture(),
-                eq(List.of()), anyString());
+        verify(playerInputService).beginPermanentChoice(eq(gd), eq(PLAYER1_ID), captor.capture(), anyString());
+        return captor.getValue();
+    }
+
+    private StackEntry acceptedEntry() {
+        ArgumentCaptor<StackEntry> captor = ArgumentCaptor.forClass(StackEntry.class);
+        verify(effectResolutionService).resolveNestedInParkedResolution(eq(gd), captor.capture());
         return captor.getValue();
     }
 

@@ -29,7 +29,6 @@ class LiarsPendulumTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         harness.assertInHand(player1, "Myr Retriever");
         harness.assertInHand(player1, "Bonesplitter");
@@ -49,7 +48,6 @@ class LiarsPendulumTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         harness.assertInHand(player1, "Myr Retriever");
         harness.assertNotInHand(player1, "Bonesplitter");
@@ -70,7 +68,6 @@ class LiarsPendulumTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         harness.assertInHand(player1, "Myr Retriever");
         harness.assertInHand(player1, "Bonesplitter");
@@ -90,7 +87,6 @@ class LiarsPendulumTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         harness.assertInHand(player1, "Myr Retriever");
         harness.assertNotInHand(player1, "Bonesplitter");
@@ -126,7 +122,6 @@ class LiarsPendulumTest extends BaseCardTest {
         activateAndChooseName("Myr Retriever");
         harness.handleListChoice(player2, "Yes");
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         harness.assertInHand(player1, "Bonesplitter");

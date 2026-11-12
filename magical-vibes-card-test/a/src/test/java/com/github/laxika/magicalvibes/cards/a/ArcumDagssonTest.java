@@ -29,7 +29,6 @@ class ArcumDagssonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
-        harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Phyrexian Ironfoot");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
@@ -52,7 +51,6 @@ class ArcumDagssonTest extends BaseCardTest {
                 .isEqualTo(player2.getId());
 
         harness.handleMayAbilityChosen(player2, true);
-        harness.passBothPriorities();
         harness.handleCardChosen(player2, 0);
 
         harness.assertOnBattlefield(player2, "Phyrexian Ironfoot");
@@ -71,7 +69,6 @@ class ArcumDagssonTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Phyrexian Ironfoot");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
         harness.handleCardChosen(player1, 0);
 
         harness.assertInGraveyard(player1, "Phyrexian Ironfoot");
@@ -89,7 +86,6 @@ class ArcumDagssonTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
-        harness.passBothPriorities();
         harness.handleCardChosen(player2, -1);
 
         harness.assertInGraveyard(player2, "Phyrexian Ironfoot");
@@ -154,7 +150,6 @@ class ArcumDagssonTest extends BaseCardTest {
                 .isEqualTo(player2.getId());
 
         harness.handleMayAbilityChosen(player2, true);
-        harness.passBothPriorities();
 
         PendingInteraction.LibrarySearch search = gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
         assertThat(search.params().cards())

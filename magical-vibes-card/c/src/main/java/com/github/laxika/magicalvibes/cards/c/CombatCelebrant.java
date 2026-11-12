@@ -28,7 +28,7 @@ public class CombatCelebrant extends Card {
                 new NotCondition(new SourceExertedThisTurn())),
                 new MayEffect(
                         SequenceEffect.of(
-                                new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                                SkipNextUntapEffect.exert(),
                                 new QueueReflexiveAbilityEffect(SequenceEffect.of(
                                         new UntapPermanentsEffect(TapUntapScope.OTHER_CONTROLLED_CREATURES),
                                         new AdditionalCombatPhaseEffect(1)))

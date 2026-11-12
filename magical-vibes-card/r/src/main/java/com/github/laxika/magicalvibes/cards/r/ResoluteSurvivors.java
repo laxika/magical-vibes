@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOU", collectorNumber = "142")
@@ -19,7 +18,7 @@ public class ResoluteSurvivors extends Card {
 
     public ResoluteSurvivors() {
         addTrigger(Triggers.attacks(), new MayEffect(
-                new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                SkipNextUntapEffect.exert(),
                 "Exert Resolute Survivors as it attacks?"));
 
         addTrigger(Triggers.youExertCreature(), SequenceEffect.of(

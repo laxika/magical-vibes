@@ -111,6 +111,25 @@ public class EffectResolutionService {
     }
 
     /**
+     * Resolves {@code nested} as part of the resolution that is parked for an answer ({@link
+     * GameData#pendingEffectResolutionEntry}): an optional action that resolution offered is carried out in it
+     * (CR 608.2d), by an entry of its own that says who acts and on what, and nothing is put on the stack. The parked
+     * resolution is set aside ({@link GameData#parkedOuterResolutions}) and is the pending one again once {@code
+     * nested} has finished, which may be after {@code nested} itself stopped for an answer; the caller's epilogue
+     * resumes it. With nothing parked, {@code nested} resolves on its own.
+     */
+    public void resolveNestedInParkedResolution(GameData gameData, StackEntry nested) {
+        StackEntry parked = gameData.pendingEffectResolutionEntry;
+        if (parked != null) {
+            gameData.parkedOuterResolutions.push(
+                    new GameData.ParkedResolution(parked, gameData.pendingEffectResolutionIndex, nested));
+            gameData.pendingEffectResolutionEntry = null;
+            gameData.pendingEffectResolutionIndex = 0;
+        }
+        resolveEffects(gameData, nested);
+    }
+
+    /**
      * Resumes resolving effects on the given stack entry starting from the specified index.
      *
      * <p>Called after an asynchronous player input (e.g. proliferate choice, X value selection)
@@ -602,8 +621,16 @@ public class EffectResolutionService {
             parkResolution(gameData, entry, effects.size());
             return;
         }
-        gameData.pendingEffectResolutionEntry = null;
-        gameData.pendingEffectResolutionIndex = 0;
+        // The resolution this one was nested in is the pending one again (resolveNestedInParkedResolution).
+        GameData.ParkedResolution outer = gameData.parkedOuterResolutions.peek();
+        if (outer != null && outer.nested() == entry) {
+            gameData.parkedOuterResolutions.pop();
+            gameData.pendingEffectResolutionEntry = outer.entry();
+            gameData.pendingEffectResolutionIndex = outer.index();
+        } else {
+            gameData.pendingEffectResolutionEntry = null;
+            gameData.pendingEffectResolutionIndex = 0;
+        }
         entry.setResolvingEffectIndex(-1);
         if (copySupport != null) copySupport.flushDeferredGraveyardCastCopies(gameData);
         entry.setResolvingEffectTargetGroup(null);

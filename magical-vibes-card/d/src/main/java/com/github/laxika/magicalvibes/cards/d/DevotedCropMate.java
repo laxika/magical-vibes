@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -26,7 +25,7 @@ public class DevotedCropMate extends Card {
     public DevotedCropMate() {
         addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                        SkipNextUntapEffect.exert(),
                         new QueueReflexiveAbilityEffect(ReturnCardFromGraveyardEffect.builder()
                                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                                 .filter(new CardAllOfPredicate(List.of(

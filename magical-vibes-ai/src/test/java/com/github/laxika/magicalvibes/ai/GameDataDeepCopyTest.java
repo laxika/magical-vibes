@@ -355,6 +355,35 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps a parked resolution, its nested resolution and a parked spell's stack object linked")
+    void deepCopyKeepsParkedResolutionsLinked() {
+        // A sorcery that asked a question is parked, still on the stack, behind the nested resolution of the accepted
+        // option, which is itself parked behind one more that waits for an answer.
+        StackEntry spell = new StackEntry(
+                StackEntryType.SORCERY_SPELL, new GrizzlyBears(), player1.getId(), "Parked spell", List.of());
+        StackEntry firstNested = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY, new GrizzlyBears(), player2.getId(), "First option", List.of());
+        StackEntry secondNested = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY, new SerraAngel(), player2.getId(), "Second option", List.of());
+        gd.stack.add(spell);
+        gd.parkedOuterResolutions.push(new GameData.ParkedResolution(spell, 2, firstNested));
+        gd.parkedOuterResolutions.push(new GameData.ParkedResolution(firstNested, 1, secondNested));
+        gd.pendingEffectResolutionEntry = secondNested;
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.parkedOuterResolutions).hasSize(2);
+        GameData.ParkedResolution inner = copy.parkedOuterResolutions.pop();
+        GameData.ParkedResolution outer = copy.parkedOuterResolutions.pop();
+        assertThat(inner.nested()).isSameAs(copy.pendingEffectResolutionEntry).isNotSameAs(secondNested);
+        assertThat(inner.index()).isEqualTo(1);
+        assertThat(inner.entry()).isSameAs(outer.nested()).isNotSameAs(firstNested);
+        assertThat(outer.index()).isEqualTo(2);
+        assertThat(outer.entry()).isSameAs(copy.stack.getLast()).isNotSameAs(spell);
+        assertThat(gd.parkedOuterResolutions).hasSize(2);
+    }
+
+    @Test
     @DisplayName("Deep copy preserves the unified delayed-action queue independently and in order")
     void deepCopyPreservesDelayedActions() {
         UUID a = UUID.randomUUID();

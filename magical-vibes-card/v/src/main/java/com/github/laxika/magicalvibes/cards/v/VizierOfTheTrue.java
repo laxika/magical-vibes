@@ -18,7 +18,7 @@ public class VizierOfTheTrue extends Card {
 
     public VizierOfTheTrue() {
         addTrigger(Triggers.attacks(), new MayEffect(
-                new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                SkipNextUntapEffect.exert(),
                 "Exert Vizier of the True as it attacks?"));
 
         PermanentPredicateTargetFilter creatureAnOpponentControls = TargetFilters.creatureAnOpponentControls();

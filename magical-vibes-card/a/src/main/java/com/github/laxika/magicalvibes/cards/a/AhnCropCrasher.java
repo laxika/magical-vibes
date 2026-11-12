@@ -18,7 +18,7 @@ public class AhnCropCrasher extends Card {
     public AhnCropCrasher() {
         addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                        SkipNextUntapEffect.exert(),
                         new com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect(
                                 new CantBlockThisTurnEffect(TapUntapScope.TARGET))
                 ), "Exert Ahn-Crop Crasher as it attacks?"));

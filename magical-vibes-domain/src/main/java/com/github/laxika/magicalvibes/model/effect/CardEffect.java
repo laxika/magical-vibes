@@ -102,6 +102,13 @@ public interface CardEffect {
     default boolean targetsChosenByReflexiveAbility() { return false; }
 
     /**
+     * Returns {@code true} when this effect exerts its creature as it attacks ("You may exert this creature as it
+     * attacks", CR 701.43a): a "you may" of it is chosen as the creature is declared as an attacker and carried out
+     * then, so the attack collector asks it off the stack instead of putting an ability on the stack.
+     */
+    default boolean exertsAsItAttacks() { return false; }
+
+    /**
      * Returns {@code true} when this effect's declared target may be omitted, such as an
      * "up to one target" choice made while a triggered ability is put on the stack.
      */

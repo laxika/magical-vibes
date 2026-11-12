@@ -27,8 +27,10 @@ import java.util.function.Supplier;
  *
  * <p>A choice handler that builds such an ability once the resolving entry's question is answered has no entry in its
  * hands: {@link #resolvingEntryOf} finds the entry still resolving, and {@link #recordFor} builds the record from it
- * for the source card and controller the handler names. An ability accepted through a "you may" asked before it was
- * on the stack records what the question kept of the trigger event ({@link #mayAbilityRecord}).</p>
+ * for the source card and controller the handler names. The accepted option of a question (a {@link
+ * PendingMayAbility}) that is carried out in the resolution or the event that asked it resolves as an entry that
+ * records what the question kept ({@link #mayAbilityRecord}), so a "when you do" among its steps is on the same
+ * record.</p>
  */
 public final class ReflexiveAbilitySupport {
 
@@ -127,10 +129,11 @@ public final class ReflexiveAbilitySupport {
     }
 
     /**
-     * The entry of an ability accepted through a "you may" that was asked before the ability was on the stack, when
-     * it chooses nothing: what the question kept of the trigger event (the event's value, player, card, spell and
-     * permanent, the source as it was), the object the event was about as its non-targeting target, and {@code
-     * xValuePaid} as its X when the ability has no permanent source and the question recorded no X.
+     * The entry the accepted option of a question resolves as, never put on the stack itself (CR 608.2d; a triggered
+     * ability's own "you may" is asked as its entry resolves, CR 603.5): the question's player as its controller,
+     * what the question kept of the trigger event (the event's value, player, card, spell and permanent, the source
+     * as it was), the object or player the question named as its non-targeting target, and {@code xValuePaid} as
+     * its X when it has no permanent source and the question recorded no X.
      */
     public static StackEntry mayAbilityRecord(PendingMayAbility ability, List<CardEffect> effects,
                                               String description, UUID sourcePermanentId, int xValuePaid) {

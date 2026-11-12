@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,7 +22,7 @@ public class ChampionOfRhonas extends Card {
         // The declinable hand-card choice covers the inner "you may put".
         addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                        SkipNextUntapEffect.exert(),
                         new QueueReflexiveAbilityEffect(new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature"))
                 ),
                 "Exert Champion of Rhonas as it attacks? (You may put a creature card from your hand onto the battlefield.)"

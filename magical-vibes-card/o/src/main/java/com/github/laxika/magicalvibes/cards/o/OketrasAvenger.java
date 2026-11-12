@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "HOU", collectorNumber = "17")
@@ -20,7 +19,7 @@ public class OketrasAvenger extends Card {
         // Walker). Choosing to exert also keeps the creature tapped through its next untap step.
         addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                        SkipNextUntapEffect.exert(),
                         new QueueReflexiveAbilityEffect(PreventDamageEffect.allCombatToSelf())
                 ),
                 "Exert Oketra's Avenger as it attacks? (Prevent all combat damage that would be dealt to it this turn.)"

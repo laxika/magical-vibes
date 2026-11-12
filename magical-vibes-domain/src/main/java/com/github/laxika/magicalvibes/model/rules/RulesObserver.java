@@ -24,7 +24,10 @@ public interface RulesObserver {
         MANA_ABILITY_QUEUE,
         /** A triggered ability held while a subgame is being played. */
         SUSPENDED_QUEUE,
-        /** A "may" question asked before an ability goes on the stack. */
+        /**
+         * A question asked with a {@code PendingMayAbility}: an entry's "you may" as it resolves, or an option of a
+         * replacement effect, a cost or a resolving object. Never a triggered ability on its way to the stack.
+         */
         MAY_ABILITY,
         /** A pending interaction, such as a trigger's target choice. */
         INTERACTION

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,7 +16,7 @@ public class RohirrimChargers extends Card {
 
     public RohirrimChargers() {
         addTrigger(Triggers.attacks(), new MayEffect(
-                new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                SkipNextUntapEffect.exert(),
                 "Exert Rohirrim Chargers as it attacks?"));
 
         addTrigger(Triggers.youExertCreature(),

@@ -85,7 +85,6 @@ class RonaHeraldOfInvasionTest extends BaseCardTest {
                 .isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(permanent -> permanent.getCard() == forest);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();

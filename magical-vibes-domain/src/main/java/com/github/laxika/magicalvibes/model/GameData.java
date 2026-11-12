@@ -1236,6 +1236,17 @@ public class GameData {
     public StackEntry pendingEffectResolutionEntry;
     public int pendingEffectResolutionIndex;
     /**
+     * The resolutions parked while a nested one runs, innermost first: an optional action a resolving spell or
+     * ability offered is carried out in that resolution (CR 608.2d), by an entry of its own that says who acts and
+     * on what. {@code entry} resumes at {@code index} once {@code nested} has finished, also when the nested
+     * resolution stopped for an answer in between ({@code EffectResolutionService.resolveNestedInParkedResolution}).
+     */
+    public final Deque<ParkedResolution> parkedOuterResolutions = new ArrayDeque<>();
+
+    /** One element of {@link #parkedOuterResolutions}. */
+    public record ParkedResolution(StackEntry entry, int index, StackEntry nested) {
+    }
+    /**
      * "If you don't" effect of the hand-card choice currently open for a "you may put a card from your hand
      * onto the battlefield; if you don't, ..." effect (Origin of the Avengers). It resolves when the player
      * declines the choice and is dropped once the choice is answered.
@@ -4597,7 +4608,7 @@ public class GameData {
                     "nextExtraTurnSequence", "graveyardEntryVersion",
                     "domainActionSequence", "domainEventSequence", "domainStateVersion",
                     "currentlyResolvingControllerId", "pendingEffectResolutionEntry",
-                    "pendingEffectResolutionIndex", "resolvingMayEffectFromStack",
+                    "pendingEffectResolutionIndex", "parkedOuterResolutions", "resolvingMayEffectFromStack",
                     "resolvedMayAccepted", "resolvedMayTargetingEntry",
                     "rerunCurrentEffectAfterInteraction", "deathReplacementsCanRerunEffect", "stepDepartureEffect",
                     "coinFlipChoicesCanRerunEffect", "recordedCoinFlips", "replayedCoinFlips", "pokeyReplacementAnswer",
@@ -10699,6 +10710,19 @@ public class GameData {
                 copy.pendingEffectResolutionEntry);
         copy.wordOfCommandPendingResolutionEntry = copyOnStack(copy, this.wordOfCommandPendingResolutionEntry,
                 copy.wordOfCommandPendingResolutionEntry);
+        // A parked resolution and its nested one keep their identities: the nested entry is the pending one or the
+        // next parked one, and a parked spell is still the object on the stack.
+        Map<StackEntry, StackEntry> parkedCopies = new IdentityHashMap<>();
+        if (this.pendingEffectResolutionEntry != null) {
+            parkedCopies.put(this.pendingEffectResolutionEntry, copy.pendingEffectResolutionEntry);
+        }
+        List<ParkedResolution> parkedInnermostFirst = new ArrayList<>(this.parkedOuterResolutions);
+        for (ParkedResolution parked : parkedInnermostFirst) {
+            StackEntry nestedCopy = parkedCopies.computeIfAbsent(parked.nested(), StackEntry::new);
+            StackEntry entryCopy = parkedCopies.computeIfAbsent(parked.entry(),
+                    entry -> copyOnStack(copy, entry, new StackEntry(entry)));
+            copy.parkedOuterResolutions.addLast(new ParkedResolution(entryCopy, parked.index(), nestedCopy));
+        }
         this.pendingManaAbilityTriggers.forEach(se -> copy.pendingManaAbilityTriggers.add(new StackEntry(se)));
         this.pendingSpellCastCostTriggers.forEach(se -> copy.pendingSpellCastCostTriggers.add(new StackEntry(se)));
         this.pendingActivatedAbilityCostTriggers.forEach(se -> copy.pendingActivatedAbilityCostTriggers.add(new StackEntry(se)));

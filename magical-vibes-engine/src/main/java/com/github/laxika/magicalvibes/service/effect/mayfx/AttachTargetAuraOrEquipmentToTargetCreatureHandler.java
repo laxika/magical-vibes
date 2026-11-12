@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
-import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -34,22 +33,16 @@ public class AttachTargetAuraOrEquipmentToTargetCreatureHandler implements MayEf
             return;
         }
 
-        // With an entry resolving, the targets are that entry's. Otherwise the accepted ability goes on the stack with
-        // them, and that entry records what the question kept of the trigger event.
-        boolean targetsOfResolvingEntry = gameData.pendingEffectResolutionEntry != null;
-        Runnable targetWalk = () -> {
-            gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                    ability.sourceCard(), ability.controllerId(), new ArrayList<>(ability.effects()),
-                    ability.sourcePermanentId(), List.of(), 0, 0, List.of(), 0, targetsOfResolvingEntry));
-            etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
-        };
-        if (targetsOfResolvingEntry) {
-            targetWalk.run();
-        } else {
-            ReflexiveAbilitySupport.route(gameData, ReflexiveAbilitySupport.mayAbilityRecord(ability,
-                    ability.effects(), ability.sourceCard().getName() + "'s ability", ability.sourcePermanentId(),
-                    0), targetWalk);
+        // The question is the resolving ability's own (CR 603.5), so the Aura or Equipment and the creature are
+        // that entry's targets.
+        if (gameData.pendingEffectResolutionEntry == null) {
+            throw new IllegalStateException("\"You may attach\" is asked as its ability resolves: "
+                    + ability.description());
         }
+        gameData.queueInteractionFirst(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                ability.sourceCard(), ability.controllerId(), new ArrayList<>(ability.effects()),
+                ability.sourcePermanentId(), List.of(), 0, 0, List.of(), 0, true));
+        etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
 
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

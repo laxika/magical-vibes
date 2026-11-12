@@ -83,7 +83,6 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreaturesAttackTogetherEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsMustAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesMustAttackIfSourceAttacksEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
@@ -2390,9 +2389,9 @@ public class CombatAttackService {
 
         boolean loneUntargetedMay = effects.size() == 1 && effects.getFirst() instanceof MayEffect loneMay
                 && loneMay.targetSpec().declaredTarget() == null;
-        if (loneUntargetedMay && isExertChoice((MayEffect) effects.getFirst())) {
-            // "You may exert this creature as it attacks" is a choice made as attackers are declared, not an
-            // ability on the stack.
+        if (loneUntargetedMay && effects.getFirst().exertsAsItAttacks()) {
+            // "You may exert this creature as it attacks" is a choice made as attackers are declared (CR 701.43a),
+            // not an ability on the stack: the answer carries the exertion out at once.
             gameData.queueMayAbilityForPlayer(attackCard, playerId, (MayEffect) effects.getFirst(), null,
                     attacker.getId(), playerId, new Permanent(attacker));
             logSelfAttackTrigger(gameData, attacker);
@@ -2545,18 +2544,6 @@ public class CombatAttackService {
         attackTrigger.setGrantingPermanentId(triggered.grantingPermanentId());
         attackTrigger.setAttackingPermanentSnapshots(declaredAttackerSnapshots.get());
         return attackTrigger;
-    }
-
-    /**
-     * Whether {@code may} is exert's "you may exert this creature as it attacks": its untap restriction ends in its
-     * controller's next untap step.
-     */
-    private static boolean isExertChoice(MayEffect may) {
-        List<CardEffect> steps = may.wrapped() instanceof SequenceEffect sequence
-                ? sequence.steps() : List.of(may.wrapped());
-        return steps.stream().anyMatch(step ->
-                step instanceof com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect skip
-                        && skip.controllerStepOnly());
     }
 
     private void logSelfAttackTrigger(GameData gameData, Permanent attacker) {

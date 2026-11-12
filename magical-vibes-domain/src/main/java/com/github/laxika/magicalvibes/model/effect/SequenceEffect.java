@@ -111,6 +111,11 @@ public record SequenceEffect(List<CardEffect> steps, boolean optionalTarget, boo
     }
 
     @Override
+    public boolean exertsAsItAttacks() {
+        return steps.stream().anyMatch(CardEffect::exertsAsItAttacks);
+    }
+
+    @Override
     public boolean hasOptionalTarget() {
         if (optionalTarget) return true;
         for (CardEffect step : steps) {

@@ -215,11 +215,17 @@ public class InputCompletionService {
 
             // Resume resolving remaining effects on the same spell/ability
             // (e.g. Ponder: after "you may shuffle" resolves, continue with "draw a card")
-            if (gameData.pendingEffectResolutionEntry != null) {
-                effectResolutionService.resolveEffectsFrom(gameData,
-                        gameData.pendingEffectResolutionEntry,
+            // A nested resolution that finishes hands back the one it was nested in
+            // (EffectResolutionService.resolveNestedInParkedResolution), which resumes in turn.
+            while (gameData.pendingEffectResolutionEntry != null) {
+                StackEntry resumed = gameData.pendingEffectResolutionEntry;
+                effectResolutionService.resolveEffectsFrom(gameData, resumed,
                         gameData.pendingEffectResolutionIndex);
                 if (gameData.waitingForSubgame) return;
+                if (gameData.pendingEffectResolutionEntry == resumed
+                        || !gameData.pendingMayAbilities.isEmpty() || gameData.interaction.isAwaitingInput()) {
+                    break;
+                }
             }
 
             if (!gameData.pendingMayAbilities.isEmpty() || gameData.interaction.isAwaitingInput()) {

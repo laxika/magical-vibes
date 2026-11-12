@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AKH", collectorNumber = "31")
@@ -20,7 +19,7 @@ public class TahCropElite extends Card {
         // Initiate). Choosing to exert also keeps the creature tapped through its next untap step.
         addTrigger(Triggers.attacks(), new MayEffect(
                 SequenceEffect.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                        SkipNextUntapEffect.exert(),
                         new QueueReflexiveAbilityEffect(new BoostAllOwnCreaturesEffect(1, 1))
                 ),
                 "Exert Tah-Crop Elite as it attacks? (Creatures you control get +1/+1 until end of turn.)"

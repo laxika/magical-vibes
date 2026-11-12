@@ -47,7 +47,6 @@ class KellanTheKidTest extends BaseCardTest {
         harness.castAndResolveFlashback(player1, 0, player2.getId());
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNotNull();
         harness.handleCardChosen(player1, 1);
 
