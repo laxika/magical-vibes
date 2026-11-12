@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
+import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MairsilThePretender.class, RodOfRuin.class})
+@CardUsed({MairsilThePretender.class, RodOfRuin.class, TurnToFrog.class})
 class MairsilThePretenderTest extends BaseCardTest {
 
     @Test
@@ -62,6 +63,32 @@ class MairsilThePretenderTest extends BaseCardTest {
 
         assertThat(gd.exiledCardsWithCageCounters).contains(rodOfRuin.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    void losingAllAbilitiesLosesTheCagedCardsActivatedAbility() {
+        MairsilThePretender mairsil = new MairsilThePretender();
+        RodOfRuin rodOfRuin = new RodOfRuin();
+        harness.setHand(player1, List.of(mairsil, rodOfRuin));
+        addMairsilMana();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(rodOfRuin.getId()));
+        Permanent mairsilPermanent = findMairsil(mairsil);
+        mairsilPermanent.setSummoningSick(false);
+        assertThat(gqs.computeStaticBonus(gd, mairsilPermanent).grantedActivatedAbilities()).isNotEmpty();
+
+        harness.setHand(player1, List.of(new TurnToFrog()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castAndResolveInstant(player1, 0, mairsilPermanent.getId());
+
+        // Turn to Frog removes Mairsil's static ability, and with it every ability it gained.
+        assertThat(gqs.computeStaticBonus(gd, mairsilPermanent).grantedActivatedAbilities()).isEmpty();
+        int mairsilIndex = gd.playerBattlefields.get(player1.getId()).indexOf(mairsilPermanent);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        assertThatThrownBy(() -> harness.activateAbility(player1, mairsilIndex, 0, null, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void addMairsilMana() {

@@ -58,6 +58,7 @@ import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCards
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfAllLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreatureCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsExiledWithBrainCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCardsExiledWithCageCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreaturesWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfExiledCardsEffect;
@@ -534,6 +535,8 @@ public final class LayerClassifier {
         map.put(GainActivatedAndTriggeredAbilitiesOfExiledCardsEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainActivatedAbilitiesOfCardsExiledWithBrainCountersEffect.class,
+                fixedCharacteristicDefining(Layer.L6_ABILITIES));
+        map.put(GainActivatedAbilitiesOfCardsExiledWithCageCountersEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
         map.put(GainAbilitiesOfLastChosenExiledCardEffect.class,
                 fixedCharacteristicDefining(Layer.L6_ABILITIES));
