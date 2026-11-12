@@ -1269,7 +1269,12 @@ public class GameData {
     public boolean resolvingMayEffectFromStack;
     /** CR 603.5 — stores the player's response to a resolution-time MayEffect (true=accepted, false=declined, null=no pending choice). */
     public Boolean resolvedMayAccepted;
-    /** CR 603.5 — stores the StackEntry for resolution-time target selection so the target can be set on it. */
+    /**
+     * The resolving entry that waits for a card its effect has its controller choose from a graveyard as it resolves
+     * (CR 608.2d: "choose an instant or sorcery card in your graveyard", "you may cast a spell from your graveyard");
+     * the choice's handler records the card on it and resumes it. Never a target: an ability's targets are chosen as
+     * it is put on the stack (CR 603.3d).
+     */
     public StackEntry resolvedMayTargetingEntry;
     public Integer chosenXValue;
     /**
@@ -9695,10 +9700,10 @@ public class GameData {
         copy.pendingReverseMiracleSearch = this.pendingReverseMiracleSearch;
         copy.resolvingMayEffectFromStack = this.resolvingMayEffectFromStack;
         copy.resolvedMayAccepted = this.resolvedMayAccepted;
-        // resolvedMayTargetingEntry usually aliases pendingEffectResolutionEntry (the CR 603.5
-        // resolution-time targeting flow sets the chosen target through the alias and resumes
-        // through pendingEffectResolutionEntry) — preserve the shared identity in the copy,
-        // otherwise the simulated choice answer would set the target on a dead copy.
+        // resolvedMayTargetingEntry usually aliases pendingEffectResolutionEntry (the graveyard choice
+        // of a resolving effect records the chosen card through the alias and resumes through
+        // pendingEffectResolutionEntry) — preserve the shared identity in the copy, otherwise the
+        // simulated choice answer would record the card on a dead copy.
         copy.resolvedMayTargetingEntry = this.resolvedMayTargetingEntry == this.pendingEffectResolutionEntry
                 ? copy.pendingEffectResolutionEntry
                 : (this.resolvedMayTargetingEntry != null ? new StackEntry(this.resolvedMayTargetingEntry) : null);

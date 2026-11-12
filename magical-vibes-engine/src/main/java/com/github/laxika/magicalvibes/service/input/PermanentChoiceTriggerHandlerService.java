@@ -937,34 +937,6 @@ public class PermanentChoiceTriggerHandlerService {
     }
 
     public void handleMayAbilityTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.MayAbilityTriggerTarget mat) {
-        // CR 603.5 — resolution-time target selection: the target was chosen during
-        // resolution of a MayEffect on the stack.  Set it on the pending entry and
-        // resume the effect resolution loop.
-        if (gameData.resolvedMayTargetingEntry != null) {
-            StackEntry pendingEntry = gameData.resolvedMayTargetingEntry;
-            gameData.resolvedMayTargetingEntry = null;
-            pendingEntry.setTargetId(permanentId);
-
-            Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-            boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
-            if (isPlayerTarget) {
-                String playerName = gameData.playerIdToName.get(permanentId);
-                gameLogService.append(gameData, GameLog.builder().card(mat.sourceCard()).text("'s ability targets " + playerName + ".").build());
-            } else if (target != null) {
-                gameLogService.append(gameData, GameLog.cardTextCard(mat.sourceCard(), "'s ability targets ", target.getCard(), "."));
-            }
-
-            gameData.resolvedMayAccepted = true;
-            if (gameData.pendingEffectResolutionEntry != null) {
-                effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
-            }
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
         boolean declined = mat.optionalTarget()

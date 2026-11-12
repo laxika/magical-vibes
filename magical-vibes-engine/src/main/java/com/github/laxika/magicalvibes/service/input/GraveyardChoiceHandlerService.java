@@ -697,7 +697,8 @@ public class GraveyardChoiceHandlerService {
                             player.getUsername() + " secretly chooses a card from their graveyard."));
                 }
                 case MAY_ABILITY_TARGET -> {
-                    // Resolution-time flow: set target on pending entry and resume resolution
+                    // The card a resolving effect had its controller choose (not a target): record it on the
+                    // waiting entry and resume its resolution.
                     if (gameData.resolvedMayTargetingEntry != null) {
                         StackEntry pendingEntry = gameData.resolvedMayTargetingEntry;
                         gameData.resolvedMayTargetingEntry = null;
@@ -1873,19 +1874,6 @@ public class GraveyardChoiceHandlerService {
             // The shared epilogue resumes the paused resolution (e.g. the cycling draw) and
             // auto-passes once no further input is needed.
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        if (gameData.resolvedMayTargetingEntry != null) {
-            StackEntry pendingEntry = gameData.resolvedMayTargetingEntry;
-            gameData.resolvedMayTargetingEntry = null;
-            gameData.interaction.clearAwaitingInput();
-            pendingEntry.setTargetCardIds(new ArrayList<>(cardIds));
-            effectResolutionService.resolveEffectsFrom(gameData, pendingEntry,
-                    gameData.pendingEffectResolutionIndex);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            }
             return;
         }
 

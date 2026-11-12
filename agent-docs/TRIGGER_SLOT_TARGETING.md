@@ -698,20 +698,13 @@ put on the stack. `TriggerTargetCollector` unwraps the optional effect to discov
 the may decision remains a resolution-time choice. Effects that explicitly create a later reflexive
 trigger are non-targeting until that trigger is created.
 
-When `MayAbilityHandlerService` performs a resolution-time target choice for one of those later
-effects, `mayAbilityPermanentTargets` uses this precedence:
-
-1. the card-level `TargetFilter` (`mayAbilityTargetFilter`, which prefers the effect's own declared
-   target group over the card's primary filter), **and**
-2. the effect's own `PermanentPredicate` (`EffectResolution.targetPredicateOf`), if it carries one;
-3. only when the ability declares **neither** does the effect's `TargetSpec` restrict anything — and
-   then it is evaluated by `TargetPredicateEvaluationService`, the same shared evaluator cast-time
-   validation uses.
-
-A card-level filter therefore *replaces* the spec's own type restriction here; it does not stack with
-it. Arm 3 used to be an open-coded target-category switch whose `default` rejected every permanent,
-so a bare `land()` or `playerOrPlaneswalker()` spec found no legal target at all (Boggart Shenanigans
-never offered a planeswalker).
+Answering the "you may" never chooses a target (effect-slot-refactor.md step 15, run 17z16c4c):
+`MayAbilityHandlerService` has no resolution-time target or graveyard choice any more. An ability whose
+"you may [do X to] target ..." reached the stack with no target resolves without one (CR 603.3d, 608.2b),
+so a new trigger route must send a targeting `MayEffect` to its target choice as the ability goes on the
+stack, like any other targeting effect. A card a resolving effect has its controller *choose* (no
+"target" in the text: "choose an instant or sorcery card in your graveyard", "you may cast a spell from
+your graveyard") is chosen by that effect's own handler as it resolves.
 
 ### Unfiltered spell / activated-ability slots
 

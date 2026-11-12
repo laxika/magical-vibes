@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
@@ -14,19 +13,13 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraOrEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGraveyardThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayLandDropEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
@@ -34,32 +27,13 @@ import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCounterTrigger
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateTokenIfCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
-import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BendOrBreakEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RagingRiverEffectHandler;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
-import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.effect.MayEffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -68,9 +42,7 @@ import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -82,10 +54,7 @@ public class MayAbilityHandlerService {
     private final MayCopyHandlerService mayCopyHandlerService;
     private final MayMiscHandlerService mayMiscHandlerService;
     private final GameQueryService gameQueryService;
-    private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
-    private final PlayerInputService playerInputService;
-    
     private final EffectResolutionService effectResolutionService;
     private final DestructionSupport destructionSupport;
     private final BendOrBreakEffectHandler bendOrBreakEffectHandler;
@@ -95,9 +64,6 @@ public class MayAbilityHandlerService {
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport;
     private final MayAbilityTapCostService mayAbilityTapCostService;
-    private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
-    private final ValidTargetService validTargetService;
-    private final TargetPredicateEvaluationService targetPredicateEvaluationService;
     private final MayEffectHandlerRegistry mayEffectHandlerRegistry;
     private final TriggerCollectionService triggerCollectionService;
     private final RagingRiverEffectHandler ragingRiverEffectHandler;
@@ -113,10 +79,7 @@ public class MayAbilityHandlerService {
                                     MayCopyHandlerService mayCopyHandlerService,
                                     MayMiscHandlerService mayMiscHandlerService,
                                     GameQueryService gameQueryService,
-                                    PredicateEvaluationService predicateEvaluationService,
                                     GameLogService gameLogService,
-                                    PlayerInputService playerInputService,
-                                    TurnProgressionService turnProgressionService,
                                     EffectResolutionService effectResolutionService,
                                     DestructionSupport destructionSupport,
                                     BendOrBreakEffectHandler bendOrBreakEffectHandler,
@@ -126,9 +89,6 @@ public class MayAbilityHandlerService {
                                     GraveyardReturnSupport graveyardReturnSupport,
                                     com.github.laxika.magicalvibes.service.effect.normalfx.BrilliantUltimatumSupport brilliantUltimatumSupport,
                                     MayAbilityTapCostService mayAbilityTapCostService,
-                                    com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry,
-                                    ValidTargetService validTargetService,
-                                    TargetPredicateEvaluationService targetPredicateEvaluationService,
                                     MayEffectHandlerRegistry mayEffectHandlerRegistry,
                                     TriggerCollectionService triggerCollectionService,
                                     RagingRiverEffectHandler ragingRiverEffectHandler) {
@@ -137,10 +97,7 @@ public class MayAbilityHandlerService {
         this.mayCopyHandlerService = mayCopyHandlerService;
         this.mayMiscHandlerService = mayMiscHandlerService;
         this.gameQueryService = gameQueryService;
-        this.predicateEvaluationService = predicateEvaluationService;
         this.gameLogService = gameLogService;
-        this.playerInputService = playerInputService;
-        
         this.effectResolutionService = effectResolutionService;
         this.destructionSupport = destructionSupport;
         this.bendOrBreakEffectHandler = bendOrBreakEffectHandler;
@@ -150,9 +107,6 @@ public class MayAbilityHandlerService {
         this.graveyardReturnSupport = graveyardReturnSupport;
         this.brilliantUltimatumSupport = brilliantUltimatumSupport;
         this.mayAbilityTapCostService = mayAbilityTapCostService;
-        this.interactionHandlerRegistry = interactionHandlerRegistry;
-        this.validTargetService = validTargetService;
-        this.targetPredicateEvaluationService = targetPredicateEvaluationService;
         this.mayEffectHandlerRegistry = mayEffectHandlerRegistry;
         this.triggerCollectionService = triggerCollectionService;
         this.ragingRiverEffectHandler = ragingRiverEffectHandler;
@@ -356,6 +310,12 @@ public class MayAbilityHandlerService {
                 () -> lifeSupport.applyLifePayment(gameData, player.getId(), amount, ability.sourceCard().getName()));
     }
 
+    /**
+     * The answer to the "you may" of an ability that is resolving (CR 603.5): its costs are paid, and the resolution
+     * that asked goes on with the answer. Nothing is chosen here: a target of the ability, the one its optional effect
+     * acts on included, was chosen as the ability was put on the stack (CR 603.3d) and is only checked again as the
+     * ability resolves (CR 608.2b), so an accepted effect whose entry has no target resolves without one.
+     */
     private void handleResolutionTimeMayChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         gameData.resolvingMayEffectFromStack = false;
         MayPayManaEffect anyPlayerMayPay = ability.effects().stream()
@@ -467,47 +427,13 @@ public class MayAbilityHandlerService {
             markOncePerTurnTriggerOnAcceptance(gameData, ability);
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " accepts — resolving ", ability.sourceCard(), "'s ability."));
-            CardEffect innerEffect = extractInnerEffect(ability);
-            StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-            boolean targetAlreadySet = pendingEntry != null
-                    && (pendingEntry.getTargetId() != null
-                    || !pendingEntry.getTargetIds().isEmpty()
-                    || !pendingEntry.getTargetCardIds().isEmpty()
-                    || !pendingEntry.getTargetGroupSizes().isEmpty()
-                    || declaredUpToMultipleTargets(pendingEntry));
-            if ((innerEffect instanceof AttachTargetEquipmentToTargetCreatureEffect
-                    || innerEffect instanceof AttachTargetAuraOrEquipmentToTargetCreatureEffect)
-                    && !targetAlreadySet) {
-                var mayHandler = mayEffectHandlerRegistry.getHandler(innerEffect);
-                if (mayHandler != null) {
-                    mayHandler.handle(gameData, player, true, ability);
-                    return;
-                }
-            }
-            boolean isTargetedPermanent = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
-            boolean isTargetedPlayer = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER);
-            boolean isTargetedGraveyard = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD);
-            if ((isTargetedPermanent || isTargetedPlayer) && pendingEntry != null && !targetAlreadySet) {
-                gameData.resolvedMayAccepted = true;
-                handleResolutionTimeTargetSelection(gameData, player, ability, pendingEntry, isTargetedPermanent, isTargetedPlayer);
-                return;
-            }
-            if (isTargetedGraveyard && pendingEntry != null && !targetAlreadySet) {
-                gameData.resolvedMayAccepted = true;
-                handleResolutionTimeGraveyardTargetSelection(gameData, player, ability, pendingEntry);
-                return;
-            }
             gameData.resolvedMayAccepted = true;
         } else {
             gameLogService.append(gameData,
                     GameLog.playerDeclinesAbility(player.getUsername(), ability.sourceCard()));
             gameData.resolvedMayAccepted = false;
         }
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
-        }
-        if (gameData.interaction.isAwaitingInput()) { return; }
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
+        resumeAfterResolutionTimeMayChoice(gameData);
     }
 
     private boolean requiresSourceSacrifice(List<CardEffect> effects) {
@@ -523,137 +449,16 @@ public class MayAbilityHandlerService {
         return false;
     }
 
-    /** Continues a may ability after a tap cost has been paid. */
+    /**
+     * Continues the resolving ability once the tap cost of its accepted "you may" is paid. Like every answer of a
+     * resolving ability's own "you may", it chooses no target (see {@link #handleResolutionTimeMayChoice}).
+     */
     public void continueAfterTapCost(GameData gameData, Player player, PendingMayAbility ability) {
         gameData.resolvingMayEffectFromStack = false;
-        continueAcceptedMayAbility(gameData, player, ability);
-    }
-
-    private void continueAcceptedMayAbility(GameData gameData, Player player, PendingMayAbility ability) {
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " accepts — resolving ", ability.sourceCard(), "'s ability."));
-        CardEffect innerEffect = extractInnerEffect(ability);
-        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-        boolean isTargetedPermanent = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
-        boolean isTargetedPlayer = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER);
-        boolean isTargetedGraveyard = innerEffect != null && innerEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD);
-        boolean targetAlreadySet = pendingEntry != null
-                && (pendingEntry.getTargetId() != null || !pendingEntry.getTargetIds().isEmpty()
-                || !pendingEntry.getTargetGroupSizes().isEmpty());
-        if ((isTargetedPermanent || isTargetedPlayer) && pendingEntry != null && !targetAlreadySet) {
-            gameData.resolvedMayAccepted = true;
-            handleResolutionTimeTargetSelection(gameData, player, ability, pendingEntry, isTargetedPermanent, isTargetedPlayer);
-            return;
-        }
-        if (isTargetedGraveyard && pendingEntry != null && !targetAlreadySet) {
-            gameData.resolvedMayAccepted = true;
-            handleResolutionTimeGraveyardTargetSelection(gameData, player, ability, pendingEntry);
-            return;
-        }
         gameData.resolvedMayAccepted = true;
-        if (gameData.pendingEffectResolutionEntry != null) {
-            effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-        if (gameData.interaction.isAwaitingInput()) {
-            return;
-        }
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * The permanents a targeted may-ability may legally be pointed at, in battlefield order.
-     *
-     * <p>Up to two restrictions are declared by the card and take precedence when present: the
-     * card-level {@link TargetFilter}, and the effect's own {@link PermanentPredicate} (read through
-     * {@link EffectResolution#targetPredicateOf} because {@code PutCounterOnTargetPermanentEffect}
-     * keeps its targeting restriction on a dedicated record component). When the ability declares
-     * neither, the effect's {@code TargetSpec} is the only restriction, and it is interpreted by the
-     * shared {@link TargetPredicateEvaluationService} — the same evaluation the cast-time interpreter
-     * in {@code TargetValidationService} performs.</p>
-     *
-     * <p>That last arm used to be an open-coded category switch, duplicated in both callers, whose
-     * {@code default} arm rejected every permanent: a may-ability with a bare {@code LAND} or
-     * {@code PLAYER_OR_PLANESWALKER} spec and no filter reported "no valid targets" over a board full
-     * of legal ones. It also read the <em>printed</em> planeswalker type line, which the shared
-     * evaluator replaces with the layer-aware check (CR 613.1d) already adopted for cast-time
-     * validation.</p>
-     */
-    private List<UUID> mayAbilityPermanentTargets(GameData gameData, PendingMayAbility ability,
-                                                  TargetFilter targetFilter) {
-        PermanentPredicate effectPredicate = ability.effects().stream()
-                .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        && EffectResolution.targetPredicateOf(e) != null)
-                .map(EffectResolution::targetPredicateOf)
-                .findFirst()
-                .orElse(null);
-        TargetPredicate specPredicate = ability.effects().stream()
-                .map(e -> e.targetSpec().targetPredicate())
-                .filter(predicate -> predicate != null && predicate.admits(TargetPredicate.Kind.PERMANENT))
-                .findFirst()
-                .orElse(null);
-        FilterContext ctx = FilterContext.of(gameData)
-                .withSourceCardId(ability.sourceCard().getId())
-                .withSourceControllerId(ability.controllerId())
-                .withSourcePermanentId(ability.sourcePermanentId());
-
-        List<UUID> validTargets = new ArrayList<>();
-        for (UUID pid : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-            if (battlefield == null) continue;
-            for (Permanent p : battlefield) {
-                if (isLegalMayAbilityTarget(p, targetFilter, effectPredicate, specPredicate, ctx)
-                        && validTargetService.isValidTriggeredAbilityPermanentTarget(gameData, ability.sourceCard(),
-                        ability.effects(), targetFilter, p, ability.controllerId())) {
-                    validTargets.add(p.getId());
-                }
-            }
-        }
-        return validTargets;
-    }
-
-    private boolean isLegalMayAbilityTarget(Permanent permanent, TargetFilter targetFilter,
-                                            PermanentPredicate effectPredicate, TargetPredicate specPredicate,
-                                            FilterContext ctx) {
-        if (targetFilter == null && effectPredicate == null) {
-            return targetPredicateEvaluationService.matchesPermanent(specPredicate, permanent, ctx);
-        }
-        if (targetFilter != null && !predicateEvaluationService.matchesFilters(permanent, Set.of(targetFilter), ctx)) {
-            return false;
-        }
-        return effectPredicate == null
-                || predicateEvaluationService.matchesPermanentPredicate(permanent, effectPredicate, ctx);
-    }
-
-    /**
-     * The target filter that governs a targeted may-ability's target choice. Prefers the filter of
-     * the card target group the may-ability's own effect is bound to, so a multi-target card whose
-     * may-ability targets a different set than its primary target picks the right filter — e.g. an
-     * aura that enchants a "creature you control" but whose ETB "you may put a -1/-1 counter on
-     * target creature" may hit ANY creature (Cartouche of Ambition). Falls back to the card's
-     * primary target filter when the effect is not bound to a declared target group (single-target
-     * may abilities are bound to group 0, whose filter equals {@code getTargetFilter()}).
-     */
-    private TargetFilter mayAbilityTargetFilter(Card sourceCard, PendingMayAbility ability) {
-        for (CardEffect e : ability.effects()) {
-            int idx = sourceCard.getEffectTargetIndex(e);
-            if (idx >= 0 && idx < sourceCard.getTargetGroups().size()) {
-                TargetFilter groupFilter = sourceCard.getTargetGroups().get(idx).getFilter();
-                if (groupFilter != null) {
-                    return groupFilter;
-                }
-            }
-        }
-        return sourceCard.getTargetFilter();
-    }
-
-    private CardEffect extractInnerEffect(PendingMayAbility ability) {
-        if (ability.effects().isEmpty()) return null;
-        CardEffect first = ability.effects().getFirst();
-        if (first instanceof MayEffect may) { return may.wrapped(); }
-        if (first instanceof MayPayLandDropEffect mayPayLandDrop) { return mayPayLandDrop.wrapped(); }
-        if (first instanceof MayPayManaEffect mayPay) { return mayPay.wrapped(); }
-        return first;
+        resumeAfterResolutionTimeMayChoice(gameData);
     }
 
     /**
@@ -725,214 +530,5 @@ public class MayAbilityHandlerService {
             }
         }
         return null;
-    }
-
-    /**
-     * The card restriction and search scope of the first graveyard-targeting effect in
-     * {@code effects}, shared by the accept path and the CR 603.5 resolution-time path. The scope
-     * is the effect's declared {@link GraveyardSearchScope}; the filter has to come from the
-     * concrete record because it is not part of the declared target. An ability with no
-     * graveyard-targeting effect falls back to the controller's own graveyard and no restriction.
-     */
-    private GraveyardTarget graveyardTargetOf(List<CardEffect> effects) {
-        for (CardEffect effect : effects) {
-            CardEffect targetEffect = effect instanceof MayEffect may ? may.wrapped() : effect;
-            GraveyardSearchScope scope = targetEffect.targetSpec().graveyardScope().orElse(null);
-            if (scope == null) {
-                continue;
-            }
-            CardPredicate filter = graveyardFilterOf(targetEffect);
-            if (filter == null) {
-                filter = targetEffect.targetSpec().graveyardCardPredicate().orElse(null);
-            }
-            return new GraveyardTarget(filter, scope);
-        }
-        return new GraveyardTarget(null, GraveyardSearchScope.CONTROLLERS_GRAVEYARD);
-    }
-
-    private CardPredicate graveyardFilterOf(CardEffect effect) {
-        if (effect instanceof MayEffect may) {
-            return graveyardFilterOf(may.wrapped());
-        }
-        if (effect instanceof SacrificePermanentThenEffect sacrifice) {
-            return graveyardFilterOf(sacrifice.thenEffect());
-        }
-        return switch (effect) {
-                case AllowCastTargetCardFromGraveyardThisTurnEffect allowCast -> allowCast.filter();
-                case ExileTargetCardFromGraveyardAndImprintOnSourceEffect imprint -> imprint.filter();
-                case ExileTargetCardFromGraveyardAndCreateTokenCopyEffect exileCopy -> exileCopy.filter();
-                case ExileGraveyardCardsEffect exile -> exile.filter();
-                case ExileGraveyardCardCreateTokenIfCreatureEffect exileCreature -> exileCreature.filter();
-                case ExileGraveyardCardWithConditionalBonusEffect exileBonus -> exileBonus.filter();
-                case ReturnCardFromGraveyardEffect ret -> ret.filter();
-                default -> null;
-            };
-    }
-
-    private record GraveyardTarget(CardPredicate filter, GraveyardSearchScope scope) {
-    }
-
-    private void handleResolutionTimeGraveyardTargetSelection(GameData gameData, Player player,
-                                                              PendingMayAbility ability, StackEntry pendingEntry) {
-        UUID controllerId = ability.controllerId();
-
-        GraveyardTarget target = graveyardTargetOf(ability.effects());
-        ExileGraveyardCardsEffect exactExile = ability.effects().stream()
-                .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
-                .filter(e -> e instanceof ExileGraveyardCardsEffect exile
-                        && exile.exactTargetCount()
-                        && exile.scope() == GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD)
-                .map(e -> (ExileGraveyardCardsEffect) e)
-                .findFirst()
-                .orElse(null);
-
-        if (exactExile != null) {
-            beginExactResolutionTimeGraveyardTargetSelection(
-                    gameData, player, ability, pendingEntry, target, exactExile);
-            return;
-        }
-
-        CardPredicate filter = target.filter();
-        List<UUID> searchPlayerIds = target.scope().graveyardOwners(gameData.orderedPlayerIds, controllerId);
-        UUID graveyardOwnerId = null;
-        List<Integer> matchingIndices = new ArrayList<>();
-        for (UUID pid : searchPlayerIds) {
-            List<Card> graveyard = gameData.playerGraveyards.get(pid);
-            if (graveyard == null) continue;
-            for (int i = 0; i < graveyard.size(); i++) {
-                if (predicateEvaluationService.matchesCardPredicate(
-                        graveyard.get(i), filter, ability.sourceCard().getId(), gameData, pid,
-                        ability.sourcePermanentId(), ability.sourcePowerAtTrigger(), ability.xValue(),
-                        ability.sourcePermanentSnapshot())) {
-                    matchingIndices.add(i);
-                    graveyardOwnerId = pid;
-                }
-            }
-        }
-
-        if (matchingIndices.isEmpty()) {
-            String filterLabel = CardPredicateUtils.describeFilter(filter);
-            gameLogService.append(gameData, GameLog.cardThen(
-                    ability.sourceCard(), "'s ability — no valid " + filterLabel + " targets in graveyard."));
-            // Resume resolution with may declined (no valid target)
-            gameData.resolvedMayAccepted = false;
-            if (gameData.pendingEffectResolutionEntry != null) {
-                effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex);
-            }
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-
-        // Single match — set target immediately and resume resolution
-        if (matchingIndices.size() == 1) {
-            List<Card> graveyard = gameData.playerGraveyards.get(graveyardOwnerId);
-            Card targetCard = graveyard.get(matchingIndices.getFirst());
-            pendingEntry.setTargetId(targetCard.getId());
-
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " targets ", targetCard, " in graveyard."));
-            effectResolutionService.resolveEffectsFrom(gameData, pendingEntry, gameData.pendingEffectResolutionIndex);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-
-        // Multiple matches — prompt player to choose via graveyard choice
-        String filterLabel = CardPredicateUtils.describeFilter(filter);
-        gameData.resolvedMayTargetingEntry = pendingEntry;
-        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
-                .builder(graveyardOwnerId, matchingIndices, GraveyardChoiceDestination.MAY_ABILITY_TARGET,
-                        "Choose a " + filterLabel + " from your graveyard to target.")
-                .mayAbilityContext(ability.sourceCard(), controllerId,
-                        new ArrayList<>(ability.effects()), ability.sourcePermanentId())
-                .build());
-    }
-
-    private void beginExactResolutionTimeGraveyardTargetSelection(
-            GameData gameData, Player player, PendingMayAbility ability, StackEntry pendingEntry,
-            GraveyardTarget target, ExileGraveyardCardsEffect effect) {
-        List<Card> matchingCards = new ArrayList<>();
-        boolean hasLegalGraveyard = false;
-        for (UUID playerId : target.scope().graveyardOwners(gameData.orderedPlayerIds, ability.controllerId())) {
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard == null) {
-                continue;
-            }
-
-            List<Card> matchingInGraveyard = graveyard.stream()
-                    .filter(card -> target.filter() == null
-                            || predicateEvaluationService.matchesCardPredicate(
-                            card, target.filter(), ability.sourceCard().getId()))
-                    .toList();
-            matchingCards.addAll(matchingInGraveyard);
-            if (matchingInGraveyard.size() >= effect.count()) {
-                hasLegalGraveyard = true;
-            }
-        }
-
-        if (!hasLegalGraveyard) {
-            gameLogService.append(gameData,
-                    GameLog.cardThen(ability.sourceCard(), "'s ability has no valid two-card graveyard target."));
-            gameData.resolvedMayAccepted = false;
-            effectResolutionService.resolveEffectsFrom(gameData, pendingEntry, gameData.pendingEffectResolutionIndex);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-
-        gameData.resolvedMayTargetingEntry = pendingEntry;
-        gameData.graveyardTargetOperation.card = ability.sourceCard();
-        gameData.graveyardTargetOperation.controllerId = ability.controllerId();
-        gameData.graveyardTargetOperation.effects = new ArrayList<>(ability.effects());
-        gameData.graveyardTargetOperation.sourcePermanentId = ability.sourcePermanentId();
-        gameData.graveyardTargetOperation.singleGraveyard = true;
-        playerInputService.beginMultiGraveyardChoice(
-                gameData,
-                ability.controllerId(),
-                matchingCards,
-                effect.count(),
-                effect.count(),
-                "Choose exactly " + effect.count() + " target cards from a single graveyard.");
-
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " accepts — choosing graveyard targets for ",
-                ability.sourceCard(), "'s ability."));
-    }
-
-    /**
-     * A triggered ability with "up to N target" (N above one) had its targets chosen when it was put
-     * on the stack (CR 603.3d), so choosing none there is not a reason to ask again at resolution.
-     */
-    private boolean declaredUpToMultipleTargets(StackEntry entry) {
-        return entry.getCard() != null && entry.getCard().getTargetGroups().stream()
-                .anyMatch(target -> target.getMinTargets() == 0 && target.getMaxTargets() > 1);
-    }
-
-    private void handleResolutionTimeTargetSelection(GameData gameData, Player player, PendingMayAbility ability, StackEntry pendingEntry, boolean canTargetPermanent, boolean canTargetPlayer) {
-        List<UUID> validTargets = new ArrayList<>();
-        Card sourceCard = ability.sourceCard();
-        TargetFilter targetFilter = mayAbilityTargetFilter(sourceCard, ability);
-        if (canTargetPermanent) {
-            validTargets.addAll(mayAbilityPermanentTargets(gameData, ability, targetFilter));
-        }
-        if (canTargetPlayer) { validTargets.addAll(validTargetService.filterValidPlayerTargets(gameData, targetFilter, gameData.orderedPlayerIds, ability.controllerId())); }
-        if (validTargets.isEmpty()) {
-            gameLogService.append(gameData,
-                    GameLog.cardThen(ability.sourceCard(), "'s ability has no valid targets."));
-            gameData.resolvedMayAccepted = false;
-            if (gameData.pendingEffectResolutionEntry != null) { effectResolutionService.resolveEffectsFrom(gameData, gameData.pendingEffectResolutionEntry, gameData.pendingEffectResolutionIndex); }
-            if (gameData.interaction.isAwaitingInput()) return;
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-        gameData.resolvedMayTargetingEntry = pendingEntry;
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(ability.sourceCard(), ability.controllerId(), new ArrayList<>(ability.effects())));
-        playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets, ability.sourceCard().getName() + "'s ability — Choose target.");
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " accepts — choosing a target for ", ability.sourceCard(), "'s ability."));
     }
 }

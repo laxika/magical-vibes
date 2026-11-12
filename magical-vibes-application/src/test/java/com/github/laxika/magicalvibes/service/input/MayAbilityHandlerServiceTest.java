@@ -35,12 +35,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSup
 import com.github.laxika.magicalvibes.service.effect.normalfx.MakeAnExampleEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RagingRiverEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.StandOrFallSupport;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.target.ValidTargetService;
-import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -53,20 +47,14 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 /**
- * Target enumeration for a targeted may-ability whose only restriction is its effect's
- * {@code TargetSpec} — no card-level {@code TargetFilter}, no effect-level
- * {@code PermanentPredicate}. That arm used to be an open-coded target-category switch whose
- * {@code default} rejected every permanent, so a {@code LAND} spec found nothing to target; it now
- * goes through the shared {@code TargetPredicateEvaluationService}, the same evaluation cast-time
- * validation performs. The question is the resolving entry's own (CR 603.5).
+ * The answer to the "you may" of a resolving entry (CR 603.5) chooses nothing: the entry's targets were chosen as it
+ * was put on the stack (CR 603.3d), so an accepted effect resumes the resolution with the targets the entry has, or
+ * with none.
  *
  * <p>An accepted option that has no handler of its own is carried out at once, in the resolution that asked, by an
  * entry that keeps what the question recorded; nothing is put on the stack for it.</p>
@@ -77,8 +65,6 @@ class MayAbilityHandlerServiceTest {
     private static final UUID PLAYER2_ID = UUID.randomUUID();
 
     private GameQueryService gameQueryService;
-    private PlayerInputService playerInputService;
-    private ValidTargetService validTargetService;
     private MayEffectHandlerRegistry mayEffectHandlerRegistry;
     private EffectResolutionService effectResolutionService;
     private MayAbilityHandlerService svc;
@@ -89,16 +75,8 @@ class MayAbilityHandlerServiceTest {
     @BeforeEach
     void setUp() {
         gameQueryService = mock(GameQueryService.class);
-        playerInputService = mock(PlayerInputService.class);
-        validTargetService = mock(ValidTargetService.class);
-        when(validTargetService.isValidTriggeredAbilityPermanentTarget(
-                any(), any(), anyList(), any(), any(), any())).thenReturn(true);
         mayEffectHandlerRegistry = mock(MayEffectHandlerRegistry.class);
         effectResolutionService = mock(EffectResolutionService.class);
-
-        PredicateEvaluationService predicateEvaluationService = new PredicateEvaluationService(gameQueryService);
-        TargetPredicateEvaluationService targetPredicateEvaluationService =
-                new TargetPredicateEvaluationService(predicateEvaluationService, mock(TargetLegalityService.class));
 
         svc = new MayAbilityHandlerService(
                 mock(InputCompletionService.class),
@@ -106,10 +84,7 @@ class MayAbilityHandlerServiceTest {
                 mock(MayCopyHandlerService.class),
                 mock(MayMiscHandlerService.class),
                 gameQueryService,
-                predicateEvaluationService,
                 mock(GameLogService.class),
-                playerInputService,
-                mock(TurnProgressionService.class),
                 effectResolutionService,
                 mock(DestructionSupport.class),
                 mock(BendOrBreakEffectHandler.class),
@@ -119,9 +94,6 @@ class MayAbilityHandlerServiceTest {
                 mock(GraveyardReturnSupport.class),
                 mock(BrilliantUltimatumSupport.class),
                 mock(MayAbilityTapCostService.class),
-                mock(InteractionHandlerRegistry.class),
-                validTargetService,
-                targetPredicateEvaluationService,
                 mayEffectHandlerRegistry,
                 mock(TriggerCollectionService.class),
                 mock(RagingRiverEffectHandler.class));
@@ -138,61 +110,29 @@ class MayAbilityHandlerServiceTest {
     }
 
     @Test
-    @DisplayName("A bare LAND spec offers the lands on the battlefield, not nothing")
-    void landSpecOffersLands() {
-        Permanent forest = permanent("Forest", CardType.LAND);
-        Permanent bear = permanent("Grizzly Bears", CardType.CREATURE);
-        gd.playerBattlefields.get(PLAYER1_ID).add(forest);
-        gd.playerBattlefields.get(PLAYER2_ID).add(bear);
-        when(gameQueryService.isLand(gd, forest)).thenReturn(true);
-        when(gameQueryService.isLand(gd, bear)).thenReturn(false);
-
-        acceptMayAbility(specEffect(TargetPredicates.land()));
-
-        assertThat(offeredTargets()).containsExactly(forest.getId());
-    }
-
-    @Test
-    @DisplayName("A bare CREATURE spec still offers only creatures")
-    void creatureSpecOffersOnlyCreatures() {
-        Permanent forest = permanent("Forest", CardType.LAND);
-        Permanent bear = permanent("Grizzly Bears", CardType.CREATURE);
-        gd.playerBattlefields.get(PLAYER1_ID).add(forest);
-        gd.playerBattlefields.get(PLAYER1_ID).add(bear);
-        when(gameQueryService.isCreature(gd, forest)).thenReturn(false);
-        when(gameQueryService.isCreature(gd, bear)).thenReturn(true);
-
-        acceptMayAbility(specEffect(TargetPredicates.creature()));
-
-        assertThat(offeredTargets()).containsExactly(bear.getId());
-    }
-
-    @Test
-    @DisplayName("A spec with no legal permanent reports no valid targets instead of prompting")
-    void noLegalPermanentDoesNotPrompt() {
+    @DisplayName("An accepted effect with a permanent target and none on its entry asks for no target as it resolves")
+    void acceptedPermanentTargetedMayChoosesNoTargetOnResolution() {
         Permanent bear = permanent("Grizzly Bears", CardType.CREATURE);
         gd.playerBattlefields.get(PLAYER1_ID).add(bear);
-        when(gameQueryService.isLand(gd, bear)).thenReturn(false);
 
-        acceptMayAbility(specEffect(TargetPredicates.land()));
+        StackEntry pendingEntry = acceptMayAbility(specEffect(TargetPredicates.creature()));
 
-        verify(playerInputService, org.mockito.Mockito.never())
-                .beginPermanentChoice(any(), any(), anyList(), anyString());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.resolvedMayAccepted).isTrue();
+        assertThat(pendingEntry.getTargetId()).isNull();
+        assertThat(pendingEntry.getTargetIds()).isEmpty();
+        verify(effectResolutionService).resolveEffectsFrom(gd, pendingEntry, 0);
     }
 
     @Test
-    void matchingCreatureRejectedByTargetingRestrictionsIsNotOffered() {
-        Permanent bear = permanent("Grizzly Bears", CardType.CREATURE);
-        Permanent restricted = permanent("Untargetable creature", CardType.CREATURE);
-        gd.playerBattlefields.get(PLAYER1_ID).addAll(List.of(bear, restricted));
-        when(gameQueryService.isCreature(gd, bear)).thenReturn(true);
-        when(gameQueryService.isCreature(gd, restricted)).thenReturn(true);
-        when(validTargetService.isValidTriggeredAbilityPermanentTarget(
-                eq(gd), any(), anyList(), any(), eq(restricted), eq(PLAYER1_ID))).thenReturn(false);
+    @DisplayName("An accepted effect with a player target and none on its entry asks for no target as it resolves")
+    void acceptedPlayerTargetedMayChoosesNoTargetOnResolution() {
+        StackEntry pendingEntry = acceptMayAbility(specEffect(TargetPredicates.player()));
 
-        acceptMayAbility(specEffect(TargetPredicates.creature()));
-
-        assertThat(offeredTargets()).containsExactly(bear.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.resolvedMayAccepted).isTrue();
+        assertThat(pendingEntry.getTargetId()).isNull();
+        verify(effectResolutionService).resolveEffectsFrom(gd, pendingEntry, 0);
     }
 
     @Test
@@ -228,35 +168,21 @@ class MayAbilityHandlerServiceTest {
     }
 
     @Test
-    @DisplayName("An accepted graveyard-cast may ability offers only matching cards")
-    void graveyardCastMayAbilityOffersOnlyMatchingCards() {
-        Card sourceCard = new Card();
-        sourceCard.setName("Test Source");
+    @DisplayName("An accepted effect with a graveyard target and none on its entry picks no card as it resolves")
+    void acceptedGraveyardTargetedMayChoosesNoCardOnResolution() {
         Card enchantment = new Card();
         enchantment.setName("Enchantment");
         enchantment.setType(CardType.ENCHANTMENT);
-        Card creature = new Card();
-        creature.setName("Creature");
-        creature.setType(CardType.CREATURE);
-        gd.playerGraveyards.put(PLAYER1_ID, new ArrayList<>(List.of(enchantment, creature)));
-        when(gameQueryService.cardHasType(enchantment, CardType.ENCHANTMENT, gd, PLAYER1_ID)).thenReturn(true);
+        gd.playerGraveyards.put(PLAYER1_ID, new ArrayList<>(List.of(enchantment)));
 
-        CardEffect effect = new AllowCastTargetCardFromGraveyardThisTurnEffect(
+        StackEntry pendingEntry = acceptMayAbility(new AllowCastTargetCardFromGraveyardThisTurnEffect(
                 new CardTypePredicate(CardType.ENCHANTMENT),
                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                false);
-        StackEntry pendingEntry = new StackEntry(
-                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
-                sourceCard, PLAYER1_ID, "Test Source's ability", List.of(new MayEffect(effect, "Cast it?")));
-        gd.pendingEffectResolutionEntry = pendingEntry;
-        gd.pendingEffectResolutionIndex = 0;
-        gd.resolvingMayEffectFromStack = true;
-        gd.pendingMayAbilities.add(new PendingMayAbility(sourceCard, PLAYER1_ID, List.of(effect), "Cast it?"));
-        gd.interaction.beginInteraction(new PendingInteraction.MayAbilityChoice(PLAYER1_ID, "Cast it?", null));
+                false));
 
-        svc.handleMayAbilityChosen(gd, player1, true);
-
-        assertThat(pendingEntry.getTargetId()).isEqualTo(enchantment.getId());
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(pendingEntry.getTargetId()).isNull();
+        assertThat(pendingEntry.getTargetCardIds()).isEmpty();
         verify(effectResolutionService).resolveEffectsFrom(gd, pendingEntry, 0);
     }
 
@@ -382,14 +308,19 @@ class MayAbilityHandlerServiceTest {
         verify(effectResolutionService, org.mockito.Mockito.never()).resolveNestedInParkedResolution(any(), any());
     }
 
-    /** Accepts the "you may" of an entry on the stack whose effect was given no target as it was put there. */
-    private void acceptMayAbility(CardEffect effect) {
+    /**
+     * Accepts the "you may" of an entry on the stack whose effect was given no target as it was put there.
+     *
+     * @return the resolving entry
+     */
+    private StackEntry acceptMayAbility(CardEffect effect) {
         Card sourceCard = new Card();
         sourceCard.setName("Test Source");
         sourceCard.setType(CardType.ENCHANTMENT);
-        gd.pendingEffectResolutionEntry = new StackEntry(
+        StackEntry pendingEntry = new StackEntry(
                 com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
                 sourceCard, PLAYER1_ID, "Test Source's ability", List.of(new MayEffect(effect, "Test may ability")));
+        gd.pendingEffectResolutionEntry = pendingEntry;
         gd.pendingEffectResolutionIndex = 0;
         gd.resolvingMayEffectFromStack = true;
         PendingMayAbility ability =
@@ -399,13 +330,7 @@ class MayAbilityHandlerServiceTest {
                 new PendingInteraction.MayAbilityChoice(PLAYER1_ID, "Test may ability", null));
 
         svc.handleMayAbilityChosen(gd, player1, true);
-    }
-
-    private List<UUID> offeredTargets() {
-        @SuppressWarnings("unchecked")
-        ArgumentCaptor<List<UUID>> captor = ArgumentCaptor.forClass(List.class);
-        verify(playerInputService).beginPermanentChoice(eq(gd), eq(PLAYER1_ID), captor.capture(), anyString());
-        return captor.getValue();
+        return pendingEntry;
     }
 
     private StackEntry acceptedEntry() {

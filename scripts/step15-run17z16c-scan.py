@@ -87,10 +87,6 @@ EXPLAINED = {
         (OWN, "'whenever a player takes the initiative' (CR 727.2) has no source and no event data; one route"),
     ("effect/normalfx/UnattachTriggerSupport.java", "triggerDestroyOnUnattachIfNeeded"):
         (OWN, "a collector: the entry it builds is the record (the creature it left as triggering permanent); one route"),
-    ("effect/mayfx/AttachTargetAuraOrEquipmentToTargetCreatureHandler.java", "handle"):
-        (HAND, "the walk sets the targets of the entry still resolving, which asked the question; no entry is built"),
-    ("effect/mayfx/AttachTargetEquipmentToTargetCreatureHandler.java", "handle"):
-        (HAND, "the walk sets the targets of the entry still resolving, which asked the question; no entry is built"),
     ("effect/mayfx/MiracleRevealHandler.java", "handle"):
         (OWN, "miracle's linked ability (CR 702.94a) of the revealed card; one route, no event data"),
     ("effect/manafx/ReflexiveManaAbilityRiderEffectHandler.java", "resolve"):
@@ -101,8 +97,6 @@ EXPLAINED = {
         (HAND, "the chapter collectors hand off chapterEntry before the target and counter prompts"),
     ("input/GraveyardChoiceHandlerService.java", "handleGraveyardCardChosen"):
         (HAND, "MAY_ABILITY_TARGET and COPY_FROM_LEAVING_GRAVEYARD prompts are begun inside a route"),
-    ("input/MayAbilityHandlerService.java", "handleResolutionTimeTargetSelection"):
-        (HAND, "resolvedMayTargetingEntry: the target is set on the entry still resolving, no entry is built"),
     ("input/MultiPermanentChoiceHandlerService.java", "handleSagaChapterTargetSelection"):
         (HAND, "the chapter collectors hand off chapterEntry before the target prompt"),
     ("input/MultiPermanentChoiceHandlerService.java", "handleCapriciousEfreetOpponentTargets"):
