@@ -161,4 +161,10 @@ public interface CardEffect {
      * amount that reads the count.
      */
     default boolean hasAbilityResolutionCondition() { return false; }
+
+    /**
+     * The modal whose modes the controller chooses as a triggered ability made of this effect alone is put on the
+     * stack (CR 603.3c), or {@code null} for an effect whose ability chooses no mode then.
+     */
+    default ChooseOneEffect modesChosenAsItTriggers() { return null; }
 }

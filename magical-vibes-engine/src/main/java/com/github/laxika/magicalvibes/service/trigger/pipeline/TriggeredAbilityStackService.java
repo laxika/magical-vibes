@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.DeclaredAttackCondition;
 import com.github.laxika.magicalvibes.model.condition.EntryFactCondition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -55,6 +56,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 /**
  * Puts a triggered ability that the pipeline matched on the stack, for every family moved off {@code EffectSlot}:
@@ -240,6 +242,152 @@ public class TriggeredAbilityStackService {
         if (triggerCollectionService.triggerPermanentChange(gameData, watch, candidate, effects, events)) {
             markLimit(gameData, options.limit(), sourceId, limitKey);
         }
+    }
+
+    /**
+     * The stack door: puts {@code request}'s ability on the stack, the same way for every ability.
+     *
+     * <ol>
+     *   <li>Its intervening "if" is judged as it triggers, in the request's context, and wraps each effect to be judged
+     *       again as it resolves (CR 603.4), but for one about the attack as declared, whose answer is fixed, and for a
+     *       modal ability whose mode is chosen as it goes on the stack, which the card writes into each mode. Its limit
+     *       ("triggers only once each turn", "only once", "do this only once each turn", CR 603.2h) keeps it from
+     *       triggering again and is marked; effects that make it trigger an additional time add stack objects (CR
+     *       603.3), unless it triggers only once each turn.</li>
+     *   <li>One stack entry is built of its effects as the card wrote them (CR 603.3); a "you may" stays among them and
+     *       is asked as it resolves (CR 603.5).</li>
+     *   <li>The request's record stamps the event on the entry, whatever the effects are.</li>
+     *   <li>A mode chosen as it triggers is announced (CR 603.3c) and its targets are chosen (CR 603.3d): the door
+     *       parks the entry with the choice ({@link StackEntry#isParkedAtStackDoor()}), and the choice's handler
+     *       finishes it ({@link #finishParked}). An effect with a target chooses it, unless the event names the object
+     *       it acts on ("that creature", a non-targeting {@code targetId} other than the source, CR 115.10a) and the
+     *       card declares no target for it. An ability with no legal choice is removed.</li>
+     *   <li>An ability that chooses nothing goes to {@link GameData#enqueueTrigger}; its controller orders it among the
+     *       others later (CR 603.3b).</li>
+     * </ol>
+     * The door never reads an effect's class: what it needs of an effect it asks through {@code CardEffect}.
+     *
+     * @return whether the ability triggered
+     */
+    public boolean put(GameData gameData, TriggeredAbilityRequest request) {
+        TriggeredAbility ability = request.ability();
+        TriggerOptions options = ability.options();
+        Condition interveningIf = options.interveningIf();
+        if (interveningIf != null && !conditionEvaluationService.isMet(gameData, interveningIf, request.ifContext())) {
+            return false;
+        }
+        UUID limitSourceId = request.sourcePermanent() != null ? request.sourcePermanentId()
+                : request.sourceCard().getId();
+        if (limitReached(gameData, options.limit(), limitSourceId, ability.limitKey())) {
+            return false;
+        }
+        List<CardEffect> effects = new ArrayList<>(ability.effects().size());
+        for (EffectRegistration registration : ability.effects()) {
+            CardEffect effect = registration.effect();
+            boolean judgedOnce = interveningIf == null || DeclaredAttackCondition.isDeclaredAttackFact(interveningIf)
+                    || effect.modesChosenAsItTriggers() != null;
+            effects.add(judgedOnce ? effect : new ConditionalEffect(interveningIf, effect));
+        }
+        int copies = options.limit() == TriggerLimit.ONCE_EACH_TURN || request.sourcePermanent() == null ? 1
+                : 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(gameData, request.controllerId(),
+                        request.sourcePermanent());
+        int previousCopies = gameData.beginTriggeredAbilityCopies(copies);
+        try {
+            gameData.routeTriggeredAbility(() -> route(gameData, request, effects));
+        } finally {
+            gameData.restoreTriggeredAbilityCopies(previousCopies);
+        }
+        markLimit(gameData, options.limit(), limitSourceId, ability.limitKey());
+        return true;
+    }
+
+    /** Builds {@code request}'s entry of {@code effects}, stamps its record, and parks it for a choice or queues it. */
+    private void route(GameData gameData, TriggeredAbilityRequest request, List<CardEffect> effects) {
+        Card card = request.sourceCard();
+        UUID controllerId = request.controllerId();
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+                request.description(), effects, null, request.sourcePermanentId());
+        entry.setOnceEachTurnActionKey(onceEachTurnActionKey(request.ability()));
+        request.record().stamp(entry);
+        gameData.handOffTriggerRecord(entry);
+        ChooseOneEffect modes = null;
+        for (CardEffect effect : effects) {
+            if (effect.modesChosenAsItTriggers() != null) {
+                if (effects.size() != 1) {
+                    throw new IllegalStateException("A mode chosen as an ability triggers is the ability's one "
+                            + "effect: " + card.getName());
+                }
+                modes = effect.modesChosenAsItTriggers();
+            }
+        }
+        if (modes != null) {
+            entry.setParkedAtStackDoor(true);
+            gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+                    card, controllerId, modes, entry.getSourcePermanentId()).withTriggerRecord(entry));
+        } else if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
+            entry.setParkedAtStackDoor(true);
+            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
+                    card, controllerId, effects));
+        } else if (choosesTarget(card, entry, effects)) {
+            entry.setParkedAtStackDoor(true);
+            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(card, controllerId, effects,
+                    entry.getSourcePermanentId(), controllerId, entry.getAttackedTargetId(), null)
+                    .withEventValue(entry.getEventValue())
+                    .withTriggeringPlayer(entry.getTriggeringPlayerId())
+                    .withTriggerRecord(entry));
+        } else {
+            gameData.enqueueTrigger(entry);
+        }
+    }
+
+    /**
+     * Whether {@code entry}'s ability chooses a permanent, player or exiled card target as it goes on the stack
+     * (CR 603.3d): an effect admits one, and either the event names no object of its own for the effect to act on, or
+     * the card declares the effect's target. An object the event names ("that creature": a non-targeting
+     * {@code targetId} other than the ability's source) is what an effect whose target the card doesn't declare acts on,
+     * without targeting it (CR 115.10a).
+     */
+    private static boolean choosesTarget(Card card, StackEntry entry, List<CardEffect> effects) {
+        List<CardEffect> targeting = effects.stream().filter(effect ->
+                effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        || effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD)).toList();
+        if (targeting.isEmpty()) {
+            return false;
+        }
+        boolean eventNamesObject = entry.isNonTargeting() && entry.getTargetId() != null
+                && !entry.getTargetId().equals(entry.getSourcePermanentId());
+        return !eventNamesObject || targeting.stream().anyMatch(card::hasEffectTargetIndex);
+    }
+
+    /**
+     * The door's one continuation: finishes {@code record}, an ability this door parked while its controller made a
+     * choice as it went on the stack ({@link StackEntry#isParkedAtStackDoor()}), with {@code choice} (the mode's
+     * effects, the targets chosen, or none chosen for an optional target). The ability goes on the stack as a new stack
+     * object with everything the record holds; once it has a target, the abilities that trigger on a permanent or player
+     * becoming the target of an ability trigger, and choosing an opponent's target is a crime (CR 700.13).
+     *
+     * @return the stack entry put on the stack
+     */
+    public StackEntry finishParked(GameData gameData, StackEntry record, Consumer<StackEntry> choice) {
+        if (!record.isParkedAtStackDoor()) {
+            throw new IllegalStateException("Not parked at the stack door: " + record.getDescription());
+        }
+        StackEntry entry = record.copyForNewStackObject();
+        entry.setParkedAtStackDoor(false);
+        choice.accept(entry);
+        gameData.enqueueTrigger(entry);
+        boolean targets = entry.getTargetId() != null || !entry.getTargetIds().isEmpty();
+        if (targets && !gameData.stack.isEmpty() && gameData.stack.getLast() == entry) {
+            triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
+            triggerCollectionService.checkCrimeTriggers(gameData, entry);
+        }
+        return entry;
+    }
+
+    /** Whether {@code record}, the record a choice was made with, belongs to an ability this door parked. */
+    public static boolean parkedAtDoor(StackEntry record) {
+        return record != null && record.isParkedAtStackDoor();
     }
 
     /**

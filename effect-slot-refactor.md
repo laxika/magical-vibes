@@ -14,7 +14,7 @@ grep its `^#### Run` headings and read that range. The invariants those runs est
 | ID | Sweep | Status |
 |---|---|---|
 | 1–14 | Ability model, every family off the enum, trigger options | done |
-| S0 | The stack door, the ratchet, the ledger; pilot: block triggers | open |
+| S0 | The stack door, the ratchet, the ledger; pilot: block triggers | done but: C16 |
 | S1 | Combat | open |
 | S2 | Steps, phases, draw step, planar | open |
 | S3 | Spells, abilities, becomes the target | open |
@@ -321,6 +321,7 @@ named, with the Oracle text of the cards involved read first.
 | C10 | S7 | `SpecializeKarlachEffectHandler` builds its own stacked entry |
 | C11 | S7 | My Laughter Echoes: the replayed scheme keeps its old target |
 | C12 | S7 | `ForcedCostOrElseEffectHandler.enqueuePaidEffects` has a fall-through that would put an "if you do" on the stack |
+| C16 | S1–S7 | The door parks every route, but only the attack-target answers (single, multi, "up to one" with none) and the no-target chosen mode finish through `finishParked`. The graveyard target (`processNextSpellGraveyardTargetTrigger`, `GraveyardTargetingService`), a mode with a non-attack target (`EntersTriggerTarget`, `ETBTokenMultiTargetTrigger`, `ETBSpellTargetTrigger`), `StackedModalTriggerService`, `StackedDividedDamageTriggerService` and `TriggerTargetCollector` still finish with their own entry and the hand-off carry. Each moves behind the door in the first sweep whose family reaches it; the block pilot reaches only Groffskithur's graveyard route |
 
 **Fixes**
 
@@ -343,6 +344,15 @@ named, with the Oracle text of the cards involved read first.
 ## Findings
 
 One block per sweep, at most 12 lines, in the form the token rules give.
+
+**S0.**
+- Rules fix: block-family abilities now trigger an additional time under "triggers an additional time" effects (Roaming Throne, CR 603.3); the old collectors skipped them. Two `RoamingThroneTest` cases fail before.
+- Rules fix: a target the card declares is chosen as the ability goes on the stack (CR 603.3d) in the "a creature blocks", "creatures block", "creatures you control become blocked", "blocks two or more" and graveyard routes, and a chosen target is no longer marked non-targeting (route-test fixtures; no printed card changed). Close Quarters declares its "any target" (CR 115.10a).
+- Door API: `TriggeredAbilityStackService.put(TriggeredAbilityRequest)` with a `TriggerRecord` stamp; collectors judge filters with `ConditionEvaluationService.eventConditionMet`. Parked entries carry `StackEntry.parkedAtStackDoor` in the choice's `triggerRecord`; handlers call `finishParked`.
+- Target rule: an effect chooses unless the record names a non-targeting object other than the source and the card declares no target. A later family whose cards print "target" beside "that creature" must declare it.
+- The door counts additional triggers without an attack flag or `TriggerContext`; S1 (attack doublers) and S6 (death doublers) must add them to the request.
+- Probe: over the 1,019 modal-card test classes only Gideon Blackblade's +1 (an activated ability with "up to one" target and none chosen) reaches `beginResolvingModalTargetChoice`, so the door doesn't own it. Open: that ability asks for a target as it resolves (CR 601.2c via 602.2b), outside this plan.
+- Ledger: drop the ` #n` sequence and sort; two players' abilities arrive in map order.
 
 ## Prompt
 

@@ -42,6 +42,13 @@ public abstract class BaseCardTest {
 
     @BeforeEach
     void setUp(TestInfo testInfo) {
+        if (TriggerLedger.enabled()) {
+            String testClass = testInfo.getTestClass().map(Class::getName)
+                    .map(name -> name.substring(name.lastIndexOf('.') + 1)).orElse("?");
+            String testMethod = testInfo.getTestMethod().map(java.lang.reflect.Method::getName).orElse("?");
+            TriggerLedger.beginTest(testClass + "#" + testMethod
+                    + (testInfo.getDisplayName().equals(testMethod + "()") ? "" : "[" + testInfo.getDisplayName() + "]"));
+        }
         harness = new GameTestHarness();
         player1 = harness.getPlayer1();
         player2 = harness.getPlayer2();

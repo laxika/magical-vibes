@@ -301,6 +301,26 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps the record of an ability the stack door parked for its target, independently")
+    void deepCopyKeepsParkedTriggerRecord() {
+        StackEntry record = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY, new SerraAngel(), player1.getId(), "Block trigger", List.of());
+        record.setParkedAtStackDoor(true);
+        gd.handOffTriggerRecord(record);
+        gd.queueInteraction(new com.github.laxika.magicalvibes.model.PermanentChoiceContext.AttackTriggerTarget(
+                new SerraAngel(), player1.getId(), List.of(), null, player1.getId(), null, null)
+                .withTriggerRecord(record));
+
+        GameData copy = gd.simulationCopy();
+        StackEntry copied = copy.stackEntriesAndTriggerRecords().getFirst();
+
+        assertThat(copied).isNotSameAs(record);
+        assertThat(copied.isParkedAtStackDoor()).isTrue();
+        copied.setParkedAtStackDoor(false);
+        assertThat(record.isParkedAtStackDoor()).isTrue();
+    }
+
+    @Test
     @DisplayName("Deep copy keeps a stack entry's triggering permanent and attachments, independently")
     void deepCopyKeepsTriggeringPermanentIndependently() {
         Permanent dying = new Permanent(new GrizzlyBears());

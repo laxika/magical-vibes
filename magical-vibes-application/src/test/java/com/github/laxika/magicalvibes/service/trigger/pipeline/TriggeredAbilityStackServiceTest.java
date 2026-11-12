@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -638,5 +644,162 @@ class TriggeredAbilityStackServiceTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(PLAYER2_ID);
         assertThat(gd.stack.getFirst().getSourcePermanentSnapshot().getChosenPermanentId()).isEqualTo(enchantmentId);
+    }
+
+    /** A blocker's ability handed to the stack door, with the attacker it blocked as "that creature". */
+    private TriggeredAbilityRequest blockRequest(TriggeredAbility ability, Card card, Permanent blocker,
+                                                 Permanent attacker) {
+        return new TriggeredAbilityRequest(ability, card, blocker, PLAYER1_ID, card.getName() + "'s block trigger",
+                ConditionContext.forPermanent(blocker, PLAYER1_ID), entry -> {
+                    entry.setTargetId(attacker.getId());
+                    entry.setNonTargeting(true);
+                    entry.setTriggeringPermanentId(attacker.getId());
+                });
+    }
+
+    @Test
+    @DisplayName("The door puts an ability that chooses nothing on the stack with its record, whatever its effects")
+    void doorPutsAnAbilityThatChoosesNothingWithItsRecord() {
+        Card card = createCreature("Blocker", 1, 1);
+        Permanent blocker = new Permanent(card);
+        Permanent attacker = new Permanent(createCreature("Attacker", 2, 2));
+        var effect = new GainLifeEffect(1);
+
+        boolean triggered = stackService.put(gd, blockRequest(new TriggeredAbility(Triggers.blocks(), effect),
+                card, blocker, attacker));
+
+        assertThat(triggered).isTrue();
+        assertThat(gd.stack).hasSize(1);
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.getEffectsToResolve()).containsExactly(effect);
+        assertThat(entry.getTargetId()).isEqualTo(attacker.getId());
+        assertThat(entry.isNonTargeting()).isTrue();
+        assertThat(entry.getTriggeringPermanentId()).isEqualTo(attacker.getId());
+        assertThat(entry.getSourcePermanentId()).isEqualTo(blocker.getId());
+        assertThat(entry.isParkedAtStackDoor()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The door judges the intervening \"if\" as the ability triggers and wraps it for resolution")
+    void doorJudgesAndWrapsTheInterveningIf() {
+        Card card = createCreature("Blocker", 1, 1);
+        Permanent blocker = new Permanent(card);
+        Permanent attacker = new Permanent(createCreature("Attacker", 2, 2));
+        var condition = new CastForAlternateCost();
+        var ability = new TriggeredAbility(Triggers.blocks(), TriggerOptions.DEFAULT.withInterveningIf(condition),
+                new GainLifeEffect(1));
+        when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class)))
+                .thenReturn(false, true);
+
+        assertThat(stackService.put(gd, blockRequest(ability, card, blocker, attacker))).isFalse();
+        assertThat(gd.stack).isEmpty();
+
+        assertThat(stackService.put(gd, blockRequest(ability, card, blocker, attacker))).isTrue();
+        assertThat(gd.stack.getFirst().getEffectsToResolve())
+                .containsExactly(new ConditionalEffect(condition, new GainLifeEffect(1)));
+    }
+
+    @Test
+    @DisplayName("The door keeps an ability limited to once each turn from triggering again")
+    void doorMarksTheLimit() {
+        Card card = createCreature("Blocker", 1, 1);
+        Permanent blocker = new Permanent(card);
+        Permanent attacker = new Permanent(createCreature("Attacker", 2, 2));
+        var ability = new TriggeredAbility(Triggers.blocks(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), new GainLifeEffect(1));
+
+        assertThat(stackService.put(gd, blockRequest(ability, card, blocker, attacker))).isTrue();
+        assertThat(stackService.put(gd, blockRequest(ability, card, blocker, attacker))).isFalse();
+        assertThat(gd.stack).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Each additional time the ability triggers is another stack object")
+    void doorAddsAStackObjectForEachAdditionalTrigger() {
+        Card card = createCreature("Blocker", 1, 1);
+        Permanent blocker = new Permanent(card);
+        Permanent attacker = new Permanent(createCreature("Attacker", 2, 2));
+        when(gameQueryService.countAdditionalTriggeredAbilityTriggers(gd, PLAYER1_ID, blocker)).thenReturn(1);
+
+        stackService.put(gd, blockRequest(new TriggeredAbility(Triggers.blocks(), new GainLifeEffect(1)),
+                card, blocker, attacker));
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.get(0)).isNotSameAs(gd.stack.get(1));
+    }
+
+    @Test
+    @DisplayName("An effect whose target the card doesn't declare acts on the creature the event names, without a choice")
+    void undeclaredTargetIsTheObjectTheEventNames() {
+        Card card = createCreature("Blocker", 1, 1);
+        Permanent blocker = new Permanent(card);
+        Permanent attacker = new Permanent(createCreature("Attacker", 2, 2));
+        var effect = new DealDamageToTargetCreatureEffect(1);
+
+        stackService.put(gd, blockRequest(new TriggeredAbility(Triggers.blocks(), effect), card, blocker, attacker));
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(attacker.getId());
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A target the card declares is chosen as the ability goes on the stack, with the record parked")
+    void declaredTargetParksTheAbilityForItsChoice() {
+        Card card = createCreature("Javelineer", 2, 2);
+        var effect = new DealDamageToTargetCreatureEffect(1);
+        card.target(1, 1).addTrigger(Triggers.blocks(), effect);
+        Permanent blocker = new Permanent(card);
+        Permanent attacker = new Permanent(createCreature("Attacker", 2, 2));
+
+        stackService.put(gd, blockRequest(card.getTriggeredAbilities().getFirst(), card, blocker, attacker));
+
+        assertThat(gd.stack).isEmpty();
+        var choice = gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
+        assertThat(choice.effects()).containsExactly(effect);
+        assertThat(choice.triggerRecord().isParkedAtStackDoor()).isTrue();
+        assertThat(choice.triggerRecord().getTriggeringPermanentId()).isEqualTo(attacker.getId());
+    }
+
+    @Test
+    @DisplayName("A mode chosen as the ability triggers parks it for the mode choice")
+    void modalAbilityParksForItsMode() {
+        Card card = createCreature("Blocker", 1, 1);
+        Permanent blocker = new Permanent(card);
+        Permanent attacker = new Permanent(createCreature("Attacker", 2, 2));
+        var choice = new ChooseOneEffect(List.of(
+                new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1)),
+                new ChooseOneEffect.ChooseOneOption("Gain life", new GainLifeEffect(1))));
+
+        stackService.put(gd, blockRequest(new TriggeredAbility(Triggers.blocks(),
+                new ChooseOneAtTriggerTimeEffect(choice)), card, blocker, attacker));
+
+        assertThat(gd.stack).isEmpty();
+        var modal = gd.peekPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
+        assertThat(modal.effect()).isEqualTo(choice);
+        assertThat(modal.triggerRecord().isParkedAtStackDoor()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The continuation puts a new stack object of the parked record and the choice on the stack")
+    void finishParkedPutsTheRecordWithTheChoice() {
+        Card card = createCreature("Javelineer", 2, 2);
+        StackEntry record = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, PLAYER1_ID, "record",
+                List.of(new GainLifeEffect(1)), null, UUID.randomUUID());
+        UUID triggeringId = UUID.randomUUID();
+        record.setTriggeringPermanentId(triggeringId);
+        UUID targetId = UUID.randomUUID();
+
+        assertThatThrownBy(() -> stackService.finishParked(gd, record, entry -> {
+        })).isInstanceOf(IllegalStateException.class);
+        record.setParkedAtStackDoor(true);
+        StackEntry finished = stackService.finishParked(gd, record, entry -> entry.setTargetId(targetId));
+
+        assertThat(finished).isNotSameAs(record);
+        assertThat(gd.stack).containsExactly(finished);
+        assertThat(finished.isParkedAtStackDoor()).isFalse();
+        assertThat(finished.getTargetId()).isEqualTo(targetId);
+        assertThat(finished.getTriggeringPermanentId()).isEqualTo(triggeringId);
+        assertThat(finished.getTargetableId()).isNotEqualTo(record.getTargetableId());
     }
 }

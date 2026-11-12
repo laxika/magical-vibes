@@ -2284,6 +2284,14 @@ public class ConditionEvaluationService {
     }
 
     /**
+     * Whether the event a collector found is the trigger event of an ability with {@code options}: its event condition
+     * holds (CR 603.2). The intervening "if" is the stack door's to judge.
+     */
+    public boolean eventConditionMet(GameData gameData, TriggerOptions options, ConditionContext ctx) {
+        return options.eventCondition() == null || isMet(gameData, options.eventCondition(), ctx);
+    }
+
+    /**
      * Whether a triggered ability with {@code options} triggers as its trigger event occurs: its intervening "if" holds
      * (CR 603.4; it is checked again as the ability resolves) and its event condition holds (CR 603.2: an event that
      * doesn't meet it isn't the ability's trigger event).

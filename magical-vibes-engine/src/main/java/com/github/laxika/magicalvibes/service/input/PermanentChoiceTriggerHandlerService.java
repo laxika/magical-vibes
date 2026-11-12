@@ -39,6 +39,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseAttackTarget
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
 import com.github.laxika.magicalvibes.service.trigger.DiscardTriggerCollectorService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,6 +83,9 @@ public class PermanentChoiceTriggerHandlerService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private TriggeredAbilityStackService triggeredAbilityStackService;
 
     /**
      * The message for a target answer that wasn't among the offered choices: when the answer is a player
@@ -1120,6 +1124,11 @@ public class PermanentChoiceTriggerHandlerService {
     }
 
     public void handleAttackTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.AttackTriggerTarget att) {
+        if (TriggeredAbilityStackService.parkedAtDoor(att.triggerRecord())) {
+            finishParkedTarget(gameData, permanentId, att);
+            continueAfterAttackTrigger(gameData);
+            return;
+        }
         Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
         boolean isExiledCardTarget = target == null
                 && gameQueryService.findCardInExileById(gameData, permanentId) != null;
@@ -1230,7 +1239,53 @@ public class PermanentChoiceTriggerHandlerService {
             gameLogService.append(gameData, GameLog.cardThen(att.sourceCard(), "'s ability has no valid target."));
             log.info("Game {} - {} attack trigger target no longer exists", gameData.id, att.sourceCard().getName());
         }
+        continueAfterAttackTrigger(gameData);
+    }
 
+    /**
+     * Finishes an ability the stack door parked for its target ({@code TriggeredAbilityStackService.finishParked}): the
+     * chosen permanent, player, or graveyard or exiled card, or no target when its controller declined an optional one.
+     * A target that no longer exists leaves the ability with no legal target, and it is removed (CR 603.3d).
+     */
+    private void finishParkedTarget(GameData gameData, UUID chosenId, PermanentChoiceContext.AttackTriggerTarget att) {
+        Permanent target = gameQueryService.findPermanentById(gameData, chosenId);
+        boolean exiledCard = target == null && gameQueryService.findCardInExileById(gameData, chosenId) != null;
+        boolean player = target == null && gameData.playerIdToName.containsKey(chosenId);
+        boolean graveyardCard = target == null && !exiledCard && !player
+                && gameQueryService.findCardInGraveyardById(gameData, chosenId) != null;
+        boolean declined = player && chosenId.equals(att.controllerId())
+                && hasOptionalSingleTarget(att.sourceCard(), att.effects());
+        if (declined) {
+            triggeredAbilityStackService.finishParked(gameData, att.triggerRecord(), entry -> {
+                entry.replaceEffectsToResolve(att.effects());
+                entry.setTargetId(null);
+                entry.setNonTargeting(false);
+            });
+            gameLogService.append(gameData, GameLog.cardThen(att.sourceCard(), "'s ability targets nothing."));
+            return;
+        }
+        if (target == null && !player && !exiledCard && !graveyardCard) {
+            gameLogService.append(gameData, GameLog.cardThen(att.sourceCard(), "'s ability has no valid target."));
+            return;
+        }
+        TargetFilter targetFilter = exiledCard || graveyardCard ? null
+                : triggerCollectionService.targetFilterForTriggeredEffects(att.sourceCard(), att.effects());
+        triggeredAbilityStackService.finishParked(gameData, att.triggerRecord(), entry -> {
+            entry.replaceEffectsToResolve(att.effects());
+            entry.setTargetId(chosenId);
+            entry.setNonTargeting(false);
+            if (exiledCard || graveyardCard) {
+                entry.setTargetZone(graveyardCard ? Zone.GRAVEYARD : Zone.EXILE);
+            } else if (targetFilter != null) {
+                entry.setTargetFilter(targetFilter);
+            }
+        });
+        gameLogService.append(gameData, GameLog.builder().card(att.sourceCard())
+                .text("'s ability targets " + getTargetDisplayName(gameData, chosenId) + ".").build());
+    }
+
+    /** What follows an attack trigger's target choice: the next queued target choice, then the may abilities. */
+    private void continueAfterAttackTrigger(GameData gameData) {
         if (gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
             triggerCollectionService.processNextAttackTriggerTarget(gameData);
             return;
@@ -1249,6 +1304,18 @@ public class PermanentChoiceTriggerHandlerService {
     public void handleAttackTrigger(GameData gameData, List<UUID> targetIds,
                                      MultiPermanentChoiceContext.AttackTriggerTargets context) {
         PermanentChoiceContext.AttackTriggerTarget att = context.pending();
+        if (TriggeredAbilityStackService.parkedAtDoor(att.triggerRecord())) {
+            triggeredAbilityStackService.finishParked(gameData, att.triggerRecord(), entry -> {
+                entry.replaceEffectsToResolve(att.effects());
+                entry.setTargetId(null);
+                entry.setNonTargeting(false);
+                entry.chooseTargetIds(targetIds);
+            });
+            gameLogService.append(gameData, GameLog.builder().card(att.sourceCard()).text("'s ability targets "
+                    + targetIds.size() + " permanent" + (targetIds.size() == 1 ? "" : "s") + ".").build());
+            continueAfterAttackTrigger(gameData);
+            return;
+        }
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 att.sourceCard(),

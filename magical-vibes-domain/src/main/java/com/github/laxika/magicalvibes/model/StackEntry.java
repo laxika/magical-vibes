@@ -81,6 +81,12 @@ public class StackEntry {
     @Setter private UUID activePlayerId;
     @Getter(AccessLevel.NONE) private boolean triggerRecordSettled;
     @Getter(AccessLevel.NONE) private boolean triggerRecordCarried;
+    /**
+     * Whether this entry is a triggered ability the stack door ({@code TriggeredAbilityStackService.put}) holds while
+     * its controller chooses its mode or targets as it goes on the stack: the handler of that choice finishes it through
+     * the door ({@code TriggeredAbilityStackService.finishParked}) rather than building an entry of its own.
+     */
+    @Getter(AccessLevel.NONE) @Setter private boolean parkedAtStackDoor;
     @Setter private String description;
     private List<CardEffect> effectsToResolve;
     /**
@@ -1226,6 +1232,7 @@ public class StackEntry {
         this.activePlayerId = source.activePlayerId;
         this.triggerRecordSettled = source.triggerRecordSettled;
         this.triggerRecordCarried = source.triggerRecordCarried;
+        this.parkedAtStackDoor = source.parkedAtStackDoor;
         this.description = source.description;
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
         this.cardCountsBeforeResolution = source.cardCountsBeforeResolution;
@@ -1609,6 +1616,11 @@ public class StackEntry {
         });
     }
 
+    /** Whether the stack door holds this entry while its controller makes a choice (see {@link #parkedAtStackDoor}). */
+    public boolean isParkedAtStackDoor() {
+        return parkedAtStackDoor;
+    }
+
     /** Whether this entry was given its collector's record of the trigger event ({@link #carryTriggerRecord}). */
     public boolean hasCarriedTriggerRecord() {
         return triggerRecordCarried;
@@ -1772,6 +1784,11 @@ public class StackEntry {
 
     public void replaceEffectsToResolve(List<CardEffect> effects) {
         effectsToResolve = List.copyOf(effects);
+    }
+
+    /** The targets chosen for this entry's ability as it is put on the stack (CR 603.3d), in the order chosen. */
+    public void chooseTargetIds(List<UUID> targetIds) {
+        this.targetIds = List.copyOf(targetIds);
     }
 
     /** Records each player's card count as this spell begins to resolve ({@link #cardCountsBeforeResolution}). */

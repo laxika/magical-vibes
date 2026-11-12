@@ -114,8 +114,17 @@ public final class ShadowTriggerRecorder implements RulesObserver {
 
     @Override
     public void triggerQueued(Route route, Object item, GameData.CollectingTrigger collecting) {
+        if (route == Route.STACK_ADDITIONAL) {
+            if (item instanceof StackEntry additional && recordedItems.add(item)) {
+                TriggerLedger.record(gameData, additional, true);
+            }
+            return;
+        }
         if (!recordedItems.add(item)) {
             return;
+        }
+        if (item instanceof StackEntry entry && route != Route.MAY_ABILITY && route != Route.INTERACTION) {
+            TriggerLedger.record(gameData, entry, false);
         }
         ShadowTrigger trigger = triggerOf(item);
         EffectSlot slot = collecting == null ? null : collecting.slot();

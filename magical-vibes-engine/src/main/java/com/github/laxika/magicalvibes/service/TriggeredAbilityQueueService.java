@@ -125,6 +125,15 @@ public class TriggeredAbilityQueueService {
     @Lazy private final GraveyardTargetingService graveyardTargetingService;
     private final ObjectProvider<TriggerCollectionService> triggerCollectionServiceProvider;
 
+    private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
+            triggeredAbilityStackService;
+
+    @Autowired
+    void setTriggeredAbilityStackService(
+            @Lazy com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService service) {
+        this.triggeredAbilityStackService = service;
+    }
+
     @Autowired
     void setReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler(
             @Lazy ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler handler) {
@@ -1067,7 +1076,17 @@ public class TriggeredAbilityQueueService {
 
             if (candidateTargets.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
-                if (optionalTarget) {
+                if (optionalTarget && com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
+                        .parkedAtDoor(pending.triggerRecord())) {
+                    // "Up to one target" with none to choose: the ability goes on the stack with no target.
+                    triggeredAbilityStackService.finishParked(gameData, pending.triggerRecord(), entry -> {
+                        entry.replaceEffectsToResolve(pending.effects());
+                        entry.setTargetId(null);
+                        entry.setNonTargeting(false);
+                    });
+                    gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
+                            "'s triggered ability triggers without a target."));
+                } else if (optionalTarget) {
                     StackEntry entry = new StackEntry(
                             StackEntryType.TRIGGERED_ABILITY,
                             pending.sourceCard(),
@@ -1523,6 +1542,13 @@ public class TriggeredAbilityQueueService {
             return;
         }
 
+        // An ability the stack door parked for its mode goes on the stack with the chosen modes' effects.
+        if (com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
+                .parkedAtDoor(triggerRecord)) {
+            triggeredAbilityStackService.finishParked(gameData, triggerRecord,
+                    chosen -> chosen.replaceEffectsToResolve(effects));
+            return;
+        }
         // No chosen mode targets: "that player" is the attacked or damaged player the trigger was about, the entry's
         // non-targeting target (Blizzard Specter's "that player discards a card").
         UUID triggerTargetId = triggerRecord == null && attackedTargetId != null

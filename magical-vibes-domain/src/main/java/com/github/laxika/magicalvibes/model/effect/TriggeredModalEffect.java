@@ -7,6 +7,11 @@ public interface TriggeredModalEffect extends CardEffect {
 
     ChooseOneEffect choice();
 
+    @Override
+    default ChooseOneEffect modesChosenAsItTriggers() {
+        return choice();
+    }
+
     /**
      * The most modes that may be chosen ("choose up to that many —"), an amount read as the ability is put on the
      * stack, or {@code null} for the modal's own count.
@@ -40,10 +45,6 @@ public interface TriggeredModalEffect extends CardEffect {
      * {@code null} for any other effect.
      */
     static ChooseOneEffect choiceMadeAsTriggered(CardEffect effect) {
-        return switch (effect) {
-            case TriggeredModalEffect modal -> modal.choice();
-            case ChooseOneEffect modal when modal.modeRestriction() != ChooseOneEffect.ModeRestriction.NONE -> modal;
-            case null, default -> null;
-        };
+        return effect == null ? null : effect.modesChosenAsItTriggers();
     }
 }

@@ -6247,6 +6247,7 @@ public class GameData {
                     StackEntry copy = entry.copyForNewStackObject();
                     super.add(copy);
                     gameData.recordStackEntryForCrime(copy);
+                    gameData.observeTrigger(RulesObserver.Route.STACK_ADDITIONAL, copy);
                 }
             }
             if (added) {

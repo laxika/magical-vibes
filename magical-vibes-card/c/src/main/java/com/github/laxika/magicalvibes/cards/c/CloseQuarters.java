@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class CloseQuarters extends Card {
 
     public CloseQuarters() {
-        // Whenever a creature you control becomes blocked, deal 1 damage to any target.
-        addTrigger(Triggers.creatureYouControlBecomesBlocked(), new DealDamageToAnyTargetEffect(1));
+        // Whenever a creature you control becomes blocked, this enchantment deals 1 damage to any target.
+        target(1, 1).addTrigger(Triggers.creatureYouControlBecomesBlocked(), new DealDamageToAnyTargetEffect(1));
     }
 }

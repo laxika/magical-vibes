@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.Abrade;
+import com.github.laxika.magicalvibes.cards.a.AshmouthHound;
+import com.github.laxika.magicalvibes.cards.e.EliteJavelineer;
 import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GhituJourneymage;
@@ -13,6 +15,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -23,7 +26,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({RoamingThrone.class, GhituJourneymage.class, ElvishVisionary.class, Abrade.class, MineshaftSpider.class, MarketGnome.class, RatchetFieldMedic.class, RipjawRaptor.class, Shock.class,
-        FugitiveWizard.class, GrizzlyBears.class, ZulaportCutthroat.class})
+        FugitiveWizard.class, GrizzlyBears.class, ZulaportCutthroat.class, AshmouthHound.class,
+        EliteJavelineer.class})
 class RoamingThroneTest extends BaseCardTest {
 
     @Test
@@ -167,6 +171,48 @@ class RoamingThroneTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 1);
         harness.castModalInstant(player2, 0, 1, List.of(throne.getId()));
+    }
+
+    @Test
+    @DisplayName("Roaming Throne doubles a chosen-type creature's block trigger that deals damage to \"that creature\"")
+    void doublesBlockTriggerOfChosenTypeCreature() {
+        Permanent throne = harness.addToBattlefieldAndReturn(player2, new RoamingThrone());
+        throne.setChosenSubtype(CardSubtype.DOG);
+        addCreatureReady(player2, new AshmouthHound());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Ashmouth Hound")).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(attacker.getMarkedDamage()).isEqualTo(1);
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Ashmouth Hound")).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("Each instance of a doubled block trigger chooses its own target")
+    void doubledBlockTriggerChoosesTargetsSeparately() {
+        Permanent throne = harness.addToBattlefieldAndReturn(player2, new RoamingThrone());
+        throne.setChosenSubtype(CardSubtype.SOLDIER);
+        addCreatureReady(player2, new EliteJavelineer());
+        Permanent blocked = addCreatureReady(player1, new GrizzlyBears());
+        Permanent other = addCreatureReady(player1, new GrizzlyBears());
+        blocked.setAttacking(true);
+        other.setAttacking(true);
+        prepareDeclareBlockers();
+
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(1, 0)));
+        harness.handlePermanentChosen(player2, blocked.getId());
+        harness.handlePermanentChosen(player2, other.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(blocked.getMarkedDamage()).isEqualTo(1);
+        assertThat(other.getMarkedDamage()).isEqualTo(1);
     }
 
     private Permanent addThrone(CardSubtype chosenSubtype) {

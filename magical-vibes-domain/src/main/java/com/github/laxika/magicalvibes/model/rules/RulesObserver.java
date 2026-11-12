@@ -20,6 +20,11 @@ public interface RulesObserver {
     enum Route {
         /** A {@code TRIGGERED_ABILITY} stack entry added to the stack. */
         STACK,
+        /**
+         * A further stack object of an ability that triggers an additional time (CR 603.3), added to the stack with
+         * the entry reported on {@link #STACK}.
+         */
+        STACK_ADDITIONAL,
         /** A triggered ability held until the mana ability that triggered it finishes resolving. */
         MANA_ABILITY_QUEUE,
         /** A triggered ability held while a subgame is being played. */

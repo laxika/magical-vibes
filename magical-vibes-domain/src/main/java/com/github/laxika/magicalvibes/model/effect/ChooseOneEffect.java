@@ -169,6 +169,12 @@ public record ChooseOneEffect(List<ChooseOneOption> options, boolean optional, i
                 anyNumberWhenConditionMet, allModesWhenConditionMet, modeRestriction);
     }
 
+    /** Chosen as the ability triggers when its modes depend on what its source chose before ("that hasn't been chosen"). */
+    @Override
+    public ChooseOneEffect modesChosenAsItTriggers() {
+        return modeRestriction != ModeRestriction.NONE ? this : null;
+    }
+
     /** "Choose one or more —" modal: at least one mode, up to every mode. */
     public static ChooseOneEffect oneOrMore(List<ChooseOneOption> options) {
         return new ChooseOneEffect(options, false, 1, options.size(), false, null);
