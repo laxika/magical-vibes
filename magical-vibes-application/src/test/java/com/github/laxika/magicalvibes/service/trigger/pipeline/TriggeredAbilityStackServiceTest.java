@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -48,6 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.PutTriggeringCardFromGraveyardOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -801,5 +803,42 @@ class TriggeredAbilityStackServiceTest {
         assertThat(finished.getTargetId()).isEqualTo(targetId);
         assertThat(finished.getTriggeringPermanentId()).isEqualTo(triggeringId);
         assertThat(finished.getTargetableId()).isNotEqualTo(record.getTargetableId());
+    }
+
+    @Test
+    @DisplayName("A graveyard target is chosen as the ability goes on the stack, with the record parked")
+    void graveyardTargetParksTheAbilityWithItsRecord() {
+        Card card = createCreature("Blocked", 2, 2);
+        Permanent attacker = new Permanent(card);
+        Permanent blocker = new Permanent(createCreature("Blocker", 1, 1));
+        var effect = ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.HAND)
+                .targetGraveyard(true)
+                .build();
+
+        stackService.put(gd, blockRequest(new TriggeredAbility(Triggers.becomesBlocked(), effect), card, attacker,
+                blocker));
+
+        assertThat(gd.stack).isEmpty();
+        var choice = gd.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
+        assertThat(choice.effects()).containsExactly(effect);
+        assertThat(choice.triggerRecord().isParkedAtStackDoor()).isTrue();
+        assertThat(choice.triggerRecord().getTriggeringPermanentId()).isEqualTo(blocker.getId());
+    }
+
+    @Test
+    @DisplayName("A parked ability that targets graveyard cards checks the abilities its targets trigger")
+    void finishParkedWithGraveyardTargetsChecksTargetTriggers() {
+        Card card = createCreature("Javelineer", 2, 2);
+        StackEntry record = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, PLAYER1_ID, "record",
+                List.of(new GainLifeEffect(1)), null, UUID.randomUUID());
+        record.setParkedAtStackDoor(true);
+        UUID graveyardCardId = UUID.randomUUID();
+
+        StackEntry finished = stackService.finishParked(gd, record,
+                entry -> entry.setTargetCardIds(List.of(graveyardCardId)));
+
+        verify(triggerCollectionService).checkBecomesTargetOfAbilityTriggers(gd);
+        verify(triggerCollectionService).checkCrimeTriggers(gd, finished);
     }
 }

@@ -3397,6 +3397,16 @@ public class TriggeredAbilityQueueService {
     private void pushSpellGraveyardTriggeredAbilityWithoutTargets(
             GameData gameData, PermanentChoiceContext.SpellGraveyardTargetTrigger pending) {
         String description = pending.sourceCard().getName() + "'s ability";
+        if (com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
+                .parkedAtDoor(pending.triggerRecord())) {
+            // An ability the stack door parked for "up to" graveyard targets, with none to choose.
+            triggeredAbilityStackService.finishParked(gameData, pending.triggerRecord(), entry -> {
+                entry.setTargetId(null);
+                entry.setNonTargeting(true);
+            });
+            gameLogService.append(gameData, GameLog.text(description + " triggers targeting no cards."));
+            return;
+        }
         UUID sourcePermanentId = gameData.playerBattlefields
                 .getOrDefault(pending.controllerId(), List.of()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(pending.sourceCard().getId()))

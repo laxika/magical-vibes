@@ -327,7 +327,7 @@ public class TriggeredAbilityStackService {
         } else if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
             entry.setParkedAtStackDoor(true);
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    card, controllerId, effects));
+                    card, controllerId, effects).withTriggerRecord(entry));
         } else if (choosesTarget(card, entry, effects)) {
             entry.setParkedAtStackDoor(true);
             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(card, controllerId, effects,
@@ -377,8 +377,7 @@ public class TriggeredAbilityStackService {
         entry.setParkedAtStackDoor(false);
         choice.accept(entry);
         gameData.enqueueTrigger(entry);
-        boolean targets = entry.getTargetId() != null || !entry.getTargetIds().isEmpty();
-        if (targets && !gameData.stack.isEmpty() && gameData.stack.getLast() == entry) {
+        if (entry.hasAnyTarget() &&!gameData.stack.isEmpty() && gameData.stack.getLast() == entry) {
             triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
             triggerCollectionService.checkCrimeTriggers(gameData, entry);
         }

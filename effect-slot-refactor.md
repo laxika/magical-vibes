@@ -14,7 +14,7 @@ grep its `^#### Run` headings and read that range. The invariants those runs est
 | ID | Sweep | Status |
 |---|---|---|
 | 1–14 | Ability model, every family off the enum, trigger options | done |
-| S0 | The stack door, the ratchet, the ledger; pilot: block triggers | done but: C16 |
+| S0 | The stack door, the ratchet, the ledger; pilot: block triggers | done |
 | S1 | Combat | open |
 | S2 | Steps, phases, draw step, planar | open |
 | S3 | Spells, abilities, becomes the target | open |
@@ -321,7 +321,7 @@ named, with the Oracle text of the cards involved read first.
 | C10 | S7 | `SpecializeKarlachEffectHandler` builds its own stacked entry |
 | C11 | S7 | My Laughter Echoes: the replayed scheme keeps its old target |
 | C12 | S7 | `ForcedCostOrElseEffectHandler.enqueuePaidEffects` has a fall-through that would put an "if you do" on the stack |
-| C16 | S1–S7 | The door parks every route, but only the attack-target answers (single, multi, "up to one" with none) and the no-target chosen mode finish through `finishParked`. The graveyard target (`processNextSpellGraveyardTargetTrigger`, `GraveyardTargetingService`), a mode with a non-attack target (`EntersTriggerTarget`, `ETBTokenMultiTargetTrigger`, `ETBSpellTargetTrigger`), `StackedModalTriggerService`, `StackedDividedDamageTriggerService` and `TriggerTargetCollector` still finish with their own entry and the hand-off carry. Each moves behind the door in the first sweep whose family reaches it; the block pilot reaches only Groffskithur's graveyard route |
+| C16 | S1–S7 | The door parks every route, but only the attack-target answers (single, multi, "up to one" with none), the no-target chosen mode and the graveyard target's general answer (cards chosen, or "up to" with none) finish through `finishParked`. The other branches of `processNextSpellGraveyardTargetTrigger` (an own-entry exile copy, a battlefield-or-graveyard target, an opponent-chosen card, independently targeted groups), a mode with a non-attack target (`EntersTriggerTarget`, `ETBTokenMultiTargetTrigger`, `ETBSpellTargetTrigger`), `StackedModalTriggerService`, `StackedDividedDamageTriggerService` and `TriggerTargetCollector` still finish with their own entry and the hand-off carry. No door-routed card reaches them yet; each moves behind the door in the first sweep whose family reaches it |
 
 **Fixes**
 
@@ -353,6 +353,7 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - The door counts additional triggers without an attack flag or `TriggerContext`; S1 (attack doublers) and S6 (death doublers) must add them to the request.
 - Probe: over the 1,019 modal-card test classes only Gideon Blackblade's +1 (an activated ability with "up to one" target and none chosen) reaches `beginResolvingModalTargetChoice`, so the door doesn't own it. Open: that ability asks for a target as it resolves (CR 601.2c via 602.2b), outside this plan.
 - Ledger: drop the ` #n` sequence and sort; two players' abilities arrive in map order.
+- C16, graveyard part: Groffskithur's graveyard target finishes through `finishParked`, which now counts graveyard-card targets for the becomes-the-target and crime checks (CR 700.13). Ledger unchanged.
 
 ## Prompt
 

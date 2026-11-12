@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
@@ -116,6 +117,9 @@ public class GraveyardChoiceHandlerService {
     private final ObjectProvider<DrawService> drawServiceProvider;
     private final SpellweaverVoluteSupport spellweaverVoluteSupport;
     private final TokenCopySupport tokenCopySupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private TriggeredAbilityStackService triggeredAbilityStackService;
 
     /**
      * God-Pharaoh's Gift: creates a copy of the exiled card, except it's a 4/4 black Zombie, as one token creation
@@ -2122,6 +2126,34 @@ public class GraveyardChoiceHandlerService {
                     !pendingFlashback);
             triggerCollectionService.checkTargetChoiceTriggers(gameData, spellEntry);
             inputCompletionService.publishStateAfterInput(gameData);
+        } else if (TriggeredAbilityStackService.parkedAtDoor(pendingTriggerRecord)) {
+            // An ability the stack door parked for its graveyard target goes on the stack with the cards chosen.
+            List<UUID> chosenCardIds = List.copyOf(cardIds);
+            triggeredAbilityStackService.finishParked(gameData, pendingTriggerRecord, entry -> {
+                entry.setTargetId(pendingTargetPlayerId);
+                entry.setNonTargeting(false);
+                entry.setTargetCardIds(new ArrayList<>(chosenCardIds));
+                entry.setTargetCardIdsByEffect(pendingTargetCardIdsByEffect);
+                entry.setTargetCardGroupSizes(pendingTargetCardGroupSizes);
+                if (pendingXValue != 0) {
+                    entry.setXValue(pendingXValue);
+                }
+                if (pendingGraveyardTargetMaxManaValue != null) {
+                    entry.setGraveyardTargetMaxManaValue(pendingGraveyardTargetMaxManaValue);
+                }
+                if (mixedZoneEffect != null) {
+                    rememberMixedZoneTargets(gameData, entry, chosenCardIds);
+                }
+                if (gameQueryService.findCardInGraveyardById(gameData, pendingCard.getId()) != null) {
+                    entry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(pendingCard.getId()));
+                }
+            });
+            String description = pendingCard.getName() + "'s ability";
+            gameLogService.append(gameData, GameLog.text(cardIds.isEmpty()
+                    ? description + " triggers targeting no cards."
+                    : description + " triggers targeting " + String.join(", ", targetNames) + "."));
+            log.info("Game {} - {} triggered ability pushed onto stack with {} graveyard targets", gameData.id,
+                    pendingCard.getName(), cardIds.size());
         } else {
             // Triggered ability (ETB, spell-cast trigger, or saga chapter) — put on stack with targets
             String description;
@@ -2172,9 +2204,7 @@ public class GraveyardChoiceHandlerService {
                 triggeredEntry.carryTriggerRecord(pendingTriggerRecord);
             }
             if (mixedZoneEffect != null) {
-                cardIds.stream()
-                        .filter(cardId -> findPermanentByCardId(gameData, cardId) != null)
-                        .forEach(triggeredEntry::rememberBattlefieldChosenTargetCard);
+                rememberMixedZoneTargets(gameData, triggeredEntry, cardIds);
             }
             if (pendingTargetPlayerId != null) {
                 triggeredEntry.setTargetId(pendingTargetPlayerId);
@@ -2211,17 +2241,6 @@ public class GraveyardChoiceHandlerService {
             triggeredEntry.setAlternateCost(pendingSourceAlternateCostAtTrigger || triggeredEntry.isAlternateCost());
             if (pendingOnceEachTurnActionKey != null) {
                 triggeredEntry.setOnceEachTurnActionKey(pendingOnceEachTurnActionKey);
-            }
-            if (mixedZoneEffect != null) {
-                for (UUID cardId : cardIds) {
-                    Permanent permanent = findPermanentByCardId(gameData, cardId);
-                    if (permanent != null) {
-                        triggeredEntry.getMixedZoneTargetPermanentIds().put(cardId, permanent.getId());
-                    } else {
-                        triggeredEntry.getMixedZoneTargetGraveyardVersions().put(cardId,
-                                gameData.graveyardEntryVersion(cardId));
-                    }
-                }
             }
             gameData.stack.add(triggeredEntry);
             if (mixedZoneEffect != null) {
@@ -2409,6 +2428,22 @@ public class GraveyardChoiceHandlerService {
             return;
         }
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    /**
+     * Records on {@code entry} where each of {@code cardIds}, the targets of an ability that may target a card on the
+     * battlefield or in a graveyard, was chosen: the permanent it is, or its incarnation in its graveyard.
+     */
+    private void rememberMixedZoneTargets(GameData gameData, StackEntry entry, List<UUID> cardIds) {
+        for (UUID cardId : cardIds) {
+            Permanent permanent = findPermanentByCardId(gameData, cardId);
+            if (permanent != null) {
+                entry.rememberBattlefieldChosenTargetCard(cardId);
+                entry.getMixedZoneTargetPermanentIds().put(cardId, permanent.getId());
+            } else {
+                entry.getMixedZoneTargetGraveyardVersions().put(cardId, gameData.graveyardEntryVersion(cardId));
+            }
+        }
     }
 
     private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {
