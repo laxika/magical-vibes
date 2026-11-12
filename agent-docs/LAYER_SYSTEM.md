@@ -609,6 +609,7 @@ the dependency relation), `orderByDependency`:
    copies of the current states (a `CharacteristicState` subclass that logs every mutator call
    as a normalized operation string — `addKeyword:FLYING`, `loseAllAbilities` WITHOUT its
    concrete result, `removeSubtypesIf` opaquely) and collect the per-permanent operation lists.
+   A state is copied when the trial first reads it (`TrialStates`); iterating the map copies the rest.
    The trial board copies the L4 filter verdicts (CR 613.6) and land-type overrides; the active
    pass's board is swapped to the trial board for the duration so legacy handlers and nested
    queries read the trial states; all bookkeeping lands on the trial board and is discarded.

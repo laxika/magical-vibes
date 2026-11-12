@@ -1776,8 +1776,8 @@ public class LayerSystemService {
     /**
      * Trial-applies {@code first} (when non-null) and then {@code instance} onto recording
      * copies of the board's states, returning {@code instance}'s per-permanent operation
-     * fingerprint. The trial board copies the layer-4 filter verdicts (CR 613.6 — later-layer
-     * parts keep the layer-4-determined sets during trials too) and the land-type overrides;
+     * fingerprint. A state is copied when the trial first reads it ({@link TrialStates}).
+     * The trial board copies the layer-4 filter verdicts (CR 613.6 — later-layer parts keep the layer-4-determined sets during trials too) and the land-type overrides;
      * managed/contribution bookkeeping goes to the trial board and is discarded. The active
      * pass's board is swapped for the duration so handlers and nested queries read the trial
      * states.
@@ -1786,13 +1786,7 @@ public class LayerSystemService {
                                                      EffectInstance first, List<PermanentSlot> slots,
                                                      Map<UUID, PermanentSlot> slotsById,
                                                      LayeredBoardState board, InstanceApplier applier) {
-        Map<UUID, CharacteristicState> trialStates = new HashMap<>();
-        Map<UUID, RecordingCharacteristicState> recorders = new HashMap<>();
-        for (Map.Entry<UUID, CharacteristicState> entry : board.states().entrySet()) {
-            RecordingCharacteristicState recorder = new RecordingCharacteristicState(entry.getValue());
-            recorders.put(entry.getKey(), recorder);
-            trialStates.put(entry.getKey(), recorder);
-        }
+        TrialStates trialStates = new TrialStates(board.states());
         Map<PermanentPredicate, Map<UUID, Boolean>> trialVerdicts = new IdentityHashMap<>();
         board.l4FilterVerdicts().forEach((filter, verdicts) -> trialVerdicts.put(filter, new HashMap<>(verdicts)));
         LayeredBoardState trialBoard = new LayeredBoardState(trialStates,
@@ -1810,18 +1804,12 @@ public class LayerSystemService {
             if (first != null) {
                 applier.apply(gameData, first, slots, slotsById, trialBoard);
             }
-            recorders.values().forEach(RecordingCharacteristicState::startRecording);
+            trialStates.startRecording();
             applier.apply(gameData, instance, slots, slotsById, trialBoard);
         } finally {
             pass.board = saved;
         }
-        Map<UUID, List<String>> fingerprint = new HashMap<>();
-        recorders.forEach((id, recorder) -> {
-            if (!recorder.ops().isEmpty()) {
-                fingerprint.put(id, recorder.ops());
-            }
-        });
-        return fingerprint;
+        return trialStates.fingerprint();
     }
 
     // ===== layer 4 =====
@@ -3351,6 +3339,9 @@ public class LayerSystemService {
             return;
         }
         applyStaticInstanceViaHandlers(gameData, instance, slots, board, (target, harvested) -> {
+            if (!hasLayer6Output(harvested)) {
+                return;
+            }
             if (instance.effect() instanceof PlaneswalkersWithLoyaltyBecomeCreaturesEffect
                     && !board.l4Contributions().getOrDefault(instance.original(), Map.of())
                     .containsKey(target.permanent().getId())) {
@@ -3438,6 +3429,22 @@ public class LayerSystemService {
                 board.l56Touched().add(target.permanent().getId());
             }
         });
+    }
+
+    /**
+     * Whether a handler's per-target result carries anything the layer-6 harvest in
+     * {@link #applyL6Instance} writes: ability loss, tokenization, keyword grants and removals,
+     * protection, granted activated abilities or granted effects. A static handler runs against
+     * every permanent and matches few of them, so the harvest skips the rest without touching
+     * their states or provenance. A new output the harvest consumes is added here too.
+     */
+    private static boolean hasLayer6Output(StaticBonusAccumulator harvested) {
+        return harvested.isLosesAllAbilities() || harvested.isLosesAllNonManaAbilities()
+                || harvested.isTokenized()
+                || !harvested.getKeywords().isEmpty() || !harvested.getRemovedKeywords().isEmpty()
+                || !harvested.getProtectionColors().isEmpty()
+                || !harvested.getGrantedActivatedAbilities().isEmpty()
+                || !harvested.getGrantedEffects().isEmpty();
     }
 
     private void applyFloatingStaticGrant(GameData gameData, EffectInstance instance,
