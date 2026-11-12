@@ -16,6 +16,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+/**
+ * Finds every {@link CardRegistration} on the classpath through a ClassGraph metadata scan, without
+ * loading the card classes. Each {@link CardPrinting} gets a factory that loads its class and looks
+ * up the no-arg constructor only when a card is first created. The scan also records whether the
+ * class declares {@code getBackFaceClassName}, so a caller building a back-face lookup constructs
+ * only those fronts. A registration naming a set code {@link CardSet} lacks fails the scan.
+ */
 public final class CardScanner {
 
     private CardScanner() {

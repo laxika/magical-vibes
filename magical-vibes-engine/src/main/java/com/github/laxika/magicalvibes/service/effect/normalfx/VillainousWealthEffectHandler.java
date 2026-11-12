@@ -77,7 +77,7 @@ public class VillainousWealthEffectHandler implements NormalEffectHandlerBean {
     }
 
     /**
-     * Cast as an Adventure only the Adventure's characteristics are evaluated (CR 715.3a), so an
+     * Cast as an Adventure only the Adventure's characteristics are evaluated (CR 716.3a), so an
      * adventurer card whose own mana value is too high is still offered when its Adventure fits.
      */
     private static boolean isCastableAsAdventureWithin(Card card, int maxManaValue) {

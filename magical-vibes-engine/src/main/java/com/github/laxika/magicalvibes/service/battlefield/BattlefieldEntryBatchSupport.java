@@ -26,7 +26,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 
-/** Chooses legal attachments before putting a batch of cards onto the battlefield together. */
+/**
+ * Puts a batch of cards onto the battlefield together, after every choice their entry needs.
+ *
+ * <p>Before any card moves, the batch gathers what each Aura enchants (CR 303.4f, among objects already on the
+ * battlefield, never a card entering with it), each battle's protector, each "enter as a copy" choice and each
+ * native as-enters choice (riot, unleash, amplify, a name, an entry cost, conflicting tapped-entry choices,
+ * devour, then the creature's position). The cards stay in their original zones, in their original order,
+ * until every choice is made; an answered choice resumes the batch and never places its card alone. A prepared
+ * copy returns to its batch through {@code CloneOperationState.battlefieldEntryBatch}. The members then enter as
+ * one event, so each one's entry triggers see the others (CR 603.6a), and every member is marked
+ * {@code Permanent.copyEntryResolved} so placement doesn't offer its copy choice again.
+ */
 @Component
 @RequiredArgsConstructor
 public class BattlefieldEntryBatchSupport {

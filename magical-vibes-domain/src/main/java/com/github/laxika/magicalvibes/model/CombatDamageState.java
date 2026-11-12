@@ -65,7 +65,13 @@ public class CombatDamageState {
 
     public final Map<Permanent, Integer> combatDamageDealt = new HashMap<>();
     public final Map<Permanent, Integer> combatDamageDealtToPlayer = new HashMap<>();
-    /** Player recipients and accumulated damage components before aggregate prevention. */
+    /**
+     * The player each damaging creature dealt its combat damage to, and with the three maps after it the normal,
+     * infect and unpreventable damage totals per player before aggregate prevention. Prevention is applied to each
+     * player's totals separately, before lifelink and state-based actions, and "deals combat damage to a player"
+     * abilities are grouped by the damaged player and the source's controller, so a myriad copy that damages
+     * another opponent uses that opponent. Game snapshots copy these maps.
+     */
     public final Map<Permanent, UUID> combatDamagePlayerRecipients = new HashMap<>();
     public final Map<UUID, Integer> normalDamageToPlayers = new LinkedHashMap<>();
     public final Map<UUID, Integer> infectDamageToPlayers = new LinkedHashMap<>();

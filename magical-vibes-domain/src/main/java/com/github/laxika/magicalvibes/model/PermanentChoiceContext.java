@@ -2659,6 +2659,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     record DayNightTransformAttachment(UUID permanentId, UUID controllerId) implements PermanentChoiceContext {}
 
+    /**
+     * The target choice of a spell being cast by an effect (a free cast). {@code sourceZone} is the zone the card is
+     * cast from, carried here until the spell is put onto the stack, whose entry then uses it.
+     */
     record LibraryCastSpellTarget(Card cardToCast, UUID controllerId, List<CardEffect> spellEffects,
                                   StackEntryType spellType, List<Card> cardsToBottom,
                                   Integer discoverValue, UUID ownerIdOverride, Zone sourceZone) implements PermanentChoiceContext {

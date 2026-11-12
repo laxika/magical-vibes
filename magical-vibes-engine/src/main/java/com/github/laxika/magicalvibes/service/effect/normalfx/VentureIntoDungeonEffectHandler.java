@@ -35,6 +35,13 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Moves the controller's venture marker (CR 309.5): into the first room of a dungeon they choose
+ * when they have none, otherwise along the arrows to the next room, asking which one where the
+ * dungeon branches, and puts that room's ability on the stack. Venturing from a bottom room
+ * completes that dungeon and starts a new one. A room's effect keeps the duration printed on the
+ * room (Fungi Cavern's -4/-0 lasts until its controller's next turn).
+ */
 @Component
 @RequiredArgsConstructor
 public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean {

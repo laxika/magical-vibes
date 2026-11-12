@@ -8,6 +8,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * The one "enter as a copy" choice that is open. It keeps the prepared permanent, with its identity, the zone it
+ * comes from and its owner, while the copy choices are answered. An entry paused in battlefield placement keeps
+ * its {@link #entryRequest} and re-enters placement with it once answered; a member of a simultaneous batch
+ * returns to {@link #battlefieldEntryBatch} instead of entering alone. {@link #copyablePermanentIds} limits the
+ * choice to the permanents that were on the battlefield as the entry began, so a copy can't pick a permanent
+ * entering with it or after it. Entries that reach their choice while this one is open wait in
+ * {@code GameData.pendingEntryCopyChoices}.
+ */
 public class CloneOperationState {
 
     public Card card;

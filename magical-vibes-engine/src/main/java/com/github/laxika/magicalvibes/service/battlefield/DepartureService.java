@@ -52,7 +52,8 @@ import java.util.function.Predicate;
  *       of its competing death replacements (CR 616.1), or answers its lone "may" replacement, in APNAP order.</li>
  *   <li><b>Perform</b> ({@link DepartureStage#PERFORM}): the destruction replacements are applied, last-known
  *       information of every departing permanent is taken, then they all leave together, each with its chosen
- *       replacement.</li>
+ *       replacement. Two or more departing permanents are one leave-the-battlefield batch, so a "whenever one or
+ *       more ... leave" watcher that leaves with them still sees the others leave.</li>
  *   <li><b>Report</b> ({@link DepartureStage#REPORT}): a {@link DepartureResult} per intent.</li>
  * </ol>
  *
@@ -148,9 +149,9 @@ public class DepartureService {
      * {@link GameData#rerunCurrentEffectAfterInteraction} is set and {@link DeathReplacementChoicePending} is
      * thrown, so the caller is parked and resolved (or completed) again once every answer is in. The rerun builds
      * the same batch, and this method continues the answered pending batch in its place. When the caller can't be
-     * stopped, nothing is asked: each permanent leaves as it did before departure batches existed (a lone
-     * question opens for it alone and it stays until answered). Such a batch therefore never returns
-     * {@link Outcome.Pending}; see {@link #departNow}.
+     * stopped, nothing is asked and the batch is performed at once; a permanent in it that needs an answer is
+     * reported to {@link LegacyDepartureFallback}, which throws, since nothing is asked after the event. Such a
+     * batch therefore never returns {@link Outcome.Pending}; see {@link #departNow}.
      */
     public Outcome depart(GameData gameData, DepartureBatch batch) {
         return depart(gameData, batch, Hooks.NONE);
@@ -207,7 +208,8 @@ public class DepartureService {
     /**
      * Drops an answered pending batch that no rerun took over, once the window its caller was stopped in has
      * closed without stopping it again (the effect fizzled, or chose differently), so it doesn't hold up later
-     * state-based checks.
+     * state-based checks. A batch owned by a resolution step is never dropped here and never taken over by a rerun;
+     * see {@link #discardOrphanedStepBatch}.
      */
     public static void discardAnsweredRerunBatch(GameData gameData) {
         DepartureBatch pending = gameData.pendingDepartureBatch;
@@ -420,6 +422,11 @@ public class DepartureService {
         return false;
     }
 
+    /**
+     * The hooks of a step departure: they log indestructible survivors, sacrifices and destructions and record each
+     * sacrifice for "whenever you sacrifice" triggers. They are built again each time the batch is departed or
+     * resumed and never stored on the batch, which is plain data.
+     */
     private Hooks stepHooks(GameData gameData, DepartureBatch batch) {
         return new Hooks(() -> {
             for (Departing departing : locate(gameData, batch, intent -> intent.cause() == DepartureCause.DESTROY)) {

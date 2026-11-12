@@ -109,7 +109,7 @@ public class ExileFreeCastSupport {
         ExiledCardEntry exiled = gameData.findExiledCard(exileCardId);
         if (exiled != null && exiled.card().getBackFaceCard() != null
                 && exiled.card().getCastingOption(AdventureCast.class).isPresent()) {
-            // An Adventure card may be cast as either face (CR 715.3), so the caster picks the creature or the Adventure.
+            // An Adventure card may be cast as either face (CR 716.3), so the caster picks the creature or the Adventure.
             java.util.Map<String, Integer> faces = new java.util.LinkedHashMap<>();
             faces.put("Cast " + exiled.card().getName(), 0);
             faces.put("Cast " + exiled.card().getBackFaceCard().getName(), 1);

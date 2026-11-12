@@ -3137,6 +3137,10 @@ public sealed interface ChoiceContext {
         }
     }
 
+    /**
+     * The mode choice of a modal spell being cast by an effect (a free cast). {@code sourceZone} is the zone the card
+     * is cast from, carried here until the spell is put onto the stack, whose entry and cast triggers then use it.
+     */
     record LibraryCastModeChoice(Card cardToCast, UUID controllerId, ChooseOneEffect effect,
                                  StackEntryType spellType, List<Integer> modeIndices,
                                  Integer discoverValue, Zone sourceZone) implements ChoiceContext {

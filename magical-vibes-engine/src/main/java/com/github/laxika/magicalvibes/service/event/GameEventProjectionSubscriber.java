@@ -145,6 +145,14 @@ public class GameEventProjectionSubscriber implements GameEventSubscriber {
         }
     }
 
+    /**
+     * Sends the prompt of a requested decision. The prompt is built from the live
+     * {@code gameData.interaction.activeInteraction()} as this runs, after the action that requested it has completed
+     * and released the game monitor, not from the {@code DecisionRequested} fact; the fact only has to match the
+     * active decision's identity and deciding player. An action may therefore refine the interaction an inner service
+     * began, through {@code InteractionState.replaceActiveInteraction}, until it returns, and the first delivery and
+     * every reconnect replay show the refined prompt.
+     */
     private void projectDecision(
             GameData gameData, GameEventFact.DecisionRequested decision, Set<UUID> recipients) {
         Set<UUID> authorizedRecipients = decisionRecipients(gameData, decision, recipients);

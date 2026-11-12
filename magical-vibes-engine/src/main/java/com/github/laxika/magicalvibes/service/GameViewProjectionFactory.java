@@ -1076,7 +1076,7 @@ public class GameViewProjectionFactory {
         if (frontView != null) {
             playable.add(frontView);
         }
-        // CR 715.3a: cast as an Adventure, only the Adventure's characteristics decide castability.
+        // CR 716.3a: cast as an Adventure, only the Adventure's characteristics decide castability.
         Card adventure = CastingPermissionService.adventureSpellCharacteristics(physicalTopCard);
         if (adventure != null) {
             CardView adventureView = playableLibraryTopSpellView(gameData, playerId, adventure,

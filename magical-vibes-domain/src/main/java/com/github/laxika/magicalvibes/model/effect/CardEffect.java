@@ -3,6 +3,18 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 
+/**
+ * Marker interface of every effect record. What the engine knows about an effect is registered once, keyed by the
+ * record's class, in the place that owns that knowledge: a {@code NormalEffectHandlerBean} resolves it from the
+ * stack, a {@code StaticEffectHandlerBean} applies it as a static ability, a {@code MayEffectHandlerBean} carries
+ * out the answer to its "you may", {@link #targetSpec()} declares what it targets (a {@code @ValidatesTarget}
+ * method adds only what a spec cannot express), and the capability interfaces of this package
+ * ({@link DamageDealingEffect}, {@link RemovalEffect}, {@link ManaProducingEffect}, {@link CardDrawingEffect},
+ * {@link LifeGainEffect}, {@link TokenCreatingEffect}, {@link CreatureBoostEffect}, {@link StaticCreatureBoostEffect},
+ * {@link KeywordGrantingEffect}, {@link ControlStealingEffect}, {@link CounterSpellingEffect},
+ * {@link RegenerationEffect}) tell the AI what it does. Engine and AI code outside the handler and validator
+ * packages reads those, not {@code instanceof} of a concrete effect; no build check enforces this.
+ */
 public interface CardEffect {
     /**
      * The zones a static ability made of this effect functions from: the battlefield (CR 113.6),

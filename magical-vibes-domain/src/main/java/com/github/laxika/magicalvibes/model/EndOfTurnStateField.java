@@ -77,6 +77,24 @@ package com.github.laxika.magicalvibes.model;
  * play-from-exile, cast-from-outside-hand, foretell and first-non-draw-step-draw records, the game's exiled-card
  * count, and the left-the-graveyard and creature-exile records ({@link Kind#COUNTS} by player for the counts). Each
  * record made while a player was active lasts until that player's cleanup step.
+ * The outside-the-game play permissions (Wish) are a {@link Kind#LIST} of the grants
+ * {@link OutsideGamePlayPermissionSet#grants()} returns, one {@code Set<UUID>} per single-play group and one
+ * {@code UUID} per lone card, so a spent group is not restored; the "exile it instead" riders and the permanents
+ * whose chosen subtype lasts until end of turn are {@link Kind#SET}s of ids (the cleanup step keeps the chosen
+ * subtype of a retained permanent).
+ *
+ * <p>Bookkeeping of one draw or one spell that cannot be pending across a cleanup step
+ * ({@code GameData.chainsDrawReplacementsApplied}, {@code drawStepFirstDrawTaken},
+ * {@code spellsPaidUsingPendingAnyManaTypeThisTurn}) has no field here.
+ *
+ * <p>A new until-end-of-turn field of {@link Permanent} needs a constant here and its cases in
+ * {@code Permanent.endOfTurnStateValue} and {@code addEndOfTurnStateValue}, beside its line in
+ * {@link Permanent#resetModifiers()}. A new game-wide store cleared by
+ * {@code TurnCleanupService.resetEndOfTurnModifiers} needs a {@code GAME_} constant and its cases in
+ * {@code GameData.gameEndOfTurnStateValue} and {@code addGameEndOfTurnStateValue}. A new "this turn"
+ * {@code DelayedAction} type the cleanup step should end is added to {@link GameData#isThisTurnDelayedAction}. A
+ * keep-the-strongest store is written only through its {@code GameData} method
+ * ({@code addDamageLifeFloorUntilEndOfTurn}, {@code limitSpellsThisTurn}), which records the contribution.
  */
 public enum EndOfTurnStateField {
 

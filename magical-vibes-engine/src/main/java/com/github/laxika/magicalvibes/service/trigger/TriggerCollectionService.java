@@ -2858,8 +2858,13 @@ public class TriggerCollectionService {
         }
     }
 
-    /** Fires battlefield and graveyard-resident triggers whenever a player completes a dungeon. */
-    /** Completes a bottom room after its last room ability leaves the stack. */
+    /**
+     * Completes the controller's dungeon when {@code departedEntry} is a bottom-room ability and no
+     * other room ability of that dungeon is still on the stack (CR 309.6, CR 309.7). Called when the
+     * ability resolves, is countered, or is removed for having no legal target, so the dungeon is
+     * completed however its last room ability leaves the stack. Then fires the battlefield and
+     * graveyard abilities that trigger when a player completes a dungeon.
+     */
     public void completeDungeonRoomIfReady(GameData gameData, StackEntry departedEntry) {
         var completion = departedEntry.getEffectsToResolve().stream()
                 .filter(com.github.laxika.magicalvibes.model.effect.CompleteDungeonEffect.class::isInstance)

@@ -250,7 +250,7 @@ type is wired up; a type with no source listed is declared but not yet emitted.
 ### Damage cues
 
 Every damage event ends in one of two places once its replacement and prevention effects have
-applied (`agent-docs/ARCHITECTURE.md`, "Replacement ordering"), and that is where the cue is
+applied (`agent-docs/architecture/replacement-damage.md`), and that is where the cue is
 emitted, so redirected, combined (simultaneous) and replayed (journaled) damage all get exactly one
 cue per event with the amount dealt:
 

@@ -4,6 +4,13 @@ import com.github.laxika.magicalvibes.model.Card;
 
 import java.util.function.Supplier;
 
+/**
+ * One {@link CardRegistration}: a card class registered at a set code and collector number.
+ *
+ * @param hasBackFace whether the class declares a back face, known from the scan without loading
+ *                    the class
+ * @param factory     constructs the card; the class is loaded on the first call, not at scan time
+ */
 public record CardPrinting(
         String setCode,
         String collectorNumber,

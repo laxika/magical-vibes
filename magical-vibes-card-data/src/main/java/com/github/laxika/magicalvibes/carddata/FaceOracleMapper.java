@@ -30,6 +30,10 @@ public final class FaceOracleMapper {
     }
 
     /**
+     * Maps one face. The front face of a split card, under either the {@code split} or the
+     * {@code aftermath} layout, is the whole card: it keeps both names (CR 709.4a) and carries the
+     * provider's combined mana value, since its mana cost is that of both halves (CR 709.4b).
+     *
      * @param isBackFace the one thing a face cannot tell about itself, and what four of the rules
      *                   below turn on
      */

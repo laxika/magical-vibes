@@ -100,7 +100,9 @@ public class InteractionHandlerRegistry {
 
     /**
      * Once every prompt nested under a suspended interaction is answered, makes that interaction
-     * active again and re-delivers it under its original decision identity.
+     * active again and re-delivers it under its original decision identity. The input-completion epilogue calls
+     * this before state-based actions, the parked resolution and auto-pass, and {@code GameService.handleInteractionAnswer} calls it for a handler that
+     * ended without the epilogue, so the outer prompt is never stranded.
      *
      * @return {@code true} when an interaction was resumed
      */

@@ -44,6 +44,17 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+/**
+ * Performs the state-based actions (CR 704.3) and is the only place a creature dies from damage or from 0
+ * toughness (CR 704.5f, 704.5g, 704.5h). Damage code only records: marked damage, the
+ * {@code Permanent.damagedByDeathtouch} flag, loyalty or defense removal, and -1/-1 counters for infect and
+ * wither. {@link #performStateBasedActions} turns those records into deaths, together with 0 loyalty, 0
+ * defense, completed Sagas, the world rule, redundant Roles, illegal attachments and the players' loss
+ * conditions; it is called after every stack resolution, input completion and combat damage step. Each check's
+ * deaths leave as one {@code DepartureBatch}. The lethality test lives here alone:
+ * {@code GameQueryService.getLethalDamageThreshold} is read elsewhere only to assign combat damage and to work
+ * out excess damage.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

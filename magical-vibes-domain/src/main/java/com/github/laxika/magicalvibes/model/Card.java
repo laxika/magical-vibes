@@ -168,7 +168,8 @@ public class Card {
     /**
      * The whole split card, with both halves' combined characteristics, that this runtime copy was
      * cast from as one half; null otherwise. Only the cast half exists on the stack (CR 709.3b), but
-     * the card has its combined characteristics again in every other zone (CR 709.4).
+     * the card has its combined characteristics again in every other zone (CR 709.4). A frozen
+     * snapshot; a copy of this card made with a new identity doesn't keep it.
      */
     private Card splitWholeCard;
 

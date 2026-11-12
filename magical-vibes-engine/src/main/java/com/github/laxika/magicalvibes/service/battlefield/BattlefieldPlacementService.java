@@ -122,6 +122,19 @@ import java.util.stream.Collectors;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * Puts one permanent onto the battlefield, behind the {@code BattlefieldEntryService} facade.
+ *
+ * <p>{@link #place} first offers every choice that is made before the permanent enters (CR 614.12a): the "enter
+ * as a copy" choice an entry wasn't offered yet ({@code CloneService.beginEntryCopyChoice}), amplify, unleash,
+ * riot, as-enters discards and the creature's position. Each pauses the {@link BattlefieldEntryRequest} and the
+ * answer resumes it, so the entry keeps its spell metadata and its triggers are collected after it.
+ *
+ * <p>Permanents of one simultaneous batch are placed one at a time. The caller takes
+ * {@link #snapshotEnterTappedTypes} once before the batch and passes the members already placed as
+ * {@code simultaneouslyEntered}; the batch is hidden from every battlefield while the entering member's
+ * replacement effects are determined (CR 614.12), so no batch member affects how another enters.
+ */
 @Slf4j
 @Component
 public class BattlefieldPlacementService {
@@ -1581,6 +1594,11 @@ public class BattlefieldPlacementService {
         });
     }
 
+    /**
+     * The card types that enter tapped because of static abilities on the battlefield now. A caller entering
+     * several permanents in one event takes this once, before the first enters, so a member of the batch doesn't
+     * make a later member enter tapped.
+     */
     public Set<CardType> snapshotEnterTappedTypes(GameData gameData) {
         Set<CardType> enterTappedTypes = EnumSet.noneOf(CardType.class);
 

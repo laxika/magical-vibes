@@ -24,6 +24,9 @@ import java.util.UUID;
  * the recipient (or the player they control) may make right now as a special action.
  * {@code playableOpponentHandIndices} are the indices of the revealed {@code opponentHand} the recipient may play
  * from right now (Sen Triplets lets them play lands and cast spells from that hand).
+ * {@code lookedAtExileCards} are the face-down exiled cards this recipient alone may look at, an
+ * immutable list; it includes cards they cannot play and cards whose exiling source has left, and
+ * none of them is added to {@code playableExileCards} for being looked at.
  */
 @Builder(toBuilder = true)
 public record GameStateMessage(

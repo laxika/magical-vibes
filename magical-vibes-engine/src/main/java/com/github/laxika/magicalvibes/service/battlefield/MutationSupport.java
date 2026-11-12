@@ -25,7 +25,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-/** Resolves targeted mutate casts while preserving the existing permanent and its physical cards. */
+/**
+ * Resolves targeted mutate casts while preserving the existing permanent and its physical cards.
+ *
+ * <p>A mutating creature spell whose target is illegal as it begins resolving resolves as an ordinary creature
+ * spell (CR 702.140b). With a legal target its controller chooses top or bottom (CR 702.140c) through
+ * {@link ChoiceContext.MutateOrderChoice}, and {@link #merge} keeps the existing {@link Permanent} object, with its
+ * controller, counters, attachments and combat state: the merged permanent hasn't entered the battlefield
+ * (CR 731.2b), so mutate triggers are collected and battlefield-entry triggers are not.
+ *
+ * <p>The merged, frozen {@code Permanent.card} carries the top component's copiable characteristics and the
+ * abilities of every component; {@code Permanent.mutatedComponentCards} keeps the physical components, top first.
+ * The top component decides whether the permanent is a token, and each token component stays marked as one.
+ */
 @Service
 @RequiredArgsConstructor
 public class MutationSupport {

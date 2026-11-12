@@ -26,6 +26,11 @@ import java.util.Optional;
  * many of those tokens"), including tokens an addition such as Queen Allenal of Ruadach put in the
  * event before it. An effect that adds tokens of a kind (Xorn) adds them once, to the first group
  * of that kind.
+ *
+ * <p>Applicability is judged per group of the event as it stands (CR 616.1f): an effect that applies to none of
+ * the original tokens becomes an option once an addition puts a token it applies to in the event (a
+ * creature-only multiplier and the Squirrels Chatterfang adds to a noncreature token event), and an effect
+ * already applied to the event is not offered again (CR 614.5).
  */
 @Component
 public class TokenCreationReplacements implements ReplacementCandidateSource<TokenCreationEvent> {

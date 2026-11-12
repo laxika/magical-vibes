@@ -2683,7 +2683,7 @@ public class MayCastHandlerService {
                                                      List<Integer> castableSplitModes,
                                                      boolean castAsAdventure) {
         Card physicalCard = ability.sourceCard();
-        // CR 715.3: cast as an Adventure, the spell has only its Adventure's characteristics.
+        // CR 716.3b: cast as an Adventure, the spell has only its Adventure's characteristics.
         Card cardToCast = castAsAdventure && physicalCard.getBackFaceCard() != null
                 ? physicalCard.createRuntimeCopyWithFace(physicalCard.getBackFaceCard())
                 : physicalCard;

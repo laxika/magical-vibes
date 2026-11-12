@@ -634,6 +634,11 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * Put the given cards on the top (or bottom) of {@code deckOwnerId}'s library in an order
      * of the deciding player's choosing. {@code prompt} is the exact text shown at begin time
      * (also re-sent on reconnect).
+     *
+     * <p>With a {@code destinationZone} the cards are the nontoken components of a merged permanent that already
+     * reached that owner's graveyard or library (at {@code destinationPosition}); the owner arranges them
+     * (CR 731.3a) by reordering them in place, without another zone change. Such an order is begun before the
+     * other queued input continuations.
      */
     record LibraryReorder(UUID playerId, java.util.List<Card> cards, boolean toBottom,
                           UUID deckOwnerId, String prompt, int drawAfterReorder,

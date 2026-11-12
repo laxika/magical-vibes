@@ -11,6 +11,10 @@ import java.util.Map;
  * {@link EffectHandlerRegistry}. Populated at startup by {@code GameEngineConfig} and consulted by
  * {@code MayAbilityHandlerService.handleMayAbilityChosen}, which iterates a pending ability's effects
  * in list order and dispatches to the first one with a registered handler.
+ *
+ * <p>The lookup is by {@code effect.getClass()}, so a may-effect typed by an interface is keyed per concrete
+ * implementor: each {@code CounterUnlessEffect} record ({@code CounterUnlessPaysEffect},
+ * {@code CounterUnlessDiscardsEffect}, ...) has a bean of its own.
  */
 public class MayEffectHandlerRegistry {
 

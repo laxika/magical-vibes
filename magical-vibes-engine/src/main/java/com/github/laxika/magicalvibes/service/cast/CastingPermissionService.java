@@ -2555,7 +2555,7 @@ public class CastingPermissionService {
     /**
      * Builds the characteristics used when casting an adventurer card as its Adventure: the card's
      * identity with only the Adventure's characteristics, so every castability check (a top-library
-     * permission's card types included) sees the Adventure alone (CR 715.3a). Returns {@code null}
+     * permission's card types included) sees the Adventure alone (CR 716.3a). Returns {@code null}
      * when the card has no Adventure that is an instant or sorcery.
      */
     public static Card adventureSpellCharacteristics(Card card) {

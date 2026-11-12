@@ -29,6 +29,11 @@ import java.util.UUID;
  * <p>This service detects the first such violation for a given player and prompts them to choose
  * which legendary permanent to keep. Only one violation is processed at a time; subsequent
  * violations are handled on the next state-based action check.
+ *
+ * <p>{@code StateBasedActionService.performStateBasedActions} runs the check for every player, so no path
+ * that puts a permanent onto the battlefield or changes its controller has to call it. The check opens a
+ * player choice, so the state-based pass skips it while another interaction is open or queued and finds the
+ * violation again on its next run.
  */
 @Service
 @RequiredArgsConstructor

@@ -77,3 +77,9 @@ narrows application test compilation; ordinary build configuration is unchanged.
 Frontend regressions are `websocket-subgame.spec.ts`, `game-subgame.spec.ts`, and
 `subgame.browser.spec.ts`. The browser test renders both player perspectives
 through five nesting levels and the return path.
+
+## Engine invariants
+
+`GameSession` owns independently mutable `GameData` frames and a stable root identity. Only the active frame accepts player actions. `GameMutationCoordinator` acquires the session lock before the per-game action lock and monitor; `SubgameService` drains transitions after the originating scope completes. Cross-game mutations are sequential, never nested. Suspended parents retain their deferred spell entries. Registry exact-ID lookup remains available to event projection, while `getActive` and player routing follow the active frame. Simulation copies duplicate the complete session and suppress registry/transport side effects.
+
+Outside-game selection uses `OutsideGameCards.view`, which includes eligible cards in suspended ancestors. Removing an ancestor candidate queues a `PendingAncestorTransfer`; the transition service removes it from the actual source and defers ancestor triggers. Do not read `playerSideboards` directly for general outside-game effects.

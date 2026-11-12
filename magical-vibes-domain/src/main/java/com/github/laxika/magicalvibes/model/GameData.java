@@ -482,7 +482,12 @@ public class GameData {
     /** Players who controlled a permanent that received a +1/+1 counter this turn. */
     public final Set<UUID> playersWhoControlledPermanentsThatReceivedPlusOneCountersThisTurn = ConcurrentHashMap.newKeySet();
     public final Set<UUID> permanentsThatReceivedPlusOnePlusOneCountersThisTurn = ConcurrentHashMap.newKeySet();
-    /** Permanents receiving +1/+1 counters, grouped by the player who put those counters. */
+    /**
+     * Permanents that had +1/+1 counters put on them this turn, grouped by the player who put those
+     * counters. A placement stays recorded if the counters are later removed; cleared when the turn
+     * advances. Predicates in static abilities read it, so it is part of the layer-system
+     * fingerprint.
+     */
     public final Map<UUID, Set<UUID>> permanentsWithPlusOneCountersPutByPlayerThisTurn = new ConcurrentHashMap<>();
     /** Per-player count of +1/+1 counters put on creatures they controlled this turn. */
     public final Map<UUID, Integer> plusOnePlusOneCountersPutOnControlledCreaturesThisTurn = new ConcurrentHashMap<>();
@@ -537,7 +542,11 @@ public class GameData {
     /** Mana spent to cast a countered spell and that spell's mana value at the time it was on the stack. */
     public record CounteredSpellManaCost(int manaSpent, int manaValue) {
     }
-    /** Perpetual base-power/base-toughness setters keyed by physical card identity. */
+    /**
+     * Perpetual base-power/base-toughness setters keyed by physical card identity, each with the timestamp of the
+     * effect that set it. They apply as base power and toughness (CR 613.4b) to the card on the battlefield and
+     * in every other zone.
+     */
     public final Map<UUID, PerpetualBasePowerToughness> perpetualCardBasePowerToughness =
             new ConcurrentHashMap<>();
     /** Perpetual static effects granted to physical cards while they are on the battlefield. */
@@ -1007,7 +1016,11 @@ public class GameData {
     public final Map<UUID, UUID> lukkaExileCastPermissions = new ConcurrentHashMap<>();
     /** Spells exiled with delay counters and waiting to go back onto the stack (Ertai's Meddling). */
     public final List<DelayedSpellExile> delayedSpellExiles = Collections.synchronizedList(new ArrayList<>());
-    /** Spells exiled with suspend counters and waiting for their owners' upkeeps. */
+    /**
+     * Spells exiled with suspend counters and waiting for their owners' upkeeps. Effects that add
+     * or remove time counters on suspended cards apply to these as well as to cards suspended from
+     * a hand; removing the last counter queues the owner's optional free cast (CR 702.62a).
+     */
     public final List<SuspendedSpellExile> suspendedSpellExiles = Collections.synchronizedList(new ArrayList<>());
     public final Map<UUID, Integer> playerDamagePreventionShields = new ConcurrentHashMap<>();
     /** Player IDs → remaining combat-damage-only prevention shields for this turn. */
@@ -2850,7 +2863,7 @@ public class GameData {
 
     /**
      * Adventurer cards in {@link #pendingFreeCastQueue} that are cast as their Adventure rather than as
-     * the card itself, because only the Adventure's mana value fits the effect's limit (CR 715.3a).
+     * the card itself, because only the Adventure's mana value fits the effect's limit (CR 716.3a).
      */
     public final Set<UUID> pendingFreeCastAdventureIds = ConcurrentHashMap.newKeySet();
 
@@ -2906,10 +2919,21 @@ public class GameData {
 
     /** Maps exiled card UUID → player UUID who has permission to play it (e.g. Praetor's Grasp). */
     public final Map<UUID, UUID> exilePlayPermissions = new ConcurrentHashMap<>();
-    /** Face-down exiled cards a player may look at for as long as they remain exiled. */
+    /**
+     * Face-down exiled cards a player may look at for as long as they remain exiled. Kept apart
+     * from {@link #exilePlayPermissions}: a card may be looked at without being playable. The
+     * player is the one granted access by the resolution that exiled the card; a later change of
+     * the source's controller doesn't move the permission, and it outlasts the source. Removed when
+     * the card leaves exile.
+     */
     public final Map<UUID, UUID> exileLookPermissions = new ConcurrentHashMap<>();
 
-    /** Players who retain permission to look at a face-down card while it remains exiled. */
+    /**
+     * Players who retain permission to look at a face-down card while it remains exiled, in
+     * addition to {@link #exileLookPermissions}. A source whose ability lets its controller look at
+     * the cards exiled with it (Bane Alley Broker) adds each player who gains control of it; a
+     * viewer stays until the card leaves exile, also after the source is gone.
+     */
     public final Map<UUID, Set<UUID>> additionalExileLookPermissions = new ConcurrentHashMap<>();
     /** Maps cards granted by one effect to their shared limited exile-play permission group. */
     public final Map<UUID, UUID> exilePlayPermissionGroups = new ConcurrentHashMap<>();
@@ -8336,12 +8360,19 @@ public class GameData {
         return drained;
     }
     public final Map<UUID, UUID> pendingCommandCasts = new ConcurrentHashMap<>();
+    /** While set, {@link #commandCastPlayerId} is casting {@link #commandCastCardId} from the command zone. */
     public UUID commandCastPlayerId;
     public UUID commandCastCardId;
     /** While set, {@link #foreignHandPlayPlayerId} is playing a card from {@link #foreignHandOwnerId}'s hand
      *  (Sen Triplets): the hand cast and land-play paths read that hand instead of the player's own. */
     public UUID foreignHandPlayPlayerId;
     public UUID foreignHandOwnerId;
+    /**
+     * The cards a hand cast or land play by {@code playerId} takes its card from: the player's command zone during
+     * a commander cast, another player's hand during a foreign-hand play, otherwise the player's own hand. The hand
+     * cast and land-play paths read the card through this and never through {@link #playerHands}, so one cast path
+     * serves every source zone. Costs are still paid from the caster's own pool and hand.
+     */
     public List<Card> castingSourceCards(UUID playerId) {
         if (playerId.equals(commandCastPlayerId)) return playerCommandZones.get(playerId);
         if (playerId.equals(foreignHandPlayPlayerId)) return playerHands.get(foreignHandOwnerId);

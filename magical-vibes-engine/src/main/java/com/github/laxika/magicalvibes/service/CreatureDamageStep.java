@@ -7,9 +7,10 @@ import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 
 /**
  * One replacement or prevention effect that can apply to damage dealt to a permanent, as
- * {@link DamagePreventionService#creatureDamageSteps()} lists them. The fixed-order chain that
- * combat and redirected damage still use walks the steps in order; the CR 616.1 ordering offers
- * each applicable step to the permanent's controller.
+ * {@link DamagePreventionService#creatureDamageSteps()} lists them. The fixed-order chain
+ * ({@code DamagePreventionService.applyCreaturePreventionShield}) walks the steps in order; the CR 616.1
+ * ordering ({@code PermanentDamagePreventions}) offers each applicable step to the permanent's controller, for
+ * noncombat, combat and redirected damage alike.
  *
  * @param family     identifies the step for CR 614.5 bookkeeping
  * @param label      what the controller sees when choosing

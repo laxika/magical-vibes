@@ -34,7 +34,7 @@ steps, so every step must be self-contained: this file is the only state that ca
    anywhere.
 6. Update the relevant `agent-docs/` files — `EFFECTS_INDEX.md` (the category table at lines
    ~115-133 is the canonical spec and **must** be rewritten), `PREDICATES_REFERENCE.md`,
-   `TRIGGER_SLOT_TARGETING.md`, `CARD_IMPLEMENTATION_PLAYBOOK.md`, `ARCHITECTURE.md:33`.
+   `TRIGGER_SLOT_TARGETING.md`, `CARD_IMPLEMENTATION_PLAYBOOK.md`, `architecture/casting-stack.md`.
 7. Add or update tests. **Never run the full test suite** — run only the affected test classes
    with `--tests` filters.
 8. Mark the step `DONE` in the Step Index, with a one-line note if anything deviated.

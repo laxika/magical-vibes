@@ -28,6 +28,18 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegi
  * may ability, check whether further input is needed, and if not, let auto-pass
  * advance to its stable observation point before recording a state invalidation.
  * This service extracts those repeated patterns into reusable methods.
+ *
+ * <p>When an effect begins an interaction in the middle of a resolution, {@code EffectResolutionService} parks the
+ * stack entry in {@code GameData.pendingEffectResolutionEntry}. The handler that completes the interaction must end
+ * through an epilogue of this service, which is the only code that resumes the parked entry correctly: it presents
+ * queued may abilities first, resumes the entry (and each resolution it was nested in), stops when the resumed
+ * effects open a new prompt or the game has finished, and only then clears the priority passes, auto-passes and
+ * invalidates the player views. A handler that calls {@code resolveAutoPass} itself leaves the entry parked: the
+ * rest of the spell's effects never happen and {@code GameData.deferPlayerLossCheck} stays set, so no player can
+ * lose. A handler that calls {@code resolveEffectsFrom} itself skips the other steps. The one exception is
+ * {@link #sbaThenAutoPassWithoutResumingParkedResolution}. {@code InputHandlerEpilogueRatchetTest} allows no direct
+ * {@code resolveAutoPass} call in the input-answering packages, and {@code BaseCardTest} fails any card test that
+ * ends, not at a prompt, with an entry still parked.
  */
 @Service
 @RequiredArgsConstructor

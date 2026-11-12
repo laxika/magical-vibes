@@ -402,6 +402,11 @@ public class DamagePreventionService {
         return applyCreaturePreventionShield(gameData, permanent, damage, isCombatDamage, damageSource, true);
     }
 
+    /**
+     * The fixed-order chain: applies every step of {@link #creatureDamageSteps()} that applies to {@code damage},
+     * in list order, and returns the damage left. Damage that is dealt goes through the CR 616.1 ordering
+     * instead, which offers the same steps as options.
+     */
     private int applyCreaturePreventionShield(GameData gameData, Permanent permanent, int damage,
                                               boolean isCombatDamage, Permanent damageSource,
                                               boolean applySelfDamagePrevention) {

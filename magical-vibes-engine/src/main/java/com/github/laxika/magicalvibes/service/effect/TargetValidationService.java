@@ -37,6 +37,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Checks the targets of effects. The structural part of every effect's targeting is its {@link TargetSpec}
+ * ({@code CardEffect.targetSpec()}), which this service interprets first for every effect. A method annotated
+ * {@link ValidatesTarget} for the effect's class, when one is registered, runs after it and holds only the rules a
+ * spec cannot express (an opponent relation, a controller or owner comparison, a chosen source, tolerance of a
+ * missing target); such an effect still declares its spec.
+ */
 @Service
 public class TargetValidationService {
 

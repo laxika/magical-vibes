@@ -138,6 +138,15 @@ public class MayAbilityHandlerService {
                         && disposition != CardPileDisposition.PLAY_FROM_EXILE;
     }
 
+    /**
+     * Routes the answer to the first pending "you may" question. In order: Word of Command's play, Raging River's
+     * attacker choice, a pile choice, the "you may" of a resolving ability ({@link #handleResolutionTimeMayChoice}),
+     * a pending Equipment attach, then the first effect of the ability, in list order, that has a
+     * {@code MayEffectHandlerBean} in the {@code MayEffectHandlerRegistry}. The one effect tested by class here is
+     * {@code CastTopOfLibraryWithoutPayingManaCostEffect} (Galvanoth), whose branch is skipped when the effect does
+     * not match the ability's source card. An answer none of these takes is logged when declined and carried out by
+     * {@link #resolveAcceptedInAskingResolution} when accepted.
+     */
     public void handleMayAbilityChosen(GameData gameData, Player player, boolean accepted) {
         if (gameData.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) == null) {
             throw new IllegalStateException("Not awaiting may ability choice");

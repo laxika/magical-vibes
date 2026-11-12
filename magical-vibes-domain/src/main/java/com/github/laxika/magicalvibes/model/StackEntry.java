@@ -33,7 +33,11 @@ public class StackEntry {
     private final Card card;
     private UUID planarAbilityId = UUID.randomUUID();
 
-    /** Independent stack identity for abilities, including abilities with no card source. */
+    /**
+     * Independent stack identity for abilities, including abilities with no card source: a spell is identified by
+     * its card's id, each activated or triggered ability by an id of its own. The copy constructor keeps the
+     * identity, for snapshots and simulations; {@link #copyForNewStackObject()} gives a duplicate its own.
+     */
     public UUID getTargetableId() {
         return getCard() == null || sourcePlanarObject != null
                 || entryType == StackEntryType.ACTIVATED_ABILITY
@@ -408,9 +412,18 @@ public class StackEntry {
     /** Whether the spell's controller controlled a modified creature when the spell was finished being cast. */
     @Setter private boolean controlledModifiedCreatureAsCast;
     /** Card exiled as an additional behold cost, pending the permanent spell entering. */
-    /** The hand card revealed to pay a power-tracking additional cost. */
+    /**
+     * The player who was last offered a mana payment by this entry's resolution, kept on the entry so a later
+     * choice or copy reads this resolution's payer and not another entry's.
+     */
     @Setter private UUID lastManaPaymentPlayerId;
+    /** The cards milled to pay this ability's activation cost, kept on the entry and copied with it. */
     @Setter private List<Card> cardsMilledAsActivationCost = List.of();
+    /**
+     * The hand card revealed to pay a power-tracking additional cost, kept by identity. While it is in a hand,
+     * amounts read its effective power; {@link #revealedPowerCostCardLastKnownPower} holds the power it had when
+     * it last was there.
+     */
     @Setter private Card revealedPowerCostCard;
     /** The revealed card's last power while it remained in its owner's hand. */
     @Setter private int revealedPowerCostCardLastKnownPower;
@@ -527,7 +540,11 @@ public class StackEntry {
     /** Card ids of the permanents actually destroyed by the event that produced this entry. */
     @Setter private List<UUID> eventCardIds = List.of();
     private final Map<UUID, Long> eventCardGraveyardEntryVersions = new HashMap<>();
-    /** Cards exiled during this entry's resolution, excluding earlier uses of the same source. */
+    /**
+     * Cards exiled during this entry's resolution, excluding earlier uses of the same source. An immutable list, which
+     * a copy of the entry shares. A later step that acts on "cards exiled this way" reads this list, not the
+     * exile records linked to the source, which also hold cards exiled by earlier resolutions.
+     */
     private List<UUID> resolutionExiledCardIds = List.of();
 
     public void setProducedManaColors(Set<ManaColor> colors) {
@@ -628,9 +645,11 @@ public class StackEntry {
      */
     @Setter private List<Integer> eventManaValues = List.of();
     /**
-     * Last-known snapshot of the source permanent, set at activation time. Used to evaluate
-     * source-relative amounts (e.g. counters on the source) per CR 608.2h last-known
-     * information when the source left the battlefield before resolution (sacrifice costs).
+     * Last-known snapshot of the source permanent, set at activation time and refreshed as the source
+     * leaves the battlefield. Used to evaluate source-relative amounts (e.g. counters on the source) per
+     * CR 608.2h last-known information when the source left the battlefield before resolution (sacrifice
+     * costs). Being a copy of the permanent, it carries the source's combat state and the permanents that
+     * dealt damage to it this turn, which handlers read when the live source is gone.
      */
     @Setter private Permanent sourcePermanentSnapshot;
     /**
@@ -761,7 +780,12 @@ public class StackEntry {
     private List<Card> triggeringCards = List.of();
     /** Card id of the permanent sacrificed as an additional cost to cast this spell, when one was paid. */
     @Setter private UUID sacrificedCardId;
-    /** Card ids of permanents sacrificed as an activated-ability cost, retained for later effects. */
+    /**
+     * Card ids of permanents sacrificed as an activated-ability cost (the chosen permanents, the source, the
+     * Equipment that granted the ability), retained for "if one or more permanents were sacrificed to activate it"
+     * and "the cards sacrificed this way". A permanent sacrificed for a mana ability that made mana for the
+     * payment is not one of them.
+     */
     @Setter private List<UUID> sacrificedCardIds = List.of();
     /** Graveyard incarnation of each sacrificed card when it was sacrificed as a cost, keyed by card id. */
     @Setter private Map<UUID, Long> sacrificedCardGraveyardVersions = Map.of();
@@ -1969,6 +1993,11 @@ public class StackEntry {
         return getCard();
     }
 
+    /**
+     * The card with the characteristics this object has on the stack. A spell cast from an aftermath
+     * split card, with no explicit cast card, is only the half being cast (CR 709.3b);
+     * {@link #getPhysicalCard()} stays the whole card.
+     */
     public Card getCard() {
         if (castCard != null) {
             return castCard;
@@ -2103,6 +2132,11 @@ public class StackEntry {
         this.sacrificedCard = freezeCard(sacrificedCard);
     }
 
+    /**
+     * The card that moves when this object leaves the stack: resolving, countered, fizzled, exiled,
+     * or returned to a hand or library. For a spell cast as one half of a split card it is the whole
+     * card with its combined characteristics (CR 709.4), never the half.
+     */
     public Card getPhysicalCard() {
         if (bestowOriginalCard != null) {
             return bestowOriginalCard;

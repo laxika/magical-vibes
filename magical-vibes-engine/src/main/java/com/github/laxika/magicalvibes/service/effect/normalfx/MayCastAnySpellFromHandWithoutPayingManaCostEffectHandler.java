@@ -97,7 +97,7 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
                             eligible.put(backFaceCopy, null);
                         }
                     }
-                    // CR 715.3a: an adventurer card cast as an Adventure is judged by its Adventure's
+                    // CR 716.3a: an adventurer card cast as an Adventure is judged by its Adventure's
                     // characteristics alone.
                     if (c.getCastingOption(AdventureCast.class).isPresent() && c.getBackFaceCard() != null
                             && qualifies.test(c.getBackFaceCard())) {

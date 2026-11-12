@@ -59,7 +59,9 @@ public class StepDepartureSupport {
 
     /**
      * Destroys {@code permanents} as {@code step}, all as one event ({@code cantBeRegenerated} as the effect says);
-     * nothing follows it. Does nothing when the list is empty.
+     * nothing follows it. Does nothing when the list is empty. This is the handler's last action: the handler is not
+     * run again when a question ends the step, so it may have changed the game before the call (picked at random,
+     * flipped coins, dealt damage, countered a spell).
      */
     public void destroy(GameData gameData, StackEntry entry, CardEffect step, List<Permanent> permanents,
                         boolean cantBeRegenerated) {

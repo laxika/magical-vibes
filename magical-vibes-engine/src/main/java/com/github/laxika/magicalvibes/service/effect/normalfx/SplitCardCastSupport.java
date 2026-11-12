@@ -55,7 +55,9 @@ import java.util.stream.IntStream;
  * the spell is put onto the stack. Only the chosen half is evaluated to see if it can be cast
  * (CR 709.3a), so a half is offered only if it fits the cast's mana value limit and has a legal
  * set of targets. Both halves may be cast together only from the caster's own hand, and only by a
- * card with fuse (CR 702.102a).
+ * card with fuse (CR 702.102a). When a paid half's cost has {X}, X is announced after the half is
+ * chosen and before its targets (CR 601.2b); a free cast leaves X at 0. A card set aside from its
+ * zone while these choices are made goes back there if the cast fails.
  */
 @Slf4j
 @Component
@@ -296,7 +298,9 @@ public class SplitCardCastSupport {
      * The modes of a split card's modal spell (its halves, then its fused spell) whose spell has the
      * characteristics {@code test} asks for. A permission to cast a spell with certain
      * characteristics considers only the half being cast (CR 709.3a); check while the card is still
-     * in its zone, so counts such as the cards in hand are those the permission sees.
+     * in its zone, so counts such as the cards in hand are those the permission sees. A permission
+     * worded "cast a card with" certain characteristics is not checked here: it looks at the whole
+     * card's combined characteristics (CR 709.4), which the card itself reports off the stack.
      */
     public List<Integer> modesMatching(GameData gameData, Card card, UUID controllerId, Predicate<Card> test) {
         ChooseOneEffect modal = splitModal(card);

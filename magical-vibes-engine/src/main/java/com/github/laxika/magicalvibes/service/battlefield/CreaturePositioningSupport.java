@@ -14,7 +14,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-/** Keeps creature order fixed while positioning applies, and obtains new creatures' positions. */
+/**
+ * Keeps creature order fixed while positioning applies, and obtains new creatures' positions.
+ *
+ * <p>An entering creature's slot is chosen before it enters, after its other as-enters choices (devour last),
+ * and it is inserted at that slot among its controller's creatures; noncreature permanents are not neighbours.
+ * A creature that changes controller gets the same choice, one creature at a time.
+ */
 @Component
 @RequiredArgsConstructor
 public class CreaturePositioningSupport {

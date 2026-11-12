@@ -21,6 +21,13 @@ import java.util.stream.IntStream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Resolves Chaotic Transformation. The controller, name and card types of every target are recorded before the
+ * targets are exiled as one event, so each replacement reads them as the permanent last existed. The replacements
+ * are then made one at a time, starting with the active player's: a controller with several chooses which is next,
+ * and the rest is inserted as the next step of the same stack entry, so one reveal, with its battlefield entry and
+ * shuffle and any choices they ask for, is complete before the next reveal begins.
+ */
 @Component
 @RequiredArgsConstructor
 public class ExileEachTargetPermanentThenRevealUntilSharedCardTypeEffectHandler

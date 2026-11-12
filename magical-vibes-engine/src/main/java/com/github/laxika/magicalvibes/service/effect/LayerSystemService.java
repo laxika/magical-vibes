@@ -2962,7 +2962,8 @@ public class LayerSystemService {
      * carries (CR 305.6) — follows the new word. Recorded as the land's type override so the
      * tap funnel produces the new color; a later-layer L4 setter simply overwrites the entry
      * (layer order: text changes apply before type changes). Replacements compose in
-     * application order, like everywhere else.
+     * application order, like everywhere else. A replacement of one creature type word for
+     * another rewrites a printed creature type the same way (CR 612.2), without a land override.
      */
     private void applyTextChangesToPrintedLandTypes(Permanent permanent, CharacteristicState state,
                                                     Map<UUID, List<CardSubtype>> landTypeOverrides) {

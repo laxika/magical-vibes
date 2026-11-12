@@ -253,6 +253,32 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+/**
+ * Casts spells and plays lands from every zone a card can be played from.
+ *
+ * <p><b>Costs.</b> Every cast path validates the whole cast, its non-mana additional costs included
+ * ({@code AdditionalSpellCostService}), before it pays anything, and each pay method runs its validator again
+ * first: payments log eagerly and nothing rewinds them, so no check may follow a payment (CR 601.2h). A cast path
+ * that cannot carry a cost's payment selection (cast from exile, from the top of a library, most additional costs
+ * of a graveyard cast) refuses the cast instead of casting without the cost. A finished cast invalidates the
+ * player views only once the card is on the stack, its cast triggers are collected and the deferred mana-ability
+ * triggers are flushed.
+ *
+ * <p><b>Sacrifices paid as a cost.</b> A cast from hand, the command zone, a graveyard or the top of a library asks
+ * the death replacement questions (CR 616.1) of the permanents it sacrifices once its costs are validated and
+ * before any is paid, and only while its mana, life, log and stack are as they were when the cast started
+ * ({@code CastStartState}). The cast stops, its request is stored as a {@code GameData} replay record, and it is
+ * made again once every answer is in. A prepared free cast is made while something resolves, so it is paused
+ * instead ({@link #askFreeCastSacrificeAllFirst}).
+ *
+ * <p><b>Source zones.</b> The hand cast and land-play paths read their card through
+ * {@link GameData#castingSourceCards}, which the commander cast points at the command zone and
+ * {@link #playFromHandOf} at another player's hand; the caster pays from their own pool and hand and uses their own
+ * land play, and plot is not available from another zone. A spell cast from another player's hand or library
+ * carries {@code StackEntry.ownerIdOverride}, and a land played that way is tracked as controlled by a player who
+ * isn't its owner. When the player may play from the top of several libraries, the request names the library and
+ * {@code CastingPermissionService.resolveLibraryTopOwner} checks it.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -13567,8 +13593,10 @@ public class SpellCastingService {
     /**
      * Casts the top card of the library. With {@code castAsAdventure} an adventurer card is cast as
      * its Adventure: only the Adventure's characteristics are evaluated to see whether it can be cast
-     * (CR 715.3a), so an instant or sorcery permission (Johann, Apprentice Sorcerer) allows it, and the
-     * resolved spell is exiled with permission to cast the creature later (CR 715.3d).
+     * (CR 716.3a), so an instant or sorcery permission (Johann, Apprentice Sorcerer) allows it, and the
+     * resolved spell is exiled with permission to cast the creature later (CR 716.3d). With {@code castFaceDown}
+     * the permissions, restrictions and cost are those of the face-down spell: its face-down alternative cost is
+     * paid with the cost modifiers that apply to it, and no free or life-payment alternative replaces it.
      */
     public void playCardFromLibraryTop(GameData gameData, Player player, Integer xValue, UUID targetId,
                                        List<UUID> counterCostPermanentIds,

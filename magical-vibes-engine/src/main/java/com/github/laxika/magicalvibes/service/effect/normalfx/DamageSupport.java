@@ -1230,6 +1230,10 @@ public class DamageSupport {
      * effect starts is journaled, so a prompt in the middle of the effect is resolved by resolving
      * the effect again (see {@link DamageJournalService}); other damage that becomes due while a
      * replacement decision is outstanding waits in {@code GameData.pendingReplacementEvents}.
+     *
+     * <p>While a step of a simultaneous damage event is dispatched ({@code GameData.collectingDamageEvent}), the
+     * step's own damage is not dealt here: it is held in {@code GameData.pendingSimultaneousDamage} until the event
+     * ends, and the value returned for it is the unmodified amount. Damage other damage causes is never held.
      */
     private int processDamageEvent(GameData gameData, DamageEvent event) {
         if (gameData.collectingDamageEvent != null && damageJournalService.isEffectDamage(gameData)) {

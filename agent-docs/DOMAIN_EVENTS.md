@@ -98,6 +98,9 @@ Mutation and rules services depend on `GameMutationCoordinator`, `GameLogService
 read ports. They do not depend on projectors, message transport, sessions, connections, or
 networking output types.
 
+`GameActionAvailabilityService` is the shared transport-free playability query: action
+validation, AI planning, and the human view projector all ask it, and it builds no networking view.
+
 `GameViewProjectionFactory` builds complete views only for requested human recipients.
 `PrivateInformationProjectionFactory` creates reveal DTOs from authorized immutable snapshots.
 `InteractionPromptProjectionRegistry` uses exact `PendingInteraction` class registration and has

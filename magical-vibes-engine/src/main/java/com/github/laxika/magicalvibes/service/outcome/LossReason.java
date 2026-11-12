@@ -18,11 +18,13 @@ package com.github.laxika.magicalvibes.service.outcome;
  */
 public enum LossReason {
 
+    /** CR 903.10a — dealt 21 or more combat damage by the same commander over the course of the game. */
+    COMMANDER_DAMAGE,
+
     /**
      * CR 704.5a — state-based action for having 0 or less life. The only reason a
      * {@code CantLoseGameFromLifeEffect} (Phyrexian Unlife) prevents.
      */
-    COMMANDER_DAMAGE,
     LIFE,
 
     /** CR 704.5c — state-based action for having ten or more poison counters. */
@@ -35,7 +37,7 @@ public enum LossReason {
     EMPTY_LIBRARY,
 
     /**
-     * CR 104.3n — an ability states that the player loses the game (Immortal Coil, Phage the
+     * CR 104.3e — an ability states that the player loses the game (Immortal Coil, Phage the
      * Untouchable, Triskaidekaphobia, Forbidden Crypt's failed draw).
      */
     EFFECT,

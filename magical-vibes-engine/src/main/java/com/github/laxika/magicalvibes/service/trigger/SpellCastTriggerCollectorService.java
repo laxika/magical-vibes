@@ -349,7 +349,7 @@ public class SpellCastTriggerCollectorService {
         }
         Integer spellXValue = triggeringSpell == null ? null : triggeringSpell.getXValue();
         // A spell cast as an Adventure has only the adventure half's characteristics while on the stack
-        // (CR 715.3b), so its colors, types and mana cost are read from that half.
+        // (CR 716.3b), so its colors, types and mana cost are read from that half.
         Card spellFace = adventureHalfOnStack(triggeringSpell, spellCard);
         // A spell keeps the {X} in its mana cost on the stack (CR 107.3), so a filter asking for it
         // reads the printed cost rather than the cost with the chosen X substituted.

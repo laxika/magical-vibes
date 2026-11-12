@@ -33,8 +33,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Freezes the callers of the legacy single-permanent removal wrappers of {@link PermanentRemovalService}. Those
  * wrappers perform a one-permanent departure batch, but their callers can't be paused, so when a removal needs an
- * answer (CR 616.1) outside a window that can stop and run the caller again, it falls back to asking after the event
- * ({@code LegacyDepartureFallback}). New code must build its {@code DepartureBatch} and call
+ * answer (CR 616.1) outside a window that can stop and run the caller again, it is an engine error that
+ * {@code LegacyDepartureFallback} throws. New code must build its {@code DepartureBatch} and call
  * {@code DepartureService.depart} instead. When a caller is moved off the wrappers, remove it from
  * {@link #ALLOWED_CALLERS}; never add one.
  *

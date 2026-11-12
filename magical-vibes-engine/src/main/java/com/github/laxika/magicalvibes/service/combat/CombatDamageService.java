@@ -1931,6 +1931,11 @@ public class CombatDamageService {
         }
     }
 
+    /**
+     * Gains life for each creature of {@code lifelinkDealers} once, for all the combat damage it dealt in this
+     * damage step ({@code combatDamageDealt} holds each creature's sum), so its controller's "whenever you gain
+     * life" abilities see one life gain per lifelink creature.
+     */
     private void processLifelink(GameData gameData, Map<Permanent, Integer> combatDamageDealt,
                                  Set<Permanent> lifelinkDealers) {
         for (var entry : combatDamageDealt.entrySet()) {

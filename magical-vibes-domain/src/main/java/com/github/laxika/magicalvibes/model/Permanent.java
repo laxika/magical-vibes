@@ -677,11 +677,16 @@ public class Permanent {
     private final Set<UUID> untapPreventedWhileSourceOnBattlefieldIds = new HashSet<>();
     /** Land permanent ids that this Cyclopean Tomb put mire counters onto while it was on the battlefield. */
     private final Set<UUID> mireCounterLandIds = new HashSet<>();
+    /**
+     * The player whose untap step an exert-style untap skip applies to: the controller of the
+     * resolution that chose it (CR 701.43a). The skip counts only during that player's untap step
+     * and expires with it, even if another player controls the permanent by then. Null for a skip
+     * that applies in any untap step.
+     */
+    @Setter private UUID skipUntapControllerId;
     /** Number of untap steps this permanent should skip. Decremented each untap step.
      *  Multiple triggers (e.g. land tapped twice while Vorinclex is out) stack independently.
      *  Used by Vorinclex, Voice of Hunger's opponent-land lock. */
-    /** Restricts an exert-style untap skip to the player who chose it. */
-    @Setter private UUID skipUntapControllerId;
     @Setter private int skipUntapCount;
     /** Accumulated damage marked on this creature (CR 704.5g). Reset during cleanup step. */
     private int markedDamage;
@@ -857,7 +862,12 @@ public class Permanent {
      * to the destination zone.
      */
     private final List<Card> meldComponentCards = new ArrayList<>();
-    /** Physical components of a creature merged by mutate, ordered from top to bottom. */
+    /**
+     * Physical components of a creature merged by mutate, ordered from top to bottom. When the permanent leaves the
+     * battlefield one permanent leaves and each component moves to its own destination (CR 731.3,
+     * {@link #cardsLeavingBattlefield()}). The copy constructor keeps the
+     * list, while an object that copies this creature's characteristics is a single object without components.
+     */
     private final List<Card> mutatedComponentCards = new ArrayList<>();
     /** Activated abilities temporarily granted by one-shot effects until end of turn
      *  (e.g. Navigator's Compass adding a basic land mana ability to a land).

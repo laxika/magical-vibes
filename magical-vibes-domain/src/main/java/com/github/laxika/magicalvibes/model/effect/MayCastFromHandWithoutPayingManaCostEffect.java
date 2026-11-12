@@ -70,7 +70,7 @@ public record MayCastFromHandWithoutPayingManaCostEffect(
                 exileInsteadOfGraveyard, afterSuccessfulCastEffect, modes, castAsAdventure);
     }
 
-    /** This permission casting the adventurer card as its Adventure (CR 715.3). */
+    /** This permission casting the adventurer card as its Adventure (CR 716.3). */
     public MayCastFromHandWithoutPayingManaCostEffect asAdventure() {
         return new MayCastFromHandWithoutPayingManaCostEffect(revealCardOnDecline, choiceGroupId, declineEffect,
                 exileInsteadOfGraveyard, afterSuccessfulCastEffect, castableSplitModes, true);

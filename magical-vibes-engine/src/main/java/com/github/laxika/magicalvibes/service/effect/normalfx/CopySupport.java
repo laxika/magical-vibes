@@ -128,6 +128,12 @@ public class CopySupport {
      * together are decided in creation order. {@link #commitDecidedStagedCopies} later puts it onto the
      * stack. Without a prompt the copy is put onto the stack at once. Extra copies from global spell-copy
      * replacements each get their own "choose new targets" prompt.</p>
+     *
+     * <p>A staged copy is found through {@link #findStagedOrStackEntry}; code that changes its targets fires no
+     * becomes-the-target trigger for it ({@link #isStagedCopy}), because the commit fires them for the final
+     * targets. A "choose new targets" prompt is never queued for a spell copy that is already on the stack.
+     * Copies of activated and triggered abilities are not staged: they are put onto the stack before their
+     * retarget prompt is answered.</p>
      */
     public void addCopyToStack(GameData gameData, StackEntry copyEntry, boolean applySpellCopyReplacement,
                                PendingMayAbility retargetPrompt) {
@@ -442,6 +448,10 @@ public class CopySupport {
         triggerCollectionService.checkSpellCopyTriggers(gameData, copyEntry);
     }
 
+    /**
+     * A new card with the copiable values of {@code original} (CR 707.2). A copy of a split card
+     * keeps its halves and its combined mana value.
+     */
     private Card createCopyCard(Card original, boolean withoutEpic) {
         Card copy = new Card();
 
