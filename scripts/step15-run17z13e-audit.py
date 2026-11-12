@@ -121,7 +121,7 @@ DONE_ROWS = {"17z13e2", "17z13e3", "17z13e4", "17z13e5", "17z13e5b", "17z13e6", 
              "17z13e8c", "17z13e8d", "17z13e9", "17z14b", "17z14b2", "17z14c", "17z14c2", "17z14c3", "17z14d",
              "17z14e", "17z14f", "17z14g", "17z14h", "17z15", "17z15b", "17z15c", "17z15d", "17z15e", "17z16",
              "17z16b", "17z16b2", "17z16c", "17z16c2", "17z16c3", "17z16c3b", "17z16c3c", "17z16c4",
-             "17z16c4b", "17z16c4c", "17z17"}
+             "17z16c4b", "17z16c4c", "17z17", "17z17b"}
 
 # The reader branches keyed by an effect's class (file, effect class) -> verdict. Row 17z13e's three (the your-upkeep
 # `SurveilEffect`, the your-draw-step `MayEffect` and Haphazard Bombardment's branches) are gone. Run 17z13e8 read the

@@ -1978,9 +1978,12 @@ public class PermanentChoiceBattlefieldHandlerService {
                 }
                 targetedAbility = effects;
             } else {
-                gameData.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(),
+                StackEntry championed = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(),
                         context.controllerId(), source.getCard().getName() + "'s ability",
-                        new ArrayList<>(effects), null, source.getId()));
+                        new ArrayList<>(effects), null, source.getId());
+                // The active player as the ability triggered, as the entry of a targeted one records.
+                championed.setActivePlayerId(gameData.activePlayerId);
+                gameData.enqueueTrigger(championed);
                 gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
             }
         }

@@ -584,9 +584,11 @@ public class SpellCastTriggerCollectorService {
                     || abilityGroups.stream()
                     .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0);
             if (multiTarget) {
+                // The walk chooses against the X the entry of an ability that chooses nothing has, as the
+                // single-target choice below does.
                 match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         sourceCard, match.controllerId(), queued, sourcePermanentId,
-                        List.of(), 0, 0, List.of(), targetRestrictedBySpellManaValue ? abilityX : 0,
+                        List.of(), 0, 0, List.of(), abilityX,
                         List.of(), false, spellCard.getId(),
                         null, triggeringSpellManaValue));
             } else {

@@ -183,6 +183,7 @@ public class MiscTriggerCollectorService {
                 null,
                 List.of(),
                 List.of());
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         match.gameData().handOffTriggerRecord(entry);
         if (needsTarget) {
             boolean multiTarget = card.getTargetGroups().stream()
@@ -1117,6 +1118,7 @@ public class MiscTriggerCollectorService {
                 match.stackEffects(),
                 null,
                 source.getId());
+        entry.setSourcePermanentSnapshot(new Permanent(source));
         gameData.handOffTriggerRecord(entry);
         if (needsTarget) {
             gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(

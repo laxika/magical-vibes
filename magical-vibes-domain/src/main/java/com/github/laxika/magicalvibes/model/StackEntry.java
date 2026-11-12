@@ -1552,6 +1552,19 @@ public class StackEntry {
             this.targetId = record.targetId;
             this.nonTargeting = true;
         }
+        // How a permanent the event names last existed, when it left the battlefield before the choice was made
+        // (CR 608.2h): the record was stamped as it left, the entry was not built yet.
+        record.lastKnownPermanentCards.forEach(this.lastKnownPermanentCards::putIfAbsent);
+        record.lastKnownPermanentPowers.forEach(this.lastKnownPermanentPowers::putIfAbsent);
+        record.lastKnownPermanentToughnesses.forEach(this.lastKnownPermanentToughnesses::putIfAbsent);
+        record.lastKnownPermanentAttachments.forEach(this.lastKnownPermanentAttachments::putIfAbsent);
+        record.lastKnownPermanentCounters.forEach((id, counts) ->
+                this.lastKnownPermanentCounters.putIfAbsent(id, new EnumMap<>(counts)));
+        record.lastKnownTargetColors.forEach(this.lastKnownTargetColors::putIfAbsent);
+        record.removedPermanentControllers.forEach(this.removedPermanentControllers::putIfAbsent);
+        if (this.sourceAttachmentIds.isEmpty()) {
+            this.sourceAttachmentIds = record.sourceAttachmentIds;
+        }
         // The active player as the ability triggered (the player whose step it is) is the event's too.
         this.activePlayerId = record.activePlayerId;
         if (record.entryType == StackEntryType.TRIGGERED_ABILITY && record.copy) {

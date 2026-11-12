@@ -5274,6 +5274,7 @@ public class StepTriggerService {
                             (UUID) null,
                             perm.getId()
                     ), activePlayerId);
+                    endStepEntry.setSourcePermanentSnapshot(new Permanent(perm));
                     gameData.handOffTriggerRecord(endStepEntry);
                     if (conditionalTarget || declaredTarget) {
                         if (perm.getCard().getTargetGroups().size() > 1 || conditionalTarget

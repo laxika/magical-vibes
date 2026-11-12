@@ -6432,6 +6432,31 @@ public class GameData {
         triggerRecordInHand = null;
     }
 
+    /**
+     * Every stack object, and the record of every triggered ability that has triggered and is not on the stack yet
+     * (the one in hand, those kept with a queued choice or with a prompt). What a permanent leaving the battlefield
+     * stamps on the stack entries that name it (how it last existed, CR 608.2h) is stamped on each of them, so an
+     * ability whose target is chosen after the permanent left records the event as the one that chose nothing.
+     */
+    public List<StackEntry> stackEntriesAndTriggerRecords() {
+        List<StackEntry> entries;
+        synchronized (stack) {
+            entries = new ArrayList<>(stack);
+        }
+        Set<StackEntry> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+        seen.addAll(entries);
+        List<StackEntry> records = new ArrayList<>();
+        records.add(triggerRecordInHand);
+        records.addAll(queuedTriggerRecords.values());
+        records.addAll(interaction.triggerRecords());
+        for (StackEntry record : records) {
+            if (record != null && seen.add(record)) {
+                entries.add(record);
+            }
+        }
+        return entries;
+    }
+
     /** What was in hand before a collector began routing an ability ({@link #beginTriggerRouting}). */
     public record TriggerRouting(StackEntry recordInHand, boolean handedOff) {
     }

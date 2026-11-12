@@ -34,6 +34,7 @@ public class ExertTriggerCollectorService {
                 match.permanent().getId());
         entry.setTargetId(exert.exertedCreatureId());
         entry.setNonTargeting(true);
+        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         match.gameData().handOffTriggerRecord(entry);
         if (match.admits(TargetPredicate.Kind.PERMANENT)
                 || match.admits(TargetPredicate.Kind.PLAYER)) {

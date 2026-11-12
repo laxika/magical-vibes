@@ -2999,13 +2999,13 @@ public class TriggerCollectionService {
             entry.setTriggeringPermanentControllerId(creatureControllerId);
             entry.setEventValue(damageDealt);
             entry.setNonTargeting(true);
+            // "That player" is the player dealt damage, recorded whatever the ability chooses.
+            entry.setTriggeringPlayerId(damagedPlayerId);
+            entry.setAttackedTargetId(damagedPlayerId);
             gameData.handOffTriggerRecord(entry);
             if (resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
                 // The target is chosen as the trigger is put on the stack (CR 603.3d), by the watcher's
-                // controller; "that player" is the player dealt damage and "that much" the damage dealt.
-                // The record of the targeted ability names the player as the choice does.
-                entry.setTriggeringPlayerId(damagedPlayerId);
-                entry.setAttackedTargetId(damagedPlayerId);
+                // controller; "that much" is the damage dealt.
                 gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                         watcher.sourceCard(), watcher.controllerId(), List.of(resolvedEffect),
                         creature.getId(), watcher.controllerId(), damagedPlayerId, creature.getId())
@@ -4380,9 +4380,10 @@ public class TriggerCollectionService {
             entry.setEventValue(damage);
             entry.setTriggeringPlayerId(damagedPlayerId);
             entry.setSourcePermanentSnapshot(new Permanent(permanent));
+            // The player dealt damage, against whom a target "that player controls" is judged, is the event's.
+            entry.setAttackedTargetId(damagedPlayerId);
             gameData.handOffTriggerRecord(entry);
             if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
-                entry.setAttackedTargetId(damagedPlayerId);
                 gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                         permanent.getCard(), controllerId, new ArrayList<>(effects), permanent.getId(), controllerId,
                         damagedPlayerId).withEventValue(damage).withTriggeringPlayer(damagedPlayerId));
@@ -6395,6 +6396,7 @@ public class TriggerCollectionService {
                 StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, enteringCard,
                         enteringControllerId, enteringCard.getName() + "'s ability",
                         new ArrayList<>(abilityEffects), null, enteringPermanent.getId());
+                entry.setSourcePermanentSnapshot(new Permanent(enteringPermanent));
                 gameData.handOffTriggerRecord(entry);
                 if (targets) {
                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
@@ -6690,7 +6692,7 @@ public class TriggerCollectionService {
                             gameData, targetPermanent, controllerId, spellEntry));
             collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
                     () -> collectAllyCreatureBecomesTargetOfSpellTriggers(
-                            gameData, targetPermanent, controllerId));
+                            gameData, targetPermanent, controllerId, spellEntry));
             collectWithAllyCreatureBecomesTargetCopies(gameData, targetPermanent, controllerId,
                     () -> collectAllyCreatureBecomesTargetOfInstantOrSorceryTriggers(
                             gameData, targetPermanent, controllerId, spellEntry));
@@ -7736,10 +7738,13 @@ public class TriggerCollectionService {
                     null,
                     source.getId()
             );
+            // The spell or ability's controller, whose permanents a target "that player controls" is judged
+            // against, and the source as the ability triggered are the event's, whatever the ability chooses.
+            entry.setAttackedTargetId(spellOrAbilityControllerId);
+            entry.setSourcePermanentSnapshot(new Permanent(source));
             if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
                 recordTargetingObject(entry, triggeringEntry);
-                entry.setAttackedTargetId(spellOrAbilityControllerId);
                 gameData.handOffTriggerRecord(entry);
                 gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
                         source.getCard(), controllerId, new ArrayList<>(effects), source.getId(),
@@ -7849,6 +7854,10 @@ public class TriggerCollectionService {
                 // "That spell or ability's controller" is the triggering spell's, read as the ability resolves;
                 // the object leaving the stack first doesn't stop the ability.
                 entry.setNonTargeting(true);
+                // The targeted creature is the event's permanent and the source is recorded as the ability
+                // triggered, whatever the ability chooses.
+                entry.setTriggeringPermanentId(targetPermanent.getId());
+                entry.setSourcePermanentSnapshot(new Permanent(source));
                 if (targetingEffects.isEmpty()) {
                     enqueueTargetTriggeredAbility(gameData, triggeringEntry, entry);
 
@@ -7885,6 +7894,9 @@ public class TriggerCollectionService {
                         targetFilter,
                         0, source.getId(), new Permanent(source), false,
                         targetPermanent.getId(), permanentTargetControllerId, creatureControllerId));
+                // The choice names the targeted creature; the record's triggering card stays the spell or ability
+                // that targeted it, as on the entry of an ability that chooses nothing.
+                recordTargetingObject(entry, triggeringEntry);
                 gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                         "'s triggered ability triggers."));
             }
@@ -8124,11 +8136,13 @@ public class TriggerCollectionService {
     /**
      * Checks ALL permanents on the targeted creature's controller's battlefield for
      * {@link TargetWatch#ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL}. Only the spell path calls this
-     * method, so activated abilities do not trigger it. The card's target groups are reused to
-     * choose any optional targets as the triggered ability is put on the stack.
+     * method, so activated abilities do not trigger it. Each ability's entry records the targeted creature as its
+     * non-targeting "that creature" and the spell that targeted it, as its sibling collectors' do; an ability that
+     * chooses a permanent or a player as its target is handed to that choice with the entry as its record (the
+     * card's target groups are chosen as the ability is put on the stack, CR 603.3d), any other goes on the stack.
      */
     private void collectAllyCreatureBecomesTargetOfSpellTriggers(
-            GameData gameData, Permanent targetPermanent, UUID creatureControllerId) {
+            GameData gameData, Permanent targetPermanent, UUID creatureControllerId, StackEntry triggeringEntry) {
         if (!gameQueryService.isCreature(gameData, targetPermanent)) return;
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(creatureControllerId);
@@ -8139,30 +8153,43 @@ public class TriggerCollectionService {
             GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, source);
             if (staticBonus.losesAllAbilities() || staticBonus.losesAllNonManaAbilities()
                     || gameQueryService.hasLostPrintedAbilities(gameData, source)) continue;
-            // Each ability is one object of all its effects (CR 603.3), its targets chosen as it goes on the stack.
+            // Each ability is one object of all its effects (CR 603.3).
             for (List<CardEffect> effects : targetAbilities(gameData, source,
                     TargetWatch.ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL)) {
-                // The ability always targets: its record is the entry it would have with nothing chosen.
-                gameData.handOffTriggerRecord(new StackEntry(
+                StackEntry entry = new StackEntry(
                         StackEntryType.TRIGGERED_ABILITY,
                         source.getCard(),
                         creatureControllerId,
                         source.getCard().getName() + "'s triggered ability",
                         new ArrayList<>(effects),
-                        null,
-                        source.getId()));
-                if (source.getCard().getTargetGroups().size() > 1
-                        || etbTokenTargetService.needsSlotBySlotTargetSelection(source.getCard())) {
-                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                            source.getCard(), creatureControllerId, effects, source.getId(), List.of(), 0, 0));
-                } else {
-                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                            source.getCard(), creatureControllerId, effects, source.getId(),
-                            source.getCard().getTargetFilter()));
-                }
-
-                gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
-                        "'s triggered ability triggers — choose targets."));
+                        targetPermanent.getId(),
+                        source.getId());
+                entry.setNonTargeting(true);
+                entry.setSourcePermanentSnapshot(new Permanent(source));
+                recordTargetingObject(entry, triggeringEntry);
+                boolean choosesTarget = effects.stream().anyMatch(effect ->
+                        effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+                gameData.routeTriggeredAbility(() -> {
+                    gameData.handOffTriggerRecord(entry);
+                    if (!choosesTarget) {
+                        gameData.stack.add(entry);
+                        gameLogService.append(gameData,
+                                GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
+                    } else {
+                        if (source.getCard().getTargetGroups().size() > 1
+                                || etbTokenTargetService.needsSlotBySlotTargetSelection(source.getCard())) {
+                            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                                    source.getCard(), creatureControllerId, effects, source.getId(), List.of(), 0, 0));
+                        } else {
+                            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
+                                    source.getCard(), creatureControllerId, effects, source.getId(),
+                                    source.getCard().getTargetFilter()));
+                        }
+                        gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
+                                "'s triggered ability triggers — choose targets."));
+                    }
+                });
                 log.info("Game {} - {} ally-creature-becomes-target-of-spell trigger queued",
                         gameData.id, source.getCard().getName());
             }
@@ -15158,6 +15185,7 @@ public class TriggerCollectionService {
                         null,
                         equipment.getId());
                 entry.setTriggeringPermanentId(equipped.getId());
+                entry.setSourcePermanentSnapshot(new Permanent(equipment));
                 gameData.handOffTriggerRecord(entry);
                 if (stackEffects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {

@@ -202,6 +202,7 @@ public class StateTriggerService {
                             entry.setDamageSourceCard(referencedPermanent.getCard());
                         }
                         entry.setStateTriggerEffectIndex(i);
+                        entry.setSourcePermanentSnapshot(new Permanent(perm));
                         gameData.handOffTriggerRecord(entry);
                         if (hasTargets(perm, trigger)) {
                             PermanentChoiceContext.ETBTokenMultiTargetTrigger pending =

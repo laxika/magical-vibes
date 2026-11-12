@@ -254,9 +254,11 @@ public class CombatTriggerService {
                                     : gameData.playerIds.contains(attackedTargetId)
                                             ? attackedTargetId
                                             : gameQueryService.findPermanentController(gameData, attackedTargetId);
+                            // The ability's controller and source are the record's: a granted ability is the
+                            // enchanted creature's (CR 113.8), whatever it chooses.
                             graveyardTargetingService.handleAttackGraveyardTargeting(
-                                    gameData, auraOwnerId, perm.getCard(), effectsForStack, perm.getId(),
-                                    defendingPlayerId, List.of(), trigger);
+                                    gameData, trigger.getControllerId(), perm.getCard(), effectsForStack,
+                                    trigger.getSourcePermanentId(), defendingPlayerId, List.of(), trigger);
                             continue;
                         } else {
                             // Check if any effect needs a permanent target — queue for target selection
@@ -268,7 +270,8 @@ public class CombatTriggerService {
                                         && effectsForStack.stream().noneMatch(effect ->
                                         perm.getCard().getEffectTargetIndex(effect) >= 0)) {
                                     gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                                            perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
+                                            perm.getCard(), trigger.getControllerId(), effectsForStack,
+                                            trigger.getSourcePermanentId(),
                                             List.of(), 1, 0, List.of(0), 0, List.of(), false, null,
                                             creature.getId()).withTriggerRecord(trigger));
                                 } else if (needsSlotBySlotTargetSelection(perm.getCard(), effectsForStack)) {
@@ -278,7 +281,8 @@ public class CombatTriggerService {
                                     List<Integer> skippedGroups = java.util.Collections.nCopies(firstGroup, 0);
                                     gameData.queueInteraction(
                                             new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                                                    perm.getCard(), auraOwnerId, effectsForStack, perm.getId(),
+                                                    perm.getCard(), trigger.getControllerId(), effectsForStack,
+                                                    trigger.getSourcePermanentId(),
                                                     List.of(), firstGroup, 0, skippedGroups, 0, List.of(), false,
                                                     null, creature.getId()).withTriggerRecord(trigger));
                                 } else {

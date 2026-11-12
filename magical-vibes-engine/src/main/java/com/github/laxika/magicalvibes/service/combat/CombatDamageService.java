@@ -3008,17 +3008,21 @@ public class CombatDamageService {
                                 gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card),
                                 dealtCombatDamage, Zone.GRAVEYARD), dealtCombatDamage,
                         conditionEvaluationService.judge(gameData, ConditionContext.forCard(card, playerId)))) {
-                    // The ability always targets, so there is no entry of one that chooses nothing: the record is
-                    // the bare entry of the ability from this graveyard incarnation, which the target choice
-                    // carries to the entry too (CR 400.7).
+                    // The entry of the ability from this graveyard incarnation when it chooses nothing, which the
+                    // target choice of one that chooses a permanent or a player carries to its entry too (CR 400.7).
                     List<CardEffect> effects = new ArrayList<>(ability.effects());
                     StackEntry record = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, playerId,
                             card.getName() + "'s triggered ability", effects);
                     record.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId()));
                     StackEntry recordInHand = gameData.handOffTriggerRecord(record);
-                    gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                            card, playerId, effects, null)
-                            .withSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId())));
+                    if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                            || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
+                        gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
+                                card, playerId, effects, null)
+                                .withSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(card.getId())));
+                    } else {
+                        gameData.stack.add(record);
+                    }
                     gameData.restoreTriggerRecordInHand(recordInHand);
                     gameLogService.append(gameData, GameLog.cardThen(card, "'s graveyard trigger triggers."));
                 }
@@ -3943,6 +3947,7 @@ public class CombatDamageService {
                         data.permanentId()
                 );
                 triggerEntry.setEventValue(data.damageDealt());
+                triggerEntry.setSourcePermanentSnapshot(new Permanent(data.sourceSnapshot()));
                 gameData.handOffTriggerRecord(triggerEntry);
                 if (targeting != null) {
                     TargetFilter targetFilter = data.card().getEffectTargetIndex(targeting) >= 0

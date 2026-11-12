@@ -1564,6 +1564,7 @@ public class CombatBlockService {
                 trigger.setAttackedTargetId(defenderId);
                 trigger.setTriggeringPermanentId(attacker.getId());
                 trigger.setAttachedPermanentSnapshot(new Permanent(attacker));
+                trigger.setSourcePermanentSnapshot(new Permanent(attacker));
                 trigger.setTriggeringPermanentControllerId(
                         gameQueryService.findPermanentController(gameData, attacker.getId()));
                 gameData.handOffTriggerRecord(trigger);

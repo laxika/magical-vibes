@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -176,6 +178,20 @@ public class InteractionState {
     /** The record of the trigger event the active interaction is a choice for, or {@code null}. */
     public StackEntry activeTriggerRecord() {
         return this.activeTriggerRecord;
+    }
+
+    /** The records of the active and of every suspended interaction, without the interactions that have none. */
+    public List<StackEntry> triggerRecords() {
+        List<StackEntry> records = new ArrayList<>();
+        if (activeTriggerRecord != null) {
+            records.add(activeTriggerRecord);
+        }
+        for (SuspendedInteraction suspended : suspendedInteractions) {
+            if (suspended.triggerRecord() != null) {
+                records.add(suspended.triggerRecord());
+            }
+        }
+        return records;
     }
 
     /** Gives the active interaction {@code record} (a simulation copy restoring its state). */

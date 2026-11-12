@@ -22,6 +22,7 @@ import java.util.Set;
 public class SuperSoldierSerum extends Card {
 
     public SuperSoldierSerum() {
+        setAttackTriggerOwnedByAura(true);
         target(TargetFilters.creature());
         addStaticEffect(new StaticBoostEffect(2, 2,
                 Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE), GrantScope.ENCHANTED_CREATURE));

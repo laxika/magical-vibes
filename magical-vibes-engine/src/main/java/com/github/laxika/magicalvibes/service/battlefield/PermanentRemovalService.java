@@ -2413,7 +2413,7 @@ public class PermanentRemovalService {
                 }
             }
         }
-        for (StackEntry entry : gameData.stack) {
+        for (StackEntry entry : gameData.stackEntriesAndTriggerRecords()) {
             if (target.getId().equals(entry.getTargetId())
                     || entry.getDeclaredTargetIds().contains(target.getId())) {
                 entry.rememberLastKnownPermanentAttachments(target.getId(), attachments);
@@ -2448,7 +2448,7 @@ public class PermanentRemovalService {
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield != null && battlefield.contains(target)) {
-                for (StackEntry entry : gameData.stack) {
+                for (StackEntry entry : gameData.stackEntriesAndTriggerRecords()) {
                     if (target.getId().equals(entry.getTriggeringPermanentId())) {
                         entry.rememberRemovedPermanentController(target.getId(), playerId);
                     }
@@ -2472,7 +2472,7 @@ public class PermanentRemovalService {
                 }
                 Card lastKnownCard = removalSnapshot != null ? removalSnapshot.getCard()
                         : snapshotEffectivePermanentCard(gameData, target);
-                for (StackEntry entry : gameData.stack) {
+                for (StackEntry entry : gameData.stackEntriesAndTriggerRecords()) {
                     for (Permanent attacker : entry.getAttackingPermanentSnapshots()) {
                         if (target.getId().equals(attacker.getId())) {
                             attacker.setLastKnownPower(target.getLastKnownPower());
@@ -2509,7 +2509,7 @@ public class PermanentRemovalService {
                         target, gameQueryService.getEffectivePower(gameData, target));
                 boolean wasLand = gameQueryService.isLand(gameData, target);
                 unattachTriggerSupport.triggerDestroyOnUnattachIfNeeded(gameData, target, target.getAttachedTo(), playerId);
-                List<StackEntry> watchingEntries = new ArrayList<>(gameData.stack);
+                List<StackEntry> watchingEntries = new ArrayList<>(gameData.stackEntriesAndTriggerRecords());
                 watchingEntries.addAll(gameData.pendingManaAbilityTriggers);
                 if (gameData.pendingEffectResolutionEntry != null
                         && !watchingEntries.contains(gameData.pendingEffectResolutionEntry)) {
@@ -2597,7 +2597,7 @@ public class PermanentRemovalService {
      */
     private void snapshotTriggeringPermanentKeywords(GameData gameData, Permanent target) {
         Set<Keyword> keywords = null;
-        for (StackEntry entry : gameData.stack) {
+        for (StackEntry entry : gameData.stackEntriesAndTriggerRecords()) {
             boolean triggering = target.getId().equals(entry.getTriggeringPermanentId());
             boolean dealer = entry.getEventDamageSource() != null
                     && target.getId().equals(entry.getEventDamageSource().getId());
@@ -2614,7 +2614,7 @@ public class PermanentRemovalService {
     }
 
     private void snapshotBeheldPower(GameData gameData, Permanent target) {
-        for (StackEntry entry : gameData.stack) {
+        for (StackEntry entry : gameData.stackEntriesAndTriggerRecords()) {
             if (target.getId().equals(entry.getBeholdPermanentId())) {
                 entry.setBeholdPower(Math.max(0, gameQueryService.getEffectivePower(gameData, target)));
             }
@@ -2622,7 +2622,7 @@ public class PermanentRemovalService {
     }
 
     private void snapshotChosenPermanentStats(GameData gameData, Permanent target, int power, int toughness) {
-        for (StackEntry entry : gameData.stack) {
+        for (StackEntry entry : gameData.stackEntriesAndTriggerRecords()) {
             if (target.getId().equals(entry.getChosenPermanentId())) {
                 entry.setChosenPermanentPowerAtLastKnown(Math.max(0, power));
                 entry.setChosenPermanentToughnessAtLastKnown(Math.max(0, toughness));
@@ -2672,7 +2672,7 @@ public class PermanentRemovalService {
         gameData.departedPermanentSnapshots.put(target.getOriginalCard().getId(), departureSnapshot);
         gameData.departedPermanentControllerIds.put(target.getCard().getId(), controllerId);
         gameData.departedPermanentControllerIds.put(target.getOriginalCard().getId(), controllerId);
-        for (StackEntry entry : gameData.stack) {
+        for (StackEntry entry : gameData.stackEntriesAndTriggerRecords()) {
             if (target.getId().equals(entry.getTriggeringPermanentId())) {
                 // "That creature's controller" is the creature's last known controller (CR 608.2h), whatever the effects.
                 entry.getRemovedPermanentControllers().put(target.getId(), controllerId);
