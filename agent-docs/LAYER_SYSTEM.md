@@ -617,7 +617,14 @@ the dependency relation), `orderByDependency`:
    first; if it differs from A's base fingerprint, **A depends on B**. Operation strings make
    this "what A attempts": a changed target set or a vanished application (existence) changes
    the fingerprint; a merely different concrete outcome does not. Pairs where B's own base
-   fingerprint is empty are skipped (a no-op cannot change anything).
+   fingerprint is empty are skipped (a no-op cannot change anything), and so are pairs where B's
+   base trial wrote nothing A's base trial read: each base trial records a `DependencyFootprint`
+   (state reads and writes per permanent and characteristic; side-table keys read through
+   `ReadTrackingSet`/`ReadTrackingMap` and written as found by diffing the tables afterwards).
+   Until A reads something B changed, A runs as in its base trial, so k Equipment granting to one
+   creature cost k trials, not k². Test JVMs run with `-DverifyLayerDependencyPruning=true`,
+   which also computes the exhaustive relation and throws on any difference;
+   `-DdisableLayerDependencyPruning=true` turns the pruning off.
 3. Topologically sorts (Kahn) preferring the collected (timestamp, position) order; when no
    remaining instance is dependency-free, a loop exists — per CR 613.8c the earliest-timestamp
    remaining instance applies next.
@@ -676,8 +683,8 @@ hashes that face-down flag so abandoning a scheme invalidates the cached board.
 ### Limits
 
 - **Compute-once approximation:** the CR re-evaluates dependencies after each application;
-  we compute the relation once against the layer-entry states and topo-sort. With the tiny
-  per-layer instance counts the difference is theoretical.
+  we compute the relation once against the layer-entry states and topo-sort. The difference
+  is theoretical.
 - **Detection is only as good as the recorded operations:** an effect whose applicability or
   parameters hinge on state OUTSIDE `CharacteristicState` (side conditions read from
   `Permanent`/`GameData`, e.g. tapped-ness, counters, chosen values) produces identical

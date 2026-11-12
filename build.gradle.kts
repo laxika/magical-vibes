@@ -100,10 +100,16 @@ subprojects {
                 "card-data.cache-dir",
                 rootProject.layout.projectDirectory.dir("card-data-cache").asFile.absolutePath
             )
+            // Every layered pass in a test checks the pruned CR 613.8 dependency relation against the exhaustive one
+            systemProperty(
+                "verifyLayerDependencyPruning",
+                System.getProperty("verifyLayerDependencyPruning") ?: "true"
+            )
             // Forward select system properties to the forked test JVM
             listOf("runCardFuzz", "runAiStress", "fuzzGames",
                     "runScenarioFuzz", "scenarioCard", "scenarioIterations", "scenarioSeed",
-                    "layerBench", "mctsBench", "disableLayerBoardCache").forEach { prop ->
+                    "layerBench", "mctsBench", "disableLayerBoardCache",
+                    "disableLayerDependencyPruning").forEach { prop ->
                 System.getProperty(prop)?.let { systemProperty(prop, it) }
             }
             testLogging {

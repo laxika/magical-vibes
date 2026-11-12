@@ -108,6 +108,7 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.layer.Layer;
 import com.github.laxika.magicalvibes.model.layer.ModifierLine;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.DependencyFootprint.BoardTable;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -124,6 +125,7 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -159,8 +161,8 @@ import java.util.UUID;
  *
  * <p><b>Dependency (CR 613.8)</b> overrides timestamp order within layers 4, 5, and 6: before a
  * layer's non-CDA instances apply, {@link #orderByDependency} trial-applies each ordered pair
- * onto {@link RecordingCharacteristicState} copies and compares the per-permanent operation
- * fingerprints — effect A depends on effect B when applying B first changes whether A exists
+ * whose {@link DependencyFootprint}s overlap onto {@link RecordingCharacteristicState} copies and
+ * compares the per-permanent operation fingerprints — effect A depends on effect B when applying B first changes whether A exists
  * (its source's abilities are gone, see {@link #staticSourceAbilitiesGone}), what A applies to,
  * or what A attempts to do. Dependent effects apply after what they depend on (topological
  * order, timestamp tie-break); dependency loops fall back to pure timestamp order (CR 613.8c).
@@ -508,6 +510,14 @@ public class LayerSystemService {
      *  off (every external query recomputes the board — the pre-cache behavior). Also used by
      *  {@code LayerPassBenchmarkTest} to measure before/after from one build. */
     private static final boolean CACHE_DISABLED = Boolean.getBoolean("disableLayerBoardCache");
+
+    /** Escape hatch: {@code -DdisableLayerDependencyPruning=true} trial-applies every pair of a
+     *  layer's instances in {@link #orderByDependency}, not only those whose footprints overlap. */
+    private static final boolean DEPENDENCY_PRUNING_DISABLED = Boolean.getBoolean("disableLayerDependencyPruning");
+
+    /** {@code -DverifyLayerDependencyPruning=true} (set for the test JVMs) also computes the
+     *  dependency relation without pruning and throws when the two differ. */
+    private static final boolean DEPENDENCY_PRUNING_VERIFIED = Boolean.getBoolean("verifyLayerDependencyPruning");
 
     /**
      * Registers a pass for the given game state on this thread and provides its layered board:
@@ -1706,10 +1716,17 @@ public class LayerSystemService {
      * is applied first — covering existence (A's source's ability is gone and A produces
      * nothing), the affected set (A's scope matches different permanents), and what A attempts
      * to do. The relation is computed once against the layer-entry states (the CR strictly
-     * re-evaluates dependencies after each application; with the tiny per-layer instance counts
-     * the difference is theoretical) and topologically sorted; independent effects and ties
-     * keep timestamp order, and dependency loops fall back to pure timestamp order (CR 613.8c).
-     * Skipped entirely for 0 or 1 instances — the overwhelmingly common case.
+     * re-evaluates dependencies after each application; the difference is theoretical) and
+     * topologically sorted; independent effects and ties keep timestamp order, and dependency
+     * loops fall back to pure timestamp order (CR 613.8c). Skipped entirely for 0 or 1
+     * instances — the overwhelmingly common case.
+     *
+     * <p>Each instance's own trial also records its {@link DependencyFootprint}, and a pair is
+     * only trial-applied when B wrote something A read, so k instances that touch different
+     * things (Equipment granting keywords to the creature they are attached to) cost k trials
+     * instead of k². {@code -DdisableLayerDependencyPruning=true} trial-applies every pair;
+     * {@code -DverifyLayerDependencyPruning=true} (on in the test JVMs) computes both relations
+     * and throws when they differ.</p>
      */
     private List<EffectInstance> orderByDependency(GameData gameData, List<EffectInstance> instances,
                                                    List<PermanentSlot> slots,
@@ -1724,23 +1741,18 @@ public class LayerSystemService {
             // production — computeBoardState always runs under beginPass) keep timestamp order.
             return instances;
         }
-        Map<EffectInstance, Map<UUID, List<String>>> baseFingerprints = new IdentityHashMap<>();
+        Map<EffectInstance, Trial> baseTrials = new IdentityHashMap<>();
         for (EffectInstance instance : instances) {
-            baseFingerprints.put(instance,
-                    trialFingerprint(gameData, pass, instance, null, slots, slotsById, board, applier));
+            baseTrials.put(instance, trial(gameData, pass, instance, null, slots, slotsById, board, applier));
         }
-        Map<EffectInstance, Set<EffectInstance>> dependsOn = new IdentityHashMap<>();
-        for (EffectInstance a : instances) {
-            for (EffectInstance b : instances) {
-                if (a == b) continue;
-                // An instance that produced no operations cannot change what another does.
-                if (baseFingerprints.get(b).isEmpty()) continue;
-                Map<UUID, List<String>> withB =
-                        trialFingerprint(gameData, pass, a, b, slots, slotsById, board, applier);
-                if (!withB.equals(baseFingerprints.get(a))) {
-                    dependsOn.computeIfAbsent(a, key -> Collections.newSetFromMap(new IdentityHashMap<>()))
-                            .add(b);
-                }
+        Map<EffectInstance, Set<EffectInstance>> dependsOn = dependencyRelation(gameData, pass, instances,
+                baseTrials, !DEPENDENCY_PRUNING_DISABLED, slots, slotsById, board, applier);
+        if (DEPENDENCY_PRUNING_VERIFIED && !DEPENDENCY_PRUNING_DISABLED) {
+            Map<EffectInstance, Set<EffectInstance>> exhaustive = dependencyRelation(gameData, pass, instances,
+                    baseTrials, false, slots, slotsById, board, applier);
+            if (!sameRelation(exhaustive, dependsOn)) {
+                throw new IllegalStateException("CR 613.8 dependency pruning missed a dependency: pruned "
+                        + describe(dependsOn) + ", exhaustive " + describe(exhaustive));
             }
         }
         if (dependsOn.isEmpty()) {
@@ -1774,22 +1786,87 @@ public class LayerSystemService {
     }
 
     /**
-     * Trial-applies {@code first} (when non-null) and then {@code instance} onto recording
-     * copies of the board's states, returning {@code instance}'s per-permanent operation
-     * fingerprint. A state is copied when the trial first reads it ({@link TrialStates}).
-     * The trial board copies the layer-4 filter verdicts (CR 613.6 — later-layer parts keep the layer-4-determined sets during trials too) and the land-type overrides;
-     * managed/contribution bookkeeping goes to the trial board and is discarded. The active
-     * pass's board is swapped for the duration so handlers and nested queries read the trial
-     * states.
+     * Which instances each instance depends on: A depends on B when trial-applying B first
+     * changes A's fingerprint. A pair is skipped when B's own trial recorded no operations, and,
+     * with {@code prune}, when B's trial wrote nothing A's trial read.
      */
-    private Map<UUID, List<String>> trialFingerprint(GameData gameData, Pass pass, EffectInstance instance,
-                                                     EffectInstance first, List<PermanentSlot> slots,
-                                                     Map<UUID, PermanentSlot> slotsById,
-                                                     LayeredBoardState board, InstanceApplier applier) {
-        TrialStates trialStates = new TrialStates(board.states());
+    private Map<EffectInstance, Set<EffectInstance>> dependencyRelation(
+            GameData gameData, Pass pass, List<EffectInstance> instances, Map<EffectInstance, Trial> baseTrials,
+            boolean prune, List<PermanentSlot> slots, Map<UUID, PermanentSlot> slotsById,
+            LayeredBoardState board, InstanceApplier applier) {
+        Map<EffectInstance, Set<EffectInstance>> dependsOn = new IdentityHashMap<>();
+        for (EffectInstance a : instances) {
+            Trial aTrial = baseTrials.get(a);
+            for (EffectInstance b : instances) {
+                if (a == b) continue;
+                Trial bTrial = baseTrials.get(b);
+                // An instance that produced no operations cannot change what another does.
+                if (bTrial.fingerprint().isEmpty()) continue;
+                if (prune && !bTrial.footprint().mayChangeWhatIsReadBy(aTrial.footprint())) continue;
+                Map<UUID, List<String>> withB =
+                        trial(gameData, pass, a, b, slots, slotsById, board, applier).fingerprint();
+                if (!withB.equals(aTrial.fingerprint())) {
+                    dependsOn.computeIfAbsent(a, key -> Collections.newSetFromMap(new IdentityHashMap<>()))
+                            .add(b);
+                }
+            }
+        }
+        return dependsOn;
+    }
+
+    /** Whether both relations give every instance the same dependencies (the maps compare values by identity). */
+    private static boolean sameRelation(Map<EffectInstance, Set<EffectInstance>> first,
+                                        Map<EffectInstance, Set<EffectInstance>> second) {
+        return first.keySet().equals(second.keySet())
+                && first.entrySet().stream().allMatch(entry -> entry.getValue().equals(second.get(entry.getKey())));
+    }
+
+    private static String describe(Map<EffectInstance, Set<EffectInstance>> dependsOn) {
+        StringBuilder description = new StringBuilder("{");
+        dependsOn.forEach((dependent, dependencies) -> {
+            description.append(' ').append(describe(dependent)).append(" after [");
+            dependencies.forEach(dependency -> description.append(describe(dependency)).append(';'));
+            description.append(']');
+        });
+        return description.append(" }").toString();
+    }
+
+    private static String describe(EffectInstance instance) {
+        return provenanceSourceName(instance) + ":" + instance.effect().getClass().getSimpleName()
+                + "@" + instance.timestamp();
+    }
+
+    /**
+     * One dependency trial's result: the operations the trial-applied instance recorded per
+     * permanent, and, for an instance's own trial (no {@code first}), what it read and wrote.
+     */
+    private record Trial(Map<UUID, List<String>> fingerprint, DependencyFootprint footprint) {
+    }
+
+    /**
+     * Trial-applies {@code first} (when non-null) and then {@code instance} onto recording
+     * copies of the board's states and side tables. A state is copied when the trial first reads
+     * it ({@link TrialStates}). The trial board copies the layer-4 filter verdicts (CR 613.6 —
+     * later-layer parts keep the layer-4-determined sets during trials too), the land-type
+     * overrides and the other side tables, while the managed-effect and layer-4 contribution
+     * bookkeeping starts empty; all of it is discarded afterwards. The active pass's board is
+     * swapped for the duration so handlers and nested queries read the trial states.
+     *
+     * <p>An instance's own trial records its {@link DependencyFootprint}: the states record
+     * their reads and writes, the side tables record the keys read through
+     * {@link ReadTrackingSet} and {@link ReadTrackingMap}, and the keys written are found by
+     * comparing each side table with its starting content once the instance is applied. The
+     * provenance tables are display output nothing reads during the pass, so they are not
+     * tracked.</p>
+     */
+    private Trial trial(GameData gameData, Pass pass, EffectInstance instance, EffectInstance first,
+                        List<PermanentSlot> slots, Map<UUID, PermanentSlot> slotsById,
+                        LayeredBoardState board, InstanceApplier applier) {
+        DependencyFootprint footprint = first == null ? new DependencyFootprint() : null;
+        TrialStates trialStates = new TrialStates(board.states(), footprint);
         Map<PermanentPredicate, Map<UUID, Boolean>> trialVerdicts = new IdentityHashMap<>();
         board.l4FilterVerdicts().forEach((filter, verdicts) -> trialVerdicts.put(filter, new HashMap<>(verdicts)));
-        LayeredBoardState trialBoard = new LayeredBoardState(trialStates,
+        LayeredBoardState trialTables = new LayeredBoardState(trialStates,
                 new HashMap<>(board.landTypeOverrides()), new HashSet<>(board.marchAnimatedIds()),
                 new HashSet<>(board.starfieldAnimatedIds()),
                 new HashSet<>(board.opalescenceAnimatedIds()),
@@ -1798,6 +1875,7 @@ public class LayerSystemService {
                 new HashSet<>(board.l56Touched()), new HashMap<>(board.basePt7b()),
                 new HashSet<>(board.switchedPt7d()), new HashMap<>(), new HashMap<>(),
                 new HashMap<>(board.devotionModifiers()), new HashSet<>(board.selfInflictedLoseAll()));
+        LayeredBoardState trialBoard = footprint == null ? trialTables : readTracking(trialTables, footprint);
         LayeredBoardState saved = pass.board;
         pass.board = trialBoard;
         try {
@@ -1809,7 +1887,84 @@ public class LayerSystemService {
         } finally {
             pass.board = saved;
         }
-        return trialStates.fingerprint();
+        if (footprint != null) {
+            recordSideTableWrites(footprint, board, trialTables);
+        }
+        return new Trial(trialStates.fingerprint(), footprint);
+    }
+
+    /** The trial board with each tracked side table recording the keys read into {@code footprint}. */
+    private static LayeredBoardState readTracking(LayeredBoardState tables, DependencyFootprint footprint) {
+        return new LayeredBoardState(tables.states(),
+                new ReadTrackingMap<>(tables.landTypeOverrides(), BoardTable.LAND_TYPE_OVERRIDES, footprint),
+                new ReadTrackingSet<>(tables.marchAnimatedIds(), BoardTable.MARCH_ANIMATED_IDS, footprint),
+                new ReadTrackingSet<>(tables.starfieldAnimatedIds(), BoardTable.STARFIELD_ANIMATED_IDS, footprint),
+                new ReadTrackingSet<>(tables.opalescenceAnimatedIds(), BoardTable.OPALESCENCE_ANIMATED_IDS,
+                        footprint),
+                new ReadTrackingSet<>(tables.managedL4Effects(), BoardTable.MANAGED_L4_EFFECTS, footprint),
+                new ReadTrackingMap<>(tables.l4Contributions(), BoardTable.L4_CONTRIBUTIONS, footprint),
+                new ReadTrackingMap<>(tables.l4FilterVerdicts(), BoardTable.L4_FILTER_VERDICTS, footprint),
+                new ReadTrackingSet<>(tables.managedL56Effects(), BoardTable.MANAGED_L56_EFFECTS, footprint),
+                new ReadTrackingSet<>(tables.l56Touched(), BoardTable.L56_TOUCHED, footprint),
+                new ReadTrackingMap<>(tables.basePt7b(), BoardTable.BASE_PT_7B, footprint),
+                new ReadTrackingSet<>(tables.switchedPt7d(), BoardTable.SWITCHED_PT_7D, footprint),
+                tables.provenance(), tables.grantedEffectProvenance(),
+                new ReadTrackingMap<>(tables.devotionModifiers(), BoardTable.DEVOTION_MODIFIERS, footprint),
+                new ReadTrackingSet<>(tables.selfInflictedLoseAll(), BoardTable.SELF_INFLICTED_LOSE_ALL,
+                        footprint));
+    }
+
+    /**
+     * Records as written every side-table key whose entry differs between the layer-entry
+     * {@code board} and the {@code trial} tables after the instance applied. The managed-effect and
+     * layer-4 contribution tables start empty in a trial, so every entry there was written by it.
+     */
+    private static void recordSideTableWrites(DependencyFootprint footprint, LayeredBoardState board,
+                                              LayeredBoardState trial) {
+        recordWrites(footprint, BoardTable.LAND_TYPE_OVERRIDES, board.landTypeOverrides(), trial.landTypeOverrides());
+        recordWrites(footprint, BoardTable.MARCH_ANIMATED_IDS, board.marchAnimatedIds(), trial.marchAnimatedIds());
+        recordWrites(footprint, BoardTable.STARFIELD_ANIMATED_IDS, board.starfieldAnimatedIds(),
+                trial.starfieldAnimatedIds());
+        recordWrites(footprint, BoardTable.OPALESCENCE_ANIMATED_IDS, board.opalescenceAnimatedIds(),
+                trial.opalescenceAnimatedIds());
+        recordWrites(footprint, BoardTable.MANAGED_L4_EFFECTS, Collections.emptySet(), trial.managedL4Effects());
+        recordWrites(footprint, BoardTable.L4_CONTRIBUTIONS, Collections.emptyMap(), trial.l4Contributions());
+        recordWrites(footprint, BoardTable.L4_FILTER_VERDICTS, board.l4FilterVerdicts(), trial.l4FilterVerdicts());
+        recordWrites(footprint, BoardTable.MANAGED_L56_EFFECTS, Collections.emptySet(), trial.managedL56Effects());
+        recordWrites(footprint, BoardTable.L56_TOUCHED, board.l56Touched(), trial.l56Touched());
+        recordWrites(footprint, BoardTable.BASE_PT_7B, board.basePt7b(), trial.basePt7b());
+        recordWrites(footprint, BoardTable.SWITCHED_PT_7D, board.switchedPt7d(), trial.switchedPt7d());
+        recordWrites(footprint, BoardTable.DEVOTION_MODIFIERS, board.devotionModifiers(), trial.devotionModifiers());
+        recordWrites(footprint, BoardTable.SELF_INFLICTED_LOSE_ALL, board.selfInflictedLoseAll(),
+                trial.selfInflictedLoseAll());
+    }
+
+    private static <E> void recordWrites(DependencyFootprint footprint, BoardTable table, Set<E> before,
+                                         Set<E> after) {
+        for (E element : after) {
+            if (!before.contains(element)) {
+                footprint.write(table, element);
+            }
+        }
+        for (E element : before) {
+            if (!after.contains(element)) {
+                footprint.write(table, element);
+            }
+        }
+    }
+
+    private static <K, V> void recordWrites(DependencyFootprint footprint, BoardTable table, Map<K, V> before,
+                                            Map<K, V> after) {
+        after.forEach((key, value) -> {
+            if (!before.containsKey(key) || !Objects.equals(before.get(key), value)) {
+                footprint.write(table, key);
+            }
+        });
+        for (K key : before.keySet()) {
+            if (!after.containsKey(key)) {
+                footprint.write(table, key);
+            }
+        }
     }
 
     // ===== layer 4 =====

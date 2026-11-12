@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.layers;
 
+import com.github.laxika.magicalvibes.cards.a.AccordersShield;
 import com.github.laxika.magicalvibes.cards.b.BloodMoon;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -13,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
@@ -42,7 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@link Card}s stand in for effect combinations the card pool cannot produce (an Urborg-style
  * ability-granting land).
  */
-@CardUsed({BloodMoon.class, Forest.class, GrizzlyBears.class, MarchOfTheMachines.class,
+@CardUsed({AccordersShield.class, BloodMoon.class, Forest.class, GrizzlyBears.class, MarchOfTheMachines.class,
         Xenograft.class})
 class LayerDependencyTest extends BaseCardTest {
 
@@ -243,5 +245,37 @@ class LayerDependencyTest extends BaseCardTest {
         // gains ELF), then "Elves are Goblins" hits both.
         assertThat(gqs.computeStaticBonus(gd, goblin).grantedSubtypes()).contains(CardSubtype.ELF);
         assertThat(gqs.computeStaticBonus(gd, elf).grantedSubtypes()).contains(CardSubtype.GOBLIN);
+    }
+
+    @Test
+    @DisplayName("Every Equipment attached to one creature grants its keyword and boost")
+    void severalEquipmentOnOneCreatureAllApply() {
+        Permanent bears = addPermanent(player1, new GrizzlyBears());
+        for (int i = 0; i < 4; i++) {
+            addPermanent(player1, new AccordersShield()).setAttachedTo(bears.getId());
+        }
+
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
+        assertThat(gqs.getEffectiveToughness(gd, bears)).isEqualTo(14);
+    }
+
+    @Test
+    @DisplayName("A later lose-all on one of several Equipment strips that Equipment's grant only (existence dependency)")
+    void loseAllOnOneOfSeveralEquipmentStripsOnlyItsGrant() {
+        Permanent bears = addPermanent(player1, new GrizzlyBears());
+        addPermanent(player1, new AccordersShield()).setAttachedTo(bears.getId());
+        Card wings = artifact("Test Wings", "{1}");
+        wings.addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
+        Permanent wingsPermanent = addPermanent(player1, wings);
+        wingsPermanent.setAttachedTo(bears.getId());
+        addPermanent(player1, new AccordersShield()).setAttachedTo(bears.getId());
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue(); // sanity
+
+        addLoseAllFloatingEffect(player2, wingsPermanent);
+
+        // The flying grant exists only while the Equipment has the ability, so it applies after
+        // the later lose-all and grants nothing; the Shields' grants are independent of it.
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+        assertThat(gqs.hasKeyword(gd, bears, Keyword.VIGILANCE)).isTrue();
     }
 }

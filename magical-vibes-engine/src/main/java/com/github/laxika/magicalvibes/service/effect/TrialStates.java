@@ -26,12 +26,18 @@ import java.util.UUID;
 final class TrialStates extends AbstractMap<UUID, CharacteristicState> {
 
     private final Map<UUID, CharacteristicState> layerEntryStates;
+    private final DependencyFootprint footprint;
     private final Map<UUID, RecordingCharacteristicState> copies = new HashMap<>();
     private Map<UUID, CharacteristicState> materialized;
     private boolean recording;
 
-    TrialStates(Map<UUID, CharacteristicState> layerEntryStates) {
+    /**
+     * @param footprint where the copies record their reads and writes once recording starts, or
+     *                  {@code null} for a trial whose footprint is not needed
+     */
+    TrialStates(Map<UUID, CharacteristicState> layerEntryStates, DependencyFootprint footprint) {
         this.layerEntryStates = layerEntryStates;
+        this.footprint = footprint;
     }
 
     @Override
@@ -95,7 +101,7 @@ final class TrialStates extends AbstractMap<UUID, CharacteristicState> {
     }
 
     private RecordingCharacteristicState copy(UUID id, CharacteristicState state) {
-        RecordingCharacteristicState copy = new RecordingCharacteristicState(state);
+        RecordingCharacteristicState copy = new RecordingCharacteristicState(state, id, footprint);
         if (recording) {
             copy.startRecording();
         }
