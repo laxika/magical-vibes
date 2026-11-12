@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.r.RoguesGloves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ArmoryAutomaton.class, AccordersShield.class})
+@CardUsed({ArmoryAutomaton.class, AccordersShield.class, RoguesGloves.class})
 class ArmoryAutomatonTest extends BaseCardTest {
 
     @Test
@@ -156,8 +157,9 @@ class ArmoryAutomatonTest extends BaseCardTest {
     @Test
     void canTargetMoreThanNinetyNineEquipment() {
         Permanent automaton = addCreatureReady(player1, new ArmoryAutomaton());
+        // An Equipment without a static ability keeps the 100 attachments from recomputing 100 layered effects.
         List<Permanent> equipment = java.util.stream.IntStream.range(0, 100)
-                .mapToObj(i -> harness.addToBattlefieldAndReturn(player2, new AccordersShield()))
+                .mapToObj(i -> harness.addToBattlefieldAndReturn(player2, new RoguesGloves()))
                 .toList();
         declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(automaton)));
         PendingInteraction.MultiPermanentChoice choice =

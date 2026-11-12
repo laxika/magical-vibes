@@ -78,6 +78,8 @@ class EtherealWhiskergillTest extends BaseCardTest {
     void canAttackWhenDefendersLandGainsIslandSubtype() {
         Permanent plains = harness.addToBattlefieldAndReturn(player2, new Plains());
         addCreatureReady(player1, new EtherealWhiskergill());
+        // The untapped Plains lets a random opening-hand Condemn stop auto-pass in declare attackers.
+        harness.setHand(player2, List.of());
         harness.setHand(player1, List.of(new AquitectsWill()));
         harness.addMana(player1, ManaColor.BLUE, 1);
 

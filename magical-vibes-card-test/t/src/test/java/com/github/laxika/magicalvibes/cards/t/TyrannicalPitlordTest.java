@@ -99,8 +99,10 @@ class TyrannicalPitlordTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLUE, 2);
         harness.addMana(player2, ManaColor.RED, 1);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
-        harness.castKickedCreature(player2, 0, chosen.getId());
+        // The kicked Mindsinger enters as a 4/4, so its trigger may target the 3-power chosen creature.
+        harness.castKickedCreature(player2, 0);
         harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, chosen.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(chosen);
