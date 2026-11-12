@@ -11230,7 +11230,11 @@ public class GameData {
                         : original instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
                         ? trigger.copyPlanarSnapshot()
                         : original instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger trigger
-                        ? trigger.copyPlanarSnapshot() : original)));
+                        ? trigger.copyPlanarSnapshot()
+                        : original instanceof PermanentChoiceContext.AttackTriggerTarget trigger
+                        ? trigger.withTriggerRecord(trigger.triggerRecord())
+                        : original instanceof PermanentChoiceContext.TriggeredModalTrigger trigger
+                        ? trigger.withTriggerRecord(trigger.triggerRecord()) : original)));
         this.queuedTriggerRecords.forEach((pending, record) -> {
             PendingInteraction copied = copiedInteractions.get(pending);
             if (copied != null) {

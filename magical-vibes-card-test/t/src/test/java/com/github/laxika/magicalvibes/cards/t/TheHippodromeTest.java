@@ -135,8 +135,7 @@ class TheHippodromeTest extends BaseCardTest {
 
     private void triggerChaosAndChooseTarget(Permanent target) {
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, target.getId());
     }
 

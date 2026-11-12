@@ -7,9 +7,4 @@ package com.github.laxika.magicalvibes.model.effect;
  * the stack as the end of combat step begins and reads the source's blockers as it resolves.
  */
 public record TapCombatOpponentAtEndOfCombatEffect() implements CardEffect {
-
-    @Override
-    public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetPredicates.permanent());
-    }
 }

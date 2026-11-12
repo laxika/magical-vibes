@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.r.RoamingThrone;
 import com.github.laxika.magicalvibes.cards.s.Skullcrack;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CloakOfConfusion.class, GrizzlyBears.class, Forest.class, Skullcrack.class})
+@CardUsed({CloakOfConfusion.class, GrizzlyBears.class, Forest.class, Skullcrack.class, RoamingThrone.class})
 class CloakOfConfusionTest extends BaseCardTest {
 
     private Permanent addEnchantedAttacker() {
@@ -54,6 +56,23 @@ class CloakOfConfusionTest extends BaseCardTest {
         // Defender lost one card at random and the enchanted attacker dealt no combat damage.
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("The Aura is the ability's source: Roaming Throne naming the attacker's type doesn't double it")
+    void auraIsTheSourceNotTheEnchantedAttacker() {
+        harness.setHand(player2, List.of(new GrizzlyBears(), new Forest()));
+        Permanent throne = harness.addToBattlefieldAndReturn(player1, new RoamingThrone());
+        throne.setChosenSubtype(CardSubtype.BEAR);
+        addEnchantedAttacker();
+
+        advanceToUnblockedTrigger();
+
+        // One ability of the Aura (CR 113.7), not a triggered ability of the Bear the Throne doubles.
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
     @Test

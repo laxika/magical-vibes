@@ -60,8 +60,7 @@ class AntarcticResearchBaseTest extends BaseCardTest {
         harness.addToBattlefield(player2, new IchorElixir());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

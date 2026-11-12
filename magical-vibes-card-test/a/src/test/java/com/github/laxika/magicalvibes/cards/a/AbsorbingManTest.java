@@ -39,8 +39,8 @@ class AbsorbingManTest extends BaseCardTest {
 
         beginFirstMainPhase();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
                 .containsExactlyInAnyOrder(artifact.getId(), enchantment.getId(), land.getId())
                 .doesNotContain(absorbingMan.getId(), creature.getId(), aura.getId());
     }
@@ -108,7 +108,7 @@ class AbsorbingManTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
 
         beginFirstMainPhase();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(absorbingMan.getCard().hasType(CardType.LAND)).isFalse();
@@ -172,7 +172,7 @@ class AbsorbingManTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
 
         beginFirstMainPhase();
-        harness.handleMultiplePermanentsChosen(player1, List.of(land.getId()));
+        harness.handlePermanentChosen(player1, land.getId());
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, land));
         harness.passBothPriorities();
 
@@ -207,7 +207,7 @@ class AbsorbingManTest extends BaseCardTest {
 
     private void resolveCopy(Permanent target) {
         beginFirstMainPhase();
-        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
     }
 }

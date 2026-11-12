@@ -156,7 +156,8 @@ class CombatDamageServiceTest {
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport.class),
                         gameLogService, triggerCollectionService,
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class),
-                        predicateEvaluationService));
+                        predicateEvaluationService,
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector.class)));
         // Abilities without an event condition trigger; the collectors judge only the event condition.
         org.mockito.Mockito.lenient().when(conditionEvaluationService.eventConditionMet(any(), any(), any()))
                 .thenAnswer(inv -> ((com.github.laxika.magicalvibes.model.trigger.TriggerOptions) inv.getArgument(1))

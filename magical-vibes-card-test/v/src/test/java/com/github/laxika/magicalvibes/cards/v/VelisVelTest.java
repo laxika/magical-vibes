@@ -56,7 +56,7 @@ class VelisVelTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, target)).isEqualTo(2);
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -109,7 +109,7 @@ class VelisVelTest extends BaseCardTest {
         Permanent otherBear = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).contains(target.getId());

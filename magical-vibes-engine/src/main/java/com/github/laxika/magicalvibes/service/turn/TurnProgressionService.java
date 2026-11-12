@@ -1774,33 +1774,12 @@ public class TurnProgressionService {
         turnCleanupService.applyCleanupResets(gameData);
     }
 
-    public void processNextUpkeepAnyTargetTrigger(GameData gameData) {
-        stepTriggerService.processNextUpkeepAnyTargetTrigger(gameData);
-    }
-
-    public void processNextUpkeepModalTrigger(GameData gameData) {
-        stepTriggerService.processNextUpkeepModalTrigger(gameData);
-    }
-
-    public void queueChosenModeUpkeepTrigger(GameData gameData, Card sourceCard, UUID controllerId,
-            UUID permanentId, ChooseOneEffect.ChooseOneOption chosen) {
-        stepTriggerService.queueChosenModeUpkeepTrigger(gameData, sourceCard, controllerId, permanentId, chosen);
-    }
-
-    public void processNextUpkeepPermanentTarget(GameData gameData) {
-        stepTriggerService.processNextUpkeepPermanentTarget(gameData);
-    }
-
     public void processNextPhasesInTriggerTarget(GameData gameData) {
         stepTriggerService.processNextPhasesInTriggerTarget(gameData);
     }
 
     public void processNextUpkeepPlayerTarget(GameData gameData) {
         stepTriggerService.processNextUpkeepPlayerTarget(gameData);
-    }
-
-    public void processNextMainPhasePlayerTarget(GameData gameData) {
-        stepTriggerService.processNextMainPhasePlayerTarget(gameData);
     }
 
     public void processNextUpkeepMultiPlayerTarget(GameData gameData) {
@@ -1821,14 +1800,6 @@ public class TurnProgressionService {
 
     public void processNextPucasMischiefTarget(GameData gameData) {
         stepTriggerService.processNextPucasMischiefTarget(gameData);
-    }
-
-    public void processNextEndStepTriggerTarget(GameData gameData) {
-        stepTriggerService.processNextEndStepTriggerTarget(gameData);
-    }
-
-    public void processNextBeginningOfCombatTriggerTarget(GameData gameData) {
-        stepTriggerService.processNextBeginningOfCombatTriggerTarget(gameData);
     }
 
     private UUID nextPlayerInTurnOrder(GameData gameData) {

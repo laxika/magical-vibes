@@ -134,7 +134,7 @@ class PlanechaseServiceTest extends BaseCardTest {
         faceUp(fixture("Test plane", CardType.PLANE, Triggers.chaosEnsues(),
                 new DealDamageToAnyTargetEffect(2)));
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class).processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -174,7 +174,7 @@ class PlanechaseServiceTest extends BaseCardTest {
         faceUp(plane);
         harness.inMutationScope(() -> planar.chaos(gd));
         assertThat(gd.stack).isEmpty();
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class).processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player2.getId());
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEffectsToResolve()).hasSize(2);
@@ -189,7 +189,7 @@ class PlanechaseServiceTest extends BaseCardTest {
                 Triggers.encounterThis(), new DealDamageToAnyTargetEffect(2)));
         harness.inMutationScope(() -> planar.reveal(gd, true));
         assertThat(planar.checkPhenomena(gd)).isFalse();
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class).processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.assertLife(player2, 18);
@@ -330,14 +330,17 @@ class PlanechaseServiceTest extends BaseCardTest {
         faceUp(fixture("Test plane", CardType.PLANE, Triggers.chaosEnsues(),
                 new DealDamageToAnyTargetEffect(2)));
         harness.inMutationScope(() -> planar.chaos(gd));
-        var original = (PermanentChoiceContext.SpellTargetTriggerAnyTarget) gd.pendingInteractions.getFirst();
+        var original = (PermanentChoiceContext.AttackTriggerTarget) gd.pendingInteractions.getFirst();
         GameData copy = gd.simulationCopy();
-        var copied = (PermanentChoiceContext.SpellTargetTriggerAnyTarget) copy.pendingInteractions.getFirst();
-        copied.planarSource().getCounters().put(CounterType.CHARGE, 2);
+        var copied = (PermanentChoiceContext.AttackTriggerTarget) copy.pendingInteractions.getFirst();
+        copied.triggerRecord().getSourcePlanarObject().getCounters().put(CounterType.CHARGE, 2);
+        copy.queuedTriggerRecord(copied).getSourcePlanarObject().getCounters().put(CounterType.CHARGE, 4);
         copy.planechase.faceUp.getFirst().getCounters().put(CounterType.CHARGE, 3);
-        assertThat(original.planarSource().getCounters()).isEmpty();
+        assertThat(original.triggerRecord().getSourcePlanarObject().getCounters()).isEmpty();
+        assertThat(gd.queuedTriggerRecord(original).getSourcePlanarObject().getCounters()).isEmpty();
         assertThat(gd.planechase.faceUp.getFirst().getCounters()).isEmpty();
-        assertThat(copied.planarSource().getId()).isEqualTo(original.planarSource().getId());
+        assertThat(copied.triggerRecord().getSourcePlanarObject().getId())
+                .isEqualTo(original.triggerRecord().getSourcePlanarObject().getId());
     }
 
 

@@ -93,8 +93,7 @@ class ElorenWildsTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

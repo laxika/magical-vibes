@@ -14,4 +14,9 @@ public record ChooseOneAtRandomEffect(List<ChooseOneEffect.ChooseOneOption> opti
         }
         options = List.copyOf(options);
     }
+
+    @Override
+    public List<ChooseOneEffect.ChooseOneOption> modesChosenAtRandomAsItTriggers() {
+        return options;
+    }
 }

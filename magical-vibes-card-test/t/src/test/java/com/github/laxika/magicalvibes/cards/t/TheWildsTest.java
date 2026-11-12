@@ -162,7 +162,7 @@ class TheWildsTest extends BaseCardTest {
 
     private void triggerChaosTargetingPlayer(java.util.UUID targetPlayerId) {
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, targetPlayerId);
     }
 }

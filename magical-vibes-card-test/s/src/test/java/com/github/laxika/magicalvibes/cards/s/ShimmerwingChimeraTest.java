@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,13 +26,12 @@ class ShimmerwingChimeraTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(choice.validIds()).containsExactly(enchantment.getId());
-        assertThat(choice.validPlayerIds()).isEmpty();
-        assertThat(choice.maxCount()).isEqualTo(1);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).containsExactly(enchantment.getId());
+        assertThat(choice.validPlayerIds()).containsExactly(player1.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(enchantment.getId()));
+        harness.handlePermanentChosen(player1, enchantment.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -53,9 +51,9 @@ class ShimmerwingChimeraTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class))
                 .isNotNull();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -101,7 +99,7 @@ class ShimmerwingChimeraTest extends BaseCardTest {
         setOwnerAndController(enchantment, player2, player1);
 
         advanceToUpkeep(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(enchantment.getId()));
+        harness.handlePermanentChosen(player1, enchantment.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Banishing Light");
@@ -116,7 +114,7 @@ class ShimmerwingChimeraTest extends BaseCardTest {
         Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new BanishingLight());
 
         advanceToUpkeep(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(enchantment.getId()));
+        harness.handlePermanentChosen(player1, enchantment.getId());
         setOwnerAndController(enchantment, player1, player2);
         harness.passBothPriorities();
 
@@ -132,7 +130,7 @@ class ShimmerwingChimeraTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new NyxbornColossus());
 
         advanceToUpkeep(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
+        harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Nyxborn Colossus");
@@ -147,7 +145,7 @@ class ShimmerwingChimeraTest extends BaseCardTest {
         Permanent enchantment = harness.addToBattlefieldAndReturn(player1, new BanishingLight());
 
         advanceToUpkeep(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(enchantment.getId()));
+        harness.handlePermanentChosen(player1, enchantment.getId());
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, chimera));
         harness.passBothPriorities();
 

@@ -28,8 +28,8 @@ class PersistentConstrictorTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
         assertThat(gd.getLife(player2.getId())).isEqualTo(19);
@@ -57,9 +57,9 @@ class PersistentConstrictorTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
 
-        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(ownBears.getId())))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownBears.getId()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(opponentBears.getId()));
+        harness.handlePermanentChosen(player1, opponentBears.getId());
     }
 
     @Test
@@ -84,7 +84,7 @@ class PersistentConstrictorTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         advanceToUpkeep(player2);
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
         harness.assertLife(player2, 19);
@@ -115,7 +115,7 @@ class PersistentConstrictorTest extends BaseCardTest {
 
         advanceToUpkeep(player2);
         harness.addMana(player2, ManaColor.BLACK, 3);
-        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
+        harness.handlePermanentChosen(player1, bears.getId());
         harness.castAndResolveInstant(player2, 0, bears.getId());
         resolveAllTriggers();
 

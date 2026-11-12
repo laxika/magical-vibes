@@ -221,40 +221,5 @@ class GraveyardTargetingServiceTest {
         assertThat(gd.graveyardTargetOperation.sourcePermanentId).isEqualTo(source.getId());
     }
 
-    @Test
-    @DisplayName("handleBeginningOfCombatGraveyardTargeting pushes stack entry when no matching graveyard cards")
-    void handleBeginningOfCombatGraveyardTargeting_pushesStackEntryWhenGraveyardEmpty() {
-        Card card = new Card();
-        card.setName("Ravenous Chupacabra");
-        UUID sourcePermanentId = UUID.randomUUID();
-        ExileGraveyardCardsEffect exileEffect = new ExileGraveyardCardsEffect(
-                1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD, new CardTypePredicate(CardType.CREATURE));
-        List<CardEffect> effects = List.of(exileEffect);
 
-        service.handleBeginningOfCombatGraveyardTargeting(gd, player1Id, card, effects, sourcePermanentId, exileEffect);
-
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-        assertThat(gd.stack.getFirst().getCard()).isSameAs(card);
-    }
-
-    @Test
-    @DisplayName("handleBeginningOfCombatGraveyardTargeting skips non-matching card types in graveyard")
-    void handleBeginningOfCombatGraveyardTargeting_skipsNonMatchingTypesInGraveyard() {
-        Card card = new Card();
-        card.setName("Ravenous Chupacabra");
-        UUID sourcePermanentId = UUID.randomUUID();
-        ExileGraveyardCardsEffect exileEffect = new ExileGraveyardCardsEffect(
-                1, GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD, new CardTypePredicate(CardType.CREATURE));
-
-        Card landCard = new Card();
-        landCard.setName("Forest");
-        landCard.setType(CardType.LAND);
-        gd.playerGraveyards.get(player1Id).add(landCard);
-
-        service.handleBeginningOfCombatGraveyardTargeting(gd, player1Id, card, List.of(exileEffect), sourcePermanentId, exileEffect);
-
-        // No creature in graveyard — falls through to empty-target stack entry path
-        assertThat(gd.stack).hasSize(1);
-    }
 }

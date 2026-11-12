@@ -14,6 +14,6 @@ public class KjeldoranFrostbeast extends Card {
     public KjeldoranFrostbeast() {
         addTrigger(Triggers.endOfCombat(),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceAttackedOrBlockedThisCombat()),
-                new DestroyCombatOpponentsOfTargetAtEndOfCombatEffect(false, true));
+                DestroyCombatOpponentsOfTargetAtEndOfCombatEffect.ofSourceWhileInCombat());
     }
 }

@@ -24,9 +24,4 @@ public record PutCounterOnCombatOpponentAtEndOfCombatEffect(
     public PutCounterOnCombatOpponentAtEndOfCombatEffect(CounterType counterType, int amount) {
         this(counterType, amount, false);
     }
-
-    @Override
-    public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetPredicates.permanent());
-    }
 }

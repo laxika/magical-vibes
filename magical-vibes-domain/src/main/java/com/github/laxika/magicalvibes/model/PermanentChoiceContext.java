@@ -2545,11 +2545,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** A player-targeted trigger from a precombat or postcombat main phase. */
-    record MainPhasePlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                        UUID sourcePermanentId, TargetFilter targetFilter)
-            implements PermanentChoiceContext {}
-
     record PlayerWithLowestLifeChoice(Card sourceCard, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     /** The Black Gate's resolution-time choice of a player tied for most life. */
@@ -2573,56 +2568,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record LeastToughnessDamageChoice(Card sourceCard, int damage) implements PermanentChoiceContext {}
 
     record UpkeepMultiPlayerTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
-
-    /** {@code targetFilter} overrides the source card's own filter — see {@link UpkeepPlayerTargetTrigger}. */
-    record UpkeepAnyTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId,
-                                  TargetFilter targetFilter) implements PermanentChoiceContext {
-
-        public UpkeepAnyTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, null);
-        }
-    }
-
-    /**
-     * A modal upkeep trigger whose mode must be chosen before its ability is put on the stack. The
-     * chosen mode's effects then go through the ordinary upkeep trigger routing.
-     */
-    record UpkeepModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
-                              UUID sourcePermanentId, boolean consumeModes) implements PermanentChoiceContext {
-
-        /**
-         * {@code consumeModes} is set by a "choose one that hasn't been chosen" modal
-         * ({@link ChooseOneEffect.ModeRestriction#NOT_YET_CHOSEN}); the upkeep path tracks no other restriction.
-         */
-        public UpkeepModalTrigger {
-            ChooseOneEffect.ModeRestriction restriction = effect.modeRestriction();
-            if (restriction != ChooseOneEffect.ModeRestriction.NONE
-                    && restriction != ChooseOneEffect.ModeRestriction.NOT_YET_CHOSEN) {
-                throw new IllegalArgumentException("An upkeep modal trigger can't track " + restriction);
-            }
-            consumeModes = consumeModes || restriction == ChooseOneEffect.ModeRestriction.NOT_YET_CHOSEN;
-        }
-
-        public UpkeepModalTrigger(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
-                                  UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effect, sourcePermanentId, false);
-        }
-    }
-
-    record UpkeepPermanentTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                        UUID sourcePermanentId, TargetFilter targetFilter,
-                                        UUID choosingPlayerId) implements PermanentChoiceContext {
-
-        public UpkeepPermanentTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                            UUID sourcePermanentId) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, null, null);
-        }
-
-        public UpkeepPermanentTargetTrigger(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                            UUID sourcePermanentId, TargetFilter targetFilter) {
-            this(sourceCard, controllerId, effects, sourcePermanentId, targetFilter, null);
-        }
-    }
 
     /** Cyclopean Tomb's resolution-time choice of a tracked land to clean up. */
     record CyclopeanTombUpkeepLandChoice(UUID delayedActionId, PermanentPredicate permanentFilter)
@@ -2650,10 +2595,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
 
     /** Puca's Mischief step 2: choose the opponent's nonland permanent (mana value &le; {@code ownTargetId}'s). */
     record PucasMischiefOpponentTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId, UUID ownTargetId) implements PermanentChoiceContext {}
-
-    record EndStepTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
-
-    record BeginningOfCombatTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 
     record DayNightTriggerTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) implements PermanentChoiceContext {}
 

@@ -56,8 +56,8 @@ class TheCheetahPlanetTest extends BaseCardTest {
         assertThat(gqs.hasEffectiveSubtype(gd, planeswalkTarget, CardSubtype.CAT)).isTrue();
 
         harness.forceStep(TurnStep.UPKEEP);
-        GameTestEngineContext.get().getBean(StepTriggerService.class).handleUpkeepTriggers(gd);
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleUpkeepTriggers(gd));
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -94,7 +94,7 @@ class TheCheetahPlanetTest extends BaseCardTest {
     private void triggerAndChooseTarget(Trigger trigger, Permanent target) {
         PlanarObject plane = gd.planechase.faceUp.getFirst();
         harness.inMutationScope(() -> planar.trigger(gd, plane, trigger, player1.getId()));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).contains(target.getId());

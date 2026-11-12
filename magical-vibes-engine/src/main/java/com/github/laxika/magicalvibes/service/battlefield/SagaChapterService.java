@@ -28,7 +28,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -54,7 +54,7 @@ public class SagaChapterService {
 
     @Autowired
     @Lazy
-    private StepTriggerService stepTriggerService;
+    private TriggeredAbilityStackService triggeredAbilityStackService;
 
     public SagaChapterService(GameQueryService gameQueryService,
                               GameLogService gameLogService,
@@ -197,8 +197,9 @@ public class SagaChapterService {
         if (chapterEffects.size() == 1 && chapterEffects.getFirst() instanceof ChooseOneAtRandomEffect randomChoice
                 && sagaPermanent != null) {
             // The random mode (and so its targets) is picked as the chapter ability triggers.
-            ChooseOneEffect.ChooseOneOption selectedOption = stepTriggerService
-                    .chooseRandomOptionAtTriggerTime(gameData, controllerId, sagaPermanent, randomChoice);
+            ChooseOneEffect.ChooseOneOption selectedOption = triggeredAbilityStackService
+                    .chooseRandomModeAsItTriggers(gameData, controllerId, sagaPermanent.getCard(), sagaPermanent,
+                            randomChoice.options());
             if (selectedOption == null) return;
             chapterEffects = selectedOption.effectsForSelection();
             if (selectedOption.targetFilter() != null) {

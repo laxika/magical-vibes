@@ -44,7 +44,7 @@ class BowieBaseOneTest extends BaseCardTest {
 
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
                 .handleEndStepTriggers(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.passBothPriorities();
 
         PendingInteraction.PermanentChoice choice =
@@ -63,8 +63,7 @@ class BowieBaseOneTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

@@ -79,7 +79,7 @@ class KetriaTest extends BaseCardTest {
 
         harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
                 .handleUpkeepTriggers(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.PermanentChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -140,7 +140,7 @@ class KetriaTest extends BaseCardTest {
         PlanarObject plane = gd.planechase.faceUp.getFirst();
         harness.inMutationScope(() -> planar.trigger(gd, plane,
                 Triggers.planeswalkToThis(), player1.getId()));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, target.getId());
         gd.playerBattlefields.get(player1.getId()).remove(target);
         harness.setGraveyard(player1, List.of(target.getCard()));
@@ -231,7 +231,7 @@ class KetriaTest extends BaseCardTest {
     private void triggerAndChooseTarget(Trigger trigger, Permanent target) {
         PlanarObject plane = gd.planechase.faceUp.getFirst();
         harness.inMutationScope(() -> planar.trigger(gd, plane, trigger, player1.getId()));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
     }

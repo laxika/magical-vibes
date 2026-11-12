@@ -114,15 +114,6 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
-    /** Selects zero or one permanent for an optional upkeep target. */
-    record UpkeepOptionalPermanentTarget(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                         UUID sourcePermanentId) implements MultiPermanentChoiceContext {
-
-        public UpkeepOptionalPermanentTarget {
-            effects = List.copyOf(effects);
-        }
-    }
-
     /** Selects creature or graveyard-card targets for a self-triggered ability. */
     record SelfTriggeredAbilityTargets(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                        String eventDescription, UUID sourcePermanentId,

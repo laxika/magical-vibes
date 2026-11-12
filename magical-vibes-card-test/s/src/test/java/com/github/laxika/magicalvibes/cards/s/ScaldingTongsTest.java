@@ -93,7 +93,7 @@ class ScaldingTongsTest extends BaseCardTest {
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIds()).containsExactly(player2.getId());
+        assertThat(choice.validPlayerIds()).containsExactly(player2.getId());
         assertThat(choice.validIds()).doesNotContain(jackal.getId(), player1.getId());
     }
 

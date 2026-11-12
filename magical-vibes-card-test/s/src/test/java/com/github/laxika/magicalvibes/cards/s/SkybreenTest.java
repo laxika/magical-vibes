@@ -92,7 +92,7 @@ class SkybreenTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Forest(), new GrizzlyBears(), new Shock()));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -204,7 +204,7 @@ class SkybreenTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passPriority(player1);
         harness.castAndResolveInstant(player2, 2, player1.getId());
@@ -220,7 +220,7 @@ class SkybreenTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Forest(), new GrizzlyBears()));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 

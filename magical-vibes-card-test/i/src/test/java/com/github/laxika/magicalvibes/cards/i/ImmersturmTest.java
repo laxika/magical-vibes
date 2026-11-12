@@ -39,7 +39,7 @@ class ImmersturmTest extends BaseCardTest {
     void enteringCreatureControllerChoosesTargetAndMayDealItsPower() {
         harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.PermanentChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -63,7 +63,7 @@ class ImmersturmTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, creatureCard);
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
@@ -75,7 +75,7 @@ class ImmersturmTest extends BaseCardTest {
     @Test
     void enteringCreatureControllerCanDeclineDamage() {
         harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player2, player1.getId());
         resolveAllTriggers();
 
@@ -90,7 +90,7 @@ class ImmersturmTest extends BaseCardTest {
     @Test
     void damageUsesCreaturesPowerAtResolution() {
         Permanent entering = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player2, player1.getId());
         entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         resolveAllTriggers();
@@ -103,7 +103,7 @@ class ImmersturmTest extends BaseCardTest {
     @Test
     void departedCreatureDealsDamageUsingItsLastKnownPower() {
         Permanent entering = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player2, player1.getId());
         entering.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, entering));
@@ -119,7 +119,7 @@ class ImmersturmTest extends BaseCardTest {
     void enteringCreatureCanDealDamageToAnotherCreature() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player2, target.getId());
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player2, true);
@@ -135,7 +135,7 @@ class ImmersturmTest extends BaseCardTest {
     void landEnteringAsCreatureTriggersDamage() {
         harness.addToBattlefield(player1, new NaturesRevolt());
         harness.enterBattlefieldAndReturn(player2, new Forest());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.PermanentChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -156,7 +156,7 @@ class ImmersturmTest extends BaseCardTest {
         original.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, original.getId());
         resolveAllTriggers();
 
@@ -164,7 +164,7 @@ class ImmersturmTest extends BaseCardTest {
         assertThat(returned.getId()).isNotEqualTo(original.getId());
         assertThat(returned.isTapped()).isFalse();
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         PendingInteraction.PermanentChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(targetChoice).isNotNull();

@@ -51,7 +51,7 @@ class KharashaFoothillsTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new AirElemental());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
@@ -73,7 +73,7 @@ class KharashaFoothillsTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new AirElemental());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();

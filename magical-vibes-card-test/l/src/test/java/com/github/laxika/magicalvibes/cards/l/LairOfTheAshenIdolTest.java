@@ -65,8 +65,7 @@ class LairOfTheAshenIdolTest extends BaseCardTest {
     @Test
     void chaosLetsTheControllerChooseAnyNumberOfPlayersForZombieTokens() {
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId(), player2.getId()));
@@ -81,8 +80,7 @@ class LairOfTheAshenIdolTest extends BaseCardTest {
     @Test
     void chaosCanTargetNoPlayers() {
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
@@ -95,8 +93,7 @@ class LairOfTheAshenIdolTest extends BaseCardTest {
     @Test
     void chaosCanGiveOnlyTheOpponentAZombie() {
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
         harness.passBothPriorities();
 
@@ -138,8 +135,7 @@ class LairOfTheAshenIdolTest extends BaseCardTest {
     @Test
     void aZombieTokenCanSatisfyTheMandatorySacrifice() {
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId()));
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Zombie");

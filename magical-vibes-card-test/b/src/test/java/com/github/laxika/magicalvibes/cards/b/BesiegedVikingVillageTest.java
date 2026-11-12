@@ -90,7 +90,7 @@ class BesiegedVikingVillageTest extends BaseCardTest {
         opponentAttacked.setAttackedThisTurn(true);
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

@@ -31,17 +31,11 @@ class NilsDisciplineEnforcerTest extends BaseCardTest {
 
         beginEndStep(player1);
 
-        PendingInteraction.PermanentChoice firstChoice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(firstChoice).isNotNull();
-        assertThat(firstChoice.validIds()).contains(ownCreature.getId(), opposingCreature.getId());
-        harness.handlePermanentChosen(player1, ownCreature.getId());
-
-        PendingInteraction.PermanentChoice secondChoice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(secondChoice).isNotNull();
-        assertThat(secondChoice.validIds()).contains(opposingCreature.getId());
-        harness.handlePermanentChosen(player1, opposingCreature.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).contains(ownCreature.getId(), opposingCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownCreature.getId(), opposingCreature.getId()));
         harness.passBothPriorities();
 
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -103,7 +97,7 @@ class NilsDisciplineEnforcerTest extends BaseCardTest {
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         beginEndStep(player1);
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         assertThat(nils.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -117,12 +111,12 @@ class NilsDisciplineEnforcerTest extends BaseCardTest {
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         beginEndStep(player1);
-        harness.handlePermanentChosen(player1, nils.getId());
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validIds()).contains(opposingCreature.getId())
-                .doesNotContain(nils.getId(), ownCreature.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).contains(nils.getId(), ownCreature.getId(), opposingCreature.getId());
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(nils.getId(), ownCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(nils.getId()));
         resolveAllTriggers();
 
         assertThat(nils.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -210,8 +204,7 @@ class NilsDisciplineEnforcerTest extends BaseCardTest {
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         beginEndStep(player1);
-        harness.handlePermanentChosen(player1, ownCreature.getId());
-        harness.handlePermanentChosen(player1, opposingCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownCreature.getId(), opposingCreature.getId()));
         gd.playerBattlefields.get(player2.getId()).remove(opposingCreature);
         gd.playerGraveyards.get(player2.getId()).add(opposingCreature.getCard());
         resolveAllTriggers();

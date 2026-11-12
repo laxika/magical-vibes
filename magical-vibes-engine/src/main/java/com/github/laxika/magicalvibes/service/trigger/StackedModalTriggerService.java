@@ -247,13 +247,22 @@ public class StackedModalTriggerService {
         ChooseOneEffect modal = announcedModal(entry);
         if (entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
                 || modal == null
-                || modal.optional() || modal.choicesRequired() != 1 || modal.choicesMax() != 1
-                || modal.choicesMaxCondition() != null || modal.isBudgeted()
                 || !entry.getTargetIds().isEmpty()
                 || (entry.getTargetId() != null && !boundPlayerTarget(gameData, entry))) {
             return false;
         }
-        return modal.options().stream().allMatch(StackedModalTriggerService::announceableMode);
+        return announcesMode(modal);
+    }
+
+    /**
+     * Whether the mode of a triggered ability that is {@code modal} alone is announced here once the ability is on the
+     * stack: one mode of modes that take at most one player or permanent target. The stack door chooses any other
+     * modal's mode as the ability goes on the stack (CR 603.3c).
+     */
+    public static boolean announcesMode(ChooseOneEffect modal) {
+        return !modal.optional() && modal.choicesRequired() == 1 && modal.choicesMax() == 1
+                && modal.choicesMaxCondition() == null && !modal.isBudgeted()
+                && modal.options().stream().allMatch(StackedModalTriggerService::announceableMode);
     }
 
     /**

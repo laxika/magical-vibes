@@ -50,6 +50,7 @@ import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.RulesEventPipeline;
 import com.github.laxika.magicalvibes.websocket.WebSocketSessionManager;
 import org.springframework.context.ApplicationContext;
@@ -436,6 +437,18 @@ public class GameTestHarness {
      */
     public void inMutationScope(Runnable serviceCall) {
         mutationCoordinator.mutate(gameData, serviceCall);
+    }
+
+    /**
+     * Begins the queued choices of the triggered abilities a test put toward the stack by calling a service directly
+     * (a planar ability's chaos, outside the die roll that would begin them): the any-target choice, then each mode and
+     * target choice the stack door queued, as the game does before a player gets priority.
+     */
+    public void beginTriggerChoices() {
+        inMutationScope(() -> {
+            triggerCollectionService.processNextSpellTargetTrigger(gameData);
+            GameTestEngineContext.get().getBean(StepTriggerService.class).beginNextStepTriggerChoice(gameData);
+        });
     }
 
     /**

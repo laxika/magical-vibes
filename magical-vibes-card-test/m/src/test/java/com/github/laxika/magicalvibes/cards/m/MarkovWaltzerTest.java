@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,9 +63,8 @@ class MarkovWaltzerTest extends BaseCardTest {
 
         advanceToCombat(player1);
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, enemy.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid permanent");
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(enemy.getId())))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -132,10 +132,9 @@ class MarkovWaltzerTest extends BaseCardTest {
         Permanent viper = harness.addToBattlefieldAndReturn(player1, new AmbushViper());
 
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, viper.getId());
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, viper.getId()))
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(viper.getId(), viper.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handlePermanentChosen(player1, waltzer.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(viper.getId(), waltzer.getId()));
         harness.passBothPriorities();
 
         assertThat(waltzer.getPowerModifier()).isEqualTo(1);
@@ -176,11 +175,6 @@ class MarkovWaltzerTest extends BaseCardTest {
     }
 
     private void chooseTargets(UUID... targetIds) {
-        for (UUID targetId : targetIds) {
-            harness.handlePermanentChosen(player1, targetId);
-        }
-        if (targetIds.length < 2 && gd.interaction.isAwaitingInput()) {
-            harness.handlePermanentChosen(player1, player1.getId());
-        }
+        harness.handleMultiplePermanentsChosen(player1, List.of(targetIds));
     }
 }

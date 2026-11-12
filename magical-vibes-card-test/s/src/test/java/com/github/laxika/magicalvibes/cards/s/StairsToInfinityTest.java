@@ -39,7 +39,9 @@ class StairsToInfinityTest extends BaseCardTest {
                 GameTestEngineContext.get().getBean(GameLogService.class),
                 GameTestEngineContext.get().getBean(TriggerCollectionService.class),
                 GameTestEngineContext.get().getBean(ConditionEvaluationService.class),
-                GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.cards.CardCatalog.class));
+                GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.cards.CardCatalog.class),
+                GameTestEngineContext.get().getBean(
+                        com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService.class));
         gd.planechase = new PlanechaseState();
         gd.planechase.controllerId = player1.getId();
         gd.planechase.faceUp.add(new PlanarObject(new StairsToInfinity(), gd.nextTimestamp()));

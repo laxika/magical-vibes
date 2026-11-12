@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -463,6 +464,19 @@ public class ETBTokenTargetService {
             List<UUID> validPlayerTargets = playerTargets(gameData, pending, group, groupEffects);
 
             List<UUID> validPermanentTargets = new ArrayList<>();
+            // The restriction the group's effects declare on their own target ("other target creature you control",
+            // Irma, Part-Time Mutant), judged with the ability's source.
+            PermanentPredicate effectRestriction = com.github.laxika.magicalvibes.model.EffectResolution
+                    .declaredPermanentRestriction(groupEffects.stream()
+                            .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)).toList())
+                    .orElse(null);
+            Permanent restrictionSource = pending.sourcePermanentId() == null ? null
+                    : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+            com.github.laxika.magicalvibes.model.filter.FilterContext restrictionContext = effectRestriction == null
+                    ? null
+                    : new com.github.laxika.magicalvibes.model.filter.FilterContext(gameData, card.getId(),
+                            pending.controllerId(), pending.xValue(), restrictionSource)
+                            .withSourcePermanentId(pending.sourcePermanentId());
             if (canTargetPermanent) {
                 // One shared layered pass for the whole candidate scan: every per-candidate
                 // legality query reads the same board instead of re-fingerprinting it.
@@ -477,6 +491,8 @@ public class ETBTokenTargetService {
                                     pending.controllerId(), card, pending.sourcePermanentId(), pending.xValue(),
                                     pending.triggerRecord() == null ? null
                                             : pending.triggerRecord().getTriggeringPlayerId())
+                                    && (effectRestriction == null || predicateEvaluationService
+                                            .matchesPermanentPredicate(p, effectRestriction, restrictionContext))
                                     // Shroud, hexproof and protection still apply (Gilded Drake vs Morphling).
                                     && targetLegalityService.checkTriggeredPermanentTargetableReason(
                                             gameData, p, card, pending.controllerId()).isEmpty()) {

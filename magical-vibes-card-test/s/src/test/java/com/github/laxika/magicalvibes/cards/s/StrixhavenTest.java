@@ -63,7 +63,7 @@ class StrixhavenTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opposingSpell));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -186,8 +186,7 @@ class StrixhavenTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(spell));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
@@ -202,8 +201,7 @@ class StrixhavenTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(spell));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handleMultiplePermanentsChosen(player1, List.of(spell.getId()));
         harness.passBothPriorities();
 

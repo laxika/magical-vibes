@@ -51,8 +51,7 @@ class BloodhillBastionTest extends BaseCardTest {
         Permanent illegalTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, illegalTarget.getId()))
@@ -98,8 +97,7 @@ class BloodhillBastionTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, token.getId()))
                 .isInstanceOf(IllegalStateException.class);
         harness.handlePermanentChosen(player1, target.getId());

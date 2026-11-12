@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DamageSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -39,6 +40,19 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToTargetCreatureEffect) effect;
+        if (e.damageSource() == DamageSource.TRIGGERING_PERMANENT) {
+            // The permanent the trigger event was about deals the damage (CR 608.2h), through an entry it is the
+            // source of; the targets stay the resolving entry's.
+            StackEntry dealing = damageSupport.entryDealtByTriggeringPermanent(gameData, entry);
+            if (dealing == null) {
+                return;
+            }
+            dealing.setTriggeringPermanentId(entry.getTriggeringPermanentId());
+            int amount = amountEvaluationService.evaluate(gameData, e.damage(),
+                    AmountContext.forStackEntry(entry, dealing.getSourcePermanentSnapshot()));
+            damageSupport.resolveCreatureTargetDamage(gameData, dealing, amount);
+            return;
+        }
 
         // Source-relative amounts use the live source permanent when it is still on the
         // battlefield, else the last-known snapshot (e.g. sacrificed as an activation cost).

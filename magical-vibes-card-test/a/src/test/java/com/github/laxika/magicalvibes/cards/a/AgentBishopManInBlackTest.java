@@ -9,6 +9,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({AgentBishopManInBlack.class, ActionNewsCrew.class})
@@ -22,9 +24,8 @@ class AgentBishopManInBlackTest extends BaseCardTest {
 
         advanceToCombat(player1);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -38,7 +39,7 @@ class AgentBishopManInBlackTest extends BaseCardTest {
 
         advanceToCombat(player1);
 
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -61,7 +62,7 @@ class AgentBishopManInBlackTest extends BaseCardTest {
 
         advanceToCombat(player1);
 
-        harness.handlePermanentChosen(player1, bishop.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bishop.getId()));
         harness.passBothPriorities();
 
         assertThat(bishop.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -74,8 +75,7 @@ class AgentBishopManInBlackTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new ActionNewsCrew());
 
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
         gd.playerBattlefields.get(player1.getId()).remove(first);
         harness.passBothPriorities();
 
@@ -89,8 +89,7 @@ class AgentBishopManInBlackTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new ActionNewsCrew());
 
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, creature.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
         gd.playerBattlefields.get(player1.getId()).remove(bishop);
         harness.passBothPriorities();
 

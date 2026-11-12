@@ -1079,7 +1079,7 @@ opening-hand actions (`MayEffect(PregameChoiceEffect)`, CR 103.6: the hand) and 
 |------|------------|
 | `Triggers.enters(ObjectRelation.THIS)` | Permanent enters the battlefield (ETB) |
 | `STATIC` | Continuous effect, always active while on battlefield |
-| `Triggers.upkeep(ActivePlayer.YOU)` | Controller's upkeep. Supports any-target routing (creature/planeswalker/battle/player) when an effect is true "any target" (`targetSpec()` admits both `Kind.PLAYER` and `Kind.PERMANENT`, e.g. Form of the Dragon via `UpkeepAnyTargetTrigger`), single-player targeting (e.g. Bloodgift Demon via `UpkeepPlayerTargetTrigger`), and multi-player targeting (e.g. Axis of Mortality via `UpkeepMultiPlayerTargetTrigger` when any effect has `targetSpec().playerTargetCount() >= 2`) |
+| `Triggers.upkeep(ActivePlayer.YOU)` | Controller's upkeep. The stack door chooses the ability's targets as it goes on the stack, like any trigger's: any target (Form of the Dragon), a player (Bloodgift Demon), a permanent; two target players (Axis of Mortality, an effect with `targetSpec().playerTargetCount() >= 2`) keep their own `UpkeepMultiPlayerTargetTrigger` choice |
 | `Triggers.upkeep(ActivePlayer.YOU) from the command zone` | Controller's upkeep while the source card is in their command zone; use an intervening `SourceCardInCommandZone` condition when leaving the command zone before resolution should stop the effect. A face-up scheme (CR 314.4) also fires its ordinary `Triggers.upkeep(ActivePlayer.YOU)` effects from here, with no source permanent (Fear My Authority) |
 | `Triggers.upkeep(ActivePlayer.ANY)` | Each player's upkeep |
 | `Triggers.upkeep(ActivePlayer.OPPONENT)` | Each opponent's upkeep |

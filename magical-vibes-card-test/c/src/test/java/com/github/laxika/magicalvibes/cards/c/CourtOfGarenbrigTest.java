@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import java.util.List;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -35,8 +36,7 @@ class CourtOfGarenbrigTest extends BaseCardTest {
         opponentCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 3);
 
         advanceToUpkeep(player1);
-        harness.handlePermanentChosen(player1, ownFirst.getId());
-        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownFirst.getId(), opponentCreature.getId()));
         harness.passBothPriorities();
 
         assertThat(ownFirst.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
@@ -53,7 +53,7 @@ class CourtOfGarenbrigTest extends BaseCardTest {
         ownCreature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
 
         advanceToUpkeep(player1);
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
@@ -69,7 +69,7 @@ class CourtOfGarenbrigTest extends BaseCardTest {
         gd.monarchPlayerId = player2.getId();
 
         advanceToUpkeep(player1);
-        harness.handlePermanentChosen(player1, ownCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownCreature.getId()));
         harness.passBothPriorities();
 
         assertThat(ownCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);

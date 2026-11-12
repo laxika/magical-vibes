@@ -151,7 +151,7 @@ class KarplusanMinotaurTest extends BaseCardTest {
 
         harness.inMutationScope(() -> {
             harness.getTriggerCollectionService().checkControllerLosesCoinFlipTriggers(gd, player1.getId());
-            harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd);
+            harness.beginTriggerChoices();
         });
 
         PendingInteraction.PermanentChoice opponentChoice =

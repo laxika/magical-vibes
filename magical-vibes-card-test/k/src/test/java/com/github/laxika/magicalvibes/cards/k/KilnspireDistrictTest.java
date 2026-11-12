@@ -63,7 +63,7 @@ class KilnspireDistrictTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.XValueChoice.class)).isNotNull();
@@ -79,7 +79,7 @@ class KilnspireDistrictTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 0);
@@ -108,7 +108,7 @@ class KilnspireDistrictTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 3);
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 3);

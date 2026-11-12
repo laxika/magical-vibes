@@ -62,8 +62,7 @@ class HotelOfFearsTest extends BaseCardTest {
         Permanent fodder = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 

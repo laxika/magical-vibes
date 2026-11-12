@@ -49,12 +49,12 @@ class TolarianContemptTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
 
-        PendingInteraction.PermanentChoice targetChoice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(targetChoice.validIds()).contains(markedCreature.getId())
                 .doesNotContain(unmarkedCreature.getId());
 
-        harness.handlePermanentChosen(player1, markedCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(markedCreature.getId()));
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction())
                 .isInstanceOf(PendingInteraction.TargetLibraryDestinationChoice.class);
@@ -76,7 +76,7 @@ class TolarianContemptTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.withAutoStop(TurnStep.END_STEP, () -> {
-            harness.handlePermanentChosen(player1, player1.getId());
+            harness.handleMultiplePermanentsChosen(player1, List.of());
             harness.passBothPriorities();
         });
 
@@ -97,7 +97,7 @@ class TolarianContemptTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.withAutoStop(TurnStep.END_STEP, () -> {
-            harness.handlePermanentChosen(player1, first.getId());
+            harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
             harness.passBothPriorities();
             assertThat(gd.interaction.activeInteraction())
                     .isInstanceOf(PendingInteraction.TargetLibraryDestinationChoice.class);
@@ -121,7 +121,7 @@ class TolarianContemptTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.withAutoStop(TurnStep.END_STEP, () -> {
-            harness.handlePermanentChosen(player1, marked.getId());
+            harness.handleMultiplePermanentsChosen(player1, List.of(marked.getId()));
             harness.passBothPriorities();
             assertThat(gd.interaction.activeInteraction(PendingInteraction.TargetLibraryDestinationChoice.class)
                     .playerId()).isEqualTo(player1.getId());
@@ -141,7 +141,7 @@ class TolarianContemptTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.withAutoStop(TurnStep.END_STEP, () -> {
-            harness.handlePermanentChosen(player1, marked.getId());
+            harness.handleMultiplePermanentsChosen(player1, List.of(marked.getId()));
             marked.setCounterCount(CounterType.REJECTION, 0);
             harness.passBothPriorities();
         });
@@ -183,7 +183,7 @@ class TolarianContemptTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.withAutoStop(TurnStep.END_STEP, () -> {
-            harness.handlePermanentChosen(player1, host.getId());
+            harness.handleMultiplePermanentsChosen(player1, List.of(host.getId()));
             harness.passBothPriorities();
             assertThat(gd.interaction.activeInteraction())
                     .isInstanceOf(PendingInteraction.TargetLibraryDestinationChoice.class);

@@ -112,8 +112,7 @@ class AkoumTest extends BaseCardTest {
 
     private void chooseChaosTarget(Permanent target, Permanent illegalTarget) {
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, illegalTarget.getId()))
                 .isInstanceOf(IllegalStateException.class);

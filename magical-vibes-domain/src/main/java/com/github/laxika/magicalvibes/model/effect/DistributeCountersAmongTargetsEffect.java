@@ -186,4 +186,9 @@ public record DistributeCountersAmongTargetsEffect(
                 ? TargetSpec.harmful(declaredTarget, targetRestriction)
                 : TargetSpec.benign(declaredTarget, targetRestriction);
     }
+
+    @Override
+    public boolean dividesAmongTargetsAsItGoesOnTheStack() {
+        return mode == DivisionMode.CHOSEN;
+    }
 }

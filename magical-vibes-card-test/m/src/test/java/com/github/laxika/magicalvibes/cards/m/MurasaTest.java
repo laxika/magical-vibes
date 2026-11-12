@@ -76,7 +76,7 @@ class MurasaTest extends BaseCardTest {
         var forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

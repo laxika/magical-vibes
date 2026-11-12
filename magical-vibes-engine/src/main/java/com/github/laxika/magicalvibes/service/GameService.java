@@ -68,6 +68,9 @@ public class GameService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.planar.PlanechaseService planechaseService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.turn.StepTriggerService stepTriggerService;
 
 
     private final GameQueryService gameQueryService;
@@ -220,10 +223,7 @@ public class GameService {
             requirePriority(gameData, player);
             planechaseService.rollSpecialAction(gameData, player.getId());
             triggerCollectionService.processNextSpellTargetTrigger(gameData);
-            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
-            if (!gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
-            }
+            stepTriggerService.beginNextStepTriggerChoice(gameData);
             stateBasedActionService.performStateBasedActions(gameData);
             mutationCoordinator.invalidateAllPlayerViews(gameData);
         }
@@ -2637,8 +2637,10 @@ public class GameService {
             int revertableBefore = gameData.revertableManaActivations.size();
             PendingManaActivation parkedBefore = gameData.pendingRevertableManaActivation;
             if (!interactionHandlerRegistry.dispatchAnswer(gameData, player, answer)) {
-                throw new IllegalStateException(
-                        "Not awaiting " + answer.getClass().getSimpleName() + " input");
+                PendingInteraction awaited = gameData.interaction.activeInteraction();
+                throw new IllegalStateException("Not awaiting " + answer.getClass().getSimpleName() + " input"
+                        + (awaited == null ? " (awaiting none)" : " (awaiting " + awaited.getClass().getSimpleName()
+                        + ")"));
             }
             // A nested prompt's handler normally returns to its outer prompt through the
             // input-completion epilogue; one that ends without it must not strand the outer one.

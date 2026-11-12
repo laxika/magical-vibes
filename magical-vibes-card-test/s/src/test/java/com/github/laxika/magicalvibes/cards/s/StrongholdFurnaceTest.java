@@ -61,7 +61,7 @@ class StrongholdFurnaceTest extends BaseCardTest {
         harness.setLife(player2, 20);
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
 
         harness.handlePermanentChosen(player1, player2.getId());
@@ -103,7 +103,7 @@ class StrongholdFurnaceTest extends BaseCardTest {
         var target = harness.addToBattlefieldAndReturn(player2, new BullCerodon());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
@@ -117,7 +117,7 @@ class StrongholdFurnaceTest extends BaseCardTest {
         harness.setLife(player2, 20);
         harness.setLibrary(player1, List.of(new Blaze(), new Blaze()));
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player2.getId());
 
         harness.inMutationScope(() -> planar.planeswalk(gd));

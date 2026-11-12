@@ -49,8 +49,7 @@ class NaarIsleTest extends BaseCardTest {
     @Test
     void chaosDealsThreeDamageToTargetPlayer() {
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -103,8 +102,7 @@ class NaarIsleTest extends BaseCardTest {
     void chaosCanTargetItsControllerAndDoesNotAddFlameCounters() {
         source.getCounters().put(CounterType.FLAME, 6);
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
@@ -119,8 +117,7 @@ class NaarIsleTest extends BaseCardTest {
         Permanent jace = harness.addToBattlefieldAndReturn(player2, new JaceBeleren());
         jace.setCounterCount(CounterType.LOYALTY, 3);
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, jace.getId());
         harness.passBothPriorities();
 

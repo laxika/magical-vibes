@@ -980,8 +980,6 @@ public class MultiPermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.UpkeepAnyNumberPlayerTargets ctx) {
             triggerHandler.handleUpkeepAnyNumberPlayerTargets(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.UpkeepOptionalPermanentTarget ctx) {
-            triggerHandler.handleUpkeepOptionalPermanentTarget(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DealDamageToDamagedPlayerControls ctx) {
             handleDealDamageToDamagedPlayerControls(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.UntapChosenPermanent ctx) {

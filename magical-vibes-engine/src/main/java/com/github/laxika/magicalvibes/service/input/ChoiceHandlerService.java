@@ -3622,8 +3622,6 @@ public class ChoiceHandlerService {
             triggerCollectionService.processNextETBSpellTargetTrigger(gameData);
         } else if (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
             triggerCollectionService.processNextTriggeredModalTrigger(gameData);
-        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class)) {
-            turnProgressionService.processNextMainPhasePlayerTarget(gameData);
         }
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -4811,13 +4809,6 @@ public class ChoiceHandlerService {
                 player.getUsername() + " chooses \"" + chosen.label() + "\" for ", ctx.sourceCard(), "."));
         log.info("Game {} - {} chooses mode \"{}\" for {} as it goes on the stack", gameData.id,
                 player.getUsername(), chosen.label(), ctx.sourceCard().getName());
-
-        if (ctx.consumeMode()) {
-            turnProgressionService.queueChosenModeUpkeepTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
-                    ctx.sourcePermanentId(), chosen);
-            turnProgressionService.processNextUpkeepModalTrigger(gameData);
-            return;
-        }
 
         triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
                 ctx.sourcePermanentId(), chosen);

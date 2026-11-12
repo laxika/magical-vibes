@@ -74,8 +74,7 @@ class DalekIntensiveCareTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new AirElemental());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
-                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(dalek.getId());

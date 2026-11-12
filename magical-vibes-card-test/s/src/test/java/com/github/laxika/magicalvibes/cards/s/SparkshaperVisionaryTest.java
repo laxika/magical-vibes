@@ -35,8 +35,7 @@ class SparkshaperVisionaryTest extends BaseCardTest {
         Permanent guff = addPlaneswalker(player1, new CommodoreGuff(), 5);
 
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, teferi.getId());
-        harness.handlePermanentChosen(player1, guff.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(teferi.getId(), guff.getId()));
         harness.passBothPriorities();
 
         for (Permanent planeswalker : List.of(teferi, guff)) {
@@ -68,7 +67,7 @@ class SparkshaperVisionaryTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
 
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, teferi.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(teferi.getId()));
         harness.passBothPriorities();
 
         declareAttackers(player1, List.of(1));
@@ -87,11 +86,10 @@ class SparkshaperVisionaryTest extends BaseCardTest {
 
         advanceToCombat(player1);
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentTeferi.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Invalid permanent");
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(opponentTeferi.getId())))
+                .isInstanceOf(IllegalStateException.class);
 
-        harness.handlePermanentChosen(player1, ownTeferi.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownTeferi.getId()));
         harness.passBothPriorities();
     }
 
@@ -101,7 +99,7 @@ class SparkshaperVisionaryTest extends BaseCardTest {
         Permanent teferi = addPlaneswalker(player1, new TeferiTemporalArchmage(), 5);
 
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(gqs.isPlaneswalker(gd, teferi)).isTrue();
@@ -115,8 +113,7 @@ class SparkshaperVisionaryTest extends BaseCardTest {
         Permanent guff = addPlaneswalker(player1, new CommodoreGuff(), 5);
 
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, teferi.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(teferi.getId()));
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, teferi)).isTrue();
@@ -144,7 +141,7 @@ class SparkshaperVisionaryTest extends BaseCardTest {
         teferi.setSummoningSick(true);
 
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, teferi.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(teferi.getId()));
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, teferi)).isTrue();
@@ -158,7 +155,7 @@ class SparkshaperVisionaryTest extends BaseCardTest {
         Permanent teferi = addPlaneswalker(player1, new TeferiTemporalArchmage(), 5);
 
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, teferi.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(teferi.getId()));
         harness.passBothPriorities();
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -179,7 +176,7 @@ class SparkshaperVisionaryTest extends BaseCardTest {
         teferi.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, teferi.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(teferi.getId()));
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, teferi)).isEqualTo(4);

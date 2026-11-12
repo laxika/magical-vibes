@@ -222,7 +222,7 @@ class AmuletOfSafekeepingTest extends BaseCardTest {
         gd.planechase.faceUp.add(new PlanarObject(new Immersturm(), gd.nextTimestamp()));
 
         harness.enterBattlefieldAndReturn(player2, new ZuranSpellcaster());
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player2, player1.getId());
         harness.passBothPriorities();
 

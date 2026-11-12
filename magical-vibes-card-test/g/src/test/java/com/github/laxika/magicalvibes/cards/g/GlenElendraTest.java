@@ -81,7 +81,7 @@ class GlenElendraTest extends BaseCardTest {
         gd.stolenCreatures.put(target.getId(), player1.getId());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
@@ -139,7 +139,7 @@ class GlenElendraTest extends BaseCardTest {
         Permanent ownCreature = addCreatureReady(player1, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

@@ -65,7 +65,7 @@ class OrzhovaTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(creature, noncreature));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -84,7 +84,7 @@ class OrzhovaTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(creature));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
@@ -102,7 +102,7 @@ class OrzhovaTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(selected, unselected));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice.validCardIds()).containsExactlyInAnyOrder(selected.getId(), unselected.getId());
@@ -121,7 +121,7 @@ class OrzhovaTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(first, second));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(
                 player1, List.of(first.getId(), second.getId())))

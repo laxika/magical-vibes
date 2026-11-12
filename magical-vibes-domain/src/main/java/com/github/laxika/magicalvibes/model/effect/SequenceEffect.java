@@ -125,4 +125,10 @@ public record SequenceEffect(List<CardEffect> steps, boolean optionalTarget, boo
         }
         return false;
     }
+
+    /** A step makes a reflexive ability that chooses the targets ("…, then when you do, …"). */
+    @Override
+    public boolean targetsChosenByReflexiveAbility() {
+        return steps.stream().anyMatch(CardEffect::targetsChosenByReflexiveAbility);
+    }
 }

@@ -28,8 +28,7 @@ class NoctisHeirApparentTest extends BaseCardTest {
         harness.forceStep(TurnStep.DECLARE_ATTACKERS);
 
         harness.enterBattlefieldAndReturn(player1, new GrizzlyBears());
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
-                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, equipment.getId());

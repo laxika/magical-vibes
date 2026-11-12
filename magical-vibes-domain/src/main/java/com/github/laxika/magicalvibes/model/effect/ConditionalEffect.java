@@ -59,4 +59,31 @@ public record ConditionalEffect(Condition condition, CardEffect wrapped)
     public boolean resolvesWhenTargetIllegal() {
         return wrapped.resolvesWhenTargetIllegal();
     }
+
+    /** The reflexive ability the wrapped effect makes chooses its targets (Aurora Shifter's "if you do"). */
+    @Override
+    public boolean targetsChosenByReflexiveAbility() {
+        return wrapped.targetsChosenByReflexiveAbility();
+    }
+
+    /** The wrapped effect's player target relation ("target opponent"), under the intervening "if" around it. */
+    @Override
+    public com.github.laxika.magicalvibes.model.filter.PlayerRelation targetPlayerRelation() {
+        return wrapped.targetPlayerRelation();
+    }
+
+    @Override
+    public boolean targetChosenByActivePlayer() {
+        return wrapped.targetChosenByActivePlayer();
+    }
+
+    @Override
+    public boolean targetChosenAtRandom() {
+        return wrapped.targetChosenAtRandom();
+    }
+
+    @Override
+    public boolean hasOptionalTarget() {
+        return wrapped.hasOptionalTarget();
+    }
 }

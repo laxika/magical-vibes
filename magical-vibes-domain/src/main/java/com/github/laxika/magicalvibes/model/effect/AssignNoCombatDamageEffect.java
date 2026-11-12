@@ -13,10 +13,23 @@ package com.github.laxika.magicalvibes.model.effect;
  * <p>When {@code thisCombatOnly} is true the restriction ends with the current combat instead of
  * lasting the whole turn ("assigns no combat damage this combat").</p>
  */
-public record AssignNoCombatDamageEffect(boolean useTargetId, boolean thisCombatOnly) implements CardEffect {
+public record AssignNoCombatDamageEffect(boolean useTargetId, boolean thisCombatOnly,
+                                         boolean useTriggeringPermanent) implements CardEffect {
+
+    public AssignNoCombatDamageEffect(boolean useTargetId, boolean thisCombatOnly) {
+        this(useTargetId, thisCombatOnly, false);
+    }
 
     public AssignNoCombatDamageEffect(boolean useTargetId) {
         this(useTargetId, false);
+    }
+
+    /**
+     * The permanent the trigger event was about assigns no combat damage this turn ("the attacking creature assigns no
+     * combat damage", Farrel's Mantle's enchanted creature).
+     */
+    public static AssignNoCombatDamageEffect ofTriggeringPermanent() {
+        return new AssignNoCombatDamageEffect(false, false, true);
     }
 
     public AssignNoCombatDamageEffect() {

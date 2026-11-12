@@ -32,11 +32,10 @@ class TaskmasterMercenaryMimicTest extends BaseCardTest {
 
         beginFirstMainPhase(player1);
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIds()).contains(battlefieldCreature.getId());
-        assertThat(choice.validCardIds()).containsExactly(graveyardCreature.getId());
+        assertThat(choice.validIds()).contains(battlefieldCreature.getId(), graveyardCreature.getId());
     }
 
     @Test
@@ -46,7 +45,7 @@ class TaskmasterMercenaryMimicTest extends BaseCardTest {
         Permanent battlefieldCreature = addCreatureReady(player2, new GrizzlyBears());
 
         beginFirstMainPhase(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(battlefieldCreature.getId()));
+        harness.handlePermanentChosen(player1, battlefieldCreature.getId());
         resolveAllTriggers();
 
         assertThat(taskmaster.getCard().getName()).isEqualTo("Taskmaster, Mercenary Mimic");
@@ -66,7 +65,7 @@ class TaskmasterMercenaryMimicTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(graveyardCreature));
 
         beginFirstMainPhase(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(graveyardCreature.getId()));
+        harness.handlePermanentChosen(player1, graveyardCreature.getId());
         resolveAllTriggers();
 
         assertThat(taskmaster.getCard().getName()).isEqualTo("Taskmaster, Mercenary Mimic");
@@ -83,7 +82,7 @@ class TaskmasterMercenaryMimicTest extends BaseCardTest {
         addCreatureReady(player2, new GrizzlyBears());
 
         beginFirstMainPhase(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
         assertThat(taskmaster.getCard()).isSameAs(original);
@@ -95,7 +94,7 @@ class TaskmasterMercenaryMimicTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new HydraulicHelper());
 
         beginFirstMainPhase(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+        harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
         assertThat(taskmaster.getCard().getSubtypes()).containsExactlyInAnyOrder(
@@ -109,7 +108,7 @@ class TaskmasterMercenaryMimicTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(target));
 
         beginFirstMainPhase(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+        harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
         assertThat(taskmaster.getCard().getSubtypes()).containsExactlyInAnyOrder(
@@ -123,7 +122,7 @@ class TaskmasterMercenaryMimicTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new HydraulicHelper());
 
         beginFirstMainPhase(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+        harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
         assertThat(taskmaster.getCard().hasType(CardType.CREATURE)).isTrue();
@@ -139,7 +138,7 @@ class TaskmasterMercenaryMimicTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new HydraulicHelper());
 
         beginFirstMainPhase(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+        harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
         harness.passUntilWithNoAttackers(player2, TurnStep.UPKEEP);
@@ -152,7 +151,7 @@ class TaskmasterMercenaryMimicTest extends BaseCardTest {
         assertThat(taskmaster.getCard().getKeywords()).doesNotContain(Keyword.DEFENDER);
 
         harness.passUntil(player1, TurnStep.PRECOMBAT_MAIN);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
     }
 
     @Test
@@ -161,7 +160,7 @@ class TaskmasterMercenaryMimicTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2, new HydraulicHelper());
 
         beginFirstMainPhase(player1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+        harness.handlePermanentChosen(player1, target.getId());
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, target));
         resolveAllTriggers();
 

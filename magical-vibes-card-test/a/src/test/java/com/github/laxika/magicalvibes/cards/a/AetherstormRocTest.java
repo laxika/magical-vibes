@@ -47,7 +47,7 @@ class AetherstormRocTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, victim.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

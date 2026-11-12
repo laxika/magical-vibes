@@ -1250,13 +1250,6 @@ class TurnProgressionServiceTest {
             verify(stepTriggerService).processNextCapriciousEfreetTarget(gd);
         }
 
-        @Test
-        @DisplayName("processNextEndStepTriggerTarget delegates to stepTriggerService")
-        void processNextEndStepTriggerTargetDelegates() {
-            turnProgressionService.processNextEndStepTriggerTarget(gd);
-
-            verify(stepTriggerService).processNextEndStepTriggerTarget(gd);
-        }
     }
 
     // =========================================================================

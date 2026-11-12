@@ -88,7 +88,7 @@ class OodSphereTest extends BaseCardTest {
 
     private void resolveChaosTarget(Permanent target) {
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

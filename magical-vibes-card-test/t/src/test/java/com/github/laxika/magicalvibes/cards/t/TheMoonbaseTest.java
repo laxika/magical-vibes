@@ -73,7 +73,7 @@ class TheMoonbaseTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(creature, noncreature));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.MultiPermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);

@@ -11,10 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.RandomPlayerDiscardsAndLosesLifeIfLandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -42,13 +38,6 @@ public class RandomPlayerDiscardsAndLosesLifeIfLandEffectHandler implements Norm
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getTargetId() == null) {
-            List<UUID> players = new ArrayList<>(gameData.playerIds);
-            if (players.isEmpty()) {
-                return;
-            }
-            entry.setTargetId(players.get(ThreadLocalRandom.current().nextInt(players.size())));
-        }
         discardCardThenEffectHandler.resolve(gameData, entry, DISCARD_EFFECT);
     }
 }

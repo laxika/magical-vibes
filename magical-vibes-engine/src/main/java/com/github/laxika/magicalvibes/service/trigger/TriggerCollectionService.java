@@ -156,6 +156,7 @@ import com.github.laxika.magicalvibes.model.effect.IncrementTriggerEffect;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerCandidate;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.trigger.TargetAbilityReader.TargetEffect;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
@@ -234,6 +235,9 @@ public class TriggerCollectionService {
     @Autowired
     @Lazy
     private TargetRedirectionSupport targetRedirectionSupport;
+    @Autowired
+    @Lazy
+    private TriggeredAbilityStackService triggeredAbilityStackService;
     @Autowired
     private ObjectProvider<StateTriggerService> stateTriggerService;
     @Autowired
@@ -3111,26 +3115,38 @@ public class TriggerCollectionService {
         }
         UUID planarControllerId = gameData.planechase.controllerId;
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            // Each ability of the plane is one object of all its effects (CR 603.3).
-            for (List<CardEffect> effects : combatAbilities(
-                    WatchedAbilities.printed(object.getCard(), CombatWatch.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT),
-                    CombatWatch.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT)) {
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        object.getCard(),
-                        planarControllerId,
-                        object.getCard().getName() + "'s triggered ability",
-                        new ArrayList<>(effects),
-                        creatureControllerId,
-                        (UUID) null);
-                entry.setTriggeringPermanentId(creature.getId());
-                entry.setTriggeringPermanentControllerId(creatureControllerId);
-                entry.setSourcePlanarObject(object.copy());
-                entry.setNonTargeting(true);
-                gameData.enqueueTrigger(entry);
-                gameLogService.append(gameData, GameLog.abilityTriggers(object.getCard()));
-                log.info("Game {} - {} triggers when a creature deals combat damage to an opponent",
-                        gameData.id, object.getCard().getName());
+            putPlanarCombatDamageAbilities(gameData, object, planarControllerId,
+                    CombatWatch.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_OPPONENT, creature, creatureControllerId);
+        }
+    }
+
+    /**
+     * Hands each ability of the face-up planar card {@code object} that {@code watch} reads to the stack door under
+     * {@code controllerId}, its event "a creature deals combat damage" by {@code creature}: the record names "that
+     * creature's controller" as the non-targeting target (CR 115.10a), the creature as the triggering permanent, and
+     * the planar object the ability is of.
+     */
+    private void putPlanarCombatDamageAbilities(GameData gameData, PlanarObject object, UUID controllerId,
+                                                CombatWatch watch, Permanent creature, UUID creatureControllerId) {
+        Card card = object.getCard();
+        ConditionContext context = ConditionContext.forCard(card, controllerId)
+                .withTriggeringPermanentId(creature.getId());
+        for (TriggeredAbility ability : WatchedAbilities.printed(card, watch)) {
+            if (CombatAbilityReader.effects(List.of(ability), watch.trigger()).isEmpty()
+                    || !conditionEvaluationService.eventConditionMet(gameData, ability.options(), context)) {
+                continue;
+            }
+            PlanarObject source = object.copy();
+            boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability, card,
+                    null, controllerId, card.getName() + "'s triggered ability", context, entry -> {
+                        entry.setTargetId(creatureControllerId);
+                        entry.setNonTargeting(true);
+                        entry.setTriggeringPermanentId(creature.getId());
+                        entry.setTriggeringPermanentControllerId(creatureControllerId);
+                        entry.setSourcePlanarObject(source);
+                    }));
+            if (triggered) {
+                gameLogService.append(gameData, GameLog.abilityTriggers(card));
             }
         }
     }
@@ -8105,26 +8121,8 @@ public class TriggerCollectionService {
 
         UUID creatureControllerId = gameQueryService.findPermanentController(gameData, sourceCreature.getId());
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            // Each ability of the plane is one object of all its effects (CR 603.3).
-            for (List<CardEffect> effects : combatAbilities(
-                    WatchedAbilities.printed(object.getCard(), CombatWatch.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU),
-                    CombatWatch.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU)) {
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        object.getCard(),
-                        damagedPlayerId,
-                        object.getCard().getName() + "'s triggered ability",
-                        new ArrayList<>(effects),
-                        creatureControllerId,
-                        (UUID) null);
-                entry.setTriggeringPermanentId(sourceCreature.getId());
-                entry.setTriggeringPermanentControllerId(creatureControllerId);
-                entry.setSourcePlanarObject(object.copy());
-                entry.setNonTargeting(true);
-                gameData.stack.add(entry);
-                gameLogService.append(gameData, GameLog.cardThen(object.getCard(),
-                        "'s combat damage trigger goes on the stack."));
-            }
+            putPlanarCombatDamageAbilities(gameData, object, damagedPlayerId,
+                    CombatWatch.ON_CREATURE_DEALS_COMBAT_DAMAGE_TO_YOU, sourceCreature, creatureControllerId);
         }
     }
 
@@ -11534,6 +11532,16 @@ public class TriggerCollectionService {
 
     public TargetFilter targetFilterForTriggeredEffects(Card sourceCard, List<CardEffect> effects) {
         return triggeredAbilityQueueService.targetFilterForTriggeredEffects(sourceCard, effects);
+    }
+
+    /** Whether the one target of {@code effects}, an ability of {@code card}, is "up to one". */
+    public boolean isOptionalSingleTarget(Card card, List<CardEffect> effects) {
+        return triggeredAbilityQueueService.isOptionalSingleTarget(card, effects);
+    }
+
+    /** The target filter of {@code pending}'s ability: its own, which the stack door stamps on the record, else its card's. */
+    public TargetFilter targetFilterOf(PermanentChoiceContext.AttackTriggerTarget pending) {
+        return triggeredAbilityQueueService.targetFilterOf(pending);
     }
 
     public void processNextAttackCounterMoveFirstTarget(GameData gameData) {

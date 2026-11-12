@@ -29,8 +29,7 @@ class TidusYunasGuardianTest extends BaseCardTest {
 
         advanceToCombat(player1);
 
-        harness.handlePermanentChosen(player1, source.getId());
-        harness.handlePermanentChosen(player1, destination.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(source.getId(), destination.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -80,8 +79,7 @@ class TidusYunasGuardianTest extends BaseCardTest {
         source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, source.getId());
-        harness.handlePermanentChosen(player1, destination.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(source.getId(), destination.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -95,8 +93,7 @@ class TidusYunasGuardianTest extends BaseCardTest {
         Permanent destination = addCreatureReady(player1, new GrizzlyBears());
 
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, source.getId());
-        harness.handlePermanentChosen(player1, destination.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(source.getId(), destination.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -112,8 +109,7 @@ class TidusYunasGuardianTest extends BaseCardTest {
         source.setCounterCount(CounterType.FLYING, 1);
 
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, source.getId());
-        harness.handlePermanentChosen(player1, destination.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(source.getId(), destination.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -192,6 +188,6 @@ class TidusYunasGuardianTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
     }
 }

@@ -45,9 +45,7 @@ class LetheLakeTest extends BaseCardTest {
     void chaosMillsTenCardsFromTargetPlayer() {
         harness.setLibrary(player2, cards(10));
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(
-                com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class)
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player2.getId());
 
         harness.passBothPriorities();
@@ -82,9 +80,7 @@ class LetheLakeTest extends BaseCardTest {
         harness.setLibrary(player1, library);
         harness.setLibrary(player2, otherLibrary);
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(
-                com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class)
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player1.getId());
 
         harness.passBothPriorities();
@@ -101,9 +97,7 @@ class LetheLakeTest extends BaseCardTest {
         List<Card> library = cards(3);
         harness.setLibrary(player2, library);
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(
-                com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class)
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player2.getId());
 
         harness.passBothPriorities();

@@ -25,7 +25,9 @@ class PanopticonTest extends BaseCardTest {
                 GameTestEngineContext.get().getBean(GameLogService.class),
                 GameTestEngineContext.get().getBean(TriggerCollectionService.class),
                 GameTestEngineContext.get().getBean(ConditionEvaluationService.class),
-                GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.cards.CardCatalog.class));
+                GameTestEngineContext.get().getBean(com.github.laxika.magicalvibes.cards.CardCatalog.class),
+                GameTestEngineContext.get().getBean(
+                        com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService.class));
         planar.initializeDeck(gd);
         gd.startingPlayerId = player1.getId();
         harness.forceActivePlayer(player1);

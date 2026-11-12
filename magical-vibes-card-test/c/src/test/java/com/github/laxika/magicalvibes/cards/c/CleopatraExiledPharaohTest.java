@@ -36,12 +36,11 @@ class CleopatraExiledPharaohTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, cleopatra.getId()))
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(cleopatra.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, nonlegendary.getId()))
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(nonlegendary.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -160,7 +159,7 @@ class CleopatraExiledPharaohTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
-        harness.handlePermanentChosen(player1, target.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -175,7 +174,7 @@ class CleopatraExiledPharaohTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.passUntil(TurnStep.END_STEP);
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

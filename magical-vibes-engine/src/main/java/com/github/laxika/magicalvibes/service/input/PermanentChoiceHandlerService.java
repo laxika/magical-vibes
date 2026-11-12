@@ -1126,10 +1126,6 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleUpkeepMultiPlayerFirstTarget(gameData, permanentId, umpt);
         } else if (context instanceof PermanentChoiceContext.UpkeepSecondPlayerTargetTrigger uspt) {
             triggerHandler.handleUpkeepMultiPlayerSecondTarget(gameData, permanentId, uspt);
-        } else if (context instanceof PermanentChoiceContext.UpkeepAnyTargetTrigger uat) {
-            triggerHandler.handleUpkeepAnyTargetTrigger(gameData, permanentId, uat);
-        } else if (context instanceof PermanentChoiceContext.UpkeepPermanentTargetTrigger uptt) {
-            triggerHandler.handleUpkeepPermanentTargetTrigger(gameData, permanentId, uptt);
         } else if (context instanceof PermanentChoiceContext.CyclopeanTombUpkeepLandChoice cyclopean) {
             removeAllMireCountersFromChosenLandEffectHandler.completeChoice(gameData, permanentId, cyclopean);
         } else if (context instanceof PermanentChoiceContext.DayNightTransformAttachment dnta) {
@@ -1140,8 +1136,6 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handlePhasesInTriggerTarget(gameData, permanentId, pit);
         } else if (context instanceof PermanentChoiceContext.UpkeepPlayerTargetTrigger upt) {
             triggerHandler.handleUpkeepPlayerTargetTrigger(gameData, permanentId, upt);
-        } else if (context instanceof PermanentChoiceContext.MainPhasePlayerTargetTrigger mpt) {
-            triggerHandler.handleMainPhasePlayerTargetTrigger(gameData, permanentId, mpt);
         } else if (context instanceof PermanentChoiceContext.PlayerWithLowestLifeChoice pwll) {
             triggerHandler.handlePlayerWithLowestLifeChoice(gameData, permanentId, pwll);
         } else if (context instanceof PermanentChoiceContext.BlackGateMostLifeChoice bgml) {
@@ -1170,10 +1164,6 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleETBTokenTargetTrigger(gameData, permanentId, etbTtt);
         } else if (context instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger etbMtt) {
             triggerHandler.handleETBTokenMultiTargetTrigger(gameData, permanentId, etbMtt);
-        } else if (context instanceof PermanentChoiceContext.EndStepTriggerTarget est) {
-            triggerHandler.handleEndStepTrigger(gameData, permanentId, est);
-        } else if (context instanceof PermanentChoiceContext.BeginningOfCombatTriggerTarget boct) {
-            triggerHandler.handleBeginningOfCombatTrigger(gameData, permanentId, boct);
         } else if (context instanceof PermanentChoiceContext.ExploreTriggerTarget ett) {
             triggerHandler.handleExploreTrigger(gameData, permanentId, ett);
         } else if (context instanceof PermanentChoiceContext.ClashTriggerTarget ctt) {

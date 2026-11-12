@@ -51,7 +51,7 @@ class TenWizardsMountainTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BurnishedHart());
 
         harness.inMutationScope(() -> planar.completeRoll(gd, player1.getId(), PlanarDieResult.BLANK));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -96,7 +96,7 @@ class TenWizardsMountainTest extends BaseCardTest {
 
         harness.inMutationScope(() -> triggers.checkControllerRollsOneOrMoreDiceTriggers(
                 gd, player1.getId(), 1, 20));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
@@ -106,7 +106,7 @@ class TenWizardsMountainTest extends BaseCardTest {
     @Test
     void planarDieRollWithNoCreaturesCanChooseNoTarget() {
         harness.inMutationScope(() -> planar.completeRoll(gd, player1.getId(), PlanarDieResult.BLANK));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         if (gd.interaction.isAwaitingInput()) {
             harness.handlePermanentChosen(player1, player1.getId());
@@ -147,7 +147,7 @@ class TenWizardsMountainTest extends BaseCardTest {
 
     private void rollBlankAndChooseTarget(java.util.UUID targetId) {
         harness.inMutationScope(() -> planar.completeRoll(gd, player1.getId(), PlanarDieResult.BLANK));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
     }

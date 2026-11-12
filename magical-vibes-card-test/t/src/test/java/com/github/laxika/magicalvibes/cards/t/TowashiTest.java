@@ -65,8 +65,7 @@ class TowashiTest extends BaseCardTest {
         Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
         harness.handlePermanentChosen(player1, target.getId());
@@ -191,8 +190,7 @@ class TowashiTest extends BaseCardTest {
         Permanent third = addCreatureReady(player1, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, first.getId());
         harness.handlePermanentChosen(player1, second.getId());
         harness.handlePermanentChosen(player1, third.getId());
@@ -212,8 +210,7 @@ class TowashiTest extends BaseCardTest {
         Permanent removed = addCreatureReady(player1, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, survivor.getId());
         harness.handlePermanentChosen(player1, removed.getId());
         harness.handleListChoice(player1, "1");

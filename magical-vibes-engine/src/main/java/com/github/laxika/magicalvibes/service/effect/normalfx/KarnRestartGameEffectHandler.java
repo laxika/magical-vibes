@@ -182,9 +182,7 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.clearPendingInteractions(PermanentChoiceContext.TriggeredModalTrigger.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.EmblemTriggerTarget.class);
-        gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepAnyTargetTrigger.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class);
-        gameData.clearPendingInteractions(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepCopyTriggerTarget.class);
         gameData.emblems.clear();

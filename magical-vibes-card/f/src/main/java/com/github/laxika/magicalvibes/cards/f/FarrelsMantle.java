@@ -4,13 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,11 +29,10 @@ public class FarrelsMantle extends Card {
         // attacking creature assigns no combat damage this turn.
         addTrigger(Triggers.enchantedCreatureAttacksUnblocked(),
                 new MayEffect(SequenceEffect.of(
-                        new DealDamageToTargetCreatureEffect(
-                                new Sum(new SourcePower(true), new Fixed(2)),
-                                false,
-                                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())),
-                        new AssignNoCombatDamageEffect()),
+                        DealDamageToTargetCreatureEffect.byTriggeringPermanent(
+                                new Sum(new TriggeringPermanentPower(true), new Fixed(2)),
+                                new PermanentNotPredicate(new PermanentIsTriggeringPermanentPredicate())),
+                        AssignNoCombatDamageEffect.ofTriggeringPermanent()),
                         "have it deal damage equal to its power plus 2 to another target creature?",
                         null,
                         MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));

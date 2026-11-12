@@ -105,6 +105,8 @@ class ReluctantRoleModelTest extends BaseCardTest {
         roleModel.tap();
         advanceToPostcombatMain(player1);
         assertThat(gd.stack).hasSize(1);
+        // The mode is announced as the ability goes on the stack (CR 603.3c); its "if" is checked again as it resolves.
+        harness.handleListChoice(player1, "Put a +1/+1 counter on this creature");
         roleModel.untap();
         harness.passBothPriorities();
 

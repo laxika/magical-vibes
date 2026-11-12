@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({InversionBehemoth.class, GiantCockroach.class})
 class InversionBehemothTest extends BaseCardTest {
@@ -27,15 +28,13 @@ class InversionBehemothTest extends BaseCardTest {
 
         advanceToBeginningOfCombat(player1);
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).containsExactlyInAnyOrder(
-                player1.getId(), behemoth.getId(), ownCockroach.getId(), opposingCockroach.getId());
+                behemoth.getId(), ownCockroach.getId(), opposingCockroach.getId());
 
-        harness.handlePermanentChosen(player1, ownCockroach.getId());
-        harness.handlePermanentChosen(player1, opposingCockroach.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownCockroach.getId(), opposingCockroach.getId()));
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(2);
@@ -65,8 +64,7 @@ class InversionBehemothTest extends BaseCardTest {
         Permanent cockroach = harness.addToBattlefieldAndReturn(player1, new GiantCockroach());
 
         advanceToBeginningOfCombat(player1);
-        harness.handlePermanentChosen(player1, behemoth.getId());
-        harness.handlePermanentChosen(player1, cockroach.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(behemoth.getId(), cockroach.getId()));
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(9);
@@ -90,13 +88,13 @@ class InversionBehemothTest extends BaseCardTest {
         Permanent behemoth = harness.addToBattlefieldAndReturn(player1, new InversionBehemoth());
 
         advanceToBeginningOfCombat(player1);
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(9);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
     }
 
     @Test
@@ -106,14 +104,15 @@ class InversionBehemothTest extends BaseCardTest {
         Permanent other = harness.addToBattlefieldAndReturn(player2, new InversionBehemoth());
 
         advanceToBeginningOfCombat(player1);
-        harness.handlePermanentChosen(player1, behemoth.getId());
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIds()).containsExactlyInAnyOrder(player1.getId(), other.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(behemoth.getId(), other.getId());
 
-        harness.handlePermanentChosen(player1, player1.getId());
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(behemoth.getId(), behemoth.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(behemoth.getId()));
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(9);
@@ -128,14 +127,14 @@ class InversionBehemothTest extends BaseCardTest {
         Permanent behemoth = harness.addToBattlefieldAndReturn(player1, new InversionBehemoth());
 
         advanceToBeginningOfCombat(player1);
-        harness.handlePermanentChosen(player1, behemoth.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(behemoth.getId()));
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(9);
         assertThat(gqs.getEffectiveToughness(gd, behemoth)).isEqualTo(2);
 
         advanceToBeginningOfCombat(player1);
-        harness.handlePermanentChosen(player1, behemoth.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(behemoth.getId()));
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, behemoth)).isEqualTo(2);
@@ -149,8 +148,7 @@ class InversionBehemothTest extends BaseCardTest {
         Permanent other = harness.addToBattlefieldAndReturn(player2, new InversionBehemoth());
 
         advanceToBeginningOfCombat(player1);
-        harness.handlePermanentChosen(player1, behemoth.getId());
-        harness.handlePermanentChosen(player1, other.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(behemoth.getId(), other.getId()));
         harness.getPermanentRemovalService().removePermanentToGraveyard(gd, behemoth);
         harness.passBothPriorities();
 
@@ -169,13 +167,11 @@ class InversionBehemothTest extends BaseCardTest {
         }
 
         advanceToBeginningOfCombat(player1);
-        for (Permanent creature : creatures) {
-            PendingInteraction.PermanentChoice choice =
-                    gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-            assertThat(choice).isNotNull();
-            assertThat(choice.validIds()).contains(creature.getId());
-            harness.handlePermanentChosen(player1, creature.getId());
-        }
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validIds()).containsAll(creatures.stream().map(Permanent::getId).toList());
+        harness.handleMultiplePermanentsChosen(player1, creatures.stream().map(Permanent::getId).toList());
         harness.passBothPriorities();
 
         for (Permanent creature : creatures) {

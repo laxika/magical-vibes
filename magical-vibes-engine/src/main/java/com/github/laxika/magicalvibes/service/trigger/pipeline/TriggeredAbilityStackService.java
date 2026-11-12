@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.service.trigger.pipeline;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -51,6 +54,8 @@ import com.github.laxika.magicalvibes.service.trigger.CreatureDeath;
 import com.github.laxika.magicalvibes.service.trigger.CreatureDeathWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
+import com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.trigger.ZoneChangeWatch;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -98,6 +103,7 @@ public class TriggeredAbilityStackService {
     private final TriggerCollectionService triggerCollectionService;
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final TriggerTargetCollector triggerTargetCollector;
 
     public TriggeredAbilityStackService(@Lazy ConditionEvaluationService conditionEvaluationService,
                                         @Lazy GameQueryService gameQueryService,
@@ -105,8 +111,10 @@ public class TriggeredAbilityStackService {
                                         @Lazy GameLogService gameLogService,
                                         @Lazy TriggerCollectionService triggerCollectionService,
                                         @Lazy AmountEvaluationService amountEvaluationService,
-                                        @Lazy PredicateEvaluationService predicateEvaluationService) {
+                                        @Lazy PredicateEvaluationService predicateEvaluationService,
+                                        @Lazy TriggerTargetCollector triggerTargetCollector) {
         this.predicateEvaluationService = predicateEvaluationService;
+        this.triggerTargetCollector = triggerTargetCollector;
         this.triggerCollectionService = triggerCollectionService;
         this.conditionEvaluationService = conditionEvaluationService;
         this.gameQueryService = gameQueryService;
@@ -289,9 +297,22 @@ public class TriggeredAbilityStackService {
         if (limitReached(gameData, options.limit(), limitSourceId, ability.limitKey())) {
             return false;
         }
-        List<CardEffect> effects = new ArrayList<>(ability.effects().size());
+        List<CardEffect> written = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
-            CardEffect effect = registration.effect();
+            List<ChooseOneEffect.ChooseOneOption> randomModes = registration.effect().modesChosenAtRandomAsItTriggers();
+            if (randomModes == null) {
+                written.add(registration.effect());
+                continue;
+            }
+            ChooseOneEffect.ChooseOneOption mode = chooseRandomModeAsItTriggers(gameData, request, randomModes);
+            if (mode == null) {
+                // No mode can be chosen: the ability is removed from the stack (CR 603.3c).
+                return false;
+            }
+            written.addAll(mode.effectsForSelection());
+        }
+        List<CardEffect> effects = new ArrayList<>(written.size());
+        for (CardEffect effect : written) {
             boolean judgedOnce = interveningIf == null || DeclaredAttackCondition.isDeclaredAttackFact(interveningIf)
                     || effect.modesChosenAsItTriggers() != null;
             effects.add(judgedOnce ? effect : new ConditionalEffect(interveningIf, effect));
@@ -310,6 +331,44 @@ public class TriggeredAbilityStackService {
     }
 
     /**
+     * The mode of a "choose one at random" chosen as {@code request}'s ability is put on the stack (CR 603.3c), at random
+     * among {@code modes} that can be chosen: a mode that targets needs a legal target, unless it may have none. {@code
+     * null} when none can.
+     */
+    public ChooseOneEffect.ChooseOneOption chooseRandomModeAsItTriggers(GameData gameData,
+                                                                      TriggeredAbilityRequest request,
+                                                                      List<ChooseOneEffect.ChooseOneOption> modes) {
+        return chooseRandomModeAsItTriggers(gameData, request.controllerId(), request.sourceCard(),
+                request.sourcePermanent(), modes);
+    }
+
+    /**
+     * The mode of a "choose one at random" chosen as an ability of {@code sourceCard} (its permanent
+     * {@code sourcePermanent}, or {@code null}) controlled by {@code controllerId} is put on the stack (CR 603.3c), at
+     * random among {@code modes} that can be chosen; {@code null} when none can.
+     */
+    public ChooseOneEffect.ChooseOneOption chooseRandomModeAsItTriggers(GameData gameData, UUID controllerId,
+                                                                      Card sourceCard, Permanent sourcePermanent,
+                                                                      List<ChooseOneEffect.ChooseOneOption> modes) {
+        List<ChooseOneEffect.ChooseOneOption> eligible = new ArrayList<>();
+        for (ChooseOneEffect.ChooseOneOption mode : modes) {
+            List<CardEffect> modeEffects = mode.effectsForSelection();
+            boolean requiresTarget = modeEffects.stream()
+                    .anyMatch(effect -> effect.targetSpec().declaredTarget() != null);
+            if (!requiresTarget || mode.minTargets() == 0) {
+                eligible.add(mode);
+                continue;
+            }
+            TargetFilter targetFilter = mode.targetFilter() != null ? mode.targetFilter() : sourceCard.getTargetFilter();
+            if (!triggerTargetCollector.collect(gameData, modeEffects, targetFilter, controllerId, sourceCard,
+                    TriggerTargetCollector.Options.END_STEP, sourcePermanent).validTargets().isEmpty()) {
+                eligible.add(mode);
+            }
+        }
+        return eligible.isEmpty() ? null : eligible.get(ThreadLocalRandom.current().nextInt(eligible.size()));
+    }
+
+    /**
      * Builds {@code request}'s entry of {@code effects}, stamps its record, and parks it for a choice or queues it. What
      * a choice needs of the event (the attacked player or permanent, the triggering permanent and player, the event's
      * value and X) it reads from the stamped entry.
@@ -322,6 +381,9 @@ public class TriggeredAbilityStackService {
         entry.setOnceEachTurnActionKey(onceEachTurnActionKey(request.ability()));
         entry.setGrantingPermanentId(request.ability().grantingPermanentId());
         entry.setTriggeredBySourceAttacking(request.attack() == TriggeredAbilityRequest.AttackCause.SOURCE_ATTACKED);
+        if (request.ability().targetFilter() != null) {
+            entry.setTargetFilter(request.ability().targetFilter());
+        }
         request.record().stamp(entry);
         gameData.handOffTriggerRecord(entry);
         ChooseOneEffect modes = null;
@@ -334,15 +396,28 @@ public class TriggeredAbilityStackService {
                 modes = effect.modesChosenAsItTriggers();
             }
         }
+        // A "choose one" whose mode can't be announced once the ability is on the stack (a mode that targets a
+        // graveyard card, "choose up to", "choose both instead") is announced as the ability goes there (CR 603.3c).
+        if (modes == null && effects.size() == 1 && effects.getFirst().modal() != null
+                && !StackedModalTriggerService.announcesMode(effects.getFirst().modal())) {
+            modes = effects.getFirst().modal();
+        }
         List<CardEffect> choosing = effects.stream().filter(effect -> !effect.targetsChosenByReflexiveAbility())
                 .toList();
         TargetPredicate.GraveyardCards randomGraveyardTarget = randomGraveyardTarget(choosing);
         if (modes != null) {
             entry.setParkedAtStackDoor(true);
-            gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
+            PermanentChoiceContext.TriggeredModalTrigger modeChoice = new PermanentChoiceContext.TriggeredModalTrigger(
                     card, controllerId, modes, entry.getSourcePermanentId(), false, false, null,
                     entry.getAttackedTargetId(), entry.getTriggeringPermanentId(), false, null)
-                    .withTriggerRecord(entry));
+                    .withTriggerRecord(entry);
+            // "Choose one. If [condition], you may choose both instead": the condition is judged as the ability
+            // triggers, with its source and controller.
+            if (modes.choicesMaxCondition() != null && !conditionEvaluationService.isMet(gameData,
+                    modes.choicesMaxCondition(), request.ifContext())) {
+                modeChoice = modeChoice.withModeCount(modes.choicesRequired(), modes.choicesRequired());
+            }
+            gameData.queueInteraction(modeChoice);
         } else if (choosing.stream().anyMatch(AttackCounterMoveEffect.class::isInstance)) {
             // Two targets chosen one after the other, the second "up to one" among the defending player's creatures
             // (Decimator Beetle): the record stays with the choice, whose handler builds the entry.
@@ -350,7 +425,23 @@ public class TriggeredAbilityStackService {
                     card, controllerId, effects, entry.getSourcePermanentId(), entry.getDefendingPlayerId()));
         } else if (randomGraveyardTarget != null) {
             putWithRandomGraveyardTarget(gameData, entry, randomGraveyardTarget);
-        } else if (choosing.stream().anyMatch(TriggeredAbilityStackService::choosesGraveyardCard)) {
+        } else if (choosing.stream().anyMatch(CardEffect::targetChosenAtRandom)) {
+            putWithRandomTarget(gameData, request, entry, choosing);
+        } else if (choosing.stream().anyMatch(TriggeredAbilityStackService::choosesGraveyardCard)
+                && !targetGroupsOf(card, choosing).isEmpty()
+                && (targetGroupsOf(card, choosing).size() > 1 || card.getMultiTargetConstraint() != null)) {
+            // A graveyard card and other targets of the card's groups ("up to one other target creature you control …
+            // up to one target creature card from your graveyard", Betor, Ancestor's Voice), or graveyard cards under
+            // the card's constraint between its targets ("up to one … from each opponent's graveyard", Orzhova):
+            // walked group by group.
+            entry.setParkedAtStackDoor(true);
+            int firstGroup = targetGroupsOf(card, choosing).getFirst().getIndex();
+            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
+                    card, controllerId, effects, entry.getSourcePermanentId(), List.of(), firstGroup, 0,
+                    java.util.Collections.nCopies(firstGroup, 0), entry.getXValue())
+                    .withEventValue(entry.getEventValue()).withTriggerRecord(entry));
+        } else if (choosing.stream().anyMatch(TriggeredAbilityStackService::choosesGraveyardCard)
+                && choosing.stream().noneMatch(TriggeredAbilityStackService::choosesBattlefieldOrPlayer)) {
             entry.setParkedAtStackDoor(true);
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     card, controllerId, effects, graveyardOwner(gameData, entry, choosing), 0, entry.getXValue(),
@@ -361,7 +452,16 @@ public class TriggeredAbilityStackService {
         } else if (choosesTarget(gameData, card, entry, choosing)) {
             entry.setParkedAtStackDoor(true);
             List<TargetGroup> groups = targetGroupsOf(card, choosing);
-            if (choosesTargetsGroupByGroup(card, groups)) {
+            // One target that may be a permanent or a graveyard card ("up to one target creature or creature card in a
+            // graveyard", Taskmaster, Mercenary Mimic) is chosen in one choice, which offers both.
+            boolean mixedGraveyardTarget = groups.size() == 1
+                    && !(groups.getFirst().getFilter()
+                    instanceof com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter)
+                    && choosing.stream()
+                    .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
+            if ((choosesTargetsGroupByGroup(card, groups, choosing)
+                    || choosing.stream().anyMatch(CardEffect::dividesAmongTargetsAsItGoesOnTheStack))
+                    && !mixedGraveyardTarget) {
                 // The groups are walked from the ability's first; earlier groups are another ability's.
                 int firstGroup = groups.isEmpty() ? 0 : groups.getFirst().getIndex();
                 gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
@@ -393,6 +493,15 @@ public class TriggeredAbilityStackService {
         if (source != null && source.isAttacking()) {
             triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(gameData, source, entry);
         }
+    }
+
+    /**
+     * Whether {@code effect} may also choose a permanent or player target, beside a graveyard card ("target creature or
+     * creature card in a graveyard", Taskmaster, Mercenary Mimic): its target choice offers both.
+     */
+    private static boolean choosesBattlefieldOrPlayer(CardEffect effect) {
+        return effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER);
     }
 
     /** Whether {@code effect} chooses a graveyard card as its ability goes on the stack (CR 603.3d). */
@@ -479,9 +588,42 @@ public class TriggeredAbilityStackService {
     }
 
     /**
+     * Puts {@code entry} on the stack with its target, a permanent or player ("target opponent chosen at random",
+     * Witch Hunt), picked at random among the legal ones as it goes there (CR 603.3d); without a legal one the ability is
+     * removed.
+     */
+    private void putWithRandomTarget(GameData gameData, TriggeredAbilityRequest request, StackEntry entry,
+                                     List<CardEffect> effects) {
+        Card card = entry.getCard();
+        List<CardEffect> randomlyTargeting = effects.stream().filter(CardEffect::targetChosenAtRandom).toList();
+        // The ability's own target filter, else the one the card declares for its effects.
+        TargetFilter targetFilter = entry.getTargetFilter() != null ? entry.getTargetFilter()
+                : triggerCollectionService.targetFilterForTriggeredEffects(card, randomlyTargeting);
+        List<UUID> candidates = triggerTargetCollector.collect(gameData, randomlyTargeting, targetFilter,
+                entry.getControllerId(), card, TriggerTargetCollector.Options.END_STEP,
+                request.sourcePermanent()).validTargets();
+        if (candidates.isEmpty()) {
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s ability has no valid targets."));
+            return;
+        }
+        UUID chosen = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
+        entry.setTargetId(chosen);
+        entry.setNonTargeting(false);
+        if (targetFilter != null) {
+            entry.setTargetFilter(targetFilter);
+        }
+        gameData.enqueueTrigger(entry);
+        String targetName = gameData.playerIdToName.containsKey(chosen) ? gameData.playerIdToName.get(chosen)
+                : java.util.Optional.ofNullable(gameQueryService.findPermanentById(gameData, chosen))
+                        .map(permanent -> permanent.getCard().getName()).orElse("a permanent");
+        gameLogService.append(gameData, GameLog.cardThen(card, "'s ability randomly targets " + targetName + "."));
+    }
+
+    /**
      * Who chooses the target of {@code entry}'s ability: the defending player for a card whose combat ability's target
      * is "of defending player's choice" (the entry's triggering player, else its defending player), the active player
-     * for an effect whose target the active player chooses, else its controller.
+     * for an effect, or a target filter (the ability's own, else the card's), whose target the active player chooses
+     * ("target creature of that player's choice"), else its controller.
      */
     private static UUID targetChooser(GameData gameData, Card card, StackEntry entry, List<CardEffect> effects) {
         if (card.isCombatTriggerTargetChosenByDefendingPlayer()) {
@@ -491,7 +633,10 @@ public class TriggeredAbilityStackService {
                 return defender;
             }
         }
-        if (effects.stream().anyMatch(CardEffect::targetChosenByActivePlayer) && gameData.activePlayerId != null) {
+        TargetFilter targetFilter = entry.getTargetFilter() != null ? entry.getTargetFilter() : card.getTargetFilter();
+        if ((effects.stream().anyMatch(CardEffect::targetChosenByActivePlayer)
+                || targetFilter != null && targetFilter.activePlayerChoosesTarget())
+                && gameData.activePlayerId != null) {
             return gameData.activePlayerId;
         }
         return entry.getControllerId();
@@ -517,27 +662,43 @@ public class TriggeredAbilityStackService {
         return groups.stream().anyMatch(group -> card.bindsEffectToTargetGroup(group.getIndex())) ? groups : bare;
     }
 
-    /** Whether the first bound group after {@code groupIndex} is bound to one of {@code effects} (none after: false). */
+    /**
+     * Whether the bound group a bare group at {@code groupIndex} belongs to is bound to one of {@code effects}: the first
+     * bound group after it, else, with none after it, the last one before it ("have target opponent gain control of
+     * target permanent you control", Iroh, Tea Master, whose effect is bound to the player's group). False with none.
+     */
     private static boolean nextBoundGroupIsOf(Card card, int groupIndex, List<CardEffect> effects) {
+        TargetGroup previous = null;
         for (TargetGroup group : card.getTargetGroups()) {
-            if (group.getIndex() > groupIndex && card.bindsEffectToTargetGroup(group.getIndex())) {
+            if (!card.bindsEffectToTargetGroup(group.getIndex())) {
+                continue;
+            }
+            if (group.getIndex() > groupIndex) {
                 return effects.stream().anyMatch(effect -> card.isEffectBoundToTargetGroup(effect, group.getIndex()));
             }
+            previous = group;
         }
-        return false;
+        // An Aura's bare group is what it enchants (a bestowed creature's), no ability's target.
+        TargetGroup owner = previous;
+        return owner != null && !card.isAura()
+                && effects.stream().anyMatch(effect -> card.isEffectBoundToTargetGroup(effect, owner.getIndex()));
     }
 
     /**
      * Whether the targets of {@code groups}, an ability's target groups, are chosen group by group: two or
-     * more groups, a group with a dynamic count, one "up to one target" group, which may be left empty (choosing its
-     * controller among players is a target, not a refusal), or an Aura's group after what it enchants, which its effects
+     * more groups, a group with a dynamic count, one "up to one target" group that may target a player, which may be
+     * left empty (choosing its controller among players is a target, not a refusal; an "up to one" permanent target is
+     * one choice that choosing oneself declines), or an Aura's group after what it enchants, which its effects
      * read by position (Super-Soldier Serum's Equipment). Otherwise the targets of one group of more than
      * one target are announced together in one choice (CR 601.2c), which enforces the card's constraint between them.
      */
-    private static boolean choosesTargetsGroupByGroup(Card card, List<TargetGroup> groups) {
+    private static boolean choosesTargetsGroupByGroup(Card card, List<TargetGroup> groups, List<CardEffect> effects) {
+        boolean mayTargetPlayer = effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                || groups.stream().anyMatch(group -> group.getFilter() instanceof PlayerPredicateTargetFilter
+                || group.getFilter() instanceof AnyTargetPredicateTargetFilter);
         return groups.size() > 1 || groups.stream().anyMatch(group -> group.getDynamicMinTargets() != null
                 || group.getDynamicMaxTargets() != null
-                || group.getMinTargets() == 0 && group.getMaxTargets() == 1)
+                || group.getMinTargets() == 0 && group.getMaxTargets() == 1 && mayTargetPlayer)
                 || card.isAura() && !groups.isEmpty() && groups.getFirst().getIndex() > 0;
     }
 
@@ -550,10 +711,13 @@ public class TriggeredAbilityStackService {
      * be the creature the event names, so it is chosen.
      */
     private boolean choosesTarget(GameData gameData, Card card, StackEntry entry, List<CardEffect> effects) {
+        // An effect bound to a target group of this ability alone reads its targets by position, whatever kind it
+        // declares ("exchange control of the two target creatures", Glen Elendra).
         List<CardEffect> targeting = effects.stream().filter(effect ->
                 effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                        || effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD)).toList();
+                        || effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD)
+                        || targetsOwnGroup(card, effect, effects)).toList();
         if (targeting.isEmpty()) {
             return false;
         }
@@ -565,8 +729,38 @@ public class TriggeredAbilityStackService {
         if (!eventNamesObject) {
             return true;
         }
-        return targeting.stream().anyMatch(effect -> card.hasEffectTargetIndex(effect)
+        return targeting.stream().anyMatch(effect -> declaresTarget(card, effect)
                 || !namedObjectFits(gameData, entry.getTargetId(), effect));
+    }
+
+    /**
+     * Whether {@code card} binds {@code effect} to a target group no other ability of the card has an effect bound to:
+     * the group is the ability's own target, which its effect reads by position. A group several abilities of the card
+     * share ("target nontoken creature" of Dance of Many's enters, leaves and upkeep abilities) is the target of the one
+     * whose effect declares it, and an Aura's first group is what it enchants.
+     */
+    private static boolean targetsOwnGroup(Card card, CardEffect effect, List<CardEffect> abilityEffects) {
+        if (!declaresTarget(card, effect)) {
+            return false;
+        }
+        int group = card.getEffectTargetIndex(effect);
+        java.util.stream.Stream<CardEffect> otherEffects = java.util.stream.Stream.concat(
+                java.util.stream.Stream.concat(card.getCastingCostsAndSpellEffects().stream(),
+                        card.getStaticEffects().stream()),
+                card.getTriggeredAbilities().stream()
+                        .filter(other -> other.effects().stream().map(EffectRegistration::effect)
+                                .noneMatch(abilityEffects::contains))
+                        .flatMap(other -> other.effects().stream().map(EffectRegistration::effect)));
+        return otherEffects.noneMatch(other -> card.isEffectBoundToTargetGroup(other, group));
+    }
+
+    /**
+     * Whether {@code card} declares {@code effect}'s target with {@code target(...)}: an effect bound to an Aura's first
+     * group acts on what the Aura enchants (CR 303.4a) or its controller, which the ability doesn't target ("enchanted
+     * permanent's controller sacrifices …", Strangling Grasp; "deals 2 damage to that player", Insubordination).
+     */
+    private static boolean declaresTarget(Card card, CardEffect effect) {
+        return card.hasEffectTargetIndex(effect) && !(card.isAura() && card.getEffectTargetIndex(effect) == 0);
     }
 
     /**

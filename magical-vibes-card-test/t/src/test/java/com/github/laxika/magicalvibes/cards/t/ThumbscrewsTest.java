@@ -109,8 +109,8 @@ class ThumbscrewsTest extends BaseCardTest {
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validPermanentIds()).containsExactly(player2.getId());
-        assertThat(choice.validPermanentIds()).doesNotContain(hawk.getId(), player1.getId());
+        assertThat(choice.validPlayerIds()).containsExactly(player2.getId());
+        assertThat(choice.validIds()).doesNotContain(hawk.getId(), player1.getId());
     }
 
     @Test

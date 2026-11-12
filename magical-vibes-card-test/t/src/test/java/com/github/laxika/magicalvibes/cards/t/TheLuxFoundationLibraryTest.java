@@ -67,8 +67,7 @@ class TheLuxFoundationLibraryTest extends BaseCardTest {
         Permanent opposingCreature = addCreatureReady(player2, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(TriggerCollectionService.class)
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactlyInAnyOrder(ownCreature.getId(), opposingCreature.getId());

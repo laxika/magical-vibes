@@ -56,8 +56,7 @@ class MirroredDepthsTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new GrizzlyBears()));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -73,8 +72,7 @@ class MirroredDepthsTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest()));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
@@ -117,8 +115,7 @@ class MirroredDepthsTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new Forest()));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -137,8 +134,7 @@ class MirroredDepthsTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(bears, new Forest()));
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -153,8 +149,7 @@ class MirroredDepthsTest extends BaseCardTest {
         harness.setLibrary(player2, List.of());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 

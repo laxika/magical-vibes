@@ -169,6 +169,27 @@ public interface CardEffect {
     default ChooseOneEffect modesChosenAsItTriggers() { return null; }
 
     /**
+     * The modal this effect is ("choose one —"), whatever its modes depend on, or {@code null} for an effect that isn't
+     * one: the stack door chooses the mode of a triggered ability made of it alone as it goes on the stack when the
+     * mode can't be announced once the ability is there (CR 603.3c).
+     */
+    default ChooseOneEffect modal() { return null; }
+
+    /**
+     * The modes one of which is chosen at random as a triggered ability with this effect is put on the stack ("choose
+     * one at random", CR 603.3c: a mode that would be illegal can't be chosen), the effect then being the chosen mode's;
+     * {@code null} for an effect whose ability chooses no mode at random.
+     */
+    default java.util.List<ChooseOneEffect.ChooseOneOption> modesChosenAtRandomAsItTriggers() { return null; }
+
+    /**
+     * Whether this effect divides an amount among its targets as its ability is put on the stack ("distribute three +1/+1
+     * counters among one, two, or three target creatures", CR 601.2d): its targets are chosen one at a time, the
+     * division after them.
+     */
+    default boolean dividesAmongTargetsAsItGoesOnTheStack() { return false; }
+
+    /**
      * The graveyard cards this effect chooses as its ability is put on the stack when they aren't one declared target
      * ("exile up to two target creature cards from defending player's graveyard"), looking through a "you may" or an
      * intervening "if" around it; {@code null} for an effect that chooses none.

@@ -16,7 +16,7 @@ grep its `^#### Run` headings and read that range. The invariants those runs est
 | 1–14 | Ability model, every family off the enum, trigger options | done |
 | S0 | The stack door, the ratchet, the ledger; pilot: block triggers | done |
 | S1 | Combat | done but: C16, C17, C18, C19, C20, C21, C22 |
-| S2 | Steps, phases, draw step, planar | open |
+| S2 | Steps, phases, draw step, planar | done but: C16, C21, C22, C23, C24, C25 |
 | S3 | Spells, abilities, becomes the target | open |
 | S4 | Damage, counters, life, tap | open |
 | S5 | Library, draw, discard, actions, sagas, the rest | open |
@@ -216,7 +216,7 @@ Carried over: C1, C8.
 `DamageTriggerCollectorService`, the counter and life collector services, and in
 `TriggerCollectionService` the damage, counter, life and tap collectors. `DamageWatch` (52),
 `CounterWatch` (43), `LifeWatch` (8), `TapWatch` (16).
-Carried over: C2.
+Carried over: C2, C21.
 
 ### S5: library, draw, discard, actions, sagas, the rest
 
@@ -241,7 +241,7 @@ registers, temporary global abilities, granted abilities, emblems, the may and p
 put an accepted follow-up on the stack. Extend `ReflexiveRouteRecordTest` to the routes it lacks
 first (the accepted "you may", exert, earthbend, the forced cost, the after-cast ability, the
 library follow-up, a reflexive group walk). Ask the user decision D2 before starting.
-Carried over: C7, C9, C10, C11, C12, C14, C15.
+Carried over: C7, C9, C10, C11, C12, C14, C15, C24.
 
 ### S8: engine-made abilities; the door is the only route
 
@@ -250,6 +250,7 @@ Carried over: C7, C9, C10, C11, C12, C14, C15.
 - The ratchet allowlist is empty for lists 1 and 2. Then make the rule structural: only the door
   can build a triggered stack entry (a constructor or factory nothing else can reach), and the
   ratchet's allowlist file is deleted.
+- C23 and C25 (the upkeep target choices the door can't express, the engine-made step abilities).
 - Carried over is empty.
 
 **Done when:** no code outside the door builds or queues a triggered stack entry, and the compiler
@@ -323,9 +324,11 @@ named, with the Oracle text of the cards involved read first.
 | C17 | S7 | The combat files' delayed abilities build their own entries (no `TriggeredAbility` to hand the door): `CombatService`'s end-of-combat actions, the `processDelayed…` readers of `CombatAttackService`, `CombatDamageService` and `CombatBlockService`, `checkDelayedBecomesBlockedTriggers`, Harsh Justice's reflection, Okoye's temporary global watcher |
 | C18 | S8 | Engine-made combat abilities build their own entries: decayed, melee, battle cry, dethrone, training, double team, granted exalted, enlist's own ability, flanking, the monarch and initiative transfers, combat damage put on the stack |
 | C19 | S5 | "You may exert this creature as it attacks" is written as an attack trigger; `CombatAttackService` reads its effect and asks it with `queueMayAbilityForPlayer` (CR 701.43d: it is an optional cost to attack, no ability) |
-| C20 | S2 | Cloak of Confusion's and Farrel's Mantle's effects read the enchanted attacker as the entry's source permanent, so their door request names the attacker as source (CR 113.7: it is the Aura). Rewrite the effects to read the triggering permanent and pass the Aura |
-| C21 | S2 | A trigger record left in hand reaches an end-of-combat delayed ability (Scion of Calamity's myriad exile gets a combat-damage record, in one test or another between runs): a hand-off outside a routing scope |
-| C22 | S2–S7 | Combat-watch collectors in `TriggerCollectionService` still build entries: ally/any creature combat damage to a player, an opponent or its owner and "creatures you control deal damage" (S4), "an ability of an attacking creature you control triggers" (S3), the planar readers (S2), emblems and temporary global abilities (S7) |
+| C21 | S4 | A trigger record left in hand reaches an end-of-combat delayed ability (Scion of Calamity's myriad exile gets a combat-damage record, in one test or another between runs): a hand-off outside a routing scope, by the combat-damage collectors C22 leaves to S4 |
+| C22 | S3–S7 | Combat-watch collectors in `TriggerCollectionService` still build entries: ally/any creature combat damage to a player, an opponent or its owner and "creatures you control deal damage" (S4), "an ability of an attacking creature you control triggers" (S3), emblems and temporary global abilities (S7) |
+| C23 | S8 | Upkeep target choices the door can't express stay in `StepTriggerService` (`queueOwnUpkeepTargetChoice`, `queueAnyNumberOfOtherPlayersTarget`): Axis of Mortality's two players, Puca's Mischief's interdependent pair, Cryptoplasm's and Vesuvan Doppelganger's copy target, Capricious Efreet's own permanent then the others, Curse of Surveillance's "any number of target players other than that player" |
+| C24 | S7 | Delayed step abilities build their own entries: the `DelayedAction` drains of `StepTriggerService` (upkeep, draw step, main phases, end of combat, end step, cleanup), pending exile and delayed self returns, boons, `TurnCleanupService`'s cleanup triggers, `TurnProgressionService`'s additional-combat trigger |
+| C25 | S8 | Engine-made step abilities build their own entries: the initiative, echo, suspend and time counters, Ertai's Meddling's delay counter, egg and refine counters, rad counters, epic, opening-hand reveals, the planar die's "Planeswalk" |
 
 **Fixes**
 
@@ -367,6 +370,16 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - C3 closed: a graveyard target takes the count its effect declares; the "you may" is asked as it resolves (CR 603.5). C4 closed: a mode chosen as it triggers isn't wrapped in the intervening "if"; the one such combat card, Jin Sakai, repeats it in each mode (CR 603.4).
 - Records gained, no behavior change: the unblocked record's triggering player (the defending player), graveyard abilities' graveyard incarnation, Ebony Fly's own power, granting permanents. Stinkdrinker Bandit boosts "it" without targeting (its source is now the Bandit, CR 113.7).
 - Dead code removed: the combat graveyard-targeting helpers of `GraveyardTargetingService`, `CombatTriggerService.putOnStackOrChooseMode`, `GainLifeEqualToDamageDealtEffect`.
+
+**S2.**
+- Door API: every step, phase, emblem and planar reader hands the ability to `put` with the step's record; `StepAbilityReader.triggering` judges only the event condition. Step handlers end with `StepTriggerService.beginNextStepTriggerChoice` (the auto-pass loop doesn't drain door choices after a step advance); tests that trigger through a service call `GameTestHarness.beginTriggerChoices()`.
+- Door routes added, asked through `CardEffect` (`modal`, `modesChosenAtRandomAsItTriggers`, `dividesAmongTargetsAsItGoesOnTheStack`) and the card's groups; their rules are in `triggers.md`. `ConditionalEffect` and `SequenceEffect` now pass target hooks through (opponent-only, reflexive targets), which S3–S7 collectors inherit.
+- Rules fix: Roaming Throne doubles every step ability of a creature of the chosen type (CR 603.3); the old readers did only your upkeep, precombat main and beginning of combat. `RoamingThroneTest` (Jin-Gitaxias's end step) fails before.
+- Rules fix: Furnace Layer's "select target player at random" picks among legal targets (CR 115.1); a hexproof player was picked before. `FurnaceLayerTest` fails before.
+- C20 closed: Cloak of Confusion's and Farrel's Mantle's source is the Aura (CR 113.7), the enchanted attacker the triggering permanent that deals the Mantle's damage (CR 608.2h). `CloakOfConfusionTest` (Roaming Throne naming the attacker's type) fails before.
+- Rules fix (route fixtures, no printed card): a targeted end-of-combat, each-draw-step or graveyard step ability chooses its targets (CR 603.3d). Dread Wight, Joven's Ferrets and Kjeldoran Frostbeast declare no target, as printed.
+- Prompt shape: one group of several targets is one `MultiPermanentChoice`; a permanent-only "up to one" target is one choice declined by choosing yourself; a "choose one" whose modes take one target is announced on the stack.
+- `DrawService` has no step abilities: its entries are the draw family's (S5), as are sagas. HEAD failures outside S2: Star-Crowned Stag attacking a battle; Prying Blade is flaky.
 
 ## Prompt
 

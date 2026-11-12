@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GhituJourneymage;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.j.JinGitaxiasCoreAugur;
 import com.github.laxika.magicalvibes.cards.m.MarketGnome;
 import com.github.laxika.magicalvibes.cards.m.MineshaftSpider;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -25,7 +26,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RoamingThrone.class, GhituJourneymage.class, ElvishVisionary.class, Abrade.class, MineshaftSpider.class, MarketGnome.class, RatchetFieldMedic.class, RipjawRaptor.class, Shock.class,
+@CardUsed({RoamingThrone.class, JinGitaxiasCoreAugur.class, GhituJourneymage.class, ElvishVisionary.class, Abrade.class, MineshaftSpider.class, MarketGnome.class, RatchetFieldMedic.class, RipjawRaptor.class, Shock.class,
         FugitiveWizard.class, GrizzlyBears.class, ZulaportCutthroat.class, AshmouthHound.class,
         EliteJavelineer.class})
 class RoamingThroneTest extends BaseCardTest {
@@ -213,6 +214,22 @@ class RoamingThroneTest extends BaseCardTest {
 
         assertThat(blocked.getMarkedDamage()).isEqualTo(1);
         assertThat(other.getMarkedDamage()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("Roaming Throne doubles an \"at the beginning of your end step\" ability of a creature of the chosen type (CR 603.3)")
+    void doublesChosenTypeCreatureEndStepTrigger() {
+        addThrone(CardSubtype.PRAETOR);
+        harness.addToBattlefieldAndReturn(player1, new JinGitaxiasCoreAugur());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
+        assertThat(gd.stack).hasSize(2)
+                .allSatisfy(entry -> assertThat(entry.getCard().getName()).isEqualTo("Jin-Gitaxias, Core Augur"));
     }
 
     private Permanent addThrone(CardSubtype chosenSubtype) {

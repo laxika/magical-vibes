@@ -48,7 +48,7 @@ class CarpetOfFlowersTest extends BaseCardTest {
 
         advanceToPrecombatMain(player1);
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.addToBattlefield(player2, new Island());
         harness.passBothPriorities();
@@ -101,7 +101,7 @@ class CarpetOfFlowersTest extends BaseCardTest {
         advanceToPostcombatMain(player1);
 
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         chooseOpponentAndResolveWithoutColorChoice();
 
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
@@ -179,7 +179,7 @@ class CarpetOfFlowersTest extends BaseCardTest {
 
     private void chooseOpponentAndResolve() {
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -190,7 +190,7 @@ class CarpetOfFlowersTest extends BaseCardTest {
 
     private void chooseOpponentAndDecline() {
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -198,7 +198,7 @@ class CarpetOfFlowersTest extends BaseCardTest {
 
     private void chooseOpponentAndResolveWithoutColorChoice() {
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.MainPhasePlayerTargetTrigger.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

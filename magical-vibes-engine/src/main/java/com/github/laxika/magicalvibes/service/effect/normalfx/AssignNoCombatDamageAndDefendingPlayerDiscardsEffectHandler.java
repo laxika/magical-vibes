@@ -36,7 +36,8 @@ public class AssignNoCombatDamageAndDefendingPlayerDiscardsEffectHandler impleme
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID attackerId = entry.getSourcePermanentId();
+        // "It" is the enchanted attacker, the permanent the trigger event was about (the Aura is the source).
+        UUID attackerId = entry.getTriggeringPermanentId();
         UUID defenderId = entry.getTargetId();
         if (attackerId == null || defenderId == null) {
             return;

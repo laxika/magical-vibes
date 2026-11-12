@@ -61,7 +61,7 @@ class HiddenDragonslayerTest extends BaseCardTest {
 
         harness.inMutationScope(() -> {
             gs.turnPermanentFaceUpWithoutPayingManaCost(gd, dragonslayer);
-            harness.getTriggerCollectionService().processNextSpellTargetTrigger(gd);
+            harness.beginTriggerChoices();
         });
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())

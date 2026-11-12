@@ -59,7 +59,7 @@ class MondassianColonyShipTest extends BaseCardTest {
         Permanent target = addCreatureReady(player2);
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(target.getId());

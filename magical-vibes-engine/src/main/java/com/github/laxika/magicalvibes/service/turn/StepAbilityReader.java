@@ -1,35 +1,24 @@
 package com.github.laxika.magicalvibes.service.turn;
 
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * Reads the "at the beginning of [step or phase]" abilities (CR 603.2b) for the step and phase readers
- * ({@link StepTriggerService}, the planar die's step triggers) and judges their options as they trigger, so no reader
- * of them takes the legacy view's wrappers. An ability triggers only when its event condition (CR 603.2) and its
- * intervening "if" (CR 603.4) are true in the reader's {@link ConditionContext} (its source, its controller and, for
- * "that player", the player whose step it is), and while "this ability triggers only once" hasn't been used up; the
- * intervening "if" is wrapped around each of its effects as a {@link ConditionalEffect}, which checks it again as the
- * ability resolves. Each ability that triggers is a {@link Read}, which the step readers and the planar reader route
- * whole, as one stack object (CR 603.3): to its target choice with all its effects, or onto the stack as written. The
- * event condition isn't checked again.
+ * ({@link StepTriggerService}, the planar step triggers): an ability's trigger event is the step's beginning when its
+ * event condition (CR 603.2) holds in the reader's {@link ConditionContext} (its source, its controller and, for "that
+ * player", the player whose step it is). The stack door judges the rest as it puts the ability on the stack.
  */
 public final class StepAbilityReader {
 
@@ -72,72 +61,29 @@ public final class StepAbilityReader {
     }
 
     /**
-     * One triggered ability as it triggers now: the ability, which names its granting permanent
-     * ({@link TriggeredAbility#grantingPermanentId()}) and its own target filter ({@link TriggeredAbility#targetFilter()}),
-     * and the effects it puts on the stack as one object (CR 603.3), its intervening "if" wrapped around each.
+     * The abilities of {@code abilities} whose trigger event this step or phase beginning is, in order: those whose event
+     * condition (CR 603.2) holds in {@code context}. The reader hands each one whole to the stack door
+     * ({@code TriggeredAbilityStackService.put}), which judges its intervening "if" (CR 603.4) and "this ability
+     * triggers only once" and puts it on the stack as one object (CR 603.3). A step or phase begins once, so no step
+     * ability is written to trigger once for several occurrences or with a limit other than "only once"; this throws on
+     * one.
      */
-    public record Read(TriggeredAbility ability, List<CardEffect> effects) {
-
-        public Read {
-            Objects.requireNonNull(ability, "ability");
-            effects = List.copyOf(effects);
-        }
-    }
-
-    /**
-     * Each ability of {@code abilities} that triggers now, in order, with the effects it puts on the stack, judged in
-     * {@code context} as {@link #triggeredEffects(GameData, TriggeredAbility, ConditionContext)} says. A step reader (or
-     * the planar reader) routes each one whole: to its target choice with all its effects when it targets, or onto the
-     * stack as written.
-     */
-    public List<Read> reads(GameData gameData, List<TriggeredAbility> abilities, ConditionContext context) {
-        List<Read> reads = new ArrayList<>();
+    public List<TriggeredAbility> triggering(GameData gameData, List<TriggeredAbility> abilities,
+                                             ConditionContext context) {
+        List<TriggeredAbility> triggering = new ArrayList<>();
         for (TriggeredAbility ability : abilities) {
-            List<CardEffect> effects = triggeredEffects(gameData, ability, context);
-            if (effects != null && !effects.isEmpty()) {
-                reads.add(new Read(ability, effects));
+            TriggerOptions options = ability.options();
+            if (options.multiplicity() != TriggerMultiplicity.EACH) {
+                throw new IllegalStateException("A step or phase begins once; no step reader reads "
+                        + options.multiplicity() + ": " + ability);
+            }
+            if (options.limit() != TriggerLimit.NONE && options.limit() != TriggerLimit.ONCE) {
+                throw new IllegalStateException("No step reader reads the limit " + options.limit() + ": " + ability);
+            }
+            if (conditionEvaluationService.eventConditionMet(gameData, options, context)) {
+                triggering.add(ability);
             }
         }
-        return reads;
-    }
-
-    /**
-     * The effects {@code ability} puts on the stack as it triggers now, or {@code null} when it doesn't trigger: its
-     * event condition (CR 603.2) or intervening "if" (CR 603.4) is false in {@code context}, or "this ability triggers
-     * only once" was used up by its source (the context's source permanent, or else its source card). Triggering marks
-     * that limit. The intervening "if" is wrapped around each effect for the check as the ability resolves. No step
-     * ability is written with another limit, or to trigger once for several occurrences, and this throws on one.
-     */
-    public List<CardEffect> triggeredEffects(GameData gameData, TriggeredAbility ability, ConditionContext context) {
-        TriggerOptions options = ability.options();
-        if (options.multiplicity() != TriggerMultiplicity.EACH) {
-            throw new IllegalStateException("A step or phase begins once; no step reader reads "
-                    + options.multiplicity() + ": " + ability);
-        }
-        if (options.limit() != TriggerLimit.NONE && options.limit() != TriggerLimit.ONCE) {
-            throw new IllegalStateException("No step reader reads the limit " + options.limit() + ": " + ability);
-        }
-        if (options.eventCondition() != null
-                && !conditionEvaluationService.isMet(gameData, options.eventCondition(), context)) {
-            return null;
-        }
-        Condition interveningIf = options.interveningIf();
-        if (interveningIf != null && !conditionEvaluationService.isMet(gameData, interveningIf, context)) {
-            return null;
-        }
-        if (options.limit() == TriggerLimit.ONCE) {
-            UUID sourceId = context.sourcePermanentId() != null ? context.sourcePermanentId()
-                    : context.sourceCard().getId();
-            if (TriggeredAbilityStackService.limitReached(gameData, TriggerLimit.ONCE, sourceId, ability.limitKey())) {
-                return null;
-            }
-            TriggeredAbilityStackService.markLimit(gameData, TriggerLimit.ONCE, sourceId, ability.limitKey());
-        }
-        List<CardEffect> effects = new ArrayList<>(ability.effects().size());
-        for (EffectRegistration registration : ability.effects()) {
-            CardEffect effect = registration.effect();
-            effects.add(interveningIf == null ? effect : new ConditionalEffect(interveningIf, effect));
-        }
-        return effects;
+        return triggering;
     }
 }

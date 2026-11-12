@@ -94,8 +94,7 @@ class ValorsReachTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.PRECOMBAT_MAIN, () -> {
             harness.inMutationScope(() -> planar.chaos(gd));
             harness.passBothPriorities();
-            harness.handlePermanentChosen(player1, first.getId());
-            harness.handlePermanentChosen(player1, second.getId());
+            harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
             gd.playerBattlefields.get(player1.getId()).removeAll(List.of(first, second));
             resolveAllTriggers();
         });
@@ -114,8 +113,7 @@ class ValorsReachTest extends BaseCardTest {
         harness.withAutoStop(TurnStep.BEGINNING_OF_COMBAT, () -> {
             harness.inMutationScope(() -> planar.chaos(gd));
             harness.passBothPriorities();
-            harness.handlePermanentChosen(player1, first.getId());
-            harness.handlePermanentChosen(player1, second.getId());
+            harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
             harness.passBothPriorities();
         });
 
@@ -163,8 +161,7 @@ class ValorsReachTest extends BaseCardTest {
 
         harness.inMutationScope(() -> planar.chaos(gd));
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
         resolveAllTriggers();
 
         assertThat(first.isTapped()).isFalse();

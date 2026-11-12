@@ -393,6 +393,19 @@ public class TriggeredAbilityQueueService {
         }
     }
 
+    /**
+     * Whether the one target of {@code effects}, an ability of {@code card}, is "up to one": an optional target of its
+     * own, or the card's one group of up to one, or the group of the card bound to the effects, of up to one target.
+     */
+    public boolean isOptionalSingleTarget(Card card, List<CardEffect> effects) {
+        if (hasOptionalSingleTarget(card, effects)) {
+            return true;
+        }
+        TargetGroup group = targetGroupForTriggeredEffects(card, effects);
+        return group != null && group.getMinTargets() == 0 && group.getMaxTargets() == 1
+                && group.getDynamicMinTargets() == null && group.getDynamicMaxTargets() == null;
+    }
+
     private boolean hasOptionalSingleTarget(Card card, List<CardEffect> effects) {
         if (effects.stream().anyMatch(effect -> effect instanceof OptionalTargetEffect
                 || effect.hasOptionalTarget())) {
@@ -844,6 +857,18 @@ public class TriggeredAbilityQueueService {
                 "'s " + pending.eventDescription() + " trigger has no targets."));
     }
 
+    /**
+     * The target filter of {@code pending}'s ability: its own ({@link TriggeredAbility#targetFilter()}, which the stack
+     * door stamps on the record: a granted ability's "target opponent"), else the one the card declares for its
+     * effects.
+     */
+    public TargetFilter targetFilterOf(PermanentChoiceContext.AttackTriggerTarget pending) {
+        if (pending.triggerRecord() != null && pending.triggerRecord().getTargetFilter() != null) {
+            return pending.triggerRecord().getTargetFilter();
+        }
+        return targetFilterForTriggeredEffects(pending.sourceCard(), pending.effects());
+    }
+
     public TargetFilter targetFilterForTriggeredEffects(Card sourceCard, List<CardEffect> effects) {
         int targetGroupIndex = effects.stream()
                 .mapToInt(sourceCard::getEffectTargetIndex)
@@ -1060,25 +1085,38 @@ public class TriggeredAbilityQueueService {
                     targetingSource = abilityPermanent;
                 }
             }
+            TargetFilter abilityTargetFilter = targetFilterOf(pending);
             TriggerTargetCollector.Result result = triggerTargetCollector.collect(
                     gameData,
                     pending.effects(),
-                    targetFilterForTriggeredEffects(pending.sourceCard(), pending.effects()),
+                    abilityTargetFilter,
                     pending.controllerId(),
                     targetingSourceCard,
                     TriggerTargetCollector.Options.ATTACK,
                     targetingSource,
                     defendingPlayerId(gameData, pending.attackedTargetId()),
-                    null, null, pending.triggeringPlayerId());
-            boolean optionalTarget = hasOptionalSingleTarget(pending.sourceCard(), pending.effects());
+                    pending.xValue(), pending.triggeringPermanentId(), pending.triggeringPlayerId());
+            boolean optionalTarget = isOptionalSingleTarget(pending.sourceCard(), pending.effects());
+            TargetGroup targetGroup = targetGroupForTriggeredEffects(pending.sourceCard(), pending.effects());
             List<UUID> candidateTargets = new ArrayList<>(result.validTargets());
+            // A player filter of the ability ("target opponent previously dealt damage by it") judges the players.
+            if (abilityTargetFilter instanceof com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter
+                    || abilityTargetFilter instanceof com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter) {
+                List<UUID> legalPlayers = validTargetService.filterValidPlayerTargetsChosenBy(gameData,
+                        abilityTargetFilter, candidateTargets.stream().filter(gameData.playerIds::contains).toList(),
+                        choosingPlayerId, pending.controllerId(), pending.sourcePermanentId());
+                candidateTargets.removeIf(id -> gameData.playerIds.contains(id) && !legalPlayers.contains(id));
+            }
             candidateTargets.addAll(result.validGraveyardCardIds());
 
             if (candidateTargets.isEmpty()) {
                 gameData.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
-                if (optionalTarget && com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
+                boolean mayTargetNone = optionalTarget || targetGroup != null && targetGroup.getMinTargets() == 0
+                        && targetGroup.getDynamicMinTargets() == null;
+                if (mayTargetNone && com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
                         .parkedAtDoor(pending.triggerRecord())) {
-                    // "Up to one target" with none to choose: the ability goes on the stack with no target.
+                    // "Up to one target", "up to two target creatures" with none to choose: the ability goes on the
+                    // stack with no target.
                     triggeredAbilityStackService.finishParked(gameData, pending.triggerRecord(), entry -> {
                         entry.replaceEffectsToResolve(pending.effects());
                         entry.setTargetId(null);
@@ -1123,7 +1161,6 @@ public class TriggeredAbilityQueueService {
                             : optionalTarget ? "target permanent or yourself to decline" : "target permanent";
             gameData.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
             gameData.interaction.setPermanentChoiceContext(pending);
-            TargetGroup targetGroup = targetGroupForTriggeredEffects(pending.sourceCard(), pending.effects());
             if (targetGroup != null && targetGroup.getMaxTargets() > 1) {
                 int minTargets = targetGroup.getMinTargets();
                 int maxTargets = Math.min(targetGroup.getMaxTargets(), candidateTargets.size());
@@ -1162,6 +1199,11 @@ public class TriggeredAbilityQueueService {
             } else if (optionalTarget) {
                 playerInputService.beginAnyTargetChoice(gameData, choosingPlayerId, candidateTargets,
                         List.of(pending.controllerId()),
+                        pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
+            } else if (candidateTargets.stream().anyMatch(gameData.playerIds::contains)) {
+                playerInputService.beginAnyTargetChoice(gameData, choosingPlayerId,
+                        candidateTargets.stream().filter(id -> !gameData.playerIds.contains(id)).toList(),
+                        candidateTargets.stream().filter(gameData.playerIds::contains).toList(),
                         pending.sourceCard().getName() + "'s ability - Choose " + targetDescription + ".");
             } else {
                 playerInputService.beginPermanentChoice(gameData, choosingPlayerId, candidateTargets,

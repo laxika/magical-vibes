@@ -321,6 +321,31 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy gives a queued door choice its own record, with its planar source copied")
+    void deepCopyGivesQueuedDoorChoiceItsOwnRecord() {
+        StackEntry record = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY, new SerraAngel(), player1.getId(), "Chaos trigger", List.of());
+        record.setParkedAtStackDoor(true);
+        record.setSourcePlanarObject(new com.github.laxika.magicalvibes.model.planar.PlanarObject(new SerraAngel(), 1));
+        gd.queueInteraction(new com.github.laxika.magicalvibes.model.PermanentChoiceContext.AttackTriggerTarget(
+                new SerraAngel(), player1.getId(), List.of(), null, player1.getId(), null, null)
+                .withTriggerRecord(record));
+        var original = (com.github.laxika.magicalvibes.model.PermanentChoiceContext.AttackTriggerTarget)
+                gd.pendingInteractions.getFirst();
+
+        GameData copy = gd.simulationCopy();
+        var copied = (com.github.laxika.magicalvibes.model.PermanentChoiceContext.AttackTriggerTarget)
+                copy.pendingInteractions.getFirst();
+
+        assertThat(copied.triggerRecord()).isNotSameAs(original.triggerRecord());
+        copied.triggerRecord().getSourcePlanarObject().getCounters()
+                .put(com.github.laxika.magicalvibes.model.CounterType.CHARGE, 2);
+        copied.triggerRecord().setParkedAtStackDoor(false);
+        assertThat(original.triggerRecord().getSourcePlanarObject().getCounters()).isEmpty();
+        assertThat(original.triggerRecord().isParkedAtStackDoor()).isTrue();
+    }
+
+    @Test
     @DisplayName("Deep copy keeps whether a parked ability's attacking source caused it, independently")
     void deepCopyKeepsTriggeredBySourceAttacking() {
         StackEntry record = new StackEntry(

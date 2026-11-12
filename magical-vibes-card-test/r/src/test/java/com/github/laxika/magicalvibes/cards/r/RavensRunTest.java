@@ -64,8 +64,7 @@ class RavensRunTest extends BaseCardTest {
         Permanent third = addCreatureReady(player2, new GiantSpider());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .containsExactly(first.getId(), second.getId(), third.getId());
@@ -87,8 +86,7 @@ class RavensRunTest extends BaseCardTest {
         addCreatureReady(player2, new GiantSpider());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, first.getId());
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, first.getId()))
@@ -98,8 +96,7 @@ class RavensRunTest extends BaseCardTest {
     @Test
     void chaosDoesNothingWithoutCreatures() {
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
@@ -111,8 +108,7 @@ class RavensRunTest extends BaseCardTest {
         Permanent second = addCreatureReady(player2, new GiantSpider());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, first.getId());
         harness.handlePermanentChosen(player1, second.getId());
 
@@ -143,8 +139,7 @@ class RavensRunTest extends BaseCardTest {
         Permanent third = addCreatureReady(player2, new GiantSpider());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, first.getId());
         harness.handlePermanentChosen(player1, second.getId());
         harness.handlePermanentChosen(player1, third.getId());

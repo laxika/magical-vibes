@@ -115,7 +115,7 @@ class JaddiLifestriderTest extends BaseCardTest {
         PlanechaseService planar = GameTestEngineContext.get().getBean(PlanechaseService.class);
         TriggerCollectionService triggers = GameTestEngineContext.get().getBean(TriggerCollectionService.class);
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player2, restricted.getId());
         harness.passBothPriorities();
 

@@ -16,6 +16,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -75,9 +77,7 @@ class KatsumasaTheAnimatorTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         resolveAllTriggers();
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -92,7 +92,7 @@ class KatsumasaTheAnimatorTest extends BaseCardTest {
         Permanent artifactCreature = harness.addToBattlefieldAndReturn(player1, new Arachnoid());
 
         advanceToUpkeep(player1);
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, artifactCreature.getId()))
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(artifactCreature.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -114,7 +114,7 @@ class KatsumasaTheAnimatorTest extends BaseCardTest {
         Permanent ring = harness.addToBattlefieldAndReturn(player1, new SolRing());
 
         advanceToUpkeep(player1);
-        harness.handlePermanentChosen(player1, ring.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ring.getId()));
         resolveAllTriggers();
         activateAnimation(ring);
 
@@ -130,7 +130,7 @@ class KatsumasaTheAnimatorTest extends BaseCardTest {
         Permanent ring = harness.addToBattlefieldAndReturn(player1, new SolRing());
 
         advanceToUpkeep(player1);
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         assertThat(ring.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -145,9 +145,7 @@ class KatsumasaTheAnimatorTest extends BaseCardTest {
         Permanent third = harness.addToBattlefieldAndReturn(player1, new CultivatorsCaravan());
 
         advanceToUpkeep(player1);
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
-        harness.handlePermanentChosen(player1, third.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId(), third.getId()));
         resolveAllTriggers();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -174,8 +172,7 @@ class KatsumasaTheAnimatorTest extends BaseCardTest {
         Permanent ring = harness.addToBattlefieldAndReturn(player1, new SolRing());
 
         advanceToUpkeep(player1);
-        harness.handlePermanentChosen(player1, caravan.getId());
-        harness.handlePermanentChosen(player1, ring.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(caravan.getId(), ring.getId()));
         activateAnimation(caravan);
         resolveAllTriggers();
 

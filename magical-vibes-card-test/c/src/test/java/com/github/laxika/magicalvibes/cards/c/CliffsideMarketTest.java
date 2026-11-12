@@ -62,7 +62,7 @@ class CliffsideMarketTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.PermanentChoice firstChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -87,7 +87,7 @@ class CliffsideMarketTest extends BaseCardTest {
     }
 
     private void resolveTriggeredLifeExchange() {
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.PermanentChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
@@ -106,7 +106,7 @@ class CliffsideMarketTest extends BaseCardTest {
         harness.setLife(player2, 23);
         PlanarObject plane = gd.planechase.faceUp.getFirst();
         harness.inMutationScope(() -> planar.trigger(gd, plane, Triggers.upkeep(ActivePlayer.YOU), player1.getId()));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
@@ -122,7 +122,7 @@ class CliffsideMarketTest extends BaseCardTest {
         harness.setLife(player2, 23);
         PlanarObject plane = gd.planechase.faceUp.getFirst();
         harness.inMutationScope(() -> planar.trigger(gd, plane, Triggers.upkeep(ActivePlayer.YOU), player1.getId()));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -138,7 +138,7 @@ class CliffsideMarketTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, first.getId());
         harness.handlePermanentChosen(player1, second.getId());
         harness.passBothPriorities();
@@ -153,7 +153,7 @@ class CliffsideMarketTest extends BaseCardTest {
         Permanent second = addCreatureReady(player2, new HillGiant());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextETBTokenMultiTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, first.getId());
         PendingInteraction.PermanentChoice secondChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

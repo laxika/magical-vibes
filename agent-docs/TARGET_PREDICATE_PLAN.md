@@ -692,7 +692,7 @@ spell effect reaches the controller's graveyard and no opponent's) and `AiTarget
   in its own `source` component; its cards (Lodestone Bauble, Misinformation) target through a
   card-level `GraveyardCardPredicateTargetFilter`. Giving it a declared target is a behaviour change
   beyond this step.
-- **`GraveyardTargetingService.handleBeginningOfCombatGraveyardTargeting` has a dead scope branch.**
+- **(Removed: the beginning-of-combat graveyard targeting goes through the stack door.)**
   `StepTriggerService:3553` only ever hands it a `TARGET_CARDS_ANY_GRAVEYARD` effect
   (`.orElseThrow()` on that filter), so its non-`ALL_GRAVEYARDS` path was and is unreachable.
 

@@ -1494,19 +1494,19 @@ public class CombatBlockService {
                 if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), context)) {
                     continue;
                 }
-                // "It" is the enchanted attacker, which the Aura's effects read as the entry's source permanent
-                // (Cloak of Confusion, Farrel's Mantle); the defending player is the non-targeting target and the
-                // attacked target, and "its controller may" (Farrel's Mantle) the attacker's controller as the
-                // ability triggered, whatever the effects are.
+                // The Aura is the ability's source (CR 113.7); "it" is the enchanted attacker, the triggering permanent
+                // the effects read (Cloak of Confusion, Farrel's Mantle). The defending player is the non-targeting
+                // target and the attacked target, and "its controller may" (Farrel's Mantle) the attacker's controller
+                // as the ability triggered, whatever the effects are.
                 boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
-                        perm.getCard(), attacker, auraOwnerId,
+                        perm.getCard(), perm, auraOwnerId,
                         perm.getCard().getName() + "'s unblocked-attack trigger", context, entry -> {
                             entry.setTargetId(defenderId);
                             entry.setNonTargeting(true);
                             entry.setAttackedTargetId(defenderId);
                             entry.setTriggeringPermanentId(attacker.getId());
                             entry.setAttachedPermanentSnapshot(new Permanent(attacker));
-                            entry.setSourcePermanentSnapshot(new Permanent(attacker));
+                            entry.setSourcePermanentSnapshot(new Permanent(perm));
                             entry.setTriggeringPermanentControllerId(
                                     gameQueryService.findPermanentController(gameData, attacker.getId()));
                         }));

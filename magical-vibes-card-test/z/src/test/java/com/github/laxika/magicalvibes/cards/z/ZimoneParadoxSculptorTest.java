@@ -28,8 +28,7 @@ class ZimoneParadoxSculptorTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player1, new BearCub());
 
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -84,7 +83,7 @@ class ZimoneParadoxSculptorTest extends BaseCardTest {
         Permanent zimone = harness.addToBattlefieldAndReturn(player1, new ZimoneParadoxSculptor());
 
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(zimone.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -98,8 +97,7 @@ class ZimoneParadoxSculptorTest extends BaseCardTest {
         Permanent other = harness.addToBattlefieldAndReturn(player1, new BearCub());
 
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, zimone.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(zimone.getId()));
         harness.passBothPriorities();
 
         assertThat(zimone.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -127,11 +125,11 @@ class ZimoneParadoxSculptorTest extends BaseCardTest {
 
         advanceToCombat(player1);
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponent.getId()))
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(opponent.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, artifact.getId()))
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
     }
 
@@ -197,8 +195,7 @@ class ZimoneParadoxSculptorTest extends BaseCardTest {
         Permanent zimone = harness.addToBattlefieldAndReturn(player1, new ZimoneParadoxSculptor());
         Permanent other = harness.addToBattlefieldAndReturn(player1, new BearCub());
         advanceToCombat(player1);
-        harness.handlePermanentChosen(player1, zimone.getId());
-        harness.handlePermanentChosen(player1, other.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(zimone.getId(), other.getId()));
 
         gd.playerBattlefields.get(player1.getId()).remove(other);
         gd.playerBattlefields.get(player2.getId()).add(other);

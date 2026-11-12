@@ -253,11 +253,6 @@ public class AutoPassService {
             triggerCollectionService.processNextSagaChapterPlayerTarget(gameData);
         }
 
-        // Process any pending end-step targeted triggers
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)) {
-            stepTriggerService.processNextEndStepTriggerTarget(gameData);
-        }
-
         // Process any pending phase-in targeted triggers (queued during untap-step phasing)
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.PhasesInTriggerTarget.class)) {
             stepTriggerService.processNextPhasesInTriggerTarget(gameData);

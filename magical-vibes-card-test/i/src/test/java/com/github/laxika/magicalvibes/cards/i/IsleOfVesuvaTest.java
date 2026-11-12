@@ -76,7 +76,7 @@ class IsleOfVesuvaTest extends BaseCardTest {
         assertThat(countPermanents(player2, "Grizzly Bears")).isEqualTo(2);
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
@@ -107,7 +107,7 @@ class IsleOfVesuvaTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent other = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, target.getId());
         harness.setHand(player1, List.of(new Unsummon()));
         harness.addMana(player1, ManaColor.BLUE, 1);
@@ -127,7 +127,7 @@ class IsleOfVesuvaTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> triggers.processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
 
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);

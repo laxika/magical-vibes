@@ -22,15 +22,24 @@ package com.github.laxika.magicalvibes.model.effect;
  * blocked by it this turn".
  */
 public record DestroyCombatOpponentsOfTargetAtEndOfCombatEffect(boolean onlyCreaturesBlockedByTarget,
-                                                                boolean onlyWhileInCombat)
+                                                                boolean onlyWhileInCombat,
+                                                                boolean ofSource)
         implements CardEffect, RemovalEffect {
 
     public DestroyCombatOpponentsOfTargetAtEndOfCombatEffect() {
-        this(false, false);
+        this(false, false, false);
     }
 
     public DestroyCombatOpponentsOfTargetAtEndOfCombatEffect(boolean onlyCreaturesBlockedByTarget) {
-        this(onlyCreaturesBlockedByTarget, false);
+        this(onlyCreaturesBlockedByTarget, false, false);
+    }
+
+    /**
+     * "At end of combat, destroy all creatures blocking or blocked by this creature" (Kjeldoran Frostbeast): the
+     * source's own end-of-combat ability, which targets nothing, destroying only while the source is still in combat.
+     */
+    public static DestroyCombatOpponentsOfTargetAtEndOfCombatEffect ofSourceWhileInCombat() {
+        return new DestroyCombatOpponentsOfTargetAtEndOfCombatEffect(false, true, true);
     }
 
     @Override
@@ -40,6 +49,6 @@ public record DestroyCombatOpponentsOfTargetAtEndOfCombatEffect(boolean onlyCrea
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.harmful(TargetPredicates.creature());
+        return ofSource ? TargetSpec.NONE : TargetSpec.harmful(TargetPredicates.creature());
     }
 }

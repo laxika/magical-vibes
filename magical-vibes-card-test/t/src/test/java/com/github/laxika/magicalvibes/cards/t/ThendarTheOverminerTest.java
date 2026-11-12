@@ -130,7 +130,8 @@ class ThendarTheOverminerTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         PendingInteraction.PermanentChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validPermanentIds()).contains(landId, player1.getId()).doesNotContain(basicId);
+        assertThat(choice.validPermanentIds()).contains(landId).doesNotContain(basicId);
+        assertThat(choice.validPlayerIds()).contains(player1.getId());
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 

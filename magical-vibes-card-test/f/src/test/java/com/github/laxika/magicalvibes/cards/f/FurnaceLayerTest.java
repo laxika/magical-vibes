@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,13 +16,14 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FurnaceLayer.class, GrizzlyBears.class, Forest.class})
+@CardUsed({FurnaceLayer.class, GrizzlyBears.class, Forest.class, LeylineOfSanctity.class})
 class FurnaceLayerTest extends BaseCardTest {
 
     private PlanechaseService planar;
@@ -67,8 +69,7 @@ class FurnaceLayerTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
@@ -88,6 +89,21 @@ class FurnaceLayerTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetId()).isIn(player1.getId(), player2.getId());
+    }
+
+    @Test
+    @DisplayName("\"Select target player at random\" picks only among legal targets: a hexproof player is never selected")
+    void randomTargetIsALegalTarget() {
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+
+        for (int i = 0; i < 12; i++) {
+            harness.inMutationScope(() -> planar.trigger(gd, source,
+                    Triggers.planeswalkToThis(), player1.getId()));
+        }
+
+        // The player is a target (CR 115.1), chosen at random among the legal ones as the ability goes on the stack.
+        assertThat(gd.stack).hasSize(12)
+                .allSatisfy(entry -> assertThat(entry.getTargetId()).isEqualTo(player1.getId()));
     }
 
     @Test
@@ -153,8 +169,7 @@ class FurnaceLayerTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.inMutationScope(() -> planar.chaos(gd));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextSpellTargetTrigger(gd));
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);

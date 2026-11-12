@@ -96,6 +96,9 @@ class TriggeredAbilityStackServiceTest {
     private GameQueryService gameQueryService;
     @Mock
     private PredicateEvaluationService predicateEvaluationService;
+
+    @Mock
+    private com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector triggerTargetCollector;
     @Mock
     private GameLogService gameLogService;
     @Mock
@@ -123,7 +126,7 @@ class TriggeredAbilityStackServiceTest {
     void setUp() {
         stackService = new TriggeredAbilityStackService(conditionEvaluationService, gameQueryService,
                 graveyardTargetingSupport, gameLogService, triggerCollectionService, amountEvaluationService,
-                predicateEvaluationService);
+                predicateEvaluationService, triggerTargetCollector);
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.orderedPlayerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
         gd.playerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));

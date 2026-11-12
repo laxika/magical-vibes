@@ -129,7 +129,6 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
-import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.GraveyardTransformedReturnService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -208,9 +207,6 @@ class StepTriggerServiceTest {
     private GraveyardTransformedReturnService graveyardTransformedReturnService;
 
     @Mock
-    private GraveyardTargetingService graveyardTargetingService;
-
-    @Mock
     private GraveyardService graveyardService;
 
     @Mock
@@ -287,7 +283,6 @@ class StepTriggerServiceTest {
                 lifeSupport,
                 battlefieldEntryService,
                 graveyardTransformedReturnService,
-                graveyardTargetingService,
                 graveyardService,
                 triggerCollectionService,
                 triggerTargetCollector,
@@ -301,6 +296,18 @@ class StepTriggerServiceTest {
                 amountEvaluationService,
                 sagaChapterService,
                 effectResolutionService);
+        org.springframework.test.util.ReflectionTestUtils.setField(sut, "triggeredAbilityStackService",
+                new com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService(
+                        new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
+                        gameQueryService,
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport.class),
+                        gameLogService, triggerCollectionService, amountEvaluationService,
+                        predicateEvaluationService, triggerTargetCollector));
+        org.springframework.test.util.ReflectionTestUtils.setField(sut, "stackedModalTriggerService",
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService.class));
+        org.springframework.test.util.ReflectionTestUtils.setField(sut, "stackedDividedDamageTriggerService",
+                org.mockito.Mockito.mock(
+                        com.github.laxika.magicalvibes.service.trigger.StackedDividedDamageTriggerService.class));
 
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
@@ -627,17 +634,17 @@ class StepTriggerServiceTest {
             card.target(0, 3).addTrigger(Triggers.upkeep(ActivePlayer.YOU), effect);
             Permanent source = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(source);
-            when(etbTokenTargetService.needsSlotBySlotTargetSelection(card)).thenReturn(true);
 
             sut.handleUpkeepTriggers(gd);
 
-            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class))
+            // One group of up to three targets is announced in one choice (CR 601.2c).
+            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class))
                     .isNotNull()
                     .satisfies(trigger -> {
                         assertThat(trigger.sourcePermanentId()).isEqualTo(source.getId());
                         assertThat(trigger.effects()).containsExactly(effect);
                     });
-            verify(etbTokenTargetService).processNextETBTokenMultiTargetTrigger(gd);
+            verify(triggerCollectionService).processNextAttackTriggerTarget(gd);
         }
 
         @Test
@@ -839,8 +846,10 @@ class StepTriggerServiceTest {
 
             sut.handleUpkeepTriggers(gd);
 
-            // processNextUpkeepPlayerTarget consumes the pending trigger and asks for target selection
-            verify(playerInputService).beginAnyTargetChoice(eq(gd), eq(player1Id), any(), any(), any());
+            // Its player target is chosen as it goes on the stack (CR 603.3d).
+            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class).choosingPlayerId())
+                    .isEqualTo(player1Id);
+            verify(triggerCollectionService).processNextAttackTriggerTarget(gd);
         }
 
         @Test
@@ -856,20 +865,14 @@ class StepTriggerServiceTest {
                             .withTargetFilter(new PlayerPredicateTargetFilter(
                                     new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                                     "Target must be an opponent"))));
-            when(targetLegalityService.matchesPlayerPredicate(
-                    eq(gd), eq(player1Id), eq(player2Id), any(PlayerRelationPredicate.class), eq(host.getId()),
-                    isNull()))
-                    .thenReturn(true);
-            when(targetLegalityService.matchesPlayerPredicate(
-                    eq(gd), eq(player1Id), eq(player1Id), any(PlayerRelationPredicate.class), eq(host.getId()),
-                    isNull()))
-                    .thenReturn(false);
 
             sut.handleUpkeepTriggers(gd);
 
-            verify(playerInputService).beginAnyTargetChoice(
-                    eq(gd), eq(player1Id), any(),
-                    argThat((List<UUID> ids) -> ids.equals(List.of(player2Id))), any());
+            // The record carries the ability's own target filter, which its target choice and resolution read.
+            PermanentChoiceContext.AttackTriggerTarget choice =
+                    gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
+            assertThat(choice.triggerRecord().getTargetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
+            verify(triggerCollectionService).processNextAttackTriggerTarget(gd);
         }
 
         @Test
@@ -1238,12 +1241,13 @@ class StepTriggerServiceTest {
 
             sut.handleUpkeepTriggers(gd);
 
-            PermanentChoiceContext.UpkeepAnyTargetTrigger trigger =
-                    (PermanentChoiceContext.UpkeepAnyTargetTrigger) gd.interaction.permanentChoiceContext();
+            PermanentChoiceContext.AttackTriggerTarget trigger =
+                    gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
             assertThat(trigger).isNotNull();
             assertThat(trigger.controllerId()).isEqualTo(player1Id);
+            assertThat(trigger.choosingPlayerId()).isEqualTo(player1Id);
             assertThat(trigger.sourcePermanentId()).isEqualTo(source.getId());
-            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id), any(), any());
+            verify(triggerCollectionService).processNextAttackTriggerTarget(gd);
             assertThat(gd.stack).isEmpty();
         }
 
@@ -1737,7 +1741,10 @@ class StepTriggerServiceTest {
 
             sut.handleBeginningOfCombatTriggers(gd);
 
-            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id), any(), any());
+            // Its target is chosen as it goes on the stack (CR 603.3d): the stack door's target choice is begun.
+            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class).choosingPlayerId())
+                    .isEqualTo(player1Id);
+            verify(triggerCollectionService).processNextAttackTriggerTarget(gd);
             assertThat(gd.stack).isEmpty();
         }
 
@@ -1776,9 +1783,10 @@ class StepTriggerServiceTest {
 
             sut.handleBeginningOfCombatTriggers(gd);
 
-            verify(triggerCollectionService).processNextTriggeredModalTrigger(gd);
-            assertThat(gd.stack).isEmpty();
-            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)).isTrue();
+            // One mode of one target: its mode is announced before anyone gets priority (CR 603.3c).
+            assertThat(gd.stack).singleElement().satisfies(entry ->
+                    assertThat(entry.getEffectsToResolve().getFirst()).isInstanceOf(ChooseOneEffect.class));
+            verify(stackedModalTriggerService()).announceNextMode(gd);
         }
 
         @Test
@@ -1984,8 +1992,11 @@ class StepTriggerServiceTest {
 
             sut.handleEndStepTriggers(gd);
 
-            assertThat(gd.stack).isEmpty();
-            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)).isTrue();
+            // Modes that take no target: the mode is announced once the ability is on the stack, before anyone gets
+            // priority (CR 603.3c).
+            assertThat(gd.stack).singleElement().satisfies(entry ->
+                    assertThat(entry.getEffectsToResolve()).containsExactly(chooseOne));
+            verify(stackedModalTriggerService()).announceNextMode(gd);
         }
 
         @Test
@@ -2014,13 +2025,13 @@ class StepTriggerServiceTest {
                     .addTrigger(Triggers.endStep(ActivePlayer.YOU), effect);
             Permanent permanent = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(permanent);
-            when(etbTokenTargetService.needsSlotBySlotTargetSelection(card)).thenReturn(true);
 
             sut.handleEndStepTriggers(gd);
 
+            // One group of up to four targets is announced in one choice (CR 601.2c).
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)).isTrue();
-            verify(etbTokenTargetService).processNextETBTokenMultiTargetTrigger(gd);
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isTrue();
+            verify(triggerCollectionService).processNextAttackTriggerTarget(gd);
         }
 
         @Test
@@ -2045,12 +2056,12 @@ class StepTriggerServiceTest {
                     "Target must be a creature."), 0, 99)
                     .addTrigger(Triggers.endStep(ActivePlayer.YOU), effect);
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
-            when(etbTokenTargetService.needsSlotBySlotTargetSelection(card)).thenReturn(true);
 
             sut.handleEndStepTriggers(gd);
 
+            // One group of any number of targets is announced in one choice (CR 601.2c).
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)).isTrue();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isTrue();
         }
 
         @Test
@@ -2209,8 +2220,8 @@ class StepTriggerServiceTest {
 
             sut.handleEndStepTriggers(gd);
 
-            var firstPending = gd.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
-            var secondPending = gd.pollPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+            var firstPending = gd.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
+            var secondPending = gd.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
             assertThat(firstPending.effects()).containsExactly(first);
             assertThat(secondPending.effects()).containsExactly(second);
         }
@@ -2306,7 +2317,8 @@ class StepTriggerServiceTest {
         void raidConditionalEndStepMayEffectQueuedWhenRaidMet() {
             Card card = createCardWithName("Raiding Looter");
             card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                    new ConditionalEffect(new Raid(), new MayEffect(new GainLifeEffect(1), "Gain life?")));
+                    com.github.laxika.magicalvibes.model.trigger.TriggerOptions.DEFAULT.withInterveningIf(new Raid()),
+                    new MayEffect(new GainLifeEffect(1), "Gain life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playersDeclaredAttackersThisTurn.add(player1Id);
 
@@ -2333,7 +2345,8 @@ class StepTriggerServiceTest {
         void raidConditionalEndStepNonMayPushesToStackWhenRaidMet() {
             Card card = createCardWithName("Raiding Creature");
             card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                    new ConditionalEffect(new Raid(), new GainLifeEffect(1)));
+                    com.github.laxika.magicalvibes.model.trigger.TriggerOptions.DEFAULT.withInterveningIf(new Raid()),
+                    new GainLifeEffect(1));
             gd.playerBattlefields.get(player1Id).add(new Permanent(card));
             gd.playersDeclaredAttackersThisTurn.add(player1Id);
 
@@ -2348,7 +2361,8 @@ class StepTriggerServiceTest {
         void raidConditionalEndStepTargetingEffectQueuesWhenRaidMet() {
             Card card = createCardWithName("Navigator's Ruin");
             card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                    new ConditionalEffect(new Raid(), new MillEffect(4, MillRecipient.TARGET_PLAYER)));
+                    com.github.laxika.magicalvibes.model.trigger.TriggerOptions.DEFAULT.withInterveningIf(new Raid()),
+                    new MillEffect(4, MillRecipient.TARGET_PLAYER));
             card.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                     "Target must be an opponent"));
@@ -2357,11 +2371,13 @@ class StepTriggerServiceTest {
 
             sut.handleEndStepTriggers(gd);
 
-            // Should not push directly to stack — should queue for target selection
+            // The target is chosen as the ability goes on the stack (CR 603.3d), with the card's target filter.
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)).isFalse(); // processed immediately
-            // processNextEndStepTriggerTarget fires and presents choice
-            verify(playerInputService).beginAnyTargetChoice(eq(gd), eq(player1Id), eq(List.of()), eq(List.of(player2Id)), any());
+            PermanentChoiceContext.AttackTriggerTarget trigger =
+                    gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
+            assertThat(trigger).isNotNull();
+            assertThat(trigger.choosingPlayerId()).isEqualTo(player1Id);
+            verify(triggerCollectionService).processNextAttackTriggerTarget(gd);
         }
 
         @Test
@@ -2369,7 +2385,8 @@ class StepTriggerServiceTest {
         void raidConditionalEndStepTargetingEffectSkipsWhenRaidNotMet() {
             Card card = createCardWithName("Navigator's Ruin");
             card.addTrigger(Triggers.endStep(ActivePlayer.YOU),
-                    new ConditionalEffect(new Raid(), new MillEffect(4, MillRecipient.TARGET_PLAYER)));
+                    com.github.laxika.magicalvibes.model.trigger.TriggerOptions.DEFAULT.withInterveningIf(new Raid()),
+                    new MillEffect(4, MillRecipient.TARGET_PLAYER));
             card.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
                     new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                     "Target must be an opponent"));
@@ -2379,27 +2396,10 @@ class StepTriggerServiceTest {
             sut.handleEndStepTriggers(gd);
 
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.EndStepTriggerTarget.class)).isFalse();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
             verify(playerInputService, never()).beginPermanentChoice(any(), any(), any(), any());
         }
 
-        @Test
-        @DisplayName("processNextEndStepTriggerTarget with PlayerPredicateTargetFilter OPPONENT excludes controller from valid targets")
-        void endStepTriggerOpponentFilterExcludesController() {
-            Card card = createCardWithName("Navigator's Ruin");
-            card.setCastTimeTargetFilter(new PlayerPredicateTargetFilter(
-                    new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                    "Target must be an opponent"));
-            gd.queueInteraction(new PermanentChoiceContext.EndStepTriggerTarget(
-                    card, player1Id, new ArrayList<>(List.of(new MillEffect(4, MillRecipient.TARGET_PLAYER))),
-                    UUID.randomUUID()));
-
-            sut.processNextEndStepTriggerTarget(gd);
-
-            // Should present choice with only opponent (player2), not controller (player1)
-            verify(playerInputService).beginAnyTargetChoice(eq(gd), eq(player1Id),
-                    eq(List.of()), eq(List.of(player2Id)), any());
-        }
 
         @Test
         @DisplayName("ConditionalEffect triggers when permanent was not kicked")
@@ -3032,16 +3032,15 @@ class StepTriggerServiceTest {
             gd.playerBattlefields.get(player1Id).add(source);
             gd.playerBattlefields.get(player1Id).add(land);
 
-            when(predicateEvaluationService.matchesFilters(any(Permanent.class), any(), any()))
-                    .thenAnswer(invocation -> invocation.getArgument(0, Permanent.class).getId().equals(land.getId()));
-            when(predicateEvaluationService.matchesPermanentPredicate(any(Permanent.class), any(), any()))
-                    .thenReturn(true);
 
             sut.handlePostcombatMainTriggers(gd);
 
+            // "Up to one target land" is chosen as it goes on the stack (CR 603.3d), in one choice its controller may
+            // decline.
             assertThat(gd.stack).isEmpty();
-            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id),
-                    argThat(ids -> ids.contains(land.getId()) && ids.contains(player1Id)), any());
+            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)
+                    .sourcePermanentId()).isEqualTo(source.getId());
+            verify(triggerCollectionService).processNextAttackTriggerTarget(gd);
         }
 
     }
@@ -3067,5 +3066,10 @@ class StepTriggerServiceTest {
         card.setType(CardType.ENCHANTMENT);
         card.setSubtypes(List.of(CardSubtype.SAGA));
         return card;
+    }
+
+    private com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService stackedModalTriggerService() {
+        return (com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService)
+                org.springframework.test.util.ReflectionTestUtils.getField(sut, "stackedModalTriggerService");
     }
 }
