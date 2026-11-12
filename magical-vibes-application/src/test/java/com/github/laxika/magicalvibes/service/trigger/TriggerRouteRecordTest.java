@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -31,14 +32,18 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
+import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
@@ -159,6 +164,29 @@ class TriggerRouteRecordTest extends BaseCardTest {
             "you discard a card / GRAVE", "the discard collector has no graveyard-card target route (no card prints "
                     + "one): the ability isn't put on the stack");
 
+    /**
+     * The (watch, variant) pairs run 17z17 measured as recording the event differently from the plain ability, or as
+     * reaching no entry: row 17z17b of effect-slot-refactor.md step 15 lists each. They are skipped when asserting and
+     * still written in measuring mode; a pair leaves this map when its collector is fixed.
+     */
+    private static final Map<String, Set<Variant>> OPEN_ROW_17Z17B = Map.ofEntries(
+            Map.entry("is dealt combat damage",
+                    Set.of(Variant.TARGET, Variant.TWO_GROUPS, Variant.GRAVE)),
+            Map.entry("a creature an opponent controls is dealt excess damage",
+                    Set.of(Variant.TARGET, Variant.TWO_GROUPS, Variant.GRAVE)),
+            Map.entry("a creature an opponent controls is dealt excess noncombat damage",
+                    Set.of(Variant.TARGET, Variant.TWO_GROUPS, Variant.GRAVE)),
+            Map.entry("a creature you control becomes the target of a spell",
+                    Set.of(Variant.MAY, Variant.TARGET, Variant.TWO_GROUPS, Variant.GRAVE, Variant.MODAL, Variant.MODAL_TARGET)),
+            Map.entry("each end step",
+                    Set.of(Variant.TARGET, Variant.TWO_GROUPS)),
+            Map.entry("aura attack",
+                    Set.of(Variant.TWO_GROUPS, Variant.GRAVE)),
+            Map.entry("enchanted creature is dealt damage",
+                    Set.of(Variant.TARGET, Variant.TWO_GROUPS)),
+            Map.entry("enchanted creature attacks and isn't blocked",
+                    Set.of(Variant.TARGET, Variant.TWO_GROUPS)));
+
     /** The way the fixture ability is written beside the plain one. */
     enum Variant {
         MAY(false, null),
@@ -205,6 +233,10 @@ class TriggerRouteRecordTest extends BaseCardTest {
     }
 
     static List<Watch> watches() {
+        return Stream.concat(eventWatches().stream(), furtherWatches().stream()).toList();
+    }
+
+    private static List<Watch> eventWatches() {
         return List.of(
                 watch("self attack", Triggers::attacks, CardType.CREATURE,
                         TriggerRouteRecordTest::fixturesAttack),
@@ -337,6 +369,280 @@ class TriggerRouteRecordTest extends BaseCardTest {
                                 new RollD6Effect(new Fixed(1), List.of()))));
     }
 
+    /**
+     * The watches run 17z17 added: the damage, counter, tap, zone-change, combat and step collectors the first list
+     * reaches through one trigger only, each on another of its triggers.
+     */
+    private static List<Watch> furtherWatches() {
+        return List.of(
+                watch("a creature attacks", Triggers::creatureAttacks, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherCreatureAttacks),
+                watch("a player attacks", Triggers::playerAttacks, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherCreatureAttacks),
+                watch("you attack a player", Triggers::youAttackPlayer, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherCreatureAttacks),
+                watch("a creature attacks you", Triggers::creatureAttacksYou, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::opponentCreatureAttacks),
+                watch("creatures attack you", Triggers::creaturesAttackYou, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::opponentCreatureAttacks),
+                watch("a creature you control attacks and isn't blocked", Triggers::creatureYouControlAttacksUnblocked,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::anotherCreatureAttacksUnblocked),
+                watch("creatures block", Triggers::creaturesBlock, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherCreatureBlocks),
+                watch("a creature becomes blocked", Triggers::creatureBecomesBlocked, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherCreatureBecomesBlocked),
+                watch("creatures you control become blocked", Triggers::creaturesYouControlBecomeBlocked,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::anotherCreatureBecomesBlocked),
+                watch("deals combat damage", Triggers::dealsCombatDamage, CardType.CREATURE,
+                        TriggerRouteRecordTest::fixturesDealCombatDamageToPlayer),
+                watch("deals combat damage to a creature", Triggers::dealsCombatDamageToCreature, CardType.CREATURE,
+                        TriggerRouteRecordTest::fixturesAreDealtCombatDamage),
+                watch("is dealt combat damage", Triggers::dealtCombatDamage, CardType.CREATURE,
+                        TriggerRouteRecordTest::fixturesAreDealtCombatDamage),
+                watch("deals damage to a creature", Triggers::dealsDamageToCreature, CardType.CREATURE,
+                        TriggerRouteRecordTest::fixturesAreDealtCombatDamage),
+                watch("deals damage to a player", Triggers::dealsDamageToPlayer, CardType.CREATURE,
+                        TriggerRouteRecordTest::fixturesDealCombatDamageToPlayer),
+                watch("deals damage to an opponent", Triggers::dealsDamageToOpponent, CardType.CREATURE,
+                        TriggerRouteRecordTest::fixturesDealCombatDamageToPlayer),
+                watch("deals combat damage to a player or planeswalker",
+                        Triggers::dealsCombatDamageToPlayerOrPlaneswalker, CardType.CREATURE,
+                        TriggerRouteRecordTest::fixturesDealCombatDamageToPlayer),
+                watch("equipped creature deals combat damage", Triggers::equippedCreatureDealsCombatDamage,
+                        CardType.ARTIFACT, TriggerRouteRecordTest::equippedCreatureDealsCombatDamageToPlayer,
+                        CardSubtype.EQUIPMENT),
+                watch("equipped creature deals combat damage to a player, as the Equipment's trigger",
+                        Triggers::equippedCreatureDealsCombatDamageToPlayer, CardType.ARTIFACT,
+                        TriggerRouteRecordTest::equippedCreatureDealsCombatDamageToPlayer, CardSubtype.EQUIPMENT),
+                watch("a creature deals combat damage to a player", Triggers::creatureDealsCombatDamageToPlayer,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::anotherCreatureDealsCombatDamageToPlayer),
+                watch("a creature you control deals combat damage", Triggers::creatureYouControlDealsCombatDamage,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::anotherCreatureDealsCombatDamageToPlayer),
+                watch("a creature deals combat damage to an opponent", Triggers::creatureDealsCombatDamageToOpponent,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::anotherCreatureDealsCombatDamageToPlayer),
+                watch("creatures you control deal damage to a player", Triggers::creaturesYouControlDealDamageToPlayer,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::anotherCreatureDealsCombatDamageToPlayer),
+                watch("a source you control deals damage to an opponent",
+                        Triggers::sourceYouControlDealsDamageToOpponent, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherCreatureDealsCombatDamageToPlayer),
+                watch("a creature you control deals damage to a creature",
+                        Triggers::creatureYouControlDealsDamageToCreature, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherCreatureDealsCombatDamageToCreature),
+                watch("a creature deals damage to a creature", Triggers::creatureDealsDamageToCreature,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::anotherCreatureDealsCombatDamageToAWall),
+                watch("you are dealt combat damage", Triggers::youAreDealtCombatDamage, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::opponentCreatureDealsCombatDamageToYou),
+                watch("a creature deals combat damage to you", Triggers::creatureDealsCombatDamageToYou,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::opponentCreatureDealsCombatDamageToYou),
+                watch("a source deals damage to you", Triggers::sourceDealsDamageToYou, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::opponentCreatureDealsCombatDamageToYou),
+                watch("you are dealt damage by a source you control", Triggers::youAreDealtDamageBySourceYouControl,
+                        CardType.ENCHANTMENT,
+                        (test, cards) -> test.helperAbilityResolves(cards,
+                                new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER))),
+                watch("a player is dealt damage", Triggers::playerDealtDamage, CardType.ENCHANTMENT,
+                        (test, cards) -> test.helperAbilityResolves(cards,
+                                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))),
+                watch("an opponent is dealt noncombat damage", Triggers::opponentDealtNoncombatDamage,
+                        CardType.ENCHANTMENT,
+                        (test, cards) -> test.helperAbilityResolves(cards,
+                                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))),
+                watch("a source you control deals noncombat damage to an opponent",
+                        Triggers::sourceYouControlDealsNoncombatDamageToOpponent, CardType.ENCHANTMENT,
+                        (test, cards) -> test.helperAbilityResolves(cards,
+                                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))),
+                watch("a source you control deals damage", Triggers::sourceYouControlDealsDamage,
+                        CardType.ENCHANTMENT,
+                        (test, cards) -> test.helperAbilityResolves(cards,
+                                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))),
+                watch("is dealt noncombat damage", Triggers::dealtNoncombatDamage, CardType.CREATURE,
+                        TriggerRouteRecordTest::fixturesAreDealtNoncombatDamage),
+                watch("is dealt damage, not in combat", Triggers::dealtDamage, CardType.CREATURE,
+                        TriggerRouteRecordTest::fixturesAreDealtNoncombatDamage),
+                watch("a creature is dealt damage", Triggers::creatureDealtDamage, CardType.ENCHANTMENT,
+                        (test, cards) -> test.opponentVictimIsDealtDamage(cards, 1)),
+                watch("a permanent you control is dealt damage", Triggers::permanentYouControlDealtDamage,
+                        CardType.ENCHANTMENT,
+                        (test, cards) -> test.helperAbilityResolves(cards, new MassDamageEffect(1))),
+                watch("a creature an opponent controls is dealt damage",
+                        Triggers::creatureOpponentControlsDealtDamage, CardType.ENCHANTMENT,
+                        (test, cards) -> test.opponentVictimIsDealtDamage(cards, 1)),
+                watch("a source you control deals noncombat damage to a creature",
+                        Triggers::sourceYouControlDealsNoncombatDamageToCreature, CardType.ENCHANTMENT,
+                        (test, cards) -> test.opponentVictimIsDealtDamage(cards, 1)),
+                watch("a creature an opponent controls is dealt excess damage",
+                        Triggers::creatureOrPlaneswalkerOpponentControlsDealtExcessDamage, CardType.ENCHANTMENT,
+                        (test, cards) -> test.opponentVictimIsDealtDamage(cards, 6)),
+                watch("a creature an opponent controls is dealt excess noncombat damage",
+                        Triggers::creatureOrPlaneswalkerOpponentControlsDealtExcessNoncombatDamage,
+                        CardType.ENCHANTMENT, (test, cards) -> test.opponentVictimIsDealtDamage(cards, 6)),
+                watch("creatures your opponents control are dealt excess noncombat damage",
+                        Triggers::creaturesOpponentsControlDealtExcessNoncombatDamage, CardType.ENCHANTMENT,
+                        (test, cards) -> test.opponentVictimIsDealtDamage(cards, 6)),
+                watch("damage to you is prevented", Triggers::damageToYouPrevented, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::damageToYouIsPrevented),
+                watch("you draw your second card each turn", Triggers::youDrawSecondCardEachTurn,
+                        CardType.ENCHANTMENT,
+                        (test, cards) -> test.helperAbilityResolves(cards, new DrawCardEffect(2))),
+                watch("you discard one or more cards", Triggers::youDiscardOneOrMoreCards, CardType.ENCHANTMENT,
+                        (test, cards) -> test.helperAbilityResolves(cards,
+                                new DiscardEffect(1, DiscardRecipient.CONTROLLER, true))),
+                watch("a library is shuffled", Triggers::playerShufflesLibrary, CardType.ENCHANTMENT,
+                        (test, cards) -> test.helperAbilityResolves(cards, new ShuffleLibraryEffect(false))),
+                watch("you proliferate", Triggers::youProliferate, CardType.ENCHANTMENT,
+                        (test, cards) -> test.helperAbilityResolves(cards, new ProliferateEffect())),
+                watch("+1/+1 counters put on this", Triggers::plusOneCountersPutOnThis, CardType.CREATURE,
+                        TriggerRouteRecordTest::countersArePutOnFixtures),
+                watch("a +1/+1 counter put on this", Triggers::plusOneCounterPutOnThis, CardType.CREATURE,
+                        TriggerRouteRecordTest::countersArePutOnFixtures),
+                watch("you put counters on a creature", Triggers::youPutCountersOnCreature, CardType.ENCHANTMENT,
+                        (test, cards) -> test.helperAbilityResolves(cards, new PutCountersOnSourceEffect(1, 1, 1))),
+                watch("you put counters on a permanent or player", Triggers::youPutCountersOnPermanentOrPlayer,
+                        CardType.ENCHANTMENT,
+                        (test, cards) -> test.helperAbilityResolves(cards, new PutCountersOnSourceEffect(1, 1, 1))),
+                watch("a permanent you control becomes untapped", Triggers::permanentYouControlBecomesUntapped,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::anotherPermanentUntaps),
+                watch("a permanent becomes untapped", Triggers::permanentBecomesUntapped, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherPermanentUntaps),
+                watch("a player taps a land for mana", Triggers::playerTapsLandForMana, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::youTapALandForMana),
+                watch("a creature you control dies", () -> Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::yourCreatureIsDestroyed),
+                watch("a nontoken creature you control dies",
+                        () -> Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL), CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::yourCreatureIsDestroyed),
+                watch("a creature dies without being sacrificed",
+                        () -> Triggers.diesWithoutBeingSacrificed(Triggers.CREATURE, ObjectRelation.ANY),
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::anotherCreatureIsDestroyed),
+                watch("a creature is put into a graveyard from the battlefield",
+                        () -> Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, Triggers.CREATURE, ObjectRelation.ANY),
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::anotherCreatureIsDestroyed),
+                watch("own trip to the graveyard from anywhere",
+                        () -> Triggers.putIntoGraveyardFromAnywhere(ObjectRelation.THIS), CardType.CREATURE,
+                        TriggerRouteRecordTest::fixturesAreDestroyed),
+                watch("a creature enters under your control",
+                        () -> Triggers.enters(Triggers.CREATURE, ObjectRelation.YOU_CONTROL), CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherCreatureEnters),
+                watch("another creature enters", () -> Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::anotherCreatureEnters),
+                watch("a creature enters under an opponent's control",
+                        () -> Triggers.enters(Triggers.CREATURE, ObjectRelation.OPPONENT_CONTROLS),
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::opponentCreatureEnters),
+                watch("a player casts a spell", () -> Triggers.playerCastsSpell().anySpell(), CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::youCastACreatureSpell),
+                watch("becomes the target of a spell", Triggers::becomesTargetOfSpell, CardType.CREATURE,
+                        TriggerRouteRecordTest::fixturesBecomeSpellTargets),
+                watch("becomes the target of your spell", Triggers::becomesTargetOfYourSpell, CardType.CREATURE,
+                        TriggerRouteRecordTest::fixturesBecomeSpellTargets),
+                watch("a creature you control becomes the target of a spell",
+                        Triggers::creatureYouControlBecomesTargetOfSpell, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherCreatureBecomesSpellTarget),
+                watch("another creature you control becomes the target of a spell or ability",
+                        Triggers::anotherCreatureYouControlBecomesTargetOfSpellOrAbility, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherCreatureBecomesSpellTarget),
+                watch("each upkeep", () -> Triggers.upkeep(ActivePlayer.ANY), CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::upkeepBegins),
+                watch("each end step", () -> Triggers.endStep(ActivePlayer.ANY), CardType.ENCHANTMENT,
+                        (test, cards) -> test.stepBegins(cards, TurnStep.POSTCOMBAT_MAIN, TurnStep.END_STEP)),
+                watch("your precombat main phase", () -> Triggers.precombatMainPhase(ActivePlayer.YOU),
+                        CardType.ENCHANTMENT,
+                        (test, cards) -> test.stepBegins(cards, TurnStep.DRAW, TurnStep.PRECOMBAT_MAIN)),
+                watch("aura attack", Triggers::attacks, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::equippedCreatureAttacks, CardSubtype.AURA),
+                watch("enchanted creature deals combat damage to a player", Triggers::dealsCombatDamageToPlayer,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::equippedCreatureDealsCombatDamageToPlayer,
+                        CardSubtype.AURA),
+                watch("enchanted creature deals damage", Triggers::enchantedCreatureDealsDamage,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::equippedCreatureDealsCombatDamageToPlayer,
+                        CardSubtype.AURA),
+                watch("enchanted creature is dealt damage", Triggers::enchantedCreatureDealtDamage,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::enchantedCreatureIsDealtCombatDamage,
+                        CardSubtype.AURA),
+                watch("enchanted creature attacks and isn't blocked", Triggers::enchantedCreatureAttacksUnblocked,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::enchantedCreatureAttacksUnblocked,
+                        CardSubtype.AURA),
+                watch("enchanted permanent becomes tapped", Triggers::enchantedPermanentBecomesTapped,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::equippedCreatureAttacks, CardSubtype.AURA),
+                watch("a creature attacks you or your planeswalker", Triggers::creatureAttacksYouOrYourPlaneswalker,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::opponentCreatureAttacks),
+                watch("a creature attacks while you defend", Triggers::creatureAttacksWhileYouDefend,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::opponentCreatureAttacks),
+                watch("you attack a player or planeswalker", Triggers::youAttackPlayerOrPlaneswalker,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::anotherCreatureAttacks),
+                watch("deals combat damage to a blocking creature", Triggers::dealsCombatDamageToBlockingCreature,
+                        CardType.CREATURE, TriggerRouteRecordTest::fixturesAreDealtCombatDamage),
+                watch("deals combat damage to a player or battle", Triggers::dealsCombatDamageToPlayerOrBattle,
+                        CardType.CREATURE, TriggerRouteRecordTest::fixturesDealCombatDamageToPlayer),
+                watch("a creature you control deals combat damage to a player or battle",
+                        Triggers::creatureYouControlDealsCombatDamageToPlayerOrBattle, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherCreatureDealsCombatDamageToPlayer),
+                watch("equipped creature deals combat damage to a player or battle",
+                        Triggers::equippedCreatureDealsCombatDamageToPlayerOrBattle, CardType.ARTIFACT,
+                        TriggerRouteRecordTest::equippedCreatureDealsCombatDamageToPlayer, CardSubtype.EQUIPMENT),
+                watch("creatures you control deal damage to an opponent",
+                        Triggers::creaturesYouControlDealDamageToOpponent, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherCreatureDealsCombatDamageToPlayer),
+                watch("a source you control deals damage to a player", Triggers::sourceYouControlDealsDamageToPlayer,
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::anotherCreatureDealsCombatDamageToPlayer),
+                watch("a source deals damage", Triggers::sourceDealsDamage, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherCreatureDealsCombatDamageToPlayer),
+                watch("a source deals damage to a permanent or player",
+                        Triggers::sourceDealsDamageToPermanentOrPlayer, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherCreatureDealsCombatDamageToPlayer),
+                watch("another source you control deals damage to a permanent or player",
+                        Triggers::anotherSourceYouControlDealsDamageToPermanentOrPlayer, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherCreatureDealsCombatDamageToPlayer),
+                watch("a permanent deals damage to you", Triggers::permanentDealsDamageToYou, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::opponentCreatureDealsCombatDamageToYou),
+                watch("a creature deals damage to you or your permanent",
+                        Triggers::creatureDealsDamageToYouOrYourPermanent, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::opponentCreatureDealsCombatDamageToYou),
+                watch("you are dealt damage by a source an opponent controls",
+                        Triggers::youAreDealtDamageBySourceOpponentControls, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::opponentCreatureDealsCombatDamageToYou),
+                watch("a source an opponent controls deals damage to you or your permanent",
+                        Triggers::sourceOpponentControlsDealsDamageToYouOrYourPermanent, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::opponentCreatureDealsCombatDamageToYou),
+                watch("you put counters on a creature you control", Triggers::youPutCountersOnCreatureYouControl,
+                        CardType.ENCHANTMENT,
+                        (test, cards) -> test.helperAbilityResolves(cards, new PutCountersOnSourceEffect(1, 1, 1))),
+                watch("+1/+1 counters put on another creature you control",
+                        Triggers::plusOneCountersPutOnAnotherCreatureYouControl, CardType.ENCHANTMENT,
+                        (test, cards) -> test.helperAbilityResolves(cards, new PutCountersOnSourceEffect(1, 1, 1))),
+                watch("you put counters on another creature", Triggers::youPutCountersOnAnotherCreature,
+                        CardType.ENCHANTMENT,
+                        (test, cards) -> test.helperAbilityResolves(cards, new PutCountersOnSourceEffect(1, 1, 1))),
+                watch("you put +1/+1 counters on this", Triggers::youPutPlusOneCountersOnThis, CardType.CREATURE,
+                        TriggerRouteRecordTest::countersArePutOnFixtures),
+                watch("becomes tapped for the first time during your turn",
+                        Triggers::becomesTappedForFirstTimeDuringYourTurn, CardType.CREATURE,
+                        TriggerRouteRecordTest::fixturesAttack),
+                watch("a creature you control becomes tapped for the first time during your turn",
+                        Triggers::creatureYouControlBecomesTappedForFirstTimeDuringYourTurn, CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherCreatureAttacks),
+                watch("a creature is sacrificed", () -> Triggers.sacrificed(Triggers.CREATURE, ObjectRelation.ANY),
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::anotherCreatureIsSacrificed),
+                watch("another creature you control dies",
+                        () -> Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::yourCreatureIsDestroyed),
+                watch("another permanent enters under your control",
+                        () -> Triggers.enters(null, ObjectRelation.ANOTHER_YOU_CONTROL), CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::anotherCreatureEnters),
+                watch("a land enters", () -> Triggers.enters(Triggers.LAND, ObjectRelation.ANY),
+                        CardType.ENCHANTMENT, TriggerRouteRecordTest::landEnters),
+                watch("an opponent's upkeep", () -> Triggers.upkeep(ActivePlayer.OPPONENT), CardType.ENCHANTMENT,
+                        TriggerRouteRecordTest::opponentUpkeepBegins),
+                watch("each draw step", () -> Triggers.drawStep(ActivePlayer.ANY), CardType.ENCHANTMENT,
+                        (test, cards) -> test.stepBegins(cards, TurnStep.UPKEEP, TurnStep.DRAW)),
+                watch("each beginning of combat", () -> Triggers.beginningOfCombat(ActivePlayer.ANY),
+                        CardType.ENCHANTMENT,
+                        (test, cards) -> test.stepBegins(cards, TurnStep.PRECOMBAT_MAIN,
+                                TurnStep.BEGINNING_OF_COMBAT)),
+                watch("you draw your second card each turn, as the nth", () -> Triggers.youDrawNthCardEachTurn(2),
+                        CardType.ENCHANTMENT,
+                        (test, cards) -> test.helperAbilityResolves(cards, new DrawCardEffect(2))));
+    }
+
     static Stream<Arguments> cases() {
         return watches().stream().flatMap(watch ->
                 Arrays.stream(Variant.values()).map(variant -> Arguments.of(watch, variant)));
@@ -358,6 +664,8 @@ class TriggerRouteRecordTest extends BaseCardTest {
         if (!measuring) {
             String reason = EXCLUDED.get(label);
             Assumptions.assumeTrue(reason == null, () -> label + " is excluded: " + reason);
+            Assumptions.assumeFalse(OPEN_ROW_17Z17B.getOrDefault(watch.name(), Set.of()).contains(variant),
+                    () -> label + " is open in row 17z17b");
         }
 
         this.variant = variant;
@@ -669,6 +977,108 @@ class TriggerRouteRecordTest extends BaseCardTest {
     private void anotherCreatureIsSacrificed(List<Card> cards) {
         fixturePermanents(cards);
         harness.sacrifice(addCreatureReady(player1, new GrizzlyBears()));
+    }
+
+    private void opponentCreatureAttacks(List<Card> cards) {
+        fixturePermanents(cards);
+        Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
+        harness.forceActivePlayer(player2);
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(player2,
+                List.of(gd.playerBattlefields.get(player2.getId()).indexOf(attacker))));
+    }
+
+    private void opponentCreatureDealsCombatDamageToYou(List<Card> cards) {
+        fixturePermanents(cards);
+        addCreatureReady(player2, new GrizzlyBears()).setAttacking(true);
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat(player2));
+    }
+
+    private void anotherCreatureAttacksUnblocked(List<Card> cards) {
+        fixturePermanents(cards);
+        addCreatureReady(player1, new GrizzlyBears()).setAttacking(true);
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+    }
+
+    private void anotherCreatureDealsCombatDamageToCreature(List<Card> cards) {
+        anotherCreatureBecomesBlocked(cards);
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
+    }
+
+    private void fixturesAreDealtNoncombatDamage(List<Card> cards) {
+        fixtureCreatures(cards);
+        helperEntersAndItsAbilityResolves(new MassDamageEffect(1));
+    }
+
+    /**
+     * A 2/4 Goblin of player2 is dealt {@code damage} noncombat damage by the helper's ability, and no other creature
+     * is: one damage event, with excess damage when {@code damage} is more than 4.
+     */
+    private void opponentVictimIsDealtDamage(List<Card> cards, int damage) {
+        addCreatureReady(player2, card("Victim", CardType.CREATURE, CardSubtype.GOBLIN));
+        helperAbilityResolves(cards, new MassDamageEffect(damage, false, false,
+                new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN))));
+    }
+
+    /** A creature of player1 is blocked by a 0/4 creature of player2, so only the attacker deals damage. */
+    private void anotherCreatureDealsCombatDamageToAWall(List<Card> cards) {
+        fixturePermanents(cards);
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        Card wall = card("Wall", CardType.CREATURE);
+        wall.setPower(0);
+        Permanent blocker = addCreatureReady(player2, wall);
+        prepareDeclareBlockers();
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareBlockers(gd, player2,
+                List.of(new BlockerAssignment(gd.playerBattlefields.get(player2.getId()).indexOf(blocker),
+                        gd.playerBattlefields.get(player1.getId()).indexOf(attacker)))));
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
+    }
+
+    /** A prevention shield of 1 on player1 prevents the 1 damage the helper's ability deals them. */
+    private void damageToYouIsPrevented(List<Card> cards) {
+        gd.playerDamagePreventionShields.merge(player1.getId(), 1, Integer::sum);
+        helperAbilityResolves(cards, new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER));
+    }
+
+    private void anotherPermanentUntaps(List<Card> cards) {
+        fixturePermanents(cards);
+        addCreatureReady(player1, new GrizzlyBears()).tap();
+        harness.performUntapStep(player1);
+    }
+
+    private void yourCreatureIsDestroyed(List<Card> cards) {
+        fixturePermanents(cards);
+        destroy(addCreatureReady(player1, new GrizzlyBears()));
+    }
+
+    private void opponentCreatureEnters(List<Card> cards) {
+        fixturePermanents(cards);
+        harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
+    }
+
+    private void enchantedCreatureIsDealtCombatDamage(List<Card> cards) {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        for (Card card : cards) {
+            addCreatureReady(player1, card).setAttachedTo(attacker.getId());
+        }
+        blockEach(List.of(attacker));
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
+    }
+
+    private void enchantedCreatureAttacksUnblocked(List<Card> cards) {
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        attacker.setAttacking(true);
+        for (Card card : cards) {
+            addCreatureReady(player1, card).setAttachedTo(attacker.getId());
+        }
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of());
+    }
+
+    private void opponentUpkeepBegins(List<Card> cards) {
+        fixturePermanents(cards);
+        advanceToUpkeep(player2);
     }
 
     private void upkeepBegins(List<Card> cards) {

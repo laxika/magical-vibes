@@ -86,10 +86,7 @@ public class PutCountersOnSourceEffectHandler implements NormalEffectHandlerBean
                     gameData, source, entry.getControllerId());
         }
 
-        if (e.powerModifier() > 0) {
-            permanentCounterSupport.firePlusOnePlusOneCountersPutOnAnotherNonHydraCreatureTriggers(
-                    gameData, source, amount, entry.getControllerId());
-        } else if (!plusZeroPlusOne) {
+        if (e.powerModifier() <= 0 && !plusZeroPlusOne) {
             permanentCounterSupport.fireMinusOneMinusOneCounterPutOnCreatureTriggers(gameData, source, amount);
         }
     }

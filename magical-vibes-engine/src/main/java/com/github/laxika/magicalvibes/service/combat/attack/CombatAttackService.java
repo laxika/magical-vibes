@@ -1584,6 +1584,7 @@ public class CombatAttackService {
                         attackTrigger.setEventValue(targetAttackerCount);
                         attackTrigger.setAttackedTargetId(attackedPlayerId);
                         attackTrigger.setNonTargeting(true);
+                        attackTrigger.setSourcePermanentSnapshot(new Permanent(perm));
                         StackEntry recordInHand = gameData.handOffTriggerRecord(attackTrigger);
                         if (needsTarget) {
                             gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
@@ -1948,6 +1949,7 @@ public class CombatAttackService {
                         );
                         trigger.setNonTargeting(true);
                         trigger.setActivePlayerId(playerId);
+                        trigger.setSourcePermanentSnapshot(new Permanent(perm));
                         trigger.setAttackingPermanentSnapshots(attackerIndices.stream()
                                 .filter(idx -> attackedPlayerId.equals(resolvedTargets.get(idx)))
                                 .map(battlefield::get)
