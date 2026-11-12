@@ -211,10 +211,10 @@ new ActivatedAbility(false, "{4}", List.of(effect),
 ```
 
 Use `Triggers.youActivateExhaustAbility()` for a trigger that watches the
-controller's exhaust activations. The trigger is collected before the activated ability resolves.
+controller's exhaust activations. The trigger is collected once the exhaust ability is on the stack.
 For a trigger that functions while its source card is in the graveyard and returns that card from
 there (Afterburner Expert), use `Triggers.youActivateExhaustAbility() from the graveyard`;
-the graveyard collector scans every card in the activating player's graveyard.
+the activation collector reads the cards in every graveyard that have such an ability there.
 
 ---
 
@@ -876,8 +876,9 @@ legality checks run.
 
 `Card.ninjutsuAbility(cost)` builds the same flagged ability for static grants to creature cards in
 hand. A battlefield trigger watching those grants is
-`Triggers.youActivateAbility().withKind(AbilityTrigger.AbilityKind.NINJUTSU)`; the hand-ninjutsu
-activation path collects that trigger after the activation costs are paid.
+`Triggers.youActivateAbility().withKind(AbilityTrigger.AbilityKind.NINJUTSU)`; a ninjutsu activation
+goes through the one activation collector like any other ability, after its costs are paid, so
+every "whenever [a player] activates an ability" trigger sees it.
 
 Only a creature matching `PermanentIsUnblockedAttackingPredicate` **on the activating player's own
 battlefield** is a legal cost; that predicate already refuses steps before declare blockers.

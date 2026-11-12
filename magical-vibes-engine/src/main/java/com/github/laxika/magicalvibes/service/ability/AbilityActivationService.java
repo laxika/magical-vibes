@@ -88,7 +88,6 @@ import com.github.laxika.magicalvibes.model.effect.ImprintedCardXCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
-import com.github.laxika.magicalvibes.model.effect.MillRecipient;
 import com.github.laxika.magicalvibes.model.effect.LibraryNinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
@@ -2096,20 +2095,14 @@ public class AbilityActivationService {
         stateBasedActionService.performStateBasedActions(gameData);
         flushActivatedAbilityCostTriggers(gameData);
         if (!ability.isManaAbility()) {
-            triggerCollectionService.checkControllerActivatesNonManaAbilityTriggers(
-                    gameData, playerId, stackEntry, ability, null, playerId, List.of());
-            triggerCollectionService.checkOpponentActivatesNonManaAbilityTriggers(
-                    gameData, playerId, stackEntry, ability, null, playerId, List.of());
+            // An ability of a card in a graveyard is not an ability of a permanent (CR 109.2).
+            triggerCollectionService.collectActivationTriggers(gameData, new TriggerCollectionService.Activation(
+                    playerId, stackEntry, ability, null, playerId, false));
+            chooseActivationTriggerTarget(gameData);
         }
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , card, "'s ability from the graveyard."));
         log.info("Game {} - {} activates {}'s graveyard ability", gameData.id, player.getUsername(), card.getName());
-
-        // "Whenever you activate an eternalize or embalm ability, draw a card" (Vizier of the
-        // Anointed). Fired after the ability is on the stack so the draw trigger lands above it.
-        if (ability.isEmbalmOrEternalize()) {
-            triggerCollectionService.checkControllerActivatesEternalizeOrEmbalmTriggers(gameData, playerId);
-        }
 
         gameData.priorityPassedBy.clear();
         mutationCoordinator.invalidateAllPlayerViews(gameData);
@@ -2539,6 +2532,30 @@ public class AbilityActivationService {
                 stackSizeBeforeCosts, null);
     }
 
+    /**
+     * The "whenever [a player] activates an ability" abilities that trigger on {@code ability}, an ability of a card
+     * that isn't on the battlefield (in a hand or a library), activated by {@code playerId} and on the stack as
+     * {@code stackEntry}: it is not an ability of a permanent (CR 109.2). Discarding a card as a special action is not
+     * activating an ability (CR 116.2e), so it triggers none.
+     */
+    private void collectHandActivationTriggers(GameData gameData, UUID playerId, StackEntry stackEntry,
+                                               ActivatedAbility ability) {
+        if (ability.isDiscardSourceAsSpecialAction()) {
+            return;
+        }
+        triggerCollectionService.collectActivationTriggers(gameData, new TriggerCollectionService.Activation(
+                playerId, stackEntry, ability, null, playerId, ability.isManaAbility()));
+        chooseActivationTriggerTarget(gameData);
+    }
+
+    /** An activation trigger that targets a permanent chooses its target now, as it goes on the stack (CR 603.3d). */
+    private void chooseActivationTriggerTarget(GameData gameData) {
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
+        }
+    }
+
     private void completeHandAbilityActivation(GameData gameData, Player player, Card card,
                                                ActivatedAbility ability, int abilityIndex, int xValue, UUID targetId,
                                                int stackSizeBeforeCosts, List<UUID> targetIds) {
@@ -2574,16 +2591,9 @@ public class AbilityActivationService {
         if (!ability.isDiscardSourceAsSpecialAction()) {
             gameData.stack.add(insertionIndex, stackEntry);
             triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, stackEntry);
-            triggerCollectionService.checkControllerActivatesAbilityCopyTriggers(
-                    gameData, playerId, stackEntry, ability, new Permanent(card), List.of());
         }
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
-        if (!ability.isManaAbility()) {
-            triggerCollectionService.checkControllerActivatesNonManaAbilityTriggers(
-                    gameData, playerId, stackEntry, ability, null, playerId, List.of());
-            triggerCollectionService.checkOpponentActivatesNonManaAbilityTriggers(
-                    gameData, playerId, stackEntry, ability, null, playerId, List.of());
-        }
+        collectHandActivationTriggers(gameData, playerId, stackEntry, ability);
 
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " activates ", card, "'s ability from their hand."));
@@ -2684,18 +2694,9 @@ public class AbilityActivationService {
         if (!ability.isDiscardSourceAsSpecialAction()) {
             gameData.stack.add(insertionIndex, stackEntry);
             triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, stackEntry);
-            triggerCollectionService.checkControllerActivatesAbilityCopyTriggers(
-                    gameData, playerId, stackEntry, ability, new Permanent(card), List.of());
         }
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
-        if (!ability.isManaAbility()) {
-            triggerCollectionService.checkControllerActivatesNonManaAbilityTriggers(
-                    gameData, playerId, stackEntry, ability, null, playerId, List.of());
-            triggerCollectionService.checkOpponentActivatesNonManaAbilityTriggers(
-                    gameData, playerId, stackEntry, ability, null, playerId, List.of());
-            triggerCollectionService.checkOpponentActivatesAbilityTriggers(
-                    gameData, playerId, new Permanent(card), ability, playerId, List.of());
-        }
+        collectHandActivationTriggers(gameData, playerId, stackEntry, ability);
         if (discarded) {
             triggerCollectionService.checkDiscardTriggers(gameData, playerId, card, ability.isCyclingAbility());
             if (ability.isCyclingAbility()) {
@@ -2803,7 +2804,7 @@ public class AbilityActivationService {
                 List.of()
         );
         gameData.stack.add(stackEntry);
-        triggerCollectionService.checkControllerActivatesNinjutsuAbilityTriggers(gameData, playerId, ability);
+        collectHandActivationTriggers(gameData, playerId, stackEntry, ability);
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates ninjutsu on ", card, "."));
@@ -2860,8 +2861,7 @@ public class AbilityActivationService {
         ActivatedAbility libraryNinjutsuAbility = new ActivatedAbility(
                 false, manaCost, List.of(resolutionEffect), card.getName() + "'s library ninjutsu")
                 .withNinjutsu();
-        triggerCollectionService.checkControllerActivatesNinjutsuAbilityTriggers(
-                gameData, playerId, libraryNinjutsuAbility);
+        collectHandActivationTriggers(gameData, playerId, stackEntry, libraryNinjutsuAbility);
         triggerCollectionService.checkCrimeTriggers(gameData, stackEntry);
 
         gameLogService.append(gameData, GameLog.textCardText(

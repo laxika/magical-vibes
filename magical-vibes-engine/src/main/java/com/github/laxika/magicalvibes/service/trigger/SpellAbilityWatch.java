@@ -23,8 +23,9 @@ import java.util.List;
  * which judge the filters, the options and the effects as one stack object; any other ability's options are judged by
  * its reader (its limit, event condition and intervening "if"), and its effects are handed to the watch's
  * {@link CollectsSpellAbilityTrigger} handlers, the intervening "if" wrapped around each for the check as it resolves
- * (CR 603.4). The activation collectors read every activation ability by
- * {@link com.github.laxika.magicalvibes.model.trigger.AbilityTrigger#unfiltered()}.
+ * (CR 603.4). The one activation collector ({@code TriggerCollectionService.collectActivationTriggers}) reads every
+ * activation ability by {@link com.github.laxika.magicalvibes.model.trigger.AbilityTrigger#unfiltered()}, once the
+ * activated ability is on the stack.
  */
 public enum SpellAbilityWatch implements TriggerWatch {
     /** "Whenever a mana ability of this creature resolves" (granted only: Tyvar the Bellicose). */

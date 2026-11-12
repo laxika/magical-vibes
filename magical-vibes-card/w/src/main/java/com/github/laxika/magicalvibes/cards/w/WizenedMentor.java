@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,7 +18,7 @@ import java.util.Set;
 public class WizenedMentor extends Card {
 
     public WizenedMentor() {
-        addTrigger(Triggers.opponentActivatesNonManaAbility(),
+        addTrigger(Triggers.opponentActivatesNonManaAbility().withSource(new PermanentTruePredicate()),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
                 new CreateTokenEffect("Zombie", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.ZOMBIE), Set.of(), Set.of()));

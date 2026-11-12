@@ -625,4 +625,29 @@ class GameDataDeepCopyTest {
         assertThat(batch.replacementAnswers()).containsOnlyKeys(bears.getId());
         assertThat(bearsSnapshot.getLastKnownPower()).isEqualTo(2);
     }
+
+    @Test
+    void deepCopyPreservesTheResolutionThatScheduledADelayedAction() {
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        gd.resolutionOrdinal = 7;
+        gd.queueDelayedAction(new DelayedPermanentAction(
+                bears.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.resolutionOrdinal).isEqualTo(7);
+        assertThat(copy.delayedActions).hasSize(1).first()
+                .isInstanceOfSatisfying(DelayedPermanentAction.class,
+                        action -> assertThat(action.schedulingResolution()).isEqualTo(7));
+
+        copy.resolutionOrdinal++;
+        copy.queueDelayedAction(new DelayedPermanentAction(
+                bears.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP));
+
+        assertThat(gd.resolutionOrdinal).isEqualTo(7);
+        assertThat(gd.delayedActions).hasSize(1);
+        assertThat(copy.delayedActions).last()
+                .isInstanceOfSatisfying(DelayedPermanentAction.class,
+                        action -> assertThat(action.schedulingResolution()).isEqualTo(8));
+    }
 }

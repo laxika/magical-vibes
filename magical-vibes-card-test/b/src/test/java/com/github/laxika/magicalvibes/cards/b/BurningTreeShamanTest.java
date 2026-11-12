@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.n.NinjaOfTheDeepHours;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.c.CirclingVultures;
 import com.github.laxika.magicalvibes.cards.g.Gelectrode;
 import com.github.laxika.magicalvibes.cards.g.GruulSignet;
 import com.github.laxika.magicalvibes.cards.o.Ovinize;
@@ -16,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BurningTreeShaman.class, Gelectrode.class, GruulSignet.class, SkarrganFirebird.class, SkarrganSkybreaker.class, Ovinize.class})
+@CardUsed({BurningTreeShaman.class, Gelectrode.class, GruulSignet.class, SkarrganFirebird.class, SkarrganSkybreaker.class, Ovinize.class, CirclingVultures.class, GrizzlyBears.class, NinjaOfTheDeepHours.class})
 class BurningTreeShamanTest extends BaseCardTest {
 
     @Test
@@ -178,5 +182,37 @@ class BurningTreeShamanTest extends BaseCardTest {
 
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("A ninjutsu ability activated from a hand triggers it")
+    void ninjutsuActivationTriggers() {
+        addCreatureReady(player2, new BurningTreeShaman());
+        Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
+        harness.setLife(player1, 20);
+        declareAttackersAndPrepareBlockers(List.of(0));
+        harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareBlockers(gd, player2, List.of()));
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new NinjaOfTheDeepHours()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateHandAbility(player1, 0, attacker.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+    }
+
+    @Test
+    @DisplayName("Discarding Circling Vultures is a special action, not an activated ability")
+    void specialActionDiscardDoesNotTrigger() {
+        addCreatureReady(player2, new BurningTreeShaman());
+        harness.setHand(player1, List.of(new CirclingVultures()));
+        harness.setLife(player1, 20);
+
+        harness.activateHandAbility(player1, 0, null);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertLife(player1, 20);
     }
 }

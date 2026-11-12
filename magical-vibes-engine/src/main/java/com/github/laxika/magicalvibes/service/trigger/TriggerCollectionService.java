@@ -57,7 +57,6 @@ import com.github.laxika.magicalvibes.model.ManaCopyRider;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
-import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingSourceDamage;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -136,7 +135,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
-import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -162,7 +160,6 @@ import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityS
 import com.github.laxika.magicalvibes.service.trigger.TargetAbilityReader.TargetEffect;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetRedirectionSupport;
-import com.github.laxika.magicalvibes.model.effect.MayPayLifeEqualToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -1311,23 +1308,27 @@ public class TriggerCollectionService {
                     int separateTriggers = Math.min(unrestrictedCopies, Math.max(0,
                             gameData.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount
                                     .getOrDefault(castingPlayerId, 0)));
-                    for (int copyGroup = 0; copyGroup < 2; copyGroup++) {
-                        int copies = copyGroup == 0 ? unrestrictedCopies - separateTriggers : limitedCopies;
-                        if (copies > 0) {
-                            gameData.stack.add(new StackEntry(
-                                    StackEntryType.TRIGGERED_ABILITY,
-                                    copyGroup == 0 ? countSource : spellCard, castingPlayerId,
-                                    "Copy " + spellCard.getName(),
-                                    List.of(new CopyControllerCastSpellEffect(snapshot, castingPlayerId, copies))));
-                        }
-                        if (copyGroup == 0) {
-                            for (int i = 0; i < separateTriggers; i++) {
-                                gameData.stack.add(new StackEntry(
-                                        StackEntryType.TRIGGERED_ABILITY, countSource, castingPlayerId,
-                                        "Copy " + spellCard.getName(),
-                                        List.of(new CopyControllerCastSpellEffect(snapshot, castingPlayerId, 1))));
-                            }
-                        }
+                    int multiCopies = unrestrictedCopies - separateTriggers;
+                    if (multiCopies > 0) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY, countSource, castingPlayerId,
+                                "Copy " + spellCard.getName(),
+                                List.of(new CopyControllerCastSpellEffect(snapshot, castingPlayerId, multiCopies))));
+                    }
+                    for (int i = 0; i < separateTriggers; i++) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY, countSource, castingPlayerId,
+                                "Copy " + spellCard.getName(),
+                                List.of(new CopyControllerCastSpellEffect(snapshot, castingPlayerId, 1))));
+                    }
+                    // The mana-value-limited copies the spell matches are one entry: a kicked Sea Gate
+                    // Stormcaller's "copy that spell twice instead" is two limits of one delayed ability, and the
+                    // list keeps no resolution to tell them from the limits of two Stormcallers.
+                    if (limitedCopies > 0) {
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY, spellCard, castingPlayerId,
+                                "Copy " + spellCard.getName(),
+                                List.of(new CopyControllerCastSpellEffect(snapshot, castingPlayerId, limitedCopies))));
                     }
                     if (unrestrictedCopies > 0) {
                         gameData.pendingNextInstantSorceryCopyThisTurnCount.remove(castingPlayerId);
@@ -1382,18 +1383,18 @@ public class TriggerCollectionService {
                     default -> false;
                 };
                 StackEntry snapshot = new StackEntry(spellEntry);
-                List<CardEffect> copyEffects = new ArrayList<>(pendingSpellCopies);
+                // Each "copy the next spell you cast this turn" is a delayed triggered ability of the resolution
+                // that created it, so each is a stack object of its own (CR 603.7a).
                 for (int i = 0; i < pendingSpellCopies; i++) {
-                    copyEffects.add(new CopyControllerCastSpellEffect(
-                            snapshot, castingPlayerId, Set.of(), Set.of(), permanentSpell, true));
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            "Copy " + spellCard.getName(),
+                            new ArrayList<>(List.of(new CopyControllerCastSpellEffect(
+                                    snapshot, castingPlayerId, Set.of(), Set.of(), permanentSpell, true)))
+                    ));
                 }
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        spellCard,
-                        castingPlayerId,
-                        "Copy " + spellCard.getName(),
-                        copyEffects
-                ));
                 gameData.pendingNextSpellCopyThisTurnCount.remove(castingPlayerId);
                 gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
                 log.info("Game {} - {} all-spell copy trigger(s) queued for {}",
@@ -1435,19 +1436,19 @@ public class TriggerCollectionService {
                         default -> false;
                     };
                     StackEntry snapshot = new StackEntry(spellEntry);
-                    List<CardEffect> copyEffects = new ArrayList<>(matchingCopies.size());
+                    // Each "when you next cast a ... spell this turn, copy it" is a delayed triggered ability of
+                    // the resolution that created it, so each is a stack object of its own (CR 603.7a).
                     for (CopyNextSpellCastThisTurnEffect copyEffect : matchingCopies) {
-                        copyEffects.add(new CopyControllerCastSpellEffect(
-                                snapshot, castingPlayerId, Set.of(), Set.of(),
-                                copyEffect.removedSupertypes(), permanentSpell, true));
+                        gameData.stack.add(new StackEntry(
+                                StackEntryType.TRIGGERED_ABILITY,
+                                spellCard,
+                                castingPlayerId,
+                                "Copy " + spellCard.getName(),
+                                new ArrayList<>(List.of(new CopyControllerCastSpellEffect(
+                                        snapshot, castingPlayerId, Set.of(), Set.of(),
+                                        copyEffect.removedSupertypes(), permanentSpell, true)))
+                        ));
                     }
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            spellCard,
-                            castingPlayerId,
-                            "Copy " + spellCard.getName(),
-                            copyEffects
-                    ));
                     int linkedXCopies = (int) matchingCopies.stream()
                             .filter(copyEffect -> copyEffect.spellFilter() instanceof CardHasXInManaCostPredicate)
                             .count();
@@ -1597,18 +1598,18 @@ public class TriggerCollectionService {
                             BATTLE_SPELL -> true;
                     default -> false;
                 };
-                List<CardEffect> copyEffects = new ArrayList<>(pendingSpellOrAbilityCopies);
+                // Each mana with "when you spend this mana to cast a spell, copy that spell" is a delayed triggered
+                // ability of the mana ability that added it, so each is a stack object of its own (CR 603.7a).
                 for (int i = 0; i < pendingSpellOrAbilityCopies; i++) {
-                    copyEffects.add(new CopyControllerCastSpellEffect(
-                            snapshot, castingPlayerId, Set.of(), Set.of(), permanentSpell, true));
+                    gameData.stack.add(new StackEntry(
+                            StackEntryType.TRIGGERED_ABILITY,
+                            spellCard,
+                            castingPlayerId,
+                            "Copy " + spellCard.getName(),
+                            new ArrayList<>(List.of(new CopyControllerCastSpellEffect(
+                                    snapshot, castingPlayerId, Set.of(), Set.of(), permanentSpell, true)))
+                    ));
                 }
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        spellCard,
-                        castingPlayerId,
-                        "Copy " + spellCard.getName(),
-                        copyEffects
-                ));
                 gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
                 log.info("Game {} - {} mana-linked spell-or-ability copy trigger(s) queued for {}",
                         gameData.id, pendingSpellOrAbilityCopies, spellCard.getName());
@@ -10241,72 +10242,6 @@ public class TriggerCollectionService {
         return true;
     }
 
-    // ── Ability-activation triggers ────────────────────────────────────
-
-    /**
-     * "Whenever you activate an ability [of a permanent]" abilities (Ceaseless Searblades, Elrond, Moon Reader): every
-     * activation ability of {@code ON_CONTROLLER_ACTIVATES_ABILITY} of a permanent the activating player controls whose
-     * filters, limit and intervening "if" the activation meets ({@link #activationEffects}) goes on the stack as one
-     * object (CR 603.3). The abilities that copy the activated ability are collected once it is on the stack.
-     */
-    public void checkControllerActivatesAbilityTriggers(GameData gameData, UUID activatingPlayerId,
-                                                        Permanent activatedPermanent, ActivatedAbility ability,
-                                                        UUID activatedPermanentControllerId,
-                                                        List<TriggeredAbility> preCollectedAbilities) {
-        gameData.forEachPermanent((ownerId, perm) -> {
-            if (!ownerId.equals(activatingPlayerId)) return;
-            if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
-            for (ActivationAbility activation : activationAbilities(perm.getCard(),
-                    SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_ABILITY)) {
-                if (isPreCollectedActivationAbility(activation, preCollectedAbilities)) continue;
-                // The abilities that copy the activated ability are collected after it has been put on the
-                // stack, so the copy has the activation's targets and X value.
-                if (activation.copiesTheTriggeringObject()) continue;
-                List<CardEffect> resolved = activationEffects(gameData, perm, ownerId, activation, ability,
-                        activatedPermanent);
-                if (resolved == null) continue;
-                if (resolved.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        && !effect.targetSpec().declares(TargetPredicates.anyTarget()))) {
-                    gameData.handOffTriggerRecord(activationEntry(perm, ownerId, resolved,
-                            activationTriggerTargetId(resolved, null, null), activation, activatedPermanent,
-                            activatedPermanentControllerId));
-                    gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                            perm.getCard(), ownerId, new ArrayList<>(resolved),
-                            "ability activation", perm.getId()));
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} queues a permanent-target ability-activation trigger ({})",
-                            gameData.id, perm.getCard().getName(), activatedPermanent.getCard().getName());
-                    markActivationLimit(gameData, perm, activation);
-                    continue;
-                }
-                if (resolved.stream().anyMatch(effect -> effect.targetSpec().declares(TargetPredicates.anyTarget()))) {
-                    queueTargetChoice(gameData, activationEntry(perm, ownerId, resolved,
-                            activationTriggerTargetId(resolved, null, null), activation, activatedPermanent,
-                            activatedPermanentControllerId),
-                            new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            perm.getCard(), ownerId, new ArrayList<>(resolved), false, null, 0, perm.getId()));
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} queues an any-target ability-activation trigger ({})",
-                            gameData.id, perm.getCard().getName(), activatedPermanent.getCard().getName());
-                    markActivationLimit(gameData, perm, activation);
-                    continue;
-                }
-                UUID targetId = activationTriggerTargetId(
-                        resolved, null, null);
-                int triggerCopies = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
-                        gameData, ownerId, perm);
-                for (int copy = 0; copy < triggerCopies; copy++) {
-                    gameData.enqueueTrigger(activationEntry(perm, ownerId, resolved, targetId, activation,
-                            activatedPermanent, activatedPermanentControllerId));
-                }
-                markActivationLimit(gameData, perm, activation);
-                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                log.info("Game {} - {} triggers on ability activation ({})",
-                        gameData.id, perm.getCard().getName(), activatedPermanent.getCard().getName());
-            }
-        });
-    }
-
     /**
      * A single "when you next cast a spell with {X} in its mana cost or activate an ability with {X} in
      * its activation cost" delayed trigger (Magus Lucea Kane) is registered as one spell copy and one
@@ -10338,150 +10273,6 @@ public class TriggerCollectionService {
     private void consumeLinkedXAbilityCopies(GameData gameData, UUID playerId, int count) {
         gameData.pendingNextXActivatedAbilityCopyThisTurnCount.computeIfPresent(playerId,
                 (id, pendingCount) -> pendingCount - count > 0 ? pendingCount - count : null);
-    }
-
-    /**
-     * Collects the {@link SpellAbilityWatch#ON_CONTROLLER_ACTIVATES_ABILITY} abilities that copy the activated ability
-     * ("copy that spell or ability", {@link CopyTriggeringSpellOrAbilityEffect}, behind a "you may" as the card writes
-     * it). This runs with the completed stack entry so the copied ability retains its chosen targets and X value. Mana
-     * abilities use a synthetic entry because they resolve without using the stack.
-     */
-    public void checkControllerActivatesAbilityCopyTriggers(GameData gameData, UUID activatingPlayerId,
-                                                             StackEntry abilityEntry, ActivatedAbility ability,
-                                                             Permanent activatedPermanent,
-                                                             List<TriggeredAbility> preCollectedAbilities) {
-        if (abilityEntry == null) return;
-
-        Integer pendingXCopies = gameData.pendingNextXActivatedAbilityCopyThisTurnCount.get(activatingPlayerId);
-        if (pendingXCopies != null && pendingXCopies > 0
-                && ability.getManaCost() != null && new ManaCost(ability.getManaCost()).hasX()) {
-            StackEntry snapshot = new StackEntry(abilityEntry);
-            List<CardEffect> copyEffects = new ArrayList<>(pendingXCopies);
-            for (int i = 0; i < pendingXCopies; i++) {
-                copyEffects.add(new CopyControllerActivatedAbilityEffect(snapshot, ability, activatingPlayerId));
-            }
-            gameData.enqueueTrigger(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    abilityEntry.getCard(),
-                    activatingPlayerId,
-                    "Copy " + abilityEntry.getCard().getName() + "'s ability",
-                    copyEffects
-            ));
-            gameData.pendingNextXActivatedAbilityCopyThisTurnCount.remove(activatingPlayerId);
-            consumeLinkedXSpellCopies(gameData, activatingPlayerId, pendingXCopies);
-            gameLogService.append(gameData, GameLog.cardThen(abilityEntry.getCard(), "'s ability is copied."));
-            log.info("Game {} - {} delayed X-ability copy trigger(s) queued for {}",
-                    gameData.id, pendingXCopies, abilityEntry.getCard().getName());
-        }
-
-        gameData.forEachPermanent((ownerId, perm) -> {
-            if (!ownerId.equals(activatingPlayerId)) return;
-            for (ActivationAbility activation : activationAbilities(perm.getCard(),
-                    SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_ABILITY)) {
-                if (isPreCollectedActivationAbility(activation, preCollectedAbilities)
-                        || !activation.copiesTheTriggeringObject()) {
-                    continue;
-                }
-                if (activation.trigger().payment() != null) {
-                    throw new IllegalStateException(perm.getCard().getName() + "'s ability copies an activated "
-                            + "ability on a payment only the non-mana collector judges: " + activation.ability());
-                }
-                List<CardEffect> judged = activationEffects(gameData, perm, ownerId, activation, ability,
-                        activatedPermanent);
-                if (judged == null) continue;
-                if (!activationStackEntryMatches(gameData, perm, ownerId, activation, abilityEntry)) continue;
-                enqueueActivationCopyAbility(gameData, perm, ownerId, activation, judged, abilityEntry, ability, 0);
-            }
-        });
-    }
-
-    /** Fires battlefield triggers that specifically watch hand ninjutsu activations. */
-    public void checkControllerActivatesNinjutsuAbilityTriggers(GameData gameData, UUID activatingPlayerId,
-                                                                 ActivatedAbility ability) {
-        gameData.forEachPermanent((ownerId, perm) -> {
-            if (!ownerId.equals(activatingPlayerId)) return;
-            if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
-            for (ActivationAbility activation : activationAbilities(perm.getCard(),
-                    SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_ABILITY)) {
-                if (activation.trigger().kind() != AbilityTrigger.AbilityKind.NINJUTSU) continue;
-                List<CardEffect> resolved = activationEffects(gameData, perm, ownerId, activation, ability, null);
-                if (resolved == null) continue;
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        ownerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(resolved),
-                        null,
-                        perm.getId()
-                );
-                if (activation.marksOnAcceptance()) {
-                    entry.setOnceEachTurnActionKey(activation.actionKey());
-                }
-                gameData.enqueueTrigger(entry);
-                markActivationLimit(gameData, perm, activation);
-                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                log.info("Game {} - {} triggers on ninjutsu activation", gameData.id, perm.getCard().getName());
-            }
-        });
-    }
-
-    /**
-     * Fires "whenever you activate an exhaust ability" triggers for the activating player's
-     * permanents. The caller invokes this only after the exhaust ability's activation costs have
-     * been paid, so the trigger is queued above the activated ability.
-     */
-    public void checkControllerActivatesExhaustAbilityTriggers(GameData gameData, UUID activatingPlayerId) {
-        gameData.forEachPermanent((ownerId, perm) -> {
-            if (!ownerId.equals(activatingPlayerId)) return;
-            for (ActivationAbility activation : activationAbilities(perm.getCard(),
-                    SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY)) {
-                List<CardEffect> resolved = activationEffects(gameData, perm, ownerId, activation, null, null);
-                if (resolved == null) continue;
-                gameData.enqueueTrigger(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        ownerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(resolved),
-                        null,
-                        perm.getId()
-                ));
-                markActivationLimit(gameData, perm, activation);
-                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                log.info("Game {} - {} triggers on exhaust ability activation", gameData.id, perm.getCard().getName());
-            }
-        });
-    }
-
-    /**
-     * Fires graveyard-resident "whenever you activate an exhaust ability" triggers for the
-     * activating player. These abilities function from the graveyard and return their own card.
-     */
-    public void checkControllerActivatesExhaustAbilityTriggersFromGraveyard(
-            GameData gameData, UUID activatingPlayerId) {
-        List<Card> graveyard = gameData.playerGraveyards.get(activatingPlayerId);
-        if (graveyard == null) return;
-
-        for (Card card : new ArrayList<>(graveyard)) {
-            for (TriggeredAbility ability : gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card)) {
-                if (!ability.hasTrigger(SpellAbilityWatch.GRAVEYARD_ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY.trigger(),
-                        Zone.GRAVEYARD)) {
-                    continue;
-                }
-                requireNoOptions(ability, card);
-                gameData.enqueueTrigger(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        card,
-                        activatingPlayerId,
-                        card.getName() + "'s ability",
-                        new ArrayList<>(ability.effects().stream().map(EffectRegistration::effect).toList())
-                ));
-                gameLogService.append(gameData, GameLog.abilityTriggers(card));
-                log.info("Game {} - {} triggers from the graveyard on exhaust ability activation",
-                        gameData.id, card.getName());
-            }
-        }
     }
 
     /**
@@ -10560,144 +10351,6 @@ public class TriggerCollectionService {
     }
 
     /**
-     * "Whenever you activate an eternalize or embalm ability" triggers (Vizier of the Anointed).
-     * Fires once per activation on every permanent the activating player controls that has an
-     * {@link SpellAbilityWatch#ON_CONTROLLER_ACTIVATES_ETERNALIZE_OR_EMBALM} effect. Called from the
-     * graveyard-ability activation path only when the activated ability is an embalm/eternalize
-     * ability, so no per-permanent condition is needed.
-     */
-    public void checkControllerActivatesEternalizeOrEmbalmTriggers(GameData gameData, UUID activatingPlayerId) {
-        gameData.forEachPermanent((ownerId, perm) -> {
-            if (!ownerId.equals(activatingPlayerId)) return;
-            for (ActivationAbility activation : activationAbilities(perm.getCard(),
-                    SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_ETERNALIZE_OR_EMBALM)) {
-                List<CardEffect> resolved = activationEffects(gameData, perm, ownerId, activation, null, null);
-                if (resolved == null) continue;
-                gameData.enqueueTrigger(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        ownerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(resolved),
-                        null,
-                        perm.getId()
-                ));
-                markActivationLimit(gameData, perm, activation);
-                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                log.info("Game {} - {} triggers on eternalize/embalm activation",
-                        gameData.id, perm.getCard().getName());
-            }
-        });
-    }
-
-    /**
-     * The activation abilities collected before an activation's costs are paid, as the stack entries to add once the
-     * activated ability is on the stack and the abilities the later activation collectors skip.
-     */
-    public record PreCostActivationTriggers(List<StackEntry> entries, List<TriggeredAbility> abilities) {}
-
-    /**
-     * Captures non-tap activation triggers before activation costs can remove the activated source
-     * or orphan an Aura that watches it. The returned entries are added after the activated ability
-     * is pushed onto the stack.
-     */
-    public PreCostActivationTriggers collectNonTapActivationTriggersBeforeCosts(
-            GameData gameData, UUID activatingPlayerId, ActivatedAbility ability,
-            Permanent activatedPermanent, UUID activatedPermanentControllerId) {
-        List<StackEntry> entries = new ArrayList<>();
-        List<TriggeredAbility> abilities = new ArrayList<>();
-        gameData.forEachPermanent((ownerId, perm) -> {
-            // Sacrificed for this activation's costs, so gone by the time the ability is activated.
-            if (gameData.pendingActivationCostSacrificeIds.contains(perm.getId())) return;
-            boolean watchesController = ownerId.equals(activatingPlayerId);
-            SpellAbilityWatch watch = watchesController
-                    ? SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY
-                    : SpellAbilityWatch.ON_OPPONENT_ACTIVATES_NONMANA_ABILITY;
-            for (ActivationAbility activation : activationAbilities(perm.getCard(), watch)) {
-                if (activation.trigger().kind() != AbilityTrigger.AbilityKind.WITHOUT_TAP_COST) continue;
-                List<CardEffect> resolved = activationEffects(gameData, perm, ownerId, activation, ability,
-                        activatedPermanent);
-                if (resolved == null) continue;
-
-                UUID targetId = activationTriggerTargetId(
-                        resolved, null, activatingPlayerId);
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        ownerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(resolved),
-                        targetId,
-                        perm.getId());
-                trigger.setNonTargeting(true);
-                if (activation.marksOnAcceptance()) {
-                    trigger.setOnceEachTurnActionKey(activation.actionKey());
-                }
-                trigger.setTriggeringPermanentId(activatedPermanent.getId());
-                trigger.setTriggeringPermanentControllerId(activatedPermanentControllerId);
-                entries.add(trigger);
-                abilities.add(activation.ability());
-                markActivationLimit(gameData, perm, activation);
-                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                log.info("Game {} - {} triggers on non-tap ability activation ({})",
-                        gameData.id, perm.getCard().getName(), activatedPermanent.getCard().getName());
-            }
-        });
-        return new PreCostActivationTriggers(List.copyOf(entries), List.copyOf(abilities));
-    }
-
-    /**
-     * "Whenever an opponent activates an ability of {a permanent}, if it isn't a mana ability, ..."
-     * triggers (e.g. Harsh Mentor). Fires on every permanent NOT controlled by the activating player
-     * that has an {@link SpellAbilityWatch#ON_OPPONENT_ACTIVATES_NONMANA_ABILITY} ability whose filters, limit and
-     * intervening "if" the activation meets ({@link #activationEffects}), such as the permanent whose ability was
-     * activated. Called only from the non-mana activation path, so mana abilities never trigger it (the
-     * "if it isn't a mana ability" clause). The activating player is baked as the non-targeting
-     * {@code targetId} so a player-directed effect (e.g. {@code DealDamageToPlayersEffect(2, TARGET_PLAYER)})
-     * acts on "that player". The activated permanent's controller is also supplied separately so
-     * effects referring to that controller still work when an activation cost removes the permanent.
-     */
-    public void checkOpponentActivatesNonManaAbilityTriggers(GameData gameData, UUID activatingPlayerId,
-                                                              StackEntry abilityEntry, ActivatedAbility ability,
-                                                              Permanent activatedPermanent,
-                                                              UUID activatedPermanentControllerId,
-                                                              List<TriggeredAbility> preCollectedAbilities) {
-        if (abilityEntry == null) return;
-        gameData.forEachPermanent((ownerId, perm) -> {
-            if (ownerId.equals(activatingPlayerId)) return;
-            if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
-            for (ActivationAbility activation : activationAbilities(perm.getCard(),
-                    SpellAbilityWatch.ON_OPPONENT_ACTIVATES_NONMANA_ABILITY)) {
-                if (isPreCollectedActivationAbility(activation, preCollectedAbilities)) continue;
-                List<CardEffect> resolved = activationEffects(gameData, perm, ownerId, activation, ability,
-                        activatedPermanent);
-                if (resolved == null) continue;
-                UUID targetId = activationTriggerTargetId(
-                        resolved, abilityEntry, activatingPlayerId);
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        perm.getCard(),
-                        ownerId,
-                        perm.getCard().getName() + "'s ability",
-                        new ArrayList<>(resolved),
-                        targetId,
-                        perm.getId());
-                // "That player" is the opponent who activated the ability — set by the event, not chosen.
-                trigger.setNonTargeting(true);
-                if (activation.marksOnAcceptance()) {
-                    trigger.setOnceEachTurnActionKey(activation.actionKey());
-                }
-                recordActivatedPermanent(trigger, activatedPermanent, activatedPermanentControllerId);
-                gameData.enqueueTrigger(trigger);
-                markActivationLimit(gameData, perm, activation);
-                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                log.info("Game {} - {} triggers on opponent non-mana ability activation ({})",
-                        gameData.id, perm.getCard().getName(), abilityEntry.getCard().getName());
-            }
-        });
-    }
-
-    /**
      * Whether the filter of {@code effect}'s becomes-the-target ability ({@link TargetEffect#filter()}) admits
      * {@code targetPermanent}, judged from {@code watcher}'s point of view: always without a filter, never for a
      * player target (no permanent) with one.
@@ -10736,9 +10389,10 @@ public class TriggerCollectionService {
     }
 
     /**
-     * An activation ability ("whenever [a player] activates an ability") of a permanent, with the trigger condition the
-     * activation collectors read it by. They judge its filters ({@link AbilityTrigger#kind()},
-     * {@link AbilityTrigger#source()}) and options themselves ({@link #activationEffects}).
+     * An activation ability ("whenever [a player] activates an ability") of a permanent or of a card in a graveyard,
+     * with the trigger condition the activation collector reads it by. The collector judges its event and player
+     * ({@link #triggersOn}), its filters ({@link AbilityTrigger#kind()}, {@link AbilityTrigger#source()},
+     * {@link AbilityTrigger#stackEntry()}, {@link AbilityTrigger#payment()}) and its options itself.
      */
     private record ActivationAbility(TriggeredAbility ability, AbilityTrigger trigger) {
 
@@ -10748,219 +10402,205 @@ public class TriggerCollectionService {
         }
 
         /**
-         * Whether the ability copies "that spell or ability" from the stack entry (Bill Potts, Rings of Brighthearth):
-         * {@link CopyTriggeringSpellOrAbilityEffect}, behind a "you may" as the card writes it. It is collected once the
-         * activated ability is on the stack, so the copy has its targets and X.
+         * Whether {@code activation} is an event of this ability's trigger for a watcher {@code watcherControllerId}
+         * controls: the activating player is the one the trigger names and the ability is of the event's kind (any
+         * ability, one that isn't a mana ability, an exhaust ability, an embalm or eternalize ability).
          */
-        boolean copiesTheTriggeringObject() {
-            return effects().stream().anyMatch(TriggerCollectionService::copiesTheTriggeringObject);
+        boolean triggersOn(Activation activation, UUID watcherControllerId) {
+            boolean activatedByWatcherController = watcherControllerId.equals(activation.activatingPlayerId());
+            boolean player = switch (trigger.player()) {
+                case ANY -> true;
+                case YOU -> activatedByWatcherController;
+                case OPPONENT -> !activatedByWatcherController;
+            };
+            if (!player) {
+                return false;
+            }
+            return switch (trigger.event()) {
+                case ACTIVATED -> true;
+                case NONMANA_ACTIVATED -> !activation.manaAbility();
+                case EXHAUST_ACTIVATED -> activation.ability().isExhaustAbility();
+                case ETERNALIZE_OR_EMBALM_ACTIVATED -> activation.ability().isEmbalmOrEternalize();
+                case THIS_MANA_ABILITY_RESOLVES -> false;
+            };
         }
 
-        /** Whether taking the action uses up the ability's "do this only once each turn" (CR 603.2h). */
-        boolean marksOnAcceptance() {
-            return ability.options().limit() == TriggerLimit.DO_ONLY_ONCE_EACH_TURN;
-        }
-
-        /** The key the ability's stack entry carries for that mark, or {@code null}. */
+        /** The key the ability's stack entry carries for its "do this only once each turn" mark, or {@code null}. */
         String actionKey() {
             return TriggeredAbilityStackService.onceEachTurnActionKey(ability);
         }
     }
 
+    /** The watches whose triggers the activation collector reads, in a zone each. */
+    private static final List<SpellAbilityWatch> ACTIVATION_WATCHES = List.of(
+            SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_ABILITY,
+            SpellAbilityWatch.ON_OPPONENT_ACTIVATES_ABILITY,
+            SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY,
+            SpellAbilityWatch.ON_OPPONENT_ACTIVATES_NONMANA_ABILITY,
+            SpellAbilityWatch.ON_ANY_PLAYER_ACTIVATES_NONMANA_ABILITY,
+            SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY,
+            SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_ETERNALIZE_OR_EMBALM,
+            SpellAbilityWatch.GRAVEYARD_ON_CONTROLLER_ACTIVATES_EXHAUST_ABILITY);
+
     /**
-     * The activation abilities of {@code card} with a trigger condition {@code watch} reads, functioning in
-     * {@code watch}'s zone, in the order they were added: those whose trigger is {@code watch}'s, or narrows it.
+     * The activation abilities among {@code abilities} that function in {@code zone}, in the order they were added:
+     * those with a trigger condition that is an activation watch's trigger in that zone, or narrows it.
      */
-    private static List<ActivationAbility> activationAbilities(Card card, SpellAbilityWatch watch) {
-        List<ActivationAbility> abilities = new ArrayList<>();
-        for (TriggeredAbility ability : card.getTriggeredAbilities()) {
+    private static List<ActivationAbility> activationAbilities(List<TriggeredAbility> abilities, Zone zone) {
+        List<ActivationAbility> watching = new ArrayList<>();
+        for (TriggeredAbility ability : abilities) {
             for (TriggerCondition condition : ability.conditions()) {
                 if (condition.trigger() instanceof AbilityTrigger activation
-                        && activation.unfiltered().equals(watch.trigger())
-                        && condition.zones().functionsIn(watch.zone())) {
-                    abilities.add(new ActivationAbility(ability, activation));
+                        && condition.zones().functionsIn(zone)
+                        && ACTIVATION_WATCHES.stream().anyMatch(watch -> watch.zone() == zone
+                        && watch.trigger().equals(activation.unfiltered()))) {
+                    watching.add(new ActivationAbility(ability, activation));
                     break;
                 }
             }
         }
-        return abilities;
+        return watching;
     }
 
     /**
-     * The effects {@code activation}, an ability of {@code watcher}, puts on the stack for the activation of
-     * {@code activated}, an ability of {@code activatedPermanent} ({@code null} for an ability activated from a hand),
-     * or {@code null} when it doesn't trigger: the kind of ability ("a loyalty ability", "without {T} in its
-     * activation cost") and the permanent whose ability it is must match the trigger's filters, the permanent judged
-     * from {@code watcher}'s point of view; the ability's limit (CR 603.2h) must not be reached; and its event condition
-     * (CR 603.2) and intervening "if" (CR 603.4) must be true. "If mana from a Treasure was spent to activate it" is a
-     * fact of the activation, judged from it and not again; any other intervening "if" is wrapped around the effects,
-     * to be checked again as the ability resolves.
-     */
-    private List<CardEffect> activationEffects(GameData gameData, Permanent watcher, UUID watcherControllerId,
-                                               ActivationAbility activation, ActivatedAbility activated,
-                                               Permanent activatedPermanent) {
-        AbilityTrigger trigger = activation.trigger();
-        if ((trigger.stackEntry() != null || trigger.payment() != null) && !activation.copiesTheTriggeringObject()) {
-            throw new IllegalStateException(watcher.getCard().getName() + "'s activation ability has a stack-entry "
-                    + "or payment filter, which only the collectors of the abilities that copy the activated ability "
-                    + "judge: " + activation.ability());
-        }
-        if (trigger.kind() != null && (activated == null || !trigger.kind().matches(activated))) {
-            return null;
-        }
-        if (trigger.source() != null) {
-            if (activatedPermanent == null) return null;
-            if (!predicateEvaluationService.matchesPermanentPredicate(activatedPermanent, trigger.source(),
-                    watcherFilterContext(gameData, watcher, watcherControllerId))) {
-                return null;
-            }
-        }
-        TriggeredAbility ability = activation.ability();
-        TriggerOptions options = ability.options();
-        if (options.multiplicity() != TriggerMultiplicity.EACH) {
-            throw new IllegalStateException(watcher.getCard().getName() + "'s activation ability has a multiplicity "
-                    + "the activation collectors don't judge: " + options);
-        }
-        if (TriggeredAbilityStackService.limitReached(gameData, options.limit(), watcher.getId(),
-                ability.limitKey())) {
-            return null;
-        }
-        ConditionContext conditionContext = ConditionContext.forPermanent(watcher, watcherControllerId);
-        if (options.eventCondition() != null
-                && !conditionEvaluationService.isMet(gameData, options.eventCondition(), conditionContext)) {
-            return null;
-        }
-        Condition interveningIf = options.interveningIf();
-        if (interveningIf instanceof TreasureManaSpentToActivate) {
-            if (activatedPermanent == null || !gameData.abilityActivationUsedTreasureMana
-                    .getOrDefault(activatedPermanent.getCard().getId(), false)) {
-                return null;
-            }
-            interveningIf = null;
-        } else if (interveningIf != null
-                && !conditionEvaluationService.isMet(gameData, interveningIf, conditionContext)) {
-            return null;
-        }
-        List<CardEffect> effects = activation.effects();
-        if (interveningIf == null) {
-            return effects;
-        }
-        Condition recheck = interveningIf;
-        return effects.stream().map(effect -> (CardEffect) new ConditionalEffect(recheck, effect)).toList();
-    }
-
-    /** Marks {@code activation}'s limit (CR 603.2h) as used on {@code watcher}, its source, once it has triggered. */
-    private static void markActivationLimit(GameData gameData, Permanent watcher, ActivationAbility activation) {
-        TriggeredAbility ability = activation.ability();
-        TriggeredAbilityStackService.markLimit(gameData, ability.options().limit(), watcher.getId(),
-                ability.limitKey());
-    }
-
-    /** Whether {@code activation} was collected before the activation's costs were paid. */
-    private static boolean isPreCollectedActivationAbility(ActivationAbility activation,
-                                                           List<TriggeredAbility> preCollectedAbilities) {
-        return preCollectedAbilities != null
-                && preCollectedAbilities.stream().anyMatch(preCollected -> preCollected == activation.ability());
-    }
-
-    /**
-     * Whether {@code effect} copies "that spell or ability" ({@link CopyTriggeringSpellOrAbilityEffect}) and does
-     * nothing else, behind a "you may", a "you may pay" or an "if".
-     */
-    private static boolean copiesTheTriggeringObject(CardEffect effect) {
-        return switch (effect) {
-            case CopyTriggeringSpellOrAbilityEffect ignored -> true;
-            case MayEffect may -> may.elseEffect() == null && copiesTheTriggeringObject(may.wrapped());
-            case MayPayManaEffect mayPay -> mayPay.wrapped() != null && copiesTheTriggeringObject(mayPay.wrapped());
-            case MayPayLifeEqualToAmountEffect mayPayLife -> copiesTheTriggeringObject(mayPayLife.wrapped());
-            case ConditionalEffect conditional -> copiesTheTriggeringObject(conditional.wrapped());
-            default -> false;
-        };
-    }
-
-    /**
-     * Whether {@code abilityEntry}, the activated ability on the stack, matches the stack-entry filter of
-     * {@code activation} ("that targets a creature or player", "of a Chandra planeswalker"), judged from {@code
-     * watcher}'s point of view; true without one.
-     */
-    private boolean activationStackEntryMatches(GameData gameData, Permanent watcher, UUID watcherControllerId,
-                                                ActivationAbility activation, StackEntry abilityEntry) {
-        StackEntryPredicate filter = activation.trigger().stackEntry();
-        return filter == null || targetLegalityService.matchesStackEntryPredicate(
-                gameData, abilityEntry, filter, watcherControllerId, watcher);
-    }
-
-    /**
-     * Whether the activation on the stack as {@code abilityEntry} paid what the payment filter of {@code activation}
-     * requires: life ({@code lifePaid}, Verrak, Warped Sengir), or one or more permanents sacrificed for its costs
-     * (Ashnod the Uncaring): the entry records every one, the source, the chosen ones and the granting Equipment
-     * alike; true without one.
-     */
-    private static boolean activationPaymentMatches(ActivationAbility activation, StackEntry abilityEntry,
-                                                    int lifePaid) {
-        AbilityTrigger.ActivationPayment payment = activation.trigger().payment();
-        if (payment == null) {
-            return true;
-        }
-        return switch (payment) {
-            case LIFE -> lifePaid > 0;
-            case SACRIFICE -> !abilityEntry.getSacrificedCardIds().isEmpty();
-        };
-    }
-
-    /**
-     * Puts {@code effects}, the effects of {@code activation} (an ability of {@code watcher} that copies the activated
-     * ability, as the card writes them), on the stack as one object (CR 603.3) controlled by {@code watcherControllerId}:
-     * its triggering spell is {@code abilityEntry}, the activated ability on the stack, and its triggering activated
-     * ability {@code ability}, which {@link CopyTriggeringSpellOrAbilityEffect} copies as it resolves for the ability's
-     * controller (CR 707.10); the life paid to activate it is the entry's event value ("pay that much life").
-     */
-    private void enqueueActivationCopyAbility(GameData gameData, Permanent watcher, UUID watcherControllerId,
-                                              ActivationAbility activation, List<CardEffect> effects,
-                                              StackEntry abilityEntry, ActivatedAbility ability, int lifePaid) {
-        StackEntry triggerEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                watcher.getCard(),
-                watcherControllerId,
-                watcher.getCard().getName() + "'s ability",
-                new ArrayList<>(effects),
-                null,
-                watcher.getId());
-        triggerEntry.setTriggeringSpell(abilityEntry);
-        triggerEntry.setTriggeringActivatedAbility(ability);
-        if (lifePaid > 0) {
-            triggerEntry.setEventValue(lifePaid);
-        }
-        triggerEntry.setOnceEachTurnActionKey(activation.actionKey());
-        gameData.enqueueTrigger(triggerEntry);
-        markActivationLimit(gameData, watcher, activation);
-        gameLogService.append(gameData, GameLog.abilityTriggers(watcher.getCard()));
-        log.info("Game {} - {} triggers on ability activation ({})",
-                gameData.id, watcher.getCard().getName(), abilityEntry.getCard().getName());
-    }
-
-    /**
-     * "Whenever you activate an ability that isn't a mana ability" abilities, called after the non-mana ability has been
-     * put on the stack: the {@link SpellAbilityWatch#ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY} abilities of every
-     * permanent the activating player controls, and the {@link SpellAbilityWatch#ON_ANY_PLAYER_ACTIVATES_NONMANA_ABILITY}
-     * abilities of every permanent ("whenever an ability of equipped creature is activated", Illusionist's Bracers,
-     * whoever activates it), whose filters, limit and intervening "if" the activation meets. The abilities that copy the
-     * activated ability (Rings of Brighthearth) also judge their stack-entry and payment filters here, and go on the
-     * stack with the activated ability as their triggering object ({@link #enqueueActivationCopyAbility}).
+     * One activation of an activated ability, as it is once the ability is on the stack and its costs are paid, which
+     * is when "whenever [a player] activates an ability" abilities trigger (CR 602.2b, CR 601.2i).
      *
-     * @param abilityEntry the activated ability's stack entry (already on the stack)
-     * @param ability      the activated ability that was activated (retained for retargeting the copy)
+     * @param activatingPlayerId             the player who activated the ability
+     * @param abilityEntry                   the activated ability on the stack, with its targets and X; for a mana
+     *                                       ability, which doesn't use the stack, the entry it would have been
+     * @param ability                        the activated ability
+     * @param activatedPermanent             the permanent whose ability it is, as it last existed when a cost removed
+     *                                       it, or {@code null} for an ability of a card that isn't a permanent (in a
+     *                                       hand, a graveyard, exile or the command zone; CR 109.2)
+     * @param activatedPermanentControllerId that permanent's controller as the activation began; the activating
+     *                                       player for an ability of a card in a hand or a graveyard
+     * @param manaAbility                    whether it is a mana ability (CR 605.1a)
      */
-    public void checkControllerActivatesNonManaAbilityTriggers(GameData gameData, UUID activatingPlayerId,
-                                                               StackEntry abilityEntry, ActivatedAbility ability,
-                                                               Permanent activatedPermanent,
-                                                               UUID activatedPermanentControllerId,
-                                                               List<TriggeredAbility> preCollectedAbilities) {
-        if (abilityEntry == null) return;
+    public record Activation(UUID activatingPlayerId, StackEntry abilityEntry, ActivatedAbility ability,
+                             Permanent activatedPermanent, UUID activatedPermanentControllerId,
+                             boolean manaAbility) {}
 
-        final int activationLifePaid = gameData.activationLifePaid;
-        gameData.trackingActivationLifePaid = false;
-        gameData.activationLifePaid = 0;
+    /**
+     * Puts the "whenever [a player] activates an ability" abilities {@code activation} makes trigger on the stack, each
+     * as one object (CR 603.3). The one collector of every activation ability, called once per activation when the
+     * activated ability is on the stack and its costs are paid (CR 602.2b, CR 601.2i): a permanent that left the
+     * battlefield to pay them has no ability left to trigger. Every activation ability of every permanent, and of every
+     * card in a graveyard that has one there, is read the same way whatever its effects are: its event and player are
+     * matched against the activation ({@link ActivationAbility#triggersOn}), its filters, payment, limit and
+     * conditions are judged by {@link #activationEffects}, and its entry records the activation
+     * ({@link #activationEntry}). An ability that chooses a target is asked for it as it goes on the stack
+     * (CR 603.3d). The delayed "when you next activate ..., copy that ability" abilities trigger here too
+     * ({@link #collectDelayedActivationCopies}).
+     */
+    public void collectActivationTriggers(GameData gameData, Activation activation) {
+        if (activation.abilityEntry() == null) {
+            return;
+        }
+        int lifePaid = gameData.activationLifePaid;
+        if (!activation.manaAbility()) {
+            gameData.trackingActivationLifePaid = false;
+            gameData.activationLifePaid = 0;
+        }
+        collectDelayedActivationCopies(gameData, activation);
+        gameData.forEachPermanent((ownerId, perm) -> {
+            if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
+            for (ActivationAbility watching : activationAbilities(perm.getCard().getTriggeredAbilities(),
+                    Zone.BATTLEFIELD)) {
+                if (!watching.triggersOn(activation, ownerId)) continue;
+                List<CardEffect> effects = activationEffects(gameData, perm, ownerId, watching, activation, lifePaid);
+                if (effects == null) continue;
+                int triggerCopies = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
+                        gameData, ownerId, perm);
+                for (int copy = 0; copy < triggerCopies; copy++) {
+                    routeActivationAbility(gameData, perm, ownerId, effects,
+                            activationEntry(perm.getCard(), perm.getId(), ownerId, watching, effects, activation,
+                                    lifePaid));
+                }
+                markActivationLimit(gameData, perm, watching);
+                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
+                log.info("Game {} - {} triggers on ability activation ({})",
+                        gameData.id, perm.getCard().getName(), activation.abilityEntry().getCard().getName());
+            }
+        });
+        collectGraveyardActivationTriggers(gameData, activation, lifePaid);
+    }
+
+    /**
+     * The activation abilities that function in a graveyard (Afterburner Expert's "whenever you activate an exhaust
+     * ability, return this card from your graveyard to the battlefield"), for the cards in every graveyard: their
+     * owner is the "you" of the trigger. Such an ability goes on the stack as written, with the same record as a
+     * permanent's ({@link #activationEntry}); one with options, or with a filter judged from a permanent's point of
+     * view, throws (no card has one).
+     */
+    private void collectGraveyardActivationTriggers(GameData gameData, Activation activation, int lifePaid) {
+        for (UUID ownerId : gameData.orderedPlayerIds) {
+            List<Card> graveyard = gameData.playerGraveyards.get(ownerId);
+            if (graveyard == null) continue;
+            for (Card card : new ArrayList<>(graveyard)) {
+                List<TriggeredAbility> written = new ArrayList<>(card.getTriggeredAbilities());
+                for (Ability granted : gameData.perpetualAbilities(card.getId())) {
+                    if (granted instanceof TriggeredAbility triggered) {
+                        written.add(triggered);
+                    }
+                }
+                if (activationAbilities(written, Zone.GRAVEYARD).isEmpty()) continue;
+                for (ActivationAbility watching : activationAbilities(
+                        gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData, card), Zone.GRAVEYARD)) {
+                    if (!watching.triggersOn(activation, ownerId)) continue;
+                    AbilityTrigger trigger = watching.trigger();
+                    if (trigger.source() != null || trigger.stackEntry() != null) {
+                        throw new IllegalStateException(card.getName() + "'s graveyard activation ability has a "
+                                + "filter judged from a permanent's point of view: " + watching.ability());
+                    }
+                    requireNoOptions(watching.ability(), card);
+                    if (trigger.kind() != null && !trigger.kind().matches(activation.ability())) continue;
+                    if (!activationPaymentMatches(trigger, activation.abilityEntry(), lifePaid)) continue;
+                    gameData.enqueueTrigger(activationEntry(card, null, ownerId, watching, watching.effects(),
+                            activation, lifePaid));
+                    gameLogService.append(gameData, GameLog.abilityTriggers(card));
+                    log.info("Game {} - {} triggers from the graveyard on ability activation ({})",
+                            gameData.id, card.getName(), activation.abilityEntry().getCard().getName());
+                }
+            }
+        }
+    }
+
+    /**
+     * The delayed triggered abilities an earlier resolution created that trigger on {@code activation} (CR 603.7): "when
+     * you next activate an ability with {X} in its activation cost this turn, copy that ability" (Magus Lucea Kane),
+     * and for an ability that isn't a mana ability "when you next activate a loyalty ability" and "... an exhaust
+     * ability" and "until end of turn, whenever you activate an ability of a planeswalker of the chosen type" (Leori,
+     * Sparktouched Hunter). Each is a stack object of its own (CR 603.7a) that copies the ability as it was activated.
+     */
+    private void collectDelayedActivationCopies(GameData gameData, Activation activation) {
+        UUID activatingPlayerId = activation.activatingPlayerId();
+        StackEntry abilityEntry = activation.abilityEntry();
+        ActivatedAbility ability = activation.ability();
+
+        Integer pendingXCopies = gameData.pendingNextXActivatedAbilityCopyThisTurnCount.get(activatingPlayerId);
+        if (pendingXCopies != null && pendingXCopies > 0
+                && ability.getManaCost() != null && new ManaCost(ability.getManaCost()).hasX()) {
+            StackEntry snapshot = new StackEntry(abilityEntry);
+            for (int i = 0; i < pendingXCopies; i++) {
+                gameData.enqueueTrigger(new StackEntry(
+                        StackEntryType.TRIGGERED_ABILITY,
+                        abilityEntry.getCard(),
+                        activatingPlayerId,
+                        "Copy " + abilityEntry.getCard().getName() + "'s ability",
+                        new ArrayList<>(List.of(
+                                new CopyControllerActivatedAbilityEffect(snapshot, ability, activatingPlayerId)))
+                ));
+            }
+            gameData.pendingNextXActivatedAbilityCopyThisTurnCount.remove(activatingPlayerId);
+            consumeLinkedXSpellCopies(gameData, activatingPlayerId, pendingXCopies);
+            gameLogService.append(gameData, GameLog.cardThen(abilityEntry.getCard(), "'s ability is copied."));
+            log.info("Game {} - {} delayed X-ability copy trigger(s) queued for {}",
+                    gameData.id, pendingXCopies, abilityEntry.getCard().getName());
+        }
+        if (activation.manaAbility()) {
+            return;
+        }
 
         Integer pendingLoyaltyCopies = gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.get(activatingPlayerId);
         if (pendingLoyaltyCopies != null && pendingLoyaltyCopies > 0 && ability.getLoyaltyCost() != null) {
@@ -11014,6 +10654,7 @@ public class TriggerCollectionService {
                     gameData.id, pendingExhaustCopies, abilityEntry.getCard().getName());
         }
 
+        Permanent activatedPermanent = activation.activatedPermanent();
         for (GameData.ChosenSubtypeActivationCopy delayedCopy : gameData.chosenSubtypeActivationCopiesThisTurn) {
             if (!delayedCopy.controllerId().equals(activatingPlayerId) || activatedPermanent == null
                     || !predicateEvaluationService.matchesPermanentPredicate(activatedPermanent,
@@ -11037,157 +10678,182 @@ public class TriggerCollectionService {
             log.info("Game {} - {} delayed trigger copies {}'s ability", gameData.id,
                     delayedCopy.sourceCard().getName(), abilityEntry.getCard().getName());
         }
-
-        gameData.forEachPermanent((ownerId, perm) -> {
-            if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
-            List<ActivationAbility> activations = new ArrayList<>(activationAbilities(perm.getCard(),
-                    SpellAbilityWatch.ON_CONTROLLER_ACTIVATES_NONMANA_ABILITY));
-            if (!ownerId.equals(activatingPlayerId)) {
-                activations.clear();
-            }
-            activations.addAll(activationAbilities(perm.getCard(),
-                    SpellAbilityWatch.ON_ANY_PLAYER_ACTIVATES_NONMANA_ABILITY));
-            for (ActivationAbility activation : activations) {
-                if (isPreCollectedActivationAbility(activation, preCollectedAbilities)) continue;
-                if (!activation.copiesTheTriggeringObject()) {
-                    List<CardEffect> resolved = activationEffects(gameData, perm, ownerId, activation, ability,
-                            activatedPermanent);
-                    if (resolved == null) continue;
-                    if (resolved.stream()
-                            .anyMatch(effect -> effect.targetSpec().declares(TargetPredicates.anyTarget()))) {
-                        queueTargetChoice(gameData, activationEntry(perm, ownerId, resolved,
-                                activationTriggerTargetId(resolved, abilityEntry, null), activation,
-                                activatedPermanent, activatedPermanentControllerId),
-                                new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                                perm.getCard(), ownerId, new ArrayList<>(resolved), false, null, 0,
-                                perm.getId()));
-                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                        log.info("Game {} - {} queues an any-target non-mana ability trigger ({})",
-                                gameData.id, perm.getCard().getName(), abilityEntry.getCard().getName());
-                    } else {
-                        UUID targetId = activationTriggerTargetId(
-                                resolved, abilityEntry, null);
-                        gameData.enqueueTrigger(activationEntry(perm, ownerId, resolved, targetId, activation,
-                                activatedPermanent, activatedPermanentControllerId));
-                        gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                        log.info("Game {} - {} triggers on non-mana ability activation ({})",
-                                gameData.id, perm.getCard().getName(), abilityEntry.getCard().getName());
-                    }
-                    markActivationLimit(gameData, perm, activation);
-                    continue;
-                }
-                List<CardEffect> judged = activationEffects(gameData, perm, ownerId, activation, ability,
-                        activatedPermanent);
-                if (judged == null
-                        || !activationStackEntryMatches(gameData, perm, ownerId, activation, abilityEntry)
-                        || !activationPaymentMatches(activation, abilityEntry, activationLifePaid)) {
-                    continue;
-                }
-                enqueueActivationCopyAbility(gameData, perm, ownerId, activation, judged, abilityEntry, ability,
-                        activationLifePaid);
-            }
-        });
     }
 
     /**
-     * "Whenever an opponent activates an ability of {a permanent}" triggers that include mana
-     * abilities. The activating player is the opponent for every watcher that is not on that
-     * player's battlefield.
+     * The effects {@code watching}, an ability of {@code watcher}, puts on the stack for {@code activation}, or
+     * {@code null} when it doesn't trigger. The kind of ability ("a loyalty ability", "without {T} in its activation
+     * cost"), the permanent whose ability it is ("an ability of an artifact", judged as it last existed and from
+     * {@code watcher}'s point of view; an ability of a card that isn't a permanent has none, CR 109.2), the activated
+     * ability on the stack with its targets ("that targets only Bill Potts") and what was paid to activate it ("if
+     * life was paid to activate it", {@code lifePaid}) must match the trigger's filters; the ability's limit
+     * (CR 603.2h) must not be reached; and its event condition (CR 603.2) and intervening "if" (CR 603.4) must be
+     * true. "If mana from a Treasure was spent to activate it" is a fact of the activation, judged from it and not
+     * again; any other intervening "if" is wrapped around the effects, to be checked again as the ability resolves.
      */
-    public void checkOpponentActivatesAbilityTriggers(GameData gameData, UUID activatingPlayerId,
-                                                      Permanent activatedPermanent, ActivatedAbility ability,
-                                                      UUID activatedPermanentControllerId,
-                                                      List<TriggeredAbility> preCollectedAbilities) {
-        gameData.forEachPermanent((ownerId, perm) -> {
-            if (ownerId.equals(activatingPlayerId)) return;
-            if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) return;
-            for (ActivationAbility activation : activationAbilities(perm.getCard(),
-                    SpellAbilityWatch.ON_OPPONENT_ACTIVATES_ABILITY)) {
-                if (isPreCollectedActivationAbility(activation, preCollectedAbilities)) continue;
-                List<CardEffect> resolved = activationEffects(gameData, perm, ownerId, activation, ability,
-                        activatedPermanent);
-                if (resolved == null) continue;
-                if (resolved.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        && !effect.targetSpec().declares(TargetPredicates.anyTarget()))) {
-                    gameData.handOffTriggerRecord(activationEntry(perm, ownerId, resolved,
-                            activationTriggerTargetId(resolved, null, activatingPlayerId), activation, activatedPermanent,
-                            activatedPermanentControllerId));
-                    gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                            perm.getCard(), ownerId, new ArrayList<>(resolved),
-                            "ability activation", perm.getId()));
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    log.info("Game {} - {} queues a permanent-target opponent ability-activation trigger ({})",
-                            gameData.id, perm.getCard().getName(), activatedPermanent.getCard().getName());
-                    markActivationLimit(gameData, perm, activation);
-                    continue;
-                }
-                if (resolved.stream().anyMatch(effect -> effect.targetSpec().declares(TargetPredicates.anyTarget()))) {
-                    queueTargetChoice(gameData, activationEntry(perm, ownerId, resolved,
-                            activationTriggerTargetId(resolved, null, activatingPlayerId), activation, activatedPermanent,
-                            activatedPermanentControllerId),
-                            new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            perm.getCard(), ownerId, new ArrayList<>(resolved), false, null, 0, perm.getId()));
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                    markActivationLimit(gameData, perm, activation);
-                    continue;
-                }
-                UUID targetId = activationTriggerTargetId(
-                        resolved, null, activatingPlayerId);
-                gameData.enqueueTrigger(activationEntry(perm, ownerId, resolved, targetId, activation,
-                        activatedPermanent, activatedPermanentControllerId));
-                markActivationLimit(gameData, perm, activation);
-                gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                log.info("Game {} - {} triggers on opponent ability activation ({})",
-                        gameData.id, perm.getCard().getName(), activatedPermanent.getCard().getName());
-            }
-        });
-    }
-
-    private UUID activationTriggerTargetId(List<CardEffect> effects, StackEntry abilityEntry,
-                                           UUID defaultTargetId) {
-        if (effects.stream().anyMatch(EffectResolution::targetsSpellOnStack)) {
-            return abilityEntry == null ? null : abilityEntry.getTargetableId();
+    private List<CardEffect> activationEffects(GameData gameData, Permanent watcher, UUID watcherControllerId,
+                                               ActivationAbility watching, Activation activation, int lifePaid) {
+        AbilityTrigger trigger = watching.trigger();
+        if (trigger.kind() != null && !trigger.kind().matches(activation.ability())) {
+            return null;
         }
-        return defaultTargetId;
+        if (trigger.source() != null) {
+            if (activation.activatedPermanent() == null) return null;
+            if (!predicateEvaluationService.matchesPermanentPredicate(activation.activatedPermanent(),
+                    trigger.source(), activatedPermanentFilterContext(gameData, watcher, watcherControllerId,
+                            activation.activatedPermanent()))) {
+                return null;
+            }
+        }
+        if (trigger.stackEntry() != null && !targetLegalityService.matchesStackEntryPredicate(
+                gameData, activation.abilityEntry(), trigger.stackEntry(), watcherControllerId, watcher)) {
+            return null;
+        }
+        if (!activationPaymentMatches(trigger, activation.abilityEntry(), lifePaid)) {
+            return null;
+        }
+        TriggeredAbility ability = watching.ability();
+        TriggerOptions options = ability.options();
+        if (options.multiplicity() != TriggerMultiplicity.EACH) {
+            throw new IllegalStateException(watcher.getCard().getName() + "'s activation ability has a multiplicity "
+                    + "the activation collector doesn't judge: " + options);
+        }
+        if (TriggeredAbilityStackService.limitReached(gameData, options.limit(), watcher.getId(),
+                ability.limitKey())) {
+            return null;
+        }
+        ConditionContext conditionContext = ConditionContext.forPermanent(watcher, watcherControllerId);
+        if (options.eventCondition() != null
+                && !conditionEvaluationService.isMet(gameData, options.eventCondition(), conditionContext)) {
+            return null;
+        }
+        Condition interveningIf = options.interveningIf();
+        if (interveningIf instanceof TreasureManaSpentToActivate) {
+            if (!gameData.abilityActivationUsedTreasureMana
+                    .getOrDefault(activation.abilityEntry().getCard().getId(), false)) {
+                return null;
+            }
+            interveningIf = null;
+        } else if (interveningIf != null
+                && !conditionEvaluationService.isMet(gameData, interveningIf, conditionContext)) {
+            return null;
+        }
+        List<CardEffect> effects = watching.effects();
+        if (interveningIf == null) {
+            return effects;
+        }
+        Condition recheck = interveningIf;
+        return effects.stream().map(effect -> (CardEffect) new ConditionalEffect(recheck, effect)).toList();
     }
 
     /**
-     * The entry of an activation ability of {@code perm} that chooses nothing: {@code targetId} what it refers to
-     * without targeting, the permanent whose ability was activated its triggering permanent. It is also the record of
-     * an activation ability that chooses a target as it goes on the stack ({@code GameData.handOffTriggerRecord}).
+     * The filter context {@code watcher} judges {@code activatedPermanent}, the permanent whose ability was activated,
+     * with. An Aura or Equipment that was attached to that permanent when paying the costs took it off the battlefield
+     * is attached to nothing as the ability becomes activated (it stays on the battlefield until state-based actions
+     * are checked, CR 704.5m and CR 704.5n), so its "an ability of enchanted artifact" or "of equipped creature"
+     * names no permanent: it is judged as it is now, unattached, not by the permanent it was last attached to.
      */
-    private static StackEntry activationEntry(Permanent perm, UUID ownerId, List<CardEffect> resolved, UUID targetId,
-                                              ActivationAbility activation, Permanent activatedPermanent,
-                                              UUID activatedPermanentControllerId) {
+    private FilterContext activatedPermanentFilterContext(GameData gameData, Permanent watcher,
+                                                          UUID watcherControllerId, Permanent activatedPermanent) {
+        if (!activatedPermanent.getId().equals(watcher.getAttachedTo())
+                || gameQueryService.findPermanentById(gameData, activatedPermanent.getId()) != null) {
+            return watcherFilterContext(gameData, watcher, watcherControllerId);
+        }
+        Permanent unattached = new Permanent(watcher);
+        unattached.setAttachedTo(null);
+        return FilterContext.of(gameData)
+                .withSourceControllerId(watcherControllerId)
+                .withSourcePermanentSnapshot(unattached);
+    }
+
+    /** Marks {@code watching}'s limit (CR 603.2h) as used on {@code watcher}, its source, once it has triggered. */
+    private static void markActivationLimit(GameData gameData, Permanent watcher, ActivationAbility watching) {
+        TriggeredAbility ability = watching.ability();
+        TriggeredAbilityStackService.markLimit(gameData, ability.options().limit(), watcher.getId(),
+                ability.limitKey());
+    }
+
+    /**
+     * Whether the activation on the stack as {@code abilityEntry} paid what the payment filter of {@code trigger}
+     * requires: life ({@code lifePaid}, Verrak, Warped Sengir), or one or more permanents sacrificed for its costs
+     * (Ashnod the Uncaring): the entry records every one, the source, the chosen ones and the granting Equipment
+     * alike; true without one.
+     */
+    private static boolean activationPaymentMatches(AbilityTrigger trigger, StackEntry abilityEntry, int lifePaid) {
+        AbilityTrigger.ActivationPayment payment = trigger.payment();
+        if (payment == null) {
+            return true;
+        }
+        return switch (payment) {
+            case LIFE -> lifePaid > 0;
+            case SACRIFICE -> !abilityEntry.getSacrificedCardIds().isEmpty();
+        };
+    }
+
+    /**
+     * The entry of {@code watching}, an activation ability of {@code source} controlled by {@code controllerId}, for
+     * {@code activation}, and the record of one that chooses a target as it goes on the stack
+     * ({@code GameData.handOffTriggerRecord}). Whatever {@code effects} are, it records the activated ability on the
+     * stack as its triggering spell and the {@link ActivatedAbility} ("copy that ability" copies it with its targets
+     * and X for this ability's controller, CR 707.10), the permanent whose ability it is with its controller ("that
+     * artifact's controller", read as the ability resolves or as the permanent last existed, CR 608.2h) and the life
+     * paid to activate it as its event value ("pay that much life"). "That ability" of an effect that acts on a
+     * spell or ability on the stack, else "that player" of an "an opponent activates" trigger, is what the entry
+     * refers to without targeting.
+     */
+    private static StackEntry activationEntry(Card source, UUID sourcePermanentId, UUID controllerId,
+                                              ActivationAbility watching, List<CardEffect> effects,
+                                              Activation activation, int lifePaid) {
+        UUID targetId = null;
+        if (effects.stream().anyMatch(EffectResolution::targetsSpellOnStack)) {
+            targetId = activation.abilityEntry().getTargetableId();
+        } else if (watching.trigger().player()
+                == com.github.laxika.magicalvibes.model.trigger.PlayerRelation.OPPONENT) {
+            targetId = activation.activatingPlayerId();
+        }
         StackEntry entry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
-                perm.getCard(),
-                ownerId,
-                perm.getCard().getName() + "'s ability",
-                new ArrayList<>(resolved),
+                source,
+                controllerId,
+                source.getName() + "'s ability",
+                new ArrayList<>(effects),
                 targetId,
-                perm.getId()
+                sourcePermanentId
         );
         if (targetId != null) {
             entry.setNonTargeting(true);
         }
-        if (activation.marksOnAcceptance()) {
-            entry.setOnceEachTurnActionKey(activation.actionKey());
+        entry.setTriggeringSpell(activation.abilityEntry());
+        entry.setTriggeringActivatedAbility(activation.ability());
+        if (lifePaid > 0) {
+            entry.setEventValue(lifePaid);
         }
-        recordActivatedPermanent(entry, activatedPermanent, activatedPermanentControllerId);
+        entry.setOnceEachTurnActionKey(watching.actionKey());
+        if (activation.activatedPermanent() != null) {
+            entry.setTriggeringPermanentId(activation.activatedPermanent().getId());
+        }
+        entry.setTriggeringPermanentControllerId(activation.activatedPermanentControllerId());
         return entry;
     }
 
     /**
-     * Records the permanent whose ability was activated on an activation ability's entry whatever its effects are:
-     * "that permanent's controller" is read from it as the ability resolves, or as it last existed (CR 608.2h).
+     * Routes {@code entry}, the entry of an activation ability of {@code perm} with {@code effects}, to the stack: an
+     * ability that chooses a permanent or "any target" is asked for it first (CR 603.3d), with {@code entry} handed
+     * off as the record its stack entry takes; any other goes on the stack as it is.
      */
-    private static void recordActivatedPermanent(StackEntry entry, Permanent activatedPermanent,
-                                                 UUID activatedPermanentControllerId) {
-        if (activatedPermanent != null) {
-            entry.setTriggeringPermanentId(activatedPermanent.getId());
+    private void routeActivationAbility(GameData gameData, Permanent perm, UUID ownerId, List<CardEffect> effects,
+                                        StackEntry entry) {
+        if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                && !effect.targetSpec().declares(TargetPredicates.anyTarget()))) {
+            gameData.handOffTriggerRecord(entry);
+            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
+                    perm.getCard(), ownerId, new ArrayList<>(effects), "ability activation", perm.getId()));
+        } else if (effects.stream().anyMatch(effect -> effect.targetSpec().declares(TargetPredicates.anyTarget()))) {
+            queueTargetChoice(gameData, entry, new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    perm.getCard(), ownerId, new ArrayList<>(effects), false, null, 0, perm.getId()));
+        } else {
+            gameData.enqueueTrigger(entry);
         }
-        entry.setTriggeringPermanentControllerId(activatedPermanentControllerId);
     }
 
     // ── Life-loss triggers ─────────────────────────────────────────────

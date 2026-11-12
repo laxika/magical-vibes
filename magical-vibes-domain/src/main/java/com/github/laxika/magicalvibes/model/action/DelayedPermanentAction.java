@@ -21,13 +21,17 @@ import java.util.UUID;
  * A {@code recurring} action models a granted "at the beginning of the end step" ability that stays
  * on the permanent: it is scheduled again each time it is drained while the permanent is still on
  * the battlefield, so a countered trigger fires again at the next end step.
+ * {@code schedulingResolution} is the identity of the resolution that scheduled the action
+ * ({@code GameData.resolutionOrdinal}, stamped by {@code GameData.queueDelayedAction}; 0 until then): the actions one
+ * resolution of a source schedules are one delayed triggered ability ("exile them at the beginning of the next end
+ * step"), and those another resolution of the same source schedules are another (CR 603.7a).
  */
 public record DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
                                      boolean cannotBeRegenerated, UUID returnExiledCardId,
                                      UUID controllerId, UUID sacrificingPlayerId,
                                      boolean followsPermanentController, Card sourceCard,
                                      UUID triggerControllerId, UUID triggerSourcePermanentId,
-                                     boolean recurring)
+                                     boolean recurring, long schedulingResolution)
         implements DelayedAction {
 
     public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,
@@ -36,12 +40,20 @@ public record DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKin
                                   boolean followsPermanentController, Card sourceCard,
                                   UUID triggerControllerId, UUID triggerSourcePermanentId) {
         this(permanentId, kind, cannotBeRegenerated, returnExiledCardId, controllerId, sacrificingPlayerId,
-                followsPermanentController, sourceCard, triggerControllerId, triggerSourcePermanentId, false);
+                followsPermanentController, sourceCard, triggerControllerId, triggerSourcePermanentId, false, 0);
     }
 
     /** Creates a recurring action; see the class description. */
     public static DelayedPermanentAction recurring(UUID permanentId, DelayedPermanentActionKind kind) {
-        return new DelayedPermanentAction(permanentId, kind, false, null, null, null, false, null, null, null, true);
+        return new DelayedPermanentAction(permanentId, kind, false, null, null, null, false, null, null, null, true,
+                0);
+    }
+
+    @Override
+    public DelayedPermanentAction scheduledBy(long schedulingResolution) {
+        return new DelayedPermanentAction(permanentId, kind, cannotBeRegenerated, returnExiledCardId, controllerId,
+                sacrificingPlayerId, followsPermanentController, sourceCard, triggerControllerId,
+                triggerSourcePermanentId, recurring, schedulingResolution);
     }
 
     public DelayedPermanentAction(UUID permanentId, DelayedPermanentActionKind kind,

@@ -66,7 +66,7 @@ class FlamerushRiderTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .contains(new DelayedPermanentAction(copy.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_OF_COMBAT,
-                        false, null, null, null, false, rider.getCard(), player1.getId(), rider.getId()));
+                        false, null, null, null, false, rider.getCard(), player1.getId(), rider.getId()).scheduledBy(gd.resolutionOrdinal));
 
         harness.passUntil(player1, TurnStep.POSTCOMBAT_MAIN);
 

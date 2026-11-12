@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.z.ZagothCrystal;
 import com.github.laxika.magicalvibes.cards.d.DromarsAttendant;
 import com.github.laxika.magicalvibes.cards.c.ClayStatue;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -12,9 +13,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Powerleech.class, ClayStatue.class, DromarsAttendant.class, GrizzlyBears.class, IcyManipulator.class, Ornithopter.class})
+@CardUsed({Powerleech.class, ClayStatue.class, DromarsAttendant.class, GrizzlyBears.class, IcyManipulator.class, Ornithopter.class, ZagothCrystal.class})
 class PowerleechTest extends BaseCardTest {
 
     @Test
@@ -153,6 +156,21 @@ class PowerleechTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(artifact.isTapped()).isTrue();
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
+    }
+
+    @Test
+    @DisplayName("Cycling an artifact card is not an artifact's ability: a card in a hand is not an artifact")
+    void cyclingAnArtifactCardDoesNotTrigger() {
+        harness.addToBattlefield(player1, new Powerleech());
+        harness.setHand(player2, List.of(new ZagothCrystal()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+        int lifeBefore = gd.playerLifeTotals.get(player1.getId());
+
+        harness.activateHandAbility(player2, 0, null);
+        resolveAllTriggers();
+
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 }

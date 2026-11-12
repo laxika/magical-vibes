@@ -145,4 +145,21 @@ public sealed interface DelayedAction permits
         DelayedControllerDamageMultiplication,
         DelayedSourceDamageMultiplication,
         UnattachEquipmentAtNextEndStep {
+
+    /**
+     * The identity of the resolution that scheduled this action ({@code GameData.resolutionOrdinal}), for the
+     * actions whose delayed triggered abilities are grouped into one stack object per resolution (CR 603.7a); 0 for
+     * an action that has not been queued yet, or that is never grouped.
+     */
+    default long schedulingResolution() {
+        return 0;
+    }
+
+    /**
+     * This action as scheduled by the resolution {@code schedulingResolution}; {@code GameData.queueDelayedAction}
+     * stamps every action with it. An action that is never grouped is returned as it is.
+     */
+    default DelayedAction scheduledBy(long schedulingResolution) {
+        return this;
+    }
 }

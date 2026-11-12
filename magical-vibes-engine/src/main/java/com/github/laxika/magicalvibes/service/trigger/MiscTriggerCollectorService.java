@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateT
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
@@ -104,12 +103,6 @@ public class MiscTriggerCollectorService {
                 new ArrayList<>(triggeredEffects),
                 null,
                 match.permanent().getId());
-        // "Return that exiled card" (Tawnos's Coffin): the cards exiled with this permanent as it untapped are the
-        // entry's triggering cards, which the return reads as it resolves.
-        entry.setTriggeringCards(match.gameData().exileReturnOnPermanentLeave
-                .getOrDefault(match.permanent().getId(), List.of()).stream()
-                .map(pending -> pending.card())
-                .toList());
         entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
         match.gameData().handOffTriggerRecord(entry);
         if (needsTarget) {

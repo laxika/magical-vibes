@@ -48,9 +48,9 @@ public record AbilityTrigger(AbilityEvent event, PlayerRelation player, Permanen
 
     /**
      * This trigger for an activated ability whose stack entry matches {@code stackEntry} only, judged with the
-     * ability's targets once it is on the stack ("an ability that targets only Bill Potts"). Only the collector of the
-     * abilities that copy the activated ability ({@code CopyTriggeringSpellOrAbilityEffect}) reads it, as it collects
-     * them once the activated ability is on the stack.
+     * ability's targets once it is on the stack ("an ability that targets only Bill Potts"). The activation collector
+     * judges it for every ability, whatever its effects are: it collects them once the activated ability is on the
+     * stack.
      */
     public AbilityTrigger withStackEntryFilter(StackEntryPredicate stackEntry) {
         return new AbilityTrigger(event, player, source, kind, Objects.requireNonNull(stackEntry, "stackEntry"),
@@ -60,8 +60,8 @@ public record AbilityTrigger(AbilityEvent event, PlayerRelation player, Permanen
     /**
      * This trigger for an activation whose costs included {@code payment} only ("if life was paid to activate it",
      * "if one or more permanents were sacrificed to activate it"): a fact of the activation, judged as the ability
-     * triggers. Only the collector of the abilities that copy a non-mana activated ability
-     * ({@code CopyTriggeringSpellOrAbilityEffect}) reads it, once the costs are paid and the ability is on the stack.
+     * triggers, once the costs are paid and the activated ability is on the stack. The activation collector judges it
+     * for every ability, whatever its effects are; the life paid is the entry's event value.
      */
     public AbilityTrigger withPayment(ActivationPayment payment) {
         return new AbilityTrigger(event, player, source, kind, stackEntry,
@@ -70,7 +70,7 @@ public record AbilityTrigger(AbilityEvent event, PlayerRelation player, Permanen
 
     /**
      * This trigger without its filters: the trigger the source, kind, stack-entry and payment filters narrow. The
-     * activation collectors read every ability of an event by this trigger, and judge the filters themselves.
+     * activation collector reads every ability of an event by this trigger, and judges the filters itself.
      */
     public AbilityTrigger unfiltered() {
         return source == null && kind == null && stackEntry == null && payment == null

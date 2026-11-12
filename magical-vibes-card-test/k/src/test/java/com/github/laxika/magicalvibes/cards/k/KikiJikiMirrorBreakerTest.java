@@ -44,7 +44,7 @@ class KikiJikiMirrorBreakerTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, token, Keyword.HASTE)).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                        false, null, null, player1.getId()));
+                        false, null, null, player1.getId()).scheduledBy(gd.resolutionOrdinal));
     }
 
     @Test

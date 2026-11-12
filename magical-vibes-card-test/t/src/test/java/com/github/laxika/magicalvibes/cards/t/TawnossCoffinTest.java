@@ -327,4 +327,36 @@ class TawnossCoffinTest extends BaseCardTest {
                 .findFirst()
                 .orElse(null);
     }
+
+    @Test
+    @DisplayName("Each activation's delayed return is its own ability when the Coffin untaps")
+    void eachActivationsReturnIsItsOwnAbility() {
+        Permanent coffin = addReadyCoffin();
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.COLORLESS, 6);
+        harness.activateAbility(player1, battlefieldIndex(coffin), null, first.getId());
+        harness.setHand(player1, List.of(new Twiddle()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.castAndResolveInstant(player1, 0, coffin.getId());
+        harness.handleMayAbilityChosen(player1, true);
+        if (gd.stack.size() > 1) {
+            harness.passBothPriorities();
+        }
+        harness.activateAbility(player1, battlefieldIndex(coffin), null, second.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        assertThat(findPermanent(player2, first.getCard().getId())).isNull();
+        assertThat(findPermanent(player2, second.getCard().getId())).isNull();
+
+        untapStepWithMayPrompt(player1);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.playerBattlefields.get(player2.getId())).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(findByCardId(player2, first.getCard().getId()).isTapped()).isTrue();
+        assertThat(findByCardId(player2, second.getCard().getId()).isTapped()).isTrue();
+    }
 }

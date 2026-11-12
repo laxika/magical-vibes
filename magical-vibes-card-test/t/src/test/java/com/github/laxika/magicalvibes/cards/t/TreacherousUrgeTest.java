@@ -42,7 +42,7 @@ class TreacherousUrgeTest extends BaseCardTest {
                 .containsExactly("Extirpate");
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .contains(new DelayedPermanentAction(phantasm.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                        false, null, null, player1.getId()));
+                        false, null, null, player1.getId()).scheduledBy(gd.resolutionOrdinal));
     }
 
     @Test

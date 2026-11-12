@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.a.AshnodsAltar;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.cards.d.DromarsAttendant;
@@ -21,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ArtifactPossession.class, AetherSpellbomb.class, DromarsAttendant.class, ClayStatue.class,
-        IcyManipulator.class, IronMyr.class, Ornithopter.class, RayOfCommand.class})
+        IcyManipulator.class, IronMyr.class, Ornithopter.class, RayOfCommand.class, AshnodsAltar.class})
 class ArtifactPossessionTest extends BaseCardTest {
 
     @Test
@@ -42,12 +43,11 @@ class ArtifactPossessionTest extends BaseCardTest {
     @Test
     @DisplayName("Activating a non-tap ability of the enchanted artifact deals damage to its controller")
     void controllerActivatingNonTapAbilityDealsDamage() {
-        attachAuraTo(player1, player1, new AetherSpellbomb());
-        gd.playerDecks.get(player1.getId()).add(new Ornithopter());
+        attachAuraTo(player1, player1, new ClayStatue());
         harness.setLife(player1, 20);
-        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player1, 0, 1, null, null);
+        harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(18);
@@ -56,11 +56,13 @@ class ArtifactPossessionTest extends BaseCardTest {
     @Test
     @DisplayName("Activating a non-tap mana ability of the enchanted artifact deals damage")
     void activatingNonTapManaAbilityDealsDamage() {
-        attachAuraTo(player1, player2, new DromarsAttendant());
+        attachAuraTo(player1, player2, new AshnodsAltar());
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player2, new Ornithopter());
+        harness.addToBattlefield(player2, new Ornithopter());
         harness.setLife(player2, 20);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
 
         harness.activateAbility(player2, 0, null, null);
+        harness.handlePermanentChosen(player2, sacrificed.getId());
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
@@ -69,13 +71,12 @@ class ArtifactPossessionTest extends BaseCardTest {
     @Test
     @DisplayName("An opponent activating a non-tap ability deals damage to the enchanted artifact's controller")
     void opponentActivatingNonTapAbilityDealsDamageToArtifactController() {
-        attachAuraTo(player1, player2, new AetherSpellbomb());
-        gd.playerDecks.get(player2.getId()).add(new Ornithopter());
+        attachAuraTo(player1, player2, new ClayStatue());
         harness.setLife(player1, 20);
         harness.setLife(player2, 20);
-        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
 
-        harness.activateAbility(player2, 0, 1, null, null);
+        harness.activateAbility(player2, 0, null, null);
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -155,5 +156,34 @@ class ArtifactPossessionTest extends BaseCardTest {
 
         assertThat(artifact.isTapped()).isTrue();
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("An ability whose cost sacrifices the enchanted artifact deals no damage: the Aura is attached to nothing")
+    void sacrificingTheEnchantedArtifactAsACostDoesNotTrigger() {
+        attachAuraTo(player1, player2, new AetherSpellbomb());
+        gd.playerDecks.get(player2.getId()).add(new Ornithopter());
+        harness.setLife(player1, 20);
+        harness.setLife(player2, 20);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, 1, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("A mana ability whose cost sacrifices the enchanted artifact deals no damage")
+    void sacrificingTheEnchantedArtifactForManaDoesNotTrigger() {
+        attachAuraTo(player1, player2, new DromarsAttendant());
+        harness.setLife(player2, 20);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player2, 0, null, null);
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
     }
 }

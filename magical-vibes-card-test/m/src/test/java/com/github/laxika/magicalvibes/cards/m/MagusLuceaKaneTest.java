@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.d.DevilsPlay;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HormagauntHorde;
@@ -212,5 +213,38 @@ class MagusLuceaKaneTest extends BaseCardTest {
             }
         }
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Two activations' delayed copies of the next X ability are two abilities")
+    void eachActivationsDelayedCopyIsItsOwnAbility() {
+        Permanent magus = addCreatureReady(player1, new MagusLuceaKane());
+        harness.addToBattlefield(player1, new KnollspineInvocation());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        magus.untap();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.activateAbility(player1, 1, 2, player2.getId());
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Two activations' delayed copies of the next X spell are two abilities")
+    void eachActivationsDelayedSpellCopyIsItsOwnAbility() {
+        Permanent magus = addCreatureReady(player1, new MagusLuceaKane());
+        harness.setHand(player1, List.of(new DevilsPlay()));
+        harness.addMana(player1, ManaColor.RED, 3);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        magus.untap();
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.castSorcery(player1, 0, 2, player2.getId());
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                .hasSize(2);
     }
 }

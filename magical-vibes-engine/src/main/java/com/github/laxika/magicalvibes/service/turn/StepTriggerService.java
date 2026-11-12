@@ -114,7 +114,6 @@ import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.OpeningHandRevealTrigger;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardAtNextEndStepUnlessPays;
@@ -734,13 +733,15 @@ public class StepTriggerService {
             List<ExilePermanentAtNextUpkeep> pendingExiles = gameData.drainDelayedActions(
                     ExilePermanentAtNextUpkeep.class, a -> a.controllerId().equals(gameData.activePlayerId));
             // Creatures scheduled by one resolution share a single delayed trigger that exiles them all
-            // ("exile those creatures at the beginning of the next upkeep").
+            // ("exile those creatures at the beginning of the next upkeep"); another resolution of the same
+            // source created another (CR 603.7a).
             Map<List<Object>, List<ExilePermanentAtNextUpkeep>> batches = new LinkedHashMap<>();
             for (ExilePermanentAtNextUpkeep action : pendingExiles) {
                 if (gameQueryService.findPermanentById(gameData, action.permanentId()) == null) {
                     continue;
                 }
-                batches.computeIfAbsent(List.of(action.sourceCard().getId(), action.controllerId()),
+                batches.computeIfAbsent(List.of(action.sourceCard().getId(), action.controllerId(),
+                                action.schedulingResolution()),
                         ignored -> new ArrayList<>()).add(action);
             }
             for (List<ExilePermanentAtNextUpkeep> batch : batches.values()) {
@@ -995,7 +996,8 @@ public class StepTriggerService {
             List<ExileToOwnerGraveyardAtNextUpkeep> pending = gameData.drainDelayedActions(
                     ExileToOwnerGraveyardAtNextUpkeep.class, a -> a.controllerId().equals(gameData.activePlayerId));
             // Cards exiled by one resolution share a single delayed trigger ("put any of those cards you
-            // didn't play into your graveyard").
+            // didn't play into your graveyard"); another resolution of the same source created another
+            // (CR 603.7a).
             Map<List<Object>, List<UUID>> unplayedBySource = new LinkedHashMap<>();
             Map<List<Object>, ExileToOwnerGraveyardAtNextUpkeep> firstBySource = new LinkedHashMap<>();
             for (ExileToOwnerGraveyardAtNextUpkeep action : pending) {
@@ -1006,7 +1008,8 @@ public class StepTriggerService {
                     continue;
                 }
                 List<Object> key = Arrays.asList(
-                        action.sourceCard() != null ? action.sourceCard().getId() : null, action.controllerId());
+                        action.sourceCard() != null ? action.sourceCard().getId() : null, action.controllerId(),
+                        action.schedulingResolution());
                 unplayedBySource.computeIfAbsent(key, ignored -> new ArrayList<>()).add(action.cardId());
                 firstBySource.putIfAbsent(key, action);
             }
@@ -6272,7 +6275,8 @@ public class StepTriggerService {
         for (DelayedPermanentAction action : actions) {
             if (action.sourceCard() != null) {
                 sharedTriggers.computeIfAbsent(
-                        List.of(action.sourceCard().getId(), Objects.requireNonNullElse(action.controllerId(), "")),
+                        List.of(action.sourceCard().getId(), Objects.requireNonNullElse(action.controllerId(), ""),
+                                action.schedulingResolution()),
                         ignored -> new ArrayList<>()).add(action);
             }
         }
@@ -6280,7 +6284,8 @@ public class StepTriggerService {
             if (shared.size() < 2) {
                 continue;
             }
-            // One delayed trigger of one ability exiles everything it scheduled together (Storm Herald).
+            // One delayed trigger of one resolution exiles everything it scheduled together (Storm Herald); two
+            // resolutions of one source (Corpse Dance cast twice with buyback) are two delayed triggers (CR 603.7a).
             List<DelayedPermanentAction> present = shared.stream()
                     .filter(action -> gameQueryService.findPermanentById(gameData, action.permanentId()) != null)
                     .toList();

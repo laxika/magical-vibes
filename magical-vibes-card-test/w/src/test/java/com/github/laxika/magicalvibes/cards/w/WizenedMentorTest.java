@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.cards.z.ZagothCrystal;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -10,9 +12,11 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({WizenedMentor.class, ProdigalPyromancer.class, Forest.class})
+@CardUsed({WizenedMentor.class, ProdigalPyromancer.class, Forest.class, ZagothCrystal.class})
 class WizenedMentorTest extends BaseCardTest {
 
     @Test
@@ -58,5 +62,19 @@ class WizenedMentorTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(countPermanents(player1, "Zombie")).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("An ability of a card in a hand is not an ability of a permanent")
+    void cyclingDoesNotTrigger() {
+        addCreatureReady(player1, new WizenedMentor());
+        harness.setHand(player2, List.of(new ZagothCrystal()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.forceActivePlayer(player2);
+
+        harness.activateHandAbility(player2, 0, null);
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Zombie");
     }
 }

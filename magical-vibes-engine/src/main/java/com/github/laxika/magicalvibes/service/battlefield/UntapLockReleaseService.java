@@ -19,9 +19,9 @@ import java.util.UUID;
 /**
  * Ends what lasts "for as long as [a permanent] remains tapped" when that permanent untaps or leaves the battlefield,
  * and triggers the delayed "when [it] leaves the battlefield or becomes untapped" abilities it is watched by (Giant
- * Oyster): its {@code WHILE_SOURCE_TAPPED} untap locks are released, its
+ * Oyster, Tawnos's Coffin): its {@code WHILE_SOURCE_TAPPED} untap locks are released, its
  * {@link DelayedDrawStepTriggerWhileSourceTapped}s end, and each {@link DelayedSourceUntapsOrLeavesTrigger} watching it
- * goes on the stack, aimed at its creature without targeting it.
+ * goes on the stack, aimed at its creature without targeting it when it names one.
  *
  * <p>Called from the two events that end such a duration: the untap paths
  * ({@code TapUntapSupport.untapPermanent}, {@code MayMiscHandlerService.handleMayNotUntapChoice}) and the single
@@ -48,19 +48,19 @@ public class UntapLockReleaseService {
 
         List<DelayedSourceUntapsOrLeavesTrigger> triggered = gameData.drainDelayedActions(
                 DelayedSourceUntapsOrLeavesTrigger.class, delayed -> delayed.sourcePermanentId().equals(sourceId));
+        // Each delayed ability is a stack object of its own (CR 603.7a).
         for (DelayedSourceUntapsOrLeavesTrigger delayed : triggered) {
-            Permanent affected = gameQueryService.findPermanentById(gameData, delayed.affectedPermanentId());
-            if (affected == null) {
+            UUID affectedId = delayed.affectedPermanentId();
+            if (affectedId != null && gameQueryService.findPermanentById(gameData, affectedId) == null) {
                 continue;
             }
             StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, delayed.sourceCard(),
                     delayed.controllerId(), delayed.sourceCard().getName() + "'s delayed ability",
-                    new ArrayList<>(List.of(delayed.effect())), affected.getId(), sourceId);
+                    new ArrayList<>(List.of(delayed.effect())), affectedId, sourceId);
             trigger.setNonTargeting(true);
             gameData.stack.add(trigger);
             gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(), "'s delayed ability triggers."));
-            log.info("Game {} - {} untaps-or-leaves delayed trigger for {}", gameData.id,
-                    delayed.sourceCard().getName(), affected.getCard().getName());
+            log.info("Game {} - {} untaps-or-leaves delayed trigger", gameData.id, delayed.sourceCard().getName());
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.k.KrumarInitiate;
 import com.github.laxika.magicalvibes.cards.k.KinTreeSeverance;
 import com.github.laxika.magicalvibes.cards.s.SarkhansResolve;
@@ -208,5 +209,22 @@ class FlameholdGrapplerTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> "Krumar Initiate".equals(p.getCard().getName())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Two Grapplers' delayed copies of the next spell are two abilities")
+    void eachGrapplersDelayedCopyIsItsOwnAbility() {
+        harness.castFromHand(player1, new FlameholdGrappler(), "{U}{R}{W}");
+        resolveAllTriggers();
+        harness.castFromHand(player1, new FlameholdGrappler(), "{U}{R}{W}");
+        resolveAllTriggers();
+
+        harness.castFromHand(player1, new KrumarInitiate(), "{1}{B}");
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                .hasSize(2);
+        resolveAllTriggers();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(p -> "Krumar Initiate".equals(p.getCard().getName())).hasSize(3);
     }
 }

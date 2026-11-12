@@ -1236,6 +1236,13 @@ public class GameData {
     public StackEntry pendingEffectResolutionEntry;
     public int pendingEffectResolutionIndex;
     /**
+     * How many stack objects have begun to resolve this game: the identity of the resolution in progress, or of the
+     * last one. A {@link DelayedAction} whose delayed triggered abilities are grouped is stamped with it as it is
+     * scheduled ({@link #queueDelayedAction}, {@link DelayedAction#scheduledBy}), so the delayed triggered ability
+     * one resolution creates (CR 603.7a) is told from the one another resolution of the same source creates.
+     */
+    public long resolutionOrdinal;
+    /**
      * The resolutions parked while a nested one runs, innermost first: an optional action a resolving spell or
      * ability offered is carried out in that resolution (CR 608.2d), by an entry of its own that says who acts and
      * on what. {@code entry} resumes at {@code index} once {@code nested} has finished, also when the nested
@@ -4613,7 +4620,8 @@ public class GameData {
                     "nextExtraTurnSequence", "graveyardEntryVersion",
                     "domainActionSequence", "domainEventSequence", "domainStateVersion",
                     "currentlyResolvingControllerId", "pendingEffectResolutionEntry",
-                    "pendingEffectResolutionIndex", "parkedOuterResolutions", "resolvingMayEffectFromStack",
+                    "pendingEffectResolutionIndex", "resolutionOrdinal", "parkedOuterResolutions",
+                    "resolvingMayEffectFromStack",
                     "resolvedMayAccepted", "resolvedMayTargetingEntry",
                     "rerunCurrentEffectAfterInteraction", "deathReplacementsCanRerunEffect", "stepDepartureEffect",
                     "coinFlipChoicesCanRerunEffect", "recordedCoinFlips", "replayedCoinFlips", "pokeyReplacementAnswer",
@@ -6554,6 +6562,9 @@ public class GameData {
         if (action instanceof PendingExileReturn pending && findExiledCard(pending.card().getId()) != null) {
             pendingExileReturnExileVersions.put(pending,
                     exileEntryVersions.getOrDefault(pending.card().getId(), -1L));
+        }
+        if (action.schedulingResolution() == 0) {
+            action = action.scheduledBy(resolutionOrdinal);
         }
         delayedActions.add(action);
     }
@@ -9710,6 +9721,7 @@ public class GameData {
         copy.pendingEffectResolutionEntry = this.pendingEffectResolutionEntry != null
                 ? new StackEntry(this.pendingEffectResolutionEntry) : null;
         copy.pendingEffectResolutionIndex = this.pendingEffectResolutionIndex;
+        copy.resolutionOrdinal = this.resolutionOrdinal;
         copy.handCardChoiceDeclineEntry = this.handCardChoiceDeclineEntry != null
                 ? new StackEntry(this.handCardChoiceDeclineEntry) : null;
         this.votingChoicesByController.forEach((controllerId, choicesByPlayer) -> {

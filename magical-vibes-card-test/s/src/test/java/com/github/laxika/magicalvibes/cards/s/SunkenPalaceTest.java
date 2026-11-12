@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.a.AuguryRaven;
 import com.github.laxika.magicalvibes.cards.d.DeepWater;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -273,5 +274,26 @@ class SunkenPalaceTest extends BaseCardTest {
         return List.of(
                 new Forest(), new Forest(), new Forest(), new Forest(),
                 new Forest(), new Forest(), new Forest());
+    }
+
+    @Test
+    void twoPalacesManaSpentOnOneSpellIsTwoCopyAbilities() {
+        harness.addToBattlefield(player1, new SunkenPalace());
+        harness.addToBattlefield(player1, new SunkenPalace());
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setGraveyard(player1, graveyardCards());
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.setGraveyard(player1, graveyardCards());
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setHand(player1, List.of(new AuguryRaven()));
+
+        harness.castCreature(player1, 0);
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                .hasSize(2);
+        resolveAllTriggers();
+        assertThat(countPermanents(player1, "Augury Raven")).isEqualTo(3);
     }
 }

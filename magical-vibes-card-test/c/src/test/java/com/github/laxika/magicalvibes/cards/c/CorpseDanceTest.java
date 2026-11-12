@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -234,5 +235,31 @@ class CorpseDanceTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Cast twice with buyback, each resolution's delayed exile is its own ability")
+    void eachResolutionsDelayedExileIsItsOwnAbility() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new SerraAngel()));
+        harness.setHand(player1, List.of(new CorpseDance()));
+        harness.addMana(player1, ManaColor.BLACK, 10);
+
+        harness.castInstantWithBuyback(player1, 0, null);
+        harness.passBothPriorities();
+        harness.castInstantWithBuyback(player1, 0, null);
+        harness.passBothPriorities();
+        harness.assertOnBattlefield(player1, "Serra Angel");
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                .hasSize(2);
+        harness.passBothPriorities();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(card -> card.getName())
+                .containsExactlyInAnyOrder("Serra Angel", "Grizzly Bears");
     }
 }

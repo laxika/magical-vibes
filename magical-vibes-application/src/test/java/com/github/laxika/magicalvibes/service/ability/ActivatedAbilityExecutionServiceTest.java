@@ -79,10 +79,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
@@ -163,9 +161,6 @@ class ActivatedAbilityExecutionServiceTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(triggerCollectionService.collectNonTapActivationTriggersBeforeCosts(
-                any(), any(), any(), any(), any()))
-                .thenReturn(new TriggerCollectionService.PreCostActivationTriggers(List.of(), List.of()));
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         player1 = new Player(player1Id, "Player1");

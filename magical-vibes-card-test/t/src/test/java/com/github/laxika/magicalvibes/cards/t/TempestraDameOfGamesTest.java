@@ -43,7 +43,7 @@ class TempestraDameOfGamesTest extends BaseCardTest {
         assertThat(token.getEffectiveToughness()).isEqualTo(target.getEffectiveToughness());
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP,
-                        false, null, null, player1.getId()));
+                        false, null, null, player1.getId()).scheduledBy(gd.resolutionOrdinal));
     }
 
     @Test

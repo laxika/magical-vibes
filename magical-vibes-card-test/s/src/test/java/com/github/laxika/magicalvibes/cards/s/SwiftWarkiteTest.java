@@ -41,7 +41,7 @@ class SwiftWarkiteTest extends BaseCardTest {
         assertThat(entered.hasKeyword(Keyword.HASTE)).isTrue();
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .contains(new DelayedPermanentAction(
-                        entered.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP));
+                        entered.getId(), DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP).scheduledBy(gd.resolutionOrdinal));
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.clearPriorityPassed();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -139,5 +140,28 @@ class MoltenEchoesTest extends BaseCardTest {
         harness.castFromHand(player1, creature, manaCost);
         harness.passBothPriorities();
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Two tokens made by two resolutions are exiled by two delayed abilities")
+    void eachResolutionsDelayedExileIsItsOwnAbility() {
+        castEchoes(CardSubtype.BEAR);
+        castCreature(new GrizzlyBears(), "{1}{G}");
+        castCreature(new GrizzlyBears(), "{1}{G}");
+        assertThat(findPermanents(player1, "Grizzly Bears"))
+                .filteredOn(p -> p.getCard().isToken()).hasSize(2);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
+
+        assertThat(gd.stack).hasSize(2);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Grizzly Bears"))
+                .filteredOn(p -> p.getCard().isToken()).hasSize(1);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Grizzly Bears"))
+                .filteredOn(p -> p.getCard().isToken()).isEmpty();
     }
 }

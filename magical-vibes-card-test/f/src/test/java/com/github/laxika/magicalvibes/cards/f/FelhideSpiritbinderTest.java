@@ -50,7 +50,7 @@ class FelhideSpiritbinderTest extends BaseCardTest {
         assertThat(gd.getDelayedActions(DelayedPermanentAction.class))
                 .contains(new DelayedPermanentAction(token.getId(), DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP,
                         false, null, null, player1.getId(), false, spiritbinder.getCard(),
-                        player1.getId(), spiritbinder.getId()));
+                        player1.getId(), spiritbinder.getId()).scheduledBy(gd.resolutionOrdinal));
     }
 
     @Test

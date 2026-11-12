@@ -660,11 +660,6 @@ public class ActivatedAbilityExecutionService {
             throw new IllegalStateException("Invalid battlefield");
         }
         UUID activatedPermanentControllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-        TriggerCollectionService.PreCostActivationTriggers preCostActivationTriggers =
-                ability.isSpecialAction()
-                        ? new TriggerCollectionService.PreCostActivationTriggers(List.of(), List.of())
-                        : triggerCollectionService.collectNonTapActivationTriggersBeforeCosts(
-                        gameData, playerId, ability, permanent, activatedPermanentControllerId);
 
         UUID effectiveTargetId = targetId;
         if (effectiveTargetId == null && (targetIds == null || targetIds.isEmpty()) && targetZone == null) {
@@ -987,25 +982,10 @@ public class ActivatedAbilityExecutionService {
             return;
         }
 
-        // "Whenever you activate an ability of ..." triggers (e.g. Ceaseless Searblades). Collected
-        // here so they end up ON TOP of the activated ability (non-mana), or deferred to the next
-        // priority window alongside cost triggers (mana abilities, per CR 603.3).
-        int stackBeforeActivationTriggers = gameData.stack.size();
-        triggerCollectionService.checkControllerActivatesAbilityTriggers(
-                gameData, playerId, permanent, ability, activatedPermanentControllerId,
-                preCostActivationTriggers.abilities());
-        triggerCollectionService.checkOpponentActivatesAbilityTriggers(
-                gameData, playerId, permanent, ability, activatedPermanentControllerId,
-                preCostActivationTriggers.abilities());
-        if (ability.isExhaustAbility()) {
-            triggerCollectionService.checkControllerActivatesExhaustAbilityTriggers(gameData, playerId);
-            triggerCollectionService.checkControllerActivatesExhaustAbilityTriggersFromGraveyard(gameData, playerId);
-        }
-        List<StackEntry> deferredActivationTriggers = List.of();
-        if (gameData.stack.size() > stackBeforeActivationTriggers) {
-            deferredActivationTriggers = new ArrayList<>(gameData.stack.subList(stackBeforeActivationTriggers, gameData.stack.size()));
-            gameData.stack.subList(stackBeforeActivationTriggers, gameData.stack.size()).clear();
-        }
+        // CR 109.2: "an ability of an artifact or creature" is an ability of a permanent, so an ability of a card
+        // off the battlefield (a suspended card in exile, a card in the command zone, an emblem) has no activated
+        // permanent for the activation triggers' source filters to match, as an ability of a card in a hand has none.
+        Permanent activatedBattlefieldPermanent = activatedPermanentControllerId != null ? permanent : null;
 
         gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " activates " , permanent.getCard(), "'s ability."));
         log.info("Game {} - {} activates {}'s ability", gameData.id, player.getUsername(), permanent.getCard().getName());
@@ -1026,9 +1006,11 @@ public class ActivatedAbilityExecutionService {
             StackEntry abilitySnapshot = createImmediateAbilitySnapshot(
                     gameData, permanent, playerId, ability, snapshotEffects, effectiveXValue, effectiveTargetId,
                     targetZone, targetIds, damageAssignments);
-            triggerCollectionService.checkControllerActivatesAbilityCopyTriggers(
-                    gameData, playerId, abilitySnapshot, ability, permanent,
-                    preCostActivationTriggers.abilities());
+            // CR 602.2b, CR 601.2i: "whenever [a player] activates an ability" abilities trigger once the costs
+            // are paid; a mana ability's wait for the next time a player would receive priority (CR 603.3).
+            triggerCollectionService.collectActivationTriggers(gameData, new TriggerCollectionService.Activation(
+                    playerId, abilitySnapshot, ability, activatedBattlefieldPermanent,
+                    activatedPermanentControllerId, true));
             if (gameData.stack.size() > stackBeforeCopyTriggers) {
                 gameData.pendingManaAbilityTriggers.addAll(
                         gameData.stack.subList(stackBeforeCopyTriggers, gameData.stack.size()));
@@ -1123,13 +1105,9 @@ public class ActivatedAbilityExecutionService {
             // wait until the next time a player would receive priority before going
             // on the stack.  This prevents them from blocking sorcery-speed spell
             // casting when a mana ability is activated to pay for a spell.
-            if (!preCostActivationTriggers.entries().isEmpty()
-                    || !deferredTapTriggers.isEmpty() || !deferredCostTriggers.isEmpty()
-                    || !deferredActivationTriggers.isEmpty()) {
-                gameData.pendingManaAbilityTriggers.addAll(preCostActivationTriggers.entries());
+            if (!deferredTapTriggers.isEmpty() || !deferredCostTriggers.isEmpty()) {
                 gameData.pendingManaAbilityTriggers.addAll(deferredTapTriggers);
                 gameData.pendingManaAbilityTriggers.addAll(deferredCostTriggers);
-                gameData.pendingManaAbilityTriggers.addAll(deferredActivationTriggers);
             }
             if (manaTypeChoicePending) {
                 List<StackEntry> deferred = new ArrayList<>(gameData.pendingManaAbilityTriggers.subList(
@@ -1176,29 +1154,15 @@ public class ActivatedAbilityExecutionService {
         } else if (unattachedEquipmentCard != null && !gameData.stack.isEmpty()) {
             gameData.stack.getLast().setDamageSourceCard(unattachedEquipmentCard);
         }
-        // Rings of Brighthearth: "whenever you activate an ability, if it isn't a mana ability, you
-        // may pay {2} to copy it." Collected after the ability is on the stack so it can be snapshotted.
         StackEntry abilityEntry = abilityStackIndex < gameData.stack.size() ? gameData.stack.get(abilityStackIndex) : null;
         triggerCollectionService.checkManaLinkedAbilityCopyTrigger(gameData, playerId, abilityEntry, ability);
-        triggerCollectionService.checkControllerActivatesAbilityCopyTriggers(
-                gameData, playerId, abilityEntry, ability, permanent,
-                preCostActivationTriggers.abilities());
         triggerCollectionService.checkCrimeTriggers(gameData, abilityEntry);
-        // CR 109.2: "an ability of an artifact or creature" is an ability of a permanent, so an ability of a card
-        // off the battlefield (a suspended card in exile, a card in the command zone, an emblem) has no activated
-        // permanent for these triggers' source filters to match, as an ability of a card in a hand has none.
-        Permanent activatedBattlefieldPermanent = activatedPermanentControllerId != null ? permanent : null;
-        triggerCollectionService.checkControllerActivatesNonManaAbilityTriggers(
-                gameData, playerId, abilityEntry, ability, activatedBattlefieldPermanent,
-                activatedPermanentControllerId, preCostActivationTriggers.abilities());
-        // "Whenever an opponent activates a non-mana ability" triggers (Harsh Mentor). Reached only on
-        // the non-mana path, so the "if it isn't a mana ability" clause is satisfied automatically.
-        triggerCollectionService.checkOpponentActivatesNonManaAbilityTriggers(
-                gameData, playerId, abilityEntry, ability, activatedBattlefieldPermanent,
-                activatedPermanentControllerId, preCostActivationTriggers.abilities());
-        gameData.stack.addAll(preCostActivationTriggers.entries());
-        // Add "whenever you activate an ability" triggers ON TOP so they resolve first (per CR rules)
-        gameData.stack.addAll(deferredActivationTriggers);
+        // CR 602.2b, CR 601.2i: "whenever [a player] activates an ability" abilities trigger now that the ability
+        // is on the stack and its costs are paid, so they go on the stack above it and one that copies it has its
+        // targets and X.
+        triggerCollectionService.collectActivationTriggers(gameData, new TriggerCollectionService.Activation(
+                playerId, abilityEntry, ability, activatedBattlefieldPermanent, activatedPermanentControllerId,
+                false));
         // Add "becomes tapped" triggers ON TOP of the ability so they resolve first (per CR rules)
         gameData.stack.addAll(deferredTapTriggers);
         // Add death triggers from sacrifice/exile ON TOP so they resolve first (per CR 603.3)
@@ -1220,6 +1184,11 @@ public class ActivatedAbilityExecutionService {
         if (!gameData.interaction.isAwaitingInput()
                 && gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
+        }
+        // Likewise an activation trigger that targets a permanent (Vazi, Keen Negotiator).
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
+            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
         }
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);

@@ -6,14 +6,17 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.action.DelayedSourceUntapsOrLeavesTrigger;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndAurasUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.ResolvePendingExileReturnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +26,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-/** Resolves the source-linked exile used by Tawnos's Coffin. */
+/**
+ * Resolves the source-linked exile used by Tawnos's Coffin, and creates its delayed "when this artifact leaves the
+ * battlefield or becomes untapped, return that exiled card" ability: one {@link DelayedSourceUntapsOrLeavesTrigger}
+ * for this resolution's creature and Auras.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -78,12 +85,22 @@ public class ExileTargetCreatureAndAurasUntilSourceLeavesEffectHandler
             return;
         }
 
-        if (!targetIsToken && sourcePermanentId != null) {
-            UUID ownerId = ownerOf(gameData, targetCards.getFirst(), target.getCard().getOwnerId());
-            gameData.addExileReturnOnPermanentLeave(sourcePermanentId,
-                    PendingExileReturn.withCountersAndCardsAttachedToPrimary(
-                            targetCards.getFirst(), ownerId, true, additionalCards,
-                            cardsToAttach, counters));
+        // "When this artifact leaves the battlefield or becomes untapped, return that exiled card": a delayed
+        // triggered ability of this resolution (CR 603.7a), controlled by the ability's controller (CR 603.7e). A
+        // source that left before the ability resolved can no longer leave or untap, so none is created.
+        if (!targetIsToken && sourcePermanentId != null
+                && gameQueryService.findPermanentById(gameData, sourcePermanentId) != null) {
+            Card primary = targetCards.getFirst();
+            UUID ownerId = ownerOf(gameData, primary, target.getCard().getOwnerId());
+            // "Under their owner's control": each other exiled card returns under its own owner's control.
+            Map<UUID, UUID> owners = new HashMap<>();
+            additionalCards.forEach(card -> owners.put(card.getId(), ownerOf(gameData, card, ownerId)));
+            PendingExileReturn pending = PendingExileReturn.withCountersAndCardsAttachedToPrimary(
+                    primary, ownerId, true, additionalCards, cardsToAttach, counters)
+                    .withReturnControllers(owners);
+            gameData.queueDelayedAction(new DelayedSourceUntapsOrLeavesTrigger(entry.getControllerId(),
+                    entry.getCard(), sourcePermanentId, null, new ResolvePendingExileReturnEffect(pending,
+                    gameData.exileEntryVersions.getOrDefault(primary.getId(), 0L))));
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);

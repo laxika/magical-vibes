@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.trigger.CounterAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.service.trigger.CounterWatch;
-import com.github.laxika.magicalvibes.service.trigger.TapWatch;
 import org.springframework.beans.factory.ObjectProvider;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
@@ -29,7 +28,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger;
@@ -1997,9 +1995,10 @@ public class PermanentRemovalService {
 
     /**
      * Drains all scheduled {@link DelayedPermanentAction}s of the given kind and puts their delayed triggers on the
-     * stack, one trigger per source that scheduled them together (a token exiled at the next cleanup is exiled at
-     * once). Permanents that already left the battlefield are skipped. Each permanent is one
-     * {@code ResolveDelayedPermanentActionEffect} step of its trigger.
+     * stack, one trigger per resolution of a source that scheduled them together (CR 603.7a; a token exiled at the
+     * next cleanup is exiled at once). Two resolutions of one source (Molten Echoes triggering twice) are two delayed
+     * triggered abilities, each a stack object of its own. Permanents that already left the battlefield are skipped.
+     * Each permanent is one {@code ResolveDelayedPermanentActionEffect} step of its trigger.
      */
     public void processDelayedPermanentActions(GameData gameData, DelayedPermanentActionKind kind) {
         List<DelayedPermanentAction> actions =
@@ -2019,9 +2018,10 @@ public class PermanentRemovalService {
                 resolveDelayedPermanentAction(gameData, action);
                 continue;
             }
-            // One delayed trigger from one source covers every permanent it scheduled together
-            // ("sacrifice those tokens at the beginning of your next upkeep" and "exile them at the
-            // beginning of the next end step" are each a single trigger).
+            // One delayed trigger of one resolution of a source covers every permanent that resolution scheduled
+            // together ("sacrifice those tokens at the beginning of your next upkeep" and "exile them at the
+            // beginning of the next end step" are each a single trigger); another resolution of the same source
+            // created another delayed trigger (CR 603.7a).
             List<Object> batchKey = (kind == DelayedPermanentActionKind.SACRIFICE_AT_NEXT_UPKEEP
                     || kind == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP
                     || kind == DelayedPermanentActionKind.SACRIFICE_AT_END_STEP
@@ -2029,8 +2029,9 @@ public class PermanentRemovalService {
                     || kind == DelayedPermanentActionKind.DESTROY_AT_END_OF_COMBAT
                     || kind == DelayedPermanentActionKind.RETURN_TO_HAND_AT_END_STEP)
                     && action.sourceCard() != null
-                    ? List.of(action.sourceCard().getId(), Objects.requireNonNullElse(action.controllerId(), "")
-                            , Objects.requireNonNullElse(action.sacrificingPlayerId(), ""))
+                    ? List.of(action.sourceCard().getId(), Objects.requireNonNullElse(action.controllerId(), ""),
+                            Objects.requireNonNullElse(action.sacrificingPlayerId(), ""),
+                            action.schedulingResolution())
                     : List.of(action, batches.size());
             batches.computeIfAbsent(batchKey, ignored -> new ArrayList<>()).add(action);
         }
@@ -3582,16 +3583,11 @@ public class PermanentRemovalService {
                 pendingReturns = remaining.isEmpty() ? null : remaining;
             }
         }
-        boolean leaveReturnsAreTriggered = WatchedAbilities.rawEffects(WatchedAbilities.printed(
-                removedPermanent.getCard(), TapWatch.ON_SELF_BECOMES_UNTAPPED))
-                .stream().anyMatch(com.github.laxika.magicalvibes.model.effect.ReturnCardsExiledWithSourceOnUntapEffect.class::isInstance);
-        if (pendingReturns != null && (leaveReturnsAreTriggered
-                || ZoneChangeWatch.ON_ANY_CREATURE_ENTERS_BATTLEFIELD.effectsOf(removedPermanent.getCard())
-                .stream().anyMatch(com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesEffect.class::isInstance))) {
+        if (pendingReturns != null
+                && ZoneChangeWatch.ON_ANY_CREATURE_ENTERS_BATTLEFIELD.effectsOf(removedPermanent.getCard())
+                .stream().anyMatch(com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesEffect.class::isInstance)) {
             // Portcullis: each exile created its own delayed "return that card when this leaves the
             // battlefield" ability, so every exiled card returns through its own triggered ability.
-            // Tawnos's Coffin: "When this artifact leaves the battlefield or becomes untapped, return that
-            // exiled card" is a triggered ability as well, so the return goes on the stack too.
             for (PendingExileReturn delayed : pendingReturns) {
                 gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, removedPermanent.getCard(),
                         controllerId, removedPermanent.getCard().getName() + "'s delayed return ability",
@@ -3743,30 +3739,6 @@ public class PermanentRemovalService {
             merged.set(index, head.withAdditionalCards(additionalCards));
         }
         return merged;
-    }
-
-    /** Resolves only the pending returns captured by one source-untap trigger. */
-    public void returnExileReturnsOnSourceEvent(GameData gameData, UUID sourcePermanentId,
-                                                Set<UUID> primaryCardIds) {
-        List<PendingExileReturn> pendingReturns =
-                gameData.exileReturnOnPermanentLeave.get(sourcePermanentId);
-        if (pendingReturns == null || primaryCardIds.isEmpty()) {
-            return;
-        }
-        List<PendingExileReturn> captured = new ArrayList<>();
-        pendingReturns.removeIf(pending -> {
-            if (primaryCardIds.contains(pending.card().getId())) {
-                captured.add(pending);
-                return true;
-            }
-            return false;
-        });
-        if (pendingReturns.isEmpty()) {
-            gameData.exileReturnOnPermanentLeave.remove(sourcePermanentId, pendingReturns);
-        }
-        for (PendingExileReturn pending : captured) {
-            returnPendingExiledCard(gameData, sourcePermanentId, pending);
-        }
     }
 
     /** Returns cards exiled until an opponent of the new monarch becomes monarch. */
