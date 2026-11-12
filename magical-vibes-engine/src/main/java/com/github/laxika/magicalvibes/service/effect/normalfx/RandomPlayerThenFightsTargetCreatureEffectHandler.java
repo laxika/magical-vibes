@@ -31,8 +31,9 @@ public class RandomPlayerThenFightsTargetCreatureEffectHandler implements Normal
 
         var selectedPlayerId = gameData.orderedPlayerIds.get(
                 ThreadLocalRandom.current().nextInt(gameData.orderedPlayerIds.size()));
+        // "That player" of the reflexive ability is the player chosen at random, recorded as its triggering player.
         queueReflexiveAbilityEffectHandler.resolve(gameData, entry,
-                new QueueReflexiveAbilityEffect(new SourceFightsTargetCreatureControlledByPlayerEffect(
-                        selectedPlayerId, entry.getSourcePermanentId())));
+                new QueueReflexiveAbilityEffect(new SourceFightsTargetCreatureControlledByPlayerEffect()),
+                record -> record.setTriggeringPlayerId(selectedPlayerId));
     }
 }

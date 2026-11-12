@@ -17,8 +17,6 @@ import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
-import java.util.UUID;
 
 @CardRegistration(set = "BLC", collectorNumber = "41")
 public class ArthurMarigoldKnight extends Card {
@@ -26,12 +24,10 @@ public class ArthurMarigoldKnight extends Card {
     private static final LibrarySelectionFollowUp CREATURE_ATTACK_AND_RETURN_FOLLOW_UP =
             new LibrarySelectionFollowUp() {
                 @Override
-                public CardEffect createEffect(List<UUID> selectedPermanentIds) {
-                    UUID selectedPermanentId = selectedPermanentIds.getFirst();
+                public CardEffect effect() {
                     return SequenceEffect.of(
-                            new MakeChosenPermanentAttackingEffect(selectedPermanentId),
-                            ReturnSelectedPermanentToHandAtEndOfCombatEffect
-                                    .forSelectedPermanent(selectedPermanentIds));
+                            MakeChosenPermanentAttackingEffect.pickedPermanent(),
+                            new ReturnSelectedPermanentToHandAtEndOfCombatEffect());
                 }
 
                 @Override

@@ -89,6 +89,59 @@ class StraxSontaranNurseTest extends BaseCardTest {
     }
 
     @Test
+    void reflexiveAbilityTargetsOnlyAnotherCreatureOfThePlayerChosenAtRandom() {
+        Permanent strax = addCreatureReady(player1, new StraxSontaranNurse());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new MindStone());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(
+                PendingInteraction.PermanentChoice.class);
+        java.util.UUID thatPlayer = gqs.findPermanentController(gd, choice.validPermanentIds().getFirst());
+        List<java.util.UUID> othersOfThatPlayer = gd.playerBattlefields.get(thatPlayer).stream()
+                .filter(permanent -> gqs.isCreature(gd, permanent) && permanent != strax)
+                .map(Permanent::getId)
+                .toList();
+        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrderElementsOf(othersOfThatPlayer);
+
+        harness.handlePermanentChosen(player1, choice.validPermanentIds().getFirst());
+
+        assertThat(gd.stack.getLast().getTriggeringPlayerId()).isEqualTo(thatPlayer);
+        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(choice.validPermanentIds().getFirst());
+    }
+
+    @Test
+    void doesNotFightATargetThatPlayerNoLongerControls() {
+        Permanent strax = addCreatureReady(player1, new StraxSontaranNurse());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new MindStone());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(
+                PendingInteraction.PermanentChoice.class);
+        java.util.UUID targetId = choice.validPermanentIds().getFirst();
+        java.util.UUID thatPlayer = gqs.findPermanentController(gd, targetId);
+        Permanent target = gqs.findPermanentById(gd, targetId);
+        harness.handlePermanentChosen(player1, targetId);
+
+        java.util.UUID otherPlayer = thatPlayer.equals(player1.getId()) ? player2.getId() : player1.getId();
+        gd.playerBattlefields.get(thatPlayer).remove(target);
+        gd.playerBattlefields.get(otherPlayer).add(target);
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(otherPlayer)).contains(target);
+        assertThat(strax.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
     void activationWithNoOtherCreaturesStillPaysCostsButDoesNotFight() {
         Permanent strax = addCreatureReady(player1, new StraxSontaranNurse());
         harness.addToBattlefield(player1, new MindStone());

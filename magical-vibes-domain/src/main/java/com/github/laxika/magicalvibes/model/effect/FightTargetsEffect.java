@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 /**
  * The creature chosen for one target group fights the creature chosen for another target
  * group: each deals damage equal to its power to the other (CR 701.12). Both use effective
@@ -12,19 +10,21 @@ import java.util.UUID;
  * DATA: {@code firstTargetGroup}/{@code secondTargetGroup} are indices into the card's
  * {@code target(...)} declarations (see {@code StackEntry.targetsForGroup}). For activated
  * abilities, which declare targets via a flat multi-target filter list instead, the indices
- * address flat target positions. The default groups are 0 and 1.</p>
+ * address flat target positions. The default groups are 0 and 1. A reflexive ability an effect handler puts on the
+ * stack with targets of its own ({@link #ofReflexiveAbilityTargets()}) reads the entry's targets instead of a
+ * group.</p>
  */
 public record FightTargetsEffect(int firstTargetGroup, int secondTargetGroup,
-                                 UUID firstTargetId, UUID secondTargetId,
-                                 boolean useBoundTargetGroupAndNext) implements CardEffect {
+                                 boolean useBoundTargetGroupAndNext,
+                                 boolean reflexiveAbilityTargets) implements CardEffect {
 
     /** "Target creature fights another target creature" — groups 0 and 1. */
     public FightTargetsEffect() {
-        this(0, 1, null, null, false);
+        this(0, 1, false, false);
     }
 
     public FightTargetsEffect(int firstTargetGroup, int secondTargetGroup) {
-        this(firstTargetGroup, secondTargetGroup, null, null, false);
+        this(firstTargetGroup, secondTargetGroup, false, false);
     }
 
     /**
@@ -36,14 +36,13 @@ public record FightTargetsEffect(int firstTargetGroup, int secondTargetGroup,
         return new FightTargetsEffect(-1, -1);
     }
 
-    /** Creates a fight effect with targets captured by a reflexive ability. */
-    public FightTargetsEffect(UUID firstTargetId, UUID secondTargetId) {
-        this(0, 1, firstTargetId, secondTargetId, false);
-    }
-
-    public FightTargetsEffect(int firstTargetGroup, int secondTargetGroup,
-                              UUID firstTargetId, UUID secondTargetId) {
-        this(firstTargetGroup, secondTargetGroup, firstTargetId, secondTargetId, false);
+    /**
+     * "Up to one target creature you control fights target creature an opponent controls" of a reflexive ability
+     * whose targets were chosen as it was put on the stack: the entry's own targets, the last of them the creature an
+     * opponent controls and the one before it, when one was chosen, the creature you control.
+     */
+    public static FightTargetsEffect ofReflexiveAbilityTargets() {
+        return new FightTargetsEffect(0, 1, false, true);
     }
 
     /**
@@ -52,7 +51,7 @@ public record FightTargetsEffect(int firstTargetGroup, int secondTargetGroup,
      * selected modes may shift the fight mode's target-group indices.
      */
     public static FightTargetsEffect boundTargetGroupAndNext() {
-        return new FightTargetsEffect(0, 1, null, null, true);
+        return new FightTargetsEffect(0, 1, true, false);
     }
 
     @Override

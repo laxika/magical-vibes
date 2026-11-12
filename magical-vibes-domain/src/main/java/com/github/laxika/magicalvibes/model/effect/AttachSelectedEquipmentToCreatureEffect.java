@@ -7,20 +7,12 @@ import java.util.List;
 import java.util.UUID;
 
 /** Lets the controller optionally attach an Equipment selected by a library effect. */
-public record AttachSelectedEquipmentToCreatureEffect(List<UUID> equipmentPermanentIds)
+public record AttachSelectedEquipmentToCreatureEffect()
         implements CardEffect, LibrarySelectionFollowUp {
 
-    public AttachSelectedEquipmentToCreatureEffect() {
-        this(List.of());
-    }
-
-    public AttachSelectedEquipmentToCreatureEffect {
-        equipmentPermanentIds = List.copyOf(equipmentPermanentIds);
-    }
-
     @Override
-    public CardEffect createEffect(List<UUID> selectedPermanentIds) {
-        return new AttachSelectedEquipmentToCreatureEffect(selectedPermanentIds);
+    public CardEffect effect() {
+        return this;
     }
 
     @Override

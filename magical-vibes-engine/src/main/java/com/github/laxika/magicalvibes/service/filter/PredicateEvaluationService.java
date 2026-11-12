@@ -340,7 +340,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourceCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSubtypeCountPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostTrackedPermanentPowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostTriggeringPermanentPowerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostXPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerEqualsToughnessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerDifferentFromBasePowerPredicate;
@@ -2065,15 +2065,19 @@ public class PredicateEvaluationService {
                 }
                 yield gameQueryService.getEffectivePower(gameData, permanent) <= xVal;
             }
-            case PermanentPowerAtMostTrackedPermanentPowerPredicate tracked -> {
-                if (gameData == null) {
+            case PermanentPowerAtMostTriggeringPermanentPowerPredicate ignored -> {
+                if (gameData == null || filterContext == null) {
                     yield false;
                 }
-                Permanent trackedPermanent = gameQueryService.findPermanentById(gameData, tracked.trackedPermanentId());
-                if (trackedPermanent == null) {
+                UUID triggeringPermanentId = filterContext.triggeringPermanentId();
+                Permanent trackedPermanent = liveTriggeringPermanent(filterContext);
+                if (trackedPermanent == null && triggeringPermanentId != null) {
                     trackedPermanent = gameData.departedPermanentSnapshots.values().stream()
-                            .filter(snapshot -> snapshot.getId().equals(tracked.trackedPermanentId()))
+                            .filter(snapshot -> snapshot.getId().equals(triggeringPermanentId))
                             .findFirst().orElse(null);
+                }
+                if (trackedPermanent == null) {
+                    trackedPermanent = filterContext.triggeringPermanentSnapshot();
                 }
                 yield trackedPermanent != null
                         && gameQueryService.getEffectivePower(gameData, permanent)

@@ -309,15 +309,17 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
         if (sourceEntry == null) {
             return;
         }
-        gameData.stack.add(new StackEntry(
+        StackEntry attachEntry = new StackEntry(
                 StackEntryType.TRIGGERED_ABILITY,
                 sourceEntry.getCard(),
                 sourceEntry.getControllerId(),
                 sourceEntry.getCard().getName() + "'s reflexive ability",
                 List.of(new MayEffect(
-                        new AttachSelectedEquipmentToCreatureEffect(List.of(equipmentId)),
+                        new AttachSelectedEquipmentToCreatureEffect(),
                         "Attach that Equipment to a creature you control?")),
                 null,
-                sourceEntry.getSourcePermanentId()));
+                sourceEntry.getSourcePermanentId());
+        attachEntry.recordPicks(List.of(equipmentId));
+        gameData.stack.add(attachEntry);
     }
 }

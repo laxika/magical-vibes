@@ -35,7 +35,8 @@ public class ConjureDuplicateOfSelectedPermanentOntoBattlefieldEffectHandler imp
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var conjure = (ConjureDuplicateOfSelectedPermanentOntoBattlefieldEffect) effect;
-        Permanent selected = gameQueryService.findPermanentById(gameData, conjure.permanentId());
+        List<UUID> picks = entry.getResolutionResults().pickedIds();
+        Permanent selected = picks.isEmpty() ? null : gameQueryService.findPermanentById(gameData, picks.getFirst());
         if (selected == null) {
             return;
         }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnThenDealManaValueDamageEffect;
@@ -49,9 +50,10 @@ public class ExileTopCardMayPlayThisTurnThenDealManaValueDamageEffectHandler
                 .text(" from the top of their library and may play it this turn.").build());
 
         if (!topCard.hasType(CardType.LAND)) {
+            // "Damage equal to the exiled card's mana value": the event value the reflexive ability records.
+            entry.setEventValue(topCard.getManaValue());
             queueReflexiveAbilityEffectHandler.resolve(gameData, entry,
-                    new QueueReflexiveAbilityEffect(
-                            new DealDamageToAnyTargetEffect(topCard.getManaValue())));
+                    new QueueReflexiveAbilityEffect(new DealDamageToAnyTargetEffect(new EventValue())));
         }
     }
 }

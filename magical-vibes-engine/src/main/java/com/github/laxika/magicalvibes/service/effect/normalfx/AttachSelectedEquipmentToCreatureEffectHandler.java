@@ -33,14 +33,13 @@ public class AttachSelectedEquipmentToCreatureEffectHandler implements NormalEff
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        AttachSelectedEquipmentToCreatureEffect attachEffect =
-                (AttachSelectedEquipmentToCreatureEffect) effect;
-        if (attachEffect.equipmentPermanentIds().size() != 1) {
+        List<UUID> selectedIds = entry.getResolutionResults().pickedIds();
+        if (selectedIds.size() != 1) {
             return;
         }
 
         UUID controllerId = entry.getControllerId();
-        UUID equipmentId = attachEffect.equipmentPermanentIds().getFirst();
+        UUID equipmentId = selectedIds.getFirst();
         Permanent equipment = gameData.playerBattlefields
                 .getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> permanent.getId().equals(equipmentId))

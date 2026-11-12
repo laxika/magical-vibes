@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AttachSelectedEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachCreatedEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import java.util.UUID;
 
 @CardRegistration(set = "YECL", collectorNumber = "1")
 public class AdaptiveArmorer extends Card {
@@ -36,9 +35,9 @@ public class AdaptiveArmorer extends Card {
 
     private static final LibrarySelectionFollowUp ATTACHMENT_FOLLOW_UP = new LibrarySelectionFollowUp() {
         @Override
-        public CardEffect createEffect(List<UUID> selectedPermanentIds) {
-            return new QueueReflexiveAbilityEffect(
-                    new AttachSelectedEquipmentToTargetCreatureEffect(selectedPermanentIds.getFirst()));
+        public CardEffect effect() {
+            return QueueReflexiveAbilityEffect.aboutPickedPermanent(
+                    new AttachCreatedEquipmentToTargetCreatureEffect());
         }
 
         @Override

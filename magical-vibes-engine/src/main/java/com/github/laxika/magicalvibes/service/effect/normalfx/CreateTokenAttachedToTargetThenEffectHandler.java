@@ -39,8 +39,8 @@ public class CreateTokenAttachedToTargetThenEffectHandler implements NormalEffec
             return;
         }
 
-        // "That creature" is the permanent the reflexive ability's effect acts for.
+        // "That creature" is the resolving entry's target, the reflexive ability's triggering permanent.
         queueReflexiveAbilityEffectHandler.resolve(gameData, entry,
-                new QueueReflexiveAbilityEffect(createThen.thenEffect(), targetId));
+                QueueReflexiveAbilityEffect.aboutEntryTarget(createThen.thenEffect()));
     }
 }

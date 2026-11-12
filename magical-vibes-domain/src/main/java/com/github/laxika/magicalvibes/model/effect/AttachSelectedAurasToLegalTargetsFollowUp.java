@@ -9,8 +9,8 @@ import java.util.UUID;
 public record AttachSelectedAurasToLegalTargetsFollowUp() implements LibrarySelectionFollowUp {
 
     @Override
-    public CardEffect createEffect(List<UUID> selectedPermanentIds) {
-        return new AttachSelectedAurasToLegalTargetsEffect(selectedPermanentIds);
+    public CardEffect effect() {
+        return new AttachSelectedAurasToLegalTargetsEffect();
     }
 
     @Override

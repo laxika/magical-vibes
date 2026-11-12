@@ -27,7 +27,6 @@ public class SourceFightsTargetCreatureControlledByPlayerEffectHandler implement
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var fight = (SourceFightsTargetCreatureControlledByPlayerEffect) effect;
         UUID targetId = entry.getTargetId();
         if (targetId == null) {
             targetId = entry.targetsForEffect(effect).stream().findFirst().orElse(null);
@@ -39,8 +38,9 @@ public class SourceFightsTargetCreatureControlledByPlayerEffectHandler implement
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null
                 || !gameQueryService.isCreature(gameData, target)
-                || !fight.playerId().equals(gameQueryService.findPermanentController(gameData, targetId))
-                || targetId.equals(fight.excludedPermanentId())) {
+                || entry.getTriggeringPlayerId() == null
+                || !entry.getTriggeringPlayerId().equals(gameQueryService.findPermanentController(gameData, targetId))
+                || targetId.equals(entry.getSourcePermanentId())) {
             return;
         }
 

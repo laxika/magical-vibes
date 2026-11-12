@@ -43,20 +43,25 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var revealEffect = (RevealUntilNonlandBottomThenDealManaValueDamageEffect) effect;
         List<UUID> groupTargets = entry.targetsForBoundEffectGroup(revealEffect);
-        UUID targetId = revealEffect.fixedTargetId();
 
         if (revealEffect.reflexive()) {
             resolveForTarget(gameData, entry, null, revealEffect.randomizeBottom(), true);
             return;
         }
-        if (targetId == null && groupTargets != null) {
+        UUID targetId;
+        List<UUID> targetsLeft = entry.getResolutionResults().pickedIds();
+        if (!targetsLeft.isEmpty() && groupTargets != null && groupTargets.containsAll(targetsLeft)) {
+            // "For each of them": a later run of this step, for the next of the targets the first run ordered.
+            targetId = targetsLeft.getFirst();
+            entry.recordPicks(targetsLeft.subList(1, targetsLeft.size()));
+        } else if (groupTargets != null) {
             if (groupTargets.isEmpty()) {
                 return;
             }
             List<UUID> orderedTargets = inTurnOrder(gameData, groupTargets);
             targetId = orderedTargets.getFirst();
-            insertFollowUpEffects(entry, revealEffect, orderedTargets);
-        } else if (targetId == null) {
+            repeatForTargetsLeft(entry, revealEffect, orderedTargets);
+        } else {
             targetId = entry.getTargetId();
         }
 
@@ -82,9 +87,14 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
                 .toList();
     }
 
-    private void insertFollowUpEffects(StackEntry entry,
-                                       RevealUntilNonlandBottomThenDealManaValueDamageEffect effect,
-                                       List<UUID> targets) {
+    /**
+     * Each target's reveal can stop for a choice (the order of the cards put on the bottom), so the card's step is
+     * run once more for each target after the first: the targets still to do are the entry's picks, which each run
+     * takes the next of.
+     */
+    private void repeatForTargetsLeft(StackEntry entry,
+                                      RevealUntilNonlandBottomThenDealManaValueDamageEffect effect,
+                                      List<UUID> targets) {
         if (targets.size() <= 1) {
             return;
         }
@@ -92,12 +102,9 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
         if (effectIndex < 0) {
             throw new IllegalStateException("Reveal effect is not in its stack entry");
         }
-        List<CardEffect> followUps = targets.subList(1, targets.size()).stream()
-                .map(target -> new RevealUntilNonlandBottomThenDealManaValueDamageEffect(
-                        effect.targetPredicate(), target, effect.randomizeBottom()))
-                .map(CardEffect.class::cast)
-                .toList();
-        entry.insertEffectsToResolve(effectIndex + 1, followUps);
+        entry.recordPicks(targets.subList(1, targets.size()));
+        entry.insertEffectsToResolve(effectIndex + 1,
+                java.util.Collections.<CardEffect>nCopies(targets.size() - 1, effect));
     }
 
     private void resolveForTarget(GameData gameData, StackEntry entry, UUID targetId,

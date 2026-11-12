@@ -1,32 +1,23 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
- * Source fights a target creature controlled by a player selected earlier in the resolution.
- * The optional excluded permanent is the "another" part of the target restriction.
+ * "[This creature] fights another target creature that player controls": the source fights a target creature, other
+ * than itself, controlled by the player the ability is about (the stack entry's triggering player: the player a
+ * preceding action of the resolution that made this reflexive ability chose).
  */
-public record SourceFightsTargetCreatureControlledByPlayerEffect(
-        UUID playerId, UUID excludedPermanentId) implements CardEffect {
-
-    public SourceFightsTargetCreatureControlledByPlayerEffect(UUID playerId) {
-        this(playerId, null);
-    }
+public record SourceFightsTargetCreatureControlledByPlayerEffect() implements CardEffect {
 
     @Override
     public TargetSpec targetSpec() {
-        var controlledByPlayer = new PermanentControlledByPlayerPredicate(playerId);
-        var predicate = excludedPermanentId == null
-                ? controlledByPlayer
-                : new PermanentAllOfPredicate(List.of(
-                        controlledByPlayer,
-                        new PermanentNotPredicate(new PermanentIsSpecificPermanentPredicate(excludedPermanentId))));
-        return TargetSpec.harmful(TargetPredicates.creature(), predicate);
+        return TargetSpec.harmful(TargetPredicates.creature(), new PermanentAllOfPredicate(List.of(
+                new PermanentControlledByTriggeringPlayerPredicate(),
+                new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))));
     }
 }

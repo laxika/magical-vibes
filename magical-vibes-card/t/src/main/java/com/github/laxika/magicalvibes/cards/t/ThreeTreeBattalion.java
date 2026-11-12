@@ -12,16 +12,14 @@ import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import java.util.UUID;
 
 @CardRegistration(set = "YBLB", collectorNumber = "4")
 public class ThreeTreeBattalion extends Card {
 
     private static final LibrarySelectionFollowUp DUPLICATE_FOLLOW_UP = new LibrarySelectionFollowUp() {
         @Override
-        public CardEffect createEffect(List<UUID> selectedPermanentIds) {
-            return new ConjureDuplicateOfSelectedPermanentOntoBattlefieldEffect(
-                    selectedPermanentIds.getFirst(), 1, 1);
+        public CardEffect effect() {
+            return new ConjureDuplicateOfSelectedPermanentOntoBattlefieldEffect(1, 1);
         }
 
         @Override

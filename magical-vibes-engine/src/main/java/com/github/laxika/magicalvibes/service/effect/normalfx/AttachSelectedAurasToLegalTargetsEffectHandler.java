@@ -40,8 +40,7 @@ public class AttachSelectedAurasToLegalTargetsEffectHandler implements NormalEff
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        continueAttaching(gameData, entry,
-                ((AttachSelectedAurasToLegalTargetsEffect) effect).auraPermanentIds());
+        continueAttaching(gameData, entry, entry.getResolutionResults().pickedIds());
     }
 
     public void completeChoice(GameData gameData, UUID targetId,
@@ -53,10 +52,11 @@ public class AttachSelectedAurasToLegalTargetsEffectHandler implements NormalEff
 
         if (!context.remainingAuraPermanentIds().isEmpty()
                 && gameData.pendingEffectResolutionEntry != null) {
+            // The Auras still to attach are the entry's picks, which the same step reads when it runs again.
+            gameData.pendingEffectResolutionEntry.recordPicks(context.remainingAuraPermanentIds());
             gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
                     gameData.pendingEffectResolutionIndex,
-                    List.of(new AttachSelectedAurasToLegalTargetsEffect(
-                            context.remainingAuraPermanentIds())));
+                    List.of(new AttachSelectedAurasToLegalTargetsEffect()));
         }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

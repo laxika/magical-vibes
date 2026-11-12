@@ -30,10 +30,9 @@ public class AttachOneOfEquipmentToCreatureEffectHandler implements NormalEffect
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        AttachOneOfEquipmentToCreatureEffect attachEffect =
-                (AttachOneOfEquipmentToCreatureEffect) effect;
+        List<UUID> equipmentPermanentIds = entry.getResolutionResults().pickedIds();
         List<UUID> creatureIds = support.legalCreatureIds(
-                gameData, entry.getControllerId(), attachEffect.equipmentPermanentIds());
+                gameData, entry.getControllerId(), equipmentPermanentIds);
         if (creatureIds.isEmpty()) {
             return;
         }
@@ -41,14 +40,14 @@ public class AttachOneOfEquipmentToCreatureEffectHandler implements NormalEffect
         if (creatureIds.size() > 1) {
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.AttachOneOfEquipmentToCreature(
-                            attachEffect.equipmentPermanentIds()));
+                            equipmentPermanentIds));
             playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), creatureIds,
                     entry.getCard().getName() + " - Choose a creature to attach an Equipment to.");
             return;
         }
 
         resolveForCreature(gameData, entry.getControllerId(), creatureIds.getFirst(),
-                attachEffect.equipmentPermanentIds(), entry.getCard().getName(), entry.getCard());
+                equipmentPermanentIds, entry.getCard().getName(), entry.getCard());
     }
 
     public void resolveForCreature(GameData gameData, UUID controllerId, UUID creatureId,

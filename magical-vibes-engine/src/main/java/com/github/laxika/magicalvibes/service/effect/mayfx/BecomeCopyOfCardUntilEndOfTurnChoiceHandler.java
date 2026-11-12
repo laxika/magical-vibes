@@ -1,15 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BecomeCopyOfCardUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
-import java.util.ArrayList;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -33,15 +31,13 @@ public class BecomeCopyOfCardUntilEndOfTurnChoiceHandler implements MayEffectHan
                     .map(BecomeCopyOfCardUntilEndOfTurnEffect.class::cast)
                     .findFirst()
                     .orElseThrow();
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(),
-                    ability.controllerId(),
-                    ability.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(ability.effects()),
-                    null,
-                    ability.sourcePermanentId());
-            effectHandler.resolve(gameData, entry, effect);
+            // "That card" is the exiled card the question names, as it is in exile now.
+            ExiledCardEntry exiled = ability.targetCardId() == null
+                    ? null : gameData.findExiledCard(ability.targetCardId());
+            if (exiled != null) {
+                effectHandler.becomeCopy(gameData, ability.sourceCard(), ability.controllerId(),
+                        ability.sourcePermanentId(), exiled.card(), effect.additionalKeywords());
+            }
         }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }

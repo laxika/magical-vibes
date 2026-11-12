@@ -61,6 +61,6 @@ public class PutCountersOnTargetPermanentThenReflexiveEffectHandler implements N
         entry.insertEffectsToResolve(effectIndex + 1,
                 List.of(new QueueReflexiveAbilityEffect(
                         counterThen.reflexiveEffect(), counterThen.reflexiveOptionalTarget(),
-                        counterThen.reflexiveUsesTargetAsTriggeringPermanent(), null)));
+                        counterThen.reflexiveUsesTargetAsTriggeringPermanent(), false)));
     }
 }

@@ -103,7 +103,7 @@ public class EarthbendTargetLandThenFightEffectHandler implements NormalEffectHa
                 StackEntryType.TRIGGERED_ABILITY,
                 context.sourceCard(), context.controllerId(),
                 context.sourceCard().getName() + "'s reflexive ability",
-                List.of(new FightTargetsEffect(context.firstTargetId(), chosenId)),
+                List.of(FightTargetsEffect.ofReflexiveAbilityTargets()),
                 context.sourcePermanentId(), fightTargetIds);
         fightEntry.setTargetFilters(context.firstTargetId() == null
                 ? List.of(TargetFilters.creatureAnOpponentControls())

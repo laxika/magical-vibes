@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.List;
+import java.util.UUID;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -28,9 +30,8 @@ public class ReturnSelectedPermanentToHandAtEndOfCombatEffectHandler implements 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        ReturnSelectedPermanentToHandAtEndOfCombatEffect returnEffect =
-                (ReturnSelectedPermanentToHandAtEndOfCombatEffect) effect;
-        Permanent permanent = gameQueryService.findPermanentById(gameData, returnEffect.permanentId());
+        List<UUID> picks = entry.getResolutionResults().pickedIds();
+        Permanent permanent = picks.isEmpty() ? null : gameQueryService.findPermanentById(gameData, picks.getFirst());
         if (permanent == null) {
             return;
         }

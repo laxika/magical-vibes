@@ -47,12 +47,15 @@ public class CreateTokenThenEffectHandler implements NormalEffectHandlerBean {
                     new QueueReflexiveAbilityEffect(createThen.thenEffect()));
             return;
         }
-        // A replacement effect that makes more tokens makes "that token" each created token in turn. Each ability
-        // is put on the stack as a step of this resolution, so one's target is chosen before the next one's is asked.
+        // A replacement effect that makes more tokens makes "that token" each created token in turn. The tokens are
+        // the entry's picks, and each ability is put on the stack as a step of this resolution that takes the next
+        // one, so one's target is chosen before the next one's is asked.
+        List<UUID> createdIds = List.copyOf(entry.getCreatedPermanentIds()
+                .subList(createdBefore, entry.getCreatedPermanentIds().size()));
+        entry.recordPicks(createdIds);
         List<CardEffect> abilities = new ArrayList<>();
-        for (UUID createdId : List.copyOf(entry.getCreatedPermanentIds()
-                .subList(createdBefore, entry.getCreatedPermanentIds().size()))) {
-            abilities.add(new QueueReflexiveAbilityEffect(createThen.thenEffect(), createdId));
+        for (int i = 0; i < createdIds.size(); i++) {
+            abilities.add(QueueReflexiveAbilityEffect.aboutPickedPermanent(createThen.thenEffect()));
         }
         if (entry.getResolvingEffectIndex() >= 0) {
             entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, abilities);

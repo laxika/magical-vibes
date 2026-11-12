@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import java.util.UUID;
 
 @CardRegistration(set = "IKO", collectorNumber = "216")
 @CardRegistration(set = "FCA", collectorNumber = "19")
@@ -35,12 +34,11 @@ public class WinotaJoinerOfForces extends Card {
 
     private static final LibrarySelectionFollowUp HUMAN_ATTACK_FOLLOW_UP = new LibrarySelectionFollowUp() {
         @Override
-        public CardEffect createEffect(List<UUID> selectedPermanentIds) {
-            UUID selectedPermanentId = selectedPermanentIds.getFirst();
+        public CardEffect effect() {
             return SequenceEffect.of(
-                    new MakeChosenPermanentAttackingEffect(selectedPermanentId),
+                    MakeChosenPermanentAttackingEffect.pickedPermanent(),
                     new GrantKeywordToChosenCreatureUntilEndOfTurnEffect(
-                            Keyword.INDESTRUCTIBLE, selectedPermanentId));
+                            Keyword.INDESTRUCTIBLE, null, true));
         }
 
         @Override

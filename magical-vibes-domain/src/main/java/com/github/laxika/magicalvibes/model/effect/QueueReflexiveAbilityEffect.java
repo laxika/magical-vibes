@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * Puts {@code effect} onto the stack as a reflexive triggered ability.
@@ -17,30 +16,40 @@ import java.util.UUID;
  * @param optionalTarget whether the reflexive ability's controller may be chosen in place of a target
  * @param useEntryTargetAsTriggeringPermanent whether the resolving entry's target is "that creature" of the
  *                                            reflexive ability
- * @param sourcePermanentId when non-null, the permanent that is the source of the reflexive ability
- *                          instead of the permanent whose ability queued it ("When a creature is put
- *                          onto the battlefield this way, it deals damage ...")
+ * @param aboutPickedPermanent whether the reflexive ability is about a permanent an earlier step of the resolution
+ *                             picked ("when a creature is put onto the battlefield this way, it deals damage ...",
+ *                             "create a token. When you do, ... that token"): the first of the resolving entry's picks
+ *                             ({@code StackEntry.recordPicks}) is taken off them and is the source permanent of the
+ *                             reflexive ability instead of the permanent whose ability queued it, so one such step
+ *                             per picked permanent puts one ability on the stack for each, in order. With no pick
+ *                             left the ability is not put on the stack
  */
 public record QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTarget,
                                            boolean useEntryTargetAsTriggeringPermanent,
-                                           UUID sourcePermanentId)
+                                           boolean aboutPickedPermanent)
         implements CardEffect {
 
     public QueueReflexiveAbilityEffect(CardEffect effect) {
-        this(effect, false, false, null);
+        this(effect, false, false, false);
     }
 
     public QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTarget) {
-        this(effect, optionalTarget, false, null);
-    }
-
-    public QueueReflexiveAbilityEffect(CardEffect effect, UUID sourcePermanentId) {
-        this(effect, false, false, sourcePermanentId);
+        this(effect, optionalTarget, false, false);
     }
 
     /** The reflexive ability whose "that creature" is the resolving entry's target. */
     public static QueueReflexiveAbilityEffect aboutEntryTarget(CardEffect effect) {
-        return new QueueReflexiveAbilityEffect(effect, false, true, null);
+        return new QueueReflexiveAbilityEffect(effect, false, true, false);
+    }
+
+    /** The reflexive ability about the next permanent an earlier step of the resolution picked. */
+    public static QueueReflexiveAbilityEffect aboutPickedPermanent(CardEffect effect) {
+        return new QueueReflexiveAbilityEffect(effect, false, false, true);
+    }
+
+    /** {@link #aboutPickedPermanent(CardEffect)} whose controller may be chosen in place of a target. */
+    public static QueueReflexiveAbilityEffect aboutPickedPermanent(CardEffect effect, boolean optionalTarget) {
+        return new QueueReflexiveAbilityEffect(effect, optionalTarget, false, true);
     }
 
     public QueueReflexiveAbilityEffect {

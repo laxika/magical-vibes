@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -30,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -68,16 +68,32 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        QueueReflexiveAbilityEffect queueEffect = (QueueReflexiveAbilityEffect) effect;
+        resolve(gameData, entry, (QueueReflexiveAbilityEffect) effect, record -> { });
+    }
+
+    /**
+     * Puts the reflexive ability on the stack with what the preceding action of the resolution determined about it
+     * set on its record by {@code recordSetup} ("that player", "the tapped creature"), before the ability takes its
+     * route: its target is chosen against the record, and the entry that reaches the stack carries it.
+     */
+    public void resolve(GameData gameData, StackEntry entry, QueueReflexiveAbilityEffect queueEffect,
+                        Consumer<StackEntry> recordSetup) {
         // What the ability records is the same whichever route it takes: the resolving entry's X, event, source and
         // "that player". "That much" and "that many" are the event value, read as such, never the ability's X.
         StackEntry record;
-        if (queueEffect.sourcePermanentId() != null) {
+        if (queueEffect.aboutPickedPermanent()) {
             // The permanent the ability's effect acts for ("when a creature is put onto the battlefield this way, it
-            // deals damage ...") is the ability's source permanent, as it is now.
+            // deals damage ...") is the ability's source permanent, as it is now: the next permanent an earlier step
+            // of this resolution picked, taken off the entry's picks so the next such step is about the one after.
+            List<UUID> picks = entry.getResolutionResults().pickedIds();
+            if (picks.isEmpty()) {
+                return;
+            }
+            UUID pickedPermanentId = picks.getFirst();
+            entry.recordPicks(picks.subList(1, picks.size()));
             record = ReflexiveAbilitySupport.record(gameData, entry, List.of(queueEffect.effect()),
-                    entry.getCard().getName() + "'s reflexive ability", queueEffect.sourcePermanentId());
-            Permanent reflexiveSource = gameQueryService.findPermanentById(gameData, queueEffect.sourcePermanentId());
+                    entry.getCard().getName() + "'s reflexive ability", pickedPermanentId);
+            Permanent reflexiveSource = gameQueryService.findPermanentById(gameData, pickedPermanentId);
             record.setSourcePermanentSnapshot(reflexiveSource == null ? null : new Permanent(reflexiveSource));
         } else {
             record = ReflexiveAbilitySupport.record(gameData, entry, List.of(queueEffect.effect()));
@@ -85,6 +101,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         if (queueEffect.useEntryTargetAsTriggeringPermanent() && entry.getTargetId() != null) {
             record.setTriggeringPermanentId(entry.getTargetId());
         }
+        recordSetup.accept(record);
         ReflexiveAbilitySupport.route(gameData, record, () -> putOnStackOrChoose(gameData, entry, queueEffect, record));
     }
 
@@ -183,7 +200,10 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
                 .withSourcePermanentId(record.getSourcePermanentId())
                 .withDefendingPlayerId(defendingPlayerId(gameData, entry.getAttackedTargetId()))
                 .withXValue(xValue)
-                .withEventValue(entry.getEventValue());
+                .withEventValue(entry.getEventValue())
+                .withTriggeringPermanentId(record.getTriggeringPermanentId())
+                .withTriggeringPermanentSnapshot(record.getTriggeringPermanentSnapshot())
+                .withTriggeringPlayerId(record.getTriggeringPlayerId());
         TargetFilter groupFilter = targetGroupFilter(entry, effect);
 
         List<UUID> validPermanentIds = new ArrayList<>();

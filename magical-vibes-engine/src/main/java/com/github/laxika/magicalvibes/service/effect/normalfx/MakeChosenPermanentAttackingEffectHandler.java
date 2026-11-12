@@ -31,8 +31,14 @@ public class MakeChosenPermanentAttackingEffectHandler implements NormalEffectHa
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         MakeChosenPermanentAttackingEffect makeAttacking = (MakeChosenPermanentAttackingEffect) effect;
-        UUID permanentId = makeAttacking.permanentId() == null
-                ? entry.getSourcePermanentId() : makeAttacking.permanentId();
+        UUID permanentId;
+        if (makeAttacking.picked()) {
+            List<UUID> picks = entry.getResolutionResults().pickedIds();
+            permanentId = picks.isEmpty() ? null : picks.getFirst();
+        } else {
+            permanentId = makeAttacking.permanentId() == null
+                    ? entry.getSourcePermanentId() : makeAttacking.permanentId();
+        }
         Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
         if (permanent == null || !gameQueryService.isCreature(gameData, permanent)) {
             return;

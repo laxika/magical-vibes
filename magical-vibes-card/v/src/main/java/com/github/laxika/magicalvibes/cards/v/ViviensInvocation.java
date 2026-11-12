@@ -15,19 +15,17 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 import java.util.List;
-import java.util.UUID;
 
 @CardRegistration(set = "M19", collectorNumber = "209")
 public class ViviensInvocation extends Card {
 
     private static final LibrarySelectionFollowUp DAMAGE_FOLLOW_UP = new LibrarySelectionFollowUp() {
         @Override
-        public CardEffect createEffect(List<UUID> selectedPermanentIds) {
-            return new QueueReflexiveAbilityEffect(
+        public CardEffect effect() {
+            return QueueReflexiveAbilityEffect.aboutPickedPermanent(
                     new SourcePermanentDealsPowerDamageToTargetCreatureEffect(new PermanentAllOfPredicate(List.of(
                             new PermanentIsCreaturePredicate(),
-                            new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))),
-                    selectedPermanentIds.getFirst());
+                            new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())))));
         }
 
         @Override

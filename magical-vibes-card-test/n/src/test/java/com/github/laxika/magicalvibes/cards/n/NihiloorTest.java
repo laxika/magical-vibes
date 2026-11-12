@@ -92,6 +92,27 @@ class NihiloorTest extends BaseCardTest {
     }
 
     @Test
+    void reflexiveAbilityRecordsThatPlayerAndTheTappedCreature() {
+        Permanent tapper = addCreatureReady(player1, new BalefulStrix());
+        Permanent withinPower = harness.addToBattlefieldAndReturn(player2, new BalefulStrix());
+        Permanent tooBig = harness.addToBattlefieldAndReturn(player2, new BalefulStrix());
+        tooBig.setPowerModifier(3);
+        Permanent ownCreature = addCreatureReady(player1, new BalefulStrix());
+        castNihiloor();
+
+        harness.handleMultiplePermanentsChosen(player1, List.of(tapper.getId()));
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(
+                PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(withinPower.getId())
+                .doesNotContain(tooBig.getId(), ownCreature.getId(), tapper.getId());
+        harness.handlePermanentChosen(player1, withinPower.getId());
+
+        assertThat(gd.stack.getLast().getTriggeringPlayerId()).isEqualTo(player2.getId());
+        assertThat(gd.stack.getLast().getTriggeringPermanentId()).isEqualTo(tapper.getId());
+    }
+
+    @Test
     void targetBecomesIllegalWhenTappedCreaturesPowerDrops() {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new BalefulStrix());
         opponentCreature.setPowerModifier(1);

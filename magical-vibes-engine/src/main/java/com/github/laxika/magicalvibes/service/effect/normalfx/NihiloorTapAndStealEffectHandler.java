@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.NihiloorTapAndStealEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostTrackedPermanentPowerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostTriggeringPermanentPowerPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -26,6 +26,13 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class NihiloorTapAndStealEffectHandler implements NormalEffectHandlerBean {
+
+    private static final GainControlOfTargetEffect GAIN_CONTROL = GainControlOfTargetEffect.withTargetPredicate(
+            ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD,
+            new PermanentAllOfPredicate(List.of(
+                    new PermanentIsCreaturePredicate(),
+                    new PermanentControlledByTriggeringPlayerPredicate(),
+                    new PermanentPowerAtMostTriggeringPermanentPowerPredicate())));
 
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
@@ -65,19 +72,18 @@ public class NihiloorTapAndStealEffectHandler implements NormalEffectHandlerBean
                     && gameQueryService.isCreature(gameData, tappedCreature)
                     && controllerId.equals(gameQueryService.findPermanentController(gameData, tappedCreature.getId()))
                     && tapUntapSupport.tapPermanent(gameData, tappedCreature)) {
-                int power = gameQueryService.getEffectivePower(gameData, tappedCreature);
-                context.resolvingEntry().setEventValue(power);
-                context.resolvingEntry().setXValue(power);
-                GainControlOfTargetEffect controlEffect = GainControlOfTargetEffect.withTargetPredicate(
-                        ControlDuration.WHILE_SOURCE_ON_BATTLEFIELD,
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentControlledByPlayerPredicate(context.opponentId()),
-                                new PermanentPowerAtMostTrackedPermanentPowerPredicate(tappedCreature.getId()))));
+                // "That player" and "the tapped creature" of the reflexive ability are its triggering player and
+                // permanent: its target is chosen, and judged again as it resolves, against the tapped creature's
+                // power as it is then (CR 608.2h).
                 queueReflexiveAbilityEffectHandler.resolve(
                         gameData,
                         context.resolvingEntry(),
-                        new QueueReflexiveAbilityEffect(controlEffect));
+                        new QueueReflexiveAbilityEffect(GAIN_CONTROL),
+                        record -> {
+                            record.setTriggeringPlayerId(context.opponentId());
+                            record.setTriggeringPermanentId(tappedCreature.getId());
+                            record.setTriggeringPermanent(tappedCreature);
+                        });
             }
         }
 

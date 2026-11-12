@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
 
 import java.util.List;
 import java.util.UUID;
@@ -14,9 +13,8 @@ import java.util.UUID;
 public record TransformSelectedPermanentFollowUp() implements LibrarySelectionFollowUp {
 
     @Override
-    public CardEffect createEffect(List<UUID> selectedPermanentIds) {
-        return new MayEffect(new TransformChosenPermanentEffect(
-                new PermanentIsSpecificPermanentPredicate(selectedPermanentIds.getFirst())), prompt());
+    public CardEffect effect() {
+        return new MayEffect(TransformChosenPermanentEffect.pickedPermanent(), prompt());
     }
 
     @Override

@@ -4356,12 +4356,26 @@ public class LibraryChoiceHandlerService {
         }
 
         StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
-        CardEffect followUpEffect = followUp.createEffect(selectedPermanentIds);
+        CardEffect followUpEffect = followUp.effect();
         if (followUp.optional()) {
-            gameData.stack.add(ReflexiveAbilitySupport.record(gameData, sourceEntry,
-                    List.of(new MayEffect(followUpEffect, followUp.prompt()))));
+            StackEntry record = ReflexiveAbilitySupport.record(gameData, sourceEntry,
+                    List.of(new MayEffect(followUpEffect, followUp.prompt())));
+            recordSelectedPermanents(record, selectedPermanentIds);
+            gameData.stack.add(record);
         } else {
+            recordSelectedPermanents(sourceEntry, selectedPermanentIds);
             sourceEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(followUpEffect));
+        }
+    }
+
+    /**
+     * The permanents a library-to-battlefield effect put onto the battlefield, on the entry its follow-up resolves
+     * in: its picks and, when there is one, its chosen permanent, which the follow-up's effect reads.
+     */
+    private static void recordSelectedPermanents(StackEntry entry, List<UUID> selectedPermanentIds) {
+        entry.recordPicks(selectedPermanentIds);
+        if (selectedPermanentIds.size() == 1) {
+            entry.setChosenPermanentId(selectedPermanentIds.getFirst());
         }
     }
 

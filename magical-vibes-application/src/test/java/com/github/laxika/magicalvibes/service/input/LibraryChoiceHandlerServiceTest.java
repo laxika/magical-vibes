@@ -225,8 +225,10 @@ class LibraryChoiceHandlerServiceTest {
                 eq(gd), eq(player1Id), entered.capture(), any(Set.class), any(List.class), isNull());
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(new MayEffect(
-                new AttachOneOfEquipmentToSamuraiEffect(List.of(entered.getValue().getId())),
+                new AttachOneOfEquipmentToSamuraiEffect(),
                 "Attach one of those Equipment to a Samurai you control?"));
+        assertThat(gd.stack.getFirst().getResolutionResults().pickedIds())
+                .containsExactly(entered.getValue().getId());
     }
 
     @Nested

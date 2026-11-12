@@ -29,10 +29,9 @@ public class AttachOneOfEquipmentToSamuraiEffectHandler implements NormalEffectH
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        AttachOneOfEquipmentToSamuraiEffect attachEffect =
-                (AttachOneOfEquipmentToSamuraiEffect) effect;
+        List<UUID> equipmentPermanentIds = entry.getResolutionResults().pickedIds();
         List<UUID> samuraiIds = support.legalSamuraiIds(
-                gameData, entry.getControllerId(), attachEffect.equipmentPermanentIds());
+                gameData, entry.getControllerId(), equipmentPermanentIds);
         if (samuraiIds.isEmpty()) {
             return;
         }
@@ -40,14 +39,14 @@ public class AttachOneOfEquipmentToSamuraiEffectHandler implements NormalEffectH
         if (samuraiIds.size() > 1) {
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.AttachEquipmentToSamurai(
-                            attachEffect.equipmentPermanentIds()));
+                            equipmentPermanentIds));
             playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), samuraiIds,
                     entry.getCard().getName() + " - Choose a Samurai to attach an Equipment to.");
             return;
         }
 
         resolveForSamurai(gameData, entry.getControllerId(), samuraiIds.getFirst(),
-                attachEffect.equipmentPermanentIds(), entry.getCard().getName());
+                equipmentPermanentIds, entry.getCard().getName());
     }
 
     public void resolveForSamurai(GameData gameData, UUID controllerId, UUID samuraiId,

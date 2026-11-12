@@ -1438,10 +1438,10 @@ public class GraveyardChoiceHandlerService {
                         && card.hasType(CardType.CREATURE)) {
                     gameData.pendingMayAbilities.add(new PendingMayAbility(
                             pendingEntry.getCard(), pendingEntry.getControllerId(),
-                            List.of(new BecomeCopyOfCardUntilEndOfTurnEffect(card)),
+                            List.of(BecomeCopyOfCardUntilEndOfTurnEffect.ofQuestionCard()),
                             "Have " + pendingEntry.getCard().getName() + " become a copy of "
                                     + card.getName() + " until end of turn?",
-                            null, null, pendingEntry.getSourcePermanentId()));
+                            card.getId(), null, pendingEntry.getSourcePermanentId()));
                 }
             }
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);

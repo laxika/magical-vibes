@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import java.util.UUID;
 
 @CardRegistration(set = "TLE", collectorNumber = "78")
 @CardRegistration(set = "TLE", collectorNumber = "172")
@@ -29,8 +28,8 @@ public class JetRebelLeader extends Card {
 
     private static final LibrarySelectionFollowUp ATTACK_FOLLOW_UP = new LibrarySelectionFollowUp() {
         @Override
-        public CardEffect createEffect(List<UUID> selectedPermanentIds) {
-            return new MakeChosenPermanentAttackingEffect(selectedPermanentIds.getFirst());
+        public CardEffect effect() {
+            return MakeChosenPermanentAttackingEffect.pickedPermanent();
         }
 
         @Override

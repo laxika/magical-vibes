@@ -28,7 +28,11 @@ public class FightTargetsEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (FightTargetsEffect) effect;
 
-        boolean hasCapturedTargets = e.secondTargetId() != null;
+        boolean hasCapturedTargets = e.reflexiveAbilityTargets();
+        List<UUID> entryTargets = entry.getTargetIds();
+        if (hasCapturedTargets && entryTargets.isEmpty()) {
+            return;
+        }
         int firstTargetGroup = firstTargetGroup(entry, e);
         int secondTargetGroup = secondTargetGroup(entry, e);
         if (e.useBoundTargetGroupAndNext()) {
@@ -41,10 +45,10 @@ public class FightTargetsEffectHandler implements NormalEffectHandlerBean {
         }
 
         List<UUID> firstGroup = hasCapturedTargets
-                ? e.firstTargetId() == null ? List.of() : List.of(e.firstTargetId())
+                ? entryTargets.size() < 2 ? List.of() : List.of(entryTargets.get(entryTargets.size() - 2))
                 : entry.targetsForGroup(firstTargetGroup);
         List<UUID> secondGroup = hasCapturedTargets
-                ? List.of(e.secondTargetId())
+                ? List.of(entryTargets.getLast())
                 : entry.targetsForGroup(secondTargetGroup);
         if (firstGroup.isEmpty() || secondGroup.isEmpty()) {
             return; // Optional target not chosen ("up to one") — no fight happens
