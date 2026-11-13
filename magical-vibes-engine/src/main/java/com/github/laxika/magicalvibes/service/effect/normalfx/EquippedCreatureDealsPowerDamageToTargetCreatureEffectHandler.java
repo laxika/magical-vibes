@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedCreatureDealsPowerDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -51,9 +50,7 @@ public class EquippedCreatureDealsPowerDamageToTargetCreatureEffectHandler imple
             if (lastKnown == null || lastKnownControllerId == null || entry.getTriggeringPermanentPowerAtTrigger() == null) {
                 return;
             }
-            StackEntry lastKnownEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    lastKnown.getCard(),
+            StackEntry lastKnownEntry = StackEntry.carrier(lastKnown.getCard(),
                     lastKnownControllerId,
                     lastKnown.getCard().getName() + "'s ability",
                     List.of(),
@@ -82,9 +79,7 @@ public class EquippedCreatureDealsPowerDamageToTargetCreatureEffectHandler imple
         if (creatureControllerId == null) {
             return;
         }
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                creature.getCard(),
+        StackEntry damageEntry = StackEntry.carrier(creature.getCard(),
                 creatureControllerId,
                 creature.getCard().getName() + "'s ability",
                 List.of(),

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -168,8 +170,7 @@ class OmenMachineDrawStepEffectHandlerTest {
             void logsWhenLibraryEmpty() {
                 Card sourceCard = createCard("Omen Machine");
 
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+                StackEntry entry = TestStackDoor.triggered(sourceCard, player1Id, sourceCard.getName(),
                         List.of(new OmenMachineDrawStepEffect()), 0, player1Id, null
                 );
 
@@ -185,8 +186,7 @@ class OmenMachineDrawStepEffectHandlerTest {
                 Card landCard = createLandCard("Forest");
                 gd.playerDecks.get(player1Id).add(landCard);
 
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+                StackEntry entry = TestStackDoor.triggered(sourceCard, player1Id, sourceCard.getName(),
                         List.of(new OmenMachineDrawStepEffect()), 0, player1Id, null
                 );
 
@@ -204,8 +204,7 @@ class OmenMachineDrawStepEffectHandlerTest {
                 Card sorceryCard = createSorceryCard("Wrath of God");
                 gd.playerDecks.get(player1Id).add(sorceryCard);
 
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+                StackEntry entry = TestStackDoor.triggered(sourceCard, player1Id, sourceCard.getName(),
                         List.of(new OmenMachineDrawStepEffect()), 0, player1Id, null
                 );
 
@@ -224,8 +223,7 @@ class OmenMachineDrawStepEffectHandlerTest {
                 targetedCard.addSpellEffect(new ExileTargetPermanentEffect());
                 gd.playerDecks.get(player1Id).add(targetedCard);
 
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+                StackEntry entry = TestStackDoor.triggered(sourceCard, player1Id, sourceCard.getName(),
                         List.of(new OmenMachineDrawStepEffect()), 0, player1Id, null
                 );
 

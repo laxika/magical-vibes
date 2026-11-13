@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.b.BearUmbra;
+import com.github.laxika.magicalvibes.cards.c.CoalitionWarbrute;
 import com.github.laxika.magicalvibes.cards.e.EiganjoExemplar;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JovensFerrets;
 import com.github.laxika.magicalvibes.cards.k.KaitoShizuki;
 import com.github.laxika.magicalvibes.cards.o.OathOfKaya;
 import com.github.laxika.magicalvibes.cards.r.Roterothopter;
+import com.github.laxika.magicalvibes.cards.s.SublimeArchangel;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -21,7 +24,8 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({IsshinTwoHeavensAsOne.class, JovensFerrets.class, Roterothopter.class,
-        BearUmbra.class, EiganjoExemplar.class, KaitoShizuki.class, OathOfKaya.class})
+        BearUmbra.class, EiganjoExemplar.class, KaitoShizuki.class, OathOfKaya.class, SublimeArchangel.class,
+        GrizzlyBears.class, CoalitionWarbrute.class})
 class IsshinTwoHeavensAsOneTest extends BaseCardTest {
 
     @Test
@@ -34,6 +38,22 @@ class IsshinTwoHeavensAsOneTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(ferrets.getToughnessModifier()).isEqualTo(4);
+    }
+
+    @Test
+    @DisplayName("Doubles the exalted abilities a static ability grants, as it doubles a printed exalted")
+    void doublesGrantedExalted() {
+        addCreatureReady(player1, new IsshinTwoHeavensAsOne());
+        addCreatureReady(player1, new SublimeArchangel());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(2));
+        resolveAllTriggers();
+
+        // Sublime Archangel's own exalted and the exalted it gives Isshin and the bears: three abilities a creature
+        // attacking alone made trigger, each twice.
+        assertThat(bears.getPowerModifier()).isEqualTo(6);
+        assertThat(bears.getToughnessModifier()).isEqualTo(6);
     }
 
     @Test
@@ -125,5 +145,19 @@ class IsshinTwoHeavensAsOneTest extends BaseCardTest {
 
         harness.assertLife(player1, 24);
         harness.assertLife(player2, 16);
+    }
+
+    @Test
+    @DisplayName("Does not double enlist's \"when you do\": it triggers on the enlist tap, not on the attack")
+    void doesNotDoubleEnlist() {
+        addCreatureReady(player1, new IsshinTwoHeavensAsOne());
+        Permanent warbrute = addCreatureReady(player1, new CoalitionWarbrute());
+        Permanent supporter = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(player1, List.of(1));
+        harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
+        resolveAllTriggers();
+
+        assertThat(warbrute.getPowerModifier()).isEqualTo(2);
     }
 }

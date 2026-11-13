@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -56,9 +55,7 @@ public class EnchantedCreatureDealsDamageToEachOpponentEffectHandler implements 
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (playerId.equals(entry.getControllerId()) || playerId.equals(entry.getTargetId())) continue;
 
-            StackEntry damageEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
+            StackEntry damageEntry = StackEntry.carrier(sourceCard,
                     sourceControllerId,
                     sourceCard.getName() + "'s ability",
                     List.of(),

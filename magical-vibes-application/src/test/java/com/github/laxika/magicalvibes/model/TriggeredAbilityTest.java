@@ -3,6 +3,9 @@ package com.github.laxika.magicalvibes.model;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -162,6 +165,21 @@ class TriggeredAbilityTest {
         assertThat(ability.withInstance("granted-by:one").limitKey()).isEqualTo(fromOne.limitKey());
         assertThat(fromOne.withEffects(ZOMBIE).instance()).isEqualTo("granted-by:one");
         assertThat(fromOne.withChapterTargets(SagaChapterTargets.NONE)).isEqualTo(fromOne);
+    }
+
+    @Test
+    void abilitiesDifferingOnlyInAOneComponentWrapperKeepTheirOwnLimitKeys() {
+        CardTypePredicate land = new CardTypePredicate(CardType.LAND);
+        TriggerOptions onceEachTurn = TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN);
+        TriggeredAbility seekLand = new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), onceEachTurn,
+                new SeekLibraryEffect(1, land));
+        TriggeredAbility seekNonland = new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), onceEachTurn,
+                new SeekLibraryEffect(1, new CardNotPredicate(land)));
+
+        assertThat(seekLand.limitKey()).isNotEqualTo(seekNonland.limitKey());
+        assertThat(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), onceEachTurn,
+                new SeekLibraryEffect(1, new CardTypePredicate(CardType.LAND))).limitKey())
+                .isEqualTo(seekLand.limitKey());
     }
 
     @Test

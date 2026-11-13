@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -19,7 +21,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -130,12 +131,12 @@ class ReturnToHandEffectHandlerTest {
     }
 
     private StackEntry entryWithSource(Card card, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+        return TestStackDoor.triggered(card, controllerId,
                 card.getName() + " trigger", effects, (UUID) null, sourcePermanentId);
     }
 
     private StackEntry entryWithTarget(Card card, UUID controllerId, List<CardEffect> effects, UUID targetId) {
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+        return TestStackDoor.triggered(card, controllerId,
                 card.getName(), effects, 0, targetId, null);
     }
 

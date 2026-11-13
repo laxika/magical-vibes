@@ -64,9 +64,7 @@ public class TargetDealsPowerDamageToTargetEffectHandler implements NormalEffect
 
         UUID sourceController = gameQueryService.findPermanentController(gameData, biter.getId());
         if (sourceController == null) return;
-        StackEntry damageEntry = new StackEntry(
-                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
-                biter.getCard(), sourceController, biter.getCard().getName(), List.of(), null, biter.getId());
+        StackEntry damageEntry = StackEntry.carrier(biter.getCard(), sourceController, biter.getCard().getName(), List.of(), null, biter.getId());
         damageEntry.setSourcePermanentSnapshot(new Permanent(biter));
         int power = gameQueryService.getPowerBasedDamage(gameData, biter);
         int rawDamage = SaturatingMath.multiply(power, e.powerMultiplier());

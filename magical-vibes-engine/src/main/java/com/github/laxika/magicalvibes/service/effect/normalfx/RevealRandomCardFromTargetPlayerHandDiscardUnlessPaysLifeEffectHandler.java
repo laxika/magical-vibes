@@ -98,8 +98,5 @@ public class RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeEffectHand
         log.info("Game {} - {} discards {} ({})", gameData.id,
                 gameData.playerIdToName.get(playerId), card.getName(), sourceCard.getName());
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, card);
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-        }
     }
 }

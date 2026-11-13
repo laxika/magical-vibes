@@ -168,6 +168,13 @@ public record ExchangeControlOfTargetPermanentsEffect(
         return triggeringPermanentIsFirstTarget && !sacrificeSourceIfNoExchange;
     }
 
+    /** An opponent's permanent judged against the controller's first target, by power or by mana value. */
+    @Override
+    public boolean choosesSecondTargetAgainstFirst() {
+        return !sourceIsFirstTarget && !triggeringPermanentIsFirstTarget
+                && (requireOpponentPowerNotGreater || requireOpponentManaValueNotGreater);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         if (targetPairInSingleGroup() || sourceIsFirstTarget || triggeringPermanentIsFirstTarget) {

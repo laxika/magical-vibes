@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayGetEnergyOrPlayThisTurnEffect;
@@ -39,9 +38,7 @@ public class ExileTopCardMayGetEnergyOrPlayThisTurnHandler implements MayEffectH
         ExiledCardEntry exiledEntry = gameData.findExiledCard(effect.exiledCardId());
         if (accepted) {
             CardEffect energy = new EnergyCountersEffect(2);
-            StackEntry energyEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(),
+            StackEntry energyEntry = StackEntry.carrier(ability.sourceCard(),
                     ability.controllerId(),
                     ability.sourceCard().getName() + " gets two energy counters.",
                     List.of(energy)

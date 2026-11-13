@@ -115,7 +115,7 @@ class FiresongAndSunspeakerTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
 
         // No pending trigger targets â€” ability 2 should not have triggered
-        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)).isFalse();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
         // Stack should be empty (no triggered ability was queued)
         assertThat(gd.stack).isEmpty();
     }

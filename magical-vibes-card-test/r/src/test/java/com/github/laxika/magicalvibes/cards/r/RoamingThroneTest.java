@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.a.Abrade;
+import com.github.laxika.magicalvibes.cards.a.Acridian;
 import com.github.laxika.magicalvibes.cards.a.AshmouthHound;
 import com.github.laxika.magicalvibes.cards.e.EliteJavelineer;
 import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
@@ -26,7 +27,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RoamingThrone.class, JinGitaxiasCoreAugur.class, GhituJourneymage.class, ElvishVisionary.class, Abrade.class, MineshaftSpider.class, MarketGnome.class, RatchetFieldMedic.class, RipjawRaptor.class, Shock.class,
+@CardUsed({RoamingThrone.class, Acridian.class, JinGitaxiasCoreAugur.class, GhituJourneymage.class, ElvishVisionary.class, Abrade.class, MineshaftSpider.class, MarketGnome.class, RatchetFieldMedic.class, RipjawRaptor.class, Shock.class,
         FugitiveWizard.class, GrizzlyBears.class, ZulaportCutthroat.class, AshmouthHound.class,
         EliteJavelineer.class})
 class RoamingThroneTest extends BaseCardTest {
@@ -302,5 +303,18 @@ class RoamingThroneTest extends BaseCardTest {
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Zulaport Cutthroat")).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Roaming Throne doubles the echo ability of a creature of the chosen type (CR 702.30a, 603.3)")
+    void doublesEchoOfChosenTypeCreature() {
+        addThrone(CardSubtype.INSECT);
+        harness.castFromHand(player1, new Acridian(), "{1}{G}");
+        harness.passBothPriorities();
+
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).filteredOn(entry -> entry.getDescription().equals("Acridian's echo ability"))
+                .hasSize(2);
     }
 }

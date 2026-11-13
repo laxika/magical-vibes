@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -90,7 +92,7 @@ class MillEffectHandlerTest {
         @DisplayName("Mills the controller for a fixed count")
         void millsControllerFixedCount() {
             MillEffect effect = new MillEffect(4, MillRecipient.CONTROLLER);
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Armored Skaab"),
+            StackEntry entry = TestStackDoor.triggered(createCard("Armored Skaab"),
                     player1Id, "Armored Skaab", List.of(effect));
 
             handler.resolve(gd, entry, effect);
@@ -123,7 +125,7 @@ class MillEffectHandlerTest {
 
             MillEffect effect = new MillEffect(new CardsInHand(CountScope.TARGET_PLAYER),
                     MillRecipient.TARGET_PLAYER);
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Dreamborn Muse"),
+            StackEntry entry = TestStackDoor.triggered(createCard("Dreamborn Muse"),
                     player1Id, "Dreamborn Muse", List.of(effect), 0, player1Id, null);
 
             handler.resolve(gd, entry, effect);
@@ -136,7 +138,7 @@ class MillEffectHandlerTest {
         void millsZeroWhenHandEmpty() {
             MillEffect effect = new MillEffect(new CardsInHand(CountScope.TARGET_PLAYER),
                     MillRecipient.TARGET_PLAYER);
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Dreamborn Muse"),
+            StackEntry entry = TestStackDoor.triggered(createCard("Dreamborn Muse"),
                     player1Id, "Dreamborn Muse", List.of(effect), 0, player1Id, null);
 
             handler.resolve(gd, entry, effect);
@@ -173,7 +175,7 @@ class MillEffectHandlerTest {
             gd.stack.add(new StackEntry(StackEntryType.SORCERY_SPELL, spellCard, player1Id, "Ideas Unbound",
                     List.of()));
             MillEffect effect = new MillEffect(new TargetSpellManaValue(), MillRecipient.TARGET_PLAYER);
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Cloudhoof Kirin"),
+            StackEntry entry = TestStackDoor.triggered(createCard("Cloudhoof Kirin"),
                     player1Id, "Cloudhoof Kirin", List.of(effect), 0, player2Id, null);
             entry.setTriggeringCardId(spellCard.getId());
 
@@ -191,7 +193,7 @@ class MillEffectHandlerTest {
         @DisplayName("Mills the triggering permanent's controller as the ability resolves the event's amount")
         void millsTheTriggeringPermanentsController() {
             MillEffect effect = new MillEffect(new EventValue(), MillRecipient.TRIGGERING_PERMANENT_CONTROLLER);
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Belltower Sphinx"),
+            StackEntry entry = TestStackDoor.triggered(createCard("Belltower Sphinx"),
                     player1Id, "Belltower Sphinx", List.of(effect));
             entry.setEventValue(3);
             when(gameQueryService.findTriggeringPermanentController(gd, entry)).thenReturn(player2Id);
@@ -205,7 +207,7 @@ class MillEffectHandlerTest {
         @DisplayName("Falls back to the event's player snapshot when no controller is recorded (Mesmeric Orb)")
         void fallsBackToTheEventPlayerSnapshot() {
             MillEffect effect = new MillEffect(1, MillRecipient.TRIGGERING_PERMANENT_CONTROLLER);
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Mesmeric Orb"),
+            StackEntry entry = TestStackDoor.triggered(createCard("Mesmeric Orb"),
                     player1Id, "Mesmeric Orb", List.of(effect));
             entry.setEventPlayerIds(List.of(player2Id));
 
@@ -223,7 +225,7 @@ class MillEffectHandlerTest {
         @DisplayName("Mills each opponent but not the controller")
         void millsEachOpponentNotController() {
             MillEffect effect = new MillEffect(2, MillRecipient.EACH_OPPONENT);
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Undead Alchemist"),
+            StackEntry entry = TestStackDoor.triggered(createCard("Undead Alchemist"),
                     player1Id, "Undead Alchemist", List.of(effect));
 
             handler.resolve(gd, entry, effect);

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.VillainousChoiceState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
@@ -110,8 +109,7 @@ public class HuntedByTheFamilyEffectHandler implements NormalEffectHandlerBean {
         if (targetId == null || gameQueryService.findPermanentById(gameData, targetId) == null) {
             return;
         }
-        StackEntry targetEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, entry.getCard(), entry.getControllerId(),
+        StackEntry targetEntry = StackEntry.carrier(entry.getCard(), entry.getControllerId(),
                 entry.getDescription(), List.of(), targetId, entry.getSourcePermanentId());
         targetEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 

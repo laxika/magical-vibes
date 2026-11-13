@@ -66,6 +66,16 @@ public class StackEntry {
         return copy;
     }
 
+    /**
+     * {@link #copyForNewStackObject()} with {@code card} as the copy's card: a parked triggered ability finished with
+     * the modes chosen for it on a runtime copy of its card ({@link StackDoor}).
+     */
+    StackEntry copyForNewStackObject(Card card) {
+        StackEntry copy = new StackEntry(this, freezeCard(card));
+        copy.planarAbilityId = UUID.randomUUID();
+        return copy;
+    }
+
     private Card castCard;
     /**
      * The half of the aftermath split card {@link #aftermathHalfSource} cast as this spell, built on
@@ -93,6 +103,17 @@ public class StackEntry {
      * card's target group an effect of it is bound to; no other ability's group of its card is its target.
      */
     @Getter(AccessLevel.NONE) @Setter private boolean madeByResolution;
+    /**
+     * Whether this entry is a carrier ({@link #carrier}): it stands for an object while a resolution acts for it (the
+     * creature or permanent that deals damage, the resolving object a nested effect resolves for) and is never a stack
+     * object, so the stack refuses it.
+     */
+    @Getter(AccessLevel.NONE) private boolean carrier;
+    /**
+     * Whether the stack door has released this triggered ability's entry to the stack ({@link StackDoor#enqueue}); the
+     * stack refuses a triggered entry it has not.
+     */
+    @Getter(AccessLevel.NONE) private boolean releasedToStack;
     /**
      * Whether this triggered ability's source attacking caused it to trigger (CR 508.3a): "whenever a creature you
      * control attacking causes a triggered ability of that creature to trigger" (Firebender Ascension) watches its
@@ -1021,6 +1042,17 @@ public class StackEntry {
      * A card referenced by a stack entry is live game state shared with AI simulation copies —
      * freeze it so any later mutation of the Card object fails fast instead of leaking.
      */
+    /**
+     * {@code entryType}, which a public constructor may build: not {@link StackEntryType#TRIGGERED_ABILITY}, whose entry
+     * only the stack door ({@link StackDoor}) builds, or {@link #carrier} for an entry that is never a stack object.
+     */
+    private static StackEntryType requireNotTriggered(StackEntryType entryType) {
+        if (entryType == StackEntryType.TRIGGERED_ABILITY) {
+            throw new IllegalArgumentException("A triggered ability's stack entry is built by the stack door");
+        }
+        return entryType;
+    }
+
     private static Card freezeCard(Card card) {
         if (card != null) {
             card.freeze();
@@ -1060,7 +1092,7 @@ public class StackEntry {
 
     // Triggered ability constructor
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve) {
-        this.entryType = entryType;
+        this.entryType = requireNotTriggered(entryType);
         this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
@@ -1077,7 +1109,7 @@ public class StackEntry {
 
     // General constructor with xValue (for sorcery spells)
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, int xValue) {
-        this.entryType = entryType;
+        this.entryType = requireNotTriggered(entryType);
         this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
@@ -1094,7 +1126,7 @@ public class StackEntry {
 
     // Targeted or damage distribution spell constructor
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, int xValue, UUID targetId, Map<UUID, Integer> damageAssignments) {
-        this.entryType = entryType;
+        this.entryType = requireNotTriggered(entryType);
         this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
@@ -1113,7 +1145,7 @@ public class StackEntry {
     // Triggered ability with source permanent and xValue constructor (e.g. spell-cast self-boost by mana spent)
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description,
                       List<CardEffect> effectsToResolve, int xValue, UUID sourcePermanentId) {
-        this.entryType = entryType;
+        this.entryType = requireNotTriggered(entryType);
         this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
@@ -1130,7 +1162,7 @@ public class StackEntry {
 
     // Triggered ability with source and target permanent constructor
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, UUID targetId, UUID sourcePermanentId) {
-        this.entryType = entryType;
+        this.entryType = requireNotTriggered(entryType);
         this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
@@ -1147,7 +1179,7 @@ public class StackEntry {
 
     // Zone-aware targeted ability constructor (e.g. target a card in graveyard)
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, UUID targetId, Zone targetZone) {
-        this.entryType = entryType;
+        this.entryType = requireNotTriggered(entryType);
         this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
@@ -1166,7 +1198,7 @@ public class StackEntry {
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description,
                       List<CardEffect> effectsToResolve, UUID targetId, Zone targetZone,
                       UUID sourcePermanentId) {
-        this.entryType = entryType;
+        this.entryType = requireNotTriggered(entryType);
         this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
@@ -1186,6 +1218,18 @@ public class StackEntry {
                       List<CardEffect> effectsToResolve, int xValue, UUID targetId,
                       UUID sourcePermanentId, Map<UUID, Integer> damageAssignments,
                       Zone targetZone, List<UUID> targetCardIds, List<UUID> targetIds) {
+        this(requireNotTriggered(entryType), card, controllerId, description, effectsToResolve, xValue, targetId,
+                sourcePermanentId, damageAssignments, targetZone, targetCardIds, targetIds, true);
+    }
+
+    /**
+     * The general constructor, of any entry type: a triggered ability's entry is built here only by {@link #triggered}
+     * (the stack door's) and {@link #carrier}. {@code anyType} only tells it from the public constructor.
+     */
+    private StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description,
+                       List<CardEffect> effectsToResolve, int xValue, UUID targetId,
+                       UUID sourcePermanentId, Map<UUID, Integer> damageAssignments,
+                       Zone targetZone, List<UUID> targetCardIds, List<UUID> targetIds, boolean anyType) {
         this.entryType = entryType;
         this.card = freezeCard(card);
         this.controllerId = controllerId;
@@ -1208,7 +1252,7 @@ public class StackEntry {
 
     // Multi-target triggered ability constructor (e.g. exile up to N cards from graveyards)
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, List<UUID> targetCardIds) {
-        this.entryType = entryType;
+        this.entryType = requireNotTriggered(entryType);
         this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
@@ -1228,10 +1272,15 @@ public class StackEntry {
      * Card and CardEffect references are shared (immutable after construction).
      */
     public StackEntry(StackEntry source) {
+        this(source, source.card);
+    }
+
+    /** {@link #StackEntry(StackEntry)} with {@code card} as the copy's card. */
+    private StackEntry(StackEntry source, Card card) {
         this.subgameResult = source.subgameResult;
         this.entryType = source.entryType;
         this.bombardmentOriginalEntryType = source.bombardmentOriginalEntryType;
-        this.card = source.card;
+        this.card = card;
         this.castCard = source.castCard;
         this.aftermathHalf = source.aftermathHalf;
         this.aftermathHalfSource = source.aftermathHalfSource;
@@ -1244,6 +1293,8 @@ public class StackEntry {
         this.triggerRecordCarried = source.triggerRecordCarried;
         this.parkedAtStackDoor = source.parkedAtStackDoor;
         this.madeByResolution = source.madeByResolution;
+        this.carrier = source.carrier;
+        this.releasedToStack = source.releasedToStack;
         this.triggeredBySourceAttacking = source.triggeredBySourceAttacking;
         this.description = source.description;
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
@@ -1330,6 +1381,7 @@ public class StackEntry {
         this.delvedCards = source.delvedCards.isEmpty() ? List.of() : new ArrayList<>(source.delvedCards);
         this.ownerIdOverride = source.ownerIdOverride;
         this.kicked = source.kicked;
+        this.giftPromised = source.giftPromised;
         this.buyback = source.buyback;
         this.putCounterCostPaid = source.putCounterCostPaid;
         this.collectEvidenceCostPaid = source.collectEvidenceCostPaid;
@@ -1637,6 +1689,184 @@ public class StackEntry {
         return madeByResolution;
     }
 
+    /** Whether this entry is a carrier, never a stack object (see {@link #carrier}). */
+    public boolean isCarrier() {
+        return carrier;
+    }
+
+    /**
+     * A carrier: an entry that is never a stack object, made while a spell or ability resolves (CR 608.2) to stand for
+     * an object that acts in it: the permanent that deals damage ("target creature deals damage equal to its power",
+     * the creature is the source of that damage, CR 120.1), or the resolving object an effect resolves for inside another
+     * effect ("unless that player pays", "if they don't"). Its card, controller, effects, targets and source permanent
+     * are what the acting effect reads, and it counts as an ability where damage asks whether a spell dealt it; the
+     * stack ({@code GameData.enqueueTrigger}, {@code GameData.stack}) refuses it. A triggered ability's own stack entry
+     * is built only by the stack door. The overloads mirror the constructors.
+     */
+    public static StackEntry carrier(Card card, UUID controllerId, String description, List<CardEffect> effects) {
+        return asCarrier(new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId, description, effects, 0, null,
+                null, null, null, null, null, true));
+    }
+
+    public static StackEntry carrier(Card card, UUID controllerId, String description, List<CardEffect> effects,
+                                     int xValue) {
+        return asCarrier(new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId, description, effects,
+                xValue, null, null, null, null, null, null, true));
+    }
+
+    public static StackEntry carrier(Card card, UUID controllerId, String description, List<CardEffect> effects,
+                                     int xValue, UUID targetId, Map<UUID, Integer> damageAssignments) {
+        return asCarrier(new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId, description, effects,
+                xValue, targetId, null, damageAssignments, null, null, null, true));
+    }
+
+    public static StackEntry carrier(Card card, UUID controllerId, String description, List<CardEffect> effects,
+                                     int xValue, UUID sourcePermanentId) {
+        return asCarrier(new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId, description, effects,
+                xValue, null, sourcePermanentId, null, null, null, null, true));
+    }
+
+    public static StackEntry carrier(Card card, UUID controllerId, String description, List<CardEffect> effects,
+                                     UUID targetId, UUID sourcePermanentId) {
+        return asCarrier(new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId, description, effects,
+                0, targetId, sourcePermanentId, null, null, null, null, true));
+    }
+
+    public static StackEntry carrier(Card card, UUID controllerId, String description, List<CardEffect> effects,
+                                     UUID targetId, Zone targetZone) {
+        return asCarrier(new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId, description, effects,
+                0, targetId, null, null, targetZone, null, null, true));
+    }
+
+    public static StackEntry carrier(Card card, UUID controllerId, String description, List<CardEffect> effects,
+                                     UUID sourcePermanentId, List<UUID> targetIds) {
+        return asCarrier(new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId, description, effects,
+                0, null, sourcePermanentId, null, null, null, targetIds, true));
+    }
+
+    public static StackEntry carrier(Card card, UUID controllerId, String description, List<CardEffect> effects,
+                                     List<UUID> targetCardIds) {
+        return asCarrier(new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId, description, effects,
+                0, null, null, null, null, targetCardIds, null, true));
+    }
+
+    public static StackEntry carrier(Card card, UUID controllerId, String description, List<CardEffect> effects,
+                                     int xValue, UUID targetId, UUID sourcePermanentId,
+                                     Map<UUID, Integer> damageAssignments, Zone targetZone, List<UUID> targetCardIds,
+                                     List<UUID> targetIds) {
+        return asCarrier(new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId, description, effects,
+                xValue, targetId, sourcePermanentId, damageAssignments, targetZone, targetCardIds, targetIds, true));
+    }
+
+    /**
+     * An entry made from {@code source}, a stack object or the record of one, of its type and as released to the stack
+     * as it is (a copy of a spell or ability, CR 707.10; the record of a resolving spell or ability another effect's
+     * handler resolves for, CR 608.2): the arguments of the {@code StackEntry} constructor of the same shape, without
+     * the entry type. A copy of a triggered ability is a triggered ability without the stack door building it anew.
+     */
+    public static StackEntry derivedFrom(StackEntry source, Card card, UUID controllerId, String description, List<CardEffect> effects) {
+        return derived(source, card, controllerId, description, effects, 0, null, null, null, null, null, null);
+    }
+
+    /** {@link #derivedFrom(StackEntry, Card, UUID, String, List)} of another constructor shape. */
+    public static StackEntry derivedFrom(StackEntry source, Card card, UUID controllerId, String description, List<CardEffect> effects, int xValue) {
+        return derived(source, card, controllerId, description, effects, xValue, null, null, null, null, null, null);
+    }
+
+    /** {@link #derivedFrom(StackEntry, Card, UUID, String, List)} of another constructor shape. */
+    public static StackEntry derivedFrom(StackEntry source, Card card, UUID controllerId, String description, List<CardEffect> effects, int xValue, UUID targetId, Map<UUID, Integer> damageAssignments) {
+        return derived(source, card, controllerId, description, effects, xValue, targetId, null, damageAssignments, null, null, null);
+    }
+
+    /** {@link #derivedFrom(StackEntry, Card, UUID, String, List)} of another constructor shape. */
+    public static StackEntry derivedFrom(StackEntry source, Card card, UUID controllerId, String description, List<CardEffect> effects, int xValue, UUID sourcePermanentId) {
+        return derived(source, card, controllerId, description, effects, xValue, null, sourcePermanentId, null, null, null, null);
+    }
+
+    /** {@link #derivedFrom(StackEntry, Card, UUID, String, List)} of another constructor shape. */
+    public static StackEntry derivedFrom(StackEntry source, Card card, UUID controllerId, String description, List<CardEffect> effects, UUID targetId, UUID sourcePermanentId) {
+        return derived(source, card, controllerId, description, effects, 0, targetId, sourcePermanentId, null, null, null, null);
+    }
+
+    /** {@link #derivedFrom(StackEntry, Card, UUID, String, List)} of another constructor shape. */
+    public static StackEntry derivedFrom(StackEntry source, Card card, UUID controllerId, String description, List<CardEffect> effects, UUID targetId, Zone targetZone) {
+        return derived(source, card, controllerId, description, effects, 0, targetId, null, null, targetZone, null, null);
+    }
+
+    /** {@link #derivedFrom(StackEntry, Card, UUID, String, List)} of another constructor shape. */
+    public static StackEntry derivedFrom(StackEntry source, Card card, UUID controllerId, String description, List<CardEffect> effects, UUID targetId, Zone targetZone, UUID sourcePermanentId) {
+        return derived(source, card, controllerId, description, effects, 0, targetId, sourcePermanentId, null, targetZone, null, null);
+    }
+
+    /** {@link #derivedFrom(StackEntry, Card, UUID, String, List)} of another constructor shape. */
+    public static StackEntry derivedFrom(StackEntry source, Card card, UUID controllerId, String description, List<CardEffect> effects, int xValue, UUID targetId, UUID sourcePermanentId, Map<UUID, Integer> damageAssignments, Zone targetZone,
+                                         List<UUID> targetCardIds, List<UUID> targetIds) {
+        return derived(source, card, controllerId, description, effects, xValue, targetId, sourcePermanentId, damageAssignments, targetZone, targetCardIds, targetIds);
+    }
+
+    /** {@link #derivedFrom(StackEntry, Card, UUID, String, List)} of another constructor shape. */
+    public static StackEntry derivedFrom(StackEntry source, Card card, UUID controllerId, String description, List<CardEffect> effects, List<UUID> targetCardIds) {
+        return derived(source, card, controllerId, description, effects, 0, null, null, null, null, targetCardIds, null);
+    }
+
+    /** {@link #derivedFrom(StackEntry, Card, UUID, String, List)} of another constructor shape. */
+    public static StackEntry derivedFrom(StackEntry source, Card card, UUID controllerId, String description, List<CardEffect> effects, UUID sourcePermanentId, List<UUID> targetIds) {
+        return derived(source, card, controllerId, description, effects, 0, null, sourcePermanentId, null, null, null, targetIds);
+    }
+
+    /** {@link #derivedFrom(StackEntry, Card, UUID, String, List)} of another constructor shape. */
+    public static StackEntry derivedFrom(StackEntry source, Card card, UUID controllerId, String description, List<CardEffect> effects, int xValue, List<UUID> targetIds) {
+        return derived(source, card, controllerId, description, effects, xValue, null, null, null, null, null, targetIds);
+    }
+
+    private static StackEntry derived(StackEntry source, Card card, UUID controllerId, String description,
+                                      List<CardEffect> effects, int xValue, UUID targetId, UUID sourcePermanentId,
+                                      Map<UUID, Integer> damageAssignments, Zone targetZone,
+                                      List<UUID> targetCardIds, List<UUID> targetIds) {
+        StackEntry entry = new StackEntry(source.entryType, card, controllerId, description, effects, xValue, targetId,
+                sourcePermanentId, damageAssignments, targetZone, targetCardIds, targetIds, true);
+        entry.releasedToStack = source.releasedToStack;
+        entry.carrier = source.carrier;
+        return entry;
+    }
+
+    /**
+     * A carrier of {@code entryType} (see {@link #carrier(Card, UUID, String, List)}): the object that deals damage, of
+     * the type the damage's source was on the stack, which stands for it while a resolution acts.
+     */
+    public static StackEntry carrier(StackEntryType entryType, Card card, UUID controllerId, String description,
+                                     List<CardEffect> effects, UUID targetId, UUID sourcePermanentId) {
+        return asCarrier(new StackEntry(entryType, card, controllerId, description, effects, 0, targetId,
+                sourcePermanentId, null, null, null, null, true));
+    }
+
+    /**
+     * A new triggered ability's entry, not yet released to the stack, with {@code damageAssignments} as its division
+     * (or {@code null}): built only through {@link StackDoor}.
+     */
+    static StackEntry triggered(Card card, UUID controllerId, String description, List<CardEffect> effects,
+                                int xValue, UUID targetId, UUID sourcePermanentId,
+                                Map<UUID, Integer> damageAssignments, Zone targetZone,
+                                List<UUID> targetCardIds, List<UUID> targetIds) {
+        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId, description, effects, xValue,
+                targetId, sourcePermanentId, damageAssignments, targetZone, targetCardIds, targetIds, true);
+    }
+
+    /** Marks this triggered entry released to the stack by the stack door ({@link StackDoor#enqueue}). */
+    void releaseToStack() {
+        releasedToStack = true;
+    }
+
+    /** Whether the stack door released this triggered entry to the stack (see {@link #releasedToStack}). */
+    public boolean isReleasedToStack() {
+        return releasedToStack;
+    }
+
+    private static StackEntry asCarrier(StackEntry entry) {
+        entry.carrier = true;
+        return entry;
+    }
+
     /** Whether the stack door holds this entry while its controller makes a choice (see {@link #parkedAtStackDoor}). */
     public boolean isParkedAtStackDoor() {
         return parkedAtStackDoor;
@@ -1706,7 +1936,7 @@ public class StackEntry {
 
     // Multi-target triggered ability with source permanent constructor (e.g. "two target players exchange life totals")
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, UUID sourcePermanentId, List<UUID> targetIds) {
-        this.entryType = entryType;
+        this.entryType = requireNotTriggered(entryType);
         this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
@@ -1723,7 +1953,7 @@ public class StackEntry {
 
     // Multi-target permanent spell constructor (e.g. "one or two target creatures")
     public StackEntry(StackEntryType entryType, Card card, UUID controllerId, String description, List<CardEffect> effectsToResolve, int xValue, List<UUID> targetIds) {
-        this.entryType = entryType;
+        this.entryType = requireNotTriggered(entryType);
         this.card = freezeCard(card);
         this.controllerId = controllerId;
         this.description = description;
@@ -1969,7 +2199,7 @@ public class StackEntry {
     }
 
     public void setEntryType(StackEntryType entryType) {
-        this.entryType = entryType;
+        this.entryType = requireNotTriggered(entryType);
     }
 
     public void convertToBombardmentMissileSpell(List<CardEffect> missileEffects) {

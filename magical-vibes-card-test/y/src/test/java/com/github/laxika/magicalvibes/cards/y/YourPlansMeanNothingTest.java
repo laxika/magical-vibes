@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -67,9 +68,7 @@ class YourPlansMeanNothingTest extends BaseCardTest {
 
     private void resolveScheme(List<java.util.UUID> targetIds) {
         YourPlansMeanNothing scheme = new YourPlansMeanNothing();
-        gd.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                scheme,
+        gd.stack.add(TestStackDoor.triggered(scheme,
                 player1.getId(),
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects(),

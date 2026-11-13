@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AbilityZones;
@@ -73,7 +75,6 @@ import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -247,16 +248,6 @@ class TriggerRouteRecordTest extends BaseCardTest {
             excluded.put("a creature deals damage to enchanted planeswalker / " + targeted, "a fixture Aura whose "
                     + "target group is a creature can't stay attached to a planeswalker: it is put into the "
                     + "graveyard before the damage is dealt");
-        }
-        // The combat damage step holds the plain ability's entry off the stack while state-based actions run, so the
-        // creature it names that dies isn't stamped with its last-known information; a parked choice's record is.
-        for (String watch : List.of("deals damage to a creature", "a creature you control deals damage to a creature")) {
-            for (Variant targeted : List.of(Variant.TARGET, Variant.TWO_GROUPS, Variant.GRAVE, Variant.MODAL,
-                    Variant.MODAL_TARGET)) {
-                excluded.put(watch + " / " + targeted, "the combat damage step holds the plain ability's entry off "
-                        + "the stack as the damaged creature dies, so only the parked record gets its last-known "
-                        + "information (C32)");
-            }
         }
         excluded.put("this champions a creature / GRAVE", "the championed ability's target choice offers players "
                 + "and permanents only (no card prints a graveyard card): the ability is removed");
@@ -782,8 +773,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         Triggers::youUntapPermanentsDuringUntapStep, CardType.ENCHANTMENT,
                         TriggerRouteRecordTest::untapStepFinishes),
                 collected("you set a scheme in motion", "youSetSchemeInMotion", Triggers::youSetSchemeInMotion,
-                        (test, collection) -> collection.checkSchemeSetInMotionTriggers(test.gd, new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY, card("Fixture Scheme", CardType.SCHEME),
+                        (test, collection) -> collection.checkSchemeSetInMotionTriggers(test.gd, TestStackDoor.triggered(card("Fixture Scheme", CardType.SCHEME),
                                 test.player1.getId(), "Fixture Scheme's ability",
                                 new ArrayList<>(List.of(new GainLifeEffect(1)))))),
                 collected("you give a gift", "youGiveGift", Triggers::youGiveGift,
@@ -1652,8 +1642,8 @@ class TriggerRouteRecordTest extends BaseCardTest {
                             test.harness.inMutationScope(() -> phasing.phaseOut(test.gd, permanents));
                             test.harness.inMutationScope(() -> phasing.applyPhasing(test.gd, test.player1.getId()));
                             test.answerAll();
-                            StepTriggerService steps = bean(StepTriggerService.class);
-                            test.harness.inMutationScope(() -> steps.processNextPhasesInTriggerTarget(test.gd));
+                            TriggerCollectionService triggers = bean(TriggerCollectionService.class);
+                            test.harness.inMutationScope(() -> triggers.beginStackDoorChoices(test.gd));
                         }),
                 watch("a permanent you control transforms", "transforms",
                         () -> Triggers.transforms(null, ObjectRelation.YOU_CONTROL), CardType.ENCHANTMENT,
@@ -2178,9 +2168,8 @@ class TriggerRouteRecordTest extends BaseCardTest {
     private void librarySearched(List<Card> cards, Player searcher) {
         fixturePermanents(cards);
         mainPhaseOf(player1);
-        GameLogService gameLog = bean(GameLogService.class);
         harness.inMutationScope(() ->
-                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gd, gameLog, searcher.getId()));
+                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gd, searcher.getId()));
     }
 
     /** Each fixture is a Curse attached to player1, who draws a card. */

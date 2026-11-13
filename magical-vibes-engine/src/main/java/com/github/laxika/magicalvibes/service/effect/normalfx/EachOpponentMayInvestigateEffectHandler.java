@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMayInvestigateEffect;
@@ -93,9 +92,7 @@ public class EachOpponentMayInvestigateEffectHandler implements NormalEffectHand
 
     private void createClues(GameData gameData, Card sourceCard, UUID sourceControllerId,
                              UUID tokenControllerId, int amount) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
+        StackEntry entry = StackEntry.carrier(sourceCard,
                 sourceControllerId,
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(CreateTokenEffect.ofClueToken(amount))));

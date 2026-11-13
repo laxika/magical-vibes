@@ -718,32 +718,7 @@ public class GraveyardChoiceHandlerService {
                         }
                         return;
                     }
-
-                    
-                    gameLogService.append(gameData, GameLog.builder().text(player.getUsername() + " targets ").card(card).text(" in graveyard with ").card(mayAbilitySourceCard).text("'s ability.").build());
-                    log.info("Game {} - {} targets {} in graveyard for may ability", gameData.id,
-                            player.getUsername(), card.getName());
-
-                    // Non-stack flow: create a new stack entry. The chosen target is a card in a
-                    // graveyard, so the entry declares that zone — otherwise an effect that really
-                    // does target (Isareth the Awakener's reanimation trigger) would be checked
-                    // against the battlefield on resolution and fizzle.
-                    StackEntry entry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            mayAbilitySourceCard,
-                            mayAbilityControllerId,
-                            mayAbilitySourceCard.getName() + "'s ability",
-                            new ArrayList<>(mayAbilityEffects),
-                            0,
-                            card.getId(),
-                            mayAbilitySourcePermanentId,
-                            null,
-                            Zone.GRAVEYARD,
-                            null,
-                            null
-                    );
-                    gameData.stack.add(entry);
-                    triggerCollectionService.checkTargetChoiceTriggers(gameData, entry);
+                    throw new IllegalStateException("A may ability's graveyard target is chosen as it resolves");
                 }
             }
 
@@ -920,20 +895,6 @@ public class GraveyardChoiceHandlerService {
             gameData.interaction.clearAwaitingInput();
             cloneService.completeMimeoplasmCloneEntry(gameData, copiedCard, otherCard);
             stateBasedActionService.performStateBasedActions(gameData);
-
-            if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
-                triggerCollectionService.processNextDeathTriggerTarget(gameData);
-                if (gameData.interaction.isAwaitingInput()) {
-                    return;
-                }
-            }
-
-            if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
-                triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
-                if (gameData.interaction.isAwaitingInput()) {
-                    return;
-                }
-            }
 
             if (!gameData.pendingMayAbilities.isEmpty()) {
                 playerInputService.processNextMayAbility(gameData);
@@ -1972,23 +1933,9 @@ public class GraveyardChoiceHandlerService {
         Card pendingPhysicalCard = gameData.graveyardTargetOperation.physicalCard;
         boolean pendingAdventure = gameData.graveyardTargetOperation.castWithAdventure;
         boolean pendingKicked = gameData.graveyardTargetOperation.kicked;
-        UUID pendingSourcePermanentId = gameData.graveyardTargetOperation.sourcePermanentId;
-        String pendingOnceEachTurnActionKey =
-                gameData.graveyardTargetOperation.onceEachTurnActionKey;
         gameData.graveyardTargetOperation.onceEachTurnActionKey = null;
-        UUID pendingAttackedTargetId = gameData.graveyardTargetOperation.attackedTargetId;
-        Integer pendingTriggeringPermanentPowerAtTrigger =
-                gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger;
         Integer pendingGraveyardTargetMaxManaValue = gameData.graveyardTargetOperation.graveyardTargetMaxManaValue;
-        UUID pendingTriggeringPermanentId = gameData.graveyardTargetOperation.triggeringPermanentId;
-        UUID pendingTriggeringCardId = gameData.graveyardTargetOperation.triggeringCardId;
-        long pendingTriggeringCardGraveyardEntryVersion =
-                gameData.graveyardTargetOperation.triggeringCardGraveyardEntryVersion;
-        StackEntry pendingTriggeringSpell = gameData.graveyardTargetOperation.triggeringSpell;
         StackEntry pendingTriggerRecord = gameData.graveyardTargetOperation.triggerRecord;
-        List<Permanent> pendingAttackingPermanentSnapshots =
-                gameData.graveyardTargetOperation.attackingPermanentSnapshots;
-        String pendingChapterName = gameData.graveyardTargetOperation.chapterName;
         UUID pendingSpellCounterTargetId = gameData.graveyardTargetOperation.spellCounterTargetId;
         List<UUID> pendingPermanentTargetIds = gameData.graveyardTargetOperation.permanentTargetIds;
         Map<CardEffect, List<UUID>> pendingTargetCardIdsByEffect = new IdentityHashMap<>(
@@ -2036,8 +1983,6 @@ public class GraveyardChoiceHandlerService {
         gameData.graveyardTargetOperation.kicked = false;
         gameData.graveyardTargetOperation.sourcePermanentId = null;
         gameData.graveyardTargetOperation.attackedTargetId = null;
-        boolean pendingSourceAlternateCostAtTrigger =
-                gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger;
         gameData.graveyardTargetOperation.sourceAlternateCostAtTrigger = false;
         gameData.graveyardTargetOperation.triggeringPermanentPowerAtTrigger = null;
         gameData.graveyardTargetOperation.graveyardTargetMaxManaValue = null;
@@ -2126,14 +2071,16 @@ public class GraveyardChoiceHandlerService {
                     !pendingFlashback);
             triggerCollectionService.checkTargetChoiceTriggers(gameData, spellEntry);
             inputCompletionService.publishStateAfterInput(gameData);
-        } else if (TriggeredAbilityStackService.parkedAtDoor(pendingTriggerRecord)) {
-            // An ability the stack door parked for its graveyard target goes on the stack with the cards chosen.
+        } else {
+            // A triggered ability the stack door parked for its graveyard target goes on the stack with the cards
+            // chosen.
             List<UUID> chosenCardIds = List.copyOf(cardIds);
             List<CardEffect> chosenEffects = new ArrayList<>(pendingEffects);
             triggeredAbilityStackService.finishParked(gameData, pendingTriggerRecord, entry -> {
                 // The effects the choice was made for: the chosen modes' when a mode was chosen first.
                 entry.replaceEffectsToResolve(chosenEffects);
                 entry.setTargetId(pendingTargetPlayerId);
+                entry.setTargetZone(null);
                 entry.setNonTargeting(false);
                 entry.setTargetCardIds(new ArrayList<>(chosenCardIds));
                 entry.setTargetCardIdsByEffect(pendingTargetCardIdsByEffect);
@@ -2157,108 +2104,6 @@ public class GraveyardChoiceHandlerService {
                     : description + " triggers targeting " + String.join(", ", targetNames) + "."));
             log.info("Game {} - {} triggered ability pushed onto stack with {} graveyard targets", gameData.id,
                     pendingCard.getName(), cardIds.size());
-        } else {
-            // Triggered ability (ETB, spell-cast trigger, or saga chapter) — put on stack with targets
-            String description;
-            if (pendingChapterName != null) {
-                description = pendingCard.getName() + "'s chapter " + pendingChapterName + " ability";
-            } else {
-                description = pendingCard.getName() + "'s ability";
-            }
-
-            StackEntry triggeredEntry;
-            if (pendingSourcePermanentId != null) {
-                // Saga chapter: include sourcePermanentId for SBA check (CR 715.4)
-                triggeredEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        pendingCard,
-                        controllerId,
-                        description,
-                        new ArrayList<>(pendingEffects),
-                        pendingXValue,
-                        null,
-                        pendingSourcePermanentId,
-                        Map.of(),
-                        null,
-                        new ArrayList<>(cardIds),
-                        List.of()
-                );
-            } else {
-                triggeredEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        pendingCard,
-                        controllerId,
-                        description,
-                        new ArrayList<>(pendingEffects),
-                        pendingXValue,
-                        null,
-                        null,
-                        Map.of(),
-                        null,
-                        new ArrayList<>(cardIds),
-                        List.of()
-                );
-            }
-            triggeredEntry.setTargetCardIdsByEffect(pendingTargetCardIdsByEffect);
-            triggeredEntry.setTargetCardGroupSizes(pendingTargetCardGroupSizes);
-            // What the collector records for an ability of this trigger that needs no choice, whatever the effects
-            // are; the choice's own facts below add to it.
-            if (pendingTriggerRecord != null) {
-                triggeredEntry.carryTriggerRecord(pendingTriggerRecord);
-            }
-            if (mixedZoneEffect != null) {
-                rememberMixedZoneTargets(gameData, triggeredEntry, cardIds);
-            }
-            if (pendingTargetPlayerId != null) {
-                triggeredEntry.setTargetId(pendingTargetPlayerId);
-            }
-            if (pendingTriggeringPermanentPowerAtTrigger != null) {
-                triggeredEntry.setTriggeringPermanentPowerAtTrigger(pendingTriggeringPermanentPowerAtTrigger);
-            }
-            if (pendingGraveyardTargetMaxManaValue != null || pendingTriggerRecord == null) {
-                triggeredEntry.setGraveyardTargetMaxManaValue(pendingGraveyardTargetMaxManaValue);
-            }
-            if (pendingAttackedTargetId != null) {
-                triggeredEntry.setAttackedTargetId(pendingAttackedTargetId);
-            }
-            if (pendingTriggeringPermanentId != null || pendingTriggerRecord == null) {
-                triggeredEntry.setTriggeringPermanentId(pendingTriggeringPermanentId);
-            }
-            if (pendingTriggeringCardId != null) {
-                triggeredEntry.setTriggeringCard(pendingTriggeringCardId, pendingTriggeringCardGraveyardEntryVersion);
-            } else if (pendingTriggeringSpell != null) {
-                // The spell a spell-cast ability triggered on ("the same name as that spell"), read as it resolves.
-                triggeredEntry.setTriggeringCardId(pendingTriggeringSpell.getTargetableId());
-            }
-            if (pendingTriggeringSpell != null || pendingTriggerRecord == null) {
-                triggeredEntry.setTriggeringSpell(pendingTriggeringSpell);
-            }
-            if (!pendingAttackingPermanentSnapshots.isEmpty() || pendingTriggerRecord == null) {
-                triggeredEntry.setAttackingPermanentSnapshots(pendingAttackingPermanentSnapshots);
-            }
-            // The ability goes on the stack as its target is chosen, so a source card in a graveyard is still the
-            // stay it triggered from: "this card" of the ability (CR 400.7), whatever the effects are.
-            if (pendingCard != null && gameQueryService.findCardInGraveyardById(gameData, pendingCard.getId()) != null) {
-                triggeredEntry.setSourceGraveyardEntryVersion(gameData.graveyardEntryVersion(pendingCard.getId()));
-            }
-            triggeredEntry.setAlternateCost(pendingSourceAlternateCostAtTrigger || triggeredEntry.isAlternateCost());
-            if (pendingOnceEachTurnActionKey != null) {
-                triggeredEntry.setOnceEachTurnActionKey(pendingOnceEachTurnActionKey);
-            }
-            gameData.stack.add(triggeredEntry);
-            if (mixedZoneEffect != null) {
-                triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData, triggeredEntry);
-            }
-            triggerCollectionService.checkTargetChoiceTriggers(gameData, triggeredEntry);
-
-            if (cardIds.isEmpty()) {
-                String triggerLog = description + " triggers targeting no cards.";
-                gameLogService.append(gameData, GameLog.text(triggerLog));
-            } else {
-                String triggerLog = description + " triggers targeting " + String.join(", ", targetNames) + ".";
-                gameLogService.append(gameData, GameLog.text(triggerLog));
-            }
-            log.info("Game {} - {} triggered ability pushed onto stack with {} graveyard targets", gameData.id, pendingCard.getName(), cardIds.size());
         }
 
         // Process any remaining pending saga chapter graveyard targets before auto-pass
@@ -2271,14 +2116,6 @@ public class GraveyardChoiceHandlerService {
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
             return;
-        }
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)
-                && !gameData.interaction.isAwaitingInput()) {
-            etbTokenTargetService.processNextETBTokenTargetTrigger(gameData);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
@@ -2411,20 +2248,6 @@ public class GraveyardChoiceHandlerService {
 
     private void finishCloneEntryAfterGraveyardChoice(GameData gameData) {
         stateBasedActionService.performStateBasedActions(gameData);
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
-            triggerCollectionService.processNextDeathTriggerTarget(gameData);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-        }
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
-            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-        }
 
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
@@ -2582,9 +2405,7 @@ public class GraveyardChoiceHandlerService {
                                                 GraveyardTargetOperationState.CumulativeUpkeepPaymentContext context) {
         gameData.graveyardTargetOperation.cumulativeUpkeepPayment = null;
         gameData.graveyardTargetOperation.singleGraveyard = false;
-        StackEntry syntheticEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                context.sourceCard(),
+        StackEntry syntheticEntry = StackEntry.carrier(context.sourceCard(),
                 context.sourceControllerId(),
                 context.sourceCard().getName() + "'s ability",
                 List.of(context.forcedCost()),
@@ -2596,9 +2417,7 @@ public class GraveyardChoiceHandlerService {
 
     private void resolveUnpaidControllerGraveyardPayment(GameData gameData,
                                                           GraveyardTargetOperationState.ControllerGraveyardPaymentContext context) {
-        StackEntry syntheticEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                context.sourceCard(),
+        StackEntry syntheticEntry = StackEntry.carrier(context.sourceCard(),
                 context.sourceControllerId(),
                 context.sourceCard().getName() + "'s ability",
                 List.of(context.forcedCost()),

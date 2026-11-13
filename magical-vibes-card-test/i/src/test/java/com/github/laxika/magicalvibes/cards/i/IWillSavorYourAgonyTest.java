@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+
 import com.github.laxika.magicalvibes.cards.c.ConsecratedSphinx;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -126,14 +127,17 @@ class IWillSavorYourAgonyTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
 
+    /**
+     * Sets the scheme in motion: its "when you set this scheme in motion" ability goes on the stack through the stack
+     * door, which has its modes chosen as it does (CR 603.3c).
+     */
     private void resolveScheme() {
         IWillSavorYourAgony scheme = new IWillSavorYourAgony();
-        gd.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                scheme,
-                player1.getId(),
-                scheme.getName(),
-                scheme.getCastingCostsAndSpellEffects()));
-        harness.passBothPriorities();
+        TriggeredAbilityStackService door = GameTestEngineContext.get().getBean(TriggeredAbilityStackService.class);
+        harness.inMutationScope(() -> {
+            door.putMade(gd, TriggeredAbilityStackService.madeAbility(scheme, player1.getId(), scheme.getName(),
+                    scheme.getCastingCostsAndSpellEffects()));
+            harness.getTriggerCollectionService().beginStackDoorChoices(gd);
+        });
     }
 }

@@ -22,12 +22,11 @@ public class Briarhorn extends Card {
         // Flash is auto-loaded from Scryfall keywords.
         // Evoke {1}{G}: cast for the alternate cost instead of the mana cost; it's sacrificed on entry.
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{G}"))));
+        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
 
         // When this creature enters, target creature gets +3/+3 until end of turn.
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new BoostTargetCreatureEffect(3, 3));
-
-        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }
 }

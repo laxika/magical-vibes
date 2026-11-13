@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "NCC", collectorNumber = "68")
 @CardRegistration(set = "NCC", collectorNumber = "168")
@@ -23,9 +22,7 @@ public class BrokersConfluence extends Card {
         setAllowSharedTargets(true);
 
         var abilityFilter = new StackEntryPredicateTargetFilter(
-                new StackEntryTypeInPredicate(Set.of(
-                        StackEntryType.ACTIVATED_ABILITY,
-                        StackEntryType.TRIGGERED_ABILITY)),
+                new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                 "Target must be an activated or triggered ability.");
 
         addSpellEffect(ChooseOneEffect.withRepeatedModes(List.of(

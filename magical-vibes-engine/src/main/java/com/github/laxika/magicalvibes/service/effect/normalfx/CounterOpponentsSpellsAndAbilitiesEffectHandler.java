@@ -23,8 +23,7 @@ public class CounterOpponentsSpellsAndAbilitiesEffectHandler implements NormalEf
             StackEntryType.SORCERY_SPELL, StackEntryType.INSTANT_SPELL,
             StackEntryType.ARTIFACT_SPELL, StackEntryType.PLANESWALKER_SPELL, StackEntryType.BATTLE_SPELL);
 
-    private static final Set<StackEntryType> ABILITY_TYPES = Set.of(
-            StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY);
+    private static final Set<StackEntryType> ABILITY_TYPES = StackEntryType.ABILITIES;
 
     private final CounterSupport counterSupport;
     private final PermanentControlSupport permanentControlSupport;

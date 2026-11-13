@@ -25,7 +25,10 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSu
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import org.junit.jupiter.api.BeforeEach;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -40,6 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,6 +70,9 @@ class MiscTriggerCollectorServiceTest {
     @Mock
     private ConditionEvaluationService conditionEvaluationService;
 
+    @Mock
+    private TriggeredAbilityStackService triggeredAbilityStackService;
+
     @InjectMocks
     private MiscTriggerCollectorService sut;
 
@@ -78,20 +85,25 @@ class MiscTriggerCollectorServiceTest {
         var effect = new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER);
         Card card = createCard("Grizzly Bears");
         gd.graveyardEntryVersions.put(card.getId(), 5L);
+        when(triggeredAbilityStackService.put(any(), any())).thenReturn(true);
 
         boolean collected = registry.dispatch(new TriggerMatchContext(gd, null, player1Id, effect, plane),
                 ZoneChangeWatch.ON_NONBLACK_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE,
                 new TriggerContext.CardPutIntoGraveyard(card, player2Id));
 
         assertThat(collected).isTrue();
-        assertThat(gd.stack).singleElement().satisfies(entry -> {
-            assertThat(entry.getCard()).isSameAs(plane);
-            assertThat(entry.getSourcePermanentId()).isNull();
-            assertThat(entry.getTargetId()).isEqualTo(player2Id);
-            assertThat(entry.isNonTargeting()).isTrue();
-            assertThat(entry.getTriggeringCardId()).isEqualTo(card.getId());
-            assertThat(entry.isTriggeringCardIncarnation(5L)).isTrue();
-        });
+        ArgumentCaptor<TriggeredAbilityRequest> request = ArgumentCaptor.forClass(TriggeredAbilityRequest.class);
+        verify(triggeredAbilityStackService).put(org.mockito.ArgumentMatchers.eq(gd), request.capture());
+        assertThat(request.getValue().sourceCard()).isSameAs(plane);
+        assertThat(request.getValue().sourcePermanent()).isNull();
+        assertThat(request.getValue().ability().effects()).extracting(
+                com.github.laxika.magicalvibes.model.EffectRegistration::effect).containsExactly(effect);
+        StackEntry entry = TriggeredAbilityStackService.madeAbility(plane, player1Id, "record", java.util.List.of(effect));
+        request.getValue().record().stamp(entry);
+        assertThat(entry.getTargetId()).isEqualTo(player2Id);
+        assertThat(entry.isNonTargeting()).isTrue();
+        assertThat(entry.getTriggeringCardId()).isEqualTo(card.getId());
+        assertThat(entry.isTriggeringCardIncarnation(5L)).isTrue();
     }
 
     private GameData gd;
@@ -104,6 +116,8 @@ class MiscTriggerCollectorServiceTest {
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
 
+        org.springframework.test.util.ReflectionTestUtils.setField(sut, "triggeredAbilityStackService",
+                triggeredAbilityStackService);
         registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(sut, registry);
     }

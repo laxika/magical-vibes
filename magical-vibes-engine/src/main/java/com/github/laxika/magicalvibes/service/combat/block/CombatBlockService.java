@@ -22,10 +22,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.effect.PayBlockCostsEffect;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockOrBecomesBlockedTrigger;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerBoost;
 import com.github.laxika.magicalvibes.model.action.DelayedBlockerDeclarationControl;
@@ -39,6 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.BlockerDeclarationControlEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatureBlocksThisTurnIfAbleEffect;
@@ -52,7 +51,6 @@ import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GlobalMustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
-import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByMatchingCreatureIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
@@ -61,7 +59,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect
 import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -78,7 +75,6 @@ import com.github.laxika.magicalvibes.service.combat.CombatTriggerService;
 import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.effect.CombatTapCostService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
-import com.github.laxika.magicalvibes.service.trigger.TriggerJudge;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
@@ -104,6 +100,10 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class CombatBlockService {
+
+    /** Flanking (CR 702.25a); its collector judges the blocking creature's flanking. */
+    private static final TriggeredAbility FLANKING_ABILITY = new TriggeredAbility(Triggers.becomesBlocked(),
+            new BoostTargetCreatureEffect(-1, -1));
 
     private final GameQueryService gameQueryService;
     private final BlockLegalityService blockLegalityService;
@@ -762,7 +762,7 @@ public class CombatBlockService {
         // battlefield, once per declaration no matter how many creatures blocked.
         checkAnyCreaturesBlockTriggers(gameData, blockerAssignments);
 
-        // Each flanking ability triggers separately for a blocker without flanking.
+        // Each flanking ability triggers separately for a blocker without flanking (CR 702.25a, 702.25b).
         for (BlockerAssignment assignment : blockerAssignments) {
             Permanent attacker = attackerBattlefield.get(assignment.attackerIndex());
             if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.FLANKING)) {
@@ -772,22 +772,7 @@ public class CombatBlockService {
             if (gameQueryService.hasKeyword(gameData, blocker, Keyword.FLANKING)) {
                 continue;
             }
-            for (int instance = 0; instance < gameQueryService.flankingInstances(gameData, attacker); instance++) {
-                StackEntry flankingTrigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        attacker.getCard(),
-                        activeId,
-                        attacker.getCard().getName() + "'s flanking trigger",
-                        List.of(new BoostTargetCreatureEffect(-1, -1)),
-                        blocker.getId(),
-                        attacker.getId()
-                );
-                // Flanking references the blocking creature without targeting it.
-                flankingTrigger.setNonTargeting(true);
-                gameData.stack.add(flankingTrigger);
-                gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(), "'s flanking triggers."));
-                log.info("Game {} - {} flanking trigger pushed onto stack", gameData.id, attacker.getCard().getName());
-            }
+            putFlankingAbilities(gameData, activeId, attacker, blocker);
         }
 
         // "Whenever this creature attacks and isn't blocked" triggers (ON_ATTACKS_UNBLOCKED,
@@ -907,18 +892,7 @@ public class CombatBlockService {
 
         if (gameQueryService.hasKeyword(gameData, attacker, Keyword.FLANKING)
                 && !gameQueryService.hasKeyword(gameData, blocker, Keyword.FLANKING)) {
-            for (int instance = 0; instance < gameQueryService.flankingInstances(gameData, attacker); instance++) {
-                StackEntry flankingTrigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        attacker.getCard(),
-                        activeId,
-                        attacker.getCard().getName() + "'s flanking trigger",
-                        List.of(new BoostTargetCreatureEffect(-1, -1)),
-                        blocker.getId(),
-                        attacker.getId());
-                flankingTrigger.setNonTargeting(true);
-                gameData.stack.add(flankingTrigger);
-            }
+            putFlankingAbilities(gameData, activeId, attacker, blocker);
         }
         checkAnyCreaturesBlockTriggers(gameData, assignments);
         processDelayedBlockOrBecomesBlockedTriggers(gameData, assignments, attackerBattlefield,
@@ -927,6 +901,27 @@ public class CombatBlockService {
             processDelayedBlockerBoostTriggers(gameData, assignments, defenderBattlefield);
         }
         combatTriggerService.reorderTriggersAPNAP(gameData, stackSizeBeforeTriggers, gameData.activePlayerId);
+    }
+
+    /**
+     * Each flanking ability of {@code attacker} for its block by {@code blocker}, a creature without flanking: "Whenever
+     * this creature becomes blocked by a creature without flanking, the blocking creature gets -1/-1 until end of turn"
+     * (CR 702.25a), each instance its own object (CR 702.25b), through the stack door. The blocking creature is the
+     * entry's non-targeting "that creature".
+     */
+    private void putFlankingAbilities(GameData gameData, UUID activeId, Permanent attacker, Permanent blocker) {
+        for (int instance = 0; instance < gameQueryService.flankingInstances(gameData, attacker); instance++) {
+            boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                    FLANKING_ABILITY, attacker.getCard(), attacker, activeId,
+                    attacker.getCard().getName() + "'s flanking trigger",
+                    ConditionContext.forPermanent(attacker, activeId), entry -> {
+                        entry.setTargetId(blocker.getId());
+                        entry.setNonTargeting(true);
+                    }));
+            if (triggered) {
+                gameLogService.append(gameData, GameLog.cardThen(attacker.getCard(), "'s flanking triggers."));
+            }
+        }
     }
 
     /**
@@ -1136,12 +1131,14 @@ public class CombatBlockService {
                                 new DealDamageToTargetCreatureEffect(new SourcePower()),
                                 new AssignNoCombatDamageEffect()),
                         "have it deal damage equal to its power to a target creature?");
-                // CR 603.3d: the target creature is chosen as the trigger is put on the stack; the
-                // "you may" is decided as it resolves (CR 603.5). The source permanent is the
+                // A delayed triggered ability (CR 603.7): its target creature is chosen as it is put on the stack
+                // (CR 603.3d); the "you may" is decided as it resolves (CR 603.5). The source permanent is the
                 // unblocked attacker ("it"); the source card is Gaze of Pain.
-                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                        delayed.sourceCard(), delayed.controllerId(), List.of(may), attacker.getId(),
-                        delayed.controllerId(), attacker.getAttackTarget(), null));
+                StackEntry trigger = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
+                        delayed.controllerId(), delayed.sourceCard().getName() + "'s ability", List.of(may), 0,
+                        attacker.getId());
+                trigger.setAttackedTargetId(attacker.getAttackTarget());
+                triggeredAbilityStackService.putDelayed(gameData, trigger);
                 gameLogService.append(gameData, GameLog.cardTextCard(
                         delayed.sourceCard(), " — ", attacker.getCard(),
                         " attacks unblocked."));
@@ -1176,9 +1173,14 @@ public class CombatBlockService {
                                 new GainLifeEffect(new SourcePower()),
                                 new AssignNoCombatDamageEffect()),
                         "gain life equal to its power?");
-                gameData.queueMayAbility(delayed.sourceCard(), delayed.controllerId(), may,
-                        null, attacker.getId());
-                gameData.stack.getLast().setSourcePermanentSnapshot(new Permanent(attacker));
+                // A delayed triggered ability (CR 603.7) about the attacker, "it" (its power, the creature that assigns
+                // no combat damage), which it acts on without choosing anything.
+                StackEntry trigger = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
+                        delayed.controllerId(), delayed.sourceCard().getName() + "'s ability", List.of(may),
+                        (UUID) null, attacker.getId());
+                trigger.setNonTargeting(true);
+                trigger.setSourcePermanentSnapshot(new Permanent(attacker));
+                triggeredAbilityStackService.putDelayed(gameData, trigger);
                 gameLogService.append(gameData, GameLog.cardTextCard(
                         delayed.sourceCard(), " — ", attacker.getCard(),
                         " attacks unblocked."));

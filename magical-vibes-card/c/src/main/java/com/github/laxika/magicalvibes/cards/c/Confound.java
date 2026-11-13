@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "PLS", collectorNumber = "22")
 public class Confound extends Card {
@@ -21,8 +20,7 @@ public class Confound extends Card {
     public Confound() {
         target(new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
-                                new StackEntryNotPredicate(new StackEntryTypeInPredicate(Set.of(
-                                        StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY))),
+                                new StackEntryNotPredicate(new StackEntryTypeInPredicate(StackEntryType.ABILITIES)),
                                 new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate()))),
                 "Target must be a spell that targets a creature."
         )).addSpellEffect(new CounterSpellEffect())

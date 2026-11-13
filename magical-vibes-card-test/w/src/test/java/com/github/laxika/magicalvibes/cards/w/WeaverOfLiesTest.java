@@ -34,12 +34,12 @@ class WeaverOfLiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(weaver));
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .contains(ownMorphCreature.getId(), opposingMorphCreature.getId())
                 .doesNotContain(weaver.getId(), ordinaryCreature.getId());
 
-        harness.handlePermanentChosen(player1, ownMorphCreature.getId());
-        harness.handlePermanentChosen(player1, opposingMorphCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownMorphCreature.getId(),
+                opposingMorphCreature.getId()));
         harness.passBothPriorities();
 
         assertThat(ownMorphCreature.isFaceDown()).isTrue();
@@ -66,11 +66,11 @@ class WeaverOfLiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(weaver));
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .contains(morphCreature.getId(), player1.getId())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .contains(morphCreature.getId())
                 .doesNotContain(weaver.getId());
 
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(morphCreature.isFaceDown()).isFalse();
@@ -93,7 +93,7 @@ class WeaverOfLiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(weaver));
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
         harness.passBothPriorities();
 
         assertThat(ordinaryCreature.isFaceDown()).isFalse();
@@ -116,8 +116,7 @@ class WeaverOfLiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(weaver));
-        harness.handlePermanentChosen(player1, chosen.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
         harness.passBothPriorities();
 
         assertThat(chosen.isFaceDown()).isTrue();
@@ -146,10 +145,10 @@ class WeaverOfLiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(weaver));
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .contains(faceUpWall.getId())
                 .doesNotContain(faceDownWall.getId(), weaver.getId());
-        harness.handlePermanentChosen(player1, faceUpWall.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(faceUpWall.getId()));
         harness.passBothPriorities();
 
         assertThat(faceDownWall.isFaceDown()).isTrue();
@@ -172,7 +171,7 @@ class WeaverOfLiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 4);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(weaver));
-        harness.handlePermanentChosen(player1, wall.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(wall.getId()));
         harness.passBothPriorities();
 
         assertThat(wall.isFaceDown()).isTrue();
@@ -205,14 +204,11 @@ class WeaverOfLiesTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(weaver));
 
-        for (int i = 0; i < 99; i++) {
-            harness.handlePermanentChosen(player1, targets.get(i).getId());
-        }
-        PendingInteraction.PermanentChoice remainingChoice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(remainingChoice).isNotNull();
-        assertThat(remainingChoice.validIds()).contains(targets.get(99).getId());
-        harness.handlePermanentChosen(player1, targets.get(99).getId());
+        // "Any number of target creatures": all of them are announced together (CR 601.2c via CR 603.3d).
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.maxCount()).isGreaterThanOrEqualTo(100);
+        harness.handleMultiplePermanentsChosen(player1, targets.stream().map(Permanent::getId).toList());
         harness.passBothPriorities();
 
         assertThat(targets).allSatisfy(target -> assertThat(target.isFaceDown()).isTrue());

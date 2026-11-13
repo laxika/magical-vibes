@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.d.DarksteelIngot;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -36,9 +37,7 @@ class MyWealthWillBuryYouTest extends BaseCardTest {
     void countsPermanentsAtResolutionRatherThanWhenTheAbilityTriggers() {
         addOpponentArtifactsAndEnchantments(2, 1);
         Card scheme = new MyWealthWillBuryYou();
-        gd.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                scheme,
+        gd.stack.add(TestStackDoor.triggered(scheme,
                 player1.getId(),
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects()));
@@ -92,9 +91,7 @@ class MyWealthWillBuryYouTest extends BaseCardTest {
 
     private void resolveScheme() {
         Card scheme = new MyWealthWillBuryYou();
-        gd.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                scheme,
+        gd.stack.add(TestStackDoor.triggered(scheme,
                 player1.getId(),
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects()));

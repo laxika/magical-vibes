@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.e.ElvishMystic;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.r.RoamingThrone;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +20,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BadgermoleCub.class, ElvishMystic.class, Forest.class, TurnToFrog.class})
+@CardUsed({BadgermoleCub.class, ElvishMystic.class, Forest.class, TurnToFrog.class, RoamingThrone.class})
 class BadgermoleCubTest extends BaseCardTest {
 
     @Test
@@ -45,6 +47,21 @@ class BadgermoleCubTest extends BaseCardTest {
         harness.tapPermanent(player1, 1);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Its triggered mana ability triggers an additional time under a Roaming Throne naming Badger (CR 605.4, 603.2d)")
+    void roamingThroneMakesTheManaAbilityTriggerAnAdditionalTime() {
+        Permanent throne = harness.addToBattlefieldAndReturn(player1, new RoamingThrone());
+        throne.setChosenSubtype(CardSubtype.BADGER);
+        harness.addToBattlefield(player1, new BadgermoleCub());
+        Permanent mystic = harness.addToBattlefieldAndReturn(player1, new ElvishMystic());
+        mystic.setSummoningSick(false);
+
+        harness.tapPermanent(player1, 2);
+
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(3);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

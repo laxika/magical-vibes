@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.effect.ParadigmCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ParadigmMayCastFromExileEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -38,6 +37,7 @@ public class ParadigmService {
     private final ParadigmCastSupport paradigmCastSupport;
     private final InputCompletionService inputCompletionService;
     private final PlayerInputService playerInputService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     // @Lazy breaks cycles through InputCompletionService/TurnProgressionService and PlayerInputService.
     public ParadigmService(CopySupport copySupport,
@@ -45,13 +45,15 @@ public class ParadigmService {
                            GameLogService gameLogService,
                            ParadigmCastSupport paradigmCastSupport,
                            @Lazy InputCompletionService inputCompletionService,
-                           @Lazy PlayerInputService playerInputService) {
+                           @Lazy PlayerInputService playerInputService,
+                           @Lazy TriggeredAbilityStackService triggeredAbilityStackService) {
         this.copySupport = copySupport;
         this.exileService = exileService;
         this.gameLogService = gameLogService;
         this.paradigmCastSupport = paradigmCastSupport;
         this.inputCompletionService = inputCompletionService;
         this.playerInputService = playerInputService;
+        this.triggeredAbilityStackService = triggeredAbilityStackService;
     }
 
     /**
@@ -95,13 +97,9 @@ public class ParadigmService {
                 continue;
             }
             Card prototype = trigger.spellPrototype();
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    prototype,
-                    activePlayerId,
-                    prototype.getName() + " paradigm",
-                    new ArrayList<>(List.of(new ParadigmCastCopyEffect()))
-            ));
+            // Paradigm's delayed triggered ability, made by the spell as it resolved (CR 702.192a, 603.7d).
+            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(prototype,
+                    activePlayerId, prototype.getName() + " paradigm", List.of(new ParadigmCastCopyEffect())));
             gameLogService.append(gameData, GameLog.cardThen(prototype, "'s paradigm triggers."));
             log.info("Game {} - {} paradigm trigger pushed onto stack", gameData.id, prototype.getName());
         }

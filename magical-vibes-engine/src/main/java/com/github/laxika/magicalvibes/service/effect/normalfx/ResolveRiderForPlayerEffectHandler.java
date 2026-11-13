@@ -62,7 +62,7 @@ public class ResolveRiderForPlayerEffectHandler implements NormalEffectHandlerBe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var step = (ResolveRiderForPlayerEffect) effect;
         CardEffect rider = step.rider();
-        StackEntry riderEntry = new StackEntry(entry.getEntryType(), entry.getCard(), step.controllerId(),
+        StackEntry riderEntry = StackEntry.derivedFrom(entry, entry.getCard(), step.controllerId(),
                 entry.getDescription(), List.of(rider), step.targetId(), entry.getSourcePermanentId());
         riderEntry.setEventValue(step.eventValue());
         riderEntry.getRemovedPermanentControllers().putAll(step.removedPermanentControllers());

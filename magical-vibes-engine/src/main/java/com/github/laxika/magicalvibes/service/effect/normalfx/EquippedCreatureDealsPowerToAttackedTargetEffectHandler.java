@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedCreatureDealsPowerToAttackedTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -58,9 +57,7 @@ public class EquippedCreatureDealsPowerToAttackedTargetEffectHandler implements 
         if (targetId == null) return;
 
         // Deal the damage as the equipped creature (its power, keywords, and colour are the source's).
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                equippedCreature.getCard(),
+        StackEntry damageEntry = StackEntry.carrier(equippedCreature.getCard(),
                 entry.getControllerId(),
                 equippedCreature.getCard().getName() + "'s combat damage",
                 List.of(),

@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -71,9 +72,7 @@ class GrinningIgnusTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
         harness.addMana(player1, ManaColor.RED, 1);
-        gd.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                new GrinningIgnus(),
+        gd.stack.add(TestStackDoor.triggered(new GrinningIgnus(),
                 player1.getId(),
                 "Pending ability",
                 List.of()));

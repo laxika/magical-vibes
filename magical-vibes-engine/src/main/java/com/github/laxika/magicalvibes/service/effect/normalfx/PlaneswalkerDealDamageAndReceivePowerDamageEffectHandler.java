@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDealDamageAndReceivePowerDamageEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -69,7 +68,7 @@ public class PlaneswalkerDealDamageAndReceivePowerDamageEffectHandler implements
             sourcePlaneswalker.setCounterCount(CounterType.LOYALTY, newLoyalty);
             gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" deals " + targetPower + " damage to " + cardName + ". (" + cardName + " now has " + newLoyalty + " loyalty.)").build());
             // The target creature is the damage source here, so its lifelink applies to this damage.
-            StackEntry targetDamageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, target.getCard(),
+            StackEntry targetDamageEntry = StackEntry.carrier(target.getCard(),
                     targetControllerId, target.getCard().getName() + "'s ability", List.of(), null, target.getId());
             targetDamageEntry.setSourcePermanentSnapshot(target);
             damageSupport.checkSpellLifelink(gameData, targetDamageEntry, targetPower);

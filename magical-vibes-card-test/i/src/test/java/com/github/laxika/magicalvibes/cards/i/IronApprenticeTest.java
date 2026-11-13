@@ -102,7 +102,7 @@ class IronApprenticeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Iron Apprentice");
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)).isFalse();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 

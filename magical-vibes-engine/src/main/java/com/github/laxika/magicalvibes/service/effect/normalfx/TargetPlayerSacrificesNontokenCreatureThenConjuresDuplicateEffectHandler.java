@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -34,6 +36,7 @@ public class TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHa
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final TriggerCollectionService triggerCollectionService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -98,7 +101,9 @@ public class TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHa
                     new DiscardCardThenEffect(null,
                             new ConjureDuplicateOfCardIntoHandEffect(sacrificedCard), "a card"),
                     "discard a card to conjure a duplicate of the sacrificed creature?");
-            gameData.queueMayAbility(entry.getCard(), entry.getControllerId(), mayDiscard);
+            // "When they do, you may discard a card": a reflexive ability (CR 603.12).
+            triggeredAbilityStackService.putMade(gameData,
+                    ReflexiveAbilitySupport.record(gameData, entry, List.of(mayDiscard)));
             return;
         }
 

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -123,9 +122,7 @@ public class ExileOwnGraveyardCardThenEffectHandler implements NormalEffectHandl
     }
 
     private void resolveInline(GameData gameData, StackEntry entry, CardEffect thenEffect) {
-        StackEntry inlineAbility = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                entry.getCard(),
+        StackEntry inlineAbility = StackEntry.carrier(entry.getCard(),
                 entry.getControllerId(),
                 entry.getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(thenEffect)),

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.PendingBendOrBreak;
-import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.PendingRagingRiver;
@@ -102,6 +101,10 @@ public class MultiPermanentChoiceHandlerService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.ForcedCostOrElseEffectHandler forcedCostOrElseEffectHandler;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
+            triggeredAbilityStackService;
 
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
@@ -403,6 +406,8 @@ public class MultiPermanentChoiceHandlerService {
         MultiPermanentChoiceContext context = multiPermanentChoice.context();
         if (context instanceof MultiPermanentChoiceContext.EtbGraveyardCardTargetGroup graveyardGroup) {
             validateAtMostOneCardPerGraveyard(gameData, graveyardGroup.pending().sourceCard(), permanentIds);
+            validateOneCardPerGraveyardIfAble(gameData, graveyardGroup.pending().sourceCard(), validCardIds,
+                    permanentIds);
         }
         if (context instanceof MultiPermanentChoiceContext.EtbPlayerTargetGroup playerGroup) {
             validateAtMostOneCardPerGraveyard(gameData, playerGroup.pending().sourceCard(), permanentIds);
@@ -470,10 +475,6 @@ public class MultiPermanentChoiceHandlerService {
         }
         if (context instanceof MultiPermanentChoiceContext.AttackTriggerTargets attackTarget
                 && permanentIds.size() < attackTarget.minTargets()) {
-            throw new IllegalStateException("Too few targets selected");
-        }
-        if (context instanceof MultiPermanentChoiceContext.SelfTriggeredAbilityTargets selfTarget
-                && permanentIds.size() < selfTarget.minTargets()) {
             throw new IllegalStateException("Too few targets selected");
         }
         if ((context instanceof MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice
@@ -961,12 +962,8 @@ public class MultiPermanentChoiceHandlerService {
             battlefieldHandler.handleChoosePlayersAsEnter(gameData, permanentIds, ctx.pending());
         } else if (context instanceof MultiPermanentChoiceContext.EtbPlayerTargetGroup ctx) {
             triggerHandler.handleEtbPlayerTargetGroup(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.EtbOptionalTarget ctx) {
-            triggerHandler.handleEtbOptionalTarget(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.EtbGraveyardCardTargetGroup ctx) {
             triggerHandler.handleEtbGraveyardCardTargetGroup(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.SelfTriggeredAbilityTargets ctx) {
-            triggerHandler.handleSelfTriggeredAbility(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.AttackTriggerTargets ctx) {
             triggerHandler.handleAttackTrigger(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.CamouflagePileChoice ctx) {
@@ -978,8 +975,6 @@ public class MultiPermanentChoiceHandlerService {
         } else if (context instanceof MultiPermanentChoiceContext.DefendingPlayerChoosesPermanentsToExile ctx) {
             defendingPlayerChoosesPermanentsToExileHandler.completeChoice(gameData, permanentIds, ctx);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        } else if (context instanceof MultiPermanentChoiceContext.UpkeepAnyNumberPlayerTargets ctx) {
-            triggerHandler.handleUpkeepAnyNumberPlayerTargets(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.DealDamageToDamagedPlayerControls ctx) {
             handleDealDamageToDamagedPlayerControls(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.UntapChosenPermanent ctx) {
@@ -1260,8 +1255,6 @@ public class MultiPermanentChoiceHandlerService {
             handleCounterDistribution(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.StackedDividedDamageTargets ctx) {
             stackedDividedDamageTriggerService.handleTargetsChosen(gameData, permanentIds, ctx);
-        } else if (gameData.hasPendingInteraction(PendingCapriciousEfreetState.class)) {
-            handleCapriciousEfreetOpponentTargets(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingPileSeparation.class)) {
             handlePileSeparation(gameData, permanentIds);
         } else if (gameData.hasPendingInteraction(PendingRagingRiver.class)) {
@@ -1318,6 +1311,32 @@ public class MultiPermanentChoiceHandlerService {
             UUID graveyardOwner = gameQueryService.findGraveyardOwnerById(gameData, cardId);
             if (graveyardOwner != null && !graveyardOwners.add(graveyardOwner)) {
                 throw new IllegalStateException("May target at most one card per graveyard");
+            }
+        }
+    }
+
+    /**
+     * "For each graveyard with an instant or sorcery card in it, exile target instant or sorcery card from that
+     * graveyard" (Mysterious Stranger): under {@link MultiTargetConstraint#ONE_PER_CONTROLLER_IF_ABLE} a card must be
+     * chosen in every graveyard that holds one of the offered cards.
+     */
+    private void validateOneCardPerGraveyardIfAble(GameData gameData, Card sourceCard, List<UUID> offeredCardIds,
+                                                   List<UUID> chosenCardIds) {
+        if (sourceCard == null
+                || sourceCard.getMultiTargetConstraint() != MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE) {
+            return;
+        }
+        Set<UUID> chosenGraveyards = new HashSet<>();
+        for (UUID cardId : chosenCardIds) {
+            UUID graveyardOwner = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+            if (graveyardOwner != null) {
+                chosenGraveyards.add(graveyardOwner);
+            }
+        }
+        for (UUID cardId : offeredCardIds) {
+            UUID graveyardOwner = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+            if (graveyardOwner != null && !chosenGraveyards.contains(graveyardOwner)) {
+                throw new IllegalStateException("Must target a card in each graveyard with a legal target");
             }
         }
     }
@@ -1409,7 +1428,7 @@ public class MultiPermanentChoiceHandlerService {
                 new ChoiceContext.SagaChapterCounterAssignment(
                         context.sourceCard(), context.controllerId(), context.effects(),
                         context.sourcePermanentId(), context.chapterName(), context.counterType(),
-                        permanentIds, java.util.Map.of(), context.total(), 0);
+                        permanentIds, java.util.Map.of(), context.total(), 0, context.triggerRecord());
         playerInputService.beginSagaChapterCounterAssignmentChoice(
                 gameData, context.controllerId(), assignment);
     }
@@ -1417,15 +1436,11 @@ public class MultiPermanentChoiceHandlerService {
     private void handleSagaChapterTargetSelection(
             GameData gameData, List<UUID> targetIds,
             MultiPermanentChoiceContext.SagaChapterTargetSelection context) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                context.sourceCard(),
-                context.controllerId(),
-                context.sourceCard().getName() + "'s chapter " + context.chapterName() + " ability",
-                new ArrayList<>(context.effects()),
-                context.sourcePermanentId(),
-                new ArrayList<>(targetIds));
-        gameData.stack.add(entry);
+        // The chapter ability the stack door parked goes on the stack with the players chosen (CR 603.3d).
+        StackEntry entry = triggeredAbilityStackService.finishParked(gameData, context.triggerRecord(), parked -> {
+            parked.setNonTargeting(false);
+            parked.chooseTargetIds(new ArrayList<>(targetIds));
+        });
         triggerCollectionService.checkTargetChoiceTriggers(gameData, entry);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
@@ -4325,65 +4340,6 @@ public class MultiPermanentChoiceHandlerService {
         // bookkeeping and turn advance proceed as normal.
         turnProgressionService.resumeStaticOrbUntap(gameData, activePlayerId, new HashSet<>(permanentIds),
                 context.filter(), context.remainingRestrictions(), context.excludedIds());
-    }
-
-    private void handleCapriciousEfreetOpponentTargets(GameData gameData, List<UUID> permanentIds) {
-        PendingCapriciousEfreetState state = gameData.pollPendingInteraction(PendingCapriciousEfreetState.class);
-
-        // Combine own target + opponent targets
-        List<UUID> allTargets = new ArrayList<>();
-        allTargets.add(state.ownTargetId());
-        allTargets.addAll(permanentIds);
-
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                state.sourceCard(),
-                state.controllerId(),
-                state.sourceCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new DestroyOneOfTargetsAtRandomEffect())),
-                0,
-                null, state.sourcePermanentId(), Map.of(), null, List.of(), allTargets
-        );
-        List<com.github.laxika.magicalvibes.model.filter.TargetFilter> filters = new ArrayList<>();
-        filters.add(DestroyOneOfTargetsAtRandomEffect.targetFilter(true));
-        for (UUID ignored : permanentIds) {
-            filters.add(DestroyOneOfTargetsAtRandomEffect.targetFilter(false));
-        }
-        entry.setTargetFilters(filters);
-        gameData.stack.add(entry);
-
-        List<String> targetNames = new ArrayList<>();
-        GameLog.Builder targetsLog = GameLog.builder().card(state.sourceCard()).text("'s ability targets ");
-        for (int i = 0; i < allTargets.size(); i++) {
-            UUID targetId = allTargets.get(i);
-            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            targetNames.add(target != null ? target.getCard().getName() : targetId.toString());
-            if (i > 0) {
-                targetsLog.text(", ");
-            }
-            appendCardOrText(targetsLog, target != null ? target.getCard() : null, targetId.toString());
-        }
-        targetsLog.text(".");
-        gameLogService.append(gameData, targetsLog.build());
-        log.info("Game {} - {} upkeep trigger targets: {}", gameData.id, state.sourceCard().getName(), targetNames);
-
-        // Continue processing: more Efreet triggers → may abilities → priority
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
-            turnProgressionService.processNextCapriciousEfreetTarget(gameData);
-            return;
-        }
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class)) {
-            turnProgressionService.processNextPucasMischiefTarget(gameData);
-            return;
-        }
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handlePileSeparation(GameData gameData, List<UUID> permanentIds) {

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BlightEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentBlightsEffect;
@@ -83,9 +82,7 @@ public class EachOpponentBlightsEffectHandler implements NormalEffectHandlerBean
     }
 
     private StackEntry sourceEntry(Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId) {
-        return new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
+        return StackEntry.carrier(sourceCard,
                 sourceControllerId,
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(),

@@ -55,7 +55,7 @@ class GavonySilversmithTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Gavony Silversmith");
@@ -86,8 +86,7 @@ class GavonySilversmithTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         Permanent silversmith = findPermanent(player1, "Gavony Silversmith");
-        harness.handlePermanentChosen(player1, silversmith.getId());
-        harness.handlePermanentChosen(player1, opponent.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(silversmith.getId(), opponent.getId()));
         resolveAllTriggers();
 
         assertThat(silversmith.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -137,10 +136,9 @@ class GavonySilversmithTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, target.getId());
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(target.getId(), target.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntrySourceIsCommanderPr
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "DMC", collectorNumber = "19")
 @CardRegistration(set = "DMC", collectorNumber = "95")
@@ -30,9 +29,7 @@ public class ThePeregrineDynamo extends Card {
                 "{1}, {T}: Copy target activated or triggered ability you control from another legendary source that's not a commander. You may choose new targets for the copy.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
-                                new StackEntryTypeInPredicate(Set.of(
-                                        StackEntryType.ACTIVATED_ABILITY,
-                                        StackEntryType.TRIGGERED_ABILITY)),
+                                new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                                 new StackEntryControlledByPredicate(),
                                 new StackEntrySourceHasSupertypePredicate(CardSupertype.LEGENDARY),
                                 new StackEntryNotPredicate(new StackEntrySourceIsCommanderPredicate()),

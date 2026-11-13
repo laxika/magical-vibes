@@ -39,8 +39,7 @@ public class RedirectAllCreatureDamageToControllerHandler implements MayEffectHa
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
-        StackEntry damageEntry = new StackEntry(
-                effect.damageEntryType(), ability.sourceCard(), ability.sourceControllerId(),
+        StackEntry damageEntry = StackEntry.carrier(effect.damageEntryType(), ability.sourceCard(), ability.sourceControllerId(),
                 ability.sourceCard().getName() + "'s ability", List.of(),
                 ability.targetCardId(), ability.sourcePermanentId());
         damageEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());

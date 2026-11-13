@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -10,7 +12,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleWhenExactlyTwoSameNameEffect;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -98,7 +99,7 @@ class FuzzInvariantsTest {
     }
 
     private StackEntry stackEntry(String cardName) {
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature(cardName, 1, 1),
+        return TestStackDoor.triggered(creature(cardName, 1, 1),
                 player1.getId(), "test entry", new ArrayList<>());
     }
 

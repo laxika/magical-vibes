@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.RingState;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.ExpireControlAtEndOfNextTurn;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
@@ -81,6 +81,10 @@ public class CreatureControlService {
     @Autowired
     @Lazy
     private AuraCopyService auraCopyService;
+
+    @Autowired
+    @Lazy
+    private TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Autowired
     @Lazy
@@ -413,14 +417,14 @@ public class CreatureControlService {
                     || !isAttachedToCreatureControlledBy(gameData, permanent, registration.controllerId())) {
                 continue;
             }
-            StackEntry trigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            // A delayed triggered ability its maker registered (CR 603.7): it keeps that source and controller.
+            StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                     registration.sourceCard(),
                     registration.controllerId(),
                     registration.sourceCard().getName() + "'s reflexive ability",
                     List.of(new UnattachEquipmentIfAttachedToControlledCreatureEffect(permanent.getId())));
             trigger.setNonTargeting(true);
-            gameData.enqueueTrigger(trigger);
+            triggeredAbilityStackService.putDelayed(gameData, trigger);
             gameLogService.append(gameData, GameLog.abilityTriggers(registration.sourceCard()));
             queued = true;
         }
@@ -450,15 +454,14 @@ public class CreatureControlService {
                 remaining.add(registration);
                 continue;
             }
-            StackEntry trigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            // "When you lose control of it, tap it": a delayed triggered ability about the permanent (CR 603.7c).
+            StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                     registration.sourceCard(),
                     registration.controllerId(),
                     registration.sourceCard().getName() + "'s delayed triggered ability",
-                    List.of(new TapPermanentsEffect(TapUntapScope.TARGET)));
-            trigger.setTargetId(permanent.getId());
+                    List.of(new TapPermanentsEffect(TapUntapScope.TARGET)), permanent.getId(), (UUID) null);
             trigger.setNonTargeting(true);
-            gameData.enqueueTrigger(trigger);
+            triggeredAbilityStackService.putDelayed(gameData, trigger);
             gameLogService.append(gameData, GameLog.abilityTriggers(registration.sourceCard()));
         }
 

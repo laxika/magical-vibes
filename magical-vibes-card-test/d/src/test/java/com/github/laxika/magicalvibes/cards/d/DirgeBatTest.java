@@ -172,6 +172,6 @@ class DirgeBatTest extends BaseCardTest {
     private void triggerMutation(Permanent bat) {
         harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
                 gd, bat, List.of(bat.getCard()), player1.getId()));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
     }
 }

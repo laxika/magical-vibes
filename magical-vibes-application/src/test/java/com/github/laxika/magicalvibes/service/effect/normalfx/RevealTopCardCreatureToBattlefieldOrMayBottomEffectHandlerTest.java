@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -6,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -118,7 +119,7 @@ class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandlerTest {
             void emptyLibraryLogs() {
                 RevealTopCardCreatureToBattlefieldOrMayBottomEffect effect =
                         new RevealTopCardCreatureToBattlefieldOrMayBottomEffect();
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Lurking Predators"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Lurking Predators"),
                         player1Id, "Lurking Predators", List.of(effect));
 
                 revealTopCardCreatureToBattlefieldOrMayBottomEffectHandler.resolve(gd, entry, new RevealTopCardCreatureToBattlefieldOrMayBottomEffect());
@@ -135,7 +136,7 @@ class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandlerTest {
 
                 RevealTopCardCreatureToBattlefieldOrMayBottomEffect effect =
                         new RevealTopCardCreatureToBattlefieldOrMayBottomEffect();
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Lurking Predators"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Lurking Predators"),
                         player1Id, "Lurking Predators", List.of(effect));
 
                 revealTopCardCreatureToBattlefieldOrMayBottomEffectHandler.resolve(gd, entry, new RevealTopCardCreatureToBattlefieldOrMayBottomEffect());
@@ -156,7 +157,7 @@ class RevealTopCardCreatureToBattlefieldOrMayBottomEffectHandlerTest {
 
                 RevealTopCardCreatureToBattlefieldOrMayBottomEffect effect =
                         new RevealTopCardCreatureToBattlefieldOrMayBottomEffect();
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Lurking Predators"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Lurking Predators"),
                         player1Id, "Lurking Predators", List.of(effect));
 
                 revealTopCardCreatureToBattlefieldOrMayBottomEffectHandler.resolve(gd, entry, new RevealTopCardCreatureToBattlefieldOrMayBottomEffect());

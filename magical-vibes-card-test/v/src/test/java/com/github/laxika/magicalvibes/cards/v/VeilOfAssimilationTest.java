@@ -159,7 +159,7 @@ class VeilOfAssimilationTest extends BaseCardTest {
     private void chooseOwnEntryTarget(Permanent target) {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenTargetTrigger.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
     }

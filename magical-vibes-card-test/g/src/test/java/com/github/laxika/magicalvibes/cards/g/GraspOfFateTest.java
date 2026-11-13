@@ -93,7 +93,7 @@ class GraspOfFateTest extends BaseCardTest {
         prepareCast();
         harness.castEnchantment(player1, 0);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Grasp of Fate");

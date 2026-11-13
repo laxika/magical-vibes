@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KitsuneDragonsDaughter.class, GrizzlyBears.class})
 class KitsuneDragonsDaughterTest extends BaseCardTest {
@@ -23,9 +24,8 @@ class KitsuneDragonsDaughterTest extends BaseCardTest {
         castKitsune();
 
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, ownCreature.getId());
-        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownCreature.getId(), opponentCreature.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -41,8 +41,7 @@ class KitsuneDragonsDaughterTest extends BaseCardTest {
         castKitsune();
 
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, ownCreature.getId());
-        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownCreature.getId(), opponentCreature.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -71,7 +70,7 @@ class KitsuneDragonsDaughterTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Targets exclude Kitsune and the second target must have a different controller")
+    @DisplayName("Targets exclude Kitsune and the two targets must have different controllers")
     void targetsExcludeSourceAndSameController() {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent otherOwnCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -79,15 +78,15 @@ class KitsuneDragonsDaughterTest extends BaseCardTest {
         castKitsune();
         harness.passBothPriorities();
 
-        PendingInteraction.PermanentChoice firstChoice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(firstChoice.validPermanentIds()).containsExactlyInAnyOrder(
+        // The two targets of one group are announced together (CR 601.2c), under the card's constraint.
+        PendingInteraction.MultiPermanentChoice choice =
+                (PendingInteraction.MultiPermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(
                 ownCreature.getId(), otherOwnCreature.getId(), opponentCreature.getId());
-        harness.handlePermanentChosen(player1, ownCreature.getId());
-        PendingInteraction.PermanentChoice secondChoice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(secondChoice.validPermanentIds()).containsExactly(opponentCreature.getId());
-        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                List.of(ownCreature.getId(), otherOwnCreature.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownCreature.getId(), opponentCreature.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -102,8 +101,7 @@ class KitsuneDragonsDaughterTest extends BaseCardTest {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castKitsune();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, ownCreature.getId());
-        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownCreature.getId(), opponentCreature.getId()));
 
         harness.inMutationScope(() -> harness.getPermanentRemovalService()
                 .sacrificePermanentToGraveyard(gd, opponentCreature));
@@ -122,8 +120,7 @@ class KitsuneDragonsDaughterTest extends BaseCardTest {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castKitsune();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, ownCreature.getId());
-        harness.handlePermanentChosen(player1, opponentCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownCreature.getId(), opponentCreature.getId()));
         Permanent kitsune = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard() instanceof KitsuneDragonsDaughter)
                 .findFirst().orElseThrow();

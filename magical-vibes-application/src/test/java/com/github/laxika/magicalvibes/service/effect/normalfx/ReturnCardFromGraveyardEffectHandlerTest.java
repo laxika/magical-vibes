@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -99,7 +101,7 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                 .filter(filter)
                 .targetPutIntoGraveyardFromLibraryThisTurn(true)
                 .build();
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Return source"),
+        StackEntry entry = TestStackDoor.triggered(createCard("Return source"),
                 player1Id, "Return source", new ArrayList<>(List.of(effect)));
         when(predicateEvaluationService.matchesCardPredicate(
                 any(Card.class), eq(filter), eq(entry.getCard().getId()), eq(gd), eq(player2Id),
@@ -341,7 +343,7 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                         .targetGraveyard(true)
                         .gainLifeEqualToManaValue(true)
                         .build();
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Razor Hippogriff"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Razor Hippogriff"),
                         player1Id, "Razor Hippogriff", new ArrayList<>(List.of(effect)),
                         creature.getId(), Zone.GRAVEYARD);
 
@@ -562,7 +564,7 @@ class ReturnCardFromGraveyardEffectHandlerTest {
                 .mandatory(true)
                 .enterTapped(true)
                 .build();
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Test source"),
+        StackEntry entry = TestStackDoor.triggered(createCard("Test source"),
                 player1Id, "Test source", new ArrayList<>(List.of(effect)));
 
         when(predicateEvaluationService.matchesCardPredicate(

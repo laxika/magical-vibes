@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToBlockingCreaturesUnlessAttackerPaysEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -56,9 +55,7 @@ public class GrantKeywordToBlockingCreaturesUnlessAttackerPaysHandler implements
             var sourceControllerId = ability.sourceControllerId() != null
                     ? ability.sourceControllerId()
                     : ability.controllerId();
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(),
+            StackEntry entry = StackEntry.carrier(ability.sourceCard(),
                     sourceControllerId,
                     ability.sourceCard().getName() + "'s ability",
                     new ArrayList<>(ability.effects()),

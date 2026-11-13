@@ -1119,8 +1119,7 @@ public class MayPenaltyChoiceHandlerService {
                     .findFirst().orElse(targetPlayerId);
         }
         DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(effect.damage(), DamageRecipient.TARGET_PLAYER);
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
+        StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(), sourceControllerId,
                 ability.sourceCard().getName() + "'s ability", new ArrayList<>(List.of(damage)),
                 targetPlayerId, ability.sourcePermanentId());
         dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry, damage);
@@ -1256,8 +1255,7 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         // Declined or no cards — deal the damage and tap the source if it landed.
-        StackEntry syntheticEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), controllerId,
+        StackEntry syntheticEntry = StackEntry.carrier(ability.sourceCard(), controllerId,
                 ability.sourceCard().getName() + "'s ability", new ArrayList<>(),
                 null, ability.sourcePermanentId());
         damageControllerUnlessDiscardThenTapSourceEffectHandler.applyDamageThenTapIfDealt(gameData, syntheticEntry, effect.damage());
@@ -1766,8 +1764,7 @@ public class MayPenaltyChoiceHandlerService {
             if (damageAmount > 0) {
                 DealDamageToPlayersEffect damage =
                         new DealDamageToPlayersEffect(damageAmount, DamageRecipient.TARGET_PLAYER);
-                StackEntry damageEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), controllerId,
+                StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(), controllerId,
                         ability.sourceCard().getName() + "'s ability", new ArrayList<>(List.of(damage)),
                         targetPlayerId, ability.sourcePermanentId());
                 dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry, damage);
@@ -2150,7 +2147,7 @@ public class MayPenaltyChoiceHandlerService {
 
         if (accepted && effect.forcedCost() instanceof OpponentGainsLifeCost lifeCost
                 && forcedCostOrElseEffectHandler.payOpponentGainsLifeCost(
-                gameData, sourceControllerId, lifeCost, ability.sourceCard(), StackEntryType.TRIGGERED_ABILITY)) {
+                gameData, sourceControllerId, lifeCost, ability.sourceCard(), null)) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -2234,8 +2231,7 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.PutTypedCounterOnSourceCost counterCost) {
-            StackEntry counterEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
+            StackEntry counterEntry = StackEntry.carrier(ability.sourceCard(), sourceControllerId,
                     ability.sourceCard().getName() + "'s ability", List.of(effect),
                     ability.targetCardId(), ability.sourcePermanentId());
             counterEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
@@ -2249,8 +2245,7 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         if (accepted && effect.forcedCost() instanceof com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost counterCost) {
-            StackEntry counterEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
+            StackEntry counterEntry = StackEntry.carrier(ability.sourceCard(), sourceControllerId,
                     ability.sourceCard().getName() + "'s ability", List.of(effect),
                     ability.targetCardId(), ability.sourcePermanentId());
             if (forcedCostOrElseEffectHandler.payCounterFromSourceCost(gameData, counterEntry, counterCost)) {
@@ -2269,8 +2264,7 @@ public class MayPenaltyChoiceHandlerService {
                             || !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent))
                             && !gameQueryService.cantBeChosen(gameData, permanent));
             if (!candidates.isEmpty()) {
-                StackEntry counterEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
+                StackEntry counterEntry = StackEntry.carrier(ability.sourceCard(), sourceControllerId,
                         ability.sourceCard().getName() + "'s ability", List.of(effect),
                         ability.targetCardId(), ability.sourcePermanentId());
                 counterEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
@@ -2295,8 +2289,7 @@ public class MayPenaltyChoiceHandlerService {
                             && (counterCost.counterType() != CounterType.PLUS_ONE_PLUS_ONE
                             || !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent)));
             if (!candidates.isEmpty()) {
-                StackEntry counterEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
+                StackEntry counterEntry = StackEntry.carrier(ability.sourceCard(), sourceControllerId,
                         ability.sourceCard().getName() + "'s ability", List.of(effect),
                         ability.targetCardId(), ability.sourcePermanentId());
                 counterEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
@@ -2436,8 +2429,7 @@ public class MayPenaltyChoiceHandlerService {
         // Preserve targetCardId so ENCHANTED_PERMANENT_CONTROLLER damage / similar fallthroughs
         // still see the enchanted permanent's controller (Mind Whip).
         clearAnyPlayerPayState(gameData);
-        StackEntry syntheticEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
+        StackEntry syntheticEntry = StackEntry.carrier(ability.sourceCard(), sourceControllerId,
                 ability.sourceCard().getName() + "'s ability", List.of(effect),
                 ability.targetCardId(), ability.sourcePermanentId());
         syntheticEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());

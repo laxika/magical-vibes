@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealPowerDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -64,9 +63,7 @@ public class ControlledCreaturesDealPowerDamageToEachOpponentEffectHandler
                 continue;
             }
             for (UUID opponentId : opponents) {
-                StackEntry damageEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        source.getCard(),
+                StackEntry damageEntry = StackEntry.carrier(source.getCard(),
                         sourceControllerId,
                         source.getCard().getName() + "'s ability",
                         List.of(),

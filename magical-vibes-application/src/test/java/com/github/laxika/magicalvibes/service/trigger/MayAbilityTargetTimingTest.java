@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -104,7 +106,7 @@ class MayAbilityTargetTimingTest extends BaseCardTest {
         Permanent source = addCreatureReady(player1, raider());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         List<CardEffect> effects = List.of(new MayEffect(new BoostTargetCreatureEffect(3, 3), QUESTION));
-        StackEntry untargeted = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), player1.getId(),
+        StackEntry untargeted = TestStackDoor.triggered(source.getCard(), player1.getId(),
                 "Fixture Raider's ability", effects);
         gd.stack.add(untargeted);
 

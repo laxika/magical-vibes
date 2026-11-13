@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -8,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ImprintFromTopCardsEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -114,7 +115,7 @@ class ImprintFromTopCardsEffectHandlerTest {
             @DisplayName("Empty library logs and does nothing")
             void emptyLibraryLogs() {
                 ImprintFromTopCardsEffect effect = new ImprintFromTopCardsEffect(4);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Clone Shell"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Clone Shell"),
                         player1Id, "Clone Shell", List.of(effect));
 
                 imprintFromTopCardsEffectHandler.resolve(gd, entry, effect);
@@ -131,7 +132,7 @@ class ImprintFromTopCardsEffectHandlerTest {
                 gd.playerDecks.get(player1Id).add(singleCard);
 
                 ImprintFromTopCardsEffect effect = new ImprintFromTopCardsEffect(4);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Clone Shell"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Clone Shell"),
                         player1Id, "Clone Shell", List.of(effect));
 
                 imprintFromTopCardsEffectHandler.resolve(gd, entry, effect);
@@ -151,7 +152,7 @@ class ImprintFromTopCardsEffectHandlerTest {
                 UUID sourcePermanentId = UUID.randomUUID();
 
                 ImprintFromTopCardsEffect effect = new ImprintFromTopCardsEffect(4);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Clone Shell"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Clone Shell"),
                         player1Id, "Clone Shell", List.of(effect), null, sourcePermanentId);
 
                 imprintFromTopCardsEffectHandler.resolve(gd, entry, effect);
@@ -169,7 +170,7 @@ class ImprintFromTopCardsEffectHandlerTest {
                 gd.playerDecks.get(player1Id).add(createCard("Giant Growth"));
 
                 ImprintFromTopCardsEffect effect = new ImprintFromTopCardsEffect(4);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Clone Shell"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Clone Shell"),
                         player1Id, "Clone Shell", List.of(effect));
 
                 imprintFromTopCardsEffectHandler.resolve(gd, entry, effect);
@@ -194,7 +195,7 @@ class ImprintFromTopCardsEffectHandlerTest {
                 UUID sourcePermanentId = UUID.randomUUID();
 
                 ImprintFromTopCardsEffect effect = new ImprintFromTopCardsEffect(4, true);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Collector's Cage"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Collector's Cage"),
                         player1Id, "Collector's Cage", List.of(effect), null, sourcePermanentId);
 
                 imprintFromTopCardsEffectHandler.resolve(gd, entry, effect);

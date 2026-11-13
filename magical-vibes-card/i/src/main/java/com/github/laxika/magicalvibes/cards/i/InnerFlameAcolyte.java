@@ -23,14 +23,13 @@ public class InnerFlameAcolyte extends Card {
     public InnerFlameAcolyte() {
         // Evoke {R}: cast for the alternate cost instead of the mana cost; it's sacrificed on entry.
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{R}"))));
+        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
 
         // When this creature enters, target creature gets +2/+0 and gains haste until end of turn.
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new BoostTargetCreatureEffect(2, 0),
                         new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
-
-        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }
 }

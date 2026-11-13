@@ -95,7 +95,7 @@ class EddymurkCrabTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
 
         Permanent crab = harness.enterBattlefieldAndReturn(player1, new EddymurkCrab());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         assertThat(crab.isTapped()).isTrue();
@@ -110,8 +110,7 @@ class EddymurkCrabTest extends BaseCardTest {
         Permanent other = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         Permanent crab = harness.enterBattlefieldAndReturn(player1, new EddymurkCrab());
-        harness.handlePermanentChosen(player1, crab.getId());
-        harness.handlePermanentChosen(player1, other.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(crab.getId(), other.getId()));
         resolveAllTriggers();
 
         assertThat(crab.isTapped()).isTrue();

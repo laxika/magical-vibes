@@ -6,25 +6,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneAtRandomEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
-import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
-import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -37,10 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -152,56 +134,51 @@ public class SagaChapterService {
     }
 
     /**
-     * Triggers a Saga chapter, including its resolution-time target selection when required.
+     * Triggers {@code card}'s chapter ability {@code loreCount} as lore counters reach it (CR 715.2b), and begins the
+     * choices it goes on the stack with.
      */
     public void triggerSagaChapter(GameData gameData, Permanent sagaPermanent, Card card,
                                    UUID controllerId, int loreCount) {
-        gameData.routeTriggeredAbility(
-                () -> triggerSagaChapter(gameData, sagaPermanent, card, controllerId, loreCount, false));
-    }
-
-    /** Triggers a chapter ability copied from a Saga card that is no longer on the battlefield. */
-    public void triggerCopiedSagaChapter(GameData gameData, Card card, UUID controllerId,
-                                         int chapterNumber) {
-        gameData.routeTriggeredAbility(
-                () -> triggerSagaChapter(gameData, null, card, controllerId, chapterNumber, true));
-    }
-
-    private void triggerSagaChapter(GameData gameData, Permanent sagaPermanent, Card card,
-                                    UUID controllerId, int loreCount, boolean copied) {
-        if (!copied && sagaPermanent != null && loreCount != sagaPermanent.getCounterCount(CounterType.LORE)
+        if (sagaPermanent != null && loreCount != sagaPermanent.getCounterCount(CounterType.LORE)
                 && gameData.permanentsEnteredBattlefieldThisTurn.values().stream()
                 .flatMap(List::stream).anyMatch(entered -> entered.getId().equals(card.getId()))
                 && hasReadAhead(gameData, controllerId, sagaPermanent)) {
             return;
         }
-        if (loreCount < 1) return;
+        putChapterAbility(gameData, sagaPermanent, card, controllerId, loreCount, false);
+        beginChapterChoices(gameData);
+    }
+
+    /** Triggers a chapter ability copied from a Saga card that is no longer on the battlefield. */
+    public void triggerCopiedSagaChapter(GameData gameData, Card card, UUID controllerId,
+                                         int chapterNumber) {
+        putChapterAbility(gameData, null, card, controllerId, chapterNumber, true);
+        beginChapterChoices(gameData);
+    }
+
+    /**
+     * Puts {@code card}'s chapter ability {@code loreCount} on the stack through the stack door, whole (CR 603.3), with
+     * the Saga as it was when it triggered and whether the chapter was copied ({@code null} Saga for one copied from a
+     * Saga card that isn't on the battlefield): the door chooses its mode, its random mode and the targets its chapter
+     * declares as it goes there (CR 603.3c, 603.3d). Reaching the final chapter triggers the "whenever the final chapter
+     * ability of a Saga you control triggers" abilities. The choices it queued are begun by the caller.
+     */
+    public void putChapterAbility(GameData gameData, Permanent sagaPermanent, Card card, UUID controllerId,
+                                  int loreCount, boolean copied) {
+        if (loreCount < 1) {
+            return;
+        }
         ChapterTrigger chapter = Triggers.chapter(loreCount);
-
-        UUID sourcePermanentId = sagaPermanent == null ? null : sagaPermanent.getId();
-
-        List<CardEffect> chapterEffects = card.getTriggerEffects(chapter);
-        if (chapterEffects.isEmpty()) return;
-
-        String chapterName = chapter.numeral();
-
-        Set<TargetFilter> chapterTargetFilters = new LinkedHashSet<>(card.getSagaChapterTargetFilters(loreCount));
-        List<SagaChapterTargetGroup> chapterTargetGroups = card.getSagaChapterTargetGroups(loreCount);
         List<TriggeredAbility> chapterAbilities = card.getTriggeredAbilities().stream()
                 .filter(ability -> ability.hasTrigger(chapter)).toList();
-        boolean announcedMode = chapterEffects.size() == 1
-                && chapterEffects.getFirst().modesChosenAsItTriggers() != null;
-        boolean choosesTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec() != TargetSpec.NONE)
-                || !chapterTargetFilters.isEmpty() || !chapterTargetGroups.isEmpty();
-        if (chapterAbilities.size() == 1 && (announcedMode || !choosesTarget
-                && chapterEffects.stream().noneMatch(e -> e.modesChosenAtRandomAsItTriggers() != null))) {
-            // A chapter ability whose mode is announced as it goes on the stack (CR 603.3c), or one that chooses
-            // nothing, goes on the stack through the stack door, whole (CR 603.3), recording the Saga as it was and
-            // whether the chapter was copied. A chapter's targets are its own groups, which the door doesn't read.
-            Permanent snapshot = sagaPermanent == null ? null : new Permanent(sagaPermanent);
+        if (chapterAbilities.isEmpty()) {
+            return;
+        }
+        Permanent snapshot = sagaPermanent == null ? null : new Permanent(sagaPermanent);
+        String description = card.getName() + "'s chapter " + chapter.numeral() + " ability";
+        for (TriggeredAbility ability : chapterAbilities) {
             boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
-                    chapterAbilities.getFirst(), card, sagaPermanent, controllerId,
-                    card.getName() + "'s chapter " + chapterName + " ability",
+                    ability, card, sagaPermanent, controllerId, description,
                     sagaPermanent == null ? ConditionContext.forCard(card, controllerId)
                             : ConditionContext.forPermanent(sagaPermanent, controllerId), entry -> {
                         entry.setNonTargeting(true);
@@ -211,83 +188,10 @@ public class SagaChapterService {
                         entry.setCopy(copied);
                     }));
             if (triggered) {
-                appendChapterTrigger(gameData, card, chapterName, null);
+                gameLogService.append(gameData, GameLog.cardThen(card,
+                        "'s chapter " + chapter.numeral() + " ability triggers."));
+                log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapter.numeral());
             }
-            if (!copied && loreCount == card.getSagaFinalChapter()) {
-                triggerCollectionService.checkSagaFinalChapterAbilityTriggers(gameData, controllerId,
-                        card.getManaValue());
-            }
-            return;
-        }
-        if (chapterEffects.size() == 1 && chapterEffects.getFirst() instanceof ChooseOneAtRandomEffect randomChoice
-                && sagaPermanent != null) {
-            // The random mode (and so its targets) is picked as the chapter ability triggers.
-            ChooseOneEffect.ChooseOneOption selectedOption = triggeredAbilityStackService
-                    .chooseRandomModeAsItTriggers(gameData, controllerId, sagaPermanent.getCard(), sagaPermanent,
-                            randomChoice.options());
-            if (selectedOption == null) return;
-            chapterEffects = selectedOption.effectsForSelection();
-            if (selectedOption.targetFilter() != null) {
-                chapterTargetFilters.add(selectedOption.targetFilter());
-                chapterTargetGroups = List.of(new SagaChapterTargetGroup(
-                        selectedOption.targetFilter(), selectedOption.minTargets(),
-                        selectedOption.maxTargets()));
-            }
-        }
-
-        // The entry of the chapter ability that chooses nothing, and the record of one that chooses a target as it
-        // goes on the stack.
-        StackEntry chapterEntry = chapterEntry(card, controllerId, chapterName, chapterEffects, sagaPermanent,
-                copied);
-        gameData.handOffTriggerRecord(chapterEntry);
-        boolean needsPlayerTarget = chapterEffects.stream()
-                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
-                || chapterTargetFilters.stream()
-                .anyMatch(PlayerPredicateTargetFilter.class::isInstance);
-        boolean hasSagaTargetGroups = !chapterTargetGroups.isEmpty();
-        boolean needsPermanentTarget = chapterEffects.stream()
-                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
-                || hasSagaTargetGroups;
-        boolean needsGraveyardTarget = chapterEffects.stream().anyMatch(e ->
-                e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
-                        || e instanceof ReturnTargetCardsFromGraveyardToHandEffect);
-        if (hasSagaTargetGroups) {
-            gameData.queueInteraction(
-                    new PermanentChoiceContext.SagaChapterTarget(card, controllerId,
-                            new ArrayList<>(chapterEffects), sourcePermanentId, chapterName,
-                            chapterTargetFilters,
-                            chapterTargetGroups, List.of(), 0));
-            appendChapterTrigger(gameData, card, chapterName, "grouped target selection");
-            triggerCollectionService.processNextSagaChapterTarget(gameData);
-        } else if (needsPlayerTarget && needsPermanentTarget) {
-            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    card, controllerId, new ArrayList<>(chapterEffects), false,
-                    sagaChapterAnyTargetFilter(chapterEffects), 0, sourcePermanentId));
-            appendChapterTrigger(gameData, card, chapterName, "any target selection");
-            triggerCollectionService.processNextSpellTargetTrigger(gameData);
-        } else if (needsPlayerTarget) {
-            gameData.queueInteraction(
-                    new PermanentChoiceContext.SagaChapterPlayerTarget(card, controllerId,
-                            new ArrayList<>(chapterEffects), sourcePermanentId, chapterName,
-                            chapterTargetFilters));
-            appendChapterTrigger(gameData, card, chapterName, "player target selection");
-            triggerCollectionService.processNextSagaChapterPlayerTarget(gameData);
-        } else if (needsPermanentTarget) {
-            gameData.queueInteraction(
-                    new PermanentChoiceContext.SagaChapterTarget(card, controllerId,
-                            new ArrayList<>(chapterEffects), sourcePermanentId, chapterName,
-                            chapterTargetFilters,
-                            chapterTargetGroups, List.of(), 0));
-            appendChapterTrigger(gameData, card, chapterName, "target selection");
-            triggerCollectionService.processNextSagaChapterTarget(gameData);
-        } else if (needsGraveyardTarget) {
-            gameData.queueInteraction(new PermanentChoiceContext.SagaChapterGraveyardTarget(
-                    card, controllerId, new ArrayList<>(chapterEffects), sourcePermanentId, chapterName));
-            appendChapterTrigger(gameData, card, chapterName, "graveyard target selection");
-            triggerCollectionService.processNextSagaChapterGraveyardTarget(gameData);
-        } else {
-            gameData.stack.add(chapterEntry);
-            appendChapterTrigger(gameData, card, chapterName, null);
         }
         if (!copied && loreCount == card.getSagaFinalChapter()) {
             triggerCollectionService.checkSagaFinalChapterAbilityTriggers(gameData, controllerId,
@@ -295,61 +199,20 @@ public class SagaChapterService {
         }
     }
 
-    /**
-     * The entry of a chapter ability of {@code card} that chooses nothing, with the Saga as it is when the ability
-     * triggers ({@code null} for a chapter copied from a Saga card that isn't on the battlefield).
-     */
-    private static StackEntry chapterEntry(Card card, UUID controllerId, String chapterName,
-                                           List<CardEffect> chapterEffects, Permanent sagaPermanent,
-                                           boolean copied) {
-        StackEntry chapterEntry;
-        if (sagaPermanent == null) {
-            chapterEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    controllerId,
-                    card.getName() + "'s chapter " + chapterName + " ability",
-                    new ArrayList<>(chapterEffects),
-                    0,
-                    (UUID) null);
-        } else {
-            chapterEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    controllerId,
-                    card.getName() + "'s chapter " + chapterName + " ability",
-                    new ArrayList<>(chapterEffects),
-                    null,
-                    sagaPermanent.getId());
-            chapterEntry.setSourcePermanentSnapshot(new Permanent(sagaPermanent));
+    /** Begins the target choices chapter abilities went to the stack door with, the chapters' own first. */
+    public void beginChapterChoices(GameData gameData) {
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
+            triggerCollectionService.processNextSagaChapterTarget(gameData);
         }
-        chapterEntry.setCopy(copied);
-        return chapterEntry;
-    }
-
-    private void appendChapterTrigger(GameData gameData, Card card, String chapterName, String detail) {
-        gameLogService.append(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
-        if (detail == null) {
-            log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
-        } else {
-            log.info("Game {} - {} chapter {} triggers (awaiting {})",
-                    gameData.id, card.getName(), chapterName, detail);
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterPlayerTarget.class)) {
+            triggerCollectionService.processNextSagaChapterPlayerTarget(gameData);
         }
-    }
-
-    private TargetFilter sagaChapterAnyTargetFilter(List<CardEffect> chapterEffects) {
-        CardEffect permanentTargetEffect = chapterEffects.stream()
-                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
-                .findFirst()
-                .orElseThrow();
-        var permanentPredicate = permanentTargetEffect.targetSpec().targetPredicate()
-                .permanentRestriction().orElse(new PermanentTruePredicate());
-        PlayerRelation relation = chapterEffects.stream()
-                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
-                .map(CardEffect::targetPlayerRelation)
-                .findFirst()
-                .orElse(PlayerRelation.ANY);
-        return new AnyTargetPredicateTargetFilter(permanentPredicate,
-                new PlayerRelationPredicate(relation), "target opponent or planeswalker");
+        if (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterGraveyardTarget.class)) {
+            triggerCollectionService.processNextSagaChapterGraveyardTarget(gameData);
+        }
+        triggerCollectionService.beginStackDoorChoices(gameData);
     }
 }

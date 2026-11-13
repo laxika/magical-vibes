@@ -91,11 +91,11 @@ public class SearchHandAndOrLibraryChoiceInteractionHandler
                     gameData.playerIdToName.get(playerId) + " searches their " + zoneName + ", reveals ",
                     chosen, ", and puts it " + destination + "."));
             if (fromLibrary && interaction.librarySearchAllowed()) {
-                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
+                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
                 LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             }
         } else if (interaction.librarySearchAllowed() && !interaction.libraryCardIds().isEmpty()) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(playerId) + " searches their library but finds no "

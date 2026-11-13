@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -63,9 +62,7 @@ public class EachOpponentMaySacrificeNontokenCreatureOrLoseLifeHandler
                 1,
                 EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffectHandler.NONTOKEN_CREATURE,
                 SacrificeRecipient.TARGET_PLAYER);
-        var sacrificeEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ability.sourceCard(),
+        var sacrificeEntry = StackEntry.carrier(ability.sourceCard(),
                 sourceControllerId,
                 ability.sourceCard().getName() + "'s ability",
                 new ArrayList<>(List.of(sacrifice)),

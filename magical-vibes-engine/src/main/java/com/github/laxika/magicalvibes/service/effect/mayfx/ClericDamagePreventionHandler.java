@@ -40,7 +40,7 @@ public class ClericDamagePreventionHandler implements MayEffectHandlerBean {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
-        StackEntry entry = new StackEntry(effect.damageEntryType(), ability.sourceCard(),
+        StackEntry entry = StackEntry.carrier(effect.damageEntryType(), ability.sourceCard(),
                 ability.sourceControllerId(), "Damage", List.of(), effect.damagedPlayerId(),
                 ability.sourcePermanentId());
         entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());

@@ -23,7 +23,7 @@ public class Hornswoggle extends Card {
                 new StackEntryAllOfPredicate(List.of(
                         new StackEntryCardTypeInPredicate(Set.of(CardType.CREATURE)),
                         new StackEntryNotPredicate(new StackEntryTypeInPredicate(
-                                Set.of(StackEntryType.TRIGGERED_ABILITY, StackEntryType.ACTIVATED_ABILITY))))),
+                                StackEntryType.ABILITIES)))),
                 "Target must be a creature spell."
         )).addSpellEffect(new CounterSpellEffect())
           .addSpellEffect(CreateTokenEffect.ofTreasureToken(1));

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToControllerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -52,9 +51,7 @@ public class TargetCreatureDealsPowerDamageToControllerEffectHandler implements 
 
         // Build a temporary entry whose source is the target creature, so prevention/protection/
         // lifelink and "deals damage" triggers key off the creature rather than Dong Zhou.
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                target.getCard(),
+        StackEntry damageEntry = StackEntry.carrier(target.getCard(),
                 controllerId,
                 target.getCard().getName() + "'s ability",
                 List.of(),

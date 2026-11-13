@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsRepeatOnDuplicateEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -88,7 +89,7 @@ player1Id = UUID.randomUUID();
                         createCard("Alpha"), createCard("Beta"), createCard("Gamma")));
 
                 ExileTopCardsRepeatOnDuplicateEffect effect = new ExileTopCardsRepeatOnDuplicateEffect(2);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Muse"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Muse"),
                         player1Id, "Muse", List.of(effect), 0, player2Id, null);
 
                 exileTopCardsRepeatOnDuplicateEffectHandler.resolve(gd, entry, effect);
@@ -105,7 +106,7 @@ player1Id = UUID.randomUUID();
                         createCard("Unique1"), createCard("Unique2")));
 
                 ExileTopCardsRepeatOnDuplicateEffect effect = new ExileTopCardsRepeatOnDuplicateEffect(2);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Muse"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Muse"),
                         player1Id, "Muse", List.of(effect), 0, player2Id, null);
 
                 exileTopCardsRepeatOnDuplicateEffectHandler.resolve(gd, entry, effect);
@@ -122,7 +123,7 @@ player1Id = UUID.randomUUID();
             @DisplayName("Stops when library is empty")
             void stopsOnEmptyLibrary() {
                 ExileTopCardsRepeatOnDuplicateEffect effect = new ExileTopCardsRepeatOnDuplicateEffect(2);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Muse"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Muse"),
                         player1Id, "Muse", List.of(effect), 0, player2Id, null);
 
                 exileTopCardsRepeatOnDuplicateEffectHandler.resolve(gd, entry, effect);

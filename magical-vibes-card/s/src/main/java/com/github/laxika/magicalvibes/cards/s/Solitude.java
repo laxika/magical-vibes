@@ -32,6 +32,7 @@ public class Solitude extends Card {
     public Solitude() {
         addCastingOption(new AlternateHandCast(List.of(
                 new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.WHITE), "white"))));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
 
         PermanentPredicate otherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
@@ -41,7 +42,5 @@ public class Solitude extends Card {
                         EventStat.POWER,
                         new GainLifeEffect(new EventValue()),
                         ThenEffectRecipient.TARGET_CONTROLLER));
-
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }
 }

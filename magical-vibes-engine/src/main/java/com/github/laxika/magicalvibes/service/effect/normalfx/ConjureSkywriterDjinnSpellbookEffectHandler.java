@@ -221,8 +221,7 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
         Card card = spellCard(ownerId, "Stifle", CardType.INSTANT, "{U}",
                 "Counter target activated or triggered ability. (Mana abilities can't be targeted.)");
         card.target(new StackEntryPredicateTargetFilter(
-                new StackEntryTypeInPredicate(Set.of(
-                        StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY)),
+                new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                 "Target must be an activated or triggered ability."))
                 .addSpellEffect(new CounterSpellEffect());
         return freeze(card);

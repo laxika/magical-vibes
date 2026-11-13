@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -113,9 +112,7 @@ public class WormsOfTheEarthEffectHandler implements NormalEffectHandlerBean {
                                      WormsOfTheEarthEffect effect, UUID playerId) {
         DealDamageToPlayersEffect damage =
                 new DealDamageToPlayersEffect(5, DamageRecipient.TARGET_PLAYER);
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
+        StackEntry damageEntry = StackEntry.carrier(sourceCard,
                 effect.abilityControllerId(),
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(damage)),

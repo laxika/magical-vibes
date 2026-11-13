@@ -232,14 +232,6 @@ public class ActivatedAbilityExecutionService {
         triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
         stateBasedActionService.performStateBasedActions(gameData);
         gameData.priorityPassedBy.clear();
-        if (!gameData.interaction.isAwaitingInput()
-                && gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
-            triggerCollectionService.processNextDeathTriggerTarget(gameData);
-        }
-        if (!gameData.interaction.isAwaitingInput()
-                && gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
-            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
-        }
         mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 
@@ -1186,10 +1178,6 @@ public class ActivatedAbilityExecutionService {
             triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
         }
         // Likewise an activation trigger that targets a permanent (Vazi, Keen Negotiator).
-        if (!gameData.interaction.isAwaitingInput()
-                && gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
-            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
-        }
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
         }
@@ -2036,12 +2024,6 @@ public class ActivatedAbilityExecutionService {
         stateBasedActionService.performStateBasedActions(gameData);
         // CR 605.3b: Do NOT clear priorityPassedBy here — mana abilities don't affect priority.
         // Priority clearing is handled by the caller when deferred triggers are pushed onto the stack.
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
-            triggerCollectionService.processNextDeathTriggerTarget(gameData);
-        }
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
-            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
-        }
         if (!gameData.interaction.isAwaitingInput() && !gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
         }
@@ -2533,12 +2515,6 @@ public class ActivatedAbilityExecutionService {
         triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
         stateBasedActionService.performStateBasedActions(gameData);
         gameData.priorityPassedBy.clear();
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
-            triggerCollectionService.processNextDeathTriggerTarget(gameData);
-        }
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
-            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
-        }
         mutationCoordinator.invalidateAllPlayerViews(gameData);
     }
 

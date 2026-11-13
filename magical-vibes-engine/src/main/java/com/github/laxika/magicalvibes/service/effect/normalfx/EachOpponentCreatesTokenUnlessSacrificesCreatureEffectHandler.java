@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatesTokenUnlessSacrificesCreatureEffect;
@@ -159,7 +158,7 @@ public class EachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler imple
 
     private StackEntry sourceEntry(Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId,
                                    Permanent sourcePermanentSnapshot) {
-        StackEntry sourceEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, sourceControllerId,
+        StackEntry sourceEntry = StackEntry.carrier(sourceCard, sourceControllerId,
                 sourceCard.getName() + "'s ability", new ArrayList<>(), 0, sourcePermanentId);
         sourceEntry.setSourcePermanentSnapshot(sourcePermanentSnapshot);
         return sourceEntry;

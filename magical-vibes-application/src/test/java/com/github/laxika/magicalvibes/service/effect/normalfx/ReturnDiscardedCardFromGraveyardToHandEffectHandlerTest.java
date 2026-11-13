@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ReturnDiscardedCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -45,7 +46,7 @@ class ReturnDiscardedCardFromGraveyardToHandEffectHandlerTest {
         gameData.playerGraveyards.put(controllerId, new ArrayList<>(List.of(discarded)));
         Card source = new Card();
         source.setName("Discard trigger source");
-        entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, controllerId,
+        entry = TestStackDoor.triggered(source, controllerId,
                 "Return discarded card", List.of(effect));
         entry.setTriggeringCardId(discarded.getId());
         entry.setTriggeringCardGraveyardEntryVersion(gameData.markGraveyardEntry(discarded));

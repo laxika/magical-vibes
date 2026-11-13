@@ -21,6 +21,7 @@ public class Vesperlark extends Card {
 
     public Vesperlark() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{W}"))));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
 
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 ReturnCardFromGraveyardEffect.builder()
@@ -30,7 +31,5 @@ public class Vesperlark extends Card {
                                 new CardPowerAtMostPredicate(1))))
                         .targetGraveyard(true)
                         .build());
-
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }
 }

@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "WHO", collectorNumber = "33")
 @CardRegistration(set = "WHO", collectorNumber = "638")
@@ -29,9 +28,7 @@ public class AdricMathematicalGenius extends Card {
                 "{2}{U}, {T}: Copy target activated or triggered ability you control. You may choose new targets for the copy.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
-                                new StackEntryTypeInPredicate(Set.of(
-                                        StackEntryType.ACTIVATED_ABILITY,
-                                        StackEntryType.TRIGGERED_ABILITY)),
+                                new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                                 new StackEntryControlledByPredicate())),
                         "Target must be an activated or triggered ability you control.")));
 
@@ -41,9 +38,7 @@ public class AdricMathematicalGenius extends Card {
                 List.of(new SacrificeSelfCost(), new CounterSpellEffect()),
                 "Ultimate Sacrifice — {1}{U}, Sacrifice Adric: Counter target activated or triggered ability.",
                 new StackEntryPredicateTargetFilter(
-                        new StackEntryTypeInPredicate(Set.of(
-                                StackEntryType.ACTIVATED_ABILITY,
-                                StackEntryType.TRIGGERED_ABILITY)),
+                        new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                         "Target must be an activated or triggered ability.")));
     }
 }

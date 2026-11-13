@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachTargetCreatureDealsPowerDamageToSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -65,9 +64,7 @@ public class EachTargetCreatureDealsPowerDamageToSourceEffectHandler implements 
                 continue;
             }
 
-            StackEntry damageEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    source.getCard(),
+            StackEntry damageEntry = StackEntry.carrier(source.getCard(),
                     controllerId,
                     source.getCard().getName() + "'s ability",
                     List.of(),

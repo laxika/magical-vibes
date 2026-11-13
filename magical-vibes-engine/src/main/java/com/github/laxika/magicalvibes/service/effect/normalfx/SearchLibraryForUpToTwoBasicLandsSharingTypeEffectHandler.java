@@ -69,7 +69,7 @@ public class SearchLibraryForUpToTwoBasicLandsSharingTypeEffectHandler
         }
 
         if (matchingCards.isEmpty()) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, controllerId);
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             gameLogService.append(gameData, GameLog.text(playerName
                     + " searches their library but finds no basic land cards. Library is shuffled."));

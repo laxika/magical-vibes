@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -68,9 +67,7 @@ public class ControlledCreaturesDealDamageToTargetPlayerEffectHandler implements
             if (sourceControllerId == null) {
                 continue;
             }
-            StackEntry damageEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourcePermanent.getCard(),
+            StackEntry damageEntry = StackEntry.carrier(sourcePermanent.getCard(),
                     sourceControllerId,
                     sourcePermanent.getCard().getName() + "'s ability",
                     List.of(), null, sourcePermanent.getId());

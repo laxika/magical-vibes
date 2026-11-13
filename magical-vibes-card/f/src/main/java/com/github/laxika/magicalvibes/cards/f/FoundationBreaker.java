@@ -22,6 +22,7 @@ public class FoundationBreaker extends Card {
 
     public FoundationBreaker() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{G}"))));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
@@ -33,7 +34,5 @@ public class FoundationBreaker extends Card {
                 new DestroyTargetPermanentEffect(),
                 "Destroy target artifact or enchantment?"
         ));
-
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }
 }

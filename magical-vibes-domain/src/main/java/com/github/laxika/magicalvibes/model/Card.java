@@ -1037,6 +1037,8 @@ public class Card {
                 bindEffectToTargetGroup(e.upgradedEffect(), targetIndex);
             }
             case MayEffect e -> bindEffectToTargetGroup(e.wrapped(), targetIndex);
+            case com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect e ->
+                    bindEffectToTargetGroup(e.wrapped(), targetIndex);
             case ExileSourceCardFromGraveyardThenEffect e ->
                     bindEffectToTargetGroup(e.thenEffect(), targetIndex);
             case ExilePermanentYouControlAndTrackWithSourceEffect e ->

@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -104,7 +105,7 @@ class ForcedCostOrElseMillTest {
 
     private StackEntry entry(ForcedCostOrElseEffect effect) {
         Card source = EffectHandlerTestFixtures.createCard("Deep Spawn");
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, playerId,
+        return TestStackDoor.triggered(source, playerId,
                 source.getName(), List.of(effect), null, UUID.randomUUID());
     }
 

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.r.RoguesGloves;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -26,10 +25,9 @@ class ArmoryAutomatonTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
-        harness.handlePermanentChosen(player1, ownEquipment.getId());
-        harness.handlePermanentChosen(player1, opposingEquipment.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(ownEquipment.getId(), opposingEquipment.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownEquipment.getId(), opposingEquipment.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -65,7 +63,7 @@ class ArmoryAutomatonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, equipment.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(equipment.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
@@ -127,7 +125,7 @@ class ArmoryAutomatonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(equipment.getAttachedTo()).isNull();

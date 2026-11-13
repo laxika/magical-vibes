@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -36,6 +37,21 @@ class PrismariTheInspirationTest extends BaseCardTest {
                 .singleElement()
                 .extracting(entry -> entry.getCard().getName())
                 .isEqualTo("Dark Ritual");
+    }
+
+    @Test
+    @DisplayName("The storm it gives is the spell's own triggered ability, not Prismari's (CR 702.40a)")
+    void stormIsTheSpellsOwnAbility() {
+        harness.addToBattlefield(player1, new PrismariTheInspiration());
+        harness.setHand(player1, List.of(new DarkRitual()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castInstant(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Dark Ritual");
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isNull();
     }
 
     @Test

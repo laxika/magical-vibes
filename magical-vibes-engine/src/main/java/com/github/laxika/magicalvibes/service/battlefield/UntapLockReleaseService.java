@@ -4,15 +4,16 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.DelayedDrawStepTriggerWhileSourceTapped;
 import com.github.laxika.magicalvibes.model.action.DelayedSourceUntapsOrLeavesTrigger;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,6 +37,10 @@ public class UntapLockReleaseService {
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
 
+    @Autowired
+    @Lazy
+    private TriggeredAbilityStackService triggeredAbilityStackService;
+
     /**
      * Releases every untap lock {@code source} holds, ends its "for as long as it remains tapped" delayed triggers and
      * puts the delayed abilities that trigger when it untaps or leaves on the stack.
@@ -54,11 +59,11 @@ public class UntapLockReleaseService {
             if (affectedId != null && gameQueryService.findPermanentById(gameData, affectedId) == null) {
                 continue;
             }
-            StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, delayed.sourceCard(),
+            StackEntry trigger = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
                     delayed.controllerId(), delayed.sourceCard().getName() + "'s delayed ability",
-                    new ArrayList<>(List.of(delayed.effect())), affectedId, sourceId);
+                    List.of(delayed.effect()), affectedId, sourceId);
             trigger.setNonTargeting(true);
-            gameData.stack.add(trigger);
+            triggeredAbilityStackService.putDelayed(gameData, trigger);
             gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(), "'s delayed ability triggers."));
             log.info("Game {} - {} untaps-or-leaves delayed trigger", gameData.id, delayed.sourceCard().getName());
         }

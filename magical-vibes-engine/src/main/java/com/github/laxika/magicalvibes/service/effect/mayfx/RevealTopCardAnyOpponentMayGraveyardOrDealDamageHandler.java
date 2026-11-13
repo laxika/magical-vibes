@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -106,9 +105,7 @@ public class RevealTopCardAnyOpponentMayGraveyardOrDealDamageHandler implements 
             RevealTopCardAnyOpponentMayGraveyardOrDealDamageEffect effect, UUID targetPlayerId) {
         DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(
                 effect.manaValue(), DamageRecipient.TARGET_PLAYER);
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ability.sourceCard(),
+        StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(),
                 effect.abilityControllerId(),
                 ability.sourceCard().getName() + "'s ability",
                 new ArrayList<>(List.of(damage)),

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -127,7 +129,7 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
                         new CopySpellForEachOtherPlayerEffect();
 
                 Card triggerCard = createCard("Radiate");
-                StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                StackEntry triggerEntry = TestStackDoor.triggered(triggerCard, player1Id,
                         "Radiate trigger", List.of(effect));
                 triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
                 triggerEntry.setTriggeringSpell(spellSnapshot);
@@ -152,7 +154,7 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
                         new CopySpellForEachOtherPlayerEffect();
 
                 Card triggerCard = createCard("Radiate");
-                StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                StackEntry triggerEntry = TestStackDoor.triggered(triggerCard, player1Id,
                         "Radiate trigger", List.of(effect));
                 triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
                 triggerEntry.setTriggeringSpell(spellSnapshot);
@@ -170,7 +172,7 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
                         new CopySpellForEachOtherPlayerEffect();
 
                 Card triggerCard = createCard("Radiate");
-                StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                StackEntry triggerEntry = TestStackDoor.triggered(triggerCard, player1Id,
                         "Radiate trigger", List.of(effect));
 
                 copySpellForEachOtherPlayerHandler.resolve(gd, triggerEntry, effect);
@@ -190,7 +192,7 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
                         new CopySpellForEachOtherPlayerEffect();
 
                 Card triggerCard = createCard("Radiate");
-                StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                StackEntry triggerEntry = TestStackDoor.triggered(triggerCard, player1Id,
                         "Radiate trigger", List.of(effect));
                 triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
                 triggerEntry.setTriggeringSpell(spellSnapshot);
@@ -212,7 +214,7 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
                         new CopySpellForEachOtherPlayerEffect();
 
                 Card triggerCard = createCard("Radiate");
-                StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                StackEntry triggerEntry = TestStackDoor.triggered(triggerCard, player1Id,
                         "Radiate trigger", List.of(effect));
                 triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
                 triggerEntry.setTriggeringSpell(spellSnapshot);
@@ -236,7 +238,7 @@ class CopySpellForEachOtherPlayerEffectHandlerTest {
                         new CopySpellForEachOtherPlayerEffect();
 
                 Card triggerCard = createCard("Radiate");
-                StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                StackEntry triggerEntry = TestStackDoor.triggered(triggerCard, player1Id,
                         "Radiate trigger", List.of(effect));
                 triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
                 triggerEntry.setTriggeringSpell(spellSnapshot);

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandOfDamagedPlayerMayCounterOrCastEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
@@ -39,9 +38,7 @@ public class ExileTopUntilNonlandOfDamagedPlayerMayCounterOrCastHandler implemen
         if (accepted && source != null
                 && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)) {
             PutCountersOnSourceEffect counterEffect = new PutCountersOnSourceEffect(1, 1, 1);
-            StackEntry counterEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(),
+            StackEntry counterEntry = StackEntry.carrier(ability.sourceCard(),
                     ability.controllerId(),
                     ability.sourceCard().getName() + "'s ability",
                     List.of(counterEffect),

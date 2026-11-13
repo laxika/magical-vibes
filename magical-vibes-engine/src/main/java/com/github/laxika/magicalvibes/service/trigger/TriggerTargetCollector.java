@@ -329,6 +329,13 @@ public class TriggerTargetCollector {
             canTargetPlayers = true;
             canTargetPermanents = false;
             canTargetGraveyardCards = false;
+        } else if (targetFilter instanceof StackEntryPredicateTargetFilter) {
+            // A stack filter declares a spell or ability target ("target creature or planeswalker spell", Subtlety),
+            // which no permanent, player or card in another zone is.
+            canTargetPlayers = false;
+            canTargetPermanents = false;
+            canTargetExiledCards = false;
+            canTargetGraveyardCards = false;
         }
 
         // An effect narrows the player half on its own only when it says so through
@@ -576,19 +583,30 @@ public class TriggerTargetCollector {
             }
         }
 
-        // A spell on the stack ("return up to one target spell to its owner's hand", Obscura Interceptor).
+        // A spell on the stack ("return up to one target spell to its owner's hand", Obscura Interceptor), or, under
+        // a stack target filter, a spell or ability the filter admits ("counter target spell, activated ability, or
+        // triggered ability", Overcharged Amalgam; "counter target creature spell", Silumgar Sorcerer).
         if (targetValidationService != null && unwrappedEffects.stream()
                 .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.SPELL))) {
             List<CardEffect> spellEffects = unwrappedEffects.stream()
                     .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.SPELL))
                     .toList();
             for (StackEntry spell : List.copyOf(gameData.stack)) {
+                UUID spellId = spell.getTargetableId();
+                if (targetFilter instanceof StackEntryPredicateTargetFilter) {
+                    if (targetLegalityService.checkSpellTargetOnStack(gameData, spellId, targetFilter, controllerId,
+                            sourcePermanentSnapshot, xValue).isEmpty()) {
+                        validTargets.add(spellId);
+                    }
+                    continue;
+                }
                 if (spell.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                         || spell.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
                     continue;
                 }
-                UUID spellId = spell.getTargetableId();
-                if (spellEffects.stream().anyMatch(effect -> targetValidationService.checkEffectTargets(
+                // The spell an effect declares ("target instant or sorcery spell you control", Naru Meha).
+                if (spellEffects.stream().anyMatch(effect -> declaredSpellMatches(gameData, effect, spell,
+                        controllerId) && targetValidationService.checkEffectTargets(
                         List.of(effect), new TargetValidationContext(gameData, spellId, Zone.STACK, sourceCard, 0,
                                 controllerId, sourcePermanentSnapshot)).isEmpty())) {
                     validTargets.add(spellId);
@@ -598,6 +616,14 @@ public class TriggerTargetCollector {
 
         return new Result(validTargets, canTargetPlayers, canTargetPermanents,
                 canTargetExiledCards, validGraveyardCardIds, opponentOnly);
+    }
+
+    /** Whether {@code spell} is a spell {@code effect}'s declared spell target admits, judged for {@code controllerId}. */
+    private boolean declaredSpellMatches(GameData gameData, CardEffect effect, StackEntry spell, UUID controllerId) {
+        TargetPredicate declared = effect.targetSpec().declaredTarget();
+        TargetPredicate leaf = declared == null ? null : declared.leaf(TargetPredicate.Kind.SPELL).orElse(null);
+        return !(leaf instanceof TargetPredicate.Spells spells)
+                || targetLegalityService.matchesStackEntryPredicate(gameData, spell, spells.inner(), controllerId);
     }
 
     /**

@@ -1,6 +1,9 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.trigger.CounterAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
@@ -27,7 +30,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger;
 import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
@@ -108,6 +110,14 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 public class PermanentRemovalService {
+
+    /** Undying (CR 702.93a), the ability a creature with the keyword has once for each instance of it. */
+    private static final TriggeredAbility UNDYING_ABILITY = new TriggeredAbility(
+            Triggers.dies(ObjectRelation.THIS), new UndyingReturnEffect());
+
+    /** Persist (CR 702.79a), the ability a creature with the keyword has once for each instance of it. */
+    private static final TriggeredAbility PERSIST_ABILITY = new TriggeredAbility(
+            Triggers.dies(ObjectRelation.THIS), new PersistReturnEffect());
 
     private final GraveyardService graveyardService;
     private final BattlefieldEntryService battlefieldEntryService;
@@ -1006,13 +1016,18 @@ public class PermanentRemovalService {
             return;
         }
         CardEffect whenExiledEffect = replacement.effect().whenExiledEffect();
-        if (whenExiledEffect instanceof MayPayManaEffect mayPay) {
-            gameData.queueMayAbility(replacement.sourceCard(), replacement.controllerId(),
-                    mayPay, null, replacement.sourcePermanentId());
-        } else if (whenExiledEffect instanceof MayEffect may) {
-            gameData.queueMayAbility(replacement.sourceCard(), replacement.controllerId(),
-                    may, null, replacement.sourcePermanentId());
-        } else if (whenExiledEffect != null) {
+        if (whenExiledEffect == null) {
+            return;
+        }
+        if (whenExiledEffect instanceof MayPayManaEffect || whenExiledEffect instanceof MayEffect) {
+            // "When you do, you may pay {2}. If you do, …" (Valentin, Dean of the Vein): a reflexive ability the
+            // replacement made (CR 603.12), its "you may" asked as it resolves (CR 603.5).
+            StackEntry reflexive = TriggeredAbilityStackService.madeAbility(replacement.sourceCard(),
+                    replacement.controllerId(), replacement.sourceCard().getName() + "'s ability",
+                    List.of(whenExiledEffect), 0, replacement.sourcePermanentId());
+            reflexive.setNonTargeting(true);
+            triggeredAbilityStackService.putMade(gameData, reflexive);
+        } else {
             resolveMandatoryOpponentExileRider(gameData, replacement, whenExiledEffect, creatureExiled, dyingPower);
         }
     }
@@ -3350,8 +3365,8 @@ public class PermanentRemovalService {
             log.warn("No handler for mandatory opponent-exile rider: {}", rider.getClass().getSimpleName());
             return;
         }
-        StackEntry riderEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
+        // The replacement's own record, never put on the stack: its rider makes the "when you do" ability.
+        StackEntry riderEntry = StackEntry.carrier(
                 replacement.sourceCard(),
                 replacement.controllerId(),
                 replacement.sourceCard().getName() + "'s replacement effect",
@@ -3439,19 +3454,11 @@ public class PermanentRemovalService {
     private void collectUndyingTrigger(GameData gameData, Permanent dyingPermanent, UUID controllerId, int undyingInstances) {
         if (undyingInstances == 0) return;
         if (dyingPermanent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) > 0) return;
-
-        Card dyingCard = dyingPermanent.getOriginalCard();
         for (int instance = 0; instance < undyingInstances; instance++) {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    dyingCard,
-                    controllerId,
-                    dyingCard.getName() + "'s undying ability",
-                    new ArrayList<>(List.of(new UndyingReturnEffect()))
-            ));
+            putDyingKeywordAbility(gameData, UNDYING_ABILITY, dyingPermanent, controllerId, "undying");
         }
-        gameLogService.append(gameData, GameLog.cardThen(dyingCard, "'s undying ability triggers."));
-        log.info("Game {} - {} undying triggers ({} instance(s))", gameData.id, dyingCard.getName(), undyingInstances);
+        log.info("Game {} - {} undying triggers ({} instance(s))", gameData.id,
+                dyingPermanent.getOriginalCard().getName(), undyingInstances);
     }
 
     /**
@@ -3467,14 +3474,33 @@ public class PermanentRemovalService {
     private void collectPersistTriggers(GameData gameData, Permanent dyingPermanent, UUID controllerId,
                                         int persistInstances) {
         if (persistInstances == 0 || dyingPermanent.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE) > 0) return;
-        Card dyingCard = dyingPermanent.getOriginalCard();
         for (int instance = 0; instance < persistInstances; instance++) {
-            StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, dyingCard, controllerId,
-                    dyingCard.getName() + "'s persist ability", new ArrayList<>(List.of(new PersistReturnEffect())));
-            trigger.setTriggeringCardId(dyingCard.getId());
-            trigger.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(dyingCard.getId()));
-            gameData.stack.add(trigger);
-            gameLogService.append(gameData, GameLog.cardThen(dyingCard, "'s persist ability triggers."));
+            putDyingKeywordAbility(gameData, PERSIST_ABILITY, dyingPermanent, controllerId, "persist");
+        }
+    }
+
+    /**
+     * Puts one instance of {@code ability}, a "when this creature dies" keyword ability of {@code dyingPermanent}
+     * (undying, persist), on the stack through the stack door as its own dies abilities go there: its intervening
+     * "if" was judged on the creature as it last existed (CR 603.10a), and a creature dying makes the "triggers an
+     * additional time" effects count it (CR 603.2c). It returns the card it left as, in the graveyard stay it went to
+     * (CR 400.7).
+     */
+    private void putDyingKeywordAbility(GameData gameData, TriggeredAbility ability, Permanent dyingPermanent,
+                                        UUID controllerId, String keyword) {
+        Card dyingCard = dyingPermanent.getOriginalCard();
+        long graveyardStay = gameData.graveyardEntryVersion(dyingCard.getId());
+        TriggeredAbilityRequest request = new TriggeredAbilityRequest(ability, dyingCard, dyingPermanent,
+                controllerId, dyingCard.getName() + "'s " + keyword + " ability",
+                ConditionContext.forPermanent(dyingPermanent, controllerId), entry -> {
+                    entry.setNonTargeting(true);
+                    entry.setTriggeringCard(dyingCard.getId(), graveyardStay);
+                })
+                .withEvent(new TriggerContext.CreatureDeath(dyingCard, controllerId, 0, 0, dyingPermanent.getId(),
+                        dyingPermanent))
+                .withCreatureDying();
+        if (triggeredAbilityStackService.put(gameData, request)) {
+            gameLogService.append(gameData, GameLog.cardThen(dyingCard, "'s " + keyword + " ability triggers."));
         }
     }
 
@@ -3685,9 +3711,13 @@ public class PermanentRemovalService {
                     .map(pending -> (CardEffect) new ResolvePendingExileReturnEffect(pending,
                             gameData.exileEntryVersions.getOrDefault(pending.card().getId(), 0L)))
                     .toList();
-            gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, removedPermanent.getCard(),
-                    controllerId, removedPermanent.getCard().getName() + "'s leaves-the-battlefield ability",
-                    new ArrayList<>(effects)));
+            // The "when this leaves the battlefield, return the exiled cards" ability linked to the exile, one object
+            // of all its returns (CR 610.3d); as a leaves-the-battlefield ability it triggers as the source leaves
+            // (CR 603.6c), with nothing to return if nothing was exiled. It goes on the stack through the stack door as
+            // the delayed returns above do.
+            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
+                    removedPermanent.getCard(), controllerId,
+                    removedPermanent.getCard().getName() + "'s leaves-the-battlefield ability", effects));
             phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
             return;
         }

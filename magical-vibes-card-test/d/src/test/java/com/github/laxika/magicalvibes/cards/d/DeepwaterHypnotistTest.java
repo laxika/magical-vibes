@@ -98,7 +98,7 @@ class DeepwaterHypnotistTest extends BaseCardTest {
 
         runUntapStep(player1);
 
-        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)).isFalse();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
     }
 
     @Test

@@ -47,7 +47,7 @@ public class SearchLibraryForSubtypeCardsToTopEffectHandler implements NormalEff
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
-        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
+        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, controllerId);
 
         String label = ((SearchLibraryForSubtypeCardsToTopEffect) effect).subtype().getDisplayName();
         String playerName = gameData.playerIdToName.get(controllerId);

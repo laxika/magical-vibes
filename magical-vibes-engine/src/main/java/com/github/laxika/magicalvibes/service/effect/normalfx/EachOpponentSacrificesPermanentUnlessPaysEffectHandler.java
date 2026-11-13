@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesPermanentUnlessPaysEffect;
@@ -87,8 +86,7 @@ public class EachOpponentSacrificesPermanentUnlessPaysEffectHandler implements N
 
         SacrificePermanentsEffect sacrifice = new SacrificePermanentsEffect(
                 1, new PermanentTruePredicate(), SacrificeRecipient.TARGET_PLAYER);
-        StackEntry sacrificeEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
+        StackEntry sacrificeEntry = StackEntry.carrier(ability.sourceCard(), sourceControllerId,
                 ability.sourceCard().getName() + "'s ability", new ArrayList<>(List.of(sacrifice)),
                 sacrificingPlayerId, ability.sourcePermanentId());
         sacrificeEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.InteractionOptions;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
-import com.github.laxika.magicalvibes.model.PendingCapriciousEfreetState;
 import com.github.laxika.magicalvibes.model.PendingAllureOfTheUnknownChoice;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
@@ -90,7 +89,6 @@ class PendingInteractionContractTest {
             PermanentChoiceContext.class,
             PendingAllureOfTheUnknownChoice.class,
             PendingSphinxAmbassadorChoice.class,
-            PendingCapriciousEfreetState.class,
             PendingKarnScionRevealChoice.class,
             PendingOpponentChoosesCardToHandRestToGraveyard.class,
             PendingMemoriesReturningChoice.class,

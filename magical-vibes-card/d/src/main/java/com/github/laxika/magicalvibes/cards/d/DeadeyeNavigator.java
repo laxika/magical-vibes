@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
@@ -33,6 +34,7 @@ public class DeadeyeNavigator extends Card {
     public DeadeyeNavigator() {
         // Soulbond (CR 702.94): may pair when this or another unpaired creature enters.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCanSoulbond()),
                 new MayEffect(new SoulbondChoosePartnerEffect(),
                         "Pair Deadeye Navigator with another unpaired creature you control?"));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),

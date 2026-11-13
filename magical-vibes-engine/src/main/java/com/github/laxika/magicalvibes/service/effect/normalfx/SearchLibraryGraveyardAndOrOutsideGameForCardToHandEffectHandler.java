@@ -77,7 +77,7 @@ public class SearchLibraryGraveyardAndOrOutsideGameForCardToHandEffectHandler
         String cardLabel = CardPredicateUtils.describeFilter(search.filter());
         if (candidates.isEmpty()) {
             if (librarySearchAllowed) {
-                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
+                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
                 if (deck != null) {
                     LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
                 }

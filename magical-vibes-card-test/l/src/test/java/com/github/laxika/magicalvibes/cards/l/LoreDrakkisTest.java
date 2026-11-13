@@ -150,6 +150,6 @@ class LoreDrakkisTest extends BaseCardTest {
     private void triggerMutation(Permanent drakkis) {
         harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
                 gd, drakkis, List.of(drakkis.getCard()), player1.getId()));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
     }
 }

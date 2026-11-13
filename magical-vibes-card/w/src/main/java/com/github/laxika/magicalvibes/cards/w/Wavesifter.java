@@ -19,13 +19,12 @@ public class Wavesifter extends Card {
     public Wavesifter() {
         // Evoke {G}{U}: cast for the alternate cost instead of the mana cost; it's sacrificed on entry.
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{G}{U}"))));
+        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
 
         // When this creature enters, investigate twice.
         // Each investigation is a separate token creation event (Marneus Calgar triggers once per event).
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 CreateTokenEffect.ofClueToken(1), CreateTokenEffect.ofClueToken(1)));
-
-        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }
 }

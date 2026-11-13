@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
@@ -94,7 +93,7 @@ public class GargantuanGorillaUpkeepSupport {
                 gameQueryService.findPermanentController(gameData, sourcePermanentId))) {
             destructionSupport.sacrificeAndLog(gameData, source, controllerId);
         }
-        StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId,
+        StackEntry damageEntry = StackEntry.carrier(sourceCard, controllerId,
                 sourceCard.getName() + "'s ability", List.of(), controllerId, sourcePermanentId);
         if (source != null) {
             damageEntry.setSourcePermanentSnapshot(new Permanent(source));

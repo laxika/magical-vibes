@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachCreatureDealsPowerDamageToItselfEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -74,9 +73,7 @@ public class EachCreatureDealsPowerDamageToItselfEffectHandler implements Normal
                 continue;
             }
 
-            StackEntry damageEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    liveCreature.getCard(),
+            StackEntry damageEntry = StackEntry.carrier(liveCreature.getCard(),
                     controllerId,
                     liveCreature.getCard().getName() + "'s ability",
                     List.of(),

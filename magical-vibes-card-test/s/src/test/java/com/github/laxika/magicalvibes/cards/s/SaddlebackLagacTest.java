@@ -58,9 +58,9 @@ class SaddlebackLagacTest extends BaseCardTest {
         Permanent other = harness.addToBattlefieldAndReturn(player1, new CanopyGorger());
         Permanent lagac = harness.enterBattlefieldAndReturn(player1, new SaddlebackLagac());
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, lagac.getId()))
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(lagac.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handlePermanentChosen(player1, other.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(other.getId()));
         harness.passBothPriorities();
 
         assertThat(other.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -84,7 +84,7 @@ class SaddlebackLagacTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new CanopyGorger());
 
         harness.enterBattlefieldAndReturn(player1, new SaddlebackLagac());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

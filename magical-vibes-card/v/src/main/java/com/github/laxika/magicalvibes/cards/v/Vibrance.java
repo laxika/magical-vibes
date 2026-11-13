@@ -30,6 +30,7 @@ public class Vibrance extends Card {
 
     public Vibrance() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{R/G}{R/G}"))));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
 
         target(new AnyTargetPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(
@@ -45,7 +46,5 @@ public class Vibrance extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new ColorSpentToCast(ManaColor.GREEN, 2)),
                 new SearchLibraryEffect(new CardTypePredicate(CardType.LAND)),
                 new GainLifeEffect(2));
-
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }
 }

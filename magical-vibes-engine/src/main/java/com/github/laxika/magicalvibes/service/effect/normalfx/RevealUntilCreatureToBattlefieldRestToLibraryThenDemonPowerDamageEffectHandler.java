@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -95,9 +94,7 @@ public class RevealUntilCreatureToBattlefieldRestToLibraryThenDemonPowerDamageEf
                 && gameQueryService.effectiveCreatureSubtypes(gameData, enteredPermanent)
                 .contains(CardSubtype.DEMON);
         if (enteredDemon) {
-            StackEntry damageEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    foundCreature,
+            StackEntry damageEntry = StackEntry.carrier(foundCreature,
                     controllerId,
                     foundCreature.getName() + "'s ability",
                     List.of(),

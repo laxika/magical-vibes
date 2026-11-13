@@ -20,12 +20,11 @@ public class Faultgrinder extends Card {
         // Trample is auto-loaded from Scryfall keywords.
         // Evoke {4}{R}: cast for the alternate cost instead of the mana cost; it's sacrificed on entry.
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{R}"))));
+        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
 
         // When this creature enters, destroy target land.
         target(TargetFilters.land())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyTargetPermanentEffect());
-
-        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }
 }

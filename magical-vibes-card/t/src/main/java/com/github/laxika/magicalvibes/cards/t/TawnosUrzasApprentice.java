@@ -26,9 +26,7 @@ public class TawnosUrzasApprentice extends Card {
                 "{U}{R}, {T}: Copy target activated or triggered ability you control from an artifact source. You may choose new targets for the copy. (Mana abilities can't be targeted.)",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
-                                new StackEntryTypeInPredicate(Set.of(
-                                        StackEntryType.ACTIVATED_ABILITY,
-                                        StackEntryType.TRIGGERED_ABILITY)),
+                                new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                                 new StackEntryControlledByPredicate(),
                                 new StackEntryCardTypeInPredicate(Set.of(CardType.ARTIFACT)))),
                         "Target must be an activated or triggered ability you control from an artifact source.")));

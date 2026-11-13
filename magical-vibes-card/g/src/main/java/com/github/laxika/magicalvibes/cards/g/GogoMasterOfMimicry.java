@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "54")
 @CardRegistration(set = "FIN", collectorNumber = "377")
@@ -25,9 +24,7 @@ public class GogoMasterOfMimicry extends Card {
                 "{X}{X}, {T}: Copy target activated or triggered ability you control X times. You may choose new targets for the copies.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
-                                new StackEntryTypeInPredicate(Set.of(
-                                        StackEntryType.ACTIVATED_ABILITY,
-                                        StackEntryType.TRIGGERED_ABILITY)),
+                                new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                                 new StackEntryControlledByPredicate())),
                         "Target must be an activated or triggered ability you control."))
                 .withMinimumXValue(1));

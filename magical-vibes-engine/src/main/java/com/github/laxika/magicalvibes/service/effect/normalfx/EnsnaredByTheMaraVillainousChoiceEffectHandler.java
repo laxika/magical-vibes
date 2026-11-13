@@ -149,8 +149,7 @@ public class EnsnaredByTheMaraVillainousChoiceEffectHandler implements NormalEff
         }
 
         if (totalManaValue > 0) {
-            StackEntry damageEntry = new StackEntry(
-                    entry.getEntryType(), entry.getCard(), entry.getControllerId(), entry.getDescription(),
+            StackEntry damageEntry = StackEntry.derivedFrom(entry, entry.getCard(), entry.getControllerId(), entry.getDescription(),
                     List.of(), opponentId, entry.getSourcePermanentId());
             damageHandler.resolve(gameData, damageEntry,
                     new DealDamageToPlayersEffect(totalManaValue, DamageRecipient.TARGET_PLAYER));

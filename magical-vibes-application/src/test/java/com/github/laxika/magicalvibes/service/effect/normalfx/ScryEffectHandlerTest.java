@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -6,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -130,7 +131,7 @@ class ScryEffectHandlerTest {
             @DisplayName("Scry 0 does nothing")
             void scryZeroDoesNothing() {
                 ScryEffect effect = new ScryEffect(0);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Some Card"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Some Card"),
                         player1Id, "Some Card", List.of(effect));
 
                 scryEffectHandler.resolve(gd, entry, effect);
@@ -143,7 +144,7 @@ class ScryEffectHandlerTest {
             @DisplayName("Empty library logs scry with empty library")
             void emptyLibraryLogs() {
                 ScryEffect effect = new ScryEffect(2);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Some Card"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Some Card"),
                         player1Id, "Some Card", List.of(effect));
 
                 scryEffectHandler.resolve(gd, entry, effect);
@@ -160,7 +161,7 @@ class ScryEffectHandlerTest {
                 gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears"));
 
                 ScryEffect effect = new ScryEffect(1);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Some Card"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Some Card"),
                         player1Id, "Some Card", List.of(effect));
 
                 scryEffectHandler.resolve(gd, entry, effect);
@@ -181,7 +182,7 @@ class ScryEffectHandlerTest {
                 gd.playerDecks.get(player1Id).add(createCard("Lightning Bolt"));
 
                 ScryEffect effect = new ScryEffect(3);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Some Card"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Some Card"),
                         player1Id, "Some Card", List.of(effect));
 
                 scryEffectHandler.resolve(gd, entry, effect);

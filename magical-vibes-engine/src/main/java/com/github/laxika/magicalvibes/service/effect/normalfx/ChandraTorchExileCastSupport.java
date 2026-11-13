@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -126,9 +125,7 @@ public class ChandraTorchExileCastSupport {
 
     public void dealDamage(GameData gameData, UUID controllerId, Card sourceCard, int damage) {
         DealDamageToPlayersEffect damageEffect = new DealDamageToPlayersEffect(damage, DamageRecipient.EACH_OPPONENT);
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
+        StackEntry damageEntry = StackEntry.carrier(sourceCard,
                 controllerId,
                 sourceCard.getName() + " deals " + damage + " damage to each opponent.",
                 List.of(damageEffect),

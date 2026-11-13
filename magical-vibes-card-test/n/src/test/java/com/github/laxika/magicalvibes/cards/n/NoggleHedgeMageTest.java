@@ -28,11 +28,10 @@ class NoggleHedgeMageTest extends BaseCardTest {
         Permanent bear1 = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent bear2 = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castNoggle();
-        harness.passBothPriorities(); // resolve creature spell -> first tap target prompt
+        harness.passBothPriorities(); // resolve creature spell -> the two tap targets, announced together (CR 601.2c)
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, bear1.getId());
-        harness.handlePermanentChosen(player1, bear2.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear1.getId(), bear2.getId()));
         harness.passBothPriorities(); // resolve ETB -> may prompt
         harness.handleMayAbilityChosen(player1, true);
 
@@ -48,8 +47,7 @@ class NoggleHedgeMageTest extends BaseCardTest {
         Permanent bear2 = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castNoggle();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, bear1.getId());
-        harness.handlePermanentChosen(player1, bear2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear1.getId(), bear2.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -134,8 +132,7 @@ class NoggleHedgeMageTest extends BaseCardTest {
         castNoggle();
         harness.passBothPriorities(); // resolve creature spell -> first tap target prompt
 
-        harness.handlePermanentChosen(player1, bear1.getId());
-        harness.handlePermanentChosen(player1, bear2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear1.getId(), bear2.getId()));
         harness.handlePermanentChosen(player1, player2.getId()); // damage target
         assertThat(gd.stack).hasSize(2);
         harness.passBothPriorities();
@@ -157,8 +154,7 @@ class NoggleHedgeMageTest extends BaseCardTest {
         Permanent bear2 = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castNoggle();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, bear1.getId());
-        harness.handlePermanentChosen(player1, bear2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear1.getId(), bear2.getId()));
         gd.playerBattlefields.get(player1.getId()).removeFirst();
         harness.passBothPriorities();
 
@@ -190,8 +186,7 @@ class NoggleHedgeMageTest extends BaseCardTest {
         Permanent bear2 = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castNoggle();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, bear1.getId());
-        harness.handlePermanentChosen(player1, bear2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear1.getId(), bear2.getId()));
         gd.playerBattlefields.get(player2.getId()).remove(bear1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);

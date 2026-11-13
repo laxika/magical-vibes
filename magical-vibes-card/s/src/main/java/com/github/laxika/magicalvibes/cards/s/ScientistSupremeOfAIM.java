@@ -29,9 +29,7 @@ public class ScientistSupremeOfAIM extends Card {
                         + "You may choose new targets for the copy. Activate only during your turn and only once each turn.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
-                                new StackEntryTypeInPredicate(Set.of(
-                                        StackEntryType.ACTIVATED_ABILITY,
-                                        StackEntryType.TRIGGERED_ABILITY)),
+                                new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                                 new StackEntryCardTypeInPredicate(Set.of(CardType.ARTIFACT)),
                                 new StackEntryControlledByPredicate())),
                         "Target must be an activated or triggered ability you control from an artifact source."),

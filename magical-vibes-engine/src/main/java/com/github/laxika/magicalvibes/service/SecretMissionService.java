@@ -3,11 +3,13 @@ package com.github.laxika.magicalvibes.service;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.SecretMissionEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,12 +32,15 @@ public class SecretMissionService {
 
     private final ConditionEvaluationService conditionEvaluationService;
     private final GameLogService gameLogService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     // The game log service sits upstream of the view projection that asks this service for revealable missions.
     public SecretMissionService(ConditionEvaluationService conditionEvaluationService,
-                                @Lazy GameLogService gameLogService) {
+                                @Lazy GameLogService gameLogService,
+                                @Lazy TriggeredAbilityStackService triggeredAbilityStackService) {
         this.conditionEvaluationService = conditionEvaluationService;
         this.gameLogService = gameLogService;
+        this.triggeredAbilityStackService = triggeredAbilityStackService;
     }
 
     /** The Secret Mission cards in the player's command zone they could reveal right now. */
@@ -76,12 +81,12 @@ public class SecretMissionService {
         gameLogService.append(gameData, GameLog.textCardText(playerName + " reveals the mission \""
                 + mission.label() + "\" and turns ", card, " face down."));
 
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                playerId,
-                card.getName() + "'s reward",
-                new ArrayList<>(List.of(secretMission.reward()))));
+        // Revealing is a special action; the reward is the card's ability that triggers on it, and resolves even if the
+        // mission's condition stops being true.
+        triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                new TriggeredAbility(Triggers.youRevealCardThisWay(), secretMission.reward()), card, null, playerId,
+                card.getName() + "'s reward", ConditionContext.forCard(card, playerId),
+                TriggeredAbilityRequest.TriggerRecord.NONE));
         gameData.priorityPassedBy.clear();
         log.info("Game {} - {} reveals the secret mission of {}", gameData.id, playerName, card.getName());
     }

@@ -116,8 +116,7 @@ class SeaDrakeTest extends BaseCardTest {
         UUID secondLand = harness.addToBattlefieldAndReturn(player1, new Island()).getId();
         castSeaDrake(List.of());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, firstLand);
-        harness.handlePermanentChosen(player1, secondLand);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstLand, secondLand));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Sea Drake");

@@ -18,6 +18,9 @@ public record PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(boo
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.graveyardCard(GraveyardSearchScope.OPPONENT_GRAVEYARD));
+        return TargetSpec.benign(TargetPredicates.graveyardCards(
+                new com.github.laxika.magicalvibes.model.filter.CardTypePredicate(
+                        com.github.laxika.magicalvibes.model.CardType.CREATURE),
+                GraveyardSearchScope.OPPONENT_GRAVEYARD));
     }
 }

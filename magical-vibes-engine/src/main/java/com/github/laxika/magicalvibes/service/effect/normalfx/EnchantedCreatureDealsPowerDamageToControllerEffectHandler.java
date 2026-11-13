@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsPowerDamageToControllerEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -45,9 +44,7 @@ public class EnchantedCreatureDealsPowerDamageToControllerEffectHandler implemen
 
         int power = creatureStillPresent ? gameQueryService.getPowerBasedDamage(gameData, creature)
                 : Math.max(0, entry.getTriggeringPermanentPowerAtTrigger());
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                creature.getCard(),
+        StackEntry damageEntry = StackEntry.carrier(creature.getCard(),
                 creatureControllerId,
                 creature.getCard().getName() + "'s ability",
                 List.of(),

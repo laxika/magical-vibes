@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedPlusOneCounters;
@@ -25,6 +27,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StagedHandExile;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -281,8 +284,7 @@ class GameDataDeepCopyTest {
         UUID departedId = UUID.randomUUID();
         UUID equipmentId = UUID.randomUUID();
         DepartedAttachments attachments = new DepartedAttachments(List.of(), List.of(equipmentId));
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, new SerraAngel(), player1.getId(), "Block trigger", List.of());
+        StackEntry entry = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Block trigger", List.of());
         entry.rememberLastKnownPermanentAttachments(departedId, attachments);
         gd.stack.add(entry);
         gd.queueDelayedAction(new com.github.laxika.magicalvibes.model.action.DelayedEndOfCombatTrigger(
@@ -303,10 +305,9 @@ class GameDataDeepCopyTest {
     @Test
     @DisplayName("Deep copy keeps the record of an ability the stack door parked for its target, independently")
     void deepCopyKeepsParkedTriggerRecord() {
-        StackEntry record = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, new SerraAngel(), player1.getId(), "Block trigger", List.of());
+        StackEntry record = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Block trigger", List.of());
         record.setParkedAtStackDoor(true);
-        gd.handOffTriggerRecord(record);
+        TestStackDoor.handOff(gd, record);
         gd.queueInteraction(new com.github.laxika.magicalvibes.model.PermanentChoiceContext.AttackTriggerTarget(
                 new SerraAngel(), player1.getId(), List.of(), null, player1.getId(), null, null)
                 .withTriggerRecord(record));
@@ -336,8 +337,7 @@ class GameDataDeepCopyTest {
     @Test
     @DisplayName("Deep copy keeps a parked record's mark of an ability a resolution made")
     void deepCopyKeepsMadeByResolutionMark() {
-        StackEntry record = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, new SerraAngel(), player1.getId(), "Reflexive ability", List.of());
+        StackEntry record = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Reflexive ability", List.of());
         record.setParkedAtStackDoor(true);
         record.setMadeByResolution(true);
         gd.queueInteraction(new com.github.laxika.magicalvibes.model.PermanentChoiceContext.AttackTriggerTarget(
@@ -357,8 +357,7 @@ class GameDataDeepCopyTest {
     @Test
     @DisplayName("Deep copy gives a queued door choice its own record, with its planar source copied")
     void deepCopyGivesQueuedDoorChoiceItsOwnRecord() {
-        StackEntry record = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, new SerraAngel(), player1.getId(), "Chaos trigger", List.of());
+        StackEntry record = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Chaos trigger", List.of());
         record.setParkedAtStackDoor(true);
         record.setSourcePlanarObject(new com.github.laxika.magicalvibes.model.planar.PlanarObject(new SerraAngel(), 1));
         gd.queueInteraction(new com.github.laxika.magicalvibes.model.PermanentChoiceContext.AttackTriggerTarget(
@@ -380,13 +379,54 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps a triggered ability on the stack released by the stack door")
+    void deepCopyKeepsTriggeredEntryReleasedToStack() {
+        StackEntry entry = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Attack trigger", List.of());
+        gd.stack.add(entry);
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.stack.getFirst()).isNotSameAs(entry);
+        assertThat(copy.stack.getFirst().isReleasedToStack()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps whether a gift was promised for a stack entry")
+    void deepCopyKeepsPromisedGift() {
+        StackEntry entry = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Enters ability", List.of());
+        entry.setGiftPromised(true);
+        gd.stack.add(entry);
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.stack.getFirst().isGiftPromised()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Deep copy gives a queued two-target choice the stack door parked a record of its own")
+    void deepCopyKeepsParkedCounterMoveRecordIndependently() {
+        StackEntry record = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Attack trigger", List.of());
+        record.setParkedAtStackDoor(true);
+        gd.queueInteraction(new com.github.laxika.magicalvibes.model.PermanentChoiceContext.AttackCounterMoveFirstTarget(
+                new SerraAngel(), player1.getId(), List.of(), null, player2.getId(), record));
+
+        GameData copy = gd.simulationCopy();
+        var copied = copy.peekPendingInteraction(
+                com.github.laxika.magicalvibes.model.PermanentChoiceContext.AttackCounterMoveFirstTarget.class);
+
+        assertThat(copied.triggerRecord()).isNotSameAs(record);
+        assertThat(copied.triggerRecord().isParkedAtStackDoor()).isTrue();
+        copied.triggerRecord().setParkedAtStackDoor(false);
+        assertThat(record.isParkedAtStackDoor()).isTrue();
+    }
+
+    @Test
     @DisplayName("Deep copy keeps whether a parked ability's attacking source caused it, independently")
     void deepCopyKeepsTriggeredBySourceAttacking() {
-        StackEntry record = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, new SerraAngel(), player1.getId(), "Attack trigger", List.of());
+        StackEntry record = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Attack trigger", List.of());
         record.setParkedAtStackDoor(true);
         record.setTriggeredBySourceAttacking(true);
-        gd.handOffTriggerRecord(record);
+        TestStackDoor.handOff(gd, record);
         gd.queueInteraction(new com.github.laxika.magicalvibes.model.PermanentChoiceContext.AttackTriggerTarget(
                 new SerraAngel(), player1.getId(), List.of(), null, player1.getId(), null, null)
                 .withTriggerRecord(record));
@@ -405,8 +445,7 @@ class GameDataDeepCopyTest {
         Permanent dying = new Permanent(new GrizzlyBears());
         dying.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         UUID auraCardId = UUID.randomUUID();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, new SerraAngel(), player1.getId(), "Death trigger", List.of());
+        StackEntry entry = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Death trigger", List.of());
         entry.setTriggeringPermanent(dying, new DepartedAttachments(List.of(auraCardId), List.of(),
                 java.util.Map.of(auraCardId, player2.getId())));
         gd.stack.add(entry);
@@ -427,8 +466,7 @@ class GameDataDeepCopyTest {
         // CR 603.5 resolution-time targeting: the chosen target is set through
         // resolvedMayTargetingEntry and resolution resumes through
         // pendingEffectResolutionEntry — both must reference the same object.
-        StackEntry suspended = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, new GrizzlyBears(), player1.getId(), "Test trigger", List.of());
+        StackEntry suspended = TestStackDoor.triggered(new GrizzlyBears(), player1.getId(), "Test trigger", List.of());
         gd.pendingEffectResolutionEntry = suspended;
         gd.resolvedMayTargetingEntry = suspended;
 
@@ -441,10 +479,8 @@ class GameDataDeepCopyTest {
     @Test
     @DisplayName("Deep copy keeps distinct may-targeting and suspended resolution entries independent")
     void deepCopyKeepsDistinctResolutionEntriesIndependent() {
-        gd.pendingEffectResolutionEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, new GrizzlyBears(), player1.getId(), "Suspended", List.of());
-        gd.resolvedMayTargetingEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, new SerraAngel(), player1.getId(), "Targeting", List.of());
+        gd.pendingEffectResolutionEntry = TestStackDoor.triggered(new GrizzlyBears(), player1.getId(), "Suspended", List.of());
+        gd.resolvedMayTargetingEntry = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Targeting", List.of());
 
         GameData copy = gd.simulationCopy();
 
@@ -460,10 +496,8 @@ class GameDataDeepCopyTest {
         // option, which is itself parked behind one more that waits for an answer.
         StackEntry spell = new StackEntry(
                 StackEntryType.SORCERY_SPELL, new GrizzlyBears(), player1.getId(), "Parked spell", List.of());
-        StackEntry firstNested = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, new GrizzlyBears(), player2.getId(), "First option", List.of());
-        StackEntry secondNested = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, new SerraAngel(), player2.getId(), "Second option", List.of());
+        StackEntry firstNested = TestStackDoor.triggered(new GrizzlyBears(), player2.getId(), "First option", List.of());
+        StackEntry secondNested = TestStackDoor.triggered(new SerraAngel(), player2.getId(), "Second option", List.of());
         gd.stack.add(spell);
         gd.parkedOuterResolutions.push(new GameData.ParkedResolution(spell, 2, firstNested));
         gd.parkedOuterResolutions.push(new GameData.ParkedResolution(firstNested, 1, secondNested));
@@ -748,5 +782,22 @@ class GameDataDeepCopyTest {
         assertThat(copy.delayedActions).last()
                 .isInstanceOfSatisfying(DelayedPermanentAction.class,
                         action -> assertThat(action.schedulingResolution()).isEqualTo(8));
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps the parked record of a target-player-then-graveyard-cards choice independently")
+    void deepCopyKeepsTheRecordOfATargetPlayerGraveyardChoiceIndependently() {
+        StackEntry record = TestStackDoor.triggered(new SerraAngel(), player1.getId(), "Enters ability", List.of());
+        gd.interaction.setPermanentChoiceContext(new PermanentChoiceContext.TargetPlayerGraveyardCardsTrigger(
+                record.getCard(), player1.getId(), record,
+                new com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect(
+                        null, Integer.MAX_VALUE)));
+
+        GameData copy = gd.simulationCopy();
+        var copied = (PermanentChoiceContext.TargetPlayerGraveyardCardsTrigger) copy.interaction.permanentChoiceContext();
+        copied.record().setXValue(3);
+
+        assertThat(copied.record()).isNotSameAs(record);
+        assertThat(record.getXValue()).isZero();
     }
 }

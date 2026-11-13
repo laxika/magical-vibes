@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -258,8 +259,8 @@ public class PsychicBattleSupport {
                 }
             }
         }
-        if (entry.getEntryType() == com.github.laxika.magicalvibes.model.StackEntryType.ACTIVATED_ABILITY
-                || entry.getEntryType() == com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY) {
+        if (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
             var ability = new com.github.laxika.magicalvibes.model.ActivatedAbility(false, null,
                     List.copyOf(entry.getEffectsToResolve()), "retarget", entry.getTargetFilter());
             try {

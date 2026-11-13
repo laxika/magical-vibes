@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
@@ -7,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.LibraryScope;
@@ -86,7 +87,7 @@ class ExileTopCardsToSourceEffectHandlerTest {
 
     private StackEntry entry(Card sourceCard, ExileTopCardsToSourceEffect effect,
                              UUID targetId, UUID sourcePermanentId) {
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, player1Id,
+        return TestStackDoor.triggered(sourceCard, player1Id,
                 sourceCard.getName(), List.of(effect), targetId, sourcePermanentId);
     }
 

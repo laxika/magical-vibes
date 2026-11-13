@@ -77,7 +77,6 @@ class ETBTokenTargetServiceTest {
     @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private TargetLegalityService targetLegalityService;
-    @Mock private GraveyardTargetingService graveyardTargetingService;
 
     private ETBTokenTargetService service;
     private GameData gd;
@@ -86,7 +85,7 @@ class ETBTokenTargetServiceTest {
     @BeforeEach
     void setUp() {
         service = new ETBTokenTargetService(gameQueryService, new PredicateEvaluationService(gameQueryService),
-                gameLogService, playerInputService, targetLegalityService, graveyardTargetingService);
+                gameLogService, playerInputService, targetLegalityService);
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -167,45 +166,6 @@ class ETBTokenTargetServiceTest {
         verify(playerInputService).beginAnyTargetChoice(
                 gd, player1Id, List.of(target.getId()), List.of(),
                 "Venser, Shaper Savant's ability — Choose a target.");
-    }
-
-    @Test
-    @DisplayName("processNextETBTokenTargetTrigger does nothing when queue is empty")
-    void processNextETBTokenTargetTrigger_doesNothingWhenQueueEmpty() {
-        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)).isFalse();
-
-        service.processNextETBTokenTargetTrigger(gd);
-
-        assertThat(gd.stack).isEmpty();
-    }
-
-    @Test
-    @DisplayName("Single ETB target applies a restriction carried by a wrapped effect")
-    void processNextETBTokenTargetTrigger_appliesWrappedEffectRestriction() {
-        UUID player2Id = UUID.randomUUID();
-        gd.playerIds.add(player2Id);
-        gd.orderedPlayerIds.add(player2Id);
-        gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-
-        Permanent ownCreature = new Permanent(new Card());
-        Permanent opponentCreature = new Permanent(new Card());
-        gd.playerBattlefields.get(player1Id).add(ownCreature);
-        gd.playerBattlefields.get(player2Id).add(opponentCreature);
-
-        Card sourceCard = new Card();
-        sourceCard.setName("Test Source");
-        MayEffect effect = new MayEffect(
-                new ExileTargetPermanentUntilSourceLeavesEffect(false,
-                        new PermanentIsSpecificPermanentPredicate(opponentCreature.getId())),
-                "Exile target permanent?");
-        gd.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(
-                sourceCard, player1Id, List.of(effect), ownCreature.getId(), null));
-
-        service.processNextETBTokenTargetTrigger(gd);
-
-        verify(playerInputService).beginAnyTargetChoice(
-                gd, player1Id, List.of(opponentCreature.getId()), List.of(),
-                "Test Source's ability — Choose a target.");
     }
 
     @Test
@@ -326,6 +286,7 @@ class ETBTokenTargetServiceTest {
         var pending = new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                 card, player1Id, card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), null, List.of(), 0, 0);
         when(targetLegalityService.matchesPlayerPredicate(eq(gd), eq(player1Id), eq(player1Id),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
                 org.mockito.ArgumentMatchers.any())).thenReturn(true);
 
         assertThat(service.controllerChoiceStopsGroup(gd, pending)).isFalse();
@@ -339,40 +300,6 @@ class ETBTokenTargetServiceTest {
                 card, player1Id, card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), null, List.of(), 0, 0);
 
         assertThat(service.controllerChoiceStopsGroup(gd, pending)).isTrue();
-    }
-
-    @Test
-    @DisplayName("An optional single-target prompt declines on yourself only when you are not a legal target")
-    void controllerChoiceDeclinesOnlyWhenTheControllerIsNotALegalTarget() {
-        Card playerTargetCard = optionalPlayerTargetCard();
-        Card creatureTargetCard = optionalCreatureTargetCard();
-        var playerTrigger = new PermanentChoiceContext.ETBTokenTargetTrigger(playerTargetCard, player1Id,
-                playerTargetCard.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), null,
-                playerTargetCard.getTargetFilter(), null);
-        var creatureTrigger = new PermanentChoiceContext.ETBTokenTargetTrigger(creatureTargetCard, player1Id,
-                creatureTargetCard.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), null,
-                creatureTargetCard.getTargetFilter(), null);
-
-        assertThat(service.controllerChoiceDeclines(gd, playerTrigger)).isFalse();
-        assertThat(service.controllerChoiceDeclines(gd, creatureTrigger)).isTrue();
-    }
-
-    @Test
-    @DisplayName("An optional single-target prompt that may target yourself asks for up to one target, so none can be chosen")
-    void optionalSingleTargetThatMayTargetTheControllerUsesAnUpToOnePrompt() {
-        gd.playerIds.add(player1Id);
-        Card card = optionalPlayerTargetCard();
-        var pending = new PermanentChoiceContext.ETBTokenTargetTrigger(card, player1Id,
-                card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), null, card.getTargetFilter(), null);
-        gd.queueInteraction(pending);
-
-        service.processNextETBTokenTargetTrigger(gd);
-
-        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.ETBTokenTargetTrigger.class)).isFalse();
-        verify(playerInputService).beginMultiPermanentOrPlayerChoice(eq(gd), eq(player1Id),
-                eq(List.of()), eq(List.of(player1Id)), eq(1),
-                eq(new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.EtbOptionalTarget(pending)),
-                org.mockito.ArgumentMatchers.anyString());
     }
 
     private static Card optionalPlayerTargetCard() {

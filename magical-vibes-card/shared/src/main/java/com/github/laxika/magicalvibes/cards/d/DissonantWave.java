@@ -18,9 +18,7 @@ public class DissonantWave extends Card {
     public DissonantWave() {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryAllOfPredicate(List.of(
-                        new StackEntryTypeInPredicate(Set.of(
-                                StackEntryType.ACTIVATED_ABILITY,
-                                StackEntryType.TRIGGERED_ABILITY)),
+                        new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                         new StackEntryNotPredicate(new StackEntryCardTypeInPredicate(
                                 Set.of(CardType.CREATURE))))),
                 "Target must be an activated or triggered ability from a noncreature source."))

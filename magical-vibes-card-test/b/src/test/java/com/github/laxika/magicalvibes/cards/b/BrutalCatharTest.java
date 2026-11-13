@@ -88,6 +88,11 @@ class BrutalCatharTest extends BaseCardTest {
         gd.spellsCastLastTurn.put(player2.getId(), 2);
         gd.previousTurnActivePlayerId = player2.getId();
         harness.performUntapStep(player1);
+        // An ability that triggers during the untap step goes on the stack, its target chosen, the next time a player
+        // would receive priority, the upkeep (CR 502.4).
+        harness.inMutationScope(() -> com.github.laxika.magicalvibes.testutil.GameTestEngineContext.get()
+                .getBean(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class)
+                .beginStackDoorChoices(gd));
 
         assertThat(cathar.isTransformed()).isFalse();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())

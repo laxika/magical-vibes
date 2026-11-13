@@ -34,7 +34,7 @@ public class TheMoonbase extends Card {
                 GrantScope.ALL_CREATURES));
 
         CardTypePredicate creature = new CardTypePredicate(CardType.CREATURE);
-        setMultiTargetConstraint(MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE);
+        setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(new GraveyardCardPredicateTargetFilter(creature, GraveyardSearchScope.OPPONENT_GRAVEYARD), 0, 99)
                 .addTrigger(Triggers.chaosEnsues(),
                         new ReturnTargetCreatureCardsFromGraveyardToBattlefieldFaceDownAsCybermenEffect());

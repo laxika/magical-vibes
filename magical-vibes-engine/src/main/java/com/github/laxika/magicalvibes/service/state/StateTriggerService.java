@@ -7,22 +7,22 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StateTriggerKey;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
-import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
+import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
@@ -35,13 +35,11 @@ import java.util.UUID;
 /**
  * Implements MTG rule 603.8 — state-triggered abilities.
  *
- * <p>After state-based actions run, this service checks every permanent for
- * state-triggered abilities ({@code Triggers.state()}, read by {@link MiscAbilityReader#stateTriggers} as one
- * {@link StateTriggerEffect} of each ability's game state) whose condition is met. If the
- * ability is not already on the stack (tracked via
- * {@link GameData#stateTriggerOnStack}), a triggered ability is pushed onto
- * the stack. The trigger won't fire again until it resolves, is countered,
- * or otherwise leaves the stack.</p>
+ * <p>After state-based actions run, this service checks every permanent for state-triggered abilities
+ * ({@code Triggers.state()}; its game state read by {@link MiscAbilityReader#stateTrigger}) whose condition is met. If
+ * the ability is not already on the stack (tracked via {@link GameData#stateTriggerOnStack}), it is handed whole to
+ * the stack door ({@link TriggeredAbilityStackService#put}), which judges its intervening "if" (CR 603.4) and chooses
+ * its targets. The trigger won't fire again until it resolves, is countered, or otherwise leaves the stack.</p>
  */
 @Slf4j
 @Service
@@ -50,33 +48,27 @@ public class StateTriggerService {
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameQueryService gameQueryService;
-    private final ETBTokenTargetService etbTokenTargetService;
-    private final ConditionEvaluationService conditionEvaluationService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
+    private final TriggerCollectionService triggerCollectionService;
 
     @Autowired
     public StateTriggerService(GameLogService gameLogService,
                                PredicateEvaluationService predicateEvaluationService,
                                GameQueryService gameQueryService,
-                               @Lazy ETBTokenTargetService etbTokenTargetService,
-                               @Lazy ConditionEvaluationService conditionEvaluationService) {
+                               @Lazy TriggeredAbilityStackService triggeredAbilityStackService,
+                               @Lazy TriggerCollectionService triggerCollectionService) {
         this.gameLogService = gameLogService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.gameQueryService = gameQueryService;
-        this.etbTokenTargetService = etbTokenTargetService;
-        this.conditionEvaluationService = conditionEvaluationService;
+        this.triggeredAbilityStackService = triggeredAbilityStackService;
+        this.triggerCollectionService = triggerCollectionService;
     }
 
-    public StateTriggerService(GameLogService gameLogService,
-                               PredicateEvaluationService predicateEvaluationService,
-                               GameQueryService gameQueryService) {
-        this(gameLogService, predicateEvaluationService, gameQueryService, null, null);
-    }
-
+    /** A service without the stack door, for a test in which no state trigger is met. */
     public StateTriggerService(GameLogService gameLogService,
                                PredicateEvaluationService predicateEvaluationService) {
         this(gameLogService, predicateEvaluationService, null, null, null);
     }
-
 
     /**
      * Evaluates a state trigger's condition: a {@code sourcePredicate} goes through the
@@ -119,36 +111,10 @@ public class StateTriggerService {
     }
 
     /**
-     * Whether the intervening "if" of a state trigger holds as its game state triggers it (CR 603.4): the reader
-     * ({@link MiscAbilityReader#stateTriggers}) wraps each of the ability's effects in it, as a
-     * {@link ConditionalEffect} that is checked again as the ability resolves, and a state trigger's effects have no
-     * conditions of their own, so every conditional among them is that "if". Without a condition evaluator (the
-     * unit-test constructors) nothing is checked here.
-     */
-    private boolean interveningIfMet(GameData gameData, StateTriggerEffect trigger, Permanent perm,
-                                     UUID controllerId) {
-        if (conditionEvaluationService == null) {
-            return true;
-        }
-        for (CardEffect effect : trigger.effects()) {
-            if (effect instanceof ConditionalEffect conditional
-                    && !conditionEvaluationService.isMet(gameData, conditional.condition(),
-                    ConditionContext.forPermanent(perm, controllerId))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /** The stack and log description of a state trigger: its own, or "[card name]'s state-triggered ability". */
-    private static String description(StateTriggerEffect trigger, Card card) {
-        return trigger.description() != null ? trigger.description() : card.getName() + "'s state-triggered ability";
-    }
-
-    /**
-     * Checks all permanents for state-triggered abilities whose conditions are met.
-     * For each qualifying permanent not already tracked, pushes a triggered ability
-     * onto the stack and marks it in {@link GameData#stateTriggerOnStack}.
+     * Checks all permanents for state-triggered abilities whose conditions are met. Each qualifying ability not already
+     * tracked goes to the stack door whole, one object (CR 603.3), its source the permanent; the entry records the
+     * permanent its game state refers to ("that creature", non-targeting) and which of the permanent's state triggers
+     * it is. One that triggers is marked in {@link GameData#stateTriggerOnStack}.
      *
      * <p>Iterates in APNAP order (orderedPlayerIds) so triggers are stacked correctly.
      * Nothing triggers once the game has ended.</p>
@@ -158,6 +124,7 @@ public class StateTriggerService {
             return;
         }
         checkPlanarStateTriggers(gameData);
+        boolean parked = false;
         for (UUID playerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
             if (battlefield == null) continue;
@@ -167,126 +134,114 @@ public class StateTriggerService {
             for (Permanent perm : snapshot) {
                 if (perm.isFaceDown()) continue;
                 if (gameQueryService != null && gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                List<StateTriggerEffect> effects = stateTriggeredEffects(gameData, perm);
-                for (int i = 0; i < effects.size(); i++) {
-                    StateTriggerEffect trigger = effects.get(i);
+                List<TriggeredAbility> abilities = stateTriggeredAbilities(gameData, perm);
+                for (int i = 0; i < abilities.size(); i++) {
+                    TriggeredAbility ability = abilities.get(i);
+                    StateTriggerEffect trigger = MiscAbilityReader.stateTrigger(ability);
 
                     // Rule 603.8: don't retrigger while already on the stack
                     StateTriggerKey key = new StateTriggerKey(perm.getId(), i);
                     if (gameData.stateTriggerOnStack.contains(key)) continue;
-
-                    if (conditionMet(gameData, trigger, perm, playerId)
-                            && interveningIfMet(gameData, trigger, perm, playerId)) {
-                        Permanent referencedPermanent = findReferencedPermanent(
-                                gameData, trigger.referencedPermanentPredicate(), perm, playerId);
-                        if (trigger.referencedPermanentPredicate() != null && referencedPermanent == null) {
-                            continue;
-                        }
-                        gameData.stateTriggerOnStack.add(key);
-
-                        // The entry of the ability that chooses nothing is also the record a target choice is given.
-                        StackEntry entry = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                perm.getCard(),
-                                playerId,
-                                description(trigger, perm.getCard()),
-                                trigger.effects(),
-                                null,
-                                perm.getId()
-                        );
-                        if (referencedPermanent != null) {
-                            entry.setTriggeringPermanentId(referencedPermanent.getId());
-                            entry.setTriggeringPermanentControllerId(playerIdOf(
-                                    gameData, referencedPermanent.getId()));
-                            entry.setTriggeringCardId(referencedPermanent.getCard().getId());
-                            entry.setDamageSourceCard(referencedPermanent.getCard());
-                        }
-                        entry.setStateTriggerEffectIndex(i);
-                        entry.setSourcePermanentSnapshot(new Permanent(perm));
-                        gameData.handOffTriggerRecord(entry);
-                        if (hasTargets(perm, trigger)) {
-                            PermanentChoiceContext.ETBTokenMultiTargetTrigger pending =
-                                    new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                                            perm.getCard(), playerId, trigger.effects(), perm.getId(),
-                                            List.of(), 0, 0)
-                                            .withStateTriggerEffectIndex(i);
-                            gameData.queueInteraction(pending);
-                            if (!gameData.interaction.isAwaitingInput()) {
-                                etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
-                            }
-                        } else {
-                            gameData.stack.add(entry);
-                        }
-
-                        gameLogService.append(gameData,
-                                GameLog.text(description(trigger, perm.getCard()) + " triggers."));
-                        log.info("Game {} - State trigger fires for {} (permanent {})",
-                                gameData.id, perm.getCard().getName(), perm.getId());
+                    if (!conditionMet(gameData, trigger, perm, playerId)) continue;
+                    Permanent referencedPermanent = findReferencedPermanent(
+                            gameData, trigger.referencedPermanentPredicate(), perm, playerId);
+                    if (trigger.referencedPermanentPredicate() != null && referencedPermanent == null) {
+                        continue;
                     }
+                    int effectIndex = i;
+                    StackEntry[] stamped = new StackEntry[1];
+                    boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
+                            perm.getCard(), perm, playerId, description(perm), ConditionContext.forPermanent(perm, playerId),
+                            entry -> {
+                                if (referencedPermanent != null) {
+                                    entry.setTriggeringPermanentId(referencedPermanent.getId());
+                                    entry.setTriggeringPermanentControllerId(playerIdOf(
+                                            gameData, referencedPermanent.getId()));
+                                    entry.setTriggeringCardId(referencedPermanent.getCard().getId());
+                                    entry.setDamageSourceCard(referencedPermanent.getCard());
+                                }
+                                entry.setStateTriggerEffectIndex(effectIndex);
+                                entry.setSourcePermanentSnapshot(new Permanent(perm));
+                                stamped[0] = entry;
+                            }));
+                    if (!triggered) {
+                        continue;
+                    }
+                    gameData.stateTriggerOnStack.add(key);
+                    parked |= stamped[0] != null && stamped[0].isParkedAtStackDoor();
+                    gameLogService.append(gameData, GameLog.text(description(perm) + " triggers."));
+                    log.info("Game {} - State trigger fires for {} (permanent {})",
+                            gameData.id, perm.getCard().getName(), perm.getId());
                 }
             }
         }
+        // A target chosen as the ability goes on the stack (CR 603.3d) is chosen now, as the game state triggered it.
+        if (parked && triggerCollectionService != null) {
+            triggerCollectionService.beginStackDoorChoices(gameData);
+        }
     }
 
-    /** Queues counter-threshold state triggers from the currently face-up planes. */
+    /** The stack and log description of a permanent's state-triggered ability. */
+    private static String description(Permanent permanent) {
+        return permanent.getCard().getName() + "'s state-triggered ability";
+    }
+
+    /**
+     * The counter-threshold state triggers of the face-up planes: each goes to the stack door whole, its source the
+     * plane and its controller the planar controller.
+     */
     private void checkPlanarStateTriggers(GameData gameData) {
         if (gameData.planechase == null) {
             return;
         }
-        for (var source : gameData.planechase.faceUp) {
-            List<StateTriggerEffect> effects = MiscAbilityReader.stateTriggers(source.getCard());
-            if (effects.isEmpty()) {
+        UUID planarControllerId = gameData.planechase.controllerId;
+        for (PlanarObject source : List.copyOf(gameData.planechase.faceUp)) {
+            List<TriggeredAbility> abilities = MiscAbilityReader.printed(source.getCard(), MiscWatch.STATE_TRIGGERED);
+            if (abilities.isEmpty()) {
                 continue;
             }
             Permanent counterSnapshot = new Permanent(source.getCard());
             counterSnapshot.getCounters().putAll(source.getCounters());
-            for (int i = 0; i < effects.size(); i++) {
-                StateTriggerEffect trigger = effects.get(i);
-                if (!conditionMet(gameData, trigger, counterSnapshot, gameData.planechase.controllerId)
-                        || !interveningIfMet(gameData, trigger, counterSnapshot, gameData.planechase.controllerId)) {
-                    continue;
-                }
+            for (int i = 0; i < abilities.size(); i++) {
                 StateTriggerKey key = new StateTriggerKey(source.getId(), i);
-                if (!gameData.stateTriggerOnStack.add(key)) {
+                if (gameData.stateTriggerOnStack.contains(key) || !conditionMet(gameData,
+                        MiscAbilityReader.stateTrigger(abilities.get(i)), counterSnapshot, planarControllerId)) {
                     continue;
                 }
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(),
-                        gameData.planechase.controllerId, source.getCard().getName() + "'s state trigger",
-                        new ArrayList<>(trigger.effects()), 0, (UUID) null);
-                entry.setSourcePlanarObject(source.copy());
-                entry.setStateTriggerEffectIndex(i);
-                gameData.stack.add(entry);
-                gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s state ability triggers."));
+                int effectIndex = i;
+                boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                        abilities.get(i), source.getCard(), null, planarControllerId,
+                        source.getCard().getName() + "'s state trigger",
+                        ConditionContext.forPermanent(counterSnapshot, planarControllerId), entry -> {
+                            entry.setSourcePlanarObject(source.copy());
+                            entry.setStateTriggerEffectIndex(effectIndex);
+                        }));
+                if (triggered) {
+                    gameData.stateTriggerOnStack.add(key);
+                    gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s state ability triggers."));
+                }
             }
         }
     }
 
-    private boolean hasTargets(Permanent permanent, StateTriggerEffect trigger) {
-        if (etbTokenTargetService == null || permanent.getCard().getTargetGroups().isEmpty()) {
-            return false;
-        }
-        return trigger.effects().stream().anyMatch(effect ->
-                effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PERMANENT)
-                        || effect.targetSpec().admits(com.github.laxika.magicalvibes.model.effect.TargetPredicate.Kind.PLAYER));
-    }
-
     /**
-     * The state triggers of {@code permanent}: its printed ones, read from its abilities, then the state-triggered
-     * abilities a static ability grants it (Olivia, Crimson Bride's "it gains 'When you don't control a legendary
-     * Vampire, exile this creature'"), as abilities layer 6 leaves it (CR 613.1f).
+     * The state-triggered abilities of {@code permanent}: its printed ones, then the ones a static ability grants it
+     * (Olivia, Crimson Bride's "it gains 'When you don't control a legendary Vampire, exile this creature'"), as
+     * abilities layer 6 leaves it (CR 613.1f).
      */
-    private List<StateTriggerEffect> stateTriggeredEffects(GameData gameData, Permanent permanent) {
-        List<StateTriggerEffect> effects = new ArrayList<>(MiscAbilityReader.stateTriggers(permanent.getCard()));
+    private List<TriggeredAbility> stateTriggeredAbilities(GameData gameData, Permanent permanent) {
+        List<TriggeredAbility> abilities = new ArrayList<>(
+                MiscAbilityReader.printed(permanent.getCard(), MiscWatch.STATE_TRIGGERED));
         if (gameQueryService != null) {
             for (CardEffect granted : gameQueryService.getGrantedEffects(gameData, permanent)) {
                 if (granted instanceof GrantTriggeredAbilityEffect grant
                         && grant.grantedAbility() instanceof TriggeredAbility ability
                         && MiscAbilityReader.hasStateTrigger(ability)) {
-                    effects.add(MiscAbilityReader.stateTrigger(ability));
+                    abilities.add(ability);
                 }
             }
         }
-        return effects;
+        return abilities;
     }
 
     private Permanent findReferencedPermanent(GameData gameData,

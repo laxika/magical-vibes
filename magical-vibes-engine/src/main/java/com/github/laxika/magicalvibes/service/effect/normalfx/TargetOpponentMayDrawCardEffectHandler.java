@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentMayDrawCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -51,7 +51,10 @@ public class TargetOpponentMayDrawCardEffectHandler implements NormalEffectHandl
             return;
         }
 
-        gameData.queueMayAbility(entry.getCard(), opponentId, new MayEffect(new DrawCardEffect(), "Draw a card?"));
+        // The opponent chooses while the ability resolves (CR 608.2d), not as an ability of its own.
+        gameData.queueMayAbilityForPlayer(entry.getCard(), entry.getControllerId(),
+                new MayEffect(new DrawCardForTargetPlayerEffect(1), "Draw a card?"), opponentId,
+                entry.getSourcePermanentId(), opponentId, entry.getSourcePermanentSnapshot());
         gameLogService.append(gameData, GameLog.textCardText(
                 "", entry.getCard(), " offers " + gameData.playerIdToName.get(opponentId) + " a card."));
     }

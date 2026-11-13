@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -20,8 +19,11 @@ import com.github.laxika.magicalvibes.model.OpponentGraveyardLifeLossWatcher;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -113,6 +115,10 @@ public class GraveyardService {
     @Autowired
     @Lazy
     private DamageJournalService damageJournalService;
+
+    @Autowired
+    @Lazy
+    private TriggeredAbilityStackService triggeredAbilityStackService;
 
     public GraveyardService(GameQueryService gameQueryService,
                             GameLogService gameLogService,
@@ -466,13 +472,13 @@ public class GraveyardService {
         gameLogService.append(gameData, GameLog.cardThen(card,
                 " is discarded into exile (madness)."));
         log.info("Game {} - {} discarded into exile for madness", gameData.id, card.getName());
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                ownerId,
-                card.getName() + "'s madness",
-                new ArrayList<>(List.of(new MadnessMayCastEffect(madnessCost)))
-        ));
+        // Madness's triggered ability, "when this card is exiled this way, its owner may cast it" (CR 702.35a): an
+        // ability of the exiled card, through the stack door.
+        triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                new TriggeredAbility(Triggers.exiledFrom(Set.of(Zone.HAND), null, ObjectRelation.THIS),
+                        new MadnessMayCastEffect(madnessCost)),
+                card, null, ownerId, card.getName() + "'s madness", ConditionContext.forCard(card, ownerId),
+                TriggeredAbilityRequest.TriggerRecord.NONE));
         gameData.priorityPassedBy.clear();
     }
 
@@ -1004,16 +1010,17 @@ public class GraveyardService {
     private void putEmblemGraveyardAbilityOnStack(GameData gameData, Emblem emblem, TriggeredAbility ability,
                                                   UUID ownerId, Card card) {
         String description = emblem.sourceCard().getName() + "'s emblem";
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                emblem.sourceCard(),
-                emblem.controllerId(),
-                description,
-                new ArrayList<>(ability.effects().stream().map(EffectRegistration::effect).toList()));
-        entry.setTriggeringCard(card.getId(), gameData.graveyardEntryVersion(card.getId()));
-        entry.setTriggeringCards(List.of(card));
-        entry.setNonTargeting(true);
-        gameData.stack.add(entry);
+        long graveyardStay = gameData.graveyardEntryVersion(card.getId());
+        // An emblem's ability functions in the command zone (CR 114.4) and goes on the stack through the stack door.
+        if (!triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability, emblem.sourceCard(), null,
+                emblem.controllerId(), description,
+                ConditionContext.forCard(emblem.sourceCard(), emblem.controllerId()), entry -> {
+                    entry.setTriggeringCard(card.getId(), graveyardStay);
+                    entry.setTriggeringCards(List.of(card));
+                    entry.setNonTargeting(true);
+                }).ofEmblem())) {
+            return;
+        }
         gameLogService.append(gameData, GameLog.text(description + " triggers for " + card.getName() + "."));
         log.info("Game {} - {} triggers for {} put into {}'s graveyard", gameData.id, description, card.getName(),
                 gameData.playerIdToName.get(ownerId));
@@ -1030,17 +1037,17 @@ public class GraveyardService {
             if (watcher.controllerId().equals(ownerId)) {
                 continue;
             }
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            // A delayed triggered ability its activation made (CR 603.7), about "that player".
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(
                     watcher.sourceCard(),
                     watcher.controllerId(),
                     watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER))),
+                    List.of(new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER)),
                     ownerId,
                     (UUID) null
             );
             entry.setNonTargeting(true);
-            gameData.stack.add(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} triggers (card put into an opponent's graveyard)",
                     gameData.id, watcher.sourceCard().getName());
@@ -1385,13 +1392,14 @@ public class GraveyardService {
             recipients.remove(shieldIndex);
         }
 
-        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(), triggerControllerId,
+        // "When it regenerates this way, that player may draw a card": a delayed triggered ability (CR 603.7).
+        StackEntry trigger = TriggeredAbilityStackService.madeAbility(perm.getCard(), triggerControllerId,
                 perm.getCard().getName() + "'s regeneration ability",
-                new ArrayList<>(List.of(new MayEffect(new DrawCardForTargetPlayerEffect(1), "Draw a card?",
-                        null, MayChoicePlayer.TARGET_PLAYER))),
+                List.of(new MayEffect(new DrawCardForTargetPlayerEffect(1), "Draw a card?",
+                        null, MayChoicePlayer.TARGET_PLAYER)),
                 opponentId, perm.getId());
         trigger.setNonTargeting(true);
-        gameData.enqueueTrigger(trigger);
+        triggeredAbilityStackService.putDelayed(gameData, trigger);
         gameLogService.append(gameData, GameLog.textCardText(
                 "", perm.getCard(), " offers " + gameData.playerIdToName.get(opponentId) + " a card."));
     }
@@ -1406,13 +1414,14 @@ public class GraveyardService {
         }
         perm.setMinusOneCounterRegenerationShield(perm.getMinusOneCounterRegenerationShield() - 1);
 
-        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(),
+        // "When it regenerates this way, put a counter on it": a delayed triggered ability (CR 603.7).
+        StackEntry trigger = TriggeredAbilityStackService.madeAbility(perm.getCard(),
                 gameQueryService.findPermanentController(gameData, perm.getId()),
                 perm.getCard().getName() + "'s regeneration ability",
-                new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect(-1, -1, 1))),
+                List.of(new com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect(-1, -1, 1)),
                 perm.getId(), perm.getId());
         trigger.setNonTargeting(true);
-        gameData.enqueueTrigger(trigger);
+        triggeredAbilityStackService.putDelayed(gameData, trigger);
     }
 
     /**
@@ -1429,13 +1438,14 @@ public class GraveyardService {
                 ? gameQueryService.findPermanentController(gameData, perm.getId())
                 : shieldControllers.removeFirst();
 
-        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(),
+        // "When it regenerates this way, put a counter on it": a delayed triggered ability (CR 603.7).
+        StackEntry trigger = TriggeredAbilityStackService.madeAbility(perm.getCard(),
                 triggerControllerId,
                 perm.getCard().getName() + "'s regeneration ability",
-                new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect(1, 1, 1))),
+                List.of(new com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect(1, 1, 1)),
                 perm.getId(), perm.getId());
         trigger.setNonTargeting(true);
-        gameData.enqueueTrigger(trigger);
+        triggeredAbilityStackService.putDelayed(gameData, trigger);
     }
 
     /**
@@ -2385,14 +2395,14 @@ public class GraveyardService {
             List<CardEffect> effects = gameData.perpetualTriggeredAbilities.get(card.getId());
             if (effects == null) continue;
             for (CardEffect effect : effects) {
-                gameData.enqueueTrigger(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        card,
-                        ownerId,
-                        card.getName() + "'s ability",
-                        new ArrayList<>(List.of(effect)),
-                        null,
-                        (UUID) null));
+                // "When this card leaves your graveyard, ...", an ability the card perpetually gained: the card's own
+                // ability, through the stack door (CR 603.10a: it looks back at the card in the graveyard).
+                if (!triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                        new TriggeredAbility(Triggers.leavesGraveyard(null, ObjectRelation.THIS), effect),
+                        card, null, ownerId, card.getName() + "'s ability", ConditionContext.forCard(card, ownerId),
+                        TriggeredAbilityRequest.TriggerRecord.NONE))) {
+                    continue;
+                }
                 gameLogService.append(gameData, GameLog.abilityTriggers(card));
                 log.info("Game {} - {} triggers on leaving its owner's graveyard",
                         gameData.id, card.getName());

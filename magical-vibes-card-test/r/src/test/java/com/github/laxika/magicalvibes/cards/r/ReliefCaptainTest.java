@@ -70,7 +70,7 @@ class ReliefCaptainTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -138,10 +138,10 @@ class ReliefCaptainTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, creature.getId());
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, creature.getId()))
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                List.of(creature.getId(), creature.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
         resolveAllTriggers();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
-import java.util.Set;
 
 @CardRegistration(set = "SCG", collectorNumber = "52")
 @CardRegistration(set = "MP2", collectorNumber = "18")
@@ -18,9 +17,7 @@ public class Stifle extends Card {
 
     public Stifle() {
         target(new StackEntryPredicateTargetFilter(
-                new StackEntryTypeInPredicate(Set.of(
-                        StackEntryType.ACTIVATED_ABILITY,
-                        StackEntryType.TRIGGERED_ABILITY)),
+                new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                 "Target must be an activated or triggered ability."
         )).addSpellEffect(new CounterSpellEffect());
     }

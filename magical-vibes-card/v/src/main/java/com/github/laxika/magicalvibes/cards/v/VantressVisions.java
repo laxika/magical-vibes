@@ -9,16 +9,13 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
-import java.util.Set;
 
 public class VantressVisions extends Card {
 
     public VantressVisions() {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryAllOfPredicate(List.of(
-                        new StackEntryTypeInPredicate(Set.of(
-                                StackEntryType.ACTIVATED_ABILITY,
-                                StackEntryType.TRIGGERED_ABILITY)),
+                        new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                         new StackEntryControlledByPredicate())),
                 "Target must be an activated or triggered ability you control."
         )).addSpellEffect(new CopyTargetActivatedOrTriggeredAbilityEffect());

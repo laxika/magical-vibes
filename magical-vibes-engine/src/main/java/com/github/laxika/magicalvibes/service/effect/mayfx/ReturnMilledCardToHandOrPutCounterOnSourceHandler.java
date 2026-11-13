@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnMilledCardToHandOrPutCounterOnSourceEffect;
@@ -101,9 +100,7 @@ public class ReturnMilledCardToHandOrPutCounterOnSourceHandler implements MayEff
         }
 
         PutCountersOnSourceEffect counterEffect = new PutCountersOnSourceEffect(1, 1, 1);
-        StackEntry counterEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ability.sourceCard(),
+        StackEntry counterEntry = StackEntry.carrier(ability.sourceCard(),
                 ability.controllerId(),
                 ability.sourceCard().getName() + "'s ability",
                 List.of(counterEffect),

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.target;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -116,7 +118,7 @@ class TargetLegalityServiceTest {
         source.setName("Life comparison");
         var damage = new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(1,
                 com.github.laxika.magicalvibes.model.effect.DamageRecipient.TARGET_PLAYER);
-        var entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, player1Id,
+        var entry = TestStackDoor.triggered(source, player1Id,
                 "Life comparison", List.of(damage), player2Id, (UUID) null);
         entry.setTargetFilter(new com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter(
                 new com.github.laxika.magicalvibes.model.filter.PlayerHasMoreLifeThanControllerPredicate(true),
@@ -451,7 +453,7 @@ class TargetLegalityServiceTest {
         @DisplayName("rejects triggered ability without HasTarget predicate")
         void rejectsTriggeredAbilityWithoutHasTargetPredicate() {
             Card source = createCreature("Bear", CardColor.GREEN);
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, player2Id, "test", List.of());
+            StackEntry entry = TestStackDoor.triggered(source, player2Id, "test", List.of());
             gd.stack.add(entry);
 
             assertThatThrownBy(() -> sut.validateSpellTargetOnStack(gd, source.getId(), null, player1Id))
@@ -463,7 +465,7 @@ class TargetLegalityServiceTest {
         @DisplayName("accepts triggered ability with HasTarget predicate nested in AllOf")
         void acceptsAbilityWithNestedHasTargetPredicate() {
             Card source = createCreature("Bear", CardColor.GREEN);
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, player2Id, "test", List.of());
+            StackEntry entry = TestStackDoor.triggered(source, player2Id, "test", List.of());
             gd.stack.add(entry);
 
             StackEntryPredicateTargetFilter filter = new StackEntryPredicateTargetFilter(
@@ -1712,7 +1714,7 @@ class TargetLegalityServiceTest {
         @DisplayName("returns false for non-targeting entry")
         void returnsFalseForNonTargetingEntry() {
             Card card = createCreature("Bear", CardColor.GREEN);
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id, "test", List.of());
+            StackEntry entry = TestStackDoor.triggered(card, player1Id, "test", List.of());
             entry.setNonTargeting(true);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
@@ -1955,7 +1957,7 @@ class TargetLegalityServiceTest {
                 StackEntry target = new StackEntry(type, source, player2Id, "Ability",
                         List.of(), null, Zone.STACK);
                 gd.stack.add(target);
-                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, new Card(), player1Id,
+                StackEntry trigger = TestStackDoor.triggered(new Card(), player1Id,
                         "Counter trigger", List.of(), target.getTargetableId(), Zone.STACK);
 
                 assertThat(sut.isTargetIllegalOnResolution(gd, trigger)).isFalse();
@@ -2063,9 +2065,7 @@ class TargetLegalityServiceTest {
             aura.setSubtypes(List.of(CardSubtype.AURA));
             aura.target(enchantFilter);
             aura.target(etbFilter).addTrigger(Triggers.enters(ObjectRelation.THIS), etbEffect);
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    aura,
+            StackEntry entry = TestStackDoor.triggered(aura,
                     player1Id,
                     "Aura ETB",
                     List.of(etbEffect),
@@ -2096,9 +2096,7 @@ class TargetLegalityServiceTest {
             aura.setSubtypes(List.of(CardSubtype.AURA));
             aura.target(enchantFilter);
             aura.target(triggerFilter).addTrigger(Triggers.dealsCombatDamageToPlayer(), triggerEffect);
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    aura,
+            StackEntry entry = TestStackDoor.triggered(aura,
                     player1Id,
                     "Aura trigger",
                     List.of(triggerEffect),
@@ -2114,7 +2112,7 @@ class TargetLegalityServiceTest {
             Permanent target = addPermanent(player2Id, createCreature("Target", CardColor.GREEN));
             Card source = createCreature("Source", CardColor.GREEN);
             CardEffect effect = new DestroyTargetPermanentEffect();
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, player1Id,
+            StackEntry entry = TestStackDoor.triggered(source, player1Id,
                     "Reflexive ability", List.of(effect), target.getId(), UUID.randomUUID());
             entry.setAttackedTargetId(player2Id);
 
@@ -2137,9 +2135,7 @@ class TargetLegalityServiceTest {
             Card source = createCreature("Source", CardColor.RED);
             source.target(firstFilter).addTrigger(Triggers.enters(ObjectRelation.THIS), firstEffect);
             source.target(secondFilter).addTrigger(Triggers.enters(ObjectRelation.THIS), secondEffect);
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    source,
+            StackEntry entry = TestStackDoor.triggered(source,
                     player1Id,
                     "Source ETB",
                     List.of(secondEffect),
@@ -2194,7 +2190,7 @@ class TargetLegalityServiceTest {
         @DisplayName("returns true when target player has hexproof and source is opponent")
         void returnsTrueWhenTargetPlayerHasHexproof() {
             Card spell = createTargetingSpell("Burn", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, spell, player1Id, "ETB",
+            StackEntry entry = TestStackDoor.triggered(spell, player1Id, "ETB",
                     spell.getCastingCostsAndSpellEffects(), 0, player2Id, Map.of());
             when(gameQueryService.playerHasHexproof(gd, player2Id)).thenReturn(true);
 
@@ -2205,7 +2201,7 @@ class TargetLegalityServiceTest {
         @DisplayName("returns false when target player has hexproof but source is self")
         void returnsFalseWhenTargetPlayerHasHexproofButSelf() {
             Card spell = createTargetingSpell("Burn", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, spell, player1Id, "ETB",
+            StackEntry entry = TestStackDoor.triggered(spell, player1Id, "ETB",
                     spell.getCastingCostsAndSpellEffects(), 0, player1Id, Map.of());
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
@@ -2215,7 +2211,7 @@ class TargetLegalityServiceTest {
         @DisplayName("returns true when target player has shroud")
         void returnsTrueWhenTargetPlayerHasShroud() {
             Card spell = createTargetingSpell("Burn", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, spell, player1Id, "ETB",
+            StackEntry entry = TestStackDoor.triggered(spell, player1Id, "ETB",
                     spell.getCastingCostsAndSpellEffects(), 0, player2Id, Map.of());
             when(gameQueryService.playerHasShroud(gd, player2Id)).thenReturn(true);
 
@@ -2226,7 +2222,7 @@ class TargetLegalityServiceTest {
         @DisplayName("returns false when target player has no hexproof or shroud")
         void returnsFalseWhenTargetPlayerHasNoProtection() {
             Card spell = createTargetingSpell("Burn", CardColor.RED);
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, spell, player1Id, "ETB",
+            StackEntry entry = TestStackDoor.triggered(spell, player1Id, "ETB",
                     spell.getCastingCostsAndSpellEffects(), 0, player2Id, Map.of());
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();

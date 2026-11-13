@@ -29,16 +29,13 @@ public class Defabricate extends Card {
                                         new StackEntryCardTypeInPredicate(
                                                 Set.of(CardType.ARTIFACT, CardType.ENCHANTMENT)),
                                         new StackEntryNotPredicate(new StackEntryTypeInPredicate(
-                                                Set.of(StackEntryType.ACTIVATED_ABILITY,
-                                                        StackEntryType.TRIGGERED_ABILITY))))),
+                                                StackEntryType.ABILITIES)))),
                                 "Target must be an artifact or enchantment spell.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Counter target activated or triggered ability",
                         new CounterSpellEffect(),
                         new StackEntryPredicateTargetFilter(
-                                new StackEntryTypeInPredicate(Set.of(
-                                        StackEntryType.ACTIVATED_ABILITY,
-                                        StackEntryType.TRIGGERED_ABILITY)),
+                                new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                                 "Target must be an activated or triggered ability."))
         )));
     }

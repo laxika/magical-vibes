@@ -397,10 +397,11 @@ public sealed interface ChoiceContext {
     record PathOfAncestryManaColorChoice(UUID playerId, UUID sourcePermanentId, int amount)
             implements ChoiceContext {}
 
+    /** A Saga chapter's counter division; {@code triggerRecord} is the entry the stack door parked. */
     record SagaChapterCounterAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                          UUID sourcePermanentId, String chapterName, CounterType counterType,
                                          List<UUID> targetIds, Map<UUID, Integer> assignments, int total,
-                                         int nextTargetIndex) implements ChoiceContext {
+                                         int nextTargetIndex, StackEntry triggerRecord) implements ChoiceContext {
 
         public SagaChapterCounterAssignment {
             effects = List.copyOf(effects);
@@ -440,14 +441,14 @@ public sealed interface ChoiceContext {
         }
 
         /**
-         * This division for a triggered ability whose entry carries {@code record}, a copy of the entry its collector
-         * builds for an ability of the same trigger that chooses nothing ({@code StackEntry.carryTriggerRecord}).
+         * This division for {@code record}, the triggered ability the stack door parked for its targets and division,
+         * which the division finishes.
          */
         public CounterDistributionAssignment withTriggerRecord(StackEntry record) {
             return new CounterDistributionAssignment(sourceCard, controllerId, effects, sourcePermanentId,
                     counterType, targetIds, assignments, total, nextTargetIndex, allowsPartialDistribution,
                     spellCast, stackEntryId, entryTargetIds, entryTargetGroupSizes,
-                    record == null ? null : new StackEntry(record));
+                    record);
         }
 
         public CounterDistributionAssignment(Card sourceCard, UUID controllerId, List<CardEffect> effects,

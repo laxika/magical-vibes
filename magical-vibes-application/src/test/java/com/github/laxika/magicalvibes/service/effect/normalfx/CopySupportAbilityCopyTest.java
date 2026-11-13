@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -29,7 +31,7 @@ class CopySupportAbilityCopyTest {
         departed.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         Card discarded = card("Forest");
         UUID player = UUID.randomUUID();
-        StackEntry original = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, UUID.randomUUID(),
+        StackEntry original = TestStackDoor.triggered(source, UUID.randomUUID(),
                 "The Ozolith's ability", List.of(), null, UUID.randomUUID());
         original.setTriggeringPermanent(departed);
         original.setTriggeringPermanentId(departed.getId());

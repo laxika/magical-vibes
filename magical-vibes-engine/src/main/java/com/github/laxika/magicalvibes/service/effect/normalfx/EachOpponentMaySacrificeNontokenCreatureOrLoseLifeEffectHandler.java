@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffect;
@@ -143,9 +142,7 @@ public class EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffectHandler
 
     public void applyLifeLoss(GameData gameData, PendingMayAbility ability, DynamicAmount amount) {
         UUID sourceControllerId = sourceControllerId(gameData, ability);
-        StackEntry contextEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ability.sourceCard(),
+        StackEntry contextEntry = StackEntry.carrier(ability.sourceCard(),
                 sourceControllerId,
                 ability.sourceCard().getName() + "'s ability",
                 List.of(),
@@ -172,9 +169,7 @@ public class EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffectHandler
     }
 
     private static StackEntry lifeLossEntry(StackEntry contextEntry, UUID playerId, LoseLifeEffect lifeLoss) {
-        StackEntry lifeLossEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                contextEntry.getCard(),
+        StackEntry lifeLossEntry = StackEntry.carrier(contextEntry.getCard(),
                 contextEntry.getControllerId(),
                 contextEntry.getCard().getName() + "'s ability",
                 List.of(lifeLoss),

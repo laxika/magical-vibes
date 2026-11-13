@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -113,11 +115,11 @@ abstract class AbstractPlayerInteractionHandlerTest {
     }
 
     protected StackEntry createTriggeredEntry(Card card, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId, card.getName(), effects, null, sourcePermanentId);
+        return TestStackDoor.triggered(card, controllerId, card.getName(), effects, null, sourcePermanentId);
     }
 
     protected StackEntry createTriggeredEntryWithTarget(Card card, UUID controllerId, List<CardEffect> effects, UUID targetId, UUID sourcePermanentId) {
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId, card.getName(),
+        return TestStackDoor.triggered(card, controllerId, card.getName(),
                 effects, 0, targetId, sourcePermanentId, null, null, null, null);
     }
 }

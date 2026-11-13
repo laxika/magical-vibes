@@ -57,10 +57,10 @@ class AngelicQuartermasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         UUID quartermasterId = harness.getPermanentId(player1, "Angelic Quartermaster");
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
 
-        assertThat(choice.validPermanentIds()).contains(otherCreature.getId()).doesNotContain(quartermasterId);
+        assertThat(choice.validIds()).contains(otherCreature.getId()).doesNotContain(quartermasterId);
     }
 
     @Test
@@ -82,7 +82,7 @@ class AngelicQuartermasterTest extends BaseCardTest {
 
         castWithoutDeclaringTargets();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Angelic Quartermaster");
@@ -128,14 +128,14 @@ class AngelicQuartermasterTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new PersistentSpecimen());
 
         Permanent quartermaster = harness.enterBattlefieldAndReturn(player1, new AngelicQuartermaster());
-        harness.handlePermanentChosen(player1, first.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                List.of(first.getId(), first.getId())))
+                .isInstanceOf(IllegalStateException.class);
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validPermanentIds()).contains(second.getId())
-                .doesNotContain(first.getId(), quartermaster.getId());
-
-        harness.handlePermanentChosen(player1, second.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

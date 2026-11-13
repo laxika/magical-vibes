@@ -6,6 +6,12 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
+import com.github.laxika.magicalvibes.model.trigger.ChapterTrigger;
+import java.util.LinkedHashSet;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -21,6 +27,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackDoor;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -30,6 +37,8 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.model.condition.EntryFactCondition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.EntryFacts;
+import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
@@ -83,7 +92,7 @@ import java.util.function.Consumer;
  * the event whatever its effects are; its options are the only trigger-level properties read (step 14 of
  * effect-slot-refactor.md). It is one stack object (CR 603.3): a modal one waits for its mode (CR 603.3c), one that
  * targets for its targets as it goes on the stack and is removed if none is legal (CR 603.3d), and any other goes on
- * the stack through {@link GameData#enqueueTrigger}.
+ * the stack through {@link StackDoor#enqueue}.
  * An ability that watches another object's zone change ("whenever a creature you control dies", a relation other
  * than {@code THIS}, its {@link ZoneChangeWatch} or {@link CreatureDeathWatch}) goes through {@link #triggerOnce}:
  * its collector records the event ({@link TriggerCollectionService#zoneChangeRequest}) and it goes through
@@ -91,7 +100,7 @@ import java.util.function.Consumer;
  * APNAP ordering (CR 603.3b) happens later, in {@code TriggeredAbilityQueueService.beginTriggerOrder}.
  */
 @Service
-public class TriggeredAbilityStackService {
+public class TriggeredAbilityStackService extends StackDoor {
 
     private final ConditionEvaluationService conditionEvaluationService;
     private final GameQueryService gameQueryService;
@@ -101,6 +110,10 @@ public class TriggeredAbilityStackService {
     private final AmountEvaluationService amountEvaluationService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final TriggerTargetCollector triggerTargetCollector;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService graveyardTargetingService;
 
     public TriggeredAbilityStackService(@Lazy ConditionEvaluationService conditionEvaluationService,
                                         @Lazy GameQueryService gameQueryService,
@@ -279,10 +292,6 @@ public class TriggeredAbilityStackService {
         if (watch == null) {
             return;
         }
-        if (TriggerCollectionService.keepsLegacyPermanentChangeRoute(watch)) {
-            triggerLegacyPermanentChange(gameData, candidate, events, watch);
-            return;
-        }
         TriggerOptions options = candidate.ability().options();
         UUID changedId = events.getFirst().permanent().getId();
         ConditionContext context = ConditionContext.forPermanent(candidate.sourceAsPermanent(), candidate.controllerId())
@@ -294,35 +303,6 @@ public class TriggeredAbilityStackService {
         if (put(gameData, triggerCollectionService.permanentChangeRequest(gameData, candidate, watch, events,
                 context))) {
             gameLogService.append(gameData, GameLog.abilityTriggers(candidate.sourceCard()));
-        }
-    }
-
-    /**
-     * Triggers {@code candidate}'s ability of {@code watch} the way its old putter does, for the abilities whose target
-     * route the door doesn't have ({@link TriggerCollectionService#keepsLegacyPermanentChangeRoute}): its options are
-     * checked here and its effects, the intervening "if" wrapped around each (CR 603.4), go to the putter.
-     */
-    private void triggerLegacyPermanentChange(GameData gameData, TriggerCandidate candidate,
-                                              List<PermanentChangeEvent> events, ZoneChangeWatch watch) {
-        TriggerOptions options = candidate.ability().options();
-        Condition interveningIf = options.interveningIf();
-        UUID changedId = events.getFirst().permanent().getId();
-        if (!conditionsMet(gameData, options,
-                ConditionContext.forPermanent(candidate.sourceAsPermanent(), candidate.controllerId())
-                        .withTargetId(changedId).withTriggeringPermanentId(changedId))) {
-            return;
-        }
-        UUID sourceId = candidate.sourceObjectId();
-        String limitKey = limitKey(candidate);
-        if (limitReached(gameData, options.limit(), sourceId, limitKey)) {
-            return;
-        }
-        List<CardEffect> effects = new ArrayList<>();
-        for (EffectRegistration registration : candidate.ability().effects()) {
-            effects.add(withInterveningIf(interveningIf, registration.effect(), false));
-        }
-        if (triggerCollectionService.triggerPermanentChange(gameData, watch, candidate, effects, events)) {
-            markLimit(gameData, options.limit(), sourceId, limitKey);
         }
     }
 
@@ -344,7 +324,7 @@ public class TriggeredAbilityStackService {
      *       finishes it ({@link #finishParked}). An effect with a target chooses it, unless the event names the object
      *       it acts on ("that creature", a non-targeting {@code targetId} other than the source, CR 115.10a) and the
      *       card declares no target for it. An ability with no legal choice is removed.</li>
-     *   <li>An ability that chooses nothing goes to {@link GameData#enqueueTrigger}; its controller orders it among the
+     *   <li>An ability that chooses nothing goes to {@link StackDoor#enqueue}; its controller orders it among the
      *       others later (CR 603.3b).</li>
      * </ol>
      * The door never reads an effect's class: what it needs of an effect it asks through {@code CardEffect}.
@@ -352,6 +332,107 @@ public class TriggeredAbilityStackService {
      * @return whether the ability triggered
      */
     public boolean put(GameData gameData, TriggeredAbilityRequest request) {
+        return put(gameData, request, (effects, copies, randomMode) -> {
+            int previousCopies = gameData.beginTriggeredAbilityCopies(copies);
+            try {
+                gameData.routeTriggeredAbility(() -> route(gameData, request, effects, randomMode));
+            } finally {
+                gameData.restoreTriggeredAbilityCopies(previousCopies);
+            }
+        });
+    }
+
+    /**
+     * The stack door for a triggered mana ability (CR 605.1b), which follows the rules of every other triggered
+     * ability (CR 605.4) but doesn't go on the stack: it resolves immediately after the mana ability that triggered it
+     * (CR 605.4a). It triggers as {@link #put} says (its intervening "if", its limit, the additional times it triggers,
+     * CR 603.2d), and each entry, its record stamped, is handed to {@code resolveAtOnce}.
+     *
+     * @return whether the ability triggered
+     */
+    public boolean putManaAbility(GameData gameData, TriggeredAbilityRequest request,
+                                  Consumer<StackEntry> resolveAtOnce) {
+        return put(gameData, request, (effects, copies, randomMode) -> {
+            for (int copy = 0; copy < copies; copy++) {
+                StackEntry entry = abilityEntry(request, effects);
+                gameData.routeTriggeredAbility(() -> {
+                    // A choice it asks as it resolves is the ability's own: the entry is its record.
+                    handOff(gameData, entry);
+                    resolveAtOnce.accept(entry);
+                });
+            }
+        });
+    }
+
+    /**
+     * The stack door for a triggered ability of a permanent tapped for mana whose record isn't complete yet: the type
+     * of mana the tap produced, which its effects read, waits for the tapped permanent's own mana choice. It triggers as
+     * {@link #put} says, and each entry, its record stamped, waits in {@link GameData#pendingManaAbilityTriggers}
+     * ({@link StackEntry#isAwaitingProducedManaColor()}) until that choice: a triggered mana ability is then resolved at
+     * once (CR 605.4a) by the choice's handler, and any other goes on the stack through {@link #putHeld}.
+     *
+     * @return whether the ability triggered
+     */
+    public boolean holdForProducedMana(GameData gameData, TriggeredAbilityRequest request) {
+        return put(gameData, request, (effects, copies, randomMode) -> {
+            for (int copy = 0; copy < copies; copy++) {
+                StackEntry entry = abilityEntry(request, effects);
+                entry.setAwaitingProducedManaColor(true);
+                gameData.pendingManaAbilityTriggers.add(entry);
+            }
+        });
+    }
+
+    /**
+     * Puts {@code held}, an ability {@link #holdForProducedMana} held until the tapped permanent's mana choice
+     * completed its record, on the stack: its mode and targets are chosen as it goes there (CR 603.3c, 603.3d), and
+     * with no legal choice it is removed.
+     */
+    public void putHeld(GameData gameData, StackEntry held) {
+        if (!held.isAwaitingProducedManaColor()) {
+            throw new IllegalArgumentException("Not held for its produced mana: " + held.getDescription());
+        }
+        held.setAwaitingProducedManaColor(false);
+        Permanent source = held.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, held.getSourcePermanentId());
+        gameData.routeTriggeredAbility(() -> routeEntry(gameData, held, held.getEffectsToResolve(),
+                ConditionContext.forStackEntry(held), source != null ? source : held.getSourcePermanentSnapshot(),
+                false));
+    }
+
+    /**
+     * The stack door for an ability whose targets were announced before it triggered: the targets announced with the
+     * cycling ability whose activation triggers it ("when you cycle this card, destroy up to X target artifacts",
+     * Rampaging War Mammoth), which the request's record stamps (none, for "up to" with none announced). It triggers as
+     * {@link #put} says and goes on the stack with those targets; nothing is chosen for it.
+     *
+     * @return whether the ability triggered
+     */
+    public boolean putWithAnnouncedTargets(GameData gameData, TriggeredAbilityRequest request) {
+        return put(gameData, request, (effects, copies, randomMode) -> {
+            int previousCopies = gameData.beginTriggeredAbilityCopies(copies);
+            try {
+                gameData.routeTriggeredAbility(() -> {
+                    StackEntry entry = abilityEntry(request, effects);
+                    handOff(gameData, entry);
+                    enqueue(gameData, entry);
+                });
+            } finally {
+                gameData.restoreTriggeredAbilityCopies(previousCopies);
+            }
+        });
+    }
+
+    /**
+     * What the door does with an ability that triggered: its effects as written, how many times it triggered, and the
+     * mode chosen at random as it triggered, or {@code null}.
+     */
+    @FunctionalInterface
+    private interface Router {
+        void route(List<CardEffect> effects, int copies, ChooseOneEffect.ChooseOneOption randomMode);
+    }
+
+    private boolean put(GameData gameData, TriggeredAbilityRequest request, Router router) {
         TriggeredAbility ability = request.ability();
         TriggerOptions options = ability.options();
         Condition interveningIf = options.interveningIf();
@@ -364,6 +445,7 @@ public class TriggeredAbilityStackService {
             return false;
         }
         List<CardEffect> written = new ArrayList<>(ability.effects().size());
+        ChooseOneEffect.ChooseOneOption randomMode = null;
         for (EffectRegistration registration : ability.effects()) {
             List<ChooseOneEffect.ChooseOneOption> randomModes = registration.effect().modesChosenAtRandomAsItTriggers();
             if (randomModes == null) {
@@ -375,7 +457,15 @@ public class TriggeredAbilityStackService {
                 // No mode can be chosen: the ability is removed from the stack (CR 603.3c).
                 return false;
             }
+            randomMode = mode;
             written.addAll(mode.effectsForSelection());
+        }
+        if (ownEntry(request)) {
+            written = asItTriggersOnEntering(gameData, request, written);
+            if (written.isEmpty() && !ability.effects().isEmpty()) {
+                // An "if" fixed as the permanent entered that isn't met: the ability doesn't trigger (CR 603.4).
+                return false;
+            }
         }
         List<CardEffect> effects = new ArrayList<>(written.size());
         for (CardEffect effect : written) {
@@ -392,14 +482,54 @@ public class TriggeredAbilityStackService {
                 : 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(gameData, request.controllerId(),
                         request.sourcePermanent(), request.attackCaused(), request.event())
                 + eventAdditionalTriggers(gameData, request);
-        int previousCopies = gameData.beginTriggeredAbilityCopies(copies);
-        try {
-            gameData.routeTriggeredAbility(() -> route(gameData, request, effects));
-        } finally {
-            gameData.restoreTriggeredAbilityCopies(previousCopies);
-        }
+        router.route(effects, copies, randomMode);
         markLimit(gameData, options.limit(), limitSourceId, ability.limitKey(), request.limitCreatureId());
         return true;
+    }
+
+    /**
+     * Whether {@code request}'s ability is its source's own "when this enters" ability, triggered by that permanent
+     * entering ({@link TriggerContext.PermanentEnters} of the source itself, CR 603.6a).
+     */
+    private static boolean ownEntry(TriggeredAbilityRequest request) {
+        return request.event() instanceof TriggerContext.PermanentEnters entering
+                && java.util.Objects.equals(entering.enteringPermanentId(), request.sourcePermanentId())
+                && request.ability().hasOwnEntry();
+    }
+
+    /**
+     * {@code written}, the effects of an entering permanent's own ability, as the ability triggers
+     * ({@link CardEffect#asItTriggersOnEntering}): a fact fixed as the permanent entered (how it was cast, judged in
+     * the request's context, which the collector gives those facts; its evoke cost or tribute paid) is judged now, as
+     * the stack entry can't read how the permanent was cast, and an effect it leaves out is dropped.
+     */
+    private List<CardEffect> asItTriggersOnEntering(GameData gameData, TriggeredAbilityRequest request,
+                                                    List<CardEffect> written) {
+        Permanent entering = request.sourcePermanent();
+        EntryFacts facts = new EntryFacts() {
+            @Override
+            public boolean isMet(Condition condition) {
+                return conditionEvaluationService.isMet(gameData, condition, request.ifContext());
+            }
+
+            @Override
+            public boolean evoked() {
+                return entering != null && entering.isEvoked();
+            }
+
+            @Override
+            public boolean tributePaid() {
+                return entering != null && entering.isTributePaid();
+            }
+        };
+        List<CardEffect> judged = new ArrayList<>(written.size());
+        for (CardEffect effect : written) {
+            CardEffect asTriggered = effect.asItTriggersOnEntering(facts);
+            if (asTriggered != null) {
+                judged.add(asTriggered);
+            }
+        }
+        return judged;
     }
 
     /**
@@ -411,22 +541,22 @@ public class TriggeredAbilityStackService {
      */
     public static StackEntry madeAbility(Card sourceCard, UUID controllerId, String description,
                                          List<CardEffect> effects, int xValue, UUID sourcePermanentId) {
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
-                new ArrayList<>(effects), xValue, sourcePermanentId);
+        return newTriggeredEntry(sourceCard, controllerId, description,
+                new ArrayList<>(effects), xValue, null, sourcePermanentId, null, null, null);
     }
 
     /** {@link #madeAbility(Card, UUID, String, List, int, UUID)} with no X and no source permanent. */
     public static StackEntry madeAbility(Card sourceCard, UUID controllerId, String description,
                                          List<CardEffect> effects) {
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
-                new ArrayList<>(effects));
+        return newTriggeredEntry(sourceCard, controllerId, description,
+                new ArrayList<>(effects), 0, null, null, null, null, null);
     }
 
     /** {@link #madeAbility(Card, UUID, String, List, int, UUID)} with no source permanent. */
     public static StackEntry madeAbility(Card sourceCard, UUID controllerId, String description,
                                          List<CardEffect> effects, int xValue) {
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
-                new ArrayList<>(effects), xValue);
+        return newTriggeredEntry(sourceCard, controllerId, description,
+                new ArrayList<>(effects), xValue, null, null, null, null, null);
     }
 
     /**
@@ -435,23 +565,23 @@ public class TriggeredAbilityStackService {
      */
     public static StackEntry madeAbility(Card sourceCard, UUID controllerId, String description,
                                          List<CardEffect> effects, UUID targetId, UUID sourcePermanentId) {
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
-                new ArrayList<>(effects), targetId, sourcePermanentId);
+        return newTriggeredEntry(sourceCard, controllerId, description,
+                new ArrayList<>(effects), 0, targetId, sourcePermanentId, null, null, null);
     }
 
     /** {@link #madeAbility(Card, UUID, String, List, UUID, UUID)} about an object in {@code targetZone}. */
     public static StackEntry madeAbility(Card sourceCard, UUID controllerId, String description,
                                          List<CardEffect> effects, UUID targetId, Zone targetZone) {
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
-                new ArrayList<>(effects), targetId, targetZone);
+        return newTriggeredEntry(sourceCard, controllerId, description,
+                new ArrayList<>(effects), 0, targetId, null, targetZone, null, null);
     }
 
     /** {@link #madeAbility(Card, UUID, String, List, UUID, Zone)} with a source permanent. */
     public static StackEntry madeAbility(Card sourceCard, UUID controllerId, String description,
                                          List<CardEffect> effects, UUID targetId, Zone targetZone,
                                          UUID sourcePermanentId) {
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
-                new ArrayList<>(effects), targetId, targetZone, sourcePermanentId);
+        return newTriggeredEntry(sourceCard, controllerId, description,
+                new ArrayList<>(effects), 0, targetId, sourcePermanentId, targetZone, null, null);
     }
 
     /**
@@ -460,15 +590,15 @@ public class TriggeredAbilityStackService {
      */
     public static StackEntry madeAbility(Card sourceCard, UUID controllerId, String description,
                                          List<CardEffect> effects, UUID sourcePermanentId, List<UUID> targetIds) {
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
-                new ArrayList<>(effects), sourcePermanentId, targetIds);
+        return newTriggeredEntry(sourceCard, controllerId, description,
+                new ArrayList<>(effects), 0, null, sourcePermanentId, null, null, targetIds);
     }
 
     /** {@link #madeAbility(Card, UUID, String, List)} about the cards {@code targetCardIds}. */
     public static StackEntry madeAbility(Card sourceCard, UUID controllerId, String description,
                                          List<CardEffect> effects, List<UUID> targetCardIds) {
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
-                new ArrayList<>(effects), targetCardIds);
+        return newTriggeredEntry(sourceCard, controllerId, description,
+                new ArrayList<>(effects), 0, null, null, null, targetCardIds, null);
     }
 
     /**
@@ -509,6 +639,34 @@ public class TriggeredAbilityStackService {
         putMade(gameData, made, 1, true);
     }
 
+    /**
+     * The stack door for an inherent triggered ability of a rule, which has no source and is controlled by
+     * {@code controllerId} (an exception to CR 113.8): the monarch's (CR 726.2), the initiative's (CR 727.2), rad
+     * counters' (CR 729.1), speed's (CR 702.179d) and the planeswalking ability (CR 901.8). Its collector has judged its
+     * trigger event, its intervening "if" and its limit. It is no permanent's ability, so no "triggers an additional
+     * time" effect counts it, and none of these abilities targets: it goes on the stack as one object of
+     * {@code effects}, with {@code record} stamped on it.
+     */
+    public void putInherent(GameData gameData, UUID controllerId, String description, List<CardEffect> effects,
+                            TriggeredAbilityRequest.TriggerRecord record) {
+        StackEntry entry = newTriggeredEntry(null, controllerId, description, new ArrayList<>(effects), 0, null, null,
+                null, null, null);
+        record.stamp(entry);
+        // The player it acts on is the record's, named without targeting ("its controller becomes the monarch").
+        if (!entry.isNonTargeting() && effects.stream().anyMatch(effect -> effect.targetSpec().declaredTarget() != null)) {
+            throw new IllegalArgumentException("An inherent ability of a rule targets nothing: " + description);
+        }
+        int previousCopies = gameData.beginTriggeredAbilityCopies(1);
+        try {
+            gameData.routeTriggeredAbility(() -> {
+                handOff(gameData, entry);
+                enqueue(gameData, entry);
+            });
+        } finally {
+            gameData.restoreTriggeredAbilityCopies(previousCopies);
+        }
+    }
+
     private void putMade(GameData gameData, StackEntry made, int copies, boolean delayed) {
         if (made.getEntryType() != StackEntryType.TRIGGERED_ABILITY) {
             throw new IllegalArgumentException("Not a triggered ability: " + made.getDescription());
@@ -532,11 +690,12 @@ public class TriggeredAbilityStackService {
         try {
             gameData.routeTriggeredAbility(() -> {
                 if (givenTargets(made) || delayed && (made.getTargetId() != null || made.isNonTargeting())) {
-                    gameData.handOffTriggerRecord(made);
-                    gameData.enqueueTrigger(made);
+                    handOff(gameData, made);
+                    enqueue(gameData, made);
                     return;
                 }
-                routeEntry(gameData, made, made.getEffectsToResolve(), ConditionContext.forStackEntry(made), source);
+                routeEntry(gameData, made, made.getEffectsToResolve(), ConditionContext.forStackEntry(made), source,
+                        false);
             });
         } finally {
             gameData.restoreTriggeredAbilityCopies(previousCopies);
@@ -616,9 +775,19 @@ public class TriggeredAbilityStackService {
      * a choice needs of the event (the attacked player or permanent, the triggering permanent and player, the event's
      * value and X) it reads from the stamped entry.
      */
-    private void route(GameData gameData, TriggeredAbilityRequest request, List<CardEffect> effects) {
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, request.sourceCard(),
-                request.controllerId(), request.description(), effects, null, request.sourcePermanentId());
+    private void route(GameData gameData, TriggeredAbilityRequest request, List<CardEffect> effects,
+                       ChooseOneEffect.ChooseOneOption randomMode) {
+        StackEntry entry = abilityEntry(request, effects);
+        if (parksForChapterTargets(gameData, request.ability(), entry, effects, randomMode)) {
+            return;
+        }
+        routeEntry(gameData, entry, effects, request.ifContext(), request.sourcePermanent(), ownEntry(request));
+    }
+
+    /** {@code request}'s entry of {@code effects}, its record stamped. */
+    private static StackEntry abilityEntry(TriggeredAbilityRequest request, List<CardEffect> effects) {
+        StackEntry entry = newTriggeredEntry(request.sourceCard(), request.controllerId(), request.description(),
+                new ArrayList<>(effects), 0, null, request.sourcePermanentId(), null, null, null);
         entry.setOnceEachTurnActionKey(onceEachTurnActionKey(request.ability()));
         entry.setGrantingPermanentId(request.ability().grantingPermanentId());
         entry.setTriggeredBySourceAttacking(request.attack() == TriggeredAbilityRequest.AttackCause.SOURCE_ATTACKED);
@@ -626,20 +795,104 @@ public class TriggeredAbilityStackService {
             entry.setTargetFilter(request.ability().targetFilter());
         }
         request.record().stamp(entry);
-        routeEntry(gameData, entry, effects, request.ifContext(), request.sourcePermanent());
+        return entry;
+    }
+
+    /**
+     * Parks {@code entry}, a Saga chapter ability's, for the targets its chapter declares ({@link
+     * TriggeredAbility#chapterTargets()}: its groups, or the filters of its one target, whose "up to one" its controller
+     * may decline) or its effects choose, chosen as it goes on the stack (CR 603.3d); a mode chosen at random brings
+     * its own target ({@code randomMode}, Summon: Magus Sisters). A target that may be a player or a permanent, with no
+     * filter of the chapter's, takes the chapter's "any target" filter and the ordinary target choice; a mode
+     * announced as it triggers takes its own choice, and graveyard cards the chapter's graveyard choice. Returns whether it parked the entry; the choice's handler finishes it ({@link #finishParked}).
+     */
+    private boolean parksForChapterTargets(GameData gameData, TriggeredAbility ability, StackEntry entry,
+                                                  List<CardEffect> effects,
+                                                  ChooseOneEffect.ChooseOneOption randomMode) {
+        ChapterTrigger chapter = ability.conditions().stream().map(TriggerCondition::trigger)
+                .filter(ChapterTrigger.class::isInstance).map(ChapterTrigger.class::cast).findFirst().orElse(null);
+        if (chapter == null || effects.size() == 1 && effects.getFirst().modesChosenAsItTriggers() != null) {
+            return false;
+        }
+        Set<TargetFilter> filters = new LinkedHashSet<>(ability.chapterTargets().filters());
+        List<SagaChapterTargetGroup> groups = ability.chapterTargets().groups();
+        if (randomMode != null && randomMode.targetFilter() != null) {
+            filters.add(randomMode.targetFilter());
+            groups = List.of(new SagaChapterTargetGroup(randomMode.targetFilter(), randomMode.minTargets(),
+                    randomMode.maxTargets()));
+        }
+        boolean player = effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                || filters.stream().anyMatch(PlayerPredicateTargetFilter.class::isInstance);
+        boolean permanent = effects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) || !groups.isEmpty();
+        Card card = entry.getCard();
+        // A chapter whose permanent filter is its own targets what the filter allows; otherwise a target that may be a
+        // player or a permanent takes the ordinary "any target" choice.
+        boolean playerFilter = filters.stream().anyMatch(PlayerPredicateTargetFilter.class::isInstance);
+        if (groups.isEmpty() && player && permanent && (filters.isEmpty() || playerFilter)) {
+            entry.setTargetFilter(chapterAnyTargetFilter(effects));
+            return false;
+        }
+        // Graveyard cards it targets, declared, or described by an effect of graveyard-card targets
+        // ({@code TargetCardGroupEffect}: "return up to two target snow permanent cards from your graveyard", The Three
+        // Seasons); a target a "when you do" inside an effect chooses is that ability's.
+        boolean graveyard = effects.stream()
+                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
+                        || effect instanceof com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect
+                        && graveyardTargetingSupport.findTarget(List.of(effect)) != null);
+        if (!player && !permanent && !graveyard) {
+            return false;
+        }
+        handOff(gameData, entry);
+        entry.setParkedAtStackDoor(true);
+        if (!player && !permanent) {
+            gameData.queueInteraction(new PermanentChoiceContext.SagaChapterGraveyardTarget(card,
+                    entry.getControllerId(), effects, entry.getSourcePermanentId(), chapter.numeral(), entry));
+            return true;
+        }
+        if (groups.isEmpty() && !permanent) {
+            gameData.queueInteraction(new PermanentChoiceContext.SagaChapterPlayerTarget(card,
+                    entry.getControllerId(), effects, entry.getSourcePermanentId(), chapter.numeral(), filters,
+                    entry));
+        } else {
+            gameData.queueInteraction(new PermanentChoiceContext.SagaChapterTarget(card, entry.getControllerId(),
+                    effects, entry.getSourcePermanentId(), chapter.numeral(), filters, groups, List.of(), 0,
+                    List.of(), entry));
+        }
+        return true;
+    }
+
+    /**
+     * The "target opponent or planeswalker" filter of a chapter ability whose target may be a player or a permanent: the
+     * permanent its effect may target, and the players of its effect's relation.
+     */
+    private static TargetFilter chapterAnyTargetFilter(List<CardEffect> effects) {
+        PermanentPredicate permanentPredicate = effects.stream()
+                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
+                .findFirst()
+                .flatMap(effect -> effect.targetSpec().targetPredicate().permanentRestriction())
+                .orElse(new PermanentTruePredicate());
+        PlayerRelation relation = effects.stream()
+                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
+                .map(CardEffect::targetPlayerRelation)
+                .findFirst()
+                .orElse(PlayerRelation.ANY);
+        return new AnyTargetPredicateTargetFilter(permanentPredicate, new PlayerRelationPredicate(relation),
+                "target opponent or planeswalker");
     }
 
     /**
      * Routes {@code entry}, an ability's stamped entry of {@code effects}: parks it for the mode or targets chosen as it
      * goes on the stack, or queues it. {@code ifContext} judges a "choose both instead" condition; {@code
-     * sourcePermanent} is the ability's source, or {@code null}.
+     * sourcePermanent} is the ability's source, or {@code null}; {@code entering} tells an entering permanent's own
+     * ability.
      */
     private void routeEntry(GameData gameData, StackEntry entry, List<CardEffect> effects, ConditionContext ifContext,
-                            Permanent sourcePermanent) {
+                            Permanent sourcePermanent, boolean entering) {
         Card card = entry.getCard();
         UUID controllerId = entry.getControllerId();
         aimAtTriggeringSpell(gameData, entry, effects);
-        gameData.handOffTriggerRecord(entry);
+        handOff(gameData, entry);
         ChooseOneEffect modes = null;
         for (CardEffect effect : effects) {
             if (effect.modesChosenAsItTriggers() != null) {
@@ -674,6 +927,9 @@ public class TriggeredAbilityStackService {
             if (modes.choicesMaxCondition() != null && !conditionEvaluationService.isMet(gameData,
                     modes.choicesMaxCondition(), ifContext)) {
                 modeChoice = modeChoice.withModeCount(modes.choicesRequired(), modes.choicesRequired());
+            } else if (modes.choicesMaxCondition() != null && modes.allModesWhenConditionMet()) {
+                // "If [condition], choose all of them instead" (CR 700.2b): every mode, judged as it triggers.
+                modeChoice = modeChoice.withModeCount(modes.choicesMax(), modes.choicesMax());
             }
             // "Choose up to X" (Riku of Many Paths): X is read as the ability goes on the stack, from its record; with
             // no mode to choose, the ability is removed (CR 700.2b).
@@ -691,14 +947,47 @@ public class TriggeredAbilityStackService {
             gameData.queueInteraction(modeChoice);
         } else if (choosing.stream().anyMatch(AttackCounterMoveEffect.class::isInstance)) {
             // Two targets chosen one after the other, the second "up to one" among the defending player's creatures
-            // (Decimator Beetle): the record stays with the choice, whose handler builds the entry.
+            // (Decimator Beetle).
+            entry.setParkedAtStackDoor(true);
             gameData.queueInteraction(new PermanentChoiceContext.AttackCounterMoveFirstTarget(
-                    card, controllerId, effects, entry.getSourcePermanentId(), entry.getDefendingPlayerId()));
+                    card, controllerId, effects, entry.getSourcePermanentId(), entry.getDefendingPlayerId(), entry));
         } else if (choosing.stream().anyMatch(CardEffect::targetChosenByAnOpponent)) {
-            // "Any target of an opponent's choice" (Karplusan Minotaur): its controller chooses one of their opponents,
-            // who chooses the target; the record stays in hand for the entry the choice's handler builds.
-            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    card, controllerId, effects, entry.getSourcePermanentId(), null).chosenByAnOpponent());
+            // "Any target of an opponent's choice" (Karplusan Minotaur): the target choice has no chooser yet; its
+            // controller chooses which of their opponents makes it as it is taken from the queue.
+            entry.setParkedAtStackDoor(true);
+            gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(card, controllerId, effects,
+                    entry.getSourcePermanentId(), null, entry.getAttackedTargetId(), entry.getTriggeringPermanentId(),
+                    entry.getXValue(), entry.getEventValue(), entry.getTriggeringPlayerId(),
+                    entry.getSourceGraveyardEntryVersion()).withTriggerRecord(entry));
+        } else if (choosing.stream().anyMatch(CardEffect::choosesSecondTargetAgainstFirst)) {
+            // Two targets chosen one after the other, the second judged against the first ("target creature you
+            // control and target creature an opponent controls with power less than or equal to that creature's
+            // power", Spawnbroker).
+            entry.setParkedAtStackDoor(true);
+            gameData.queueInteraction(new PermanentChoiceContext.PucasMischiefOwnTarget(
+                    card, controllerId, effects, entry.getSourcePermanentId(), entry));
+        } else if (targetPlayersGraveyardChoice(choosing) != null) {
+            // A target player, then target cards in that player's graveyard ("target player shuffles any number of
+            // target cards from their graveyard into their library", Loaming Shaman), chosen one after the other once
+            // no other choice is being made.
+            entry.setParkedAtStackDoor(true);
+            GraveyardCardChoosingEffect choice = targetPlayersGraveyardChoice(choosing);
+            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(card, controllerId,
+                    effects, null, 0, entry.getXValue(), 0, null, false, null, entry.getSourcePermanentId())
+                    .withTriggerRecord(entry)
+                    .deferring(game -> graveyardTargetingService.beginTargetPlayerGraveyardChoice(game, entry,
+                            choice)));
+        } else if (battlefieldAndGraveyardChoice(choosing) != null) {
+            // Permanents and graveyard cards chosen in one selection across both zones ("up to three other target
+            // creatures from the battlefield and/or creature cards from graveyards", Angel of Serenity; Savior of
+            // Ollenbock's "whenever this creature trains"), which begins once no other choice is being made.
+            entry.setParkedAtStackDoor(true);
+            BattlefieldAndGraveyardCardChoosingEffect choice = battlefieldAndGraveyardChoice(choosing);
+            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(card, controllerId,
+                    effects, null, 0, entry.getXValue(), 0, null, false, null, entry.getSourcePermanentId())
+                    .withTriggerRecord(entry)
+                    .deferring(game -> graveyardTargetingService.beginBattlefieldAndGraveyardChoice(game, entry,
+                            choice)));
         } else if (randomGraveyardTarget != null) {
             putWithRandomGraveyardTarget(gameData, entry, randomGraveyardTarget);
         } else if (choosing.stream().anyMatch(CardEffect::targetChosenAtRandom)) {
@@ -714,20 +1003,24 @@ public class TriggeredAbilityStackService {
             int firstGroup = targetGroupsOf(card, entry, choosing).getFirst().getIndex();
             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                     card, controllerId, effects, entry.getSourcePermanentId(), List.of(), firstGroup, 0,
-                    java.util.Collections.nCopies(firstGroup, 0), entry.getXValue())
+                    java.util.Collections.nCopies(firstGroup, 0), entry.getXValue(),
+                    List.copyOf(entry.getRepeatedAdditionalCosts()))
                     .withEventValue(entry.getEventValue()).withTriggerRecord(entry));
         } else if (choosing.stream().anyMatch(effect -> choosesGraveyardCard(effect)
                 // An ability a resolution made chooses the graveyard cards its effect describes as it goes on the
-                // stack ("when you do, return up to that many target … cards from your graveyard", Loamcrafter Faun).
-                || choosesDescribedGraveyardCard(effect, departure || entry.isMadeByResolution()))
+                // stack ("when you do, return up to that many target … cards from your graveyard", Loamcrafter Faun),
+                // and so does an entering permanent's own ability ("return up to two target land cards from your
+                // graveyard to your hand", Tilling Treefolk).
+                || choosesDescribedGraveyardCard(effect, departure || entry.isMadeByResolution() || entering))
                 && choosing.stream().noneMatch(TriggeredAbilityStackService::choosesBattlefieldOrPlayer)) {
             entry.setParkedAtStackDoor(true);
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
                     card, controllerId, effects, graveyardOwner(gameData, entry, choosing), 0, entry.getXValue(),
-                    graveyardChoiceMaxTargets(entry, choosing), entry.getTriggeringPermanentPowerAtTrigger(),
+                    graveyardChoiceMaxTargets(gameData, entry, choosing, sourcePermanent),
+                    entry.getTriggeringPermanentPowerAtTrigger(),
                     entry.isAlternateCost(), entry.getTriggeringPermanentId(), entry.getSourcePermanentId(),
                     entry.getOnceEachTurnActionKey(), entry.getAttackingPermanentSnapshots(),
-                    graveyardTargetMaxManaValue(gameData, entry, choosing), null)
+                    graveyardTargetMaxManaValue(gameData, entry, choosing, sourcePermanent, entering), null)
                     .withTriggeringSpell(entry.getTriggeringSpellSnapshot())
                     .withTriggerRecord(entry));
         } else if (choosesTarget(gameData, card, entry, choosing)) {
@@ -745,9 +1038,11 @@ public class TriggeredAbilityStackService {
                     && !mixedGraveyardTarget) {
                 // The groups are walked from the ability's first; earlier groups are another ability's.
                 int firstGroup = groups.isEmpty() ? 0 : groups.getFirst().getIndex();
+                // A group sized by the costs paid ("for each time it was kicked") reads them from the record.
                 gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                         card, controllerId, effects, entry.getSourcePermanentId(), List.of(), firstGroup, 0,
-                        java.util.Collections.nCopies(firstGroup, 0), entry.getXValue())
+                        java.util.Collections.nCopies(firstGroup, 0), entry.getXValue(),
+                        List.copyOf(entry.getRepeatedAdditionalCosts()))
                         .withEventValue(entry.getEventValue()).withTriggerRecord(entry));
             } else {
                 gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(card, controllerId, effects,
@@ -757,7 +1052,7 @@ public class TriggeredAbilityStackService {
                         .withTriggerRecord(entry));
             }
         } else {
-            gameData.enqueueTrigger(entry);
+            enqueue(gameData, entry);
             notifyAttackingSourceTriggered(gameData, entry);
         }
     }
@@ -809,14 +1104,42 @@ public class TriggeredAbilityStackService {
                 || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER);
     }
 
+    /** The choice across the battlefield and graveyards one of {@code effects} makes ({@link CardEffect#battlefieldAndGraveyardChoice}), or {@code null}. */
+    private static BattlefieldAndGraveyardCardChoosingEffect battlefieldAndGraveyardChoice(List<CardEffect> effects) {
+        for (CardEffect effect : effects) {
+            BattlefieldAndGraveyardCardChoosingEffect choice = effect.battlefieldAndGraveyardChoice();
+            if (choice != null) {
+                return choice;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The graveyard cards one of {@code effects} chooses in the graveyard of the player it targets
+     * ({@link CardEffect#graveyardCardChoice} of an effect whose target is a player), or {@code null}.
+     */
+    private static GraveyardCardChoosingEffect targetPlayersGraveyardChoice(List<CardEffect> effects) {
+        for (CardEffect effect : effects) {
+            TargetSpec spec = effect.targetSpec();
+            if (effect.graveyardCardChoice() != null && spec.admits(TargetPredicate.Kind.PLAYER)
+                    && !spec.admits(TargetPredicate.Kind.PERMANENT)
+                    && !spec.admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
+                return effect.graveyardCardChoice();
+            }
+        }
+        return null;
+    }
+
     /** Whether {@code effect} chooses a graveyard card as its ability goes on the stack (CR 603.3d). */
     private static boolean choosesGraveyardCard(CardEffect effect) {
         return effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD) || effect.graveyardCardChoice() != null;
     }
 
     /**
-     * Whether {@code effect}, an effect of an ability a permanent leaving the battlefield triggered ({@code departure}:
-     * its source's own, or another's), returns target graveyard cards it describes itself and chooses them as the
+     * Whether {@code effect}, an effect of an ability a permanent leaving the battlefield triggered, an ability a
+     * resolution made or an entering permanent's own ability ({@code departure}), returns target graveyard cards it
+     * describes itself and chooses them as the
      * ability goes on the stack (CR 603.3d): "return any number of target Spirit cards from your graveyard" (Iname, Life
      * Aspect), "return target creature card from your graveyard" when the haunted creature dies (Exhumer Thrull).
      */
@@ -851,15 +1174,23 @@ public class TriggeredAbilityStackService {
 
     /**
      * The most cards a graveyard choice of {@code effects} takes when it isn't a declared target (Rysorian Badger's "up
-     * to two", Froghemoth's "up to that many", read with the entry's event value), or 0 for the count the effects
-     * declare.
+     * to two", Froghemoth's "up to that many", read with the entry's event value), or a described target's count read
+     * as the ability goes on the stack, or 0 for the count the effects declare.
      */
-    private static int graveyardChoiceMaxTargets(StackEntry entry, List<CardEffect> effects) {
+    private int graveyardChoiceMaxTargets(GameData gameData, StackEntry entry, List<CardEffect> effects,
+                                          Permanent sourcePermanent) {
         for (CardEffect effect : effects) {
             GraveyardCardChoosingEffect choice = effect.graveyardCardChoice();
             if (choice != null && !effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
                 return choice.graveyardChoiceMaxTargets(entry.getEventValue());
             }
+        }
+        // "Up to X target cards" an effect describes (Rot Hulk; Marshal's Anthem's "for each time it was kicked"):
+        // X is read as the ability goes on the stack, from its record.
+        GraveyardTargetingSupport.Target described = graveyardTargetingSupport.findTarget(effects);
+        if (described != null && described.maximumTargetCount() != null) {
+            return Math.max(0, amountEvaluationService.evaluate(gameData, described.maximumTargetCount(),
+                    AmountContext.forStackEntry(entry, sourcePermanent)));
         }
         return 0;
     }
@@ -897,7 +1228,7 @@ public class TriggeredAbilityStackService {
         entry.setTargetId(chosen.getId());
         entry.setTargetZone(Zone.GRAVEYARD);
         entry.setNonTargeting(true);
-        gameData.enqueueTrigger(entry);
+        enqueue(gameData, entry);
         gameLogService.append(gameData, GameLog.cardThen(card,
                 "'s ability targets " + chosen.getName() + " at random."));
     }
@@ -927,7 +1258,7 @@ public class TriggeredAbilityStackService {
         if (targetFilter != null) {
             entry.setTargetFilter(targetFilter);
         }
-        gameData.enqueueTrigger(entry);
+        enqueue(gameData, entry);
         String targetName = gameData.playerIdToName.containsKey(chosen) ? gameData.playerIdToName.get(chosen)
                 : java.util.Optional.ofNullable(gameQueryService.findPermanentById(gameData, chosen))
                         .map(permanent -> permanent.getCard().getName()).orElse("a permanent");
@@ -1018,8 +1349,8 @@ public class TriggeredAbilityStackService {
      * Whether the targets of {@code groups}, an ability's target groups, are chosen group by group: two or
      * more groups, a group with a dynamic count, one "up to one target" group that may target a player, which may be
      * left empty (choosing its controller among players is a target, not a refusal; an "up to one" permanent target is
-     * one choice that choosing oneself declines), or an Aura's group after what it enchants, which its effects
-     * read by position (Super-Soldier Serum's Equipment). Otherwise the targets of one group of more than
+     * one choice that choosing oneself declines), a group whose count or filter a kicker changes, or an Aura's group
+     * after what it enchants, which its effects read by position (Super-Soldier Serum's Equipment). Otherwise the targets of one group of more than
      * one target are announced together in one choice (CR 601.2c), which enforces the card's constraint between them.
      */
     private static boolean choosesTargetsGroupByGroup(Card card, List<TargetGroup> groups, List<CardEffect> effects) {
@@ -1028,8 +1359,20 @@ public class TriggeredAbilityStackService {
                 || group.getFilter() instanceof AnyTargetPredicateTargetFilter);
         return groups.size() > 1 || groups.stream().anyMatch(group -> group.getDynamicMinTargets() != null
                 || group.getDynamicMaxTargets() != null
-                || group.getMinTargets() == 0 && group.getMaxTargets() == 1 && mayTargetPlayer)
+                || group.getMinTargets() == 0 && group.getMaxTargets() == 1 && mayTargetPlayer
+                || kickedGroup(group))
                 || card.isAura() && !groups.isEmpty() && groups.getFirst().getIndex() > 0;
+    }
+
+    /**
+     * Whether {@code group} takes other targets when its spell was kicked ("when this enters, if it was kicked, tap up
+     * to two target creatures", Kitesail Cleric): its count and filter are read from the source as it entered, group by
+     * group.
+     */
+    private static boolean kickedGroup(TargetGroup group) {
+        return group.getKickedMinTargets() != group.getMinTargets()
+                || group.getKickedMaxTargets() != group.getMaxTargets()
+                || !java.util.Objects.equals(group.getKickedFilter(), group.getFilter());
     }
 
     /**
@@ -1144,7 +1487,7 @@ public class TriggeredAbilityStackService {
         StackEntry entry = record.copyForNewStackObject();
         entry.setParkedAtStackDoor(false);
         choice.accept(entry);
-        gameData.enqueueTrigger(entry);
+        enqueue(gameData, entry);
         if (entry.hasAnyTarget() &&!gameData.stack.isEmpty() && gameData.stack.getLast() == entry) {
             triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
             triggerCollectionService.checkCrimeTriggers(gameData, entry);
@@ -1153,23 +1496,25 @@ public class TriggeredAbilityStackService {
         return entry;
     }
 
+    /**
+     * {@link #finishParked(GameData, StackEntry, Consumer)} for a choice made on {@code card}, the runtime copy of the
+     * record's card that declares the targets of the modes chosen as the ability went on the stack (CR 603.3c): the
+     * ability goes on the stack with that copy as its card, so each chosen mode's effects keep their own target group.
+     */
+    public StackEntry finishParked(GameData gameData, StackEntry record, Card card, Consumer<StackEntry> choice) {
+        if (card == null || card == record.getCard()) {
+            return finishParked(gameData, record, choice);
+        }
+        if (!record.isParkedAtStackDoor()) {
+            throw new IllegalStateException("Not parked at the stack door: " + record.getDescription());
+        }
+        return finishParked(gameData, parkedOn(record, card), choice);
+    }
+
     /** Whether {@code record}, the record a choice was made with, belongs to an ability this door parked. */
     public static boolean parkedAtDoor(StackEntry record) {
         return record != null && record.isParkedAtStackDoor();
     }
-
-    /**
-     * Whether the ability's intervening "if" (CR 603.4) and event condition (CR 603.2) let it trigger. Only the
-     * intervening "if" is checked again as the ability resolves; the event condition is part of the trigger event.
-     */
-    private boolean conditionsMet(GameData gameData, TriggerOptions options, ConditionContext context) {
-        return (options.interveningIf() == null
-                || conditionEvaluationService.isMet(gameData, options.interveningIf(), context))
-                && (options.eventCondition() == null
-                || conditionEvaluationService.isMet(gameData, options.eventCondition(), context));
-    }
-
-
 
     /**
      * The controller of {@code candidate}'s ability: its source's controller, but for the ability Dance of Many gives
@@ -1177,6 +1522,7 @@ public class TriggeredAbilityStackService {
      * controlled by the enchantment's controller while it is on the battlefield. The engine makes that ability, so it
      * rides on the token (effect-slot-refactor.md step 16).
      */
+
     private UUID abilityControllerId(GameData gameData, TriggerCandidate candidate) {
         List<EffectRegistration> effects = candidate.ability().effects();
         if (effects.size() == 1 && effects.getFirst().effect() instanceof RemoveLinkedPermanentEffect remove
@@ -1207,10 +1553,20 @@ public class TriggeredAbilityStackService {
      * object's). {@code null} otherwise, and when the effects have no such limit; the choice then reads the record.
      */
     /**
-     * The mana value limit of {@code entry}'s graveyard target: a departed source's as it last existed, else the one
-     * the maker of an ability a resolution made fixed on its record ("less than or equal to this creature's power").
+     * The mana value limit of {@code entry}'s graveyard target: an entering permanent's own ability's, read with its
+     * record and source as it entered, a departed source's as it last existed, else the one the maker of an ability a
+     * resolution made fixed on its record ("less than or equal to this creature's power").
      */
-    private Integer graveyardTargetMaxManaValue(GameData gameData, StackEntry entry, List<CardEffect> effects) {
+    private Integer graveyardTargetMaxManaValue(GameData gameData, StackEntry entry, List<CardEffect> effects,
+                                                Permanent sourcePermanent, boolean entering) {
+        if (entering) {
+            // An entering permanent's own ability reads it as it entered ("with mana value X or less, where X is the
+            // amount of mana spent to cast this", Astelli Reclaimer).
+            var target = graveyardTargetingSupport.findTarget(effects);
+            return target == null || target.maximumManaValue() == null ? null
+                    : amountEvaluationService.evaluate(gameData, target.maximumManaValue(),
+                    AmountContext.forStackEntry(entry, sourcePermanent));
+        }
         Integer departed = departedGraveyardTargetMaxManaValue(gameData, entry, effects);
         return departed != null || !entry.isMadeByResolution() ? departed : entry.getGraveyardTargetMaxManaValue();
     }
@@ -1245,11 +1601,6 @@ public class TriggeredAbilityStackService {
                 : moved.getLastKnownPower() != null ? moved.getLastKnownPower() : moved.getEffectivePower();
         return context.withTriggeringPermanentId(moved.getId())
                 .withTriggeringPermanentPowerAtTrigger(Math.max(0, power));
-    }
-
-    /** The key the source's limits are kept under for this ability: equal abilities of one source share it. */
-    private static String limitKey(TriggerCandidate candidate) {
-        return candidate.ability().limitKey();
     }
 
     /**
@@ -1365,25 +1716,5 @@ public class TriggeredAbilityStackService {
             return;
         }
         markLimit(gameData, limit, sourceId, key);
-    }
-
-    /**
-     * {@code effect} with the ability's intervening "if" {@code interveningIf} ({@code null} for none) around it, so it
-     * is checked again as the ability resolves (CR 603.4). On an ability triggered by an object entering the
-     * battlefield ({@code entering}) it goes inside a "you may" that targets nothing, whose collectors bind the choice to
-     * the entering object; the "you may" isn't asked once the "if" is false ({@code EffectResolutionService}). A fact
-     * fixed as the object entered ({@link EntryFactCondition}: "if you cast it", "if it was kicked") isn't wrapped: it
-     * was judged as the ability triggered, the answer is the same as it resolves, and the stack entry can't always read
-     * how the object was cast.
-     */
-    static CardEffect withInterveningIf(Condition interveningIf, CardEffect effect, boolean entering) {
-        if (interveningIf == null || entering && EntryFactCondition.isEntryFact(interveningIf)) {
-            return effect;
-        }
-        if (entering && effect instanceof MayEffect may && TargetSpec.NONE.equals(may.targetSpec())) {
-            return new MayEffect(new ConditionalEffect(interveningIf, may.wrapped()), may.prompt(), may.elseEffect(),
-                    may.choicePlayer(), may.choicePlayerId());
-        }
-        return new ConditionalEffect(interveningIf, effect);
     }
 }

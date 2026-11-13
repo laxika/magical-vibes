@@ -241,7 +241,7 @@ class PrototypePortalTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.castCreature(player2, 0);
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player2, List.of(shield.getId()));
+        harness.handlePermanentChosen(player2, shield.getId());
 
         harness.passBothPriorities();
         assertThat(gd.findExiledCard(shield.getId())).isNull();

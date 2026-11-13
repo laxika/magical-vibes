@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -46,9 +47,7 @@ class RotLikeTheScumYouAreTest extends BaseCardTest {
 
     private void resolveScheme() {
         RotLikeTheScumYouAre scheme = new RotLikeTheScumYouAre();
-        gd.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                scheme,
+        gd.stack.add(TestStackDoor.triggered(scheme,
                 player1.getId(),
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects()));

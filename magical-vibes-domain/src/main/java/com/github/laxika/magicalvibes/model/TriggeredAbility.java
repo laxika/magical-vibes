@@ -398,10 +398,13 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
      * The key this ability's limit is marked under on its source ("triggers only once each turn", "this ability
      * triggers only once", "do this only once each turn" as the action is taken, CR 603.2h) and that its "one or more"
      * marks are derived from, so a limit covers every trigger condition of the ability and no other ability of the
-     * source. Equal abilities of one source share it, but for their {@link #instance()}.
+     * source. Equal abilities of one source share it, but for their {@link #instance()}. A record's hash can't tell a
+     * one-component record from its component ({@code CardNotPredicate(p)} hashes as {@code p}), so two abilities
+     * differing only in such a wrapper (Oasis of Renewal's "seek a land card" and "seek a nonland card") would share
+     * the hash; the key adds the hash of the ability's description, which names each component's type.
      */
     public String limitKey() {
-        return "trigger:" + Integer.toHexString(hashCode());
+        return "trigger:" + Integer.toHexString(hashCode()) + ":" + Integer.toHexString(toString().hashCode());
     }
 
     /**

@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 
@@ -8,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandOnCoinFlipLossEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -96,18 +97,18 @@ class ReturnSelfToHandOnCoinFlipLossEffectHandlerTest {
         }
 
         private StackEntry entryWithSource(Card card, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
-            return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+            return TestStackDoor.triggered(card, controllerId,
                     card.getName() + " trigger", effects, (UUID) null, sourcePermanentId);
         }
 
         private StackEntry entryWithTarget(Card card, UUID controllerId, List<CardEffect> effects, UUID targetId) {
-            return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+            return TestStackDoor.triggered(card, controllerId,
                     card.getName(), effects, 0, targetId, null);
         }
 
         private StackEntry entryWithTargetAndSource(Card card, UUID controllerId, List<CardEffect> effects,
                                                     UUID targetId, UUID sourcePermanentId) {
-            return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+            return TestStackDoor.triggered(card, controllerId,
                     card.getName() + " trigger", effects, targetId, sourcePermanentId);
         }
 

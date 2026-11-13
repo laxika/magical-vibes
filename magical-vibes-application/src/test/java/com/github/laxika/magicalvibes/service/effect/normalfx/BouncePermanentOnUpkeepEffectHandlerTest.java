@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,7 +10,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BouncePermanentOnUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -85,13 +86,13 @@ class BouncePermanentOnUpkeepEffectHandlerTest {
     }
 
     private StackEntry entryWithSource(Card card, UUID controllerId, List<CardEffect> effects, UUID sourcePermanentId) {
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+        return TestStackDoor.triggered(card, controllerId,
                 card.getName() + " trigger", effects, (UUID) null, sourcePermanentId);
     }
 
     private StackEntry entryWithTargetAndSource(Card card, UUID controllerId, List<CardEffect> effects,
                                                 UUID targetId, UUID sourcePermanentId) {
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+        return TestStackDoor.triggered(card, controllerId,
                 card.getName() + " trigger", effects, targetId, sourcePermanentId);
     }
 

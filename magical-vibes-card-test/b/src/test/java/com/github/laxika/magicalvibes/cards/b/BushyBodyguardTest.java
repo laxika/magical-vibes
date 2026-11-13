@@ -24,6 +24,7 @@ class BushyBodyguardTest extends BaseCardTest {
         harness.castKickedCreature(player1, 0);
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
 
         assertThat(gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()))

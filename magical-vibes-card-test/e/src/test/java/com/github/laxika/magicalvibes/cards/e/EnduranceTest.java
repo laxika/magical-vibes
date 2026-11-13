@@ -4,16 +4,9 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
-import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -193,57 +186,6 @@ class EnduranceTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(existingTop, graveyardCard);
-    }
-
-    @Test
-    @DisplayName("Its single-target trigger prompt can be declined even though Endurance's controller is a legal target")
-    void singleTargetTriggerPromptCanBeDeclined() {
-        Card ownGraveyardCard = new GrizzlyBears();
-        Card opponentGraveyardCard = new Forest();
-        harness.setGraveyard(player1, List.of(ownGraveyardCard));
-        harness.setGraveyard(player2, List.of(opponentGraveyardCard));
-        openSingleTargetTriggerPrompt();
-
-        harness.handleMultiplePermanentsChosen(player1, List.of());
-        assertThat(gd.stack).singleElement()
-                .satisfies(entry -> assertThat(entry.getTargetId()).isNull());
-        harness.passBothPriorities();
-
-        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ownGraveyardCard);
-        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(opponentGraveyardCard);
-    }
-
-    @Test
-    @DisplayName("Its single-target trigger prompt can target Endurance's controller")
-    void singleTargetTriggerPromptCanTargetTheController() {
-        Card ownGraveyardCard = new GrizzlyBears();
-        harness.setGraveyard(player1, List.of(ownGraveyardCard));
-        harness.setLibrary(player1, List.of());
-        openSingleTargetTriggerPrompt();
-
-        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId()));
-        harness.passBothPriorities();
-
-        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(ownGraveyardCard);
-    }
-
-    /**
-     * Opens the single-target "up to one target player" prompt that a trigger outside the ETB
-     * walker (Equipment-attach, enters-from-graveyard) uses for Endurance's ability.
-     */
-    private void openSingleTargetTriggerPrompt() {
-        Permanent endurance = harness.addToBattlefieldAndReturn(player1, new Endurance());
-        Card card = endurance.getCard();
-        gd.queueInteraction(new PermanentChoiceContext.ETBTokenTargetTrigger(card, player1.getId(),
-                card.getTriggerEffects(Triggers.enters(ObjectRelation.THIS)), endurance.getId(), card.getTargetFilter()));
-        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(ETBTokenTargetService.class)
-                .processNextETBTokenTargetTrigger(gd));
-
-        var prompt = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(prompt.context()).isInstanceOf(MultiPermanentChoiceContext.EtbOptionalTarget.class);
-        assertThat(prompt.validPlayerIds()).contains(player1.getId(), player2.getId());
-        assertThat(prompt.maxCount()).isEqualTo(1);
     }
 
     private void giveHardcastMana() {

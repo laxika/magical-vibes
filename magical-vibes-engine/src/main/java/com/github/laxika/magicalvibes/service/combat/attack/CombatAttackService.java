@@ -29,7 +29,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.TargetGroup;
@@ -118,6 +117,7 @@ import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import java.util.*;
@@ -147,6 +147,43 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class CombatAttackService {
+
+    /** Decayed's triggered ability: "When this creature attacks, sacrifice it at end of combat" (CR 702.147a). */
+    private static final TriggeredAbility DECAYED_ABILITY = new TriggeredAbility(Triggers.attacks(),
+            new SacrificeAtEndOfCombatEffect());
+
+    /** Battle cry: "Whenever this creature attacks, each other attacking creature gets +1/+0" (CR 702.91a). */
+    private static final TriggeredAbility BATTLE_CRY_ABILITY = new TriggeredAbility(Triggers.attacks(),
+            new BoostAllOwnCreaturesEffect(1, 0, new PermanentAllOfPredicate(List.of(
+                    new PermanentIsAttackingPredicate(),
+                    new PermanentNotPredicate(new PermanentIsSourceCardPredicate())))));
+
+    /**
+     * Dethrone: "Whenever this creature attacks the player with the most life or tied for most life, put a +1/+1
+     * counter on this creature" (CR 702.105a); its collector judges the attacked player.
+     */
+    private static final TriggeredAbility DETHRONE_ABILITY = new TriggeredAbility(Triggers.attacks(),
+            new PutCountersOnSourceEffect(1, 1, 1));
+
+    /**
+     * Training: "Whenever this creature and at least one other creature with power greater than this creature's power
+     * attack, put a +1/+1 counter on this creature" (CR 702.149a); its collector judges the other attacker.
+     */
+    private static final TriggeredAbility TRAINING_ABILITY = new TriggeredAbility(Triggers.attacks(), new TrainEffect());
+
+    /**
+     * Enlist's triggered ability: "When you do, this creature gets +X/+0 until end of turn, where X is the tapped
+     * creature's power" (CR 702.154a).
+     */
+    private static final TriggeredAbility ENLIST_ABILITY = new TriggeredAbility(Triggers.enlists(),
+            new BoostSelfEffect(new ChosenPermanentPower(), new Fixed(0)));
+
+    /**
+     * An exalted a static ability grants: "Whenever a creature you control attacks alone, that creature gets +1/+1
+     * until end of turn" (CR 702.83a); its collector judges that the creature attacks alone.
+     */
+    private static final TriggeredAbility GRANTED_EXALTED_ABILITY = new TriggeredAbility(
+            Triggers.creatureYouControlAttacks(), new BoostTargetCreatureEffect(1, 1));
 
     private final GameQueryService gameQueryService;
     private final AttackLegalityService attackLegalityService;
@@ -1047,27 +1084,15 @@ public class CombatAttackService {
         // Check for "when this creature attacks" triggers
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
-            int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
-            try {
-            // Decayed's "sacrifice it at end of combat" is its own triggered ability (CR 702.147a),
-            // so it goes on the stack as a separate object from any printed attack ability.
+            // Decayed's "when this creature attacks, sacrifice it at end of combat" is its own triggered ability
+            // (CR 702.147a), so it goes on the stack as a separate object from any printed attack ability.
             boolean decayedTrigger = gameQueryService.hasKeyword(gameData, attacker, Keyword.DECAYED);
             collectSelfAttackAbilities(gameData, playerId, attacker, attackerIndices, declaredAttackerSnapshots);
             if (decayedTrigger) {
-                StackEntry decayedSacrifice = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        attacker.getCard(),
-                        playerId,
-                        attacker.getCard().getName() + "'s decayed trigger",
-                        List.of(new SacrificeAtEndOfCombatEffect()),
-                        attackerIndices.size(),
-                        attacker.getId()
-                );
-                decayedSacrifice.setSourcePermanentSnapshot(new Permanent(attacker));
-                gameData.stack.add(decayedSacrifice);
-            }
-            } finally {
-                gameData.restoreTriggeredAbilityCopies(previousCopies);
+                putKeywordAttackAbility(gameData, playerId, attacker, DECAYED_ABILITY, "'s decayed trigger", entry -> {
+                    entry.setXValue(attackerIndices.size());
+                    entry.setSourcePermanentSnapshot(new Permanent(attacker));
+                });
             }
 
             // Check for aura-based "when enchanted creature attacks" triggers
@@ -1102,88 +1127,46 @@ public class CombatAttackService {
             }
         }
 
-        // Engine-level melee triggers: each attacking creature with melee gets +1/+1 until end
-        // of turn for each distinct opponent attacked by this combat.
+        // Melee (CR 702.121a): each attacking creature with melee gets +1/+1 until end of turn for each distinct
+        // opponent attacked by this combat.
         Set<UUID> opponentsAttackedThisCombat = new HashSet<>();
         for (int idx : attackerIndices) {
             UUID attackTarget = resolvedTargets.get(idx);
-            if (attackTarget == null) {
-                continue;
-            }
-            if (gameData.playerIds.contains(attackTarget)) {
+            if (attackTarget != null && gameData.playerIds.contains(attackTarget)) {
                 opponentsAttackedThisCombat.add(attackTarget);
-                continue;
             }
         }
-        {
-            int meleeBoost = opponentsAttackedThisCombat.size();
-            for (int idx : attackerIndices) {
-                Permanent attacker = battlefield.get(idx);
-                if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.MELEE)) {
-                    continue;
-                }
-                int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
-                try {
-                    for (int instance = 0; instance < gameQueryService.meleeInstances(gameData, attacker); instance++) {
-                    StackEntry meleeTrigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            attacker.getCard(),
-                            playerId,
-                            attacker.getCard().getName() + "'s melee",
-                            List.of(new BoostSelfEffect(meleeBoost, meleeBoost)),
-                            null,
-                            attacker.getId()
-                    );
-                    gameData.stack.add(meleeTrigger);
-                    triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
-                            gameData, attacker, meleeTrigger);
-                    gameLogService.append(gameData,
-                            GameLog.builder().card(attacker.getCard()).text("'s melee triggers.").build());
-                    log.info("Game {} - {} melee trigger pushed onto stack", gameData.id,
-                            attacker.getCard().getName());
-                    }
-                } finally {
-                    gameData.restoreTriggeredAbilityCopies(previousCopies);
-                }
-            }
-        }
-
-        // Engine-level battle cry triggers (keyword-driven, no manual card wiring needed)
+        int meleeBoost = opponentsAttackedThisCombat.size();
+        TriggeredAbility meleeAbility = new TriggeredAbility(Triggers.attacks(),
+                new BoostSelfEffect(meleeBoost, meleeBoost));
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
-            int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
-            try {
-            int battleCryInstances = gameQueryService.triggerKeywordInstances(gameData, attacker, Keyword.BATTLE_CRY);
-            for (int instance = 0; instance < battleCryInstances; instance++) {
-                List<CardEffect> battleCryEffects = List.of(new BoostAllOwnCreaturesEffect(1, 0,
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsAttackingPredicate(),
-                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-                        ))
-                ));
-                StackEntry battleCryTrigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        attacker.getCard(),
-                        playerId,
-                        attacker.getCard().getName() + "'s battle cry",
-                        battleCryEffects,
-                        null,
-                        attacker.getId()
-                );
-                gameData.stack.add(battleCryTrigger);
-                triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
-                        gameData, attacker, battleCryTrigger);
-                gameLogService.append(gameData,
-                        GameLog.builder().card(attacker.getCard()).text("'s battle cry triggers.").build());
-                log.info("Game {} - {} battle cry trigger pushed onto stack", gameData.id, attacker.getCard().getName());
+            if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.MELEE)) {
+                continue;
             }
-            } finally {
-                gameData.restoreTriggeredAbilityCopies(previousCopies);
+            for (int instance = 0; instance < gameQueryService.meleeInstances(gameData, attacker); instance++) {
+                if (putKeywordAttackAbility(gameData, playerId, attacker, meleeAbility, "'s melee", entry -> { })) {
+                    gameLogService.append(gameData,
+                            GameLog.builder().card(attacker.getCard()).text("'s melee triggers.").build());
+                }
             }
         }
 
-        // Engine-level dethrone triggers: attack the player with the most life (including ties)
-        // to put a +1/+1 counter on the attacking creature.
+        // Battle cry (CR 702.91a): each instance triggers separately.
+        for (int idx : attackerIndices) {
+            Permanent attacker = battlefield.get(idx);
+            int battleCryInstances = gameQueryService.triggerKeywordInstances(gameData, attacker, Keyword.BATTLE_CRY);
+            for (int instance = 0; instance < battleCryInstances; instance++) {
+                if (putKeywordAttackAbility(gameData, playerId, attacker, BATTLE_CRY_ABILITY, "'s battle cry",
+                        entry -> { })) {
+                    gameLogService.append(gameData,
+                            GameLog.builder().card(attacker.getCard()).text("'s battle cry triggers.").build());
+                }
+            }
+        }
+
+        // Dethrone (CR 702.105a): attacking the player with the most life or tied for most life puts a +1/+1 counter on
+        // the attacking creature; each instance triggers separately (CR 702.105b).
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.DETHRONE)
@@ -1191,80 +1174,39 @@ public class CombatAttackService {
                     gameData, attacker, new PermanentAttacksPlayerWithMostLifePredicate())) {
                 continue;
             }
-            // CR 702.105b — each separate instance of dethrone (printed or granted) triggers on its own.
             int dethroneInstances = gameQueryService.triggerKeywordInstances(gameData, attacker, Keyword.DETHRONE);
             for (int instance = 0; instance < dethroneInstances; instance++) {
-                int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
-                try {
-                    List<CardEffect> dethroneEffects = List.of(new PutCountersOnSourceEffect(1, 1, 1));
-                    StackEntry dethroneTrigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            attacker.getCard(),
-                            playerId,
-                            attacker.getCard().getName() + "'s dethrone",
-                            dethroneEffects,
-                            null,
-                            attacker.getId()
-                    );
-                    gameData.stack.add(dethroneTrigger);
-                    triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
-                            gameData, attacker, dethroneTrigger);
+                if (putKeywordAttackAbility(gameData, playerId, attacker, DETHRONE_ABILITY, "'s dethrone",
+                        entry -> { })) {
                     gameLogService.append(gameData,
                             GameLog.builder().card(attacker.getCard()).text("'s dethrone triggers.").build());
-                    log.info("Game {} - {} dethrone trigger pushed onto stack", gameData.id, attacker.getCard().getName());
-                } finally {
-                    gameData.restoreTriggeredAbilityCopies(previousCopies);
                 }
             }
         }
 
-        // Engine-level training triggers: attacks with another creature of greater power → +1/+1 counter
+        // Training (CR 702.149a): attacking with another creature of greater power puts a +1/+1 counter on it.
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
-            int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
-            try {
             if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.TRAINING)) {
                 continue;
             }
             int selfPower = gameQueryService.getEffectivePower(gameData, attacker);
             boolean hasGreaterPowerAlly = false;
             for (int otherIdx : attackerIndices) {
-                if (otherIdx == idx) {
-                    continue;
-                }
-                Permanent other = battlefield.get(otherIdx);
-                if (gameQueryService.getEffectivePower(gameData, other) > selfPower) {
+                if (otherIdx != idx && gameQueryService.getEffectivePower(gameData, battlefield.get(otherIdx)) > selfPower) {
                     hasGreaterPowerAlly = true;
                     break;
                 }
             }
-            if (!hasGreaterPowerAlly) {
-                continue;
-            }
-            List<CardEffect> trainingEffects = List.of(new TrainEffect());
-            StackEntry trainingTrigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    attacker.getCard(),
-                    playerId,
-                    attacker.getCard().getName() + "'s training",
-                    trainingEffects,
-                    null,
-                    attacker.getId()
-            );
-            gameData.stack.add(trainingTrigger);
-            triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
-                    gameData, attacker, trainingTrigger);
-            gameLogService.append(gameData,
-                    GameLog.builder().card(attacker.getCard()).text("'s training triggers.").build());
-            log.info("Game {} - {} training trigger pushed onto stack", gameData.id, attacker.getCard().getName());
-            } finally {
-                gameData.restoreTriggeredAbilityCopies(previousCopies);
+            if (hasGreaterPowerAlly && putKeywordAttackAbility(gameData, playerId, attacker, TRAINING_ABILITY,
+                    "'s training", entry -> { })) {
+                gameLogService.append(gameData,
+                        GameLog.builder().card(attacker.getCard()).text("'s training triggers.").build());
             }
         }
 
-        // Engine-level double team triggers: a nontoken attacker conjures a copy into its
-        // controller's hand, then both cards lose double team permanently. Each instance of the
-        // keyword triggers separately.
+        // Double team: "when this creature attacks, if it's not a token, conjure a duplicate of it into your hand. Then
+        // both cards perpetually lose double team." Each instance of the keyword triggers separately.
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.DOUBLE_TEAM)
@@ -1273,33 +1215,20 @@ public class CombatAttackService {
             }
             int doubleTeamInstances = gameQueryService.triggerKeywordInstances(
                     gameData, attacker, Keyword.DOUBLE_TEAM);
-            Optional<ConjureCardToHandEffect> conjureDuplicate = conjureDoubleTeamDuplicate(attacker.getCard());
-            int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
-            try {
-                for (int instance = 0; instance < doubleTeamInstances; instance++) {
-                    List<CardEffect> doubleTeamEffects = new ArrayList<>();
-                    doubleTeamEffects.add(new PerpetuallyRemoveKeywordEffect(Keyword.DOUBLE_TEAM));
-                    conjureDuplicate.ifPresent(doubleTeamEffects::add);
-                    StackEntry doubleTeamTrigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            attacker.getCard(),
-                            playerId,
-                            attacker.getCard().getName() + "'s double team",
-                            doubleTeamEffects,
-                            attacker.getId(),
-                            attacker.getId()
-                    );
-                    doubleTeamTrigger.setNonTargeting(true);
-                    gameData.stack.add(doubleTeamTrigger);
-                    triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
-                            gameData, attacker, doubleTeamTrigger);
+            List<CardEffect> doubleTeamEffects = new ArrayList<>();
+            doubleTeamEffects.add(new PerpetuallyRemoveKeywordEffect(Keyword.DOUBLE_TEAM));
+            conjureDoubleTeamDuplicate(attacker.getCard()).ifPresent(doubleTeamEffects::add);
+            TriggeredAbility doubleTeamAbility = new TriggeredAbility(Triggers.attacks(),
+                    doubleTeamEffects.toArray(CardEffect[]::new));
+            for (int instance = 0; instance < doubleTeamInstances; instance++) {
+                if (putKeywordAttackAbility(gameData, playerId, attacker, doubleTeamAbility, "'s double team",
+                        entry -> {
+                            entry.setTargetId(attacker.getId());
+                            entry.setNonTargeting(true);
+                        })) {
                     gameLogService.append(gameData,
                             GameLog.builder().card(attacker.getCard()).text("'s double team triggers.").build());
-                    log.info("Game {} - {} double team trigger pushed onto stack", gameData.id,
-                            attacker.getCard().getName());
                 }
-            } finally {
-                gameData.restoreTriggeredAbilityCopies(previousCopies);
             }
         }
 
@@ -1550,21 +1479,12 @@ public class CombatAttackService {
                 int printedInstances = perm.getCard().getKeywords().contains(Keyword.EXALTED) ? 1 : 0;
                 int instances = gameQueryService.triggerKeywordInstances(gameData, perm, Keyword.EXALTED)
                         - printedInstances;
+                // Each granted instance is the ability "whenever a creature you control attacks alone, that creature
+                // gets +1/+1 until end of turn" (CR 702.83a), put as a printed one is: the attacking creature caused it.
                 for (int i = 0; i < instances; i++) {
-                    StackEntry exaltedTrigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            playerId,
-                            perm.getCard().getName() + "'s exalted ability",
-                            List.of(new BoostTargetCreatureEffect(1, 1)),
-                            null,
-                            perm.getId());
-                    exaltedTrigger.setTargetId(attacker.getId());
-                    exaltedTrigger.setNonTargeting(true);
-                    exaltedTrigger.setTriggeringPermanentId(attacker.getId());
-                    gameData.stack.add(exaltedTrigger);
-                    gameLogService.append(gameData, GameLog.builder().card(perm.getCard())
-                            .text("'s exalted ability triggers.").build());
+                    putAllyCreatureAttackAbility(gameData, playerId, perm, attacker, GRANTED_EXALTED_ABILITY,
+                            ConditionContext.forPermanent(perm, playerId)
+                                    .withTriggeringPermanentId(attacker.getId()));
                 }
             }
         }
@@ -2341,6 +2261,14 @@ public class CombatAttackService {
                 enlistedSupporters);
     }
 
+    /**
+     * Enlist's triggered ability ("when you do, this creature gets +X/+0 until end of turn, where X is the tapped
+     * creature's power", CR 702.154a) of each attacker that enlisted a creature, then the attacker's "whenever this
+     * creature enlists a creature" abilities. The enlisted creature is the entry's chosen permanent, whose power X reads.
+     * Its trigger event is the enlist cost's tap, not the attack, so it isn't an ability its source's attacking caused:
+     * Isshin, Two Heavens as One doesn't double it (only conditions directly related to attacking) and Firebender
+     * Ascension doesn't count it.
+     */
     private void addEnlistmentTriggers(GameData gameData, UUID playerId, Map<UUID, Integer> boostPowers,
                                        Map<UUID, UUID> enlistedSupporters) {
         for (Map.Entry<UUID, Integer> boost : boostPowers.entrySet()) {
@@ -2348,32 +2276,21 @@ public class CombatAttackService {
             if (attacker == null) {
                 continue;
             }
-            int previousCopies = beginAttackTriggerCopies(gameData, playerId, attacker);
-            try {
-                StackEntry enlistTrigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        attacker.getCard(),
-                        playerId,
-                        attacker.getCard().getName() + "'s enlist trigger",
-                        List.of(new BoostSelfEffect(
-                                new ChosenPermanentPower(), new Fixed(0))),
-                        attacker.getId(),
-                        attacker.getId());
-                enlistTrigger.setNonTargeting(true);
-                enlistTrigger.setChosenPermanentId(enlistedSupporters.get(boost.getKey()));
-                enlistTrigger.setSourcePermanentSnapshot(new Permanent(attacker));
-                gameData.stack.add(enlistTrigger);
-                triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(
-                        gameData, attacker, enlistTrigger);
+            UUID enlistedId = enlistedSupporters.get(boost.getKey());
+            if (triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ENLIST_ABILITY,
+                    attacker.getCard(), attacker, playerId, attacker.getCard().getName() + "'s enlist trigger",
+                    ConditionContext.forPermanent(attacker, playerId), entry -> {
+                        entry.setTargetId(attacker.getId());
+                        entry.setNonTargeting(true);
+                        entry.setChosenPermanentId(enlistedId);
+                        entry.setSourcePermanentSnapshot(new Permanent(attacker));
+                    }))) {
                 gameLogService.append(gameData,
                         GameLog.builder().card(attacker.getCard()).text("'s enlist ability triggers.").build());
-                Permanent enlistedCreature = gameQueryService.findPermanentById(
-                        gameData, enlistedSupporters.get(boost.getKey()));
-                if (enlistedCreature != null) {
-                    collectEnlistAbilities(gameData, playerId, attacker, enlistedCreature);
-                }
-            } finally {
-                gameData.restoreTriggeredAbilityCopies(previousCopies);
+            }
+            Permanent enlistedCreature = gameQueryService.findPermanentById(gameData, enlistedId);
+            if (enlistedCreature != null) {
+                collectEnlistAbilities(gameData, playerId, attacker, enlistedCreature);
             }
         }
     }
@@ -2443,10 +2360,21 @@ public class CombatAttackService {
         return controls.isEmpty() ? activePlayerId : controls.getLast().chooserId();
     }
 
-    private int beginAttackTriggerCopies(GameData gameData, UUID controllerId, Permanent source) {
-        return gameData.beginTriggeredAbilityCopies(1 +
-                gameQueryService.countAdditionalTriggeredAbilityTriggers(
-                        gameData, controllerId, source, true));
+    /**
+     * Puts {@code ability}, an ability a keyword of {@code attacker} gives it, on the stack through the stack door as one
+     * object, described as the attacker's name and {@code description}: its source attacking caused it to trigger
+     * (CR 508.3a), so the "triggers an additional time" effects that count those count it, and the "a creature you
+     * control attacking causes a triggered ability of that creature to trigger" watchers see it. {@code record} stamps
+     * what the attack was.
+     *
+     * @return whether it triggered
+     */
+    private boolean putKeywordAttackAbility(GameData gameData, UUID playerId, Permanent attacker,
+                                            TriggeredAbility ability, String description,
+                                            TriggeredAbilityRequest.TriggerRecord record) {
+        return triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability, attacker.getCard(),
+                attacker, playerId, attacker.getCard().getName() + description,
+                ConditionContext.forPermanent(attacker, playerId), record).causedBySourceAttacking());
     }
 
     /**

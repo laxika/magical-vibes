@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -89,14 +88,8 @@ public class MagmasaurUpkeepSupport {
         }
 
         MassDamageEffect massDamage = new MassDamageEffect(new Fixed(damage), true, false, WITHOUT_FLYING);
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                controllerId,
-                sourceCard.getName() + "'s ability",
-                List.of(massDamage),
-                null,
-                sourcePermanentId);
+        StackEntry entry = StackEntry.carrier(sourceCard, controllerId, sourceCard.getName() + "'s ability",
+                List.of(massDamage), null, sourcePermanentId);
         entry.setSourcePermanentSnapshot(lastKnownSource);
         massDamageEffectHandler.resolve(gameData, entry, massDamage);
     }

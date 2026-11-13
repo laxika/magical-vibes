@@ -1,67 +1,30 @@
 package com.github.laxika.magicalvibes.service.library;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
-
+import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
 import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
-import java.util.ArrayList;
-import java.util.List;
+
 import java.util.UUID;
 
-/** Fires library-search triggers from the unified library-search choke point. */
+/** Records library searches at the unified library-search choke point. */
 public final class LibrarySearchTriggerHelper {
 
     private LibrarySearchTriggerHelper() {}
 
     /**
-     * Records that a player searched their library and queues every "whenever ... searches a library"
-     * trigger it causes. Call this once per search, including searches that find nothing, since
-     * those still count as searching.
-     * <p>
-     * Both trigger kinds are covered: permanents controlled by the searching
-     * player fire their {@link LibraryWatch#ON_CONTROLLER_SEARCHES_LIBRARY} effects, and permanents
-     * controlled by every other player fire their {@link LibraryWatch#ON_OPPONENT_SEARCHES_LIBRARY}
-     * effects with the searching player as the trigger's target. Triggers are only enqueued (and
-     * logged) here; they go on the stack the next time pending triggers are processed.
+     * Records that a player searched their library, and emits the search as a rules event, which the "whenever ...
+     * searches a library" abilities trigger on (CR 603.2): the trigger pipeline hands them to the stack door
+     * ({@code TriggerCollectionService.checkLibrarySearchTriggers}) as the event's batch closes. Call this once per
+     * search, including searches that find nothing, since those still count as searching.
      *
      * @param gameData          the game being mutated
-     * @param gameLogService    used to log each ability that triggers
      * @param searchingPlayerId the player whose library was searched; also added to
      *                          {@code playersWhoSearchedLibraryThisTurn}
      */
-    public static void recordSearchAndQueueTriggers(GameData gameData, GameLogService gameLogService,
-                                                    UUID searchingPlayerId) {
+    public static void recordSearchAndQueueTriggers(GameData gameData, UUID searchingPlayerId) {
         gameData.playersWhoSearchedLibraryThisTurn.add(searchingPlayerId);
-        gameData.forEachBattlefield((controllerId, battlefield) -> {
-            for (var perm : List.copyOf(battlefield)) {
-                if (perm.isLosesAllAbilitiesUntilEndOfTurn()) continue;
-                boolean controllerSearch = controllerId.equals(searchingPlayerId);
-                for (List<CardEffect> effects : LibraryAbilityReader.printedEffectsByAbility(perm.getCard(),
-                        controllerSearch
-                                ? LibraryWatch.ON_CONTROLLER_SEARCHES_LIBRARY
-                                : LibraryWatch.ON_OPPONENT_SEARCHES_LIBRARY)) {
-                    StackEntry trigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            perm.getCard(),
-                            controllerId,
-                            perm.getCard().getName() + "'s ability",
-                            new ArrayList<>(effects),
-                            controllerSearch ? null : searchingPlayerId,
-                            perm.getId()
-                    );
-                    // The searching player is the trigger's subject, not a chosen target, so hexproof on
-                    // that player must not make the trigger fizzle on resolution.
-                    trigger.setNonTargeting(true);
-                    gameData.enqueueTrigger(trigger);
-                    gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
-                }
-            }
-        });
+        gameData.rulesEvents.emit(LibraryEvent.searched(searchingPlayerId));
     }
 
     /**

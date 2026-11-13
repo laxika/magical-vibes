@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BalduvianWarlordEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BalduvianWarlordEffectHandler;
@@ -34,9 +33,7 @@ public class BalduvianWarlordReblockMayHandler implements MayEffectHandlerBean {
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         if (accepted) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(),
+            StackEntry entry = StackEntry.carrier(ability.sourceCard(),
                     ability.controllerId(),
                     ability.sourceCard().getName() + "'s ability",
                     new ArrayList<>(ability.effects()),

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -138,7 +140,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
-                StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                StackEntry triggerEntry = TestStackDoor.triggered(triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
                 triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
                 triggerEntry.setTriggeringSpell(spellSnapshot);
@@ -171,7 +173,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
-                StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                StackEntry triggerEntry = TestStackDoor.triggered(triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
                 triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
                 triggerEntry.setTriggeringSpell(spellSnapshot);
@@ -207,7 +209,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
-                StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                StackEntry triggerEntry = TestStackDoor.triggered(triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
                 triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
                 triggerEntry.setTriggeringSpell(spellSnapshot);
@@ -239,7 +241,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
-                StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                StackEntry triggerEntry = TestStackDoor.triggered(triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
                 triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
                 triggerEntry.setTriggeringSpell(spellSnapshot);
@@ -274,7 +276,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
-                StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                StackEntry triggerEntry = TestStackDoor.triggered(triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
                 triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
                 triggerEntry.setTriggeringSpell(spellSnapshot);
@@ -305,7 +307,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
-                StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                StackEntry triggerEntry = TestStackDoor.triggered(triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
                 triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
                 triggerEntry.setTriggeringSpell(spellSnapshot);
@@ -340,7 +342,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
-                StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                StackEntry triggerEntry = TestStackDoor.triggered(triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
                 triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
                 triggerEntry.setTriggeringSpell(spellSnapshot);
@@ -358,7 +360,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
-                StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                StackEntry triggerEntry = TestStackDoor.triggered(triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
 
                 copySpellForEachOtherSubtypeHandler.resolve(gd, triggerEntry, effect);
@@ -384,7 +386,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
-                StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                StackEntry triggerEntry = TestStackDoor.triggered(triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
                 triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
                 triggerEntry.setTriggeringSpell(spellSnapshot);
@@ -416,7 +418,7 @@ class CopySpellForEachOtherSubtypePermanentEffectHandlerTest {
                         new CopySpellForEachOtherSubtypePermanentEffect(CardSubtype.GOLEM);
 
                 Card triggerCard = createCard("Precursor Golem");
-                StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerCard, player1Id,
+                StackEntry triggerEntry = TestStackDoor.triggered(triggerCard, player1Id,
                         "Precursor Golem trigger", List.of(effect));
                 triggerEntry.setTriggeringCardId(spellSnapshot.getCard().getId());
                 triggerEntry.setTriggeringSpell(spellSnapshot);

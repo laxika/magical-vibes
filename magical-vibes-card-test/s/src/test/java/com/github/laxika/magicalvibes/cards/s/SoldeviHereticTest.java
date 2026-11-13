@@ -48,6 +48,22 @@ class SoldeviHereticTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The opponent chooses whether to draw as the ability resolves, with nothing put on the stack")
+    void opponentChoosesAsTheAbilityResolves() {
+        addHereticReady();
+        harness.addToBattlefield(player2, new SoldeviHeretic());
+        harness.setLibrary(player2, List.of(new SoldeviHeretic()));
+
+        UUID targetId = harness.getPermanentId(player2, "Soldevi Heretic");
+        harness.activateAbility(player1, 0, null, targetId);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player2.getId());
+    }
+
+    @Test
     @DisplayName("The opponent may decline the draw")
     void opponentMayDecline() {
         addHereticReady();

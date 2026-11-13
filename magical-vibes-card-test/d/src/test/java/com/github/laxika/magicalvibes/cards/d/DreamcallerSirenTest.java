@@ -41,8 +41,7 @@ class DreamcallerSirenTest extends BaseCardTest {
 
             castDreamcallerSiren();
             harness.passBothPriorities(); // resolve creature spell — trigger-time target prompts
-            harness.handlePermanentChosen(player1, bears1.getId());
-            harness.handlePermanentChosen(player1, bears2.getId()); // max reached — trigger on stack
+            harness.handleMultiplePermanentsChosen(player1, List.of(bears1.getId(), bears2.getId()));
             harness.passBothPriorities(); // resolve ETB trigger
 
             assertThat(bears1.isTapped()).isTrue();
@@ -59,8 +58,7 @@ class DreamcallerSirenTest extends BaseCardTest {
 
             castDreamcallerSiren();
             harness.passBothPriorities(); // resolve creature spell — trigger-time target prompts
-            harness.handlePermanentChosen(player1, bears.getId());
-            harness.handlePermanentChosen(player1, player1.getId()); // choose self to stop at one target
+            harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
             harness.passBothPriorities(); // resolve ETB trigger
 
             assertThat(bears.isTapped()).isTrue();
@@ -79,10 +77,9 @@ class DreamcallerSirenTest extends BaseCardTest {
             // Casting never asked for a target — the choice happens now, as the
             // trigger is put on the stack (CR 603.3d)
             assertThat(gd.interaction.activeInteraction())
-                    .isInstanceOf(PendingInteraction.PermanentChoice.class);
+                    .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
 
-            harness.handlePermanentChosen(player1, bearsId);
-            harness.handlePermanentChosen(player1, player1.getId()); // stop after one target
+            harness.handleMultiplePermanentsChosen(player1, List.of(bearsId));
 
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -98,8 +95,7 @@ class DreamcallerSirenTest extends BaseCardTest {
 
             castDreamcallerSiren();
             harness.passBothPriorities(); // resolve creature spell — trigger-time target prompts
-            harness.handlePermanentChosen(player1, bearsId);
-            harness.handlePermanentChosen(player1, player1.getId()); // stop after one target
+            harness.handleMultiplePermanentsChosen(player1, List.of(bearsId));
 
             harness.assertOnBattlefield(player1, "Dreamcaller Siren");
         }
@@ -114,14 +110,15 @@ class DreamcallerSirenTest extends BaseCardTest {
             castDreamcallerSiren();
             harness.passBothPriorities(); // resolve creature spell — trigger-time target prompts
 
-            PendingInteraction.PermanentChoice choice =
-                    gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            PendingInteraction.MultiPermanentChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
             assertThat(choice).isNotNull();
 
             UUID landId = findPermanent(player2, "Forest").getId();
-            assertThatThrownBy(() -> harness.handlePermanentChosen(player1, landId))
+            assertThat(choice.validIds()).doesNotContain(landId);
+            assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(landId)))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Invalid permanent");
+                    .hasMessageContaining("Invalid selection");
         }
     }
 
@@ -166,8 +163,7 @@ class DreamcallerSirenTest extends BaseCardTest {
 
         castDreamcallerSiren();
         harness.passBothPriorities(); // resolve creature spell — trigger-time target prompts
-        harness.handlePermanentChosen(player1, bears.getId());
-        harness.handlePermanentChosen(player1, player1.getId()); // stop — ETB trigger on stack
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
         // Remove the other Pirate before ETB resolves
         gd.playerBattlefields.get(player1.getId()).removeIf(
@@ -232,7 +228,7 @@ class DreamcallerSirenTest extends BaseCardTest {
 
         castDreamcallerSiren();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).hasSize(1);
@@ -249,8 +245,7 @@ class DreamcallerSirenTest extends BaseCardTest {
 
         castDreamcallerSiren();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
@@ -274,8 +269,7 @@ class DreamcallerSirenTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new JungleDelver());
 
         harness.enterBattlefieldAndReturn(player1, new DreamcallerSiren());
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
@@ -289,8 +283,7 @@ class DreamcallerSirenTest extends BaseCardTest {
         castDreamcallerSiren();
         harness.passBothPriorities();
         Permanent siren = findPermanent(player1, "Dreamcaller Siren");
-        harness.handlePermanentChosen(player1, siren.getId());
-        harness.handlePermanentChosen(player1, equipment.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(siren.getId(), equipment.getId()));
         harness.passBothPriorities();
 
         assertThat(siren.isTapped()).isTrue();
@@ -304,11 +297,10 @@ class DreamcallerSirenTest extends BaseCardTest {
 
         castDreamcallerSiren();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, target.getId());
-
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                List.of(target.getId(), target.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isTrue();
@@ -322,8 +314,7 @@ class DreamcallerSirenTest extends BaseCardTest {
 
         castDreamcallerSiren();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
         gd.playerBattlefields.get(player2.getId()).remove(first);
         harness.passBothPriorities();
 
@@ -338,8 +329,7 @@ class DreamcallerSirenTest extends BaseCardTest {
 
         castDreamcallerSiren();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         gd.playerBattlefields.get(player1.getId()).remove(findPermanent(player1, "Dreamcaller Siren"));
         harness.passBothPriorities();
 

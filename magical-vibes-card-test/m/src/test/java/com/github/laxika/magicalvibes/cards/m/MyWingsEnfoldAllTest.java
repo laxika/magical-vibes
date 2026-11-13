@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.cards.d.DarkRitual;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -48,9 +49,7 @@ class MyWingsEnfoldAllTest extends BaseCardTest {
 
     private void resolveScheme(String mode) {
         Card sourceCard = new MyWingsEnfoldAll();
-        gd.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
+        gd.stack.add(TestStackDoor.triggered(sourceCard,
                 player1.getId(),
                 sourceCard.getName() + "'s set-in-motion ability",
                 sourceCard.getCastingCostsAndSpellEffects()));

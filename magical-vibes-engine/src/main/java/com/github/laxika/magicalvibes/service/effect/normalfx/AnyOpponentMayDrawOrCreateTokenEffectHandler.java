@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnyOpponentMayDrawOrCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -83,9 +82,7 @@ public class AnyOpponentMayDrawOrCreateTokenEffectHandler implements NormalEffec
 
     private void createToken(GameData gameData, Card sourceCard, UUID controllerId,
                              CreateTokenEffect tokenEffect) {
-        StackEntry tokenEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
+        StackEntry tokenEntry = StackEntry.carrier(sourceCard,
                 controllerId,
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(tokenEffect)));

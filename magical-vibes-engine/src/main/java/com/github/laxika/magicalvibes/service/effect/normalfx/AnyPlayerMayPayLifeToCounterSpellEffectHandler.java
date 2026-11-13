@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.AnyPlayerMayPayLifeToCounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -84,9 +83,7 @@ public class AnyPlayerMayPayLifeToCounterSpellEffectHandler implements NormalEff
                              AnyPlayerMayPayLifeToCounterSpellEffect effect) {
         StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
         if (sourceEntry == null) {
-            sourceEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
+            sourceEntry = StackEntry.carrier(sourceCard,
                     effect.abilityControllerId(),
                     sourceCard.getName() + "'s ability",
                     new ArrayList<>(List.of(effect)));

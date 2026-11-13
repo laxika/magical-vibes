@@ -41,11 +41,10 @@ public class Mulldrifter extends Card {
         // Flying is auto-loaded from Scryfall keywords.
         // Evoke {2}{U}: cast for the alternate cost instead of the mana cost; it's sacrificed on entry.
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{U}"))));
+        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
 
         // When this creature enters, draw two cards.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
-
-        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }
 }

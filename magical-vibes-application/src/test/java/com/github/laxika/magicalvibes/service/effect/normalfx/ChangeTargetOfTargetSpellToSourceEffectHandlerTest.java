@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 
@@ -115,7 +117,7 @@ class ChangeTargetOfTargetSpellToSourceEffectHandlerTest {
 
         /** Creates a stack entry for ChangeTargetOfTargetSpellToSourceEffect (e.g. Spellskite trigger). */
         private StackEntry redirectToSourceEntry(Card card, UUID controllerId, UUID targetSpellCardId, UUID sourcePermanentId) {
-            return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+            return TestStackDoor.triggered(card, controllerId,
                     card.getName(), List.of(new ChangeTargetOfTargetSpellToSourceEffect()),
                     targetSpellCardId, sourcePermanentId);
         }

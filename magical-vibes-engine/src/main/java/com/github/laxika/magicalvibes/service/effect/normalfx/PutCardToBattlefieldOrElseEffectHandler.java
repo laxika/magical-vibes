@@ -64,7 +64,7 @@ public class PutCardToBattlefieldOrElseEffectHandler implements NormalEffectHand
     }
 
     private StackEntry fallbackEntry(StackEntry entry, CardEffect fallback) {
-        StackEntry fallbackEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
+        StackEntry fallbackEntry = StackEntry.derivedFrom(entry, entry.getCard(), entry.getControllerId(),
                 entry.getDescription(), List.of(fallback), entry.getTargetId(), entry.getSourcePermanentId());
         fallbackEntry.setActivePlayerId(entry.getActivePlayerId());
         fallbackEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());

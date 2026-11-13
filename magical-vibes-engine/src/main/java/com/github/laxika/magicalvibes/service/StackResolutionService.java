@@ -59,7 +59,6 @@ import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibrar
 import com.github.laxika.magicalvibes.model.effect.ShuffleIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
 import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.MiscWatch;
@@ -222,9 +221,6 @@ public class StackResolutionService {
                 entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY ? entry.getControllerId() : null;
         CardAdvantagePostResolutionService.snapshotBeforeResolution(gameData, entry);
         try {
-            if (beginDirectTriggeredModal(gameData, entry)) {
-                return;
-            }
             switch (entry.getEntryType()) {
                 case CREATURE_SPELL -> resolveCreatureSpell(gameData, entry);
                 case ENCHANTMENT_SPELL -> resolveEnchantmentSpell(gameData, entry);
@@ -284,66 +280,9 @@ public class StackResolutionService {
             }
         }
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.PlotTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextPlotTrigger(gameData);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-        }
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-        }
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
-            triggerCollectionService.processNextDeathTriggerTarget(gameData);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-        }
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
-            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-        }
-
         triggerCollectionService.beginStackDoorChoices(gameData);
         if (gameData.interaction.isAwaitingInput()) {
             return;
-        }
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
-            triggerCollectionService.processNextExploreTriggerTarget(gameData);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-        }
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class)) {
-            triggerCollectionService.processNextClashTriggerTarget(gameData);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-        }
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextLifeGainTriggerTarget(gameData);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-        }
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)
-                || gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class)) {
-            triggerCollectionService.processNextDrawTriggerTarget(gameData);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
         }
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
@@ -556,11 +495,8 @@ public class StackResolutionService {
         // CR 702.152a: a blitzed permanent has haste as a static ability, not as an enters-the-battlefield
         // trigger, so Torpor Orb-style suppression of enters triggers doesn't remove it.
         boolean printedBlitzHaste = entry.isAlternateCost()
-                && entry.getCard().getOwnEntryEffects().stream()
-                .anyMatch(e -> e instanceof com.github.laxika.magicalvibes.model.effect.ConditionalEffect c
-                        && c.condition() instanceof com.github.laxika.magicalvibes.model.condition.CastForAlternateCost
-                        && c.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect grant
-                        && grant.keywords().contains(Keyword.HASTE));
+                && entry.getCard().getCastingOption(com.github.laxika.magicalvibes.model.AlternateHandCast.class)
+                .filter(com.github.laxika.magicalvibes.model.AlternateHandCast::blitz).isPresent();
         if (printedBlitzHaste) {
             gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), permanent.getId(), controllerId,
@@ -582,19 +518,6 @@ public class StackResolutionService {
                     entry.getControllerId(), entry.getCard(), permanent.getId(), permanent.getId(),
                     com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.self()));
         }
-    }
-
-    private boolean beginDirectTriggeredModal(GameData gameData, StackEntry entry) {
-        if (entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
-                || entry.getEffectsToResolve().size() != 1
-                || !(entry.getEffectsToResolve().getFirst() instanceof TriggeredModalEffect modal)) {
-            return false;
-        }
-
-        gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                entry.getCard(), entry.getControllerId(), modal.choice(), entry.getSourcePermanentId()));
-        triggerCollectionService.processNextTriggeredModalTrigger(gameData);
-        return true;
     }
 
     private void queueWarpExileIfPresent(GameData gameData, StackEntry entry, Permanent permanent) {

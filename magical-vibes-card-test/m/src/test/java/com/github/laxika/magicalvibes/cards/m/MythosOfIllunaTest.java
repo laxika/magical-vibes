@@ -45,7 +45,7 @@ class MythosOfIllunaTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, bears.getId());
 
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, opponentGiant.getId());
         harness.passBothPriorities();
 

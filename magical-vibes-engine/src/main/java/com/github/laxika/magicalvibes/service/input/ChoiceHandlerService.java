@@ -3154,7 +3154,7 @@ public class ChoiceHandlerService {
                 .toList();
         gameData.pendingManaAbilityTriggers.removeAll(triggers);
         for (StackEntry trigger : triggers) {
-            if (landTapTriggerCollectorService.queueResolvedProducedManaTriggerTarget(
+            if (landTapTriggerCollectorService.putResolvedProducedManaTrigger(
                     gameData, trigger, manaColor)) {
                 continue;
             }
@@ -3607,8 +3607,7 @@ public class ChoiceHandlerService {
         List<ChooseOneEffect.ChooseOneOption> modesInPrintedOrder = new ArrayList<>(chosenModes);
         modesInPrintedOrder.sort(java.util.Comparator.comparingInt(mode -> ctx.effect().options().indexOf(mode)));
         triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
-                ctx.sourcePermanentId(), modesInPrintedOrder, ctx.triggeringCardId(), ctx.attackedTargetId(),
-                ctx.triggeringPermanentId(), ctx.triggerRecord());
+                ctx.sourcePermanentId(), modesInPrintedOrder, ctx.attackedTargetId(), ctx.triggerRecord());
 
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
             triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
@@ -4430,26 +4429,12 @@ public class ChoiceHandlerService {
             return;
         }
 
-        if (ctx.triggerTime() && ctx.effect().optional()
-                && ChooseOneEffect.NO_MODE_LABEL.equals(chosenLabel)) {
-            gameData.interaction.clearAwaitingInput();
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " chooses no modes for ", ctx.sourceCard(), "."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
         ChooseOneEffect.ChooseOneOption chosen = ctx.effect().options().stream()
                 .filter(o -> o.label().equals(chosenLabel))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Invalid mode: " + chosenLabel));
 
         gameData.interaction.clearAwaitingInput();
-
-        if (ctx.triggerTime()) {
-            handleTriggerTimeModeChoice(gameData, player, chosen, ctx);
-            return;
-        }
 
         // Splice the chosen mode's effects into the paused resolution at the ChooseOneEffect's slot
         // so they resolve in card-text order through the same effect loop.
@@ -4553,16 +4538,6 @@ public class ChoiceHandlerService {
 
     private void handleMultipleChooseModeChoice(GameData gameData, Player player, String chosenLabel,
             ChoiceContext.ChooseModeChoice ctx) {
-        if (ctx.triggerTime() && ctx.effect().optional()
-                && ctx.chosenLabels().isEmpty()
-                && ChooseOneEffect.NO_MODE_LABEL.equals(chosenLabel)) {
-            gameData.interaction.clearAwaitingInput();
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " chooses no modes for ", ctx.sourceCard(), "."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
         List<String> chosenLabels = new ArrayList<>(ctx.chosenLabels());
         if (ChooseOneEffect.FINISH_MODE_SELECTION.equals(chosenLabel)) {
             if (!ctx.effect().variableModeCount()
@@ -4594,25 +4569,6 @@ public class ChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        if (ctx.triggerTime()) {
-            List<ChooseOneEffect.ChooseOneOption> selectedModes = ctx.effect().options().stream()
-                    .filter(option -> chosenLabels.contains(option.label()))
-                    .toList();
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " chooses " + chosenLabels + " for ", ctx.sourceCard(), "."));
-            triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(),
-                    ctx.controllerId(), ctx.sourcePermanentId(), selectedModes);
-            if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
-                triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
-            } else if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
-                triggerCollectionService.processNextEntersTriggerTarget(gameData);
-            }
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            }
-            return;
-        }
-
         List<CardEffect> selectedEffects = ctx.effect().options().stream()
                 .filter(option -> chosenLabels.contains(option.label()))
                 .flatMap(option -> option.effects().stream())
@@ -4791,39 +4747,6 @@ public class ChoiceHandlerService {
         }
         stateBasedActionService.performStateBasedActions(gameData);
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * A "choose one that hasn't been chosen" mode pick, made as the trigger goes on the stack
-     * (Demonic Pact). The mode is marked consumed on the source permanent so it is never offered
-     * again, then the chosen mode's effects become the triggered ability — picking their own targets
-     * if the mode needs any. Remaining modal triggers are drained before the ordinary targeted-upkeep
-     * pipelines run.
-     */
-    private void handleTriggerTimeModeChoice(GameData gameData, Player player,
-            ChooseOneEffect.ChooseOneOption chosen, ChoiceContext.ChooseModeChoice ctx) {
-        Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
-        if (ctx.consumeMode() && source != null) {
-            source.getChosenModeLabels().add(chosen.label());
-        }
-
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " chooses \"" + chosen.label() + "\" for ", ctx.sourceCard(), "."));
-        log.info("Game {} - {} chooses mode \"{}\" for {} as it goes on the stack", gameData.id,
-                player.getUsername(), chosen.label(), ctx.sourceCard().getName());
-
-        triggerCollectionService.queueChosenTriggeredModalTrigger(gameData, ctx.sourceCard(), ctx.controllerId(),
-                ctx.sourcePermanentId(), chosen);
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
-            triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
-        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.EntersTriggerTarget.class)) {
-            triggerCollectionService.processNextEntersTriggerTarget(gameData);
-        } else if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
-            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
-        }
-        if (!gameData.interaction.isAwaitingInput()) {
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-        }
     }
 
     private void handleDrawReplacementChoice(GameData gameData, String chosenKind, ChoiceContext.DrawReplacementChoice ctx) {
@@ -6342,7 +6265,7 @@ public class ChoiceHandlerService {
                     new ChoiceContext.SagaChapterCounterAssignment(
                             ctx.sourceCard(), ctx.controllerId(), ctx.effects(), ctx.sourcePermanentId(),
                             ctx.chapterName(), ctx.counterType(), ctx.targetIds(), assignments, ctx.total(),
-                            nextTargetIndex);
+                            nextTargetIndex, ctx.triggerRecord());
             playerInputService.beginSagaChapterCounterAssignmentChoice(gameData, player.getId(), next);
             inputCompletionService.publishStateAfterInput(gameData);
             return;
@@ -6353,19 +6276,12 @@ public class ChoiceHandlerService {
         }
 
         gameData.interaction.clearAwaitingInput();
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ctx.sourceCard(),
-                ctx.controllerId(),
-                ctx.sourceCard().getName() + "'s chapter " + ctx.chapterName() + " ability",
-                new java.util.ArrayList<>(ctx.effects()),
-                0,
-                null,
-                ctx.sourcePermanentId(),
-                assignments,
-                null,
-                List.of(),
-                ctx.targetIds()));
+        // The chapter ability the stack door parked goes on the stack with its targets and its division announced.
+        triggeredAbilityStackService.finishParked(gameData, ctx.triggerRecord(), entry -> {
+            entry.setNonTargeting(false);
+            entry.announceDamageAssignments(assignments);
+            entry.setDeclaredTargetIds(ctx.targetIds());
+        });
         gameLogService.append(gameData, GameLog.cardThen(ctx.sourceCard(),
                 "'s chapter " + ctx.chapterName() + " counter distribution is set."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -6419,50 +6335,32 @@ public class ChoiceHandlerService {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ctx.sourceCard(),
-                ctx.controllerId(),
-                ctx.sourceCard().getName() + "'s ability",
-                new java.util.ArrayList<>(ctx.effects()),
-                0,
-                null,
-                ctx.sourcePermanentId(),
-                assignments,
-                null,
-                List.of(),
+        // The ability the stack door parked for its targets and division goes on the stack through the door with the
+        // targets and division announced (CR 601.2d via CR 603.3d).
+        StackEntry announced = StackEntry.carrier(ctx.sourceCard(), ctx.controllerId(),
+                ctx.sourceCard().getName() + "'s ability", new java.util.ArrayList<>(ctx.effects()), 0, null,
+                ctx.sourcePermanentId(), assignments, null, List.of(),
                 ctx.entryTargetIds() != null ? ctx.entryTargetIds() : ctx.targetIds());
         if (ctx.entryTargetGroupSizes() != null) {
-            entry.setTargetGroupSizes(ctx.entryTargetGroupSizes());
+            announced.setTargetGroupSizes(ctx.entryTargetGroupSizes());
         }
         Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
+        Permanent sourceSnapshot = null;
         if (source != null) {
-            Permanent snapshot = new Permanent(source);
-            snapshot.setCard(permanentRemovalService.snapshotEffectivePermanentCard(gameData, source));
-            snapshot.setLastKnownPower(gameQueryService.getEffectivePower(gameData, source));
-            snapshot.setLastKnownToughness(gameQueryService.getEffectiveToughness(gameData, source));
-            snapshot.setLastKnownColors(Set.copyOf(gameQueryService.getEffectiveColors(gameData, source)));
-            entry.setSourcePermanentSnapshot(snapshot);
+            sourceSnapshot = new Permanent(source);
+            sourceSnapshot.setCard(permanentRemovalService.snapshotEffectivePermanentCard(gameData, source));
+            sourceSnapshot.setLastKnownPower(gameQueryService.getEffectivePower(gameData, source));
+            sourceSnapshot.setLastKnownToughness(gameQueryService.getEffectiveToughness(gameData, source));
+            sourceSnapshot.setLastKnownColors(Set.copyOf(gameQueryService.getEffectiveColors(gameData, source)));
         }
-        if (com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
-                .parkedAtDoor(ctx.triggerRecord())) {
-            // An ability the stack door parked for its targets and division: it goes on the stack through the door
-            // with the targets and division announced (CR 601.2d via CR 603.3d).
-            Permanent sourceSnapshot = entry.getSourcePermanentSnapshot();
-            triggeredAbilityStackService.finishParked(gameData, ctx.triggerRecord(), parked -> {
-                parked.replaceEffectsToResolve(entry.getEffectsToResolve());
-                parked.adoptChosenTargets(entry);
-                if (sourceSnapshot != null) {
-                    parked.setSourcePermanentSnapshot(sourceSnapshot);
-                }
-            });
-        } else {
-            if (ctx.triggerRecord() != null) {
-                // The collector's record of the trigger event, the same as for an ability of it that chooses nothing.
-                entry.carryTriggerRecord(ctx.triggerRecord());
+        Permanent announcedSourceSnapshot = sourceSnapshot;
+        triggeredAbilityStackService.finishParked(gameData, ctx.triggerRecord(), ctx.sourceCard(), parked -> {
+            parked.replaceEffectsToResolve(announced.getEffectsToResolve());
+            parked.adoptChosenTargets(announced);
+            if (announcedSourceSnapshot != null) {
+                parked.setSourcePermanentSnapshot(announcedSourceSnapshot);
             }
-            gameData.stack.add(entry);
-        }
+        });
         gameLogService.append(gameData, GameLog.cardThen(ctx.sourceCard(),
                 ctx.counterType() == null ? "'s damage division is set." : "'s counter distribution is set."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -7428,9 +7326,6 @@ public class ChoiceHandlerService {
         }
         triggerCollectionService.finishDiscardEvent(gameData);
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-        }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -7510,9 +7405,6 @@ public class ChoiceHandlerService {
         log.info("Game {} - {} discards {} card(s) named {}", gameData.id, targetName,
                 toDiscard.size(), cardName);
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-        }
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 

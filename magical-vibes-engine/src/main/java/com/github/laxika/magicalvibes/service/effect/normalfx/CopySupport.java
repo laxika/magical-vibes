@@ -371,9 +371,7 @@ public class CopySupport {
     private StackEntry createCopyStackEntry(StackEntry source, Card copyCard, UUID controllerId,
                                              UUID targetId, Zone targetZone, List<UUID> targetCardIds,
                                              Map<UUID, Integer> damageAssignments, List<UUID> sourceTargetIds) {
-        StackEntry copy = new StackEntry(
-                source.getEntryType(),
-                copyCard,
+        StackEntry copy = StackEntry.derivedFrom(source, copyCard,
                 controllerId,
                 "Copy of " + source.getDescription(),
                 new ArrayList<>(source.getEffectsToResolve()),

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -91,7 +93,7 @@ class CopySpellForEachOtherControlledCreatureEffectHandlerTest {
     @DisplayName("No-op when the entry has no triggering spell")
     void noOpWhenSnapshotNull() {
         var effect = new CopySpellForEachOtherControlledCreatureEffect();
-        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCreature("Mirrorwing Dragon").getCard(),
+        StackEntry trigger = TestStackDoor.triggered(createCreature("Mirrorwing Dragon").getCard(),
                 player1Id, "trigger", List.of(effect));
 
         handler.resolve(gd, trigger, effect);
@@ -121,7 +123,7 @@ class CopySpellForEachOtherControlledCreatureEffectHandlerTest {
     }
 
     private StackEntry triggerOn(Permanent source, StackEntry spell, CardEffect effect) {
-        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), player1Id,
+        StackEntry trigger = TestStackDoor.triggered(source.getCard(), player1Id,
                 source.getCard().getName() + "'s ability", List.of(effect), (UUID) null, source.getId());
         trigger.setTriggeringCardId(spell.getCard().getId());
         trigger.setTriggeringSpell(spell);

@@ -70,9 +70,6 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
         triggerCollectionService.finishDiscardEvent(gameData);
 
         // Process any pending self-discard triggers
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-        }
 
         // Step 3: Check if discarded cards share at least one card type
         if (discardedCards.size() >= 2 && playerInteractionSupport.sharesCardType(discardedCards)) {

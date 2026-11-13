@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMayInvestigateOrLoseLifeThenControllerInvestigatesEffect;
@@ -91,9 +90,7 @@ public class EachOpponentMayInvestigateOrLoseLifeThenControllerInvestigatesEffec
 
     private void investigate(GameData gameData, Card sourceCard, UUID playerId, int amount,
                              UUID sourcePermanentId, Permanent sourcePermanentSnapshot) {
-        StackEntry tokenEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
+        StackEntry tokenEntry = StackEntry.carrier(sourceCard,
                 playerId,
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(CreateTokenEffect.ofClueToken(amount))),

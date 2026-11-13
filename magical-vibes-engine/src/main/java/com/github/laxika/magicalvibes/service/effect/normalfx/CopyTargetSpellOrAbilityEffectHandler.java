@@ -32,11 +32,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandlerBean {
 
-    private static final Set<StackEntryType> COPYABLE_STACK_TYPES = Set.of(
-            StackEntryType.INSTANT_SPELL,
-            StackEntryType.SORCERY_SPELL,
-            StackEntryType.ACTIVATED_ABILITY,
-            StackEntryType.TRIGGERED_ABILITY);
+    private static final Set<StackEntryType> COPYABLE_STACK_TYPES = StackEntryType.abilitiesAnd(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL);
 
     private final GameLogService gameLogService;
     private final CopySupport copySupport;

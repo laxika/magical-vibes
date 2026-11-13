@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CastingPlayerMayDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
@@ -33,9 +32,7 @@ public class CastingPlayerMayDrawCardHandler implements MayEffectHandlerBean {
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         if (accepted) {
             var drawEffect = new DrawCardForTargetPlayerEffect(1);
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(),
+            StackEntry entry = StackEntry.carrier(ability.sourceCard(),
                     player.getId(),
                     ability.sourceCard().getName() + "'s ability",
                     new ArrayList<>(List.of(drawEffect)),

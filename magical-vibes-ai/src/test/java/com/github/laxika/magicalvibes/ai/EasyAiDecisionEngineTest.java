@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AbandonHope;
@@ -102,7 +104,6 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -3207,7 +3208,7 @@ class EasyAiDecisionEngineTest {
 
         when(gameQueryService.canActivateManaAbility(any(), any())).thenReturn(true);
         Mockito.doAnswer(inv -> {
-            gd.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature,
+            gd.stack.add(TestStackDoor.triggered(creature,
                     aiPlayer.getId(), "Test trigger", List.of()));
             return null;
         }).when(messageHandler).handleActivateAbility(any());

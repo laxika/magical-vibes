@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -79,9 +78,7 @@ public class TargetCreatureDealsDamageToControllerEffectHandler implements Norma
         int damage = amountEvaluationService.evaluate(gameData, targetEffect.damage(),
                 AmountContext.forStackEntry(entry, target));
 
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                target.getCard(),
+        StackEntry damageEntry = StackEntry.carrier(target.getCard(),
                 controllerId,
                 target.getCard().getName() + "'s ability",
                 List.of(),

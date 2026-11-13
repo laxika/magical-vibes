@@ -26,9 +26,7 @@ public class LithoformEngine extends Card {
                 "{2}, {T}: Copy target activated or triggered ability you control. You may choose new targets for the copy.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
-                                new StackEntryTypeInPredicate(Set.of(
-                                        StackEntryType.ACTIVATED_ABILITY,
-                                        StackEntryType.TRIGGERED_ABILITY)),
+                                new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                                 new StackEntryControlledByPredicate())),
                         "Target must be an activated or triggered ability you control.")));
 

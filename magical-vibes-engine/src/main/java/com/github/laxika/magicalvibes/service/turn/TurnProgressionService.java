@@ -1777,30 +1777,6 @@ public class TurnProgressionService {
         turnCleanupService.applyCleanupResets(gameData);
     }
 
-    public void processNextPhasesInTriggerTarget(GameData gameData) {
-        stepTriggerService.processNextPhasesInTriggerTarget(gameData);
-    }
-
-    public void processNextUpkeepPlayerTarget(GameData gameData) {
-        stepTriggerService.processNextUpkeepPlayerTarget(gameData);
-    }
-
-    public void processNextUpkeepMultiPlayerTarget(GameData gameData) {
-        stepTriggerService.processNextUpkeepMultiPlayerTarget(gameData);
-    }
-
-    public void processUpkeepSecondPlayerTarget(GameData gameData, PermanentChoiceContext.UpkeepSecondPlayerTargetTrigger trigger) {
-        stepTriggerService.processUpkeepSecondPlayerTarget(gameData, trigger);
-    }
-
-    public void processNextUpkeepCopyTarget(GameData gameData) {
-        stepTriggerService.processNextUpkeepCopyTarget(gameData);
-    }
-
-    public void processNextCapriciousEfreetTarget(GameData gameData) {
-        stepTriggerService.processNextCapriciousEfreetTarget(gameData);
-    }
-
     public void processNextPucasMischiefTarget(GameData gameData) {
         stepTriggerService.processNextPucasMischiefTarget(gameData);
     }

@@ -73,7 +73,7 @@ public class GainControlOfAllPermanentsMatchingEffectHandler implements NormalEf
         List<Permanent> simultaneous = new ArrayList<>();
         for (Permanent permanent : toSeize) {
             if (duration.isSourceLinked()) {
-                StackEntry individual = new StackEntry(entry.getEntryType(), entry.getCard(), controllerId,
+                StackEntry individual = StackEntry.derivedFrom(entry, entry.getCard(), controllerId,
                         entry.getDescription(), List.of(controlEffect), permanent.getId(),
                         entry.getSourcePermanentId());
                 individual.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());

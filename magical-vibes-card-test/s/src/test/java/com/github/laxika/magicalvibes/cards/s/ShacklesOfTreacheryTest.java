@@ -72,7 +72,7 @@ class ShacklesOfTreacheryTest extends BaseCardTest {
         resolveCombat();
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)).isFalse();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
     }
 
     @Test

@@ -228,6 +228,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -332,6 +333,10 @@ public class SpellCastingService {
 
     @org.springframework.beans.factory.annotation.Autowired
     private com.github.laxika.magicalvibes.service.event.VisualCueService visualCueService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private TriggeredAbilityStackService triggeredAbilityStackService;
 
     // --- Helper records ---
 
@@ -2426,7 +2431,6 @@ public class SpellCastingService {
         gameData.exilePlayPermissions.put(card.getId(), playerId);
         gameData.exilePlayWithoutPayingManaCost.add(card.getId());
         triggerCollectionService.checkPlotTriggers(gameData, playerId, card);
-        triggerCollectionService.processNextPlotTrigger(gameData);
     }
 
     /**
@@ -13323,16 +13327,14 @@ public class SpellCastingService {
         if (discord == null) {
             return;
         }
-        StackEntry abilityCopy = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                discord.getCard(),
-                casterId,
+        // The copy (CR 707.10) is made by Discord's ability as the spell is cast, with Discord as its source: it goes on
+        // the stack through the door as an ability an earlier resolution made, choosing nothing.
+        StackEntry abilityCopy = TriggeredAbilityStackService.madeAbility(discord.getCard(), casterId,
                 discord.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.DiscordRandomCardCopyEffect())),
-                null,
+                List.of(new com.github.laxika.magicalvibes.model.effect.DiscordRandomCardCopyEffect()), 0,
                 discord.getId());
         abilityCopy.setNonTargeting(true);
-        gameData.stack.add(abilityCopy);
+        triggeredAbilityStackService.putDelayed(gameData, abilityCopy);
         gameLogService.append(gameData, GameLog.abilityTriggers(discord.getCard()));
     }
 
@@ -16603,22 +16605,14 @@ public class SpellCastingService {
             UUID sourcePermanentId = rider.sourcePermanentId();
             Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
             Card sourceCard = source != null ? source.getCard() : castCard;
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    playerId,
-                    sourceCard.getName() + "'s ability",
+            // "When you cast it this turn, this creature gains all activated abilities of that card until end of turn"
+            // (Havengul Lich): a delayed triggered ability with the Lich as its source (CR 603.7e).
+            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(sourceCard,
+                    playerId, sourceCard.getName() + "'s ability",
                     List.of(new GrantSourceActivatedAbilitiesUntilEndOfTurnEffect(
                             new ArrayList<>(castCard.getActivatedAbilities(Zone.BATTLEFIELD)),
                             castCard.getName())),
-                    0,
-                    null,
-                    sourcePermanentId,
-                    Map.of(),
-                    null,
-                    List.of(),
-                    List.of()
-            ));
+                    0, sourcePermanentId));
         }
         return permission;
     }

@@ -179,6 +179,6 @@ class SnapdaxApexOfTheHuntTest extends BaseCardTest {
     private void triggerMutation(Permanent snapdax) {
         harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
                 gd, snapdax, List.of(snapdax.getCard()), player1.getId()));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
     }
 }

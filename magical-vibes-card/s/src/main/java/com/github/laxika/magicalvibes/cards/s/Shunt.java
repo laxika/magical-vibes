@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import java.util.List;
-import java.util.Set;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -19,8 +18,7 @@ public class Shunt extends Card {
     public Shunt() {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryAllOfPredicate(List.of(new StackEntryIsSingleTargetPredicate(),
-                        new StackEntryNotPredicate(new StackEntryTypeInPredicate(Set.of(
-                                StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY))))),
+                        new StackEntryNotPredicate(new StackEntryTypeInPredicate(StackEntryType.ABILITIES)))),
                 "Target spell must have a single target."
         )).addSpellEffect(new ChangeTargetOfTargetSpellWithSingleTargetEffect());
     }

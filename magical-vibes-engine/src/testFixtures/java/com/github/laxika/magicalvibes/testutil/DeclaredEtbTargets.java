@@ -230,8 +230,8 @@ final class DeclaredEtbTargets {
     private boolean answerActivePrompt() {
         PendingInteraction active = gameData.interaction.activeInteraction();
         if (active instanceof PendingInteraction.PermanentChoice choice) {
-            if (choice.context() instanceof PermanentChoiceContext.ETBTokenTargetTrigger single) {
-                return answerSingleTarget(choice, single);
+            if (choice.context() instanceof PermanentChoiceContext.AttackTriggerTarget door) {
+                return answerSingleTarget(choice, door);
             }
             if (choice.context() instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger multi) {
                 return answerTargetSlot(choice, multi);
@@ -240,22 +240,21 @@ final class DeclaredEtbTargets {
         }
         if (active instanceof PendingInteraction.MultiPermanentChoice choice
                 && choice.context() instanceof MultiPermanentChoiceContext.AttackTriggerTargets door) {
-            return answerDoorTargets(choice, door.pending());
+            return answerDoorTargets(choice, door.pending(), door.minTargets());
         }
         if (active instanceof PendingInteraction.MultiPermanentChoice choice
                 && etbTargetGroup(choice.context()) != null) {
             return answerTargetGroup(choice, etbTargetGroup(choice.context()));
         }
-        if (active instanceof PendingInteraction.MultiPermanentChoice choice
-                && choice.context() instanceof MultiPermanentChoiceContext.EtbOptionalTarget optional) {
-            return answerOptionalTarget(choice, optional.pending());
-        }
         return false;
     }
 
-    /** Answers the stack door's prompt for the targets of one group of several with the declared targets it offers. */
+    /**
+     * Answers the stack door's prompt for the targets of one group of several with the declared targets it offers. A
+     * prompt that can't be answered with none, when none were declared ("two target lands"), is left to the test.
+     */
     private boolean answerDoorTargets(PendingInteraction.MultiPermanentChoice choice,
-                                      PermanentChoiceContext.AttackTriggerTarget door) {
+                                      PermanentChoiceContext.AttackTriggerTarget door, int minTargets) {
         Declaration declaration = find(door.sourceCard(), door.sourcePermanentId());
         if (declaration == null) {
             return false;
@@ -264,39 +263,25 @@ final class DeclaredEtbTargets {
                 .filter(id -> choice.validIds().contains(id) || choice.validPlayerIds().contains(id))
                 .limit(choice.maxCount())
                 .toList();
-        if (chosen.isEmpty() && !declaration.targetIds.isEmpty()) {
+        if (chosen.isEmpty() && (!declaration.targetIds.isEmpty() || minTargets > 0)) {
             return false;
         }
         answer(choice.playerId(), new InteractionAnswer.PermanentsChosen(chosen), declaration, door.sourceCard());
         return true;
     }
 
-    /** Answers an optional single-target prompt, choosing no target when none were declared. */
-    private boolean answerOptionalTarget(PendingInteraction.MultiPermanentChoice choice,
-                                         PermanentChoiceContext.ETBTokenTargetTrigger single) {
-        Declaration declaration = find(single.sourceCard(), single.sourcePermanentId());
-        if (declaration == null) {
-            return false;
-        }
-        List<UUID> chosen = declaration.targetIds.stream()
-                .filter(id -> choice.validIds().contains(id) || choice.validPlayerIds().contains(id))
-                .limit(1)
-                .toList();
-        if (chosen.isEmpty() && !declaration.targetIds.isEmpty()) {
-            return false;
-        }
-        answer(choice.playerId(), new InteractionAnswer.PermanentsChosen(chosen), declaration, single.sourceCard());
-        return true;
-    }
-
+    /**
+     * Answers the stack door's prompt for one target with a declared target it offers, or, when none were declared,
+     * declines an optional target by choosing the controller.
+     */
     private boolean answerSingleTarget(PendingInteraction.PermanentChoice choice,
-                                       PermanentChoiceContext.ETBTokenTargetTrigger single) {
+                                       PermanentChoiceContext.AttackTriggerTarget single) {
         Declaration declaration = find(single.sourceCard(), single.sourcePermanentId());
         if (declaration == null) {
             return false;
         }
         if (declaration.targetIds.isEmpty()) {
-            if (!etbTokenTargetService.controllerChoiceDeclines(gameData, single)) {
+            if (!choice.validPlayerIds().contains(single.controllerId())) {
                 throw new IllegalStateException(single.sourceCard().getName()
                         + "'s ETB ability was declared with no targets, but its prompt cannot be declined");
             }
@@ -441,18 +426,11 @@ final class DeclaredEtbTargets {
                 && etbTargetGroup(choice.context()) != null) {
             context = etbTargetGroup(choice.context());
         } else if (interaction instanceof PendingInteraction.MultiPermanentChoice choice
-                && choice.context() instanceof MultiPermanentChoiceContext.EtbOptionalTarget optional) {
-            context = optional.pending();
-        } else if (interaction instanceof PendingInteraction.MultiPermanentChoice choice
                 && choice.context() instanceof MultiPermanentChoiceContext.AttackTriggerTargets door) {
             context = door.pending();
         }
         if (context instanceof PermanentChoiceContext.AttackTriggerTarget door) {
-            return interaction instanceof PendingInteraction.MultiPermanentChoice
-                    && door.sourceCard().getId().equals(card.getId());
-        }
-        if (context instanceof PermanentChoiceContext.ETBTokenTargetTrigger single) {
-            return single.sourceCard().getId().equals(card.getId());
+            return door.sourceCard().getId().equals(card.getId());
         }
         return context instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger multi
                 && multi.sourceCard().getId().equals(card.getId());

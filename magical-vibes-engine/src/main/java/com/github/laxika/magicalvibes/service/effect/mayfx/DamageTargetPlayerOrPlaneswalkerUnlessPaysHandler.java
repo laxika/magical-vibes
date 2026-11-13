@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageTargetPlayerOrPlaneswalkerUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
@@ -67,8 +66,7 @@ public class DamageTargetPlayerOrPlaneswalkerUnlessPaysHandler implements MayEff
 
         DealDamageToTargetPlayerOrPlaneswalkerEffect damage =
                 new DealDamageToTargetPlayerOrPlaneswalkerEffect(effect.damage());
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), payerId,
+        StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(), payerId,
                 ability.sourceCard().getName() + "'s delayed ability", new ArrayList<>(List.of(damage)),
                 targetId, (UUID) null);
         damageHandler.resolve(gameData, damageEntry, damage);

@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredi
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "MMQ", collectorNumber = "87")
 @CardRegistration(set = "DDT", collectorNumber = "15")
@@ -27,8 +26,7 @@ public class Misdirection extends Card {
                 new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.BLUE), "blue"))));
         target(new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
-                                new StackEntryNotPredicate(new StackEntryTypeInPredicate(Set.of(
-                                        StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY))),
+                                new StackEntryNotPredicate(new StackEntryTypeInPredicate(StackEntryType.ABILITIES)),
                                 new StackEntryIsSingleTargetPredicate())),
                 "Target spell must have a single target."
         )).addSpellEffect(new ChangeTargetOfTargetSpellWithSingleTargetEffect());

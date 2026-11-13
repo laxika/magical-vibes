@@ -118,7 +118,7 @@ class ThreeTreeScribeTest extends BaseCardTest {
 
         harness.inMutationScope(() -> {
             harness.getPermanentRemovalService().removePermanentToExile(gd, leaving);
-            harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd);
+            harness.getTriggerCollectionService().beginStackDoorChoices(gd);
         });
 
         PendingInteraction.PermanentChoice choice =

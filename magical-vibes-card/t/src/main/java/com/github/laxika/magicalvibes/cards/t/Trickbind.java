@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
-import java.util.Set;
 
 @CardRegistration(set = "TSP", collectorNumber = "88")
 @CardRegistration(set = "SLD", collectorNumber = "1774")
@@ -16,9 +15,7 @@ public class Trickbind extends Card {
 
     public Trickbind() {
         target(new StackEntryPredicateTargetFilter(
-                new StackEntryTypeInPredicate(Set.of(
-                        StackEntryType.ACTIVATED_ABILITY,
-                        StackEntryType.TRIGGERED_ABILITY)),
+                new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                 "Target must be an activated or triggered ability."))
                 .addSpellEffect(new CounterAbilityAndLockSourceEffect(EffectDuration.UNTIL_END_OF_TURN));
     }

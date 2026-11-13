@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
@@ -9,7 +11,6 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesEffect;
@@ -174,7 +175,7 @@ class BlockCollectorAbilityStackObjectTest extends BaseCardTest {
         Permanent guard = addCreatureReady(player2, card);
         declareAttackersAndPrepareBlockers(List.of(0, 1));
         harness.withAutoStop(TurnStep.DECLARE_BLOCKERS, () -> gs.declareBlockers(gd, player2, List.of()));
-        gd.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player2.getId(), "Late Guard's ability",
+        gd.stack.add(TestStackDoor.triggered(card, player2.getId(), "Late Guard's ability",
                 new ArrayList<>(List.of(new MakeAllUnblockedCreaturesAttackingControllerBlockedBySourceEffect())),
                 null, guard.getId()));
 

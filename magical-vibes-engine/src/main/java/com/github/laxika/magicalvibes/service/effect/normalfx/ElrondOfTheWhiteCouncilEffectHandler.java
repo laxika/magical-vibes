@@ -156,7 +156,7 @@ public class ElrondOfTheWhiteCouncilEffectHandler implements NormalEffectHandler
             creatureControlService.applyControlEffect(gameData, effectControllerId, permanent,
                     controlEffect, EffectDuration.PERMANENT, null, sourceName);
 
-            StackEntry grantEntry = new StackEntry(entry.getEntryType(), entry.getCard(), effectControllerId,
+            StackEntry grantEntry = StackEntry.derivedFrom(entry, entry.getCard(), effectControllerId,
                     entry.getDescription(), List.of(grantRestriction), permanent.getId(),
                     entry.getSourcePermanentId());
             grantEntry.setNonTargeting(true);

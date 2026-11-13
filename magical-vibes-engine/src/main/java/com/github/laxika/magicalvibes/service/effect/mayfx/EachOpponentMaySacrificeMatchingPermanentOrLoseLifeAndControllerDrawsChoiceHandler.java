@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDrawsEffect;
@@ -81,9 +80,7 @@ public class EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDra
                 1,
                 new PermanentSharesCardTypeWithSourcePermanentPredicate(),
                 SacrificeRecipient.TARGET_PLAYER);
-        var sacrificeEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ability.sourceCard(),
+        var sacrificeEntry = StackEntry.carrier(ability.sourceCard(),
                 sourceControllerId,
                 ability.sourceCard().getName() + "'s ability",
                 new ArrayList<>(List.of(sacrifice)),
@@ -116,9 +113,7 @@ public class EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDra
     }
 
     private StackEntry drawEntry(PendingMayAbility ability, UUID sourceControllerId) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ability.sourceCard(),
+        StackEntry entry = StackEntry.carrier(ability.sourceCard(),
                 sourceControllerId,
                 ability.sourceCard().getName() + "'s ability",
                 new ArrayList<>(List.of(new DrawCardEffect(1))),

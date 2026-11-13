@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsThenEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -137,9 +136,7 @@ public class SacrificePermanentsThenEffectHandler implements NormalEffectHandler
             return;
         }
 
-        StackEntry inlineEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
+        StackEntry inlineEntry = StackEntry.carrier(sourceCard,
                 controllerId,
                 sourceCard.getName() + "'s effect",
                 new ArrayList<>(List.of(thenEffect)),

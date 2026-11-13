@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
@@ -81,9 +80,7 @@ public class SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeE
         Permanent sacrificedSnapshot = new Permanent(creature);
         destructionSupport.sacrificeAndLog(gameData, creature, controllerId);
 
-        StackEntry continuation = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
+        StackEntry continuation = StackEntry.carrier(sourceCard,
                 controllerId,
                 sourceCard.getName() + "'s ability",
                 List.of(),

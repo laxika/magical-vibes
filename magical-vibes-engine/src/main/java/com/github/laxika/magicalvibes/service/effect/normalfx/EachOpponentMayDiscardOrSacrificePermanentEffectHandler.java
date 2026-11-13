@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -107,9 +106,7 @@ public class EachOpponentMayDiscardOrSacrificePermanentEffectHandler
     private void dealDamage(GameData gameData, StackEntry sourceEntry, UUID playerId,
             DynamicAmount amount) {
         var damage = new DealDamageToPlayersEffect(amount, DamageRecipient.TARGET_PLAYER);
-        var damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceEntry.getCard(),
+        var damageEntry = StackEntry.carrier(sourceEntry.getCard(),
                 sourceEntry.getControllerId(),
                 sourceEntry.getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(damage)),

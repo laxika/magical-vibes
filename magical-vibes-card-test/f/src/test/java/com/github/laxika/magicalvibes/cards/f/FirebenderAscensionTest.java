@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.c.CoalitionWarbrute;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.t.TeoSpiritedGlider;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FirebenderAscension.class, FireSages.class, FireNationRaider.class, TeoSpiritedGlider.class})
+@CardUsed({FirebenderAscension.class, FireSages.class, FireNationRaider.class, TeoSpiritedGlider.class,
+        GrizzlyBears.class, CoalitionWarbrute.class})
 class FirebenderAscensionTest extends BaseCardTest {
 
     @Test
@@ -65,6 +69,20 @@ class FirebenderAscensionTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_OF_COMBAT);
 
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.RED)).isEqualTo(2);
+    }
+
+    @Test
+    void decayedTriggeringAsTheCreatureAttacksAddsQuestCounter() {
+        Permanent ascension = harness.addToBattlefieldAndReturn(player1, new FirebenderAscension());
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        bears.getGrantedKeywords().add(Keyword.DECAYED);
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(bears)));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        // Decayed's "when this creature attacks, sacrifice it at end of combat" is a triggered ability of the creature
+        // its attacking caused to trigger.
+        assertThat(ascension.getCounterCount(CounterType.QUEST)).isEqualTo(1);
     }
 
     @Test
@@ -150,5 +168,20 @@ class FirebenderAscensionTest extends BaseCardTest {
 
         assertThat(ascension.getCounterCount(CounterType.QUEST)).isEqualTo(1);
         assertThat(teo.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    void enlistingDoesNotAddQuestCounter() {
+        Permanent ascension = harness.addToBattlefieldAndReturn(player1, new FirebenderAscension());
+        Permanent warbrute = addCreatureReady(player1, new CoalitionWarbrute());
+        Permanent supporter = addCreatureReady(player1, new GrizzlyBears());
+
+        declareAttackers(List.of(gd.playerBattlefields.get(player1.getId()).indexOf(warbrute)));
+        harness.handleMultiplePermanentsChosen(player1, List.of(supporter.getId()));
+        harness.passUntil(TurnStep.END_OF_COMBAT);
+
+        // Enlist's "when you do" triggers on the enlist tap (CR 702.154a), not on the creature attacking.
+        assertThat(warbrute.getPowerModifier()).isEqualTo(2);
+        assertThat(ascension.getCounterCount(CounterType.QUEST)).isZero();
     }
 }

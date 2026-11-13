@@ -1123,116 +1123,12 @@ public class AnimationSupport {
             if (asTransforms.effect() instanceof ApplyLudevicCopyEffect) {
                 ludevicCopySupport.resolveAfterTransform(gameData, self);
             } else if (asTransforms.effect() instanceof CreateEmblemEffect emblem) {
-                createEmblemEffectHandler.resolve(gameData, new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, face, controllerId,
+                // Applied as it transforms, never put on the stack.
+                createEmblemEffectHandler.resolve(gameData, StackEntry.carrier(face, controllerId,
                         face.getName() + "'s transform ability", List.of(emblem), null, self.getId()), emblem);
             }
         }
         gameData.rulesEvents.emit(new PermanentChangeEvent(toBackFace ? PermanentChange.TRANSFORMED_TO_BACK
                 : PermanentChange.TRANSFORMED_TO_FRONT, new Permanent(self), controllerId));
-    }
-
-    /**
-     * Puts {@code self}'s "when this transforms into [this face]" ability, of {@code effects}, on the stack, as the
-     * trigger pipeline matched it, as one object of all its effects (CR 603.3): an ability with a target chooses it
-     * now, once for every effect (CR 603.3d); any other goes on the stack as written, a "you may" among its effects
-     * asked as it resolves (CR 603.5).
-     *
-     * @return whether it triggered
-     */
-    public boolean putTransformAbilityOnStack(GameData gameData, Permanent self, Card triggerCard,
-                                              List<CardEffect> effects) {
-        UUID controllerId = gameQueryService.findPermanentController(gameData, self.getId());
-        if (controllerId == null) {
-            return false;
-        }
-        // The route is read from all the ability's effects; the first that needs a choice of its own decides it.
-        // The entry of an ability that chooses nothing, which is also the record a target or graveyard choice
-        // carries (GameData.handOffTriggerRecord).
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                triggerCard,
-                controllerId,
-                triggerCard.getName() + "'s transform ability",
-                effects,
-                null,
-                self.getId()
-        );
-        entry.setSourcePermanentSnapshot(new Permanent(self));
-        gameData.handOffTriggerRecord(entry);
-        for (CardEffect e : effects) {
-            if (e instanceof DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect splitDamage) {
-                gameData.interaction.setPermanentChoiceContext(
-                        new PermanentChoiceContext.TransformOpponentThenCreatureTarget(
-                                triggerCard, controllerId, effects, self.getId()));
-                List<UUID> opponents = gameData.orderedPlayerIds.stream()
-                        .filter(pid -> !pid.equals(controllerId))
-                        .toList();
-                // "target opponent or planeswalker": any planeswalker, including your own.
-                List<UUID> planeswalkers = new ArrayList<>();
-                if (!splitDamage.opponentOnly()) {
-                    gameData.forEachPermanent((playerId, candidate) -> {
-                        if (gameQueryService.isPlaneswalker(gameData, candidate)
-                                && validTargetService.isValidTriggeredAbilityPermanentTarget(gameData, triggerCard,
-                                List.of(splitDamage), TargetFilters.permanent(), candidate, controllerId)) {
-                            planeswalkers.add(candidate.getId());
-                        }
-                    });
-                }
-                playerInputService.beginAnyTargetChoice(gameData, controllerId, planeswalkers, opponents,
-                        triggerCard.getName() + (splitDamage.opponentOnly()
-                                ? "'s ability - Choose target opponent."
-                                : "'s ability - Choose target opponent or planeswalker."));
-                gameLogService.append(gameData, GameLog.cardThen(triggerCard,
-                        "'s transform ability triggers - choose target opponent."));
-                log.info("Game {} - {} transform trigger awaiting opponent target", gameData.id, triggerCard.getName());
-                return true;
-            } else if (e instanceof ReturnCardFromGraveyardEffect returnEffect
-                    && returnEffect.targetGraveyard()) {
-                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        triggerCard, controllerId, new ArrayList<>(effects)));
-                gameLogService.append(gameData, GameLog.cardThen(triggerCard,
-                        "'s transform ability triggers - choose a graveyard target."));
-                if (!gameData.interaction.isAwaitingInput()) {
-                    triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
-                }
-                return true;
-            } else if (e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    || e.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                TriggerTargetCollector.Result result = triggerTargetCollector.collect(
-                        gameData, effects, triggerCard.getTargetFilter(), controllerId, triggerCard,
-                        TriggerTargetCollector.Options.ATTACK, self);
-                if (result.validTargets().isEmpty()) {
-                    gameLogService.append(gameData, GameLog.cardThen(triggerCard,
-                            "'s transform ability has no valid target."));
-                    log.info("Game {} - {} transform trigger skipped (no valid targets)",
-                            gameData.id, triggerCard.getName());
-                    return false;
-                }
-                PermanentChoiceContext.TransformTriggerTarget context =
-                        new PermanentChoiceContext.TransformTriggerTarget(
-                                triggerCard, controllerId, new ArrayList<>(effects), self.getId());
-                gameData.interaction.setPermanentChoiceContext(context);
-                playerInputService.beginAnyTargetChoice(gameData, controllerId,
-                        result.validTargets().stream()
-                                .filter(id -> !gameData.playerIdToName.containsKey(id))
-                                .toList(),
-                        result.validTargets().stream()
-                                .filter(gameData.playerIdToName::containsKey)
-                                .toList(),
-                        triggerCard.getName() + "'s ability - Choose target.");
-                gameLogService.append(gameData, GameLog.cardThen(triggerCard,
-                        "'s transform ability triggers - choose a target."));
-                log.info("Game {} - {} transform trigger awaiting target", gameData.id, triggerCard.getName());
-                return true;
-            }
-        }
-        if (effects.isEmpty()) {
-            return true;
-        }
-        gameData.stack.add(entry);
-        gameLogService.append(gameData, GameLog.cardThen(triggerCard, "'s transform ability triggers."));
-        log.info("Game {} - {} transform trigger pushed onto stack", gameData.id, triggerCard.getName());
-        return true;
     }
 }

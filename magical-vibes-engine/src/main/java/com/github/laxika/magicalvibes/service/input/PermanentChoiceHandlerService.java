@@ -85,6 +85,9 @@ public class PermanentChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService stackedModalTriggerService;
 
     private final PlayerInputService playerInputService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService graveyardTargetingService;
     private final com.github.laxika.magicalvibes.service.PermanentAuctionService permanentAuctionService;
 
     private final LibraryChoiceHandlerService libraryChoiceHandlerService;
@@ -1001,8 +1004,6 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleDemonstrateOpponentChoice(gameData, permanentId, demonstrate);
         } else if (context instanceof PermanentChoiceContext.SoulbondChoosePartner soulbondChoose) {
             battlefieldHandler.handleSoulbondChoosePartner(gameData, permanentId, soulbondChoose);
-        } else if (context instanceof PermanentChoiceContext.ChampionedTriggerTarget championedTrigger) {
-            triggerHandler.handleChampionedTrigger(gameData, permanentId, championedTrigger);
         } else if (context instanceof PermanentChoiceContext.SpellRetarget retarget) {
             spellHandler.handleSpellRetarget(gameData, permanentId, retarget);
         } else if (context instanceof PermanentChoiceContext.RedHerringExchange exchange) {
@@ -1012,22 +1013,10 @@ public class PermanentChoiceHandlerService {
             }
         } else if (context instanceof PermanentChoiceContext.PsychicBattleRetarget retarget) {
             spellHandler.handlePsychicBattleRetarget(gameData, permanentId, retarget);
-        } else if (context instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget stt) {
-            triggerHandler.handleSpellTargetTrigger(gameData, permanentId, stt);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentToChooseTriggerTarget chooser) {
             triggerHandler.handleChooseOpponentToChooseTriggerTarget(gameData, permanentId, chooser);
-        } else if (context instanceof PermanentChoiceContext.DiscardTriggerAnyTarget dtt) {
-            triggerHandler.handleDiscardTrigger(gameData, permanentId, dtt);
-        } else if (context instanceof PermanentChoiceContext.PlotTriggerAnyTarget plotTrigger) {
-            triggerHandler.handlePlotTrigger(gameData, permanentId, plotTrigger);
         } else if (context instanceof PermanentChoiceContext.CopyPermanentTargetedBySpell) {
             triggerHandler.handleCopyPermanentTargetedBySpell(gameData, permanentId);
-        } else if (context instanceof PermanentChoiceContext.DiscardControllerTriggerTarget dct) {
-            triggerHandler.handleDiscardControllerTrigger(gameData, permanentId, dct);
-        } else if (context instanceof PermanentChoiceContext.DeathTriggerTarget dtt) {
-            triggerHandler.handleDeathTrigger(gameData, permanentId, dtt);
-        } else if (context instanceof PermanentChoiceContext.SelfTriggeredAbilityTarget slt) {
-            triggerHandler.handleSelfTriggeredAbility(gameData, permanentId, slt);
         } else if (context instanceof PermanentChoiceContext.PreventDamageSourceChoice preventSource) {
             battlefieldHandler.handlePreventDamageSourceChoice(gameData, permanentId, preventSource);
         } else if (context instanceof PermanentChoiceContext.GuardDogsPermanentChoice) {
@@ -1068,12 +1057,6 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleResolvingModalTarget(gameData, permanentId, rmt);
         } else if (context instanceof PermanentChoiceContext.AnyOpponentMayTapCreatureForToken aotc) {
             battlefieldHandler.handleAnyOpponentMayTapCreatureForToken(gameData, permanentId, aotc);
-        } else if (context instanceof PermanentChoiceContext.ExploitTriggerTarget exploitTt) {
-            triggerHandler.handleExploitTrigger(gameData, permanentId, exploitTt);
-        } else if (context instanceof PermanentChoiceContext.ExploitPermanentTriggerTarget exploitPt) {
-            triggerHandler.handleExploitPermanentTrigger(gameData, permanentId, exploitPt);
-        } else if (context instanceof PermanentChoiceContext.ExploitPlayerTriggerTarget exploitPl) {
-            triggerHandler.handleExploitPlayerTrigger(gameData, permanentId, exploitPl);
         } else if (context instanceof PermanentChoiceContext.LibraryCastSpellTarget lct) {
             spellHandler.handleLibraryCastSpellTarget(gameData, permanentId, lct);
         } else if (context instanceof PermanentChoiceContext.FreeCastSacrificeCost sacrificeCost) {
@@ -1096,6 +1079,8 @@ public class PermanentChoiceHandlerService {
             spellHandler.handleOpponentChosenSpellTarget(gameData, permanentId, opponentTarget);
         } else if (context instanceof PermanentChoiceContext.OpponentChosenSpellTargets opponentTargets) {
             spellHandler.handleOpponentChosenSpellTargets(gameData, permanentId, opponentTargets);
+        } else if (context instanceof PermanentChoiceContext.TargetPlayerGraveyardCardsTrigger playerTarget) {
+            graveyardTargetingService.chooseTargetPlayersGraveyardCards(gameData, permanentId, playerTarget);
         } else if (context instanceof PermanentChoiceContext.AttackTriggerTarget att) {
             triggerHandler.handleAttackTrigger(gameData, permanentId, att);
         } else if (context instanceof PermanentChoiceContext.TokenAttackTargetChoice tokenAttack) {
@@ -1118,22 +1103,10 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleEntersTrigger(gameData, permanentId, ett);
         } else if (context instanceof PermanentChoiceContext.StackedModalTriggerTarget stackedModalTarget) {
             stackedModalTriggerService.handleTargetChosen(gameData, permanentId, stackedModalTarget);
-        } else if (context instanceof PermanentChoiceContext.EmblemTriggerTarget ett) {
-            triggerHandler.handleEmblemTrigger(gameData, permanentId, ett);
-        } else if (context instanceof PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger umpt) {
-            triggerHandler.handleUpkeepMultiPlayerFirstTarget(gameData, permanentId, umpt);
-        } else if (context instanceof PermanentChoiceContext.UpkeepSecondPlayerTargetTrigger uspt) {
-            triggerHandler.handleUpkeepMultiPlayerSecondTarget(gameData, permanentId, uspt);
         } else if (context instanceof PermanentChoiceContext.CyclopeanTombUpkeepLandChoice cyclopean) {
             removeAllMireCountersFromChosenLandEffectHandler.completeChoice(gameData, permanentId, cyclopean);
         } else if (context instanceof PermanentChoiceContext.DayNightTransformAttachment dnta) {
             triggerHandler.handleDayNightTransformAttachment(gameData, permanentId, dnta);
-        } else if (context instanceof PermanentChoiceContext.DayNightTriggerTarget dntt) {
-            triggerHandler.handleDayNightTriggerTarget(gameData, permanentId, dntt);
-        } else if (context instanceof PermanentChoiceContext.PhasesInTriggerTarget pit) {
-            triggerHandler.handlePhasesInTriggerTarget(gameData, permanentId, pit);
-        } else if (context instanceof PermanentChoiceContext.UpkeepPlayerTargetTrigger upt) {
-            triggerHandler.handleUpkeepPlayerTargetTrigger(gameData, permanentId, upt);
         } else if (context instanceof PermanentChoiceContext.PlayerWithLowestLifeChoice pwll) {
             triggerHandler.handlePlayerWithLowestLifeChoice(gameData, permanentId, pwll);
         } else if (context instanceof PermanentChoiceContext.BlackGateMostLifeChoice bgml) {
@@ -1142,36 +1115,14 @@ public class PermanentChoiceHandlerService {
             triggerHandler.handleTheMasterMostLifeChoice(gameData, permanentId, tmml);
         } else if (context instanceof PermanentChoiceContext.LeastToughnessDamageChoice ltdc) {
             triggerHandler.handleLeastToughnessDamageChoice(gameData, permanentId, ltdc);
-        } else if (context instanceof PermanentChoiceContext.UpkeepCopyTriggerTarget uct) {
-            triggerHandler.handleUpkeepCopyTrigger(gameData, permanentId, uct);
-        } else if (context instanceof PermanentChoiceContext.CapriciousEfreetOwnTarget ceo) {
-            triggerHandler.handleCapriciousEfreetOwnTarget(gameData, permanentId, ceo);
         } else if (context instanceof PermanentChoiceContext.PucasMischiefOwnTarget pmot) {
             triggerHandler.handlePucasMischiefOwnTarget(gameData, permanentId, pmot);
         } else if (context instanceof PermanentChoiceContext.PucasMischiefOpponentTarget pmot) {
             triggerHandler.handlePucasMischiefOpponentTarget(gameData, permanentId, pmot);
-        } else if (context instanceof PermanentChoiceContext.LifeGainTriggerAnyTarget lgt) {
-            triggerHandler.handleLifeGainTrigger(gameData, permanentId, lgt);
-        } else if (context instanceof PermanentChoiceContext.DrawTriggerAnyTarget dt) {
-            triggerHandler.handleDrawTrigger(gameData, permanentId, dt);
-        } else if (context instanceof PermanentChoiceContext.DrawTriggerPermanentTarget dpt) {
-            triggerHandler.handleDrawTriggerPermanentTarget(gameData, permanentId, dpt);
         } else if (context instanceof PermanentChoiceContext.ETBSpellTargetTrigger etbStt) {
             triggerHandler.handleETBSpellTargetTrigger(gameData, permanentId, etbStt);
-        } else if (context instanceof PermanentChoiceContext.ETBTokenTargetTrigger etbTtt) {
-            triggerHandler.handleETBTokenTargetTrigger(gameData, permanentId, etbTtt);
         } else if (context instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger etbMtt) {
             triggerHandler.handleETBTokenMultiTargetTrigger(gameData, permanentId, etbMtt);
-        } else if (context instanceof PermanentChoiceContext.ExploreTriggerTarget ett) {
-            triggerHandler.handleExploreTrigger(gameData, permanentId, ett);
-        } else if (context instanceof PermanentChoiceContext.ClashTriggerTarget ctt) {
-            triggerHandler.handleClashTrigger(gameData, permanentId, ctt);
-        } else if (context instanceof PermanentChoiceContext.TransformOpponentThenCreatureTarget tot) {
-            triggerHandler.handleTransformOpponentTarget(gameData, permanentId, tot);
-        } else if (context instanceof PermanentChoiceContext.TransformCreatureTarget tct) {
-            triggerHandler.handleTransformCreatureTarget(gameData, permanentId, tct);
-        } else if (context instanceof PermanentChoiceContext.TransformTriggerTarget ttt) {
-            triggerHandler.handleTransformTriggerTarget(gameData, permanentId, ttt);
         } else if (context instanceof PermanentChoiceContext.AttackCounterMoveFirstTarget acmf) {
             triggerHandler.handleAttackCounterMoveFirstTarget(gameData, permanentId, acmf);
         } else if (context instanceof PermanentChoiceContext.AttackCounterMoveSecondTarget acms) {

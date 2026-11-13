@@ -67,7 +67,7 @@ class ExpeditionRaptorTest extends BaseCardTest {
         addMana();
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         assertThat(otherRaptor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -99,9 +99,9 @@ class ExpeditionRaptorTest extends BaseCardTest {
                 .filter(raptor -> !raptor.getId().equals(otherRaptor.getId()))
                 .findFirst().orElseThrow();
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, enteringRaptor.getId()))
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(enteringRaptor.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
         assertThat(enteringRaptor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }

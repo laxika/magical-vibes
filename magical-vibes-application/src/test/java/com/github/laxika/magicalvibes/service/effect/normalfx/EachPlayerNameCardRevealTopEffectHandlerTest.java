@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerNameCardRevealTopEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -114,7 +115,7 @@ class EachPlayerNameCardRevealTopEffectHandlerTest {
                 gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears"));
 
                 EachPlayerNameCardRevealTopEffect effect = new EachPlayerNameCardRevealTopEffect();
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Conundrum Sphinx"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Conundrum Sphinx"),
                         player1Id, "Conundrum Sphinx", List.of(effect));
 
                 eachPlayerNameCardRevealTopEffectHandler.resolve(gd, entry, new EachPlayerNameCardRevealTopEffect());

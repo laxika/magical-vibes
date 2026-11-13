@@ -65,6 +65,14 @@ public interface CardEffect {
     default boolean targetChosenByAnOpponent() { return false; }
 
     /**
+     * Returns whether this effect's two targets are chosen one after the other as its triggered ability goes on the
+     * stack, the second judged against the first ("target creature you control and target creature an opponent
+     * controls with power less than or equal to that creature's power", Spawnbroker; "target nonland permanent you
+     * control and target nonland permanent an opponent controls with an equal or lesser mana value", Puca's Mischief).
+     */
+    default boolean choosesSecondTargetAgainstFirst() { return false; }
+
+    /**
      * Returns whether a death trigger using this effect has its target chosen, as it is put on the stack, by the
      * controller of its triggering permanent as that permanent last existed on the battlefield (Necrotic Plague's
      * "its controller chooses target creature"), rather than by the ability's controller.
@@ -202,5 +210,25 @@ public interface CardEffect {
     default GraveyardCardChoosingEffect graveyardCardChoice() {
         return this instanceof GraveyardCardChoosingEffect choosing && choosing.choosesGraveyardCards()
                 ? choosing : null;
+    }
+
+    /**
+     * The permanents and graveyard cards this effect chooses together as its ability is put on the stack, in one
+     * selection across both zones ("up to three other target creatures from the battlefield and/or creature cards from
+     * graveyards", Angel of Serenity); {@code null} for an effect that chooses none.
+     */
+    default BattlefieldAndGraveyardCardChoosingEffect battlefieldAndGraveyardChoice() {
+        return null;
+    }
+
+    /**
+     * This effect of a permanent's own "when this enters" ability as the ability triggers: an "if" about a fact fixed
+     * as the permanent entered (how it was cast, whether its evoke cost or tribute was paid) is judged now from
+     * {@code facts}, as the ability's stack entry can't read how the permanent was cast. {@code null} leaves the effect
+     * out, and an ability none of whose effects is left doesn't trigger (an intervening "if", CR 603.4); any other
+     * effect is itself.
+     */
+    default CardEffect asItTriggersOnEntering(EntryFacts facts) {
+        return this;
     }
 }

@@ -4,15 +4,16 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MiracleMayCastEffect;
 import com.github.laxika.magicalvibes.model.effect.MiracleRevealEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
-import java.util.ArrayList;
-import java.util.List;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,6 +29,7 @@ public class MiracleRevealHandler implements MayEffectHandlerBean {
 
     private final GameLogService gameLogService;
     private final InputCompletionService inputCompletionService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -58,13 +60,13 @@ public class MiracleRevealHandler implements MayEffectHandlerBean {
                 .filter(MiracleRevealEffect.class::isInstance)
                 .map(MiracleRevealEffect.class::cast)
                 .findFirst().orElse(new MiracleRevealEffect());
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                player.getId(),
-                card.getName() + "'s miracle",
-                new ArrayList<>(List.of(new MiracleMayCastEffect(reveal.miracleCost(), reveal.xReduction())))
-        ));
+        // "When you reveal this card this way, you may cast it ..." is the miracle card's own triggered ability, linked to
+        // its static ability (CR 702.94a): the door puts it on the stack.
+        triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                new TriggeredAbility(Triggers.youRevealCardThisWay(),
+                        new MiracleMayCastEffect(reveal.miracleCost(), reveal.xReduction())),
+                card, null, player.getId(), card.getName() + "'s miracle",
+                ConditionContext.forCard(card, player.getId()), TriggeredAbilityRequest.TriggerRecord.NONE));
         gameData.priorityPassedBy.clear();
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

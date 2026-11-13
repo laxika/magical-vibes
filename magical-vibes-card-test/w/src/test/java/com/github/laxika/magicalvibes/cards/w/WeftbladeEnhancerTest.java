@@ -60,7 +60,7 @@ class WeftbladeEnhancerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Weftblade Enhancer");
@@ -90,7 +90,7 @@ class WeftbladeEnhancerTest extends BaseCardTest {
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -110,7 +110,7 @@ class WeftbladeEnhancerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         UUID enhancerId = harness.getPermanentId(player1, "Weftblade Enhancer");
-        harness.handlePermanentChosen(player1, enhancerId);
+        harness.handleMultiplePermanentsChosen(player1, List.of(enhancerId));
         resolveAllTriggers();
 
         assertThat(findPermanent(player1, "Weftblade Enhancer")
@@ -139,7 +139,7 @@ class WeftbladeEnhancerTest extends BaseCardTest {
         addMana();
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
@@ -160,8 +160,8 @@ class WeftbladeEnhancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.castCreatureWithAlternateCost(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1,
-                harness.getPermanentId(player1, "Weftblade Enhancer"));
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(harness.getPermanentId(player1, "Weftblade Enhancer")));
         resolveAllTriggers();
         assertThat(findPermanent(player1, "Weftblade Enhancer")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -186,8 +186,8 @@ class WeftbladeEnhancerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castFromExile(player1, enhancer.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1,
-                harness.getPermanentId(player1, "Weftblade Enhancer"));
+        harness.handleMultiplePermanentsChosen(player1,
+                List.of(harness.getPermanentId(player1, "Weftblade Enhancer")));
         resolveAllTriggers();
 
         assertThat(gd.findExiledCard(enhancer.getId())).isNull();

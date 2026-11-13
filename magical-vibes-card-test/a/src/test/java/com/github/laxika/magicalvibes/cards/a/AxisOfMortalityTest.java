@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import java.util.List;
 import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.cards.o.OrbsOfWarding;
 import com.github.laxika.magicalvibes.cards.r.RampagingFerocidon;
@@ -25,10 +26,8 @@ class AxisOfMortalityTest extends BaseCardTest {
      */
     private void triggerAndTargetBothPlayers(Player controller, Player firstTarget, Player secondTarget, boolean accept) {
         advanceToUpkeep(controller);
-        // Choose first target player
-        harness.handlePermanentChosen(controller, firstTarget.getId());
-        // Choose second target player
-        harness.handlePermanentChosen(controller, secondTarget.getId());
+        // Choose both target players in one choice
+        harness.handleMultiplePermanentsChosen(controller, List.of(firstTarget.getId(), secondTarget.getId()));
         // Trigger is now on the stack — pass priorities to resolve
         harness.passBothPriorities();
         // MayEffect prompts the controller — accept or decline
@@ -100,8 +99,7 @@ class AxisOfMortalityTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         // Choose both targets
-        harness.handlePermanentChosen(player1, player1.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId(), player2.getId()));
 
         assertThat(gd.stack).hasSize(1);
         StackEntry entry = gd.stack.getFirst();
@@ -176,8 +174,7 @@ class AxisOfMortalityTest extends BaseCardTest {
         harness.setLife(player1, 15);
         harness.setLife(player2, 20);
         advanceToUpkeep(player1);
-        harness.handlePermanentChosen(player1, player1.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId(), player2.getId()));
         gd.playersCantLoseLifeThisTurn = true;
 
         harness.passBothPriorities();
@@ -194,8 +191,7 @@ class AxisOfMortalityTest extends BaseCardTest {
         harness.setLife(player1, 15);
         harness.setLife(player2, 20);
         advanceToUpkeep(player1);
-        harness.handlePermanentChosen(player1, player1.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId(), player2.getId()));
         harness.addToBattlefield(player2, new OrbsOfWarding());
 
         harness.passBothPriorities();
@@ -212,8 +208,7 @@ class AxisOfMortalityTest extends BaseCardTest {
         harness.setLife(player1, 5);
         harness.setLife(player2, 20);
         advanceToUpkeep(player1);
-        harness.handlePermanentChosen(player1, player1.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId(), player2.getId()));
         harness.setLife(player1, 8);
         harness.setLife(player2, 17);
 

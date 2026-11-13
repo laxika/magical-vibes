@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.DamageBonusGrant;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BoostColorSourceDamageThisTurnEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,7 +33,7 @@ class BoostColorSourceDamageThisTurnEffectHandlerTest extends AbstractDamageHand
             void setsBonusForController() {
                 Card card = createCard("The Flame of Keld");
                 BoostColorSourceDamageThisTurnEffect effect = new BoostColorSourceDamageThisTurnEffect(CardColor.RED, 2);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id,
+                StackEntry entry = TestStackDoor.triggered(card, player1Id,
                         "The Flame of Keld chapter III", new ArrayList<>(List.of(effect)), null);
 
                 boostColorSourceDamageThisTurnHandler.resolve(gd, entry, effect);
@@ -49,7 +50,7 @@ class BoostColorSourceDamageThisTurnEffectHandlerTest extends AbstractDamageHand
 
                 Card card = createCard("Second Flame");
                 BoostColorSourceDamageThisTurnEffect effect = new BoostColorSourceDamageThisTurnEffect(CardColor.RED, 3);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id,
+                StackEntry entry = TestStackDoor.triggered(card, player1Id,
                         "Second Flame", new ArrayList<>(List.of(effect)), null);
 
                 boostColorSourceDamageThisTurnHandler.resolve(gd, entry, effect);
@@ -64,7 +65,7 @@ class BoostColorSourceDamageThisTurnEffectHandlerTest extends AbstractDamageHand
             void doesNotAffectOtherPlayer() {
                 Card card = createCard("The Flame of Keld");
                 BoostColorSourceDamageThisTurnEffect effect = new BoostColorSourceDamageThisTurnEffect(CardColor.RED, 2);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id,
+                StackEntry entry = TestStackDoor.triggered(card, player1Id,
                         "The Flame of Keld chapter III", new ArrayList<>(List.of(effect)), null);
 
                 boostColorSourceDamageThisTurnHandler.resolve(gd, entry, effect);

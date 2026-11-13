@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -30,9 +31,7 @@ class ChaosIsMyPlaythingTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(player1NonPermanent, player1Permanent));
         harness.setLibrary(player2, List.of(player2NonPermanent, player2Permanent));
         ChaosIsMyPlaything scheme = new ChaosIsMyPlaything();
-        gd.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                scheme,
+        gd.stack.add(TestStackDoor.triggered(scheme,
                 player1.getId(),
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects(),
@@ -55,9 +54,7 @@ class ChaosIsMyPlaythingTest extends BaseCardTest {
     void cannotTargetAPermanentYouControl() {
         Permanent ownPermanent = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         ChaosIsMyPlaything scheme = new ChaosIsMyPlaything();
-        gd.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                scheme,
+        gd.stack.add(TestStackDoor.triggered(scheme,
                 player1.getId(),
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects(),
@@ -193,9 +190,7 @@ class ChaosIsMyPlaythingTest extends BaseCardTest {
 
     private void resolveScheme(List<UUID> targetIds) {
         ChaosIsMyPlaything scheme = new ChaosIsMyPlaything();
-        gd.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                scheme,
+        gd.stack.add(TestStackDoor.triggered(scheme,
                 player1.getId(),
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects(),

@@ -445,20 +445,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         if (!gameData.interaction.isAwaitingInput()) {
             stateBasedActionService.performStateBasedActions(gameData);
 
-            if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
-                triggerCollectionService.processNextDeathTriggerTarget(gameData);
-                if (gameData.interaction.isAwaitingInput()) {
-                    return;
-                }
-            }
-
-            if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
-                triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
-                if (gameData.interaction.isAwaitingInput()) {
-                    return;
-                }
-            }
-
             // A clone choice can also arise mid-resolution (token-copy effects), so the canonical
             // epilogue must run to resume the parked entry.
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -1812,9 +1798,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             return;
         }
 
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                context.sourceCard(),
+        StackEntry entry = StackEntry.carrier(context.sourceCard(),
                 context.controllerId(),
                 context.sourceCard().getName() + "'s ability",
                 List.of(context.effect()),
@@ -2714,18 +2698,6 @@ public class PermanentChoiceBattlefieldHandlerService {
                     ctx.sourcePermanentId());
             triggerCollectionService.checkAllyCreatureExploitTriggers(
                     gameData, ctx.controllerId(), ctx.sourcePermanent(), exploitedCard, sacrificedPower);
-            if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class)
-                    && !gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.processNextExploitTriggerTarget(gameData);
-            }
-            if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploitPermanentTriggerTarget.class)
-                    && !gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.processNextExploitPermanentTriggerTarget(gameData);
-            }
-            if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploitPlayerTriggerTarget.class)
-                    && !gameData.interaction.isAwaitingInput()) {
-                triggerCollectionService.processNextExploitPlayerTriggerTarget(gameData);
-            }
             if (gameData.interaction.isAwaitingInput()) {
                 return;
             }

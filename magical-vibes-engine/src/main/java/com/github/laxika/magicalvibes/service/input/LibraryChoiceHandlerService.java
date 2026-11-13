@@ -281,7 +281,7 @@ public class LibraryChoiceHandlerService {
             if (cardIndex == -1) {
                 shuffleAfterSelection = false;
             } else {
-                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
+                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
             }
         }
 
@@ -295,7 +295,7 @@ public class LibraryChoiceHandlerService {
                 && followUp.basicLandSearchQueue() == null
                 && accumulatedCards.isEmpty()
                 && (targetPlayerId == null || targetPlayerId.equals(playerId))) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
         }
 
         if (cardIndex >= 0
@@ -329,7 +329,7 @@ public class LibraryChoiceHandlerService {
                         .markSearchedOnPick(followUp.basicLandSearchQueue())
                         ? !followUp.basicLandSearchQueue().searchedPlayerIds().contains(librarySearch.playerId())
                         : accumulatedCards.isEmpty())) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
             if (com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport.markSearchedOnPick(followUp.basicLandSearchQueue())) {
                 followUp = followUp.withBasicLandSearchQueue(
                         followUp.basicLandSearchQueue().withSearchedPlayer(librarySearch.playerId()));

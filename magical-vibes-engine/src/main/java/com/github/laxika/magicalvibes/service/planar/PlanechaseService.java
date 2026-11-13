@@ -192,8 +192,9 @@ public class PlanechaseService {
                 if (planarDiePlaneswalkIsReplaced(game)) {
                     chaos(game);
                 } else {
-                    game.enqueueTrigger(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                            null, playerId, "Planeswalk", List.of(new PlaneswalkEffect())));
+                    // The planeswalking ability, controlled by the player whose roll made it trigger (CR 901.8, 901.9c).
+                    triggeredAbilityStackService.putInherent(game, playerId, "Planeswalk",
+                            List.of(new PlaneswalkEffect()), TriggeredAbilityRequest.TriggerRecord.NONE);
                 }
             }
         }
@@ -409,8 +410,7 @@ public class PlanechaseService {
 
     public boolean checkPhenomena(GameData game) {
         if (game.planechase == null || game.effectResolutionDepth > 0 || game.interaction.isAwaitingInput()
-                || game.pendingEffectResolutionEntry != null || !game.pendingMayAbilities.isEmpty()
-                || game.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) return false;
+                || game.pendingEffectResolutionEntry != null || !game.pendingMayAbilities.isEmpty()) return false;
         for (PlanarObject object : List.copyOf(game.planechase.faceUp)) {
             if (!object.getCard().hasType(CardType.PHENOMENON)) continue;
             // Its ability is on the stack, held with mana abilities' triggers, or waiting for its mode or targets with

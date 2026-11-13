@@ -47,6 +47,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -75,6 +76,8 @@ class CreatureControlServiceTest {
     @Mock private GameQueryService gameQueryService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
 
+    @Mock private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
+            triggeredAbilityStackService;
     @InjectMocks private CreatureControlService creatureControlService;
 
     private GameData gd;
@@ -94,6 +97,13 @@ class CreatureControlServiceTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
+        // The stack door puts a delayed ability on the stack (its own routes are TriggeredAbilityStackServiceTest's).
+        org.springframework.test.util.ReflectionTestUtils.setField(creatureControlService,
+                "triggeredAbilityStackService", triggeredAbilityStackService);
+        org.mockito.Mockito.doAnswer(invocation -> {
+            com.github.laxika.magicalvibes.testutil.TestStackDoor.enqueue(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(triggeredAbilityStackService).putDelayed(any(), any());
 
         lenient().when(gameQueryService.findPermanentById(eq(gd), any(UUID.class)))
                 .thenAnswer(inv -> {
@@ -324,6 +334,9 @@ class CreatureControlServiceTest {
             gd.playerBattlefields.get(player2Id).add(equipment);
             Card sourceCard = createCreatureCard("Stolen Uniform");
             gd.registerControlLossUnattachTrigger(equipment.getId(), player1Id, sourceCard);
+            // "If it's attached to a creature you control": the creature and its controller as the game sees them.
+            when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+            when(gameQueryService.findPermanentController(gd, creature.getId())).thenReturn(player1Id);
 
             applySteal(player1Id, equipment, EffectDuration.UNTIL_END_OF_TURN, null);
             gd.expireEndOfTurnFloatingEffects();

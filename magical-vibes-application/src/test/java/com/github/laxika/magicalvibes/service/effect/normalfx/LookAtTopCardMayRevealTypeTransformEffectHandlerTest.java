@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealTypeTransformEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -112,7 +113,7 @@ class LookAtTopCardMayRevealTypeTransformEffectHandlerTest {
             void emptyLibraryLogs() {
                 LookAtTopCardMayRevealTypeTransformEffect effect =
                         new LookAtTopCardMayRevealTypeTransformEffect(Set.of(CardType.INSTANT, CardType.SORCERY));
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Delver of Secrets"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Delver of Secrets"),
                         player1Id, "Delver of Secrets", List.of(effect));
 
                 lookAtTopCardMayRevealTypeTransformEffectHandler.resolve(gd, entry, effect);
@@ -129,7 +130,7 @@ class LookAtTopCardMayRevealTypeTransformEffectHandlerTest {
 
                 LookAtTopCardMayRevealTypeTransformEffect effect =
                         new LookAtTopCardMayRevealTypeTransformEffect(Set.of(CardType.INSTANT, CardType.SORCERY));
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Delver of Secrets"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Delver of Secrets"),
                         player1Id, "Delver of Secrets", List.of(effect));
 
                 lookAtTopCardMayRevealTypeTransformEffectHandler.resolve(gd, entry, effect);

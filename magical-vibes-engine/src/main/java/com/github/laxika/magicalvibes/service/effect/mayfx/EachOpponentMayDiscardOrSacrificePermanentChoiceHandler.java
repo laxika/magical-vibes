@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -115,9 +114,7 @@ public class EachOpponentMayDiscardOrSacrificePermanentChoiceHandler implements 
             UUID sourceControllerId, PermanentPredicate sacrificeFilter) {
         var sacrifice = new SacrificePermanentsEffect(
                 1, sacrificeFilter, SacrificeRecipient.TARGET_PLAYER);
-        var sacrificeEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ability.sourceCard(),
+        var sacrificeEntry = StackEntry.carrier(ability.sourceCard(),
                 sourceControllerId,
                 ability.sourceCard().getName() + "'s ability",
                 new ArrayList<>(List.of(sacrifice)),
@@ -165,9 +162,7 @@ public class EachOpponentMayDiscardOrSacrificePermanentChoiceHandler implements 
     private void dealDamage(GameData gameData, PendingMayAbility ability, DynamicAmount amount,
             UUID sourceControllerId) {
         var damage = new DealDamageToPlayersEffect(amount, DamageRecipient.TARGET_PLAYER);
-        var damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ability.sourceCard(),
+        var damageEntry = StackEntry.carrier(ability.sourceCard(),
                 sourceControllerId,
                 ability.sourceCard().getName() + "'s ability",
                 new ArrayList<>(List.of(damage)),

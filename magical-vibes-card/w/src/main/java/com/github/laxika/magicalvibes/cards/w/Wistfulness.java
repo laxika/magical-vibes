@@ -31,6 +31,7 @@ public class Wistfulness extends Card {
 
     public Wistfulness() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{G/U}{G/U}"))));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
@@ -48,7 +49,5 @@ public class Wistfulness extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new ColorSpentToCast(ManaColor.BLUE, 2)),
                 SequenceEffect.of(new DrawCardEffect(2), new DiscardEffect(1, DiscardRecipient.CONTROLLER)));
-
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }
 }

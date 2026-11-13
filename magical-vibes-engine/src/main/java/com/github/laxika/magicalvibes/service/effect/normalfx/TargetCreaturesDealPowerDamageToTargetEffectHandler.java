@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreaturesDealPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -60,8 +59,7 @@ public class TargetCreaturesDealPowerDamageToTargetEffectHandler implements Norm
             }
 
             int power = gameQueryService.getPowerBasedDamage(gameData, source);
-            StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                    source.getCard(), gameQueryService.findPermanentController(gameData, sourceId),
+            StackEntry damageEntry = StackEntry.carrier(source.getCard(), gameQueryService.findPermanentController(gameData, sourceId),
                     entry.getDescription(), List.of(), victim.getId(), sourceId);
             damageEntry.setSourcePermanentSnapshot(new Permanent(source));
             int rawDamage = power;

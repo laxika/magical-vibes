@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
-import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class CapriciousEfreet extends Card {
 
     public CapriciousEfreet() {
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DestroyOneOfTargetsAtRandomEffect());
+        target(DestroyOneOfTargetsAtRandomEffect.targetFilter(true));
+        target(DestroyOneOfTargetsAtRandomEffect.targetFilter(false), 0, 2)
+                .addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DestroyOneOfTargetsAtRandomEffect());
     }
 }

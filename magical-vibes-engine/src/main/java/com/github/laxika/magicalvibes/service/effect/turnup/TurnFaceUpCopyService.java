@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -40,8 +39,6 @@ import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardCh
 import com.github.laxika.magicalvibes.model.rules.PermanentChange;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -52,10 +49,6 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class TurnFaceUpCopyService {
-
-    @Autowired
-    @Lazy
-    private GraveyardTargetingService graveyardTargetingService;
 
     private final GameQueryService gameQueryService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -197,107 +190,6 @@ public class TurnFaceUpCopyService {
     public void turnedFaceUp(GameData gameData, Permanent permanent, UUID controllerId, int xValue) {
         gameData.rulesEvents.emit(new PermanentChangeEvent(PermanentChange.TURNED_FACE_UP, new Permanent(permanent),
                 controllerId, xValue));
-    }
-
-    /**
-     * Puts {@code permanent}'s "when this is turned face up" ability, of {@code effects}, on the stack as the trigger
-     * pipeline matched it, once more for each effect that makes it trigger an additional time: a modal ability
-     * chooses its mode and a targeted one waits for its targets (CR 603.3d). The pipeline judged the ability's
-     * intervening "if" as it triggered (CR 603.4); its effects are wrapped in it, so it is checked again as they
-     * resolve.
-     *
-     * @param xValue the X paid to turn it face up, or 0
-     * @return whether it triggered
-     */
-    public boolean putTurnedFaceUpAbilityOnStack(GameData gameData, Permanent permanent, UUID controllerId,
-                                                 List<CardEffect> effects, int xValue) {
-        if (effects.isEmpty()) {
-            return false;
-        }
-        Card card = permanent.getCard();
-        int triggerCopies = 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(
-                gameData, controllerId, permanent, false,
-                new TriggerContext.PermanentTurnsFaceUp(permanent, controllerId));
-        // The entry of an ability that chooses nothing, which is also the record a mode or target choice carries
-        // (GameData.handOffTriggerRecord).
-        java.util.function.Supplier<StackEntry> plainEntry = () -> {
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
-                    card.getName() + "'s ability", new ArrayList<>(effects), xValue, permanent.getId());
-            entry.setSourcePermanentSnapshot(new Permanent(permanent));
-            return entry;
-        };
-        if (effects.size() == 1 && effects.getFirst() instanceof ChooseOneEffect modal) {
-            for (int copy = 0; copy < triggerCopies; copy++) {
-                gameData.handOffTriggerRecord(plainEntry.get());
-                gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                        card, controllerId, modal, permanent.getId()));
-            }
-            return true;
-        }
-        BattlefieldAndGraveyardCardChoosingEffect mixedZoneChoice = effects.stream()
-                .filter(BattlefieldAndGraveyardCardChoosingEffect.class::isInstance)
-                .map(BattlefieldAndGraveyardCardChoosingEffect.class::cast)
-                .findFirst().orElse(null);
-        if (mixedZoneChoice != null) {
-            gameData.handOffTriggerRecord(plainEntry.get());
-            graveyardTargetingService.handleBattlefieldAndGraveyardExileETBTargeting(
-                    gameData, controllerId, card, effects, permanent.getId(), mixedZoneChoice, xValue);
-            return true;
-        }
-        boolean targetsSpell = effects.stream()
-                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.SPELL));
-        boolean targetsGraveyard = effects.stream()
-                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
-        boolean targetsPlayer = effects.stream()
-                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
-        boolean targetsPermanent = effects.stream()
-                .anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-        if (targetsGraveyard) {
-            int minimumGraveyardTargets = effects.stream()
-                    .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))
-                    .anyMatch(effect -> !effect.hasOptionalTarget()) ? 1 : 0;
-            for (int copy = 0; copy < triggerCopies; copy++) {
-                gameData.handOffTriggerRecord(plainEntry.get());
-                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        card, controllerId, effects, null, minimumGraveyardTargets, xValue));
-            }
-            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
-        } else if (targetsSpell) {
-            StackEntryPredicate spellFilter = null;
-            boolean includeAbilities = false;
-            if (card.getTargetFilter() instanceof StackEntryPredicateTargetFilter filter) {
-                spellFilter = filter.predicate();
-                includeAbilities = TriggerCollectionService.predicateContainsHasTarget(filter.predicate());
-            }
-            for (int copy = 0; copy < triggerCopies; copy++) {
-                gameData.handOffTriggerRecord(plainEntry.get());
-                gameData.queueInteraction(new PermanentChoiceContext.ETBSpellTargetTrigger(
-                        card, controllerId, effects, spellFilter, includeAbilities, permanent.getId()));
-            }
-        } else if (targetsPlayer || targetsPermanent || effects.stream().anyMatch(card::hasEffectTargetIndex)) {
-            boolean multiTarget = card.getTargetGroups().size() > 1
-                    || card.getTargetGroups().stream()
-                    .anyMatch(group -> group.getMaxTargets() > 1 || group.getMinTargets() == 0
-                            || group.getDynamicMinTargets() != null)
-                    || effects.stream().anyMatch(card::hasEffectTargetIndex)
-                    && triggerCollectionService.needsSlotBySlotTargetSelection(card);
-            for (int copy = 0; copy < triggerCopies; copy++) {
-                gameData.handOffTriggerRecord(plainEntry.get());
-                if (multiTarget) {
-                    gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                            card, controllerId, effects, permanent.getId(), List.of(), 0, 0));
-                } else {
-                    gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            card, controllerId, effects, !targetsPermanent, card.getTargetFilter(), 0,
-                            permanent.getId()));
-                }
-            }
-        } else {
-            for (int copy = 0; copy < triggerCopies; copy++) {
-                gameData.stack.add(plainEntry.get());
-            }
-        }
-        return true;
     }
 
     private void applyTurnFaceUpReplacements(GameData gameData, UUID controllerId, Permanent permanent,

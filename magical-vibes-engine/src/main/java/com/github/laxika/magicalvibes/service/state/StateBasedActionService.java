@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CantBeDestroyedByLethalDamageUnlessSingleSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -125,6 +126,10 @@ public class StateBasedActionService {
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.effect.normalfx.StoriedEffectHandler storiedEffectHandler;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private TriggeredAbilityStackService triggeredAbilityStackService;
 
     public void performStateBasedActions(GameData gameData) {
         if (gameData.waitingForSubgame) return;
@@ -773,17 +778,15 @@ public class StateBasedActionService {
                 for (UUID creatureId : new ArrayList<>(linked)) {
                     Permanent creature = gameQueryService.findPermanentById(gameData, creatureId);
                     if (creature != null && prevController.equals(gameData.findControllerOf(creature))) {
-                        StackEntry trigger = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                creature.getCard(),
+                        // "Sacrifice the creature when you lose control of [this]": a delayed triggered ability the
+                        // returning ability made (CR 603.7), about the creature it returned, which it acts on.
+                        StackEntry trigger = TriggeredAbilityStackService.madeAbility(creature.getCard(),
                                 prevController,
                                 creature.getCard().getName() + "'s control-loss sacrifice ability",
-                                List.of(new SacrificeTriggeringPermanentEffect()),
-                                null,
-                                seraphId);
+                                List.of(new SacrificeTriggeringPermanentEffect()), (UUID) null, seraphId);
                         trigger.setTriggeringPermanentId(creatureId);
                         trigger.setNonTargeting(true);
-                        gameData.enqueueTrigger(trigger);
+                        triggeredAbilityStackService.putDelayed(gameData, trigger);
                         gameLogService.append(gameData, GameLog.abilityTriggers(creature.getCard()));
                         queued = true;
                     }
@@ -832,17 +835,16 @@ public class StateBasedActionService {
                     .anyMatch(exiled -> permanentId.equals(exiled.sourcePermanentId()));
             if ((hasLinkedCards || permanent != null)
                     && (permanent == null || !gameQueryService.hasLostAllAbilities(gameData, permanent))) {
+                // The ability the watch was registered for acts on the cards exiled with the source, which it names by
+                // the source's id even once the source has left; it keeps the source and controller it was registered
+                // with, as a delayed ability does (CR 603.7e), and chooses nothing.
                 Card sourceCard = watch.sourceCard();
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        sourceCard,
-                        previousController,
+                StackEntry trigger = TriggeredAbilityStackService.madeAbility(sourceCard, previousController,
                         sourceCard.getName() + "'s control-loss ability",
-                        List.of(new ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect()),
-                        null,
+                        List.of(new ReturnAllCardsExiledWithSourceToOwnerGraveyardEffect()), (UUID) null,
                         permanentId);
                 trigger.setNonTargeting(true);
-                gameData.enqueueTrigger(trigger);
+                triggeredAbilityStackService.putDelayed(gameData, trigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
                 anyQueued = true;
             }

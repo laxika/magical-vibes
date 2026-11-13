@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutMatchingOntoBattlefieldOrCreateTokenEffect;
@@ -66,9 +65,7 @@ public class LookAtTopCardMayPutMatchingOntoBattlefieldOrCreateTokenHandler
 
     private void createFallbackToken(GameData gameData, PendingMayAbility ability,
                                      LookAtTopCardMayPutMatchingOntoBattlefieldOrCreateTokenEffect effect) {
-        StackEntry tokenEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ability.sourceCard(),
+        StackEntry tokenEntry = StackEntry.carrier(ability.sourceCard(),
                 ability.controllerId(),
                 ability.sourceCard().getName() + "'s ability",
                 List.of(effect.fallbackToken()),

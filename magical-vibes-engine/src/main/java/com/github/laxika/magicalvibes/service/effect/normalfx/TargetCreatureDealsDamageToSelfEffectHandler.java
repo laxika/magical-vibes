@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToSelfEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -52,8 +51,7 @@ public class TargetCreatureDealsDamageToSelfEffectHandler implements NormalEffec
 
         int damage = amountEvaluationService.evaluate(gameData, selfDamageEffect.damage(),
                 AmountContext.forStackEntry(entry, target));
-        StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                target.getCard(), gameQueryService.findPermanentController(gameData, target.getId()),
+        StackEntry damageEntry = StackEntry.carrier(target.getCard(), gameQueryService.findPermanentController(gameData, target.getId()),
                 target.getCard().getName() + " deals damage to itself", List.of(),
                 target.getId(), target.getId());
         damageEntry.setNonTargeting(true);

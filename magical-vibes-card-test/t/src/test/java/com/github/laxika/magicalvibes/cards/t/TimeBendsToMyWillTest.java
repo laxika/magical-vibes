@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.cards.s.SafeholdSentry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -38,9 +39,7 @@ class TimeBendsToMyWillTest extends BaseCardTest {
 
     private void resolveScheme() {
         TimeBendsToMyWill scheme = new TimeBendsToMyWill();
-        gd.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                scheme,
+        gd.stack.add(TestStackDoor.triggered(scheme,
                 player1.getId(),
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects()));

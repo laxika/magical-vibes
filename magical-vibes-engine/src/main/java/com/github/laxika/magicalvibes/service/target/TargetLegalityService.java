@@ -5488,8 +5488,7 @@ public class TargetLegalityService {
             return true;
         }
         if (predicate instanceof StackEntryTypeInPredicate typeIn) {
-            return typeIn.spellTypes().contains(StackEntryType.ACTIVATED_ABILITY)
-                    || typeIn.spellTypes().contains(StackEntryType.TRIGGERED_ABILITY);
+            return typeIn.spellTypes().stream().anyMatch(StackEntryType::isAbility);
         }
         if (predicate instanceof StackEntryAllOfPredicate allOf) {
             return allOf.predicates().stream().anyMatch(this::predicateAdmitsAbilityTarget);

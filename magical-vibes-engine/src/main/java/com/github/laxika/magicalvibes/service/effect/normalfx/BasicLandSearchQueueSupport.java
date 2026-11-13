@@ -154,7 +154,7 @@ public class BasicLandSearchQueueSupport {
                 && markSearchedOnPick(followUp.basicLandSearchQueue())
                 && LibrarySearchTriggerHelper.anyPermanentReactsToLibrarySearches(gameData);
         if ((deck == null || deck.isEmpty()) && !offersOptionalSearchOnEmptyLibrary) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
             if (!shuffleAfterQueue && deck != null) LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             gameLogService.append(gameData,
                     GameLog.text(playerName + " searches their library but it is empty."
@@ -169,7 +169,7 @@ public class BasicLandSearchQueueSupport {
                 .toList();
         boolean choosesWhetherToSearch = markSearchedOnPick(followUp.basicLandSearchQueue());
         if (basicLands.isEmpty() && !choosesWhetherToSearch) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
             if (!shuffleAfterQueue) LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             gameLogService.append(gameData, GameLog.text(
                     playerName + " searches their library but finds no basic land cards."
@@ -179,7 +179,7 @@ public class BasicLandSearchQueueSupport {
 
         int count = pick.count();
         if (count <= 0 && !choosesWhetherToSearch) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
             if (!shuffleAfterQueue) LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             gameLogService.append(gameData, GameLog.text(
                     playerName + " searches their library for up to zero basic land cards."
@@ -192,7 +192,7 @@ public class BasicLandSearchQueueSupport {
                 ? " into your hand"
                 : enterTapped ? " onto the battlefield tapped" : " onto the battlefield";
         if (!followUp.basicLandSearchQueue().optionalSearch()) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, playerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
         }
         String prompt = (followUp.basicLandSearchQueue().optionalSearch() ? "You may search" : "Search")
                 + " your library for up to " + count + " basic land card"

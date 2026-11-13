@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsOrControllerDrawsEffect;
@@ -42,9 +41,7 @@ public class EachOpponentDiscardsOrControllerDrawsEffectHandler implements Norma
         followUp = playerInteractionSupport.startNextEachPlayerDiscard(gameData, followUp);
 
         if (!gameData.interaction.isAwaitingInput() && followUp.eachPlayerNoDiscardCount() > 0) {
-            StackEntry completion = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
+            StackEntry completion = StackEntry.carrier(sourceCard,
                     entry.getControllerId(),
                     sourceCard.getName() + "'s effect",
                     List.of(drawCards));

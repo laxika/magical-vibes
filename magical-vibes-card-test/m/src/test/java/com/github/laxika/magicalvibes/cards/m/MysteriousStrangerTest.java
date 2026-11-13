@@ -24,7 +24,7 @@ class MysteriousStrangerTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opponentCounsel));
         harness.castFromHand(player1, new MysteriousStranger(), "{2}{R}{R}");
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(ownCounsel.getId(), opponentCounsel.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownCounsel.getId(), opponentCounsel.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -44,7 +44,7 @@ class MysteriousStrangerTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of());
         harness.castFromHand(player1, new MysteriousStranger(), "{2}{R}{R}");
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(ownCounsel.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownCounsel.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(ownCounsel.getId())).isNotNull();
@@ -60,7 +60,7 @@ class MysteriousStrangerTest extends BaseCardTest {
         harness.castFromHand(player1, new MysteriousStranger(), "{2}{R}{R}");
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(bears.getId())))
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -73,7 +73,7 @@ class MysteriousStrangerTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opponentCounsel));
         harness.castFromHand(player1, new MysteriousStranger(), "{2}{R}{R}");
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(ownCounsel.getId(), opponentCounsel.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownCounsel.getId(), opponentCounsel.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.stack).noneMatch(StackEntry::isCopy);
@@ -94,7 +94,7 @@ class MysteriousStrangerTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of(opponentCounsel));
         harness.castFromHand(player1, new MysteriousStranger(), "{2}{R}{R}");
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(ownCounsel.getId(), opponentCounsel.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownCounsel.getId(), opponentCounsel.getId()));
         harness.setGraveyard(player2, List.of());
         harness.passBothPriorities();
 
@@ -115,7 +115,7 @@ class MysteriousStrangerTest extends BaseCardTest {
         harness.castFromHand(player1, new MysteriousStranger(), "{2}{R}{R}");
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1,
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
                 List.of(first.getId(), second.getId())))
                 .isInstanceOf(IllegalStateException.class);
     }
@@ -130,7 +130,9 @@ class MysteriousStrangerTest extends BaseCardTest {
         harness.castFromHand(player1, new MysteriousStranger(), "{2}{R}{R}");
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(ownCounsel.getId())))
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(ownCounsel.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

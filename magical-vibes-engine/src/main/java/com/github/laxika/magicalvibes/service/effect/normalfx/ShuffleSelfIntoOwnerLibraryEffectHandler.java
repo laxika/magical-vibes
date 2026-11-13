@@ -91,7 +91,7 @@ public class ShuffleSelfIntoOwnerLibraryEffectHandler implements NormalEffectHan
             case TARGET_OWNER_AS_TARGET -> sourceOwnerId;
             default -> entry.getTargetId();
         };
-        StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), thenControllerId,
+        StackEntry thenEntry = StackEntry.derivedFrom(entry, entry.getCard(), thenControllerId,
                 entry.getDescription(), List.of(shuffle.thenEffect()), thenTargetId,
                 entry.getSourcePermanentId());
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());

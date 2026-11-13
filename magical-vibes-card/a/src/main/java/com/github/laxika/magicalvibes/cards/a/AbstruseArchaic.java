@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntrySourceIsColorlessPr
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "CMM", collectorNumber = "712")
 @CardRegistration(set = "CMM", collectorNumber = "744")
@@ -24,9 +23,7 @@ public class AbstruseArchaic extends Card {
                 "{1}, {T}: Copy target activated or triggered ability you control from a colorless source. You may choose new targets for the copy.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
-                                new StackEntryTypeInPredicate(Set.of(
-                                        StackEntryType.ACTIVATED_ABILITY,
-                                        StackEntryType.TRIGGERED_ABILITY)),
+                                new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                                 new StackEntrySourceIsColorlessPredicate(),
                                 new StackEntryControlledByPredicate())),
                         "Target must be an activated or triggered ability you control from a colorless source.")));

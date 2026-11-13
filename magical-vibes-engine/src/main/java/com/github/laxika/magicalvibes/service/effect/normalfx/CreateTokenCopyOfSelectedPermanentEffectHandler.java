@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSelectedPermanentEffect;
 import lombok.RequiredArgsConstructor;
@@ -23,9 +22,7 @@ public class CreateTokenCopyOfSelectedPermanentEffectHandler implements NormalEf
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var copyEffect = (CreateTokenCopyOfSelectedPermanentEffect) effect;
-        StackEntry copyEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                entry.getCard(),
+        StackEntry copyEntry = StackEntry.carrier(entry.getCard(),
                 entry.getControllerId(),
                 entry.getCard().getName() + "'s selected permanent copy",
                 java.util.List.of(),

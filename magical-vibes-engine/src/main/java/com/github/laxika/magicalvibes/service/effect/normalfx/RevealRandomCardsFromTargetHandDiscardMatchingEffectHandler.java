@@ -98,9 +98,6 @@ public class RevealRandomCardsFromTargetHandDiscardMatchingEffectHandler impleme
         log.info("Game {} - {} discards {} revealed matching card(s)",
                 gameData.id, playerName, discarded.size());
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-        }
     }
 
     private static void appendCardList(GameLog.Builder builder, List<Card> cards) {

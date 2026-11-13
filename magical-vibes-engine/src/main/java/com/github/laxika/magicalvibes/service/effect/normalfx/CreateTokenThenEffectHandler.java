@@ -16,8 +16,8 @@ import java.util.UUID;
 
 /**
  * Resolves "create a token. When you do, ..." (CR 603.12): the tokens are created, then the follow-up is put on the
- * stack as one reflexive ability, or, for a follow-up the card writes as about "that token", one for each token
- * created, with that token as the permanent it acts for.
+ * stack as a reflexive ability once for each time the written action occurred (CR 603.12a), or, for a follow-up the
+ * card writes as about "that token", one for each token created, with that token as the permanent it acts for.
  */
 @Component
 @RequiredArgsConstructor
@@ -46,18 +46,21 @@ public class CreateTokenThenEffectHandler implements NormalEffectHandlerBean {
         }
 
         if (!createThen.aboutThatToken()) {
-            // Tokens a replacement effect created instead of the ones written (Divine Visitation's Angels) aren't the
-            // action "when you do" refers to; a token the written action created is, and when the action creates one
-            // token, each token a replacement effect added to it triggers the ability once (CR 603.12; Ajani, Nacatl
-            // Avenger's ruling).
+            // The ability triggers once for each time the written action occurred (CR 603.12a). Each written quantity
+            // of the written tokens a replacement effect makes counts as the action done once more (Ajani, Nacatl
+            // Avenger's ruling for one token: a doubler makes two abilities; "create two" under one doubler makes four
+            // tokens, two abilities; a tripler three). Tokens a replacement effect creates instead (Divine
+            // Visitation's Angels) or adds of another kind (Chatterfang's Squirrels) aren't the written tokens. No
+            // ruling covers a quantity above one, and a count that isn't a multiple of it rounds down. A quantity
+            // that isn't fixed triggers it once.
             long writtenTokens = entry.getCreatedPermanentIds().subList(createdBefore,
                     entry.getCreatedPermanentIds().size()).stream()
                     .map(id -> gameQueryService.findPermanentById(gameData, id))
                     .filter(token -> token != null && createThen.tokenEffect().tokenName() != null
                             && createThen.tokenEffect().tokenName().equals(token.getCard().getName()))
                     .count();
-            boolean oneTokenWritten = createThen.tokenEffect().amount() instanceof Fixed fixed && fixed.value() == 1;
-            long count = oneTokenWritten ? writtenTokens : Math.min(1, writtenTokens);
+            int writtenQuantity = createThen.tokenEffect().amount() instanceof Fixed fixed ? fixed.value() : 0;
+            long count = writtenQuantity > 0 ? writtenTokens / writtenQuantity : Math.min(1, writtenTokens);
             List<CardEffect> reflexive = new ArrayList<>();
             for (long i = 0; i < count; i++) {
                 reflexive.add(new QueueReflexiveAbilityEffect(createThen.thenEffect()));

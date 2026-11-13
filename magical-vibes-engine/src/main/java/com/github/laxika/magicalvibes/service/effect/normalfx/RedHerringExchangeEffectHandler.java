@@ -211,7 +211,7 @@ public class RedHerringExchangeEffectHandler implements NormalEffectHandlerBean 
                 && switch (entry.getEntryType()) {
                     case CREATURE_SPELL, ENCHANTMENT_SPELL, ARTIFACT_SPELL, PLANESWALKER_SPELL,
                             BATTLE_SPELL, SORCERY_SPELL, INSTANT_SPELL -> true;
-                    case ACTIVATED_ABILITY, TRIGGERED_ABILITY -> false;
+                    case TRIGGERED_ABILITY, ACTIVATED_ABILITY -> false;
                 };
     }
 }

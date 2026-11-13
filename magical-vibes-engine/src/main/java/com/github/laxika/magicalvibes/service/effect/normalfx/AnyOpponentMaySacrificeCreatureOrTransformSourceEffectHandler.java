@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnyOpponentMaySacrificeCreatureOrTransformSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -117,9 +116,7 @@ public class AnyOpponentMaySacrificeCreatureOrTransformSourceEffectHandler
         if (sourcePermanentId == null) {
             return;
         }
-        StackEntry transformEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
+        StackEntry transformEntry = StackEntry.carrier(sourceCard,
                 abilityControllerId,
                 sourceCard.getName() + "'s ability",
                 List.of(new TransformSelfEffect()),

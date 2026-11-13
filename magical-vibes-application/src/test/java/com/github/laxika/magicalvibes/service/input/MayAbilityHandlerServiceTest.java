@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -10,7 +12,6 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGraveyardThisTurnEffect;
@@ -152,9 +153,7 @@ class MayAbilityHandlerServiceTest {
                         .destination(GraveyardChoiceDestination.TOP_OF_OWNERS_LIBRARY)
                         .targetGraveyard(true)
                         .build());
-        StackEntry pendingEntry = new StackEntry(
-                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
-                sourceCard, PLAYER1_ID, "Test Source's ability", List.of(new MayEffect(sequence, "Exile it?")),
+        StackEntry pendingEntry = TestStackDoor.triggered(sourceCard, PLAYER1_ID, "Test Source's ability", List.of(new MayEffect(sequence, "Exile it?")),
                 List.of(targetCard.getId()));
         gd.pendingEffectResolutionEntry = pendingEntry;
         gd.pendingEffectResolutionIndex = 0;
@@ -300,7 +299,7 @@ class MayAbilityHandlerServiceTest {
         sourceCard.setName("Test Source");
         sourceCard.setType(CardType.CREATURE);
         UUID sourcePermanentId = UUID.randomUUID();
-        StackEntry resolving = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, PLAYER1_ID,
+        StackEntry resolving = TestStackDoor.triggered(sourceCard, PLAYER1_ID,
                 "Test Source's ability", new ArrayList<>(List.of(new CardEffect() { })), null, sourcePermanentId);
         resolving.setOnceEachTurnActionKey("once");
         gd.pendingEffectResolutionEntry = resolving;
@@ -339,9 +338,7 @@ class MayAbilityHandlerServiceTest {
         Card sourceCard = new Card();
         sourceCard.setName("Test Source");
         sourceCard.setType(CardType.ENCHANTMENT);
-        StackEntry pendingEntry = new StackEntry(
-                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
-                sourceCard, PLAYER1_ID, "Test Source's ability", List.of(new MayEffect(effect, "Test may ability")));
+        StackEntry pendingEntry = TestStackDoor.triggered(sourceCard, PLAYER1_ID, "Test Source's ability", List.of(new MayEffect(effect, "Test may ability")));
         gd.pendingEffectResolutionEntry = pendingEntry;
         gd.pendingEffectResolutionIndex = 0;
         gd.resolvingMayEffectFromStack = true;

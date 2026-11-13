@@ -32,6 +32,7 @@ public class Deceit extends Card {
 
     public Deceit() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{U/B}{U/B}"))));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
 
         SpellTarget playerTarget = target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
@@ -50,7 +51,5 @@ public class Deceit extends Card {
         playerTarget.addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new ColorSpentToCast(ManaColor.BLACK, 2)),
                 new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.DISCARD));
-
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }
 }

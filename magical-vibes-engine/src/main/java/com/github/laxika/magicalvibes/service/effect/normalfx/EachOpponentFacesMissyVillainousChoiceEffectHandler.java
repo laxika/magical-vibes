@@ -86,8 +86,7 @@ public class EachOpponentFacesMissyVillainousChoiceEffectHandler implements Norm
 
     private void dealDamage(GameData gameData, StackEntry entry, UUID opponentId) {
         if (opponentId != null && gameData.playerIds.contains(opponentId)) {
-            StackEntry damageEntry = new StackEntry(
-                    entry.getEntryType(), entry.getCard(), entry.getControllerId(),
+            StackEntry damageEntry = StackEntry.derivedFrom(entry, entry.getCard(), entry.getControllerId(),
                     entry.getDescription(), List.of(), opponentId, entry.getSourcePermanentId());
             damageHandler.resolve(gameData, damageEntry,
                     new ControlledCreaturesDealDamageToTargetPlayerEffect(1,

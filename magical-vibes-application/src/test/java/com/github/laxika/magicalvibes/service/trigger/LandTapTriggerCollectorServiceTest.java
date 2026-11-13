@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
@@ -42,6 +41,11 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -73,6 +77,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -106,6 +111,21 @@ class LandTapTriggerCollectorServiceTest {
     @Mock
     private TriggerCollectionService triggerCollectionService;
 
+    @Mock
+    private ObjectProvider<TriggeredAbilityStackService> stackServiceProvider;
+
+    @Mock
+    private ConditionEvaluationService conditionEvaluationService;
+
+    @Mock
+    private PredicateEvaluationService predicateEvaluationService;
+
+    @Mock
+    private GraveyardTargetingSupport graveyardTargetingSupport;
+
+    @Mock
+    private TriggerTargetCollector triggerTargetCollector;
+
     @Spy
     private EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
 
@@ -123,8 +143,14 @@ class LandTapTriggerCollectorServiceTest {
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
         gd.playerManaPools.put(player1Id, new ManaPool());
         gd.playerManaPools.put(player2Id, new ManaPool());
+        gd.playerIds.addAll(List.of(player1Id, player2Id));
         sut = new LandTapTriggerCollectorService(gameQueryService, gameLogService, effectHandlerRegistry,
-                triggerCollectionServiceProvider);
+                triggerCollectionServiceProvider, stackServiceProvider);
+        TriggeredAbilityStackService door = new TriggeredAbilityStackService(conditionEvaluationService,
+                gameQueryService, graveyardTargetingSupport, gameLogService, triggerCollectionService,
+                amountEvaluationService, predicateEvaluationService, triggerTargetCollector);
+        lenient().when(stackServiceProvider.getObject()).thenReturn(door);
+        lenient().when(triggerCollectionServiceProvider.getObject()).thenReturn(triggerCollectionService);
         registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(sut, registry);
         addOneOfEachHandler = new AddOneOfEachManaTypeProducedByLandEffectHandler(
@@ -269,27 +295,28 @@ class LandTapTriggerCollectorServiceTest {
     class Targeted {
 
         @Test
-        @DisplayName("Forbidden Orchard's \"target opponent\" is chosen with the record of the tap")
+        @DisplayName("Forbidden Orchard's declared \"target opponent\" is chosen at the stack door with the record of the tap")
         void playerTargetIsChosenWithTheRecord() {
-            when(triggerCollectionServiceProvider.getObject()).thenReturn(triggerCollectionService);
-            Permanent orchard = createLandPermanent("Forbidden Orchard", ManaColor.COLORLESS);
+            Card orchardCard = createCard("Forbidden Orchard", CardType.LAND);
             var effect = new CreateTokenForTargetPlayerEffect(
                     new CreateTokenEffect("Spirit", 1, 1, null, List.of(CardSubtype.SPIRIT), Set.of(), Set.of()),
                     PlayerRelation.OPPONENT);
+            orchardCard.target(new PlayerPredicateTargetFilter(
+                    new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent"))
+                    .addTrigger(Triggers.youTapThisLandForMana(), effect);
+            Permanent orchard = new Permanent(orchardCard);
 
             assertThat(tapLand(orchard, player1Id, effect, player1Id, orchard.getId(), ManaColor.GREEN)).isTrue();
 
             assertThat(gd.stack).isEmpty();
-            var choice = (PermanentChoiceContext.SpellTargetTriggerAnyTarget) gd.pendingInteractions.getFirst();
+            var choice = (PermanentChoiceContext.AttackTriggerTarget) gd.pendingInteractions.getFirst();
             assertThat(choice.effects()).containsExactly(effect);
-            assertThat(choice.playerTargetOnly()).isTrue();
-            assertThat(choice.targetFilter()).isInstanceOf(PlayerPredicateTargetFilter.class);
-            assertThat(choice.triggeringPlayerId()).isEqualTo(player1Id);
-            assertThat(choice.triggeringPermanentId()).isEqualTo(orchard.getId());
             assertThat(choice.sourcePermanentId()).isEqualTo(orchard.getId());
-            assertThat(choice.producedManaColors()).containsExactly(ManaColor.GREEN);
-            assertThat(choice.choosingPlayerId()).isEqualTo(player1Id);
-            verify(triggerCollectionService).processNextSpellTargetTrigger(gd);
+            StackEntry record = choice.triggerRecord();
+            assertThat(record.isParkedAtStackDoor()).isTrue();
+            assertThat(record.getTriggeringPlayerId()).isEqualTo(player1Id);
+            assertThat(record.getTriggeringPermanentId()).isEqualTo(orchard.getId());
+            assertThat(record.getProducedManaColors()).containsExactly(ManaColor.GREEN);
         }
 
         @Test
@@ -310,24 +337,29 @@ class LandTapTriggerCollectorServiceTest {
             assertThat(parked.getEffectsToResolve()).containsExactly(effect);
             assertThat(parked.getTargetFilter()).isNull();
 
-            assertThat(sut.queueResolvedProducedManaTriggerTarget(gd, parked, ManaColor.RED)).isTrue();
+            gd.interaction.clearAwaitingInput();
+            gd.pendingManaAbilityTriggers.remove(parked);
+            assertThat(sut.putResolvedProducedManaTrigger(gd, parked, ManaColor.RED)).isTrue();
 
-            var choice = (PermanentChoiceContext.SpellTargetTriggerAnyTarget) gd.pendingInteractions.getFirst();
+            var choice = (PermanentChoiceContext.AttackTriggerTarget) gd.pendingInteractions.getFirst();
             assertThat(choice.effects()).containsExactly(effect);
-            assertThat(choice.producedManaColors()).containsExactly(ManaColor.RED);
-            assertThat(choice.triggeringPermanentId()).isEqualTo(land.getId());
+            StackEntry record = choice.triggerRecord();
+            assertThat(record.isParkedAtStackDoor()).isTrue();
+            assertThat(record.getProducedManaColors()).containsExactly(ManaColor.RED);
+            assertThat(record.getTriggeringPermanentId()).isEqualTo(land.getId());
             // "Target creature you control" is the effect's own target, not a filter the collector adds.
-            assertThat(choice.targetFilter()).isNull();
+            assertThat(record.getTargetFilter()).isNull();
+            verify(triggerCollectionService).beginStackDoorChoices(gd);
         }
 
         @Test
         @DisplayName("a parked ability whose effects target nothing is not routed to a target choice")
         void parkedUntargetedAbilityIsNotRoutedToATargetChoice() {
-            Permanent source = createPermanent("Mana Trigger Source");
-            StackEntry parked = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), player1Id,
-                    "Mana Trigger Source's ability", List.of(new GainLifeEffect(1)));
+            Card source = createCard("Mana Trigger Source", CardType.ENCHANTMENT);
+            StackEntry parked = StackEntry.carrier(source, player1Id, "Mana Trigger Source's ability",
+                    List.of(new GainLifeEffect(1)));
 
-            assertThat(sut.queueResolvedProducedManaTriggerTarget(gd, parked, ManaColor.RED)).isFalse();
+            assertThat(sut.putResolvedProducedManaTrigger(gd, parked, ManaColor.RED)).isFalse();
 
             assertThat(gd.pendingInteractions).isEmpty();
         }

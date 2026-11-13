@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffectHandler;
@@ -28,7 +27,7 @@ public class CreateAttackingCopiesForOtherOpponentsHandler implements MayEffectH
     @Override
     public void handle(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
         var effect = (CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect) ability.effects().getFirst();
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(),
+        StackEntry entry = StackEntry.carrier(ability.sourceCard(),
                 ability.controllerId(), ability.description(), ability.effects(),
                 ability.targetCardId(), ability.sourcePermanentId());
         entry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());

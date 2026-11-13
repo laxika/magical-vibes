@@ -165,7 +165,7 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
     private boolean isPermanentSpell(StackEntryType entryType) {
         return switch (entryType) {
             case CREATURE_SPELL, ENCHANTMENT_SPELL, ARTIFACT_SPELL, PLANESWALKER_SPELL, BATTLE_SPELL -> true;
-            case INSTANT_SPELL, SORCERY_SPELL, TRIGGERED_ABILITY, ACTIVATED_ABILITY -> false;
+            case TRIGGERED_ABILITY, ACTIVATED_ABILITY, INSTANT_SPELL, SORCERY_SPELL -> false;
         };
     }
 }

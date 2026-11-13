@@ -124,7 +124,8 @@ public class GraveyardTargetingSupport {
                 unwrapped = may.wrapped();
             } else if (unwrapped instanceof ConditionalEffect conditional) {
                 unwrapped = conditional.wrapped();
-            } else if (unwrapped instanceof MayPayManaEffect mayPay) {
+            } else if (unwrapped instanceof MayPayManaEffect mayPay && mayPay.wrapped() != null) {
+                // "You may pay {U}. If you don't, …" (Knight of the Mists) offers nothing to pay for.
                 unwrapped = mayPay.wrapped();
             } else {
                 return unwrapped;
@@ -231,12 +232,14 @@ public class GraveyardTargetingSupport {
             int maxTargets = returnTargets.xScaled() ? 1
                     : returnTargets.hasTotalManaValueCap() ? Integer.MAX_VALUE : returnTargets.maxTargets();
             int minTargets = returnTargets.xScaled() ? 1 : returnTargets.minTargets();
+            // "Up to X target cards" (Rot Hulk, Marshal's Anthem): the count read as the ability goes on the stack.
             return new Target(returnTargets.filter(), returnTargets.source(),
                     "to the battlefield", maxTargets, minTargets,
                     returnTargets.dynamicMaxTotalManaValue() != null
                             ? returnTargets.dynamicMaxTotalManaValue()
                             : returnTargets.hasTotalManaValueCap()
-                            ? new Fixed(returnTargets.maxTotalManaValue()) : null);
+                            ? new Fixed(returnTargets.maxTotalManaValue()) : null,
+                    false, null, returnTargets.dynamicMaxTargets());
         }
         if (effect instanceof ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEffect returnTargets) {
             return new Target(returnTargets.graveyardChoiceFilter(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD,

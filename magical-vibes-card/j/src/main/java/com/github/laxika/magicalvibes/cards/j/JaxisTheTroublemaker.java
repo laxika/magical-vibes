@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -38,9 +37,6 @@ public class JaxisTheTroublemaker extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new CastForAlternateCost(), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
-                new SacrificeSelfAtEndStepEffect());
         addTrigger(Triggers.dies(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
                 new DrawCardEffect());

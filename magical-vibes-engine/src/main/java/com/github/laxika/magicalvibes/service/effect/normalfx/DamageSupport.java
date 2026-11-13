@@ -496,8 +496,8 @@ public class DamageSupport {
         if (sourceControllerId == null && entry != null) sourceControllerId = entry.getControllerId();
         gameData.recordDamageToPermanentFromSource(targetId, amount, sourceId, sourceName, sourceControllerId);
         boolean qualifyingSpell = entry != null
-                && entry.getEntryType() != com.github.laxika.magicalvibes.model.StackEntryType.ACTIVATED_ABILITY
-                && entry.getEntryType() != com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY;
+                && entry.getEntryType() != StackEntryType.ACTIVATED_ABILITY
+                && entry.getEntryType() != StackEntryType.TRIGGERED_ABILITY;
         boolean qualifyingCreature = damageSource != null
                 && (gameQueryService.hasEffectiveSubtype(gameData, damageSource,
                 com.github.laxika.magicalvibes.model.CardSubtype.GIANT)
@@ -739,7 +739,7 @@ public class DamageSupport {
         UUID controllerId = live == null ? null : gameQueryService.findPermanentController(gameData, live.getId());
         if (controllerId == null) controllerId = entry.getEventDamageSourceControllerId();
         Card dealerCard = live != null ? live.getCard() : dealer.getCard();
-        StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, dealerCard, controllerId,
+        StackEntry damageEntry = StackEntry.carrier(dealerCard, controllerId,
                 entry.getDescription(), List.of(), entry.getTargetId(), dealer.getId());
         damageEntry.setDamageSourceCard(dealerCard);
         damageEntry.setDamageSourceControllerId(controllerId);
@@ -776,7 +776,7 @@ public class DamageSupport {
             return null;
         }
         UUID controllerId = gameQueryService.findTriggeringPermanentController(gameData, entry);
-        StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, dealer.getCard(), controllerId,
+        StackEntry damageEntry = StackEntry.carrier(dealer.getCard(), controllerId,
                 entry.getDescription(), List.of(), entry.getTargetId(), dealer.getId());
         damageEntry.setDamageSourceCard(dealer.getCard());
         damageEntry.setDamageSourceControllerId(controllerId);
@@ -1785,9 +1785,7 @@ public class DamageSupport {
         gameData.pendingEyeForAnEyeReflections.clear();
 
         for (var reflection : toProcess) {
-            StackEntry tempEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    reflection.eyeCard(),
+            StackEntry tempEntry = StackEntry.carrier(reflection.eyeCard(),
                     reflection.eyeControllerId(),
                     reflection.eyeCard().getName() + "'s reflection",
                     List.of(), (UUID) null, reflection.sourcePermanentId());
@@ -1938,9 +1936,7 @@ public class DamageSupport {
         }
 
         // Create a temporary stack entry for the private damage helpers
-        StackEntry tempEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
+        StackEntry tempEntry = StackEntry.carrier(sourceCard,
                 controllerId,
                 sourceCard.getName() + "'s ability",
                 List.of(),

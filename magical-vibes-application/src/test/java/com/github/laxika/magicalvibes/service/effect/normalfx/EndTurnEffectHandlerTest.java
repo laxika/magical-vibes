@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -158,8 +160,7 @@ class EndTurnEffectHandlerTest {
             @DisplayName("Triggered abilities on the stack cease to exist without exile")
             void triggeredAbilitiesCeaseToExist() {
                 Card triggerSource = createCard("Soul Warden", CardType.CREATURE);
-                StackEntry triggeredEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, triggerSource, player1Id, "Soul Warden trigger",
+                StackEntry triggeredEntry = TestStackDoor.triggered(triggerSource, player1Id, "Soul Warden trigger",
                         List.of(), 0
                 );
                 gd.stack.add(triggeredEntry);

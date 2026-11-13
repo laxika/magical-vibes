@@ -142,8 +142,5 @@ public class ZyymRevealHandEffectMayHandler implements MayEffectHandlerBean {
             battlefieldEntryService.handleCreatureEnteredBattlefield(
                     gameData, playerId, card, null, false);
         }
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-        }
     }
 }

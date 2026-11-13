@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachEnchantmentDealsDamageToControllerThenEachAuraToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -98,9 +97,7 @@ public class EachEnchantmentDealsDamageToControllerThenEachAuraToEnchantedCreatu
 
     /** The enchantment itself is the damage source, not the resolving spell. */
     private StackEntry sourceEntry(Permanent enchantment, UUID controllerId) {
-        return new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                enchantment.getCard(),
+        return StackEntry.carrier(enchantment.getCard(),
                 controllerId,
                 enchantment.getCard().getName() + "'s ability",
                 List.of(),

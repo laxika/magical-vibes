@@ -150,9 +150,6 @@ public class AutoPassService {
         }
 
         // Process any pending spell-target triggers (e.g. Livewire Lash)
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextSpellTargetTrigger(gameData);
-        }
 
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ETBSpellTargetTrigger.class)) {
             triggerCollectionService.processNextETBSpellTargetTrigger(gameData);
@@ -169,19 +166,8 @@ public class AutoPassService {
         }
 
         // Process any pending discard self-triggers before death triggers
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-        }
-
-        if (!gameData.interaction.isAwaitingInput()
-                && gameData.hasPendingInteraction(PermanentChoiceContext.PlotTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextPlotTrigger(gameData);
-        }
 
         // Process any pending targeted controller-discard triggers (e.g. Zenith Seeker)
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class)) {
-            triggerCollectionService.processNextDiscardControllerTriggerTarget(gameData);
-        }
 
         // Process any pending targeted attack triggers before death triggers
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
@@ -198,50 +184,17 @@ public class AutoPassService {
             triggerCollectionService.processNextEntersTriggerTarget(gameData);
         }
 
-        if (!gameData.interaction.isAwaitingInput()
-                && gameData.hasPendingInteraction(PermanentChoiceContext.DayNightTriggerTarget.class)) {
-            triggerCollectionService.processNextDayNightTriggerTarget(gameData);
-        }
-
         // Process any pending targeted death triggers before auto-passing
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
-            triggerCollectionService.processNextDeathTriggerTarget(gameData);
-        }
 
         // Process any pending targeted leaves-the-battlefield triggers (e.g. Meadowboon)
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
-            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
-        }
 
         // Process any pending explore targeted triggers
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
-            triggerCollectionService.processNextExploreTriggerTarget(gameData);
-        }
-        // Process any pending exploit stack-target triggers
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ExploitTriggerTarget.class)) {
-            triggerCollectionService.processNextExploitTriggerTarget(gameData);
-        }
-        if (!gameData.interaction.isAwaitingInput()
-                && gameData.hasPendingInteraction(PermanentChoiceContext.ExploitPermanentTriggerTarget.class)) {
-            triggerCollectionService.processNextExploitPermanentTriggerTarget(gameData);
-        }
 
         // Process any pending clash targeted triggers
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.ClashTriggerTarget.class)) {
-            triggerCollectionService.processNextClashTriggerTarget(gameData);
-        }
 
         // Process any pending life-gain targeted triggers
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextLifeGainTriggerTarget(gameData);
-        }
 
         // Process any pending draw targeted triggers (Niv-Mizzet, the Firemind)
-        if (!gameData.interaction.isAwaitingInput()
-                && (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)
-                || gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class))) {
-            triggerCollectionService.processNextDrawTriggerTarget(gameData);
-        }
 
         // Process any pending saga chapter targeted triggers
         if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
@@ -254,9 +207,6 @@ public class AutoPassService {
         }
 
         // Process any pending phase-in targeted triggers (queued during untap-step phasing)
-        if (!gameData.interaction.isAwaitingInput() && gameData.hasPendingInteraction(PermanentChoiceContext.PhasesInTriggerTarget.class)) {
-            stepTriggerService.processNextPhasesInTriggerTarget(gameData);
-        }
 
         if (!gameData.interaction.isAwaitingInput() && gameData.pendingInteractions.isEmpty()) {
             triggerCollectionService.beginTriggerOrder(gameData);
@@ -282,12 +232,6 @@ public class AutoPassService {
 
             // A draw queued by the draw step's turn-based action puts its targeted trigger on the stack
             // before the next priority window (CR 603.3), so its target is chosen before anyone receives priority.
-            if (!gameData.interaction.isAwaitingInput()
-                    && (gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class)
-                    || gameData.hasPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class))) {
-                triggerCollectionService.processNextDrawTriggerTarget(gameData);
-                continue;
-            }
 
             // When stack is non-empty, never auto-pass — players must explicitly pass
             if (!gameData.stack.isEmpty()) {

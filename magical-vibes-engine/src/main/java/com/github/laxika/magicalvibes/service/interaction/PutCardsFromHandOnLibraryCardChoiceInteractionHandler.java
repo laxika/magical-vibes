@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -86,9 +85,7 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
             inOneBatch(gameData, () -> shuffleIntoLibrary(gameData, player, validated));
             if (interaction.thenEffect() != null && interaction.thenEffectSourceCard() != null) {
                 Card sourceCard = interaction.thenEffectSourceCard();
-                StackEntry followUp = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        sourceCard,
+                StackEntry followUp = StackEntry.carrier(sourceCard,
                         player.getId(),
                         sourceCard.getName() + "'s effect",
                         List.of(interaction.thenEffect())
@@ -121,9 +118,7 @@ public class PutCardsFromHandOnLibraryCardChoiceInteractionHandler
                 interaction.placement() == HandToLibraryPlacement.TOP));
         if (interaction.thenEffect() != null && interaction.thenEffectSourceCard() != null) {
             Card sourceCard = interaction.thenEffectSourceCard();
-            StackEntry followUp = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
+            StackEntry followUp = StackEntry.carrier(sourceCard,
                     player.getId(),
                     sourceCard.getName() + "'s effect",
                     List.of(interaction.thenEffect())

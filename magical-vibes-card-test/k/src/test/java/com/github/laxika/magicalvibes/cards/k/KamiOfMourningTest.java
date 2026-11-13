@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({KamiOfMourning.class, GrizzlyBears.class, HillGiant.class, MishrasFactory.class})
 class KamiOfMourningTest extends BaseCardTest {
@@ -33,14 +32,13 @@ class KamiOfMourningTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new KamiOfMourning());
         harness.passBothPriorities();
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(choice.validIds()).contains(controlledCreature.getId());
-        assertThat(choice.validIds()).doesNotContain(opponentCreature.getId());
-        assertThat(choice.validCardIds()).containsExactly(controlledGraveyardCreature.getId());
-        assertThat(choice.validCardIds()).doesNotContain(opponentGraveyardCreature.getId());
-        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
-                .hasMessageContaining("Too few targets");
+        // One target that may be a permanent or a graveyard card is chosen in one choice offering both, and it is
+        // required: no player answer declines it.
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).contains(controlledCreature.getId(), controlledGraveyardCreature.getId());
+        assertThat(choice.validIds()).doesNotContain(opponentCreature.getId(), opponentGraveyardCreature.getId());
+        assertThat(choice.validPlayerIds()).isEmpty();
     }
 
     @Test
@@ -49,7 +47,7 @@ class KamiOfMourningTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(targetCard));
         harness.enterBattlefieldAndReturn(player1, new KamiOfMourning());
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(targetCard.getId()));
+        harness.handlePermanentChosen(player1, targetCard.getId());
         resolveAllTriggers();
 
         Permanent sameManaValueCreature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -71,7 +69,7 @@ class KamiOfMourningTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.enterBattlefieldAndReturn(player1, new KamiOfMourning());
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+        harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
 
         kill(target);
@@ -95,7 +93,7 @@ class KamiOfMourningTest extends BaseCardTest {
         for (int i = 0; i < 2; i++) {
             harness.enterBattlefieldAndReturn(player1, new KamiOfMourning());
             harness.passBothPriorities();
-            harness.handleMultiplePermanentsChosen(player1, List.of(targetCard.getId()));
+            harness.handlePermanentChosen(player1, targetCard.getId());
             resolveAllTriggers();
         }
 
@@ -115,7 +113,7 @@ class KamiOfMourningTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(targetCard));
         harness.enterBattlefieldAndReturn(player1, new KamiOfMourning());
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(targetCard.getId()));
+        harness.handlePermanentChosen(player1, targetCard.getId());
         resolveAllTriggers();
 
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new HillGiant());
@@ -133,7 +131,7 @@ class KamiOfMourningTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(targetCard));
         harness.enterBattlefieldAndReturn(player1, new KamiOfMourning());
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(targetCard.getId()));
+        harness.handlePermanentChosen(player1, targetCard.getId());
         resolveAllTriggers();
 
         for (int i = 0; i < 2; i++) {
@@ -161,7 +159,7 @@ class KamiOfMourningTest extends BaseCardTest {
 
         harness.enterBattlefieldAndReturn(player1, new KamiOfMourning());
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(factory.getId()));
+        harness.handlePermanentChosen(player1, factory.getId());
         resolveAllTriggers();
 
         kill(factory);

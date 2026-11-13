@@ -169,7 +169,7 @@ class KohTheFaceStealerTest extends BaseCardTest {
 
         harness.castFromHand(player1, new Riftsweeper(), "{1}{G}");
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(sorcerer.getId()));
+        harness.handlePermanentChosen(player1, sorcerer.getId());
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(sorcerer.getId())).isNull();

@@ -645,16 +645,13 @@ public class CombatDamageService {
             if (sourceCard != null) break;
         }
 
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                gameData.activePlayerId,
-                "Combat damage",
-                new ArrayList<>(List.of(new CombatDamageResolutionEffect())),
-                null,
-                sourcePermanentId);
+        // "Combat damage uses the stack" (Stack of Paperwork): the assigned damage is one object on the stack, which a
+        // rule makes as the step begins, not an ability a permanent's trigger event made, so no "triggers an
+        // additional time" effect counts it: the door puts it as one object of the rule that made it.
+        StackEntry damageEntry = TriggeredAbilityStackService.madeAbility(sourceCard, gameData.activePlayerId,
+                "Combat damage", List.of(new CombatDamageResolutionEffect()), 0, sourcePermanentId);
         damageEntry.setNonTargeting(true);
-        gameData.stack.add(damageEntry);
+        triggeredAbilityStackService.putMade(gameData, damageEntry);
         gameLogService.append(gameData, GameLog.text("Combat damage is put on the stack."));
         return CombatResult.AUTO_PASS_ONLY;
     }
@@ -845,11 +842,14 @@ public class CombatDamageService {
             }
         });
         Map<UUID, Permanent> damagedCreatureSnapshots = snapshotCombatDamagedCreatures(gameData, state);
+        // The damage abilities below trigger as the damage is dealt and go on the stack through the stack door now, so
+        // they stay on the stack while state-based actions run: a creature they name that dies is stamped with its
+        // last-known information there (CR 608.2h). After the state-based actions they are moved above the abilities
+        // those actions triggered, in the order they were put.
         int beforeGlobalDamageTriggers = gameData.stack.size();
         processAnyCreatureDealtDamageTriggers(gameData, state, damagedCreatureSnapshots);
         List<StackEntry> globalDamageTriggers = new ArrayList<>(
                 gameData.stack.subList(beforeGlobalDamageTriggers, gameData.stack.size()));
-        gameData.stack.subList(beforeGlobalDamageTriggers, gameData.stack.size()).clear();
         snapshotDelayedCombatDamageDrawSources(gameData, state);
         snapshotDelayedCombatDamageLookAtHandAndDrawSources(gameData, state, defenderId);
         snapshotSelfDealsDamageAbilities(gameData, state);
@@ -869,22 +869,26 @@ public class CombatDamageService {
                 triggerCollectionService.checkPlayerDealtDamageTriggers(gameData, playerId, damage));
         List<StackEntry> sourceDamageReflectionTriggers = new ArrayList<>(
                 gameData.stack.subList(beforeSourceDamageReflections, gameData.stack.size()));
-        gameData.stack.subList(beforeSourceDamageReflections, gameData.stack.size()).clear();
         int beforeSelfAllyDamageReflections = gameData.stack.size();
         processSelfDealtDamageToCreatureReflectionTriggers(gameData, state, damagedCreatureSnapshots);
         List<StackEntry> selfAllyDamageReflectionTriggers = new ArrayList<>(
                 gameData.stack.subList(beforeSelfAllyDamageReflections, gameData.stack.size()));
-        gameData.stack.subList(beforeSelfAllyDamageReflections, gameData.stack.size()).clear();
         int beforeWatcherAllyDamageReflections = gameData.stack.size();
         processWatchersDealtDamageToCreatureReflectionTriggers(gameData, state, damagedCreatureSnapshots);
         List<StackEntry> watcherAllyDamageReflectionTriggers = new ArrayList<>(
                 gameData.stack.subList(beforeWatcherAllyDamageReflections, gameData.stack.size()));
-        gameData.stack.subList(beforeWatcherAllyDamageReflections, gameData.stack.size()).clear();
-        boolean damageEventTriggersQueued = gameData.stack.size() > stackSizeBeforeDamageEvents;
+        Set<StackEntry> heldDamageTriggers = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+        heldDamageTriggers.addAll(globalDamageTriggers);
+        heldDamageTriggers.addAll(sourceDamageReflectionTriggers);
+        heldDamageTriggers.addAll(selfAllyDamageReflectionTriggers);
+        heldDamageTriggers.addAll(watcherAllyDamageReflectionTriggers);
+        boolean damageEventTriggersQueued =
+                gameData.stack.size() - heldDamageTriggers.size() > stackSizeBeforeDamageEvents;
         Map<UUID, List<Permanent>> battlefieldsBeforeStateBasedActions = new LinkedHashMap<>();
         gameData.playerBattlefields.forEach((playerId, battlefield) ->
                 battlefieldsBeforeStateBasedActions.put(playerId, new ArrayList<>(battlefield)));
         stateBasedActionService.performStateBasedActions(gameData);
+        gameData.stack.removeIf(heldDamageTriggers::contains);
 
         if (gameData.status == com.github.laxika.magicalvibes.model.GameStatus.FINISHED) {
             return CombatResult.DONE;
@@ -1077,10 +1081,6 @@ public class CombatDamageService {
 
         // "Whenever this creature is dealt damage" triggers with a target choose it as they are put on
         // the stack (CR 603.3d), still in the damage step rather than after the step has advanced.
-        if (!gameData.interaction.isAwaitingInput()
-                && gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextSpellTargetTrigger(gameData);
-        }
 
         if (gameData.interaction.isAwaitingInput()) {
             return CombatResult.DONE;
@@ -1115,12 +1115,16 @@ public class CombatDamageService {
                 controllerId = gameData.findControllerOf(damageEntry.getKey());
             }
             if (controllerId != null && !controllerId.equals(gameData.monarchPlayerId)) {
-                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, null,
-                        gameData.monarchPlayerId, "Combat damage causes a player to become the monarch",
+                // "Whenever a creature deals combat damage to the monarch, its controller becomes the monarch": no
+                // source, controlled by the monarch (CR 726.2); "its controller" is the entry's non-targeting player.
+                UUID newMonarchId = controllerId;
+                triggeredAbilityStackService.putInherent(gameData, gameData.monarchPlayerId,
+                        "Combat damage causes a player to become the monarch",
                         List.of(new com.github.laxika.magicalvibes.model.effect.TargetPlayerBecomesMonarchEffect()),
-                        controllerId, (UUID) null);
-                trigger.setNonTargeting(true);
-                gameData.enqueueTrigger(trigger);
+                        entry -> {
+                            entry.setTargetId(newMonarchId);
+                            entry.setNonTargeting(true);
+                        });
             }
         }
     }
@@ -1144,15 +1148,16 @@ public class CombatDamageService {
                 controllers.add(controllerId);
             }
         }
+        // "Whenever one or more creatures a player controls deal combat damage to the player who has the initiative, the
+        // controller of those creatures takes the initiative": no source, controlled by the player who has the
+        // initiative (CR 727.2); "the controller of those creatures" is the entry's non-targeting player.
         for (UUID controllerId : controllers) {
-            StackEntry trigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    null,
-                    controllerId,
-                    "Combat damage causes a player to take the initiative",
-                    List.of(new TakeInitiativeEffect()));
-            trigger.setNonTargeting(true);
-            gameData.enqueueTrigger(trigger);
+            triggeredAbilityStackService.putInherent(gameData, gameData.initiativePlayerId,
+                    "Combat damage causes a player to take the initiative", List.of(new TakeInitiativeEffect(true)),
+                    entry -> {
+                        entry.setTargetId(controllerId);
+                        entry.setNonTargeting(true);
+                    });
         }
     }
 
@@ -4287,7 +4292,7 @@ public class CombatDamageService {
         if (state == null) return;
         var effect = (com.github.laxika.magicalvibes.model.effect.PreventDamageToControllerPerClericEffect)
                 ability.effects().getFirst();
-        StackEntry damageEntry = new StackEntry(effect.damageEntryType(), ability.sourceCard(),
+        StackEntry damageEntry = StackEntry.carrier(effect.damageEntryType(), ability.sourceCard(),
                 ability.sourceControllerId(), "Combat damage", List.of(), effect.damagedPlayerId(),
                 ability.sourcePermanentId());
         damageEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());

@@ -86,7 +86,7 @@ class TempestOwlTest extends BaseCardTest {
         harness.passBothPriorities();
         Permanent owl = findPermanent(player1, "Tempest Owl");
 
-        harness.handlePermanentChosen(player1, owl.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(owl.getId()));
         resolveAllTriggers();
 
         assertThat(owl.isTapped()).isTrue();
@@ -96,12 +96,8 @@ class TempestOwlTest extends BaseCardTest {
         prepareKickedCast();
         harness.castKickedCreature(player1, 0);
         harness.passBothPriorities();
-        for (java.util.UUID targetId : targetIds) {
-            harness.handlePermanentChosen(player1, targetId);
-        }
-        if (targetIds.size() < 3) {
-            harness.handlePermanentChosen(player1, player1.getId());
-        }
+        // The up to three targets of the one group are announced together (CR 601.2c).
+        harness.handleMultiplePermanentsChosen(player1, targetIds);
         resolveAllTriggers();
     }
 

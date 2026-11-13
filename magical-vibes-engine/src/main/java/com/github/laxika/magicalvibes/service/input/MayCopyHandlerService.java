@@ -129,20 +129,6 @@ public class MayCopyHandlerService {
         cloneService.completeCloneEntry(gameData, null);
         stateBasedActionService.performStateBasedActions(gameData);
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
-            triggerCollectionService.processNextDeathTriggerTarget(gameData);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-        }
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
-            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-        }
-
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);
             return;
@@ -298,20 +284,6 @@ public class MayCopyHandlerService {
 
     private void finishCloneEntry(GameData gameData) {
         stateBasedActionService.performStateBasedActions(gameData);
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class)) {
-            triggerCollectionService.processNextDeathTriggerTarget(gameData);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-        }
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
-            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-        }
 
         if (!gameData.pendingMayAbilities.isEmpty()) {
             playerInputService.processNextMayAbility(gameData);

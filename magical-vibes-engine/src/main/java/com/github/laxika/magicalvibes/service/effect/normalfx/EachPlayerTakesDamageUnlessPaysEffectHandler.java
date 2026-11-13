@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -107,8 +106,7 @@ public class EachPlayerTakesDamageUnlessPaysEffectHandler implements NormalEffec
         }
         UUID next = gameData.eachPlayerDamageUnlessPaysRemaining.removeFirst();
         UUID sourceControllerId = sourceControllerId(gameData, ability);
-        StackEntry synthetic = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(),
+        StackEntry synthetic = StackEntry.carrier(ability.sourceCard(),
                 sourceControllerId,
                 ability.sourceCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect)),
@@ -131,8 +129,7 @@ public class EachPlayerTakesDamageUnlessPaysEffectHandler implements NormalEffec
         UUID sourceControllerId = sourceControllerId(gameData, ability);
         DealDamageToPlayersEffect damage =
                 new DealDamageToPlayersEffect(amount, DamageRecipient.TARGET_PLAYER);
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
+        StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(), sourceControllerId,
                 ability.sourceCard().getName() + "'s ability", new ArrayList<>(List.of(damage)),
                 playerId, ability.sourcePermanentId());
         dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry, damage);

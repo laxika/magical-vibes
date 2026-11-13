@@ -20,9 +20,9 @@ public class OminousSphinx extends Card {
         // Whenever you cycle or discard a card, target creature an opponent controls gets -2/-0 until
         // end of turn. Cycling discards the card (CR 702.29e), so the single "controller discards"
         // trigger covers both wordings. The effect's own filter ("a creature not controlled by the
-        // ability's controller" = an opponent's creature) drives the target choice via
-        // DiscardTriggerCollectorService's DiscardControllerTriggerTarget pipeline; no cast-time
-        // target() is declared, so casting Ominous Sphinx itself never prompts for a target.
+        // ability's controller" = an opponent's creature) drives the target, chosen as the stack door
+        // puts the ability on the stack; no cast-time target() is declared, so casting Ominous Sphinx
+        // itself never prompts for a target.
         addTrigger(Triggers.youDiscardCard(),
                 new BoostTargetCreatureEffect(-2, 0, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

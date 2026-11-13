@@ -745,9 +745,7 @@ public class DestructionSupport {
         if (target == null) {
             // The fallback effects may change the game before they kill, so they can't stop and be redone.
             gameData.deathReplacementsCanRerunEffect = false;
-            StackEntry syntheticEntry = new StackEntry(
-                    com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
-                    context.sourceCard(),
+            StackEntry syntheticEntry = StackEntry.carrier(context.sourceCard(),
                     context.controllerId(),
                     context.sourceCard().getName() + "'s ability",
                     List.of(context.effect()),
@@ -824,9 +822,7 @@ public class DestructionSupport {
 
     private void resolveForcedCostElseEffectsFromContext(GameData gameData,
             PermanentChoiceContext.ForcedCostOrElse context) {
-        StackEntry syntheticEntry = new StackEntry(
-                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
-                context.sourceCard(), context.controllerId(), context.sourceCard().getName() + "'s ability",
+        StackEntry syntheticEntry = StackEntry.carrier(context.sourceCard(), context.controllerId(), context.sourceCard().getName() + "'s ability",
                 List.of(context.effect()), null, context.sourcePermanentId());
         resolveForcedCostElseEffects(gameData, syntheticEntry, context.effect());
     }

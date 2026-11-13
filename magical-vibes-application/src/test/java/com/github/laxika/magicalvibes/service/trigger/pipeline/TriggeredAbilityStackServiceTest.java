@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -90,6 +92,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -825,7 +829,7 @@ class TriggeredAbilityStackServiceTest {
     @DisplayName("The continuation puts a new stack object of the parked record and the choice on the stack")
     void finishParkedPutsTheRecordWithTheChoice() {
         Card card = createCreature("Javelineer", 2, 2);
-        StackEntry record = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, PLAYER1_ID, "record",
+        StackEntry record = TestStackDoor.triggered(card, PLAYER1_ID, "record",
                 List.of(new GainLifeEffect(1)), null, UUID.randomUUID());
         UUID triggeringId = UUID.randomUUID();
         record.setTriggeringPermanentId(triggeringId);
@@ -869,7 +873,7 @@ class TriggeredAbilityStackServiceTest {
     @DisplayName("A parked ability that targets graveyard cards checks the abilities its targets trigger")
     void finishParkedWithGraveyardTargetsChecksTargetTriggers() {
         Card card = createCreature("Javelineer", 2, 2);
-        StackEntry record = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, PLAYER1_ID, "record",
+        StackEntry record = TestStackDoor.triggered(card, PLAYER1_ID, "record",
                 List.of(new GainLifeEffect(1)), null, UUID.randomUUID());
         record.setParkedAtStackDoor(true);
         UUID graveyardCardId = UUID.randomUUID();
@@ -956,10 +960,10 @@ class TriggeredAbilityStackServiceTest {
 
         assertThat(triggered).isTrue();
         assertThat(gd.stack).isEmpty();
-        var choice = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
-        assertThat(choice.opponentChoosesTarget()).isTrue();
+        var choice = gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
         assertThat(choice.choosingPlayerId()).isNull();
         assertThat(choice.sourcePermanentId()).isEqualTo(creature.getId());
+        assertThat(choice.triggerRecord().isParkedAtStackDoor()).isTrue();
     }
 
     @Test
@@ -1200,5 +1204,333 @@ class TriggeredAbilityStackServiceTest {
                 TriggeredAbilityRequest.TriggerRecord.NONE).withEvent(event));
 
         verify(gameQueryService).countAdditionalTriggeredAbilityTriggers(gd, PLAYER1_ID, watcher, false, event);
+    }
+
+    @Test
+    @DisplayName("An inherent ability of a designation has no source, chooses nothing and is put once")
+    void inherentAbilityIsSourcelessAndPutOnce() {
+        stackService.putInherent(gd, PLAYER2_ID, "Combat damage causes a player to become the monarch",
+                List.of(new com.github.laxika.magicalvibes.model.effect.TargetPlayerBecomesMonarchEffect()), entry -> {
+                    entry.setTargetId(PLAYER1_ID);
+                    entry.setNonTargeting(true);
+                });
+
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getCard()).isNull();
+            assertThat(entry.getSourcePermanentId()).isNull();
+            assertThat(entry.getControllerId()).isEqualTo(PLAYER2_ID);
+            assertThat(entry.getTargetId()).isEqualTo(PLAYER1_ID);
+            assertThat(entry.isNonTargeting()).isTrue();
+        });
+        verify(gameQueryService, never()).countAdditionalTriggeredAbilityTriggers(any(), any(), any(),
+                org.mockito.ArgumentMatchers.anyBoolean(), any());
+    }
+
+    @Test
+    @DisplayName("An inherent ability of a rule goes on the stack with no source, its record and no additional copies")
+    void inherentAbilityHasNoSource() {
+        var draw = new DrawCardEffect(1);
+
+        stackService.putInherent(gd, PLAYER2_ID, "The monarch draws a card", List.of(draw), entry -> {
+            entry.setTargetId(PLAYER2_ID);
+            entry.setNonTargeting(true);
+        });
+
+        assertThat(gd.stack).hasSize(1);
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.getCard()).isNull();
+        assertThat(entry.getControllerId()).isEqualTo(PLAYER2_ID);
+        assertThat(entry.getEffectsToResolve()).containsExactly(draw);
+        assertThat(entry.getTargetId()).isEqualTo(PLAYER2_ID);
+        assertThat(entry.isNonTargeting()).isTrue();
+        verifyNoInteractions(gameQueryService);
+    }
+
+    @Test
+    @DisplayName("An inherent ability of a rule targets nothing")
+    void inherentAbilityRefusesATarget() {
+        assertThatThrownBy(() -> stackService.putInherent(gd, PLAYER1_ID, "bad",
+                List.of(new DealDamageToAnyTargetEffect(1)), entry -> { }))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A triggered mana ability resolves at once, once for each time it triggers (CR 605.4, 605.4a)")
+    void manaAbilityResolvesAtOnceForEachTimeItTriggers() {
+        Card card = createCreature("Mana Grower", 1, 1);
+        Permanent grower = new Permanent(card);
+        when(gameQueryService.countAdditionalTriggeredAbilityTriggers(gd, PLAYER1_ID, grower, false, null))
+                .thenReturn(1);
+        List<StackEntry> resolved = new ArrayList<>();
+
+        stackService.putManaAbility(gd, new TriggeredAbilityRequest(new TriggeredAbility(Triggers.tappedForMana(),
+                new GainLifeEffect(1)), card, grower, PLAYER1_ID, "mana", ConditionContext.forPermanent(grower,
+                PLAYER1_ID), entry -> entry.setTriggeringPlayerId(PLAYER2_ID)), resolved::add);
+
+        assertThat(resolved).hasSize(2).allSatisfy(entry -> {
+            assertThat(entry.getTriggeringPlayerId()).isEqualTo(PLAYER2_ID);
+            assertThat(entry.getSourcePermanentId()).isEqualTo(grower.getId());
+        });
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An ability held for its produced mana waits, then chooses its target as it goes on the stack")
+    void heldAbilityChoosesItsTargetOnceItsRecordIsComplete() {
+        Card card = createEnchantment("Fortification");
+
+        stackService.holdForProducedMana(gd, new TriggeredAbilityRequest(new TriggeredAbility(
+                Triggers.tappedForMana(), new DealDamageToTargetCreatureEffect(1)), card, null, PLAYER1_ID, "held",
+                ConditionContext.forCard(card, PLAYER1_ID), TriggeredAbilityRequest.TriggerRecord.NONE));
+
+        assertThat(gd.stack).isEmpty();
+        StackEntry held = gd.pendingManaAbilityTriggers.getFirst();
+        assertThat(held.isAwaitingProducedManaColor()).isTrue();
+
+        gd.pendingManaAbilityTriggers.remove(held);
+        stackService.putHeld(gd, held);
+
+        assertThat(held.isAwaitingProducedManaColor()).isFalse();
+        assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.AttackTriggerTarget.class::isInstance)
+                .singleElement()
+                .satisfies(choice -> {
+                    StackEntry record = ((PermanentChoiceContext.AttackTriggerTarget) choice).triggerRecord();
+                    assertThat(record.isParkedAtStackDoor()).isTrue();
+                    assertThat(record.getDescription()).isEqualTo("held");
+                });
+    }
+
+    @Test
+    @DisplayName("An ability whose targets were announced goes on the stack with them, choosing nothing")
+    void announcedTargetsAreKept() {
+        Card card = createCreature("Cycler", 2, 2);
+        UUID target = UUID.randomUUID();
+
+        stackService.putWithAnnouncedTargets(gd, new TriggeredAbilityRequest(new TriggeredAbility(
+                Triggers.youCycleThisCard(), new DealDamageToTargetCreatureEffect(1)), card, null, PLAYER1_ID,
+                "cycle", ConditionContext.forCard(card, PLAYER1_ID), entry -> {
+                    entry.chooseTargetIds(List.of(target));
+                    entry.setTargetId(target);
+                }));
+
+        assertThat(gd.pendingInteractions).isEmpty();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getTargetId()).isEqualTo(target);
+            assertThat(entry.getTargetIds()).containsExactly(target);
+        });
+    }
+
+    @Test
+    @DisplayName("A Saga chapter's own target filter parks its entry for the chapter's target choice")
+    void chapterTargetFilterParksForTheChapterChoice() {
+        Card card = createCreature("Saga", 0, 0);
+        Permanent saga = new Permanent(card);
+        var counter = new PutCounterOnTargetPermanentEffect(CounterType.SHIELD);
+        var filter = com.github.laxika.magicalvibes.model.filter.TargetFilters.creatureYouControl();
+        var chapter = new TriggeredAbility(List.of(new com.github.laxika.magicalvibes.model.trigger.TriggerCondition(
+                Triggers.chapter(2))), TriggerOptions.DEFAULT,
+                List.of(new com.github.laxika.magicalvibes.model.EffectRegistration(counter)),
+                new com.github.laxika.magicalvibes.model.SagaChapterTargets(java.util.Set.of(filter), List.of(),
+                        false));
+
+        stackService.put(gd, new TriggeredAbilityRequest(chapter, card, saga, PLAYER1_ID, "chapter",
+                ConditionContext.forPermanent(saga, PLAYER1_ID), TriggeredAbilityRequest.TriggerRecord.NONE));
+
+        assertThat(gd.stack).isEmpty();
+        var choice = gd.peekPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class);
+        assertThat(choice.chapterName()).isEqualTo("II");
+        assertThat(choice.targetFilters()).containsExactly(filter);
+        assertThat(choice.triggerRecord().isParkedAtStackDoor()).isTrue();
+        assertThat(choice.triggerRecord().getSourcePermanentId()).isEqualTo(saga.getId());
+    }
+
+    @Test
+    @DisplayName("A Saga chapter whose target may be a player or a permanent takes the chapter's any-target filter")
+    void chapterAnyTargetTakesTheOrdinaryTargetChoice() {
+        Card card = createCreature("Saga", 0, 0);
+        Permanent saga = new Permanent(card);
+        var chapter = new TriggeredAbility(Triggers.chapter(1),
+                new com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect(2));
+
+        stackService.put(gd, new TriggeredAbilityRequest(chapter, card, saga, PLAYER1_ID, "chapter",
+                ConditionContext.forPermanent(saga, PLAYER1_ID), TriggeredAbilityRequest.TriggerRecord.NONE));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)).isFalse();
+        var choice = gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
+        assertThat(choice.triggerRecord().getTargetFilter())
+                .isInstanceOf(com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter.class);
+    }
+
+    /** The request for {@code source}'s own "when this enters" ability, triggered by {@code source} entering. */
+    private static TriggeredAbilityRequest ownEntry(TriggeredAbility ability, Permanent source) {
+        return new TriggeredAbilityRequest(ability, source.getCard(), source, PLAYER1_ID, "enters",
+                ConditionContext.forPermanent(source, PLAYER1_ID), TriggeredAbilityRequest.TriggerRecord.NONE)
+                .withEvent(new com.github.laxika.magicalvibes.service.trigger.TriggerContext.PermanentEnters(
+                        source.getCard(), PLAYER1_ID, null, 1, source.getId()));
+    }
+
+    @Test
+    @DisplayName("Evoke's sacrifice is judged as the entering permanent's own ability triggers: none unless evoked")
+    void evokeSacrificeIsJudgedAsTheOwnEntryAbilityTriggers() {
+        Card card = createCreature("Evoker", 2, 2);
+        var ability = new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                new com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect());
+        Permanent hardcast = new Permanent(card);
+
+        assertThat(stackService.put(gd, ownEntry(ability, hardcast))).isFalse();
+        assertThat(gd.stack).isEmpty();
+
+        Permanent evoked = new Permanent(card);
+        evoked.setEvoked(true);
+        assertThat(stackService.put(gd, ownEntry(ability, evoked))).isTrue();
+        assertThat(gd.stack).singleElement().satisfies(entry -> assertThat(entry.getEffectsToResolve())
+                .containsExactly(new com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect(true)));
+    }
+
+    @Test
+    @DisplayName("An effect's \"if it was kicked\" is judged as the entering permanent's own ability triggers")
+    void entryFactOfAnEffectIsJudgedAsTheOwnEntryAbilityTriggers() {
+        Card card = createCreature("Kicker", 2, 2);
+        var kicked = new ConditionalEffect(new com.github.laxika.magicalvibes.model.condition.Kicked(),
+                new GainLifeEffect(3));
+        var ability = new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), kicked);
+        Permanent source = new Permanent(card);
+
+        when(conditionEvaluationService.isMet(eq(gd), eq(kicked.condition()), any())).thenReturn(true);
+        stackService.put(gd, ownEntry(ability, source));
+        when(conditionEvaluationService.isMet(eq(gd), eq(kicked.condition()), any())).thenReturn(false);
+        stackService.put(gd, ownEntry(ability, source));
+
+        assertThat(gd.stack).extracting(entry -> entry.getEffectsToResolve().getFirst())
+                .containsExactly(new GainLifeEffect(3), new DrawCardEffect(0));
+    }
+
+    @Test
+    @DisplayName("Another permanent's enters ability doesn't judge its effects' facts as the entering one's")
+    void othersEntersAbilityKeepsItsEffectsUnjudged() {
+        Card card = createCreature("Watcher", 2, 2);
+        Card entering = createCreature("Newcomer", 1, 1);
+        var kicked = new ConditionalEffect(new com.github.laxika.magicalvibes.model.condition.Kicked(),
+                new GainLifeEffect(3));
+        Permanent watcher = new Permanent(card);
+        Permanent newcomer = new Permanent(entering);
+
+        stackService.put(gd, new TriggeredAbilityRequest(new TriggeredAbility(
+                Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), kicked), card, watcher,
+                PLAYER1_ID, "watch", ConditionContext.forPermanent(watcher, PLAYER1_ID),
+                TriggeredAbilityRequest.TriggerRecord.NONE)
+                .withEvent(new com.github.laxika.magicalvibes.service.trigger.TriggerContext.PermanentEnters(
+                        entering, PLAYER1_ID, null, 1, newcomer.getId())));
+
+        assertThat(gd.stack).singleElement().satisfies(entry ->
+                assertThat(entry.getEffectsToResolve()).containsExactly(kicked));
+    }
+
+    @Test
+    @DisplayName("\"If [condition], choose all of them instead\" makes every mode chosen when the condition is met")
+    void allModesWhenTheConditionIsMet() {
+        Card card = createCreature("Commander", 2, 2);
+        Permanent source = new Permanent(card);
+        ChooseOneEffect modes = ChooseOneEffect.allWhen(List.of(
+                new ChooseOneEffect.ChooseOneOption("Gain", new GainLifeEffect(1)),
+                new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1))),
+                new com.github.laxika.magicalvibes.model.condition.Delirium());
+        when(conditionEvaluationService.isMet(eq(gd), eq(modes.choicesMaxCondition()), any())).thenReturn(true);
+
+        stackService.put(gd, ownEntry(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                new com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect(modes)), source));
+
+        assertThat(gd.peekPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class).modeCount())
+                .isEqualTo(new PermanentChoiceContext.TriggeredModalTrigger.ModeCount(2, 2));
+    }
+
+    @Test
+    @DisplayName("Permanents and graveyard cards chosen together wait for one selection across both zones")
+    void battlefieldAndGraveyardTargetsWaitForTheirSelection() {
+        Card card = createCreature("Angel", 5, 6);
+        Permanent source = new Permanent(card);
+
+        stackService.put(gd, ownEntry(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                new com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSourceLeavesEffect(3, true)),
+                source));
+
+        assertThat(gd.stack).isEmpty();
+        var choice = gd.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
+        assertThat(choice.deferredTargeting()).isNotNull();
+        assertThat(TriggeredAbilityStackService.parkedAtDoor(choice.triggerRecord())).isTrue();
+    }
+
+    @Test
+    @DisplayName("A target player and target cards in that player's graveyard wait for their choices, the player first")
+    void targetPlayerThenItsGraveyardCardsWaitForTheirChoices() {
+        Card card = createCreature("Shaman", 2, 2);
+        Permanent source = new Permanent(card);
+
+        stackService.put(gd, ownEntry(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
+                new com.github.laxika.magicalvibes.model.effect.ShuffleTargetCardsFromGraveyardIntoLibraryEffect(
+                        null, Integer.MAX_VALUE)), source));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
+        var choice = gd.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
+        assertThat(choice.deferredTargeting()).isNotNull();
+        assertThat(TriggeredAbilityStackService.parkedAtDoor(choice.triggerRecord())).isTrue();
+    }
+
+    @Test
+    @DisplayName("Two targets, the second judged against the first, are chosen one after the other")
+    void secondTargetJudgedAgainstTheFirstIsChosenAfterIt() {
+        Card card = createCreature("Broker", 1, 1);
+        Permanent source = new Permanent(card);
+
+        stackService.put(gd, ownEntry(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), new MayEffect(
+                com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect
+                        .forControlledTargetsWithPowerRestriction(
+                                new com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate()),
+                "Exchange?")), source));
+
+        assertThat(gd.stack).isEmpty();
+        var choice = gd.peekPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class);
+        assertThat(choice.triggerRecord().isParkedAtStackDoor()).isTrue();
+        assertThat(choice.triggerRecord().getSourcePermanentId()).isEqualTo(source.getId());
+    }
+
+    @Test
+    @DisplayName("A counter moved between two targets chosen one after the other waits with the record parked")
+    void counterMoveTargetsWaitWithTheRecordParked() {
+        Card card = createCreature("Beetle", 1, 1);
+        Permanent source = new Permanent(card);
+        var ability = new TriggeredAbility(Triggers.attacks(),
+                new com.github.laxika.magicalvibes.model.effect.RemoveAndPutCounterOnAttackEffect());
+
+        stackService.put(gd, new TriggeredAbilityRequest(ability, card, source, PLAYER1_ID, "attack",
+                ConditionContext.forPermanent(source, PLAYER1_ID), TriggerRecord.NONE));
+
+        assertThat(gd.stack).isEmpty();
+        var choice = gd.peekPendingInteraction(PermanentChoiceContext.AttackCounterMoveFirstTarget.class);
+        assertThat(choice.triggerRecord().isParkedAtStackDoor()).isTrue();
+        assertThat(choice.triggerRecord().getSourcePermanentId()).isEqualTo(source.getId());
+    }
+
+    @Test
+    @DisplayName("The continuation puts a chosen mode's ability on the stack with the card its modes' targets are declared on")
+    void finishParkedOnTheModesCardKeepsTheRecord() {
+        Card card = createCreature("Command", 2, 2);
+        StackEntry record = TestStackDoor.triggered(card, PLAYER1_ID, "record", List.of(new GainLifeEffect(1)),
+                null, UUID.randomUUID());
+        UUID triggeringId = UUID.randomUUID();
+        record.setTriggeringPermanentId(triggeringId);
+        record.setParkedAtStackDoor(true);
+        Card modesCard = card.createRuntimeCopy();
+
+        StackEntry finished = stackService.finishParked(gd, record, modesCard, entry -> entry.setNonTargeting(false));
+
+        assertThat(gd.stack).containsExactly(finished);
+        assertThat(finished.getCard()).isSameAs(modesCard);
+        assertThat(finished.getTriggeringPermanentId()).isEqualTo(triggeringId);
+        assertThat(finished.isParkedAtStackDoor()).isFalse();
+        assertThat(finished.isReleasedToStack()).isTrue();
     }
 }

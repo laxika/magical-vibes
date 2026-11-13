@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -46,8 +48,7 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
     @Test
     void enteringPermanentDamageUsesItsControllerWithoutChangingAbilityOwnership() {
         Permanent creature = addPermanent(player2Id, createCreature("Entering creature", 3, 3));
-        StackEntry entry = new StackEntry(com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
-                createCard("Enchantment"), player1Id, "Damage ability", java.util.List.of(),
+        StackEntry entry = TestStackDoor.triggered(createCard("Enchantment"), player1Id, "Damage ability", java.util.List.of(),
                 player1Id, creature.getId());
         entry.setTriggeringPermanentControllerId(player2Id);
         when(gameQueryService.findPermanentById(gd, creature.getId())).thenReturn(creature);

@@ -174,7 +174,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
         if (cumulativeUpkeep && awardManaEffectHandler != null) {
             // "Cumulative upkeep — Add {R}" (Braid of Fire): adding the mana is the payment itself,
             // not a triggered ability, so it happens immediately instead of using the stack.
-            StackEntry payment = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId,
+            StackEntry payment = StackEntry.carrier(sourceCard, controllerId,
                     sourceCard.getName() + "'s cumulative upkeep", new ArrayList<>(), xValue, sourcePermanentId);
             payment.setSourcePermanentSnapshot(sourcePermanentSnapshot);
             for (CardEffect effect : paidEffects) {

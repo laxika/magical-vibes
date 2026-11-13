@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
@@ -81,8 +80,7 @@ public class ExileTargetPermanentUnlessControllerPaysEffectHandler implements No
     public void exileTargetPermanent(GameData gameData, Card sourceCard, UUID sourceControllerId,
             UUID targetPermanentId, UUID sourcePermanentId) {
         ExileTargetPermanentEffect exileTarget = new ExileTargetPermanentEffect();
-        StackEntry targetEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, sourceCard, sourceControllerId,
+        StackEntry targetEntry = StackEntry.carrier(sourceCard, sourceControllerId,
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(exileTarget)), targetPermanentId, sourcePermanentId);
         exileTargetPermanentEffectHandler.resolve(gameData, targetEntry, exileTarget);

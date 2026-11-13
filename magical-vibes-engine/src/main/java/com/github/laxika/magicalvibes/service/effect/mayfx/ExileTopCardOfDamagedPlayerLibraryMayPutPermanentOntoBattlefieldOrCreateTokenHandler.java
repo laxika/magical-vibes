@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLibraryMayPutPermanentOntoBattlefieldOrCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PutExiledCardOntoBattlefieldUnderControllerEffect;
@@ -42,9 +41,7 @@ public class ExileTopCardOfDamagedPlayerLibraryMayPutPermanentOntoBattlefieldOrC
         if (accepted && ability.targetCardId() != null
                 && gameData.findExiledCard(ability.targetCardId()) != null) {
             var putEffect = new PutExiledCardOntoBattlefieldUnderControllerEffect(ability.targetCardId());
-            var entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(),
+            var entry = StackEntry.carrier(ability.sourceCard(),
                     ability.controllerId(),
                     ability.sourceCard().getName() + "'s ability",
                     List.of(putEffect),
@@ -52,9 +49,7 @@ public class ExileTopCardOfDamagedPlayerLibraryMayPutPermanentOntoBattlefieldOrC
                     ability.sourcePermanentId());
             putExiledCardHandler.resolve(gameData, entry, putEffect);
         } else {
-            var tokenEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(),
+            var tokenEntry = StackEntry.carrier(ability.sourceCard(),
                     ability.controllerId(),
                     ability.sourceCard().getName() + "'s ability",
                     List.of(effect.fallbackToken()),

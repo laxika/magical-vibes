@@ -98,5 +98,8 @@ public record CopySpellEffect(StackEntryPredicate spellFilter, boolean tokenWith
         return new CopySpellEffect(null, false, false, false, false, false, false, color);
     }
 
-    @Override public TargetSpec targetSpec() { return TargetSpec.benign(TargetPredicates.spellOnStack()); }
+    /** Target spell, restricted by {@link #spellFilter} when it has one ("target instant or sorcery spell you control"). */
+    @Override public TargetSpec targetSpec() {
+        return TargetSpec.benign(spellFilter == null ? TargetPredicates.spellOnStack() : TargetPredicates.spells(spellFilter));
+    }
 }

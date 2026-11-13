@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -46,9 +45,7 @@ public class ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageHandler
         if (accepted) {
             DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(
                     effect.damage(), DamageRecipient.TARGET_PLAYER);
-            StackEntry damageEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(), sourceControllerId,
+            StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(), sourceControllerId,
                     ability.sourceCard().getName() + "'s ability",
                     new ArrayList<>(List.of(damage)), ability.targetCardId(), ability.sourcePermanentId());
             damageEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());

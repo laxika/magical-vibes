@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -157,8 +159,7 @@ class ExileTargetPermanentUntilSourceLeavesEffectHandlerTest {
         // =========================================================================
 
     private StackEntry createEntry(Card sourceCard, UUID controllerId, UUID targetId) {
-                return new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, sourceCard.getName(),
+                return TestStackDoor.triggered(sourceCard, controllerId, sourceCard.getName(),
                         List.of(new ExileTargetPermanentUntilSourceLeavesEffect()), 0, targetId, null
                 );
             }

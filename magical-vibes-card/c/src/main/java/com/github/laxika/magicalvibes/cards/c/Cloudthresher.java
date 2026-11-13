@@ -23,12 +23,11 @@ public class Cloudthresher extends Card {
         // Flash and Reach are auto-loaded from Scryfall keywords.
         // Evoke {2}{G}{G}: cast for the alternate cost instead of the mana cost; it's sacrificed on entry.
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{G}{G}"))));
+        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
 
         // When this creature enters, it deals 2 damage to each creature with flying and each player.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new MassDamageEffect(2, false, true, new PermanentHasKeywordPredicate(Keyword.FLYING)));
-
-        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }
 }

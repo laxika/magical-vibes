@@ -18,9 +18,7 @@ import java.util.Set;
 public class TalesEnd extends Card {
 
     public TalesEnd() {
-        StackEntryTypeInPredicate abilityTypes = new StackEntryTypeInPredicate(Set.of(
-                StackEntryType.ACTIVATED_ABILITY,
-                StackEntryType.TRIGGERED_ABILITY));
+        StackEntryTypeInPredicate abilityTypes = new StackEntryTypeInPredicate(StackEntryType.ABILITIES);
         StackEntryAllOfPredicate legendarySpell = new StackEntryAllOfPredicate(List.of(
                 new StackEntryTypeInPredicate(Set.of(
                         StackEntryType.CREATURE_SPELL,

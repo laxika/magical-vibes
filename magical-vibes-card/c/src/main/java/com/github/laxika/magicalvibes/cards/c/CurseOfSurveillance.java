@@ -5,6 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.EachTargetPlayerDrawsCardsEqualToAttachedCountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerOtherThanTriggeringPlayerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,8 +17,13 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class CurseOfSurveillance extends Card {
 
     public CurseOfSurveillance() {
-        addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER),
-                new EachTargetPlayerDrawsCardsEqualToAttachedCountEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.CURSE)));
+        // Enchant player.
+        target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.ANY),
+                "Target must be a player"));
+        target(new PlayerPredicateTargetFilter(new PlayerOtherThanTriggeringPlayerPredicate(),
+                "Target must be a player other than the enchanted player"), 0, Integer.MAX_VALUE)
+                .addTrigger(Triggers.upkeep(ActivePlayer.ENCHANTED_PLAYER),
+                        new EachTargetPlayerDrawsCardsEqualToAttachedCountEffect(
+                                new PermanentHasSubtypePredicate(CardSubtype.CURSE)));
     }
 }

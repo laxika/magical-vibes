@@ -333,8 +333,6 @@ public class InteractionPromptProjectionRegistry {
                 this::projectTwoOpponentOwnedExiledCardsToGraveyardChoice);
         register(PendingInteraction.OblivionSowerLandChoice.class,
                 this::projectOblivionSowerLandChoice);
-        register(PendingInteraction.ETBExiledCardTargetChoice.class,
-                this::projectETBExiledCardTargetChoice);
         register(PendingInteraction.PermanentChoice.class, this::projectPermanentChoice);
         register(PendingInteraction.AdNauseamRepeatChoice.class, this::projectAdNauseamRepeatChoice);
         register(PendingInteraction.ForbiddenRitualRepeatChoice.class, this::projectForbiddenRitualRepeatChoice);
@@ -1910,25 +1908,6 @@ public class InteractionPromptProjectionRegistry {
             case ARTIFACT, ENCHANTMENT, INSTANT -> "an ";
             default -> "a ";
         };
-    }
-
-    private InteractionPromptMessage projectETBExiledCardTargetChoice(
-            GameData gameData, PendingInteraction.ETBExiledCardTargetChoice interaction) {
-        List<UUID> validIds = new ArrayList<>(interaction.validCardIds());
-        validIds.addAll(interaction.validPermanentIds());
-        List<CardView> cardViews = new ArrayList<>(exiledCardViews(gameData, interaction.validCardIds()));
-        gameData.playerBattlefields.values().stream()
-                .flatMap(List::stream)
-                .filter(permanent -> interaction.validPermanentIds().contains(permanent.getId()))
-                .map(permanent -> cardViewFactory.create(permanent.getCard()).toBuilder()
-                        .id(permanent.getId())
-                        .build())
-                .forEach(cardViews::add);
-        return InteractionPromptMessage.multiCardPick(
-                validIds,
-                cardViews,
-                1,
-                interaction.sourceCard().getName() + "'s ability — Choose a permanent or face-up exiled card.");
     }
 
     private InteractionPromptMessage projectPermanentChoice(

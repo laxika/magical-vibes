@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "TOR", collectorNumber = "39")
 public class HydromorphGuardian extends Card {
@@ -29,8 +28,7 @@ public class HydromorphGuardian extends Card {
                 "{U}, Sacrifice this creature: Counter target spell that targets a creature you control.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
-                                new StackEntryNotPredicate(new StackEntryTypeInPredicate(Set.of(
-                                        StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY))),
+                                new StackEntryNotPredicate(new StackEntryTypeInPredicate(StackEntryType.ABILITIES)),
                                 new StackEntryTargetsPermanentPredicate(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentControlledBySourceControllerPredicate()))))),

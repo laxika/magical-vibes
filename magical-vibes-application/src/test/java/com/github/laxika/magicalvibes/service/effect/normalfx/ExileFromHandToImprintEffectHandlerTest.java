@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -167,8 +169,7 @@ class ExileFromHandToImprintEffectHandlerTest {
                 gd.playerHands.get(player1Id).add(handCard);
 
                 ExileFromHandToImprintEffect effect = new ExileFromHandToImprintEffect(filter, "a nonland card");
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, anvilCard, player1Id, "Semblance Anvil trigger",
+                StackEntry entry = TestStackDoor.triggered(anvilCard, player1Id, "Semblance Anvil trigger",
                         List.of(effect), anvilPerm.getId(), (UUID) null
                 );
 
@@ -193,8 +194,7 @@ class ExileFromHandToImprintEffectHandlerTest {
                 gd.playerHands.get(player1Id).add(handCard);
 
                 ExileFromHandToImprintEffect effect = ExileFromHandToImprintEffect.faceDown(null, "a card");
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, anvilCard, player1Id, "Summoner's Egg trigger",
+                StackEntry entry = TestStackDoor.triggered(anvilCard, player1Id, "Summoner's Egg trigger",
                         List.of(effect), anvilPerm.getId(), (UUID) null
                 );
 
@@ -218,8 +218,7 @@ class ExileFromHandToImprintEffectHandlerTest {
                 gd.playerHands.get(player1Id).clear();
 
                 ExileFromHandToImprintEffect effect = new ExileFromHandToImprintEffect(filter, "a nonland card");
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, anvilCard, player1Id, "Semblance Anvil trigger",
+                StackEntry entry = TestStackDoor.triggered(anvilCard, player1Id, "Semblance Anvil trigger",
                         List.of(effect), anvilPerm.getId(), (UUID) null
                 );
 
@@ -241,8 +240,7 @@ class ExileFromHandToImprintEffectHandlerTest {
                 gd.playerHands.get(player1Id).add(handCard);
 
                 ExileFromHandToImprintEffect effect = new ExileFromHandToImprintEffect(filter, "a nonland card");
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, anvilCard, player1Id, "Semblance Anvil trigger",
+                StackEntry entry = TestStackDoor.triggered(anvilCard, player1Id, "Semblance Anvil trigger",
                         List.of(effect), anvilPerm.getId(), (UUID) null
                 );
 
@@ -261,8 +259,7 @@ class ExileFromHandToImprintEffectHandlerTest {
                 Card anvilCard = createCard("Semblance Anvil");
 
                 ExileFromHandToImprintEffect effect = new ExileFromHandToImprintEffect(filter, "a nonland card");
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, anvilCard, player1Id, "Semblance Anvil trigger",
+                StackEntry entry = TestStackDoor.triggered(anvilCard, player1Id, "Semblance Anvil trigger",
                         List.of(effect), anvilId, (UUID) null
                 );
 

@@ -24,7 +24,7 @@ class ArchipelagoreTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
                 gd, archipelagore, List.of(archipelagore.getCard()), player1.getId()));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
 
         // "Up to one target creature" after the first mutation: one choice, declined by choosing yourself.
         PendingInteraction.PermanentChoice firstChoice =
@@ -41,7 +41,7 @@ class ArchipelagoreTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
                 gd, archipelagore, List.of(archipelagore.getCard()), player1.getId()));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
 
         // "Up to two target creatures" after the second mutation: a dynamic count, chosen one target at a time.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
@@ -75,7 +75,7 @@ class ArchipelagoreTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
                 gd, archipelagore, List.of(archipelagore.getCard()), player1.getId()));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
         harness.handlePermanentChosen(player1, player1.getId());
         resolveOneTrigger();
 
@@ -93,7 +93,7 @@ class ArchipelagoreTest extends BaseCardTest {
 
         harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
                 gd, archipelagore, List.of(archipelagore.getCard()), player1.getId()));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
         harness.handlePermanentChosen(player1, creature.getId());
         resolveOneTrigger();
 

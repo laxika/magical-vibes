@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -154,7 +156,7 @@ class SacrificeOtherCreatureOrDamageEffectHandlerTest {
         }
 
         private StackEntry triggeredAbilityEntry(Card card, UUID controllerId, UUID targetId, UUID sourcePermanentId) {
-            return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+            return TestStackDoor.triggered(card, controllerId,
                     card.getName(), List.of(), targetId, sourcePermanentId);
         }
 

@@ -46,7 +46,7 @@ public class SearchLibraryForCardsToExileAndCreateTokensEffectHandler implements
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
         if (deck == null || deck.isEmpty()) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, controllerId);
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             gameLogService.append(gameData, GameLog.text(
                     playerName + " searches their library but it is empty. Library is shuffled."));

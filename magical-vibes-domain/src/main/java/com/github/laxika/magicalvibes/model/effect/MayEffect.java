@@ -63,6 +63,16 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
     }
 
     @Override
+    public boolean choosesSecondTargetAgainstFirst() {
+        return wrapped.choosesSecondTargetAgainstFirst();
+    }
+
+    @Override
+    public BattlefieldAndGraveyardCardChoosingEffect battlefieldAndGraveyardChoice() {
+        return wrapped.battlefieldAndGraveyardChoice();
+    }
+
+    @Override
     public boolean targetChosenByActivePlayer() {
         return choicePlayer == MayChoicePlayer.ACTIVE_PLAYER || wrapped.targetChosenByActivePlayer();
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -33,13 +34,13 @@ public class RedirectNextDamageFromChosenSourceToSelfEffectHandler implements No
 
         List<UUID> validIds = new java.util.ArrayList<>(preventionSupport.collectAllBattlefieldPermanentIds(gameData));
         gameData.stack.stream()
-                .filter(stackEntry -> stackEntry.getEntryType() != com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY
-                        && stackEntry.getEntryType() != com.github.laxika.magicalvibes.model.StackEntryType.ACTIVATED_ABILITY)
+                .filter(stackEntry -> stackEntry.getEntryType() != StackEntryType.TRIGGERED_ABILITY
+                        && stackEntry.getEntryType() != StackEntryType.ACTIVATED_ABILITY)
                 .map(stackEntry -> stackEntry.getCard().getId())
                 .forEach(validIds::add);
         gameData.stack.stream()
-                .filter(stackEntry -> stackEntry.getEntryType() == com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY
-                        || stackEntry.getEntryType() == com.github.laxika.magicalvibes.model.StackEntryType.ACTIVATED_ABILITY)
+                .filter(stackEntry -> stackEntry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        || stackEntry.getEntryType() == StackEntryType.ACTIVATED_ABILITY)
                 .map(StackEntry::getSourcePermanentId)
                 .filter(sourceId -> sourceId != null && !validIds.contains(sourceId))
                 .forEach(validIds::add);

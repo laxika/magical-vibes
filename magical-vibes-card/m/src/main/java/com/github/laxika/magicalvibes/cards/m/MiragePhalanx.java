@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
@@ -33,6 +34,7 @@ public class MiragePhalanx extends Card {
 
     public MiragePhalanx() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCanSoulbond()),
                 new MayEffect(new SoulbondChoosePartnerEffect(),
                         "Pair Mirage Phalanx with another unpaired creature you control?"));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),

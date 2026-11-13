@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndChangeLifeEffect;
@@ -60,7 +61,7 @@ class RevealTopCardPutIntoHandAndChangeLifeEffectHandlerTest {
     private StackEntry entryFor(RevealTopCardPutIntoHandAndChangeLifeEffect effect, String sourceName) {
         Card source = new Card();
         source.setName(sourceName);
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, source, player1Id, sourceName, List.of(effect));
+        return TestStackDoor.triggered(source, player1Id, sourceName, List.of(effect));
     }
 
     @Test

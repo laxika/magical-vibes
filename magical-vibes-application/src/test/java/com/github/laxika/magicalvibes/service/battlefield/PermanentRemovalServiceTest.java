@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -71,9 +73,7 @@ class PermanentRemovalServiceTest {
         card.setName("Leaving land");
         card.setType(CardType.LAND);
         Permanent land = addPermanent(player2Id, card);
-        var entry = new com.github.laxika.magicalvibes.model.StackEntry(
-                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
-                new Card(), player1Id, "Damage trigger", List.of());
+        var entry = TestStackDoor.triggered(new Card(), player1Id, "Damage trigger", List.of());
         entry.setTriggeringPermanentId(land.getId());
         entry.setTriggeringPermanentControllerId(player1Id);
         gd.pendingManaAbilityTriggers.add(entry);
@@ -102,9 +102,7 @@ class PermanentRemovalServiceTest {
         var effect = new com.github.laxika.magicalvibes.model.effect.MayEffect(
                 new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1), "Draw?", null,
                 com.github.laxika.magicalvibes.model.MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER);
-        var entry = new com.github.laxika.magicalvibes.model.StackEntry(
-                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
-                new Card(), player1Id, "Optional trigger", List.of(effect));
+        var entry = TestStackDoor.triggered(new Card(), player1Id, "Optional trigger", List.of(effect));
         entry.setTriggeringPermanentId(creature.getId());
         entry.setTriggeringPermanentControllerId(player1Id);
         gd.stack.add(entry);
@@ -182,7 +180,7 @@ class PermanentRemovalServiceTest {
         org.springframework.test.util.ReflectionTestUtils.setField(prs, "triggeredAbilityStackService",
                 triggeredAbilityStackService);
         org.mockito.Mockito.lenient().doAnswer(invocation -> {
-            invocation.<GameData>getArgument(0).enqueueTrigger(invocation.getArgument(1));
+            com.github.laxika.magicalvibes.testutil.TestStackDoor.enqueue(invocation.getArgument(0), invocation.getArgument(1));
             return null;
         }).when(triggeredAbilityStackService).putDelayed(org.mockito.ArgumentMatchers.any(),
                 org.mockito.ArgumentMatchers.any());

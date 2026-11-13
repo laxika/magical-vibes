@@ -67,6 +67,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class PermanentCounterSupport {
 
     private final GameQueryService gameQueryService;
+    /** Vanishing's "when the last time counter is removed from this permanent, sacrifice it" (CR 702.63a). */
+    private static final TriggeredAbility VANISHING_SACRIFICE = new TriggeredAbility(
+            new CounterTrigger(CounterTrigger.CounterEvent.COUNTERS_REMOVED,
+                    com.github.laxika.magicalvibes.model.trigger.ObjectRelation.THIS),
+            new com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect());
+
     private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
@@ -989,42 +995,19 @@ public class PermanentCounterSupport {
                 com.github.laxika.magicalvibes.model.Keyword.VANISHING)) return;
         UUID controllerId = controllerOf(gameData, permanent);
         if (controllerId == null) return;
-        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, permanent.getCard(),
-                controllerId, permanent.getCard().getName() + "'s vanishing ability",
-                List.of(new com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect()),
-                null, permanent.getId());
-        trigger.setSourcePermanentSnapshot(new Permanent(permanent));
-        gameData.stack.add(trigger);
+        // The permanent's own ability: the effects that make its abilities trigger an additional time count it
+        // (CR 603.3).
+        Permanent snapshot = new Permanent(permanent);
+        triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(VANISHING_SACRIFICE,
+                permanent.getCard(), permanent, controllerId,
+                permanent.getCard().getName() + "'s vanishing ability",
+                ConditionContext.forPermanent(permanent, controllerId),
+                entry -> entry.setSourcePermanentSnapshot(snapshot)));
     }
 
+    /** Triggers {@code saga}'s chapter ability {@code loreCount}, reached by a lore counter {@code entry} put on it. */
     public void triggerSagaChapter(GameData gameData, StackEntry entry, Permanent saga, int loreCount) {
-        Card card = saga.getCard();
-
-        if (sagaChapterService != null) {
-            sagaChapterService.triggerSagaChapter(gameData, saga, card, entry.getControllerId(), loreCount);
-            return;
-        }
-
-        if (loreCount < 1) return;
-        ChapterTrigger chapter = Triggers.chapter(loreCount);
-
-        List<CardEffect> chapterEffects = card.getTriggerEffects(chapter);
-        if (chapterEffects.isEmpty()) return;
-
-        String chapterName = chapter.numeral();
-
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                entry.getControllerId(),
-                card.getName() + "'s chapter " + chapterName + " ability",
-                new ArrayList<>(chapterEffects),
-                null,
-                saga.getId()
-        ));
-
-        gameLogService.append(gameData, GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
-        log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
+        sagaChapterService.triggerSagaChapter(gameData, saga, saga.getCard(), entry.getControllerId(), loreCount);
     }
 
     /**

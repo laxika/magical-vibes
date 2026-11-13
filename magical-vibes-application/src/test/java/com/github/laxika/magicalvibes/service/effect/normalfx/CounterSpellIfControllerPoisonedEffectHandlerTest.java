@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -110,7 +112,7 @@ class CounterSpellIfControllerPoisonedEffectHandlerTest {
         }
 
         private StackEntry counterUnlessPaysEntry(Card card, UUID controllerId, UUID targetCardId, int amount) {
-            return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
+            return TestStackDoor.triggered(card, controllerId,
                     card.getName(), List.of(new CounterUnlessPaysEffect(amount)), 0, targetCardId, null);
         }
 

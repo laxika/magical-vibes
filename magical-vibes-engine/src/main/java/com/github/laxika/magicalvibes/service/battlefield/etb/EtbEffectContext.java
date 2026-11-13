@@ -8,17 +8,15 @@ import java.util.UUID;
 import java.util.List;
 
 /**
- * Per-trigger context passed to {@link EtbEffectResolver} handlers when a creature's own
- * "when this enters" effects ({@code Triggers.enters(ObjectRelation.THIS)}) are resolved at trigger time.
- *
- * <p>Carries everything a handler may need to unwrap modal choices, materialise values, or evaluate
- * an intervening-if gate (CR 603.4):
+ * The facts fixed as a permanent entered the battlefield, which its own "when this enters" abilities
+ * ({@code Triggers.enters(ObjectRelation.THIS)}) are judged by as they trigger ({@link EtbEffectResolver}): their
+ * event condition, intervening "if" (CR 603.4) and their effects' entry facts.
  *
  * @param gameData        the current game state
  * @param card            the entering card whose ETB abilities are being resolved
  * @param controllerId    the controller of the entering permanent (the ability controller)
  * @param wasCastFromHand whether the permanent was cast from hand (gates cast-from-hand effects)
- * @param etbMode         the modal-choice index selected at cast time (for {@code ChooseOneEffect})
+ * @param etbMode         the modal-choice index selected at cast time
  * @param kicked          whether the spell was kicked (gates kicked-conditional effects)
  * @param evoked          whether the spell was cast for its evoke cost (gates the evoke sacrifice)
  * @param prowl           whether the spell was cast for its prowl cost (gates prowl-conditional effects)

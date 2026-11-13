@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.ai.simulation.GameSimulator;
 import com.github.laxika.magicalvibes.ai.simulation.HeadlessSimulationContext;
@@ -97,7 +99,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -2266,7 +2267,7 @@ class HardAiDecisionEngineTest extends HardAiDecisionEngineTestSupport {
 
             when(mockGameQueryService.canActivateManaAbility(any(), any())).thenReturn(true);
             Mockito.doAnswer(inv -> {
-                mockGd.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature,
+                mockGd.stack.add(TestStackDoor.triggered(creature,
                         mockAiPlayer.getId(), "Test trigger", List.of()));
                 return null;
             }).when(mockMessageHandler).handleActivateAbility(any());

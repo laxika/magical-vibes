@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -7,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CastTopOfLibraryWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.networking.SessionManager;
 import com.github.laxika.magicalvibes.networking.model.CardView;
@@ -120,7 +121,7 @@ class CastTopOfLibraryWithoutPayingManaCostEffectHandlerTest {
             void emptyLibraryLogs() {
                 CastTopOfLibraryWithoutPayingManaCostEffect effect =
                         new CastTopOfLibraryWithoutPayingManaCostEffect(Set.of(CardType.INSTANT, CardType.SORCERY));
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Galvanoth"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Galvanoth"),
                         player1Id, "Galvanoth", List.of(effect));
 
                 castTopOfLibraryWithoutPayingManaCostEffectHandler.resolve(gd, entry, effect);
@@ -137,7 +138,7 @@ class CastTopOfLibraryWithoutPayingManaCostEffectHandlerTest {
 
                 CastTopOfLibraryWithoutPayingManaCostEffect effect =
                         new CastTopOfLibraryWithoutPayingManaCostEffect(Set.of(CardType.INSTANT, CardType.SORCERY));
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Galvanoth"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Galvanoth"),
                         player1Id, "Galvanoth", List.of(effect));
 
                 castTopOfLibraryWithoutPayingManaCostEffectHandler.resolve(gd, entry, effect);
@@ -157,7 +158,7 @@ class CastTopOfLibraryWithoutPayingManaCostEffectHandlerTest {
 
                 CastTopOfLibraryWithoutPayingManaCostEffect effect =
                         new CastTopOfLibraryWithoutPayingManaCostEffect(Set.of(CardType.INSTANT, CardType.SORCERY));
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Galvanoth"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Galvanoth"),
                         player1Id, "Galvanoth", List.of(effect));
 
                 castTopOfLibraryWithoutPayingManaCostEffectHandler.resolve(gd, entry, effect);

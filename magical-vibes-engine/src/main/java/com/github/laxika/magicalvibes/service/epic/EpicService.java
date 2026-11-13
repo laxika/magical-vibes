@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.action.EpicDelayedTrigger;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.EpicUpkeepCopyEffect;
@@ -17,6 +18,8 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 /** Resolves Epic's game-long restriction and recurring upkeep spell copies. */
@@ -27,6 +30,10 @@ public class EpicService {
 
     private final CopySupport copySupport;
     private final GameLogService gameLogService;
+
+    @Autowired
+    @Lazy
+    private TriggeredAbilityStackService triggeredAbilityStackService;
 
     public void register(GameData gameData, StackEntry entry) {
         UUID controllerId = entry.getControllerId();
@@ -44,16 +51,13 @@ public class EpicService {
         for (EpicDelayedTrigger delayed : gameData.getDelayedActions(EpicDelayedTrigger.class)) {
             if (!delayed.controllerId().equals(activePlayerId)) continue;
 
-            StackEntry upkeepTrigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    delayed.spellPrototype(),
-                    activePlayerId,
-                    "Epic copy trigger for " + delayed.spellPrototype().getName(),
-                    new ArrayList<>(List.of(new EpicUpkeepCopyEffect())),
-                    delayed.targetId(),
-                    (UUID) null);
+            // Epic's delayed triggered ability, made by the spell as it resolved (CR 702.50a, 603.7d): it copies the
+            // spell with the targets it had, and the copy may choose new ones.
+            StackEntry upkeepTrigger = TriggeredAbilityStackService.madeAbility(delayed.spellPrototype(),
+                    activePlayerId, "Epic copy trigger for " + delayed.spellPrototype().getName(),
+                    List.of(new EpicUpkeepCopyEffect()), delayed.targetId(), (UUID) null);
             upkeepTrigger.setNonTargeting(true);
-            gameData.stack.add(upkeepTrigger);
+            triggeredAbilityStackService.putDelayed(gameData, upkeepTrigger);
             gameLogService.append(gameData, GameLog.cardThen(delayed.spellPrototype(), "'s Epic ability triggers."));
             log.info("Game {} - {} Epic upkeep trigger pushed onto the stack", gameData.id,
                     delayed.spellPrototype().getName());

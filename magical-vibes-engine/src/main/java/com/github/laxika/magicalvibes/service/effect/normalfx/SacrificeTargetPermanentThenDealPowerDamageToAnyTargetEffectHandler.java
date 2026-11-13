@@ -66,8 +66,7 @@ public class SacrificeTargetPermanentThenDealPowerDamageToAnyTargetEffectHandler
             return;
         }
 
-        StackEntry reflexiveContext = new StackEntry(
-                entry.getEntryType(), entry.getCard(), entry.getControllerId(), entry.getDescription(),
+        StackEntry reflexiveContext = StackEntry.derivedFrom(entry, entry.getCard(), entry.getControllerId(), entry.getDescription(),
                 new ArrayList<>(List.of()), null, target.getId());
         reflexiveContext.setSourcePermanentSnapshot(sourceSnapshot);
         reflexiveContext.setEventValue(Math.max(0, result.lastKnownPower()));

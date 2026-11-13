@@ -101,9 +101,9 @@ import com.github.laxika.magicalvibes.model.action.EachPlayerHandExileReturnAtNe
 import com.github.laxika.magicalvibes.model.action.TargetPlayerHandExileReturnAtNextTurnEndStep;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
@@ -123,7 +123,7 @@ import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.action.ReturnExiledCardAtNextEndStepUnlessPays;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
-import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -142,11 +142,9 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 import com.github.laxika.magicalvibes.model.effect.TemporaryCopyEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -196,7 +194,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.model.effect.DiscardSpecificCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRecipient;
-import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -610,14 +607,10 @@ public class StepTriggerService {
 
         if (gameData.activePlayerId != null
                 && gameData.activePlayerId.equals(gameData.initiativePlayerId)) {
-            StackEntry initiativeTrigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    null,
-                    gameData.activePlayerId,
-                    "The initiative's ability",
-                    new ArrayList<>(List.of(new VentureIntoDungeonEffect(Dungeon.UNDERCITY))));
-            initiativeTrigger.setNonTargeting(true);
-            gameData.enqueueTrigger(initiativeTrigger);
+            // "At the beginning of the upkeep of the player who has the initiative, that player ventures into
+            // Undercity" (CR 727.2).
+            triggeredAbilityStackService.putInherent(gameData, gameData.activePlayerId, "The initiative's ability",
+                    List.of(new VentureIntoDungeonEffect(Dungeon.UNDERCITY)), TriggerRecord.NONE);
         }
 
         // Spatial Binding: "Until your next upkeep, target permanent can't phase out." Phasing is a
@@ -861,16 +854,12 @@ public class StepTriggerService {
                                 action.dynamicManaCost()),
                         new ArrayList<>(List.of(new SacrificeSelfEffect())),
                         true, action.paidEffects());
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        action.sourceCard(),
-                        controllerId,
-                        action.sourceCard().getName() + "'s echo ability",
-                        new ArrayList<>(List.of(payEchoOrSacrifice)),
-                        (UUID) null,
-                        action.permanentId());
-                entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                // Echo is the permanent's own triggered ability (CR 702.30a): the effects that make its abilities
+                // trigger an additional time count it (CR 603.3).
+                triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                        new TriggeredAbility(YOUR_UPKEEP, payEchoOrSacrifice), action.sourceCard(), echoSource,
+                        controllerId, action.sourceCard().getName() + "'s echo ability",
+                        ConditionContext.forPermanent(echoSource, controllerId), TriggerRecord.NONE));
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s echo ability triggers."));
                 log.info("Game {} - {} echo trigger pushed onto stack", gameData.id, action.sourceCard().getName());
             }
@@ -1057,13 +1046,11 @@ public class StepTriggerService {
                 if (action.exileInsteadOfGraveyard()) {
                     gameData.exileInsteadOfGraveyard.add(action.card().getId());
                 }
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        action.card(),
-                        action.controllerId(),
-                        action.card().getName() + "'s rebound ability",
-                        new ArrayList<>(List.of(new ReboundCastFromExileEffect())));
-                gameData.stack.add(entry);
+                // Rebound's delayed triggered ability, made by the spell as it resolved (CR 702.88a, 603.7d).
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(action.card(), action.controllerId(),
+                        action.card().getName() + "'s rebound ability", List.of(new ReboundCastFromExileEffect()));
+                entry.setNonTargeting(true);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(action.card(), "'s rebound ability triggers."));
                 log.info("Game {} - {} rebound trigger pushed onto stack", gameData.id, action.card().getName());
             }
@@ -1263,9 +1250,6 @@ public class StepTriggerService {
             if (!enchantedPlayerId.equals(activePlayerId)) return;
 
             for (TriggeredAbility ability : enchantedPlayerUpkeepAbilities) {
-                if (queueAnyNumberOfOtherPlayersTarget(gameData, perm, auraOwnerId, enchantedPlayerId, ability)) {
-                    continue;
-                }
                 putStepAbility(gameData, ability, perm.getCard(), perm, auraOwnerId, "upkeep ability", curseContext,
                         entry -> {
                             entry.setTargetId(enchantedPlayerId);
@@ -1287,13 +1271,13 @@ public class StepTriggerService {
                     if (eggCounters != null && eggCounters > 0
                             && card.getTriggerEffects(YOUR_UPKEEP, Zone.EXILE).stream()
                             .noneMatch(RemoveEggCounterFromExileAndReturnEffect.class::isInstance)) {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                card,
-                                activePlayerId,
-                                card.getName() + "'s egg counter ability",
-                                new ArrayList<>(List.of(new RemoveEggCounterFromExileAndReturnEffect(card.getId())))
-                        ));
+                        // The card's own "at the beginning of your upkeep, if this card is exiled with an egg counter
+                        // on it" ability, functioning from exile (Darigaaz Reincarnated).
+                        triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                                new TriggeredAbility(new TriggerCondition(YOUR_UPKEEP, AbilityZones.EXILE),
+                                        new RemoveEggCounterFromExileAndReturnEffect(card.getId())),
+                                card, null, activePlayerId, card.getName() + "'s egg counter ability",
+                                ConditionContext.forCard(card, activePlayerId), TriggerRecord.NONE));
 
                         gameLogService.append(gameData,
                                 GameLog.cardThen(card, "'s upkeep ability triggers (exiled with egg counters)."));
@@ -1309,13 +1293,13 @@ public class StepTriggerService {
             for (Card card : new ArrayList<>(exiledCards)) {
                 Integer refineCounters = gameData.exiledCardRefineCounters.get(card.getId());
                 if (refineCounters != null && refineCounters > 0) {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            card,
-                            activePlayerId,
-                            card.getName() + "'s refine counter ability",
-                            new ArrayList<>(List.of(new RemoveRefineCounterFromExiledCardEffect(card.getId())))
-                    ));
+                    // "At the beginning of your upkeep, if this card is exiled, remove a refine counter from it", an
+                    // ability the card gained as it was exiled (Uvilda, Dean of Perfection).
+                    triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                            new TriggeredAbility(new TriggerCondition(YOUR_UPKEEP, AbilityZones.EXILE),
+                                    new RemoveRefineCounterFromExiledCardEffect(card.getId())),
+                            card, null, activePlayerId, card.getName() + "'s refine counter ability",
+                            ConditionContext.forCard(card, activePlayerId), TriggerRecord.NONE));
                     gameLogService.append(gameData,
                             GameLog.cardThen(card, "'s refine counter ability triggers."));
                 }
@@ -1333,13 +1317,13 @@ public class StepTriggerService {
                 }
                 Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
                 if (timeCounters != null && timeCounters > 0) {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            card,
-                            activePlayerId,
-                            card.getName() + "'s suspend ability",
-                            new ArrayList<>(List.of(new RemoveTimeCounterFromExiledCardEffect(card.getId())))
-                    ));
+                    // Suspend's "at the beginning of your upkeep, if this card is suspended, remove a time counter
+                    // from it" (CR 702.62a).
+                    triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                            new TriggeredAbility(new TriggerCondition(YOUR_UPKEEP, AbilityZones.EXILE),
+                                    new RemoveTimeCounterFromExiledCardEffect(card.getId())),
+                            card, null, activePlayerId, card.getName() + "'s suspend ability",
+                            ConditionContext.forCard(card, activePlayerId), TriggerRecord.NONE));
 
                     gameLogService.append(gameData,
                             GameLog.cardThen(card, "'s suspend ability triggers."));
@@ -1394,13 +1378,13 @@ public class StepTriggerService {
                 continue;
             }
             Card meddlingCard = pending.meddlingCard();
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    meddlingCard,
-                    pending.meddlerId(),
+            // A delayed triggered ability Ertai's Meddling made as it resolved: its source is the Meddling and its
+            // controller the player who controlled it (CR 603.7d).
+            StackEntry delayCounter = TriggeredAbilityStackService.madeAbility(meddlingCard, pending.meddlerId(),
                     meddlingCard.getName() + " delay counter ability",
-                    new ArrayList<>(List.of(new RemoveDelayCounterFromExiledSpellEffect(pending.cardId())))
-            ));
+                    List.of(new RemoveDelayCounterFromExiledSpellEffect(pending.cardId())));
+            delayCounter.setNonTargeting(true);
+            triggeredAbilityStackService.putDelayed(gameData, delayCounter);
 
             gameLogService.append(gameData,
                     GameLog.cardThen(meddlingCard, "'s delay counter ability triggers."));
@@ -1417,13 +1401,13 @@ public class StepTriggerService {
                 continue;
             }
             Card suspendedCard = suspendedEntry.card();
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    suspendedCard,
-                    activePlayerId,
-                    suspendedCard.getName() + "'s suspend ability",
-                    new ArrayList<>(List.of(new RemoveSuspendCounterFromExiledSpellEffect(pending.cardId())))
-            ));
+            // Suspend's "remove a time counter" upkeep ability of a spell exiled with time counters that gained suspend
+            // (CR 702.62a).
+            triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                    new TriggeredAbility(new TriggerCondition(YOUR_UPKEEP, AbilityZones.EXILE),
+                            new RemoveSuspendCounterFromExiledSpellEffect(pending.cardId())),
+                    suspendedCard, null, activePlayerId, suspendedCard.getName() + "'s suspend ability",
+                    ConditionContext.forCard(suspendedCard, activePlayerId), TriggerRecord.NONE));
 
             gameLogService.append(gameData, GameLog.cardThen(suspendedCard, "'s suspend ability triggers."));
             log.info("Game {} - {} suspend upkeep trigger pushed onto stack", gameData.id, suspendedCard.getName());
@@ -1431,12 +1415,8 @@ public class StepTriggerService {
 
         // Phase-in targeted triggers were queued during the untap-step phasing action; choose targets
         // now as they go on the stack (before upkeep's own targeted triggers).
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.PhasesInTriggerTarget.class)) {
-            processNextPhasesInTriggerTarget(gameData);
-            return;
-        }
 
-        processNextUpkeepMultiPlayerTarget(gameData);
+        processNextPucasMischiefTarget(gameData);
     }
 
     /**
@@ -1477,12 +1457,6 @@ public class StepTriggerService {
                 return;
             }
         }
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
-            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-        }
         triggerCollectionService.processNextDayNightTriggerTarget(gameData);
         if (gameData.interaction.isAwaitingInput()) {
             return;
@@ -1496,113 +1470,15 @@ public class StepTriggerService {
      * type with enchanted creature", Call to the Kindred, read as it resolves and from the creature's last-known
      * information once it has left, CR 608.2h). The door chooses a mode as it goes on the stack ("choose one that
      * hasn't been chosen", Demonic Pact) and its targets with all its effects (CR 603.3c, 603.3d), by its own target
-     * filter (a granted ability's "target opponent", Custody Battle) over the card's. The target choices the door can't
-     * make go to their own choice first ({@link #queueOwnUpkeepTargetChoice}).
+     * filter (a granted ability's "target opponent", Custody Battle) over the card's.
      */
     private void putYourUpkeepAbility(GameData gameData, Permanent perm, UUID activePlayerId,
                                       TriggeredAbility ability, ConditionContext context) {
-        if (queueOwnUpkeepTargetChoice(gameData, perm, activePlayerId, ability)) {
-            return;
-        }
         putStepAbility(gameData, ability, perm.getCard(), perm, activePlayerId, "upkeep ability", context, entry -> {
             entry.setActivePlayerId(activePlayerId);
             entry.setSourcePermanentSnapshot(new Permanent(perm));
             recordAttachedPermanent(gameData, perm, entry);
         });
-    }
-
-    /**
-     * Queues the target choice of {@code ability}, an "at the beginning of your upkeep" ability of {@code perm}, whose
-     * targets the stack door's choices can't take: two target players (Axis of Mortality), the interdependent pair of
-     * an exchange (Puca's Mischief: one you control, one an opponent controls with equal or lesser mana value), a copy
-     * target (Cryptoplasm) and Capricious Efreet's own permanent then the others. Its record is handed off with the
-     * choice; it has no intervening "if" or limit. Returns whether it did.
-     */
-    private boolean queueOwnUpkeepTargetChoice(GameData gameData, Permanent perm, UUID activePlayerId,
-                                               TriggeredAbility ability) {
-        Card card = perm.getCard();
-        List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect).toList();
-        boolean twoPlayers = effects.stream().anyMatch(effect -> admitsOnlyPlayer(effect)
-                && effect.targetSpec().playerTargetCount() >= 2);
-        ExchangeControlOfTargetPermanentsEffect exchange = interdependentExchange(effects);
-        BecomeCopyOfTargetCreatureEffect copyEffect = effects.stream()
-                .filter(BecomeCopyOfTargetCreatureEffect.class::isInstance)
-                .map(BecomeCopyOfTargetCreatureEffect.class::cast).findFirst().orElse(null);
-        boolean efreet = effects.stream().anyMatch(DestroyOneOfTargetsAtRandomEffect.class::isInstance);
-        if (!twoPlayers && (exchange == null || exchange.sourceIsFirstTarget()) && copyEffect == null && !efreet) {
-            return false;
-        }
-        if (ability.options().interveningIf() != null || ability.options().limit() != TriggerLimit.NONE
-                || effects.size() > 1) {
-            throw new IllegalStateException("An upkeep ability with its own target choice is one effect with no "
-                    + "intervening \"if\" or limit: " + ability);
-        }
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, activePlayerId,
-                card.getName() + "'s upkeep ability", new ArrayList<>(effects), (UUID) null, perm.getId());
-        entry.setActivePlayerId(activePlayerId);
-        entry.setSourcePermanentSnapshot(new Permanent(perm));
-        gameData.routeTriggeredAbility(() -> {
-            gameData.handOffTriggerRecord(entry);
-            if (twoPlayers) {
-                gameData.queueInteraction(new PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger(
-                        card, activePlayerId, effects, perm.getId()));
-            } else if (exchange != null) {
-                gameData.queueInteraction(new PermanentChoiceContext.PucasMischiefOwnTarget(
-                        card, activePlayerId, effects, perm.getId()));
-            } else if (copyEffect != null) {
-                // "Another creature": the ability triggers only with a creature to target (CR 603.3d).
-                boolean hasValidTargets = gameData.playerBattlefields.values().stream().flatMap(List::stream)
-                        .anyMatch(p -> (copyEffect.canTargetSelf() || !p.getId().equals(perm.getId()))
-                                && gameQueryService.isCreature(gameData, p));
-                if (hasValidTargets) {
-                    gameData.queueInteraction(new PermanentChoiceContext.UpkeepCopyTriggerTarget(
-                            card, activePlayerId, perm.getId(), copyEffect));
-                } else {
-                    gameData.dropTriggerRecordInHand();
-                }
-            } else {
-                // The Efreet itself is a valid "nonland permanent you control" target, so this always triggers.
-                gameData.queueInteraction(new PermanentChoiceContext.CapriciousEfreetOwnTarget(
-                        card, activePlayerId, perm.getId()));
-            }
-        });
-        return true;
-    }
-
-    /**
-     * Queues the choice of "any number of target players other than that player" of {@code ability}, a Curse's
-     * "at the beginning of enchanted player's upkeep" ability whose effects target players (Curse of Surveillance),
-     * which excludes the enchanted player: the stack door's choices take no such exclusion. Returns whether it did.
-     */
-    private boolean queueAnyNumberOfOtherPlayersTarget(GameData gameData, Permanent perm, UUID controllerId,
-                                                       UUID enchantedPlayerId, TriggeredAbility ability) {
-        List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect).toList();
-        if (effects.stream().noneMatch(StepTriggerService::admitsOnlyPlayer)) {
-            return false;
-        }
-        if (ability.options().interveningIf() != null || ability.options().limit() != TriggerLimit.NONE) {
-            throw new IllegalStateException("A Curse's any-number player target ability has no intervening \"if\" "
-                    + "or limit: " + ability);
-        }
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(), controllerId,
-                perm.getCard().getName() + "'s upkeep ability", new ArrayList<>(effects), enchantedPlayerId,
-                perm.getId());
-        entry.setActivePlayerId(gameData.activePlayerId);
-        entry.setTriggeringPlayerId(enchantedPlayerId);
-        gameData.routeTriggeredAbility(() -> {
-            gameData.handOffTriggerRecord(entry);
-            gameData.queueInteraction(new PermanentChoiceContext.UpkeepPlayerTargetTrigger(
-                    perm.getCard(), controllerId, effects, perm.getId(), null, controllerId, true,
-                    enchantedPlayerId));
-        });
-        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s upkeep ability triggers."));
-        return true;
-    }
-
-    /** Whether {@code effect} targets only players. */
-    private static boolean admitsOnlyPlayer(CardEffect effect) {
-        return effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                && !effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT);
     }
 
     /**
@@ -1620,247 +1496,11 @@ public class StepTriggerService {
     }
 
     /**
-     * Processes the next pending {@code ON_SELF_PHASES_IN} permanent-target trigger (e.g. Shimmering
-     * Efreet's "target creature phases out"). Queued during the untap-step phasing action; drained
-     * here at upkeep start so the target is chosen as the ability is put on the stack.
-     *
-     * @param gameData the current game state to modify
-     */
-    public void processNextPhasesInTriggerTarget(GameData gameData) {
-        if (!gameData.hasPendingInteraction(PermanentChoiceContext.PhasesInTriggerTarget.class)) {
-            processNextUpkeepMultiPlayerTarget(gameData);
-            return;
-        }
-
-        PermanentChoiceContext.PhasesInTriggerTarget trigger =
-                gameData.pollPendingInteraction(PermanentChoiceContext.PhasesInTriggerTarget.class);
-
-        TargetFilter targetFilter = trigger.sourceCard().getTargetFilter();
-        TriggerTargetCollector.Result result = triggerTargetCollector.collect(
-                gameData,
-                trigger.effects(),
-                targetFilter,
-                trigger.controllerId(),
-                trigger.sourceCard(),
-                TriggerTargetCollector.Options.END_STEP);
-        List<UUID> validTargets = result.validTargets();
-
-        if (validTargets.isEmpty()) {
-            gameLogService.append(gameData,
-                    GameLog.cardThen(trigger.sourceCard(), "'s phase-in trigger has no valid targets."));
-            log.info("Game {} - {} phase-in trigger skipped (no valid targets)",
-                    gameData.id, trigger.sourceCard().getName());
-            processNextPhasesInTriggerTarget(gameData);
-            return;
-        }
-
-        gameData.interaction.setPermanentChoiceContext(trigger);
-
-        String targetDescription;
-        if (targetFilter instanceof PermanentPredicateTargetFilter ppf) {
-            targetDescription = ppf.errorMessage().replace("Target must be ", "").replace("an ", "").replace("a ", "");
-        } else {
-            targetDescription = "target permanent";
-        }
-
-        playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validTargets,
-                trigger.sourceCard().getName() + "'s ability — Choose " + targetDescription + ".");
-
-        gameLogService.append(gameData,
-                GameLog.cardThen(trigger.sourceCard(), "'s phase-in trigger — choose " + targetDescription + "."));
-        log.info("Game {} - {} phase-in trigger awaiting target selection",
-                gameData.id, trigger.sourceCard().getName());
-    }
-
-    public void processNextUpkeepPlayerTarget(GameData gameData) {
-        if (!gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class)) {
-            processNextUpkeepCopyTarget(gameData);
-            return;
-        }
-
-        PermanentChoiceContext.UpkeepPlayerTargetTrigger trigger = gameData.pollPendingInteraction(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class);
-
-        // Honour the trigger's target filter (e.g. "target opponent") so the choosing player is not
-        // offered as a valid target. A null filter (e.g. "target player") leaves all players eligible.
-        TargetFilter playerTargetFilter = trigger.targetFilter() != null
-                ? trigger.targetFilter() : trigger.sourceCard().getTargetFilter();
-        List<UUID> validPlayerTargets = validTargetService.filterValidPlayerTargetsChosenBy(
-                gameData, playerTargetFilter,
-                new ArrayList<>(gameData.orderedPlayerIds), trigger.choosingPlayerId(),
-                trigger.controllerId(), trigger.sourcePermanentId());
-
-        if (trigger.anyNumberTargets()) {
-            if (trigger.excludedPlayerId() != null) {
-                validPlayerTargets.remove(trigger.excludedPlayerId());
-            }
-
-            if (validPlayerTargets.isEmpty()) {
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        trigger.sourceCard(),
-                        trigger.controllerId(),
-                        trigger.sourceCard().getName() + "'s upkeep ability",
-                        new ArrayList<>(trigger.effects()),
-                        trigger.sourcePermanentId(),
-                        List.of());
-                entry.setTriggeringPlayerId(trigger.excludedPlayerId());
-                gameData.stack.add(entry);
-                processNextUpkeepPlayerTarget(gameData);
-                return;
-            }
-
-            gameData.interaction.setPermanentChoiceContext(trigger);
-            playerInputService.beginMultiPermanentOrPlayerChoice(
-                    gameData,
-                    trigger.choosingPlayerId(),
-                    List.of(),
-                    validPlayerTargets,
-                    validPlayerTargets.size(),
-                    new MultiPermanentChoiceContext.UpkeepAnyNumberPlayerTargets(
-                            trigger.sourceCard(), trigger.controllerId(), trigger.effects(), trigger.sourcePermanentId(),
-                            trigger.excludedPlayerId()),
-                    trigger.sourceCard().getName() + "'s ability — Choose any number of target players other than the enchanted player.");
-            return;
-        }
-
-        if (validPlayerTargets.isEmpty()) {
-            gameLogService.append(gameData,
-                    GameLog.cardThen(trigger.sourceCard(), "'s upkeep trigger has no valid targets."));
-            log.info("Game {} - {} upkeep player-target trigger skipped (no valid targets)",
-                    gameData.id, trigger.sourceCard().getName());
-            processNextUpkeepPlayerTarget(gameData);
-            return;
-        }
-
-        gameData.interaction.setPermanentChoiceContext(trigger);
-        playerInputService.beginAnyTargetChoice(gameData, trigger.choosingPlayerId(),
-                List.of(), validPlayerTargets,
-                trigger.sourceCard().getName() + "'s ability — Choose target player.");
-
-        gameLogService.append(gameData, GameLog.cardThen(trigger.sourceCard(), "'s upkeep ability triggers."));
-        log.info("Game {} - {} upkeep trigger awaiting player target selection", gameData.id, trigger.sourceCard().getName());
-    }
-
-    /**
-     * Processes the next pending upkeep multi-player-targeted trigger (e.g. Axis of Mortality).
-     * Presents the controller with a player choice for the first target; when selected,
-     * a second target selection is initiated via {@code UpkeepSecondPlayerTargetTrigger}.
-     */
-    public void processNextUpkeepMultiPlayerTarget(GameData gameData) {
-        if (!gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger.class)) {
-            processNextUpkeepPlayerTarget(gameData);
-            return;
-        }
-
-        PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger trigger = gameData.pollPendingInteraction(PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger.class);
-
-        List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
-
-        gameData.interaction.setPermanentChoiceContext(trigger);
-        playerInputService.beginAnyTargetChoice(gameData, trigger.controllerId(),
-                List.of(), validPlayerTargets,
-                trigger.sourceCard().getName() + "'s ability — Choose first target player.");
-
-        gameLogService.append(gameData, GameLog.cardThen(trigger.sourceCard(), "'s upkeep ability triggers."));
-        log.info("Game {} - {} upkeep trigger awaiting first player target selection", gameData.id, trigger.sourceCard().getName());
-    }
-
-    /**
-     * Processes the second player target for an upkeep multi-player-targeted trigger.
-     * After the second target is selected, the trigger is pushed onto the stack with both targets.
-     */
-    public void processUpkeepSecondPlayerTarget(GameData gameData, PermanentChoiceContext.UpkeepSecondPlayerTargetTrigger trigger) {
-        List<UUID> validPlayerTargets = new ArrayList<>(gameData.orderedPlayerIds);
-        // Cannot target the same player twice
-        validPlayerTargets.remove(trigger.firstTargetPlayerId());
-
-        gameData.interaction.setPermanentChoiceContext(trigger);
-        playerInputService.beginAnyTargetChoice(gameData, trigger.controllerId(),
-                List.of(), validPlayerTargets,
-                trigger.sourceCard().getName() + "'s ability — Choose second target player.");
-
-        log.info("Game {} - {} upkeep trigger awaiting second player target selection", gameData.id, trigger.sourceCard().getName());
-    }
-
-    /**
-     * Processes the next pending upkeep copy-trigger target selection
-     * (e.g. Clone Shell).  If no targets remain, continues to may-ability
-     * processing.
-     *
-     * @param gameData the current game state to modify
-     */
-    public void processNextUpkeepCopyTarget(GameData gameData) {
-        if (!gameData.hasPendingInteraction(PermanentChoiceContext.UpkeepCopyTriggerTarget.class)) {
-            // All copy triggers targeted, continue with Capricious Efreet targets then may abilities
-            processNextCapriciousEfreetTarget(gameData);
-            return;
-        }
-
-        PermanentChoiceContext.UpkeepCopyTriggerTarget trigger = gameData.peekPendingInteraction(PermanentChoiceContext.UpkeepCopyTriggerTarget.class);
-
-        List<UUID> validTargets = triggerTargetCollector.collect(gameData, List.of(trigger.effect()),
-                null, trigger.controllerId(), trigger.sourceCard(), TriggerTargetCollector.Options.UPKEEP,
-                gameQueryService.findPermanentById(gameData, trigger.sourcePermanentId())).validTargets();
-
-        if (validTargets.isEmpty()) {
-            // No valid targets remaining — skip
-            gameData.pollPendingInteraction(PermanentChoiceContext.UpkeepCopyTriggerTarget.class);
-            processNextUpkeepCopyTarget(gameData);
-            return;
-        }
-
-        gameData.pollPendingInteraction(PermanentChoiceContext.UpkeepCopyTriggerTarget.class);
-        gameData.interaction.setPermanentChoiceContext(trigger);
-        playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validTargets,
-                trigger.sourceCard().getName() + " — Choose a creature to target.");
-
-        gameLogService.append(gameData, GameLog.cardThen(trigger.sourceCard(), "'s upkeep ability triggers."));
-        log.info("Game {} - {} upkeep copy trigger awaiting target selection", gameData.id, trigger.sourceCard().getName());
-    }
-
-    /**
-     * Processes the next pending Capricious Efreet upkeep trigger target selection.
-     * Step 1: controller chooses one nonland permanent they control.
-     */
-    public void processNextCapriciousEfreetTarget(GameData gameData) {
-        if (!gameData.hasPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class)) {
-            processNextPucasMischiefTarget(gameData);
-            return;
-        }
-
-        PermanentChoiceContext.CapriciousEfreetOwnTarget trigger = gameData.pollPendingInteraction(PermanentChoiceContext.CapriciousEfreetOwnTarget.class);
-
-        // Collect valid own nonland permanents (Efreet itself is a valid target)
-        List<UUID> validOwnTargets = new ArrayList<>();
-        List<Permanent> battlefield = gameData.playerBattlefields.get(trigger.controllerId());
-        if (battlefield != null) {
-            for (Permanent p : battlefield) {
-                if (validTargetService.isValidTriggeredAbilityPermanentTarget(gameData, trigger.sourceCard(),
-                        List.of(new DestroyOneOfTargetsAtRandomEffect()),
-                        DestroyOneOfTargetsAtRandomEffect.targetFilter(true), p, trigger.controllerId())) {
-                    validOwnTargets.add(p.getId());
-                }
-            }
-        }
-
-        if (validOwnTargets.isEmpty()) {
-            // No valid own targets — skip this trigger
-            processNextCapriciousEfreetTarget(gameData);
-            return;
-        }
-
-        gameData.interaction.setPermanentChoiceContext(trigger);
-        playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validOwnTargets,
-                trigger.sourceCard().getName() + " — Choose a nonland permanent you control.");
-
-        gameLogService.append(gameData, GameLog.cardThen(trigger.sourceCard(), "'s upkeep ability triggers."));
-        log.info("Game {} - {} upkeep trigger awaiting own target selection", gameData.id, trigger.sourceCard().getName());
-    }
-
-    /**
-     * Processes the next pending Puca's Mischief upkeep trigger target selection.
-     * Step 1: controller chooses one nonland permanent they control that has at least one legal
-     * opponent pairing (an opponent nonland permanent with equal or lesser mana value).
+     * Begins the first target choice of the next queued exchange whose second target depends on the first: "target
+     * creature you control and target creature an opponent controls with power less than or equal to that creature's
+     * power" (Spawnbroker), or, for a card with {@link MultiTargetConstraint#MANA_VALUE_AT_MOST_FIRST_TARGET}, "target
+     * nonland permanent you control and target nonland permanent an opponent controls with an equal or lesser mana
+     * value" (Puca's Mischief). A permanent you control is offered only with a legal partner (CR 601.2c via 603.3d).
      */
     public void processNextPucasMischiefTarget(GameData gameData) {
         if (!gameData.hasPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class)) {
@@ -1870,82 +1510,52 @@ public class StepTriggerService {
 
         PermanentChoiceContext.PucasMischiefOwnTarget trigger =
                 gameData.pollPendingInteraction(PermanentChoiceContext.PucasMischiefOwnTarget.class);
-
-        ExchangeControlOfTargetPermanentsEffect exchange = interdependentExchange(trigger.effects());
-        if (exchange != null && exchange.requireOpponentPowerNotGreater()) {
-            List<UUID> validOwnTargets = new ArrayList<>();
-            List<Permanent> battlefield = gameData.playerBattlefields.get(trigger.controllerId());
-            if (battlefield != null) {
-                for (Permanent own : battlefield) {
-                    if (!gameQueryService.isCreature(gameData, own)) continue;
-                    if (validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, own, trigger.controllerId())) continue;
-                    int ownPower = gameQueryService.getEffectivePower(gameData, own);
-                    if (hasOpponentCreatureAtMostPower(gameData, trigger.controllerId(), ownPower)) {
-                        validOwnTargets.add(own.getId());
-                    }
-                }
-            }
-            if (validOwnTargets.isEmpty()) {
-                log.info("Game {} - {} exchange skipped (no legal target pair)",
-                        gameData.id, trigger.sourceCard().getName());
-                processNextPucasMischiefTarget(gameData);
-                return;
-            }
-            gameData.interaction.setPermanentChoiceContext(trigger);
-            playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validOwnTargets,
-                    trigger.sourceCard().getName() + " — Choose a creature you control.");
-            gameLogService.append(gameData, GameLog.cardThen(trigger.sourceCard(), "'s enter-the-battlefield ability triggers."));
-            return;
-        }
-
-        // A nonland permanent you control is a legal first target only if some opponent nonland
-        // permanent has mana value <= its own — i.e. own MV >= the smallest opponent MV.
-        int minOpponentManaValue = Integer.MAX_VALUE;
-        for (UUID pid : gameData.orderedPlayerIds) {
-            if (pid.equals(trigger.controllerId())) continue;
-            List<Permanent> bf = gameData.playerBattlefields.get(pid);
-            if (bf == null) continue;
-            for (Permanent p : bf) {
-                if (!p.getCard().hasType(CardType.LAND)) {
-                    minOpponentManaValue = Math.min(minOpponentManaValue, p.getCard().getManaValue());
-                }
-            }
-        }
+        boolean byManaValue = trigger.sourceCard().getMultiTargetConstraint()
+                == MultiTargetConstraint.MANA_VALUE_AT_MOST_FIRST_TARGET;
 
         List<UUID> validOwnTargets = new ArrayList<>();
         List<Permanent> battlefield = gameData.playerBattlefields.get(trigger.controllerId());
         if (battlefield != null) {
-            for (Permanent p : battlefield) {
-                if (!p.getCard().hasType(CardType.LAND) && p.getCard().getManaValue() >= minOpponentManaValue
-                        && !validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, p, trigger.controllerId())) {
-                    validOwnTargets.add(p.getId());
+            for (Permanent own : battlefield) {
+                if (validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, own, trigger.controllerId())) continue;
+                boolean hasPartner = byManaValue
+                        ? !own.getCard().hasType(CardType.LAND)
+                        && hasOpponentNonlandAtMostManaValue(gameData, trigger.controllerId(),
+                        own.getCard().getManaValue())
+                        : gameQueryService.isCreature(gameData, own)
+                        && hasOpponentCreatureAtMostPower(gameData, trigger.controllerId(),
+                        gameQueryService.getEffectivePower(gameData, own));
+                if (hasPartner) {
+                    validOwnTargets.add(own.getId());
                 }
             }
         }
-
         if (validOwnTargets.isEmpty()) {
-            // No legal pair of targets — the trigger does nothing.
-            log.info("Game {} - {} upkeep trigger skipped (no legal target pair)",
+            log.info("Game {} - {} exchange skipped (no legal target pair)",
                     gameData.id, trigger.sourceCard().getName());
             processNextPucasMischiefTarget(gameData);
             return;
         }
-
         gameData.interaction.setPermanentChoiceContext(trigger);
         playerInputService.beginPermanentChoice(gameData, trigger.controllerId(), validOwnTargets,
-                trigger.sourceCard().getName() + " — Choose a nonland permanent you control.");
-
-        gameLogService.append(gameData, GameLog.cardThen(trigger.sourceCard(), "'s upkeep ability triggers."));
-        log.info("Game {} - {} upkeep trigger awaiting own target selection (Puca's Mischief)",
-                gameData.id, trigger.sourceCard().getName());
+                trigger.sourceCard().getName() + (byManaValue
+                        ? " — Choose a nonland permanent you control." : " — Choose a creature you control."));
+        gameLogService.append(gameData, GameLog.cardThen(trigger.sourceCard(), byManaValue
+                ? "'s triggered ability triggers." : "'s enter-the-battlefield ability triggers."));
     }
 
-    private ExchangeControlOfTargetPermanentsEffect interdependentExchange(List<CardEffect> effects) {
-        return effects.stream()
-                .map(effect -> effect instanceof MayEffect may ? may.wrapped() : effect)
-                .filter(ExchangeControlOfTargetPermanentsEffect.class::isInstance)
-                .map(ExchangeControlOfTargetPermanentsEffect.class::cast)
-                .findFirst().orElse(null);
+    private boolean hasOpponentNonlandAtMostManaValue(GameData gameData, UUID controllerId, int manaValue) {
+        for (UUID pid : gameData.orderedPlayerIds) {
+            if (pid.equals(controllerId)) continue;
+            for (Permanent permanent : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
+                if (!permanent.getCard().hasType(CardType.LAND)
+                        && permanent.getCard().getManaValue() <= manaValue
+                        && !validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, permanent, controllerId)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private boolean hasOpponentCreatureAtMostPower(GameData gameData, UUID controllerId, int power) {
@@ -1979,10 +1589,11 @@ public class StepTriggerService {
         due.sort(java.util.Comparator.comparing(trigger -> !trigger.revealingPlayerId().equals(activePlayerId)));
         for (OpeningHandRevealTrigger trigger : due) {
             gameData.openingHandUpkeepTriggers.remove(trigger);
-            gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                    trigger.sourceCard(), trigger.revealingPlayerId(),
-                    trigger.sourceCard().getName() + "'s opening hand ability",
-                    new ArrayList<>(List.of(trigger.effect()))));
+            // A delayed triggered ability revealing the card made, with the card as its source (CR 603.7).
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(trigger.sourceCard(),
+                    trigger.revealingPlayerId(), trigger.sourceCard().getName() + "'s opening hand ability",
+                    List.of(trigger.effect()));
+            triggeredAbilityStackService.putDelayed(gameData, entry);
         }
     }
 
@@ -2356,13 +1967,11 @@ public class StepTriggerService {
             if (!toFire.isEmpty()) {
                 gameData.openingHandManaTriggers.removeAll(toFire);
                 for (OpeningHandRevealTrigger trigger : toFire) {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            trigger.sourceCard(),
-                            trigger.revealingPlayerId(),
-                            trigger.sourceCard().getName() + "'s ability",
-                            new ArrayList<>(List.of(trigger.effect()))
-                    ));
+                    // A delayed triggered ability revealing the card made (CR 603.7); it adds mana as it resolves,
+                    // on the stack (it doesn't trigger from a mana ability, CR 605.1b).
+                    triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
+                            trigger.sourceCard(), trigger.revealingPlayerId(),
+                            trigger.sourceCard().getName() + "'s ability", List.of(trigger.effect())));
 
                     gameLogService.append(gameData,
                             GameLog.cardThen(trigger.sourceCard(), "'s delayed trigger fires — adds mana."));
@@ -2386,14 +1995,11 @@ public class StepTriggerService {
             return;
         }
 
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                null,
-                activePlayerId,
+        // Rad counters' inherent ability, controlled by the active player (CR 729.1); its intervening "if" is judged
+        // again as it resolves.
+        triggeredAbilityStackService.putInherent(gameData, activePlayerId,
                 gameData.playerIdToName.get(activePlayerId) + "'s rad ability",
-                new ArrayList<>(List.of(new ResolveRadCountersEffect())));
-        entry.setNonTargeting(true);
-        gameData.enqueueTrigger(entry);
+                List.of(new ResolveRadCountersEffect()), TriggerRecord.NONE);
         gameLogService.append(gameData, GameLog.text(
                 gameData.playerIdToName.get(activePlayerId) + "'s rad ability triggers."));
         log.info("Game {} - {}'s rad ability triggers", gameData.id,
@@ -2652,152 +2258,10 @@ public class StepTriggerService {
             log.info("Game {} - {} gets lore counter {}", gameData.id, card.getName(), newLoreCount);
             triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(gameData, saga, activePlayerId);
 
-            // Trigger the appropriate chapter ability
-            if (newLoreCount < 1) continue;
-            ChapterTrigger chapter = Triggers.chapter(newLoreCount);
-
-            List<CardEffect> chapterEffects = card.getTriggerEffects(chapter);
-            if (chapterEffects.isEmpty()) continue;
-
-            Set<TargetFilter> chapterTargetFilters = new LinkedHashSet<>(
-                    card.getSagaChapterTargetFilters(newLoreCount));
-            List<SagaChapterTargetGroup> chapterTargetGroups = card.getSagaChapterTargetGroups(newLoreCount);
-            if (chapterEffects.size() == 1
-                    && chapterEffects.getFirst() instanceof ChooseOneAtRandomEffect randomChoice) {
-                ChooseOneEffect.ChooseOneOption selectedOption = triggeredAbilityStackService
-                        .chooseRandomModeAsItTriggers(gameData, activePlayerId, saga.getCard(), saga,
-                                randomChoice.options());
-                if (selectedOption == null) continue;
-                chapterEffects = selectedOption.effectsForSelection();
-                if (selectedOption.targetFilter() != null) {
-                    chapterTargetFilters.add(selectedOption.targetFilter());
-                    chapterTargetGroups = List.of(new SagaChapterTargetGroup(
-                            selectedOption.targetFilter(), selectedOption.minTargets(),
-                            selectedOption.maxTargets()));
-                }
-            }
-
-            String chapterName = chapter.numeral();
-            // The entry of a chapter ability that chooses nothing, which a mode or target choice is given as its record.
-            StackEntry chapterEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    activePlayerId,
-                    card.getName() + "'s chapter " + chapterName + " ability",
-                    new ArrayList<>(chapterEffects),
-                    null,
-                    saga.getId()
-            );
-            chapterEntry.setSourcePermanentSnapshot(new Permanent(saga));
-            gameData.handOffTriggerRecord(chapterEntry);
-
-            if (chapterEffects.size() == 1
-                    && chapterEffects.getFirst() instanceof ChooseOneAtTriggerTimeEffect modal) {
-                gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                        card, activePlayerId, modal.choice(), saga.getId()));
-                gameLogService.append(gameData,
-                        GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
-                log.info("Game {} - {} chapter {} triggers (awaiting mode selection)",
-                        gameData.id, card.getName(), chapterName);
-                continue;
-            }
-
-            boolean needsPlayerTarget = chapterEffects.stream()
-                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER))
-                    || chapterTargetFilters.stream()
-                    .anyMatch(com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter.class::isInstance);
-            boolean hasSagaTargetGroups = !chapterTargetGroups.isEmpty();
-            boolean needsPermanentTarget = chapterEffects.stream()
-                    .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
-                    || hasSagaTargetGroups;
-            boolean needsGraveyardTarget = chapterEffects.stream().anyMatch(e ->
-                    e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
-                            || e instanceof ReturnTargetCardsFromGraveyardToHandEffect);
-            if (hasSagaTargetGroups) {
-                gameData.queueInteraction(
-                        new PermanentChoiceContext.SagaChapterTarget(card, activePlayerId,
-                                new ArrayList<>(chapterEffects), saga.getId(), chapterName,
-                                chapterTargetFilters,
-                                chapterTargetGroups, List.of(), 0));
-                gameLogService.append(gameData,
-                        GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
-                log.info("Game {} - {} chapter {} triggers (awaiting grouped target selection)",
-                        gameData.id, card.getName(), chapterName);
-            } else if (needsPlayerTarget && needsPermanentTarget) {
-                gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        card, activePlayerId, new ArrayList<>(chapterEffects), false,
-                        sagaChapterAnyTargetFilter(chapterEffects), 0, saga.getId()));
-                gameLogService.append(gameData,
-                        GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
-                log.info("Game {} - {} chapter {} triggers (awaiting any target selection)",
-                        gameData.id, card.getName(), chapterName);
-            } else if (needsPlayerTarget) {
-                gameData.queueInteraction(
-                        new PermanentChoiceContext.SagaChapterPlayerTarget(card, activePlayerId,
-                                new ArrayList<>(chapterEffects), saga.getId(), chapterName,
-                                chapterTargetFilters));
-                gameLogService.append(gameData,
-                        GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
-                log.info("Game {} - {} chapter {} triggers (awaiting player target selection)",
-                        gameData.id, card.getName(), chapterName);
-            } else if (needsPermanentTarget) {
-                gameData.queueInteraction(
-                        new PermanentChoiceContext.SagaChapterTarget(card, activePlayerId,
-                                new ArrayList<>(chapterEffects), saga.getId(), chapterName,
-                                chapterTargetFilters,
-                                chapterTargetGroups, List.of(), 0));
-                gameLogService.append(gameData,
-                        GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
-                log.info("Game {} - {} chapter {} triggers (awaiting target selection)", gameData.id, card.getName(), chapterName);
-            } else if (needsGraveyardTarget) {
-                gameData.queueInteraction(
-                        new PermanentChoiceContext.SagaChapterGraveyardTarget(card, activePlayerId,
-                                new ArrayList<>(chapterEffects), saga.getId(), chapterName));
-                gameLogService.append(gameData,
-                        GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
-                log.info("Game {} - {} chapter {} triggers (awaiting graveyard target selection)", gameData.id, card.getName(), chapterName);
-            } else {
-                gameData.stack.add(chapterEntry);
-
-                gameLogService.append(gameData,
-                        GameLog.cardThen(card, "'s chapter " + chapterName + " ability triggers."));
-                log.info("Game {} - {} chapter {} triggers", gameData.id, card.getName(), chapterName);
-            }
-            if (newLoreCount == card.getSagaFinalChapter()) {
-                triggerCollectionService.checkSagaFinalChapterAbilityTriggers(gameData, activePlayerId,
-                        card.getManaValue());
-            }
+            // Each chapter a placed counter reached triggers (CR 715.2b); the stack door chooses its targets.
+            sagaChapterService.putChapterAbility(gameData, saga, card, activePlayerId, newLoreCount, false);
         }
-
-        // Process any queued saga chapter target selections
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)) {
-            triggerCollectionService.processNextSagaChapterTarget(gameData);
-        }
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterPlayerTarget.class)) {
-            triggerCollectionService.processNextSagaChapterPlayerTarget(gameData);
-        }
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextSpellTargetTrigger(gameData);
-        }
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.SagaChapterGraveyardTarget.class)) {
-            triggerCollectionService.processNextSagaChapterGraveyardTarget(gameData);
-        }
-    }
-
-    private TargetFilter sagaChapterAnyTargetFilter(List<CardEffect> chapterEffects) {
-        CardEffect permanentTargetEffect = chapterEffects.stream()
-                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))
-                .findFirst()
-                .orElseThrow();
-        var permanentPredicate = permanentTargetEffect.targetSpec().targetPredicate()
-                .permanentRestriction().orElse(new PermanentTruePredicate());
-        PlayerRelation relation = chapterEffects.stream()
-                .filter(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))
-                .map(CardEffect::targetPlayerRelation)
-                .findFirst()
-                .orElse(PlayerRelation.ANY);
-        return new AnyTargetPredicateTargetFilter(permanentPredicate,
-                new PlayerRelationPredicate(relation), "target opponent or planeswalker");
+        sagaChapterService.beginChapterChoices(gameData);
     }
 
     /**
@@ -3113,8 +2577,7 @@ public class StepTriggerService {
                 if (gameQueryService.isCreature(gameData, returned)) {
                     int discardCount = Math.max(0, gameQueryService.getEffectiveToughness(gameData, returned));
                     if (discardCount > 0) {
-                        StackEntry discardEntry = new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
+                        StackEntry discardEntry = StackEntry.carrier(
                                 pending.followUpSourceCard(),
                                 pending.timingControllerId(),
                                 pending.followUpSourceCard().getName() + "'s delayed trigger — discard "
@@ -3238,12 +2701,14 @@ public class StepTriggerService {
             }
         }
         if (gameData.activePlayerId.equals(gameData.monarchPlayerId)) {
-            StackEntry monarchDraw = new StackEntry(StackEntryType.TRIGGERED_ABILITY, null,
-                    gameData.monarchPlayerId, "The monarch draws a card",
+            // "At the beginning of the monarch's end step, that player draws a card" (CR 726.2).
+            UUID monarchId = gameData.monarchPlayerId;
+            triggeredAbilityStackService.putInherent(gameData, monarchId, "The monarch draws a card",
                     List.of(new com.github.laxika.magicalvibes.model.effect.DrawCardForMonarchEndStepEffect()),
-                    gameData.monarchPlayerId, (UUID) null);
-            monarchDraw.setNonTargeting(true);
-            gameData.enqueueTrigger(monarchDraw);
+                    entry -> {
+                        entry.setTargetId(monarchId);
+                        entry.setNonTargeting(true);
+                    });
         }
         if (gameData.planechase != null) planechaseService.step(gameData,
                 EACH_END_STEP, YOUR_END_STEP);

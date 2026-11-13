@@ -57,9 +57,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfCommandEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardFromHandToPerpetuallyGrantEnterExileEffectHandler;
@@ -287,13 +284,9 @@ public class CardChoiceHandlerService {
                 && copy.getCastingOption(AlternateHandCast.class)
                         .map(AlternateHandCast::blitz)
                         .orElse(false) == false) {
+            // Haste and the end-step sacrifice come from the blitz cost having been paid as the permanent enters
+            // (CR 702.152a), not from enters abilities.
             copy.addCastingOption(AlternateHandCast.blitz(copy.getManaCost()));
-            copy.addTrigger(Triggers.enters(ObjectRelation.THIS),
-                    TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
-                    new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF));
-            copy.addTrigger(Triggers.enters(ObjectRelation.THIS),
-                    TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
-                    new SacrificeSelfAtEndStepEffect());
             copy.addTrigger(Triggers.dies(ObjectRelation.THIS),
                     TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()), new DrawCardEffect(1));
         }
@@ -1584,10 +1577,6 @@ public class CardChoiceHandlerService {
 
         // Self-discard triggers (e.g. Guerrilla Tactics) are processed after the counters and rummage
         // draw above; a triggered ability is put on the stack only at the next priority point (CR 603.3).
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-            return;
-        }
 
         // Untap permanent after "discard a card, then untap [source]" completes
         if (followUp.untapPermanentId() != null) {
@@ -1696,7 +1685,7 @@ public class CardChoiceHandlerService {
             // resolves, not as a separate reflexive trigger.
             if (followUp.resolveThenDuringSameResolution()
                     && thenEffect instanceof com.github.laxika.magicalvibes.model.effect.CastExiledCardWithoutPayingManaCostEffect) {
-                StackEntry inlineEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, playerId,
+                StackEntry inlineEntry = StackEntry.carrier(sourceCard, playerId,
                         sourceCard.getName() + "'s effect", List.of(thenEffect));
                 effectResolutionService.resolveEffectsFrom(gameData, inlineEntry, 0);
                 return;
@@ -2458,16 +2447,6 @@ public class CardChoiceHandlerService {
         }
 
         // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-            return;
-        }
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.PlotTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextPlotTrigger(gameData);
-            if (gameData.interaction.isAwaitingInput()) {
-                return;
-            }
-        }
 
         // A follow-up choice (Reap Intellect's same-name search) resumes the remaining effects once answered.
         if (gameData.interaction.isAwaitingInput()) {
@@ -2715,10 +2694,6 @@ public class CardChoiceHandlerService {
         }
 
         // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-            return;
-        }
 
         // Resume any remaining effects on the same spell/ability.
         if (gameData.pendingEffectResolutionEntry != null) {

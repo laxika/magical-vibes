@@ -26,13 +26,14 @@ class CaseOfTheTrampledGardenTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.enterBattlefieldAndReturn(player1, new CaseOfTheTrampledGarden());
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
 
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
         harness.passBothPriorities();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -128,10 +129,9 @@ class CaseOfTheTrampledGardenTest extends BaseCardTest {
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.enterBattlefieldAndReturn(player1, new CaseOfTheTrampledGarden());
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponent.getId()))
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(opponent.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -144,8 +144,7 @@ class CaseOfTheTrampledGardenTest extends BaseCardTest {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         harness.enterBattlefieldAndReturn(player1, new CaseOfTheTrampledGarden());
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
 
         gd.playerBattlefields.get(player1.getId()).remove(second);
         gd.playerGraveyards.get(player1.getId()).add(second.getCard());
@@ -228,8 +227,7 @@ class CaseOfTheTrampledGardenTest extends BaseCardTest {
         Permanent second = addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
         Permanent casePermanent = harness.enterBattlefieldAndReturn(player1, new CaseOfTheTrampledGarden());
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
         harness.passBothPriorities();
 
         resolveEndStepTriggers();

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsPowerDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -88,9 +87,7 @@ public class EnchantedCreatureDealsPowerDamageToTargetCreatureEffectHandler impl
         int power = creatureGone && creature.getLastKnownPower() != null
                 ? Math.max(0, creature.getLastKnownPower())
                 : gameQueryService.getPowerBasedDamage(gameData, creature);
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                creature.getCard(),
+        StackEntry damageEntry = StackEntry.carrier(creature.getCard(),
                 controllerId,
                 creature.getCard().getName() + "'s ability",
                 List.of(),

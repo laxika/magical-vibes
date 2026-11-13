@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfOneOfCardsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -52,9 +51,7 @@ public class BecomeCopyOfOneOfCardsUntilEndOfTurnChoiceHandler implements MayEff
         if (effect.cards().size() == 1) {
             BecomeCopyOfCardUntilEndOfTurnEffect copyEffect =
                     new BecomeCopyOfCardUntilEndOfTurnEffect(effect.cards().getFirst());
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(),
+            StackEntry entry = StackEntry.carrier(ability.sourceCard(),
                     ability.controllerId(),
                     ability.sourceCard().getName() + "'s ability",
                     new ArrayList<>(List.of(copyEffect)),

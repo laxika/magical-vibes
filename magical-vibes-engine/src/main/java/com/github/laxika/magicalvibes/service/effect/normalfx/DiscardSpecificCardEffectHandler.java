@@ -51,8 +51,5 @@ public class DiscardSpecificCardEffectHandler implements NormalEffectHandlerBean
             triggerCollectionService.finishDiscardEvent(gameData);
         }
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-        }
     }
 }

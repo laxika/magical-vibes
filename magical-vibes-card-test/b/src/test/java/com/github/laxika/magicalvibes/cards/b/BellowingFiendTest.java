@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.cards.c.ChandraHopesBeacon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
@@ -15,7 +17,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -212,7 +213,7 @@ class BellowingFiendTest extends BaseCardTest {
             harness.setLife(player2, 20);
 
             DamageSupport damageSupport = GameTestEngineContext.get().getBean(DamageSupport.class);
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, fiend.getCard(),
+            StackEntry entry = TestStackDoor.triggered(fiend.getCard(),
                     player1.getId(), "Bellowing Fiend's ability", List.of(), null, fiend.getId());
 
             harness.inMutationScope(() ->

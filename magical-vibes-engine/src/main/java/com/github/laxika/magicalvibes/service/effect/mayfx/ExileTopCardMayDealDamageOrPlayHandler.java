@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayDealDamageOrPlayEffect;
@@ -39,9 +38,7 @@ public class ExileTopCardMayDealDamageOrPlayHandler implements MayEffectHandlerB
         ExiledCardEntry exiledEntry = gameData.findExiledCard(effect.exiledCardId());
         if (accepted && exiledEntry != null) {
             CardEffect damage = new DealDamageToTargetCreatureEffect(exiledEntry.card().getManaValue());
-            StackEntry damageEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(),
+            StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(),
                     ability.controllerId(),
                     ability.sourceCard().getName() + " deals damage to the target creature.",
                     List.of(damage),

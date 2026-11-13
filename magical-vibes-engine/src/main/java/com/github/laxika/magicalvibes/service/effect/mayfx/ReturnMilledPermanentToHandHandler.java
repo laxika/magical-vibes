@@ -85,7 +85,7 @@ public class ReturnMilledPermanentToHandHandler implements MayEffectHandlerBean 
                         && predicateEvaluationService.matchesCardPredicate(
                         card, marker.bonusFilter(), ability.sourceCard().getId(), gameData, ownerId)) {
                     lifeSupport.applyGainLife(gameData, ability.controllerId(), marker.bonusLife(),
-                            null, ability.sourceCard(), StackEntryType.TRIGGERED_ABILITY);
+                            null, ability.sourceCard(), null);
                 }
             }
         }

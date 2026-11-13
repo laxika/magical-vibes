@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -133,7 +132,7 @@ public class SacrificeOtherCreatureOrDamageEffectHandler implements NormalEffect
         }
         // The damage is no part of a sacrifice, so an accepted answer that found nothing to sacrifice can't be redone.
         gameData.deathReplacementsCanRerunEffect = false;
-        StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(),
+        StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(),
                 controllerId, ability.sourceCard().getName() + "'s ability", new ArrayList<>(List.of(e)),
                 controllerId, ability.sourcePermanentId());
         dealDamage(gameData, damageEntry, e.damage(), controllerId);

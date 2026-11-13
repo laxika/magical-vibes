@@ -24,6 +24,8 @@ public class Infestation extends Card {
         // Evoke {1}{B}{B}, pay 3 life; it's sacrificed on entry.
         addCastingOption(new AlternateHandCast(List.of(
                 new ManaCastingCost("{1}{B}{B}"), new LifeCastingCost(3))));
+        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
 
         // When this creature enters, conjure a card named Blowfly Infestation onto the battlefield.
         // Then put a -1/-1 counter on each creature.
@@ -32,8 +34,5 @@ public class Infestation extends Card {
                 new PutCounterOnEachMatchingPermanentEffect(
                         CounterType.MINUS_ONE_MINUS_ONE, 1,
                         new PermanentIsCreaturePredicate(), EachPermanentScope.ALL_PLAYERS)));
-
-        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }
 }

@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "171")
 @CardRegistration(set = "SPM", collectorNumber = "280")
@@ -35,9 +34,7 @@ public class PeterParkersCamera extends Card {
                 "{2}, {T}, Remove a film counter from Peter Parker's Camera: Copy target activated or triggered ability you control. You may choose new targets for the copy.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
-                                new StackEntryTypeInPredicate(Set.of(
-                                        StackEntryType.ACTIVATED_ABILITY,
-                                        StackEntryType.TRIGGERED_ABILITY)),
+                                new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                                 new StackEntryControlledByPredicate())),
                         "Target must be an activated or triggered ability you control.")));
     }

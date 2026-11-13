@@ -82,8 +82,7 @@ public class EachOpponentFacesSycoraxCommanderVillainousChoiceEffectHandler
     }
 
     private void discard(GameData gameData, StackEntry entry, UUID opponentId) {
-        StackEntry discardEntry = new StackEntry(
-                entry.getEntryType(), entry.getCard(), entry.getControllerId(), entry.getDescription(),
+        StackEntry discardEntry = StackEntry.derivedFrom(entry, entry.getCard(), entry.getControllerId(), entry.getDescription(),
                 List.of(), opponentId, entry.getSourcePermanentId());
         discardEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         discardHandler.resolve(gameData, discardEntry,
@@ -91,8 +90,7 @@ public class EachOpponentFacesSycoraxCommanderVillainousChoiceEffectHandler
     }
 
     private void dealDamage(GameData gameData, StackEntry entry, UUID opponentId) {
-        StackEntry damageEntry = new StackEntry(
-                entry.getEntryType(), entry.getCard(), entry.getControllerId(), entry.getDescription(),
+        StackEntry damageEntry = StackEntry.derivedFrom(entry, entry.getCard(), entry.getControllerId(), entry.getDescription(),
                 List.of(), opponentId, entry.getSourcePermanentId());
         damageEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
         damageHandler.resolve(gameData, damageEntry,

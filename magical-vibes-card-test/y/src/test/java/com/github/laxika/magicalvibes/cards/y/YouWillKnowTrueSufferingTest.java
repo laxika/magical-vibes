@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.cards.c.CentaurCourser;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -54,9 +56,7 @@ class YouWillKnowTrueSufferingTest extends BaseCardTest {
 
     private void resolveScheme() {
         YouWillKnowTrueSuffering scheme = new YouWillKnowTrueSuffering();
-        gd.stack.add(new com.github.laxika.magicalvibes.model.StackEntry(
-                com.github.laxika.magicalvibes.model.StackEntryType.TRIGGERED_ABILITY,
-                scheme,
+        gd.stack.add(TestStackDoor.triggered(scheme,
                 player1.getId(),
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects()));

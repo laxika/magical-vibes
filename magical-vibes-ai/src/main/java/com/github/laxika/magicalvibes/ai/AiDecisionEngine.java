@@ -634,7 +634,7 @@ public abstract class AiDecisionEngine {
     private boolean answerEtbTargetPrompt(GameData gameData, PendingInteraction active) {
         UUID aiPlayerId = aiPlayer.getId();
         if (active instanceof PendingInteraction.PermanentChoice choice && aiPlayerId.equals(choice.playerId())) {
-            if (choice.context() instanceof PermanentChoiceContext.ETBTokenTargetTrigger single) {
+            if (choice.context() instanceof PermanentChoiceContext.AttackTriggerTarget single) {
                 UUID target = targetSelector.chooseTarget(gameData, single.sourceCard(), aiPlayerId);
                 if (target == null || !choice.validIds().contains(target)) {
                     return false;
@@ -678,16 +678,6 @@ public abstract class AiDecisionEngine {
                             || choice.validCardIds().contains(id))
                     .limit(choice.maxCount())
                     .toList();
-            send(() -> gameActions.answerInteraction(new InteractionAnswer.PermanentsChosen(chosen)));
-            return true;
-        }
-        if (active instanceof PendingInteraction.MultiPermanentChoice choice && aiPlayerId.equals(choice.playerId())
-                && choice.context() instanceof MultiPermanentChoiceContext.EtbOptionalTarget optional) {
-            // An "up to one" target the AI has no good use for is left unchosen.
-            UUID target = targetSelector.chooseTarget(gameData, optional.pending().sourceCard(), aiPlayerId);
-            List<UUID> chosen = target != null
-                    && (choice.validIds().contains(target) || choice.validPlayerIds().contains(target))
-                    ? List.of(target) : List.of();
             send(() -> gameActions.answerInteraction(new InteractionAnswer.PermanentsChosen(chosen)));
             return true;
         }

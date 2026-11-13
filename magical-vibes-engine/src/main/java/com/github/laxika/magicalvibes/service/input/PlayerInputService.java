@@ -1207,91 +1207,9 @@ public class PlayerInputService {
                 cardToCast.getName());
     }
 
-    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId) {
-        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId, false);
-    }
-
-    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
-            boolean modesResetEachTurn) {
-        if (effect.variableModeCount()) {
-            beginChooseModeChoice(gameData, controllerId, sourceCard, effect, true, sourcePermanentId,
-                    List.of());
-            return;
-        }
-        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
-                modesResetEachTurn, false, List.of());
-    }
-
-    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
-            boolean modesResetEachTurn,
-            List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes) {
-        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
-                modesResetEachTurn, false, chosenModes, null);
-    }
-
-    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
-            boolean modesResetEachTurn, boolean consumeModes,
-            List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes) {
-        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
-                modesResetEachTurn, consumeModes, chosenModes, null);
-    }
-
-    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
-            boolean modesResetEachTurn,
-            List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes,
-            UUID triggeringCardId) {
-        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
-                modesResetEachTurn, false, chosenModes, triggeringCardId);
-    }
-
-    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
-            boolean modesResetEachTurn, boolean consumeModes,
-            List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes,
-            UUID triggeringCardId) {
-        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
-                modesResetEachTurn, consumeModes, chosenModes, triggeringCardId, null);
-    }
-
-    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
-            boolean modesResetEachTurn, boolean consumeModes,
-            List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes,
-            UUID triggeringCardId, UUID attackedTargetId) {
-        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
-                modesResetEachTurn, consumeModes, chosenModes, triggeringCardId, attackedTargetId, null);
-    }
-
-    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
-            boolean modesResetEachTurn, boolean consumeModes,
-            List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes,
-            UUID triggeringCardId, UUID attackedTargetId, UUID triggeringPermanentId) {
-        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
-                modesResetEachTurn, consumeModes, chosenModes, triggeringCardId, attackedTargetId,
-                triggeringPermanentId, false);
-    }
-
-    public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
-            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
-            boolean modesResetEachTurn, boolean consumeModes,
-            List<com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption> chosenModes,
-            UUID triggeringCardId, UUID attackedTargetId, UUID triggeringPermanentId,
-            boolean rememberLastChosenMode) {
-        beginTriggeredModalChoice(gameData, controllerId, sourceCard, effect, sourcePermanentId,
-                modesResetEachTurn, consumeModes, chosenModes, triggeringCardId, attackedTargetId,
-                triggeringPermanentId, rememberLastChosenMode, null);
-    }
-
     /**
      * Asks {@code controllerId} for the modes of a triggered ability as it goes on the stack (CR 603.3c).
-     * {@code triggerRecord}, or {@code null}, is the collector's record of the trigger event, which the entry the
-     * chosen modes go on the stack as carries.
+     * {@code triggerRecord} is the ability the stack door parked for its mode, which the chosen modes finish.
      */
     public void beginTriggeredModalChoice(GameData gameData, UUID controllerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,

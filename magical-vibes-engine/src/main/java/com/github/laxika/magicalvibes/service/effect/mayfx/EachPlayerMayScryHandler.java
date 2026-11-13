@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayScryEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -38,9 +37,7 @@ public class EachPlayerMayScryHandler implements MayEffectHandlerBean {
 
         if (accepted) {
             ScryEffect scry = new ScryEffect(effect.count());
-            StackEntry scryEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(),
+            StackEntry scryEntry = StackEntry.carrier(ability.sourceCard(),
                     player.getId(),
                     ability.sourceCard().getName() + "'s ability",
                     new ArrayList<>(List.of(scry)),

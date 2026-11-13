@@ -108,7 +108,7 @@ class CradleOfVitalityTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(25);
-        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)).isFalse();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
         assertThat(gd.stack).isEmpty();
     }
 
@@ -151,7 +151,7 @@ class CradleOfVitalityTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.LifeGainTriggerAnyTarget.class)).isFalse();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(findPermanent(player1, "Grizzly Bears").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }

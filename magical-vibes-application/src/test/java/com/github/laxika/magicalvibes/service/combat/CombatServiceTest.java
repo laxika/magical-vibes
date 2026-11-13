@@ -120,7 +120,7 @@ class CombatServiceTest {
         org.springframework.test.util.ReflectionTestUtils.setField(combatService, "triggeredAbilityStackService",
                 triggeredAbilityStackService);
         org.mockito.Mockito.lenient().doAnswer(invocation -> {
-            invocation.<GameData>getArgument(0).enqueueTrigger(invocation.getArgument(1));
+            com.github.laxika.magicalvibes.testutil.TestStackDoor.enqueue(invocation.getArgument(0), invocation.getArgument(1));
             return null;
         }).when(triggeredAbilityStackService).putDelayed(org.mockito.ArgumentMatchers.any(),
                 org.mockito.ArgumentMatchers.any());

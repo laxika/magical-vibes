@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeOtherCreatureThenRevealUntilLowerManaValueEffect;
@@ -85,9 +84,7 @@ public class SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler
     public void resolveAfterChoice(GameData gameData, Card sourceCard, UUID controllerId,
                                    Permanent creature,
                                    com.github.laxika.magicalvibes.model.filter.CardPredicate predicate) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
+        StackEntry entry = StackEntry.carrier(sourceCard,
                 controllerId,
                 sourceCard.getName() + "'s ability",
                 List.of());

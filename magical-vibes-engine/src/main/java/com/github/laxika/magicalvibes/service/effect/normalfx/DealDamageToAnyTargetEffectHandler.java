@@ -84,7 +84,7 @@ public class DealDamageToAnyTargetEffectHandler implements NormalEffectHandlerBe
 
         StackEntry damageEntry = entry;
         if (e.sourceIsTriggeringPermanent()) {
-            damageEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
+            damageEntry = StackEntry.derivedFrom(entry, entry.getCard(), entry.getControllerId(),
                     entry.getDescription(), entry.getEffectsToResolve(), targetId, sourcePermanentId);
             damageEntry.setXValue(entry.getXValue());
             damageEntry.setSourcePermanentSnapshot(source == null ? null : new Permanent(source));

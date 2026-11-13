@@ -125,11 +125,26 @@ public class InteractionState {
     }
 
     private static PermanentChoiceContext copyPermanentChoiceContext(PermanentChoiceContext context) {
-        if (context instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger) {
-            return trigger.copyPlanarSnapshot();
+        if (context instanceof PermanentChoiceContext.AttackTriggerTarget trigger) {
+            return trigger.withTriggerRecordCopy();
+        }
+        if (context instanceof PermanentChoiceContext.ChooseOpponentToChooseTriggerTarget choice) {
+            return new PermanentChoiceContext.ChooseOpponentToChooseTriggerTarget(
+                    choice.target().withTriggerRecordCopy());
+        }
+        if (context instanceof PermanentChoiceContext.AttackCounterMoveFirstTarget first) {
+            return first.withTriggerRecordCopy();
+        }
+        if (context instanceof PermanentChoiceContext.AttackCounterMoveSecondTarget second) {
+            return second.withTriggerRecordCopy();
+        }
+        if (context instanceof PermanentChoiceContext.PucasMischiefOwnTarget own) return own.withTriggerRecordCopy();
+        if (context instanceof PermanentChoiceContext.PucasMischiefOpponentTarget opponent) {
+            return opponent.withTriggerRecordCopy();
         }
         if (context instanceof PermanentChoiceContext.FreeCastSacrificeCost cost) return cost.deepCopy();
         if (context instanceof PermanentChoiceContext.FreeCastBeholdCost cost) return cost.deepCopy();
+        if (context instanceof PermanentChoiceContext.TargetPlayerGraveyardCardsTrigger choice) return choice.deepCopy();
         if (context instanceof PermanentChoiceContext.AuraEntryBatchChoice batch) return batch.deepCopy();
         if (context instanceof PermanentChoiceContext.PreparedTokenCopyAttachments copies) return copies.deepCopy();
         if (context instanceof PermanentChoiceContext.PreparedOpponentTokenCopiesAttacking copies) return copies.deepCopy();

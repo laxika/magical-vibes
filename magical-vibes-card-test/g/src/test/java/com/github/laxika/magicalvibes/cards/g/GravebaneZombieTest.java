@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.cards.a.Abduction;
 import com.github.laxika.magicalvibes.cards.a.AllIsDust;
 import com.github.laxika.magicalvibes.cards.a.ArchfiendOfDepravity;
@@ -1860,7 +1862,7 @@ class GravebaneZombieTest extends BaseCardTest {
         Permanent zombie = harness.addToBattlefieldAndReturn(player2, new GravebaneZombie());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Card scheme = new RunningIsUseless();
-        gd.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, scheme, player1.getId(),
+        gd.stack.add(TestStackDoor.triggered(scheme, player1.getId(),
                 scheme.getName(), scheme.getCastingCostsAndSpellEffects()));
         harness.passBothPriorities();
 

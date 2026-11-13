@@ -82,9 +82,6 @@ public class RevealHandAndDiscardDuplicateNonlandCardsEffectHandler implements N
             discardCard(gameData, targetPlayerId, card, entry.getCard());
         }
         triggerCollectionService.finishDiscardEvent(gameData);
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-        }
     }
 
     private void discardCard(GameData gameData, UUID playerId, Card card, Card sourceCard) {

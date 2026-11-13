@@ -52,6 +52,8 @@ public class DestroyTargetPermanentThenMayDiscardToConjureDuplicateEffectHandler
                 new DiscardCardThenEffect(null,
                         new ConjureDuplicateOfCardIntoHandEffect(targetCard), "a card"),
                 "discard a card to conjure a duplicate of that permanent?");
-        gameData.queueMayAbility(entry.getCard(), entry.getControllerId(), mayDiscard);
+        // "Then you may discard a card" is chosen while the ability resolves (CR 608.2d), not as an ability of its own.
+        gameData.queueMayAbilityForPlayer(entry.getCard(), entry.getControllerId(), mayDiscard, null,
+                entry.getSourcePermanentId(), entry.getControllerId(), entry.getSourcePermanentSnapshot());
     }
 }

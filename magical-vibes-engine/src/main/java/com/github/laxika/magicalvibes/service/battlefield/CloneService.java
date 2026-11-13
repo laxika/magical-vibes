@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -84,6 +84,9 @@ public class CloneService {
     private final TriggerCollectionService triggerCollectionService;
     private final ExiledCreatureCopyOnEnterService exiledCreatureCopyOnEnterService;
     private final AuraAttachmentService auraAttachmentService;
+    @Autowired
+    @Lazy
+    private TriggeredAbilityStackService triggeredAbilityStackService;
     @Autowired
     @Lazy
     private BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
@@ -832,17 +835,10 @@ public class CloneService {
         if (battlefieldEntryBatch != null) {
             List<StackEntry> triggers = new ArrayList<>();
             if (graveyardCardToExile != null) {
-                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(), controllerId,
-                        perm.getCard().getName() + "'s reflexive ability",
-                        List.of(new ExileTriggeringCardFromGraveyardEffect()), 0, perm.getId());
-                trigger.setTriggeringCardId(graveyardCardToExile.getId());
-                triggers.add(trigger);
+                triggers.add(exileCopiedCardAbility(perm, controllerId, graveyardCardToExile));
             }
             if (targetPerm != null && !reflexiveEffects.isEmpty()) {
-                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, perm.getCard(), controllerId,
-                        card.getName() + "'s reflexive ability", reflexiveEffects, targetPerm.getId(), perm.getId());
-                trigger.setNonTargeting(true);
-                triggers.add(trigger);
+                triggers.add(copiedPermanentAbility(card, perm, controllerId, targetPerm, reflexiveEffects));
             }
             battlefieldEntryBatchSupport.completeClonePreparation(gameData, perm, triggers, battlefieldEntryBatch);
             return;
@@ -920,31 +916,44 @@ public class CloneService {
         }
 
         if (graveyardCardToExile != null) {
-            StackEntry exileTrigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    enteredCard,
-                    controllerId,
-                    enteredCard.getName() + "'s reflexive ability",
-                    List.of(new ExileTriggeringCardFromGraveyardEffect()),
-                    0,
-                    perm.getId());
-            exileTrigger.setTriggeringCardId(graveyardCardToExile.getId());
-            gameData.stack.add(exileTrigger);
+            triggeredAbilityStackService.putMade(gameData,
+                    exileCopiedCardAbility(perm, controllerId, graveyardCardToExile));
         }
 
         if (targetPerm != null && !reflexiveEffects.isEmpty()) {
-            StackEntry reflexiveTrigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, enteredCard, controllerId,
-                    card.getName() + "'s reflexive ability", reflexiveEffects,
-                    targetPerm.getId(), perm.getId());
-            reflexiveTrigger.setNonTargeting(true);
-            gameData.stack.add(reflexiveTrigger);
+            triggeredAbilityStackService.putMade(gameData,
+                    copiedPermanentAbility(card, perm, controllerId, targetPerm, reflexiveEffects));
         }
 
         if (!gameData.interaction.isAwaitingInput()) {
             legendRuleService.checkLegendRule(gameData, controllerId);
         }
         beginNextQueuedEntryCopyChoice(gameData);
+    }
+
+    /**
+     * The reflexive ability the copy's entering makes when it copied a card in a graveyard ("when you do, exile that
+     * card", CR 603.12), with the copy as its source.
+     */
+    private static StackEntry exileCopiedCardAbility(Permanent perm, UUID controllerId, Card copiedCard) {
+        StackEntry ability = TriggeredAbilityStackService.madeAbility(perm.getCard(), controllerId,
+                perm.getCard().getName() + "'s reflexive ability",
+                List.of(new ExileTriggeringCardFromGraveyardEffect()), 0, perm.getId());
+        ability.setTriggeringCardId(copiedCard.getId());
+        return ability;
+    }
+
+    /**
+     * The reflexive ability the copy's entering makes about the permanent it copied ("when you do, tap the copied
+     * creature", Wall of Stolen Identity, CR 603.12), which acts on that permanent without targeting it.
+     */
+    private static StackEntry copiedPermanentAbility(Card card, Permanent perm, UUID controllerId,
+                                                     Permanent copiedPermanent, List<CardEffect> effects) {
+        StackEntry ability = TriggeredAbilityStackService.madeAbility(perm.getCard(), controllerId,
+                card.getName() + "'s reflexive ability", effects, 0, perm.getId());
+        ability.setTargetId(copiedPermanent.getId());
+        ability.setNonTargeting(true);
+        return ability;
     }
 
     private void applyAdditionalPlusOnePlusOneCounters(GameData gameData, UUID controllerId, Permanent perm,

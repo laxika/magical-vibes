@@ -42,6 +42,10 @@ import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,11 +69,10 @@ class EtbTriggerServiceTest {
     @Mock private GameLogService gameLogService;
     @Mock private PlayerInputService playerInputService;
     @Mock private TriggerCollectionService triggerCollectionService;
-    @Mock private GraveyardTargetingService graveyardTargetingService;
-    @Mock private ETBTokenTargetService etbTokenTargetService;
     @Mock private AmountEvaluationService amountEvaluationService;
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private ConditionEvaluationService conditionEvaluationService;
+    @Mock private TargetLegalityService targetLegalityService;
 
     private EtbTriggerService service;
     private GameData gameData;
@@ -78,9 +81,12 @@ class EtbTriggerServiceTest {
     @BeforeEach
     void setUp() {
         service = new EtbTriggerService(gameQueryService, gameLogService, playerInputService,
-                triggerCollectionService, graveyardTargetingService, etbTokenTargetService,
-                new EtbEffectResolver(conditionEvaluationService), amountEvaluationService,
-                conditionEvaluationService, predicateEvaluationService, new GraveyardTargetingSupport());
+                triggerCollectionService, new EtbEffectResolver(conditionEvaluationService));
+        // A permanent's own enters abilities go on the stack through the stack door.
+        ReflectionTestUtils.setField(service, "triggeredAbilityStackService", new TriggeredAbilityStackService(
+                conditionEvaluationService, gameQueryService, new GraveyardTargetingSupport(), gameLogService,
+                triggerCollectionService, amountEvaluationService, predicateEvaluationService,
+                new TriggerTargetCollector(gameQueryService, predicateEvaluationService, targetLegalityService)));
         controllerId = UUID.randomUUID();
         gameData = new GameData(UUID.randomUUID(), "test", controllerId, "Player");
         gameData.orderedPlayerIds.add(controllerId);
@@ -160,9 +166,9 @@ class EtbTriggerServiceTest {
         service.processCreatureETBEffects(gameData, controllerId, land, null, false);
 
         assertThat(gameData.hasPendingInteraction(
-                PermanentChoiceContext.ETBTokenTargetTrigger.class)).isTrue();
+                PermanentChoiceContext.AttackTriggerTarget.class)).isTrue();
         assertThat(gameData.stack).isEmpty();
-        verify(etbTokenTargetService).processNextETBTokenTargetTrigger(gameData);
+        verify(triggerCollectionService).beginStackDoorChoices(gameData);
     }
 
     @Test
@@ -181,7 +187,7 @@ class EtbTriggerServiceTest {
         service.processCreatureETBEffects(gameData, controllerId, creature, null, false);
 
         assertThat(gameData.hasPendingInteraction(
-                PermanentChoiceContext.ETBTokenTargetTrigger.class)).isFalse();
+                PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
         assertThat(gameData.stack).hasSize(1);
         assertThat(gameData.stack.getFirst().getTargetId()).isNull();
     }
@@ -220,8 +226,9 @@ class EtbTriggerServiceTest {
 
         service.processCreatureETBEffects(gameData, controllerId, creature, null, false);
 
-        verify(graveyardTargetingService).handleGraveyardCardsExileETBTargeting(
-                gameData, controllerId, creature, List.of(exile, lifeLoss), exile, 1);
+        PermanentChoiceContext.SpellGraveyardTargetTrigger pending =
+                gameData.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
+        assertThat(pending.effects()).containsExactly(exile, lifeLoss);
         assertThat(gameData.stack).isEmpty();
     }
 

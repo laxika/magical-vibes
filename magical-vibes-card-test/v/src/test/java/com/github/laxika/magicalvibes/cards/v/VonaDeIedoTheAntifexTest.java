@@ -44,6 +44,22 @@ class VonaDeIedoTheAntifexTest extends BaseCardTest {
     }
 
     @Test
+    void theDiscardIsChosenAsTheAbilityResolvesWithNothingPutOnTheStack() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, new ArrayList<>(List.of(new VonaDeIedoTheAntifex(), new Forest())));
+        addMana();
+
+        harness.castCreature(player1, 0, target.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(target.getCard());
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
+    }
+
+    @Test
     void decliningDiscardDoesNotConjure() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Forest forest = new Forest();

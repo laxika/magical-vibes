@@ -60,7 +60,7 @@ public class EachOpponentMaySearchLibraryForCreatureToBattlefieldEffectHandler i
             return;
         }
         UUID searcherId = searchers.removeFirst();
-        StackEntry searchEntry = new StackEntry(entry.getEntryType(), entry.getCard(), searcherId,
+        StackEntry searchEntry = StackEntry.derivedFrom(entry, entry.getCard(), searcherId,
                 entry.getDescription(), List.of(
                         new MayEffect(new SearchLibraryEffect(new CardTypePredicate(CardType.CREATURE),
                                 LibrarySearchDestination.BATTLEFIELD),

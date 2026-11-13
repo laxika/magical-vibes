@@ -3,13 +3,9 @@ package com.github.laxika.magicalvibes.model.effect;
 /**
  * Makes the creature attached to the source Equipment a copy of a creature card exiled with it.
  *
- * <p>{@code asAttaches} marks the "As this Equipment becomes attached to a creature" wording (Dinosaur
- * Headdress), a static-style effect applied during the attachment; otherwise this is the "Whenever this
- * Equipment becomes attached" triggered ability (Assimilation Aegis) that uses the stack.
+ * <p>As the effect of a "whenever this Equipment becomes attached" triggered ability it uses the stack (Assimilation
+ * Aegis); wrapped in {@link AsThisBecomesAttachedEffect} it is the "as this Equipment becomes attached to a creature"
+ * static ability, applied during the attachment (Dinosaur Headdress).
  */
-public record AttachedCreatureBecomesCopyOfExiledCreatureEffect(boolean asAttaches) implements CardEffect {
-
-    public AttachedCreatureBecomesCopyOfExiledCreatureEffect() {
-        this(false);
-    }
+public record AttachedCreatureBecomesCopyOfExiledCreatureEffect() implements CardEffect {
 }

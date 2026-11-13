@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -132,9 +131,7 @@ public class VaanExileCastSupport {
     public void createTreasureDuringResolution(GameData gameData, UUID controllerId,
                                                 Card sourceCard, UUID sourcePermanentId) {
         CreateTokenEffect treasure = CreateTokenEffect.ofTreasureToken(1);
-        StackEntry treasureEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
+        StackEntry treasureEntry = StackEntry.carrier(sourceCard,
                 controllerId,
                 sourceCard.getName() + " creates a Treasure token.",
                 List.of(treasure),

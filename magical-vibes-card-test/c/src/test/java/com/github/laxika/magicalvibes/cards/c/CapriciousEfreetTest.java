@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -15,7 +14,6 @@ import com.github.laxika.magicalvibes.cards.m.Mountain;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -66,13 +64,11 @@ class CapriciousEfreetTest extends BaseCardTest {
         harness.clearMessages();
         harness.handlePermanentChosen(player1, bears.getId());
 
-        // Step 2: multi-permanent choice for opponent targets
+        // The targets you don't control are chosen one at a time
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(harness.getConn1().getMessagesContaining("\"type\":\"INTERACTION_PROMPT\""))
                 .hasSize(1);
-        assertThat(harness.getConn1().getMessagesContaining("\"type\":\"GAME_STATE\"")).isEmpty();
-        assertThat(harness.getConn2().getMessagesContaining("\"type\":\"GAME_STATE\"")).isEmpty();
     }
 
     @Test
@@ -85,7 +81,7 @@ class CapriciousEfreetTest extends BaseCardTest {
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
         harness.clearMessages();
-        harness.handleMultiplePermanentsChosen(player1, List.of()); // zero opponents
+        harness.handlePermanentChosen(player1, player1.getId()); // no targets you don't control
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetIds())
@@ -103,14 +99,11 @@ class CapriciousEfreetTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(hillGiant.getId()));
+        harness.handlePermanentChosen(player1, hillGiant.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetIds())
                 .containsExactly(bears.getId(), hillGiant.getId());
-        assertThat(gd.gameLog)
-                .extracting(GameLogEntry::plainText)
-                .contains("Capricious Efreet's ability targets Runeclaw Bear, Canyon Minotaur.");
     }
 
     @Test
@@ -123,7 +116,8 @@ class CapriciousEfreetTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(hillGiant.getId(), bears2.getId()));
+        harness.handlePermanentChosen(player1, hillGiant.getId());
+        harness.handlePermanentChosen(player1, bears2.getId());
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetIds())
@@ -157,7 +151,7 @@ class CapriciousEfreetTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, bears.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(hillGiant.getId()));
+        harness.handlePermanentChosen(player1, hillGiant.getId());
 
         int totalBefore = gd.playerBattlefields.get(player1.getId()).size()
                 + gd.playerBattlefields.get(player2.getId()).size();
@@ -289,7 +283,7 @@ class CapriciousEfreetTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, efreet.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId()));
+        harness.handlePermanentChosen(player1, bear.getId());
         gd.playerBattlefields.get(player1.getId()).remove(efreet);
         gd.playerBattlefields.get(player2.getId()).remove(bear);
         gd.playerBattlefields.get(player1.getId()).add(bear);
@@ -307,7 +301,7 @@ class CapriciousEfreetTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.handlePermanentChosen(player1, efreet.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId()));
+        harness.handlePermanentChosen(player1, bear.getId());
         gd.playerBattlefields.get(player1.getId()).remove(efreet);
 
         harness.passBothPriorities();

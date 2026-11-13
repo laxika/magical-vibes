@@ -136,6 +136,6 @@ class SouvenirSnatcherTest extends BaseCardTest {
     private void triggerMutation(Permanent snatcher) {
         harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
                 gd, snatcher, List.of(snatcher.getCard()), player1.getId()));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
     }
 }

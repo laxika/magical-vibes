@@ -11,12 +11,17 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BattleDefeatedExileAndCastTransformedEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -24,28 +29,37 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
- * Siege battle defeat: when the last defense counter is removed, queue the intrinsic triggered
- * ability that exiles the battle and casts it transformed.
+ * Siege battle defeat: when the last defense counter is removed, the Siege's intrinsic triggered ability (CR 310.12b)
+ * exiles the battle and casts it transformed.
  */
 @Slf4j
 @Component
 public class BattleDefeatSupport {
 
+    /**
+     * A Siege's intrinsic ability, "When the last defense counter is removed from this permanent, exile it, then you may
+     * cast it transformed without paying its mana cost" (CR 310.12b).
+     */
+    private static final TriggeredAbility SIEGE_DEFEAT_ABILITY = new TriggeredAbility(
+            Triggers.youRemoveLastCounterFromThis(CounterType.DEFENSE), new BattleDefeatedExileAndCastTransformedEffect());
+
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     public BattleDefeatSupport(GameQueryService gameQueryService,
                                GameLogService gameLogService,
                                PermanentRemovalService permanentRemovalService,
-                               @Lazy TriggerCollectionService triggerCollectionService) {
+                               @Lazy TriggerCollectionService triggerCollectionService,
+                               @Lazy TriggeredAbilityStackService triggeredAbilityStackService) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.permanentRemovalService = permanentRemovalService;
         this.triggerCollectionService = triggerCollectionService;
+        this.triggeredAbilityStackService = triggeredAbilityStackService;
     }
-
     /**
      * Call after defense counters change. If the battle has ≤0 defense and is a Siege (or has a
      * back face), queue the defeat trigger unless one is already on the stack.
@@ -72,15 +86,13 @@ public class BattleDefeatSupport {
             return;
         }
 
-        StackEntry trigger = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                controllerId,
+        boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                SIEGE_DEFEAT_ABILITY, card, battle, controllerId,
                 card.getName() + " — When this battle is defeated, exile it, then cast it transformed.",
-                List.of(new BattleDefeatedExileAndCastTransformedEffect()),
-                null,
-                battle.getId());
-        gameData.stack.add(trigger);
+                ConditionContext.forPermanent(battle, controllerId), entry -> { }));
+        if (!triggered) {
+            return;
+        }
         gameData.priorityPassedBy.clear();
 
         gameLogService.append(gameData, GameLog.cardThen(card, " is defeated."));

@@ -44,11 +44,11 @@ class AggressiveBiomancyTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 2, bears.getId());
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, giant.getId());
         harness.passBothPriorities();
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, giant.getId());
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -66,7 +66,7 @@ class AggressiveBiomancyTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, 1, bears.getId());
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 

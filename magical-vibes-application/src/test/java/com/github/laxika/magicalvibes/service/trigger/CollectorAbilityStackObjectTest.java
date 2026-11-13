@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -134,9 +133,8 @@ class CollectorAbilityStackObjectTest extends BaseCardTest {
         card.addTrigger(Triggers.opponentSearchesTheirLibrary(), new DrawCardEffect(1));
         card.addTrigger(Triggers.opponentSearchesTheirLibrary(), new GainLifeEffect(1));
         addCreatureReady(player1, card);
-        GameLogService gameLogService = GameTestEngineContext.get().getBean(GameLogService.class);
 
-        harness.inMutationScope(() -> LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gd, gameLogService,
+        harness.inMutationScope(() -> LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gd,
                 player2.getId()));
 
         assertThat(entriesOf("Search Watcher")).hasSize(2)

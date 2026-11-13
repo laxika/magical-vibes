@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,9 +24,10 @@ public class SepulchralPrimordial extends Card {
         // opponent this is one up-to-one choice among that opponent's creature cards, made as the
         // trigger goes on the stack (declining leaves the trigger with no target); "you may" is asked
         // on resolution.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new PutCardFromOpponentGraveyardOntoBattlefieldEffect(
-                        false, new CardTypePredicate(CardType.CREATURE), false),
-                "Put the target creature card onto the battlefield under your control?"));
+        CardTypePredicate creatureCard = new CardTypePredicate(CardType.CREATURE);
+        target(new GraveyardCardPredicateTargetFilter(creatureCard, GraveyardSearchScope.OPPONENT_GRAVEYARD), 0, 1)
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
+                        new PutCardFromOpponentGraveyardOntoBattlefieldEffect(false, creatureCard, false, null, true),
+                        "Put the target creature card onto the battlefield under your control?"));
     }
 }

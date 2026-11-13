@@ -6147,9 +6147,11 @@ public class GameData {
      * Routes a triggered-ability {@link StackEntry} to the main stack, or to
      * {@link #pendingManaAbilityTriggers} when a mana ability is currently resolving
      * (CR 603.2 / 603.3). Deferred triggers are flushed by the existing flush points
-     * (priority grant, auto-pass, {@code SpellCastingService.finishSpellCast}).
+     * (priority grant, auto-pass, {@code SpellCastingService.finishSpellCast}). Only the stack door reaches it
+     * ({@link StackDoor#enqueue}).
      */
-    public void enqueueTrigger(StackEntry entry) {
+    void enqueueTrigger(StackEntry entry) {
+        refuseNonStackObject(entry);
         giveTriggerRecordInHand(entry);
         if (waitingForSubgame && session.active() != this) {
             observeTrigger(RulesObserver.Route.SUSPENDED_QUEUE, entry);
@@ -6182,6 +6184,21 @@ public class GameData {
 
     public void restoreTriggeredAbilityCopies(int previous) {
         activeTriggeredAbilityCopies = previous;
+    }
+
+    /**
+     * Refuses {@code entry} as a stack object: a carrier stands for an object in a resolution and is never one
+     * ({@link StackEntry#carrier}), and a triggered ability's entry reaches the stack only as the stack door releases it
+     * ({@link StackDoor#enqueue}); a copy of a stack object keeps what it copies.
+     */
+    private static void refuseNonStackObject(StackEntry entry) {
+        if (entry.isCarrier()) {
+            throw new IllegalStateException("A carrier is never a stack object: " + entry.getDescription());
+        }
+        if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY && !entry.isReleasedToStack()) {
+            throw new IllegalStateException("A triggered ability reaches the stack through the stack door: "
+                    + entry.getDescription());
+        }
     }
 
     private void recordGraveyardTargetVersions(StackEntry entry) {
@@ -6236,6 +6253,7 @@ public class GameData {
 
         @Override
         public boolean add(StackEntry entry) {
+            refuseNonStackObject(entry);
             gameData.stampSpellEnteringStack(entry);
             gameData.giveTriggerRecordInHand(entry);
             boolean added = super.add(entry);
@@ -6262,6 +6280,7 @@ public class GameData {
 
         @Override
         public void add(int index, StackEntry entry) {
+            refuseNonStackObject(entry);
             gameData.stampSpellEnteringStack(entry);
             gameData.giveTriggerRecordInHand(entry);
             super.add(index, entry);
@@ -6273,6 +6292,7 @@ public class GameData {
 
         @Override
         public boolean addAll(java.util.Collection<? extends StackEntry> entries) {
+            entries.forEach(GameData::refuseNonStackObject);
             entries.forEach(gameData::stampSpellEnteringStack);
             entries.forEach(gameData::giveTriggerRecordInHand);
             boolean added = super.addAll(entries);
@@ -6287,6 +6307,7 @@ public class GameData {
 
         @Override
         public boolean addAll(int index, java.util.Collection<? extends StackEntry> entries) {
+            entries.forEach(GameData::refuseNonStackObject);
             entries.forEach(gameData::stampSpellEnteringStack);
             entries.forEach(gameData::giveTriggerRecordInHand);
             boolean added = super.addAll(index, entries);
@@ -6396,24 +6417,16 @@ public class GameData {
     /**
      * Hands off {@code record}, the entry a collector builds for an ability that chooses nothing, for the ability it
      * is routing: the choice the ability is queued or asked with, or the entry that reaches the stack for it, takes
-     * it (see {@link #triggerRecordInHand}). Putting {@code record} itself on the stack takes it too. Returns the
-     * record that was in hand, for {@link #restoreTriggerRecordInHand} once the ability is routed.
+     * it (see {@link #triggerRecordInHand}). Putting {@code record} itself on the stack takes it too.
+     * Returns the record that was in hand.
      */
-    public StackEntry handOffTriggerRecord(StackEntry record) {
+    StackEntry handOffTriggerRecord(StackEntry record) {
         StackEntry previous = triggerRecordInHand;
         triggerRecordInHand = record;
         if (record != null) {
             triggerRecordHandedOff = true;
         }
         return previous;
-    }
-
-    /** Ends a hand-off: whatever is still in hand is dropped and {@code previous} is in hand again. */
-    public void restoreTriggerRecordInHand(StackEntry previous) {
-        if (triggerRecordInHand != previous) {
-            reportTriggerRecordLeftBehind();
-        }
-        triggerRecordInHand = previous;
     }
 
     /**
@@ -9399,28 +9412,6 @@ public class GameData {
         exiledCards.addAll(updated);
     }
 
-    /**
-     * CR 603.5 — Puts a "you may" triggered ability directly onto the stack with the
-     * MayEffect wrapper intact.  The may choice happens at resolution time, not trigger time.
-     */
-    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may) {
-        stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                controllerId,
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(may))
-        ));
-    }
-
-    /**
-     * CR 603.5 — Puts a "you may" triggered ability with source permanent and target context
-     * directly onto the stack.  The may choice happens at resolution time, not trigger time.
-     */
-    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId, UUID sourcePermanentId) {
-        queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, 0, (String) null);
-    }
-
     /** Queues a may ability while keeping its controller distinct from the choosing player. */
     public void queueMayAbilityForPlayer(Card sourceCard, UUID controllerId, MayEffect may,
                                          UUID targetCardId, UUID sourcePermanentId, UUID choicePlayerId,
@@ -9470,74 +9461,6 @@ public class GameData {
                 triggeringPermanentPowerAtTrigger,
                 null
         ));
-    }
-
-    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
-                                UUID sourcePermanentId, int eventValue,
-                                String onceEachTurnActionKey) {
-        queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, eventValue,
-                onceEachTurnActionKey, null);
-    }
-
-    /** Queues a may ability while preserving last-known toughness for an entering permanent. */
-    public void queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
-                                UUID sourcePermanentId, int eventValue,
-                                String onceEachTurnActionKey,
-                                Integer triggeringPermanentToughnessAtTrigger) {
-        queueMayAbility(sourceCard, controllerId, may, targetCardId, sourcePermanentId, eventValue,
-                onceEachTurnActionKey, triggeringPermanentToughnessAtTrigger, null);
-    }
-
-    /**
-     * Queues a may ability that {@code grantingPermanentId} granted ({@link StackEntry#getGrantingPermanentId()}), or
-     * {@code null}, with the event value and last-known toughness of
-     * {@link #queueMayAbility(Card, UUID, MayEffect, UUID, UUID, int, String, Integer)}.
-     */
-    public StackEntry queueMayAbility(Card sourceCard, UUID controllerId, MayEffect may, UUID targetCardId,
-                                UUID sourcePermanentId, int eventValue,
-                                String onceEachTurnActionKey,
-                                Integer triggeringPermanentToughnessAtTrigger, UUID grantingPermanentId) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                controllerId,
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(may)),
-                targetCardId,
-                sourcePermanentId
-        );
-        entry.setEventValue(eventValue);
-        entry.setOnceEachTurnActionKey(onceEachTurnActionKey);
-        entry.setTriggeringPermanentToughnessAtTrigger(triggeringPermanentToughnessAtTrigger);
-        entry.setGrantingPermanentId(grantingPermanentId);
-        if (may.targetSpec().declaredTarget() == null) {
-            entry.setNonTargeting(true);
-        }
-        if (triggeringPermanentToughnessAtTrigger != null && targetCardId != null) {
-            entry.setTriggeringPermanentId(targetCardId);
-        }
-        stack.add(entry);
-        return entry;
-    }
-
-    public void queueMayAbility(Card sourceCard, UUID controllerId, MayPayManaEffect mayPay,
-                                UUID targetCardId, UUID sourcePermanentId) {
-        queueMayAbility(sourceCard, controllerId, mayPay, targetCardId, sourcePermanentId, 0);
-    }
-
-    public void queueMayAbility(Card sourceCard, UUID controllerId, MayPayManaEffect mayPay,
-                                UUID targetCardId, UUID sourcePermanentId, int eventValue) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                controllerId,
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(mayPay)),
-                targetCardId,
-                sourcePermanentId
-        );
-        entry.setEventValue(eventValue);
-        stack.add(entry);
     }
 
     /**
@@ -11227,14 +11150,16 @@ public class GameData {
                                 drain.delayedColorless())
                         : original instanceof PendingInteraction.ColorChoice choice
                         ? choice.copyCardTypeOnEnterPermanent()
-                        : original instanceof PermanentChoiceContext.SpellTargetTriggerAnyTarget trigger
-                        ? trigger.copyPlanarSnapshot()
+                        : original instanceof PermanentChoiceContext.AttackCounterMoveFirstTarget trigger
+                        ? trigger.withTriggerRecordCopy()
+                        : original instanceof PermanentChoiceContext.PucasMischiefOwnTarget trigger
+                        ? trigger.withTriggerRecordCopy()
                         : original instanceof PermanentChoiceContext.ETBTokenMultiTargetTrigger trigger
                         ? trigger.copyPlanarSnapshot()
                         : original instanceof PermanentChoiceContext.AttackTriggerTarget trigger
-                        ? trigger.withTriggerRecord(trigger.triggerRecord())
+                        ? trigger.withTriggerRecordCopy()
                         : original instanceof PermanentChoiceContext.TriggeredModalTrigger trigger
-                        ? trigger.withTriggerRecord(trigger.triggerRecord()) : original)));
+                        ? trigger.withTriggerRecordCopy() : original)));
         this.queuedTriggerRecords.forEach((pending, record) -> {
             PendingInteraction copied = copiedInteractions.get(pending);
             if (copied != null) {

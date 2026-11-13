@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.cards.b.BeholdThePowerOfDestruction;
 import com.github.laxika.magicalvibes.cards.f.FearMyAuthority;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -7,7 +9,6 @@ import com.github.laxika.magicalvibes.cards.i.ICallForSlaughter;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -38,9 +39,7 @@ class MyLaughterEchoesTest extends BaseCardTest {
         harness.addToBattlefieldAndReturn(player1, new MyLaughterEchoes());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         BeholdThePowerOfDestruction scheme = new BeholdThePowerOfDestruction();
-        StackEntry schemeEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                scheme,
+        StackEntry schemeEntry = TestStackDoor.triggered(scheme,
                 player1.getId(),
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects());
@@ -78,9 +77,7 @@ class MyLaughterEchoesTest extends BaseCardTest {
     void doesNotTriggerForAnOngoingScheme() {
         harness.addToBattlefield(player1, new MyLaughterEchoes());
         FearMyAuthority scheme = new FearMyAuthority();
-        StackEntry schemeEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                scheme,
+        StackEntry schemeEntry = TestStackDoor.triggered(scheme,
                 player1.getId(),
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects());
@@ -95,9 +92,7 @@ class MyLaughterEchoesTest extends BaseCardTest {
     void doesNotTriggerForAnotherPlayersScheme() {
         var echoes = harness.addToBattlefieldAndReturn(player1, new MyLaughterEchoes());
         ICallForSlaughter scheme = new ICallForSlaughter();
-        StackEntry schemeEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                scheme,
+        StackEntry schemeEntry = TestStackDoor.triggered(scheme,
                 player2.getId(),
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects());
@@ -142,9 +137,7 @@ class MyLaughterEchoesTest extends BaseCardTest {
     }
 
     private void setSchemeInMotion(ICallForSlaughter scheme) {
-        StackEntry schemeEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                scheme,
+        StackEntry schemeEntry = TestStackDoor.triggered(scheme,
                 player1.getId(),
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects());
@@ -155,9 +148,7 @@ class MyLaughterEchoesTest extends BaseCardTest {
     private PermanentSetup setUpEchoesAndScheme() {
         var echoes = harness.addToBattlefieldAndReturn(player1, new MyLaughterEchoes());
         ICallForSlaughter scheme = new ICallForSlaughter();
-        StackEntry schemeEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                scheme,
+        StackEntry schemeEntry = TestStackDoor.triggered(scheme,
                 player1.getId(),
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects());

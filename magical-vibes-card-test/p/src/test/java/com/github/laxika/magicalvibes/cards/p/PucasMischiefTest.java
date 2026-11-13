@@ -134,7 +134,6 @@ class PucasMischiefTest extends BaseCardTest {
         // Opponent's target leaves the battlefield before the ability resolves.
         gd.playerBattlefields.get(player2.getId()).remove(opp);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         // No exchange happened — the controller keeps their permanent.
         harness.assertOnBattlefield(player1, "Briarberry Cohort");

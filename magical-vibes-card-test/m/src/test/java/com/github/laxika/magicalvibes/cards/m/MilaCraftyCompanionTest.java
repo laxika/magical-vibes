@@ -120,7 +120,7 @@ class MilaCraftyCompanionTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(com.github.laxika.magicalvibes.model.PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+                .isInstanceOf(com.github.laxika.magicalvibes.model.PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 

@@ -246,7 +246,7 @@ public class AttachAurasToSourceEffectHandler implements NormalEffectHandlerBean
                 && !auraAttachmentService.canEnchant(gameData, card, controllerId, host))) {
             return false;
         }
-        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
+        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, controllerId);
         library.remove(card);
         putAttachmentOntoBattlefieldAttached(gameData, host, controllerId, card, "library", Zone.LIBRARY);
         LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);

@@ -61,22 +61,21 @@ public class EarthbendTargetLandThenFightEffectHandler implements NormalEffectHa
             return;
         }
 
-        // "When you do" is an ability of its own (CR 603.12): its targets are chosen as it goes on the stack, and the
-        // entry they are chosen for records what the resolving entry was about.
-        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of());
-        ReflexiveAbilitySupport.route(gameData, record, () -> {
-            if (controlledCreatures.isEmpty()) {
-                beginOpponentChoice(gameData, sourceCard, controllerId, opponentCreatures,
-                        null, entry.getSourcePermanentId());
-                return;
-            }
-            gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.EarthbendThenFightTarget(
-                    sourceCard, controllerId, entry.getSourcePermanentId(), null, false));
-            List<UUID> validPlayerIds = List.of(controllerId);
-            playerInputService.beginAnyTargetChoice(gameData, controllerId, controlledCreatures, validPlayerIds,
-                    sourceCard.getName()
-                            + " - Choose up to one creature you control to fight (choose yourself to decline).");
-        });
+        // "When you do" is an ability of its own (CR 603.12): its targets are chosen as it goes on the stack, and its
+        // entry records what the resolving entry was about.
+        StackEntry ability = ReflexiveAbilitySupport.record(gameData, entry,
+                List.of(FightTargetsEffect.ofReflexiveAbilityTargets()));
+        if (controlledCreatures.isEmpty()) {
+            beginOpponentChoice(gameData, sourceCard, controllerId, opponentCreatures,
+                    null, entry.getSourcePermanentId(), ability);
+            return;
+        }
+        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.EarthbendThenFightTarget(
+                sourceCard, controllerId, entry.getSourcePermanentId(), null, false, ability));
+        List<UUID> validPlayerIds = List.of(controllerId);
+        playerInputService.beginAnyTargetChoice(gameData, controllerId, controlledCreatures, validPlayerIds,
+                sourceCard.getName()
+                        + " - Choose up to one creature you control to fight (choose yourself to decline).");
     }
 
     public void handleTargetChoice(GameData gameData, UUID chosenId,
@@ -93,23 +92,15 @@ public class EarthbendTargetLandThenFightEffectHandler implements NormalEffectHa
                 return;
             }
             beginOpponentChoice(gameData, context.sourceCard(), context.controllerId(), opponentCreatures,
-                    firstTargetId, context.sourcePermanentId());
+                    firstTargetId, context.sourcePermanentId(), context.ability());
             return;
         }
 
         List<UUID> fightTargetIds = context.firstTargetId() == null
                 ? List.of(chosenId)
                 : List.of(context.firstTargetId(), chosenId);
-        StackEntry fightEntry = TriggeredAbilityStackService.madeAbility(
-                context.sourceCard(), context.controllerId(),
-                context.sourceCard().getName() + "'s reflexive ability",
-                List.of(FightTargetsEffect.ofReflexiveAbilityTargets()), (UUID) null, context.sourcePermanentId());
+        StackEntry fightEntry = context.ability();
         fightEntry.chooseTargetIds(fightTargetIds);
-        // The record the "when you do" was asked with (what the earthbend's resolution was about) is in hand again.
-        StackEntry record = gameData.handOffTriggerRecord(null);
-        if (record != null) {
-            fightEntry.carryTriggerRecord(record);
-        }
         fightEntry.setTargetFilters(context.firstTargetId() == null
                 ? List.of(TargetFilters.creatureAnOpponentControls())
                 : List.of(TargetFilters.creatureYouControl(), TargetFilters.creatureAnOpponentControls()));
@@ -121,9 +112,9 @@ public class EarthbendTargetLandThenFightEffectHandler implements NormalEffectHa
 
     private void beginOpponentChoice(GameData gameData, Card sourceCard, UUID controllerId,
                                       List<UUID> opponentCreatures, UUID firstTargetId,
-                                      UUID sourcePermanentId) {
+                                      UUID sourcePermanentId, StackEntry ability) {
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.EarthbendThenFightTarget(
-                sourceCard, controllerId, sourcePermanentId, firstTargetId, true));
+                sourceCard, controllerId, sourcePermanentId, firstTargetId, true, ability));
         playerInputService.beginPermanentChoice(gameData, controllerId, opponentCreatures,
                 sourceCard.getName() + " - Choose target creature an opponent controls.");
     }

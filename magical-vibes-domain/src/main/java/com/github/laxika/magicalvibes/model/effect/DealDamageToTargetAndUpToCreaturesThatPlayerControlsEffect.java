@@ -37,4 +37,10 @@ public record DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect(
             throw new IllegalArgumentException("maxCreatureTargets must be non-negative");
         }
     }
+
+    /** Its targets are a player or planeswalker and creatures; its card's target groups say which. */
+    @Override
+    public TargetSpec targetSpec() {
+        return TargetSpec.harmful(TargetPredicates.anyTarget());
+    }
 }

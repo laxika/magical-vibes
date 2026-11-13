@@ -24,12 +24,11 @@ public class IngotChewer extends Card {
     public IngotChewer() {
         // Evoke {R}: cast for the alternate cost instead of the mana cost; it's sacrificed on entry.
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{R}"))));
+        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
 
         // When this creature enters, destroy target artifact.
         target(TargetFilters.artifact())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyTargetPermanentEffect());
-
-        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }
 }

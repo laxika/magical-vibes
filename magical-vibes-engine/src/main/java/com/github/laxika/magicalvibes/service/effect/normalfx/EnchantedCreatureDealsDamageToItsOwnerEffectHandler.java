@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -56,9 +55,7 @@ public class EnchantedCreatureDealsDamageToItsOwnerEffectHandler implements Norm
         int rawDamage = e.damage();
 
         // Create a temporary stack entry with the creature as source for correct damage attribution
-        StackEntry creatureEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                creature.getCard(),
+        StackEntry creatureEntry = StackEntry.carrier(creature.getCard(),
                 controllerId,
                 creatureName + " deals damage to its owner",
                 List.of(),

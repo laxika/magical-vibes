@@ -23,7 +23,6 @@ public class Spitebellows extends Card {
     public Spitebellows() {
         // Evoke {1}{R}{R}: cast for the alternate cost instead of the mana cost; it's sacrificed on entry.
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{R}{R}"))));
-
         // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
 

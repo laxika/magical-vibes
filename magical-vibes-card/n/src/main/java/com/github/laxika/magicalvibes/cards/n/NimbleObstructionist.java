@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "HOU", collectorNumber = "40")
 @CardRegistration(set = "AKR", collectorNumber = "71")
@@ -28,9 +27,7 @@ public class NimbleObstructionist extends Card {
         addCycling("{2}{U}");
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryAllOfPredicate(List.of(
-                        new StackEntryTypeInPredicate(Set.of(
-                                StackEntryType.ACTIVATED_ABILITY,
-                                StackEntryType.TRIGGERED_ABILITY)),
+                        new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                         new StackEntryNotPredicate(new StackEntryControlledByPredicate()))),
                 "Target must be an activated or triggered ability you don't control."))
                 .addTrigger(Triggers.youCycleThisCard(), new CounterSpellEffect());

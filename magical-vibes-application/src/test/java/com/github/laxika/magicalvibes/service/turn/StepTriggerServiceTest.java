@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.action.LoseLifeAtNextDrawStepUnlessP
 import org.mockito.InOrder;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.ArgumentMatchers.isNull;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.DelayedDestroyAllPermanents;
@@ -36,7 +37,6 @@ import com.github.laxika.magicalvibes.model.action.DiscardCardsAtNextEndStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -44,7 +44,6 @@ import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerMayDrawUpToNCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
@@ -888,59 +887,6 @@ class StepTriggerServiceTest {
 
             verify(playerInputService, never()).beginAnyTargetChoice(any(), any(), any(), any(), any());
             assertThat(gd.stack).isEmpty();
-        }
-
-        @Test
-        @DisplayName("BecomeCopyOfTargetCreatureEffect triggers copy target selection when valid targets exist")
-        void copyEffectTriggersCopyTargetSelection() {
-            gd.turnNumber = 2;
-            Card sourceCard = createCardWithName("Clone Shell");
-            sourceCard.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new BecomeCopyOfTargetCreatureEffect());
-            Permanent sourcePerm = new Permanent(sourceCard);
-            gd.playerBattlefields.get(player1Id).add(sourcePerm);
-
-            Card targetCard = createCardWithName("Target Creature");
-            Permanent targetPerm = new Permanent(targetCard);
-            gd.playerBattlefields.get(player2Id).add(targetPerm);
-
-            when(gameQueryService.isCreature(eq(gd), any(Permanent.class))).thenAnswer(inv -> {
-                Permanent p = inv.getArgument(1);
-                return p.getId().equals(targetPerm.getId());
-            });
-
-            sut.handleUpkeepTriggers(gd);
-
-            // processNextUpkeepCopyTarget consumes the trigger and asks for target selection
-            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id), any(), any());
-        }
-
-        @Test
-        @DisplayName("BecomeCopyOfTargetCreatureEffect skipped when no valid creature targets")
-        void copyEffectSkippedWhenNoTargets() {
-            gd.turnNumber = 2;
-            Card sourceCard = createCardWithName("Clone Shell");
-            sourceCard.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new BecomeCopyOfTargetCreatureEffect());
-            gd.playerBattlefields.get(player1Id).add(new Permanent(sourceCard));
-            // No other permanents on any battlefield — source is skipped, so isCreature is never called
-
-            sut.handleUpkeepTriggers(gd);
-
-            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.UpkeepCopyTriggerTarget.class)).isFalse();
-            assertThat(gd.stack).isEmpty();
-        }
-
-        @Test
-        @DisplayName("DestroyOneOfTargetsAtRandomEffect triggers own-target selection")
-        void destroyAtRandomTriggersOwnTargetSelection() {
-            gd.turnNumber = 2;
-            Card card = createCardWithName("Capricious Efreet");
-            card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new DestroyOneOfTargetsAtRandomEffect());
-            gd.playerBattlefields.get(player1Id).add(new Permanent(card));
-
-            sut.handleUpkeepTriggers(gd);
-
-            // processNextCapriciousEfreetTarget consumes the trigger and asks for permanent choice
-            verify(playerInputService).beginPermanentChoice(eq(gd), eq(player1Id), any(), any());
         }
 
         @Test
@@ -2748,10 +2694,8 @@ class StepTriggerServiceTest {
 
             sut.handlePrecombatMainTriggers(gd);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-            assertThat(gd.stack.getFirst().getDescription()).contains("chapter II");
-            assertThat(gd.stack.getFirst().getEffectsToResolve()).hasSize(1);
+            // The chapter ability goes on the stack through the stack door (SagaChapterService's own route).
+            verify(sagaChapterService).putChapterAbility(gd, perm, saga, player1Id, 2, false);
         }
 
         @Test
@@ -2769,9 +2713,9 @@ class StepTriggerServiceTest {
 
             sut.handlePrecombatMainTriggers(gd);
 
-            assertThat(gd.stack).isEmpty();
-            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SagaChapterTarget.class)).isTrue();
-            verify(triggerCollectionService).processNextSagaChapterTarget(gd);
+            // The stack door parks the chapter for its target groups; the step begins the choices it queued.
+            verify(sagaChapterService).putChapterAbility(gd, sagaPermanent, saga, player1Id, 1, false);
+            verify(sagaChapterService).beginChapterChoices(gd);
         }
 
         @Test
@@ -2785,7 +2729,8 @@ class StepTriggerServiceTest {
 
             sut.handlePrecombatMainTriggers(gd);
 
-            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
+            verify(sagaChapterService).putChapterAbility(eq(gd), same(perm), same(saga), eq(player1Id), eq(2),
+                    eq(false));
         }
 
         @Test
@@ -2837,7 +2782,9 @@ class StepTriggerServiceTest {
 
             assertThat(perm1.getCounterCount(CounterType.LORE)).isEqualTo(2);
             assertThat(perm2.getCounterCount(CounterType.LORE)).isEqualTo(3);
-            assertThat(gd.stack).hasSize(2); // both chapters triggered
+            // Both chapters triggered.
+            verify(sagaChapterService).putChapterAbility(gd, perm1, saga1, player1Id, 2, false);
+            verify(sagaChapterService).putChapterAbility(gd, perm2, saga2, player1Id, 3, false);
         }
 
         @Test
@@ -2868,7 +2815,8 @@ class StepTriggerServiceTest {
             sut.handlePrecombatMainTriggers(gd);
 
             verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment gets a lore counter (2).")));
-            verify(gameLogService).append(eq(gd), argThat((GameLogEntry e) -> e.plainText().equals("Chainer's Torment's chapter II ability triggers.")));
+            // The chapter ability's own log line is SagaChapterService's, which puts it on the stack.
+            verify(sagaChapterService).putChapterAbility(gd, perm, saga, player1Id, 2, false);
         }
 
         @Test

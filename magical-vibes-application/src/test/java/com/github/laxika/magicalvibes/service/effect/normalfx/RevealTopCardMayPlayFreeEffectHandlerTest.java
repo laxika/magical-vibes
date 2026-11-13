@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -200,7 +202,7 @@ class RevealTopCardMayPlayFreeEffectHandlerTest {
 
                 RevealTopCardMayPlayFreeEffect effect =
                         new RevealTopCardMayPlayFreeEffect(LookDestination.BOTTOM_OF_LIBRARY, true);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Descendants' Path"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Descendants' Path"),
                         player1Id, "Descendants' Path", List.of(effect));
 
                 revealTopCardMayPlayFreeEffectHandler.resolve(gd, entry, effect);
@@ -220,7 +222,7 @@ class RevealTopCardMayPlayFreeEffectHandlerTest {
 
                 RevealTopCardMayPlayFreeEffect effect =
                         new RevealTopCardMayPlayFreeEffect(LookDestination.BOTTOM_OF_LIBRARY, true);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Descendants' Path"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Descendants' Path"),
                         player1Id, "Descendants' Path", List.of(effect));
 
                 revealTopCardMayPlayFreeEffectHandler.resolve(gd, entry, effect);
@@ -241,7 +243,7 @@ class RevealTopCardMayPlayFreeEffectHandlerTest {
 
                 RevealTopCardMayPlayFreeEffect effect =
                         new RevealTopCardMayPlayFreeEffect(LookDestination.BOTTOM_OF_LIBRARY, true);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Descendants' Path"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Descendants' Path"),
                         player1Id, "Descendants' Path", List.of(effect));
 
                 revealTopCardMayPlayFreeEffectHandler.resolve(gd, entry, effect);

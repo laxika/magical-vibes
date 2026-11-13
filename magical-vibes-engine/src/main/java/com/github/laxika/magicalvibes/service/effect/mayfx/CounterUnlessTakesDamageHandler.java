@@ -56,8 +56,7 @@ public class CounterUnlessTakesDamageHandler implements MayEffectHandlerBean {
         if (accepted) {
             DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(
                     effect.damage(), DamageRecipient.TARGET_SPELL_CONTROLLER);
-            StackEntry damageEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, ability.sourceCard(), sourceControllerId,
+            StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(), sourceControllerId,
                     ability.sourceCard().getName() + "'s effect", new ArrayList<>(List.of(damage)),
                     ability.targetCardId(), (UUID) null);
             dealDamageToPlayersEffectHandler.resolve(gameData, damageEntry, damage);

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.Ability;
@@ -351,36 +353,6 @@ class StackResolutionServiceTest {
 
             verify(stateBasedActionService, never()).performStateBasedActions(any());
             verify(legendRuleService, never()).checkLegendRule(any(), any());
-        }
-
-        @Test
-        @DisplayName("Processes pending discard self triggers after SBA")
-        void processesPendingDiscardSelfTriggers() {
-            Card spell = createInstant("Trigger Instant");
-            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell,
-                    PLAYER1_ID, spell.getName(), List.of());
-            gd.stack.addLast(entry);
-            gd.queueInteraction(
-                    new PermanentChoiceContext.DiscardTriggerAnyTarget(createCreature("Discard Source"), PLAYER1_ID, List.of()));
-
-            svc.resolveTopOfStack(gd);
-
-            verify(triggerCollectionService).processNextDiscardSelfTrigger(gd);
-        }
-
-        @Test
-        @DisplayName("Processes pending death trigger targets after SBA")
-        void processesPendingDeathTriggerTargets() {
-            Card spell = createInstant("Death Instant");
-            StackEntry entry = new StackEntry(StackEntryType.INSTANT_SPELL, spell,
-                    PLAYER1_ID, spell.getName(), List.of());
-            gd.stack.addLast(entry);
-            gd.queueInteraction(
-                    new PermanentChoiceContext.DeathTriggerTarget(createCreature("Dying Source"), PLAYER1_ID, List.of()));
-
-            svc.resolveTopOfStack(gd);
-
-            verify(triggerCollectionService).processNextDeathTriggerTarget(gd);
         }
 
         @Test
@@ -929,7 +901,7 @@ class StackResolutionServiceTest {
         void triggeredAbilityFizzleNoGraveyard() {
             UUID nonExistentTarget = UUID.randomUUID();
             Card card = createCreature("Trigger Source");
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card,
+            StackEntry entry = TestStackDoor.triggered(card,
                     PLAYER1_ID, "Trigger Source's ability", List.of(), 0, nonExistentTarget, null);
             gd.stack.addLast(entry);
             when(targetLegalityService.isTargetIllegalOnResolution(gd, entry)).thenReturn(true);

@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -115,7 +116,7 @@ class ExileCardsFromGraveyardEffectHandlerTest {
                 gd.playerGraveyards.get(player2Id).add(artifact);
 
                 ExileCardsFromGraveyardEffect effect = new ExileCardsFromGraveyardEffect(2, 0);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Scavenging Ooze"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Scavenging Ooze"),
                         player1Id, "Scavenging Ooze", List.of(effect),
                         List.of(creature.getId(), artifact.getId()));
 
@@ -138,7 +139,7 @@ class ExileCardsFromGraveyardEffectHandlerTest {
                 gd.playerGraveyards.get(player1Id).add(creature);
 
                 ExileCardsFromGraveyardEffect effect = new ExileCardsFromGraveyardEffect(1, 3);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Scavenging Ooze"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Scavenging Ooze"),
                         player1Id, "Scavenging Ooze", List.of(effect),
                         List.of(creature.getId()));
 
@@ -164,7 +165,7 @@ class ExileCardsFromGraveyardEffectHandlerTest {
                 ExileCardsFromGraveyardEffect effect = new ExileCardsFromGraveyardEffect(
                         2, new CardTypePredicate(CardType.CREATURE), 2, 2, true);
                 Card source = createCard("Soul-Shackled Zombie");
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source,
+                StackEntry entry = TestStackDoor.triggered(source,
                         player1Id, source.getName(), List.of(effect),
                         List.of(creature.getId(), noncreature.getId()));
 
@@ -194,7 +195,7 @@ class ExileCardsFromGraveyardEffectHandlerTest {
 
                 ExileCardsFromGraveyardEffect effect =
                         new ExileCardsFromGraveyardEffect(2, 1, true, null, true);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Rysorian Badger"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Rysorian Badger"),
                         player1Id, "Rysorian Badger", List.of(effect), 0, null, attackerId, Map.of(), null,
                         List.of(creature.getId(), other.getId(), goneCardId), List.of());
 
@@ -216,7 +217,7 @@ class ExileCardsFromGraveyardEffectHandlerTest {
 
                 ExileCardsFromGraveyardEffect effect =
                         new ExileCardsFromGraveyardEffect(2, 1, true, null, true);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Rysorian Badger"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Rysorian Badger"),
                         player1Id, "Rysorian Badger", List.of(effect), 0, null, attackerId, Map.of(), null,
                         List.of(goneCardId), List.of());
 
@@ -234,7 +235,7 @@ class ExileCardsFromGraveyardEffectHandlerTest {
                 UUID goneCardId = UUID.randomUUID();
 
                 ExileCardsFromGraveyardEffect effect = new ExileCardsFromGraveyardEffect(1, 0);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Scavenging Ooze"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Scavenging Ooze"),
                         player1Id, "Scavenging Ooze", List.of(effect),
                         List.of(goneCardId));
 

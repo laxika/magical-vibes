@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -171,8 +173,7 @@ class FlickerEffectHandlerTest {
             Permanent target = new Permanent(createCreatureCard("Grizzly Bears"));
             Card sourceCard = createCreatureCard("Y'shtola Rhul");
             FlickerEffect effect = FlickerEffect.flickerTargetWithAdditionalEndStep();
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+            StackEntry entry = TestStackDoor.triggered(sourceCard, player1Id, sourceCard.getName(),
                     List.of(effect), 0, target.getId(), null);
 
             gd.currentStep = TurnStep.END_STEP;
@@ -191,8 +192,7 @@ class FlickerEffectHandlerTest {
             Permanent target = new Permanent(createCreatureCard("Grizzly Bears"));
             Card sourceCard = createCreatureCard("Y'shtola Rhul");
             FlickerEffect effect = FlickerEffect.flickerTargetWithAdditionalEndStep();
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+            StackEntry entry = TestStackDoor.triggered(sourceCard, player1Id, sourceCard.getName(),
                     List.of(effect), 0, target.getId(), null);
 
             gd.currentStep = TurnStep.END_STEP;
@@ -237,8 +237,7 @@ class FlickerEffectHandlerTest {
             FlickerEffect effect = new FlickerEffect(
                     FlickerScope.TARGET, null, ReturnTiming.IMMEDIATE, TurnStep.END_STEP,
                     true, null, null, 0, false, false);
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+            StackEntry entry = TestStackDoor.triggered(sourceCard, player1Id, sourceCard.getName(),
                     List.of(effect), 0, target.getId(), null);
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
@@ -262,8 +261,7 @@ class FlickerEffectHandlerTest {
             FlickerEffect effect = new FlickerEffect(
                     FlickerScope.SELF, null, ReturnTiming.IMMEDIATE, TurnStep.END_STEP,
                     false, null, null, 0, false, false);
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, sourceCard, player1Id, sourceCard.getName(),
+            StackEntry entry = TestStackDoor.triggered(sourceCard, player1Id, sourceCard.getName(),
                     List.of(effect), null, target.getId());
 
             when(gameQueryService.findPermanentById(gd, target.getId())).thenReturn(target);
@@ -310,8 +308,7 @@ class FlickerEffectHandlerTest {
     class TargetAtStep {
 
         private StackEntry createEntry(Card sourceCard, UUID controllerId, UUID targetId) {
-            return new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, sourceCard.getName(),
+            return TestStackDoor.triggered(sourceCard, controllerId, sourceCard.getName(),
                     List.of(FlickerEffect.exileTargetReturnAtEndStep()), 0, targetId, null);
         }
 

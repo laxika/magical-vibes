@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "LCI", collectorNumber = "81")
 @CardRegistration(set = "LCI", collectorNumber = "335")
@@ -23,9 +22,7 @@ public class TishanasTidebinder extends Card {
         // for as long as this creature remains on the battlefield. (The target may be an ability of any source.)
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryAllOfPredicate(List.of(
-                        new StackEntryTypeInPredicate(Set.of(
-                                StackEntryType.ACTIVATED_ABILITY,
-                                StackEntryType.TRIGGERED_ABILITY)))),
+                        new StackEntryTypeInPredicate(StackEntryType.ABILITIES))),
                 "Target must be an activated or triggered ability."),
                 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),

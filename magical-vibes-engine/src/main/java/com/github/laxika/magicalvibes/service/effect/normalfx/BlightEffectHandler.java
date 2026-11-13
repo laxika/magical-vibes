@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.BlightEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -84,9 +83,7 @@ public class BlightEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        StackEntry followUp = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                entry.getCard(),
+        StackEntry followUp = StackEntry.carrier(entry.getCard(),
                 entry.getControllerId(),
                 entry.getDescription(),
                 new ArrayList<>(List.of(blight.thenEffect())),

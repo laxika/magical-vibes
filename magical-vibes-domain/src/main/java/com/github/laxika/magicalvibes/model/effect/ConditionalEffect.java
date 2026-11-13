@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.condition.Condition;
+import com.github.laxika.magicalvibes.model.condition.EntryFactCondition;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 
 /**
@@ -50,6 +51,20 @@ public record ConditionalEffect(Condition condition, CardEffect wrapped)
         return wrapped.graveyardCardChoice();
     }
 
+    /**
+     * A fact fixed as the permanent entered ({@link EntryFactCondition}: a kicker, the zone it was cast from, a cost
+     * paid, the mana spent) is judged as its own "when this enters" ability triggers: the wrapped effect when it is
+     * met, else an effect that does nothing, so the ability still goes on the stack (an effect's "if" doesn't keep its
+     * ability from triggering). Any other condition is judged as the effect resolves.
+     */
+    @Override
+    public CardEffect asItTriggersOnEntering(EntryFacts facts) {
+        if (!EntryFactCondition.isEntryFact(condition)) {
+            return this;
+        }
+        return facts.isMet(condition) ? wrapped : new DrawCardEffect(0);
+    }
+
     @Override
     public TargetSpec targetSpec() {
         return wrapped.targetSpec();
@@ -75,6 +90,16 @@ public record ConditionalEffect(Condition condition, CardEffect wrapped)
     @Override
     public boolean targetChosenByAnOpponent() {
         return wrapped.targetChosenByAnOpponent();
+    }
+
+    @Override
+    public boolean choosesSecondTargetAgainstFirst() {
+        return wrapped.choosesSecondTargetAgainstFirst();
+    }
+
+    @Override
+    public BattlefieldAndGraveyardCardChoosingEffect battlefieldAndGraveyardChoice() {
+        return wrapped.battlefieldAndGraveyardChoice();
     }
 
     @Override

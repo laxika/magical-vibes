@@ -72,7 +72,7 @@ public class DawnbreakReclaimerEffectHandler implements NormalEffectHandlerBean 
         }
 
         if (state.dawnbreakReclaimerChosenOwnCardId != null) {
-            queueMayAbility(gameData, entry, reclaimerEffect,
+            askToReturnChosenCards(gameData, entry, reclaimerEffect,
                     state.dawnbreakReclaimerChosenOpponentCardId,
                     state.dawnbreakReclaimerChosenOwnCardId);
             return;
@@ -159,9 +159,9 @@ public class DawnbreakReclaimerEffectHandler implements NormalEffectHandlerBean 
         List<Card> ownCards = matchingCards(gameData.playerGraveyards.get(entry.getControllerId()),
                 effect.filter(), entry.getCard().getId());
         if (ownCards.isEmpty()) {
-            queueMayAbility(gameData, entry, effect, state.dawnbreakReclaimerChosenOpponentCardId, null);
+            askToReturnChosenCards(gameData, entry, effect, state.dawnbreakReclaimerChosenOpponentCardId, null);
         } else if (ownCards.size() == 1) {
-            queueMayAbility(gameData, entry, effect,
+            askToReturnChosenCards(gameData, entry, effect,
                     state.dawnbreakReclaimerChosenOpponentCardId, ownCards.getFirst().getId());
         } else {
             state.resolutionTimeDawnbreakReclaimerOwnCardChoiceResume = true;
@@ -179,7 +179,7 @@ public class DawnbreakReclaimerEffectHandler implements NormalEffectHandlerBean 
         }
     }
 
-    private void queueMayAbility(GameData gameData, StackEntry entry,
+    private void askToReturnChosenCards(GameData gameData, StackEntry entry,
                                  DawnbreakReclaimerEffect effect,
                                  UUID opponentCardId, UUID ownCardId) {
         if (opponentCardId == null && ownCardId == null) {

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -7,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
@@ -99,7 +100,7 @@ class LookAtTopCardsOfTargetLibraryEffectHandlerTest {
     }
 
     private StackEntry entryTargeting(String cardName, LookAtTopCardsOfTargetLibraryEffect effect) {
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard(cardName),
+        return TestStackDoor.triggered(createCard(cardName),
                 player1Id, cardName, List.of(effect), 0, player2Id, null);
     }
 

@@ -4,15 +4,22 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.AbilityZones;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.trigger.CounterTrigger;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastExiledCardWithCostReductionEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveRefineCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +32,10 @@ public class RemoveRefineCounterFromExiledCardEffectHandler implements NormalEff
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+
+    @Autowired
+    @Lazy
+    private TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,15 +64,17 @@ public class RemoveRefineCounterFromExiledCardEffectHandler implements NormalEff
         if (ownerId == null) {
             return;
         }
-        StackEntry castTrigger = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                ownerId,
-                card.getName() + "'s cast ability",
-                new ArrayList<>(List.<CardEffect>of(new MayCastExiledCardWithCostReductionEffect(4))));
-        castTrigger.setTargetId(cardId);
-        castTrigger.setTargetZone(Zone.EXILE);
-        gameData.stack.add(castTrigger);
+        // "When the last refine counter is removed from this card, if it's exiled, you may cast it. It costs {4} less to
+        // cast this way", an ability the card gained as it was exiled (Uvilda, Dean of Perfection).
+        TriggeredAbility castAbility = new TriggeredAbility(
+                new TriggerCondition(new CounterTrigger(CounterTrigger.CounterEvent.COUNTERS_REMOVED,
+                        ObjectRelation.THIS), AbilityZones.EXILE),
+                new MayCastExiledCardWithCostReductionEffect(4));
+        triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(castAbility, card, null, ownerId,
+                card.getName() + "'s cast ability", ConditionContext.forCard(card, ownerId), castTrigger -> {
+                    castTrigger.setTargetId(cardId);
+                    castTrigger.setTargetZone(Zone.EXILE);
+                }));
         gameLogService.append(gameData, GameLog.cardThen(card,
                 " has its last refine counter removed. You may cast it for {4} less."));
         log.info("Game {} - {} last refine counter removed; cast offer queued", gameData.id, card.getName());

@@ -49,7 +49,7 @@ public class IntuitionEffectHandler implements NormalEffectHandlerBean {
         UUID controllerId = entry.getControllerId();
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) return;
         com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper
-                .recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
+                .recordSearchAndQueueTriggers(gameData, controllerId);
 
         String controllerName = gameData.playerIdToName.get(controllerId);
         List<Card> deck = gameData.playerDecks.get(controllerId);

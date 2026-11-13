@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.DungeonProgress;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
@@ -32,6 +33,34 @@ class SeasonedDungeoneerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
         harness.handleCardChosen(player1, 0);
         assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card instanceof Forest);
+    }
+
+    @Test
+    @DisplayName("Combat damage to the player who has the initiative triggers their ability, which gives the initiative "
+            + "to the attacker's controller")
+    void combatDamageToTheInitiativeHolderTriggersTheirAbility() {
+        harness.setLibrary(player1, List.of(new Forest()));
+        gd.initiativePlayerId = player2.getId();
+        Permanent giant = addCreatureReady(player1, new HillGiant());
+        giant.setAttacking(true);
+        giant.setAttackTarget(player2.getId());
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.clearPriorityPassed();
+
+        harness.resolveCombatDamage();
+
+        // The ability has no source and is controlled by the player who had the initiative (CR 727.2).
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getCard()).isNull();
+            assertThat(entry.getControllerId()).isEqualTo(player2.getId());
+        });
+
+        harness.passBothPriorities();
+
+        assertThat(gd.initiativePlayerId).isEqualTo(player1.getId());
+        // Taking it triggers "that player ventures into Undercity", controlled by the new holder.
+        assertThat(gd.stack).singleElement().satisfies(entry ->
+                assertThat(entry.getControllerId()).isEqualTo(player1.getId()));
     }
 
     @Test

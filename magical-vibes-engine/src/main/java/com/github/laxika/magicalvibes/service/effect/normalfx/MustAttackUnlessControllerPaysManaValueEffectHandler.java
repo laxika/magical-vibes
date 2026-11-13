@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetIfDidNotAttackAtEndStepEffect;
@@ -65,8 +64,7 @@ public class MustAttackUnlessControllerPaysManaValueEffectHandler implements Nor
         SetCombatRequirementThisTurnEffect mustAttack =
                 new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK);
         DestroyTargetIfDidNotAttackAtEndStepEffect destroy = new DestroyTargetIfDidNotAttackAtEndStepEffect();
-        StackEntry syntheticEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, sourceCard, abilityControllerId,
+        StackEntry syntheticEntry = StackEntry.carrier(sourceCard, abilityControllerId,
                 sourceCard.getName() + " - must attack or be destroyed",
                 List.of(mustAttack, destroy), targetPermanentId, (UUID) null);
         setCombatRequirementThisTurnEffectHandler.resolve(gameData, syntheticEntry, mustAttack);

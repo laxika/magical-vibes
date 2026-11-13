@@ -82,7 +82,7 @@ public class SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffectH
         }
         lifeSupport.applyGainLife(gameData, entry.getControllerId(),
                 entry.getResolutionResults().lastKnownToughness(),
-                entry.getCard().getName(), entry.getCard(), StackEntryType.TRIGGERED_ABILITY,
+                entry.getCard().getName(), entry.getCard(), entry.getEntryType(),
                 entry.getControllerId());
     }
 }

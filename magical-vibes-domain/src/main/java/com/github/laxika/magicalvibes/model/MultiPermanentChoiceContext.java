@@ -28,14 +28,6 @@ public sealed interface MultiPermanentChoiceContext {
     record EtbPlayerTargetGroup(PermanentChoiceContext.ETBTokenMultiTargetTrigger pending)
             implements MultiPermanentChoiceContext {}
 
-    /**
-     * Selects at most one target for a single-target trigger whose "up to one" target may be the
-     * controller, so an empty answer chooses no target rather than reusing the controller as a
-     * decline sentinel (CR 601.2c, CR 603.3d).
-     */
-    record EtbOptionalTarget(PermanentChoiceContext.ETBTokenTargetTrigger pending)
-            implements MultiPermanentChoiceContext {}
-
     /** Selects the two players remembered by a permanent as it enters the battlefield. */
     record ChoosePlayersAsEnter(PermanentChoiceContext.ChoosePlayerAsEnter pending)
             implements MultiPermanentChoiceContext {}
@@ -81,50 +73,26 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
+    /** A Saga chapter's targets for its counters; {@code triggerRecord} is the entry the stack door parked. */
     record SagaChapterCounterDistribution(Card sourceCard, UUID controllerId, List<CardEffect> effects,
                                           UUID sourcePermanentId, String chapterName, CounterType counterType,
-                                          int total) implements MultiPermanentChoiceContext {
+                                          int total, StackEntry triggerRecord) implements MultiPermanentChoiceContext {
 
         public SagaChapterCounterDistribution {
             effects = List.copyOf(effects);
         }
     }
 
-    /** The controller selected any number of player targets for a Saga chapter. */
+    /**
+     * The controller selected any number of player targets for a Saga chapter; {@code triggerRecord} is the entry the
+     * stack door parked.
+     */
     record SagaChapterTargetSelection(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                      UUID sourcePermanentId, String chapterName, int minTargets)
+                                      UUID sourcePermanentId, String chapterName, int minTargets,
+                                      StackEntry triggerRecord)
             implements MultiPermanentChoiceContext {
 
         public SagaChapterTargetSelection {
-            effects = List.copyOf(effects);
-        }
-    }
-
-    /**
-     * Selects zero or more players for an upkeep trigger whose event was about {@code triggeringPlayerId} ("that
-     * player", the enchanted player whose upkeep it is), which the stack entry it makes carries as its triggering
-     * player.
-     */
-    record UpkeepAnyNumberPlayerTargets(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                        UUID sourcePermanentId, UUID triggeringPlayerId)
-            implements MultiPermanentChoiceContext {
-
-        public UpkeepAnyNumberPlayerTargets {
-            effects = List.copyOf(effects);
-        }
-    }
-
-    /** Selects creature or graveyard-card targets for a self-triggered ability. */
-    record SelfTriggeredAbilityTargets(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                       String eventDescription, UUID sourcePermanentId,
-                                       Integer eventValue, int minTargets) implements MultiPermanentChoiceContext {
-
-        public SelfTriggeredAbilityTargets(Card sourceCard, UUID controllerId, List<CardEffect> effects,
-                                          String eventDescription, UUID sourcePermanentId, Integer eventValue) {
-            this(sourceCard, controllerId, effects, eventDescription, sourcePermanentId, eventValue, 0);
-        }
-
-        public SelfTriggeredAbilityTargets {
             effects = List.copyOf(effects);
         }
     }

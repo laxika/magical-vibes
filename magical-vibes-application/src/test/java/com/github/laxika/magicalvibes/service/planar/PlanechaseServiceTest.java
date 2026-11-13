@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.planar;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.Panopticon;
 import com.github.laxika.magicalvibes.cards.v.Voidslime;
@@ -212,7 +214,7 @@ class PlanechaseServiceTest extends BaseCardTest {
     @Test
     void sourceLessPlaneswalkingAbilityCanBeCountered() {
         var source = faceUp(new Panopticon());
-        gd.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, null, player1.getId(),
+        gd.stack.add(TestStackDoor.triggered(null, player1.getId(),
                 "Planeswalk", List.of(new PlaneswalkEffect())));
         var id = gd.stack.getLast().getTargetableId();
         gd.playerSpellsCantBeCounteredByColorsThisTurn.put(player1.getId(), Set.of(CardColor.BLUE));
@@ -350,7 +352,7 @@ class PlanechaseServiceTest extends BaseCardTest {
         faceUp(new Panopticon());
         harness.addToBattlefield(player1, new com.github.laxika.magicalvibes.cards.s.StrionicResonator());
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        gd.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, null, player1.getId(),
+        gd.stack.add(TestStackDoor.triggered(null, player1.getId(),
                 "Planeswalk", List.of(new PlaneswalkEffect())));
         var target = gd.stack.getLast().getTargetableId();
         harness.activateAbility(player1, 0, null, target);

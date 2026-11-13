@@ -4,11 +4,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
@@ -38,6 +41,10 @@ public class MiscTriggerCollectorService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final ETBTokenTargetService etbTokenTargetService;
     private PermanentRemovalService permanentRemovalService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private TriggeredAbilityStackService triggeredAbilityStackService;
 
     public MiscTriggerCollectorService(GameLogService gameLogService,
                                        @Lazy GraveyardService graveyardService,
@@ -69,13 +76,13 @@ public class MiscTriggerCollectorService {
     }
 
     /**
-     * Puts {@code effect}, an effect of an ability that cards put into a graveyard triggered, on the stack whatever the
-     * effect is: the entry records {@code cards} ({@link #recordCardsPutIntoGraveyard}: "that card", "them", each with
-     * the graveyard stay it went to, CR 400.7), {@code triggeringPlayerId} as its triggering player and
-     * {@code thatPlayerId} as its non-targeting "that player", {@code eventValue} ("that many") when not {@code null},
-     * the source as it triggered (a permanent's snapshot, a plane's planar object) and the "do this only once each
-     * turn" mark (CR 603.2h). An ability that targets waits for its targets as it goes on the stack (CR 603.3d).
-     * Returns whether it triggered: an ability of no source doesn't.
+     * Puts the ability of {@code match}'s effects that cards put into a graveyard triggered on the stack through the
+     * stack door, whatever its effects are: its record holds {@code cards} ({@link #recordCardsPutIntoGraveyard}:
+     * "that card", "them", each with the graveyard stay it went to, CR 400.7), {@code triggeringPlayerId} as its
+     * triggering player and {@code thatPlayerId} as its non-targeting "that player", {@code eventValue} ("that many")
+     * when not {@code null}, the source as it triggered (a permanent's snapshot, a plane's planar object, CR 608.2h)
+     * and the "do this only once each turn" mark (CR 603.2h). Returns whether it triggered: an ability of no source
+     * doesn't.
      */
     private boolean queueGraveyardCardsAbility(TriggerMatchContext match, List<Card> cards,
                                                UUID triggeringPlayerId, UUID thatPlayerId, Integer eventValue,
@@ -86,41 +93,37 @@ public class MiscTriggerCollectorService {
         if (sourceCard == null) {
             return false;
         }
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                match.stackEffects(),
-                thatPlayerId,
-                source == null ? null : source.getId());
-        entry.setNonTargeting(true);
-        recordCardsPutIntoGraveyard(gameData, entry, cards);
-        entry.setTriggeringPlayerId(triggeringPlayerId);
-        if (eventValue != null) {
-            entry.setEventValue(eventValue);
+        Permanent snapshot = source == null ? null : new Permanent(source);
+        String onceEachTurnActionKey = match.onceEachTurnActionKey();
+        TriggeredAbility ability = new TriggeredAbility(
+                Triggers.putIntoGraveyardFromAnywhere(Triggers.NONBLACK_CARD, ObjectRelation.ANOTHER),
+                match.stackEffects().toArray(CardEffect[]::new));
+        boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
+                sourceCard, source, match.controllerId(), sourceCard.getName() + "'s ability",
+                source != null ? ConditionContext.forPermanent(source, match.controllerId())
+                        : ConditionContext.forCard(sourceCard, match.controllerId()), entry -> {
+                    entry.setTargetId(thatPlayerId);
+                    entry.setNonTargeting(true);
+                    recordCardsPutIntoGraveyard(gameData, entry, cards);
+                    entry.setTriggeringPlayerId(triggeringPlayerId);
+                    if (eventValue != null) {
+                        entry.setEventValue(eventValue);
+                    }
+                    if (snapshot != null) {
+                        entry.setSourcePermanentSnapshot(snapshot);
+                    }
+                    if (match.sourcePlanarObject() != null) {
+                        entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
+                    }
+                    if (onceEachTurnActionKey != null) {
+                        entry.setOnceEachTurnActionKey(onceEachTurnActionKey);
+                    }
+                }));
+        if (triggered) {
+            gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+            log.info("Game {} - {} triggers ({})", gameData.id, sourceCard.getName(), event);
         }
-        // The source as the ability goes on the stack, whatever the effect is (CR 608.2h).
-        if (source != null) {
-            entry.setSourcePermanentSnapshot(new Permanent(source));
-        }
-        if (match.sourcePlanarObject() != null) {
-            entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
-        }
-        entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
-        gameData.handOffTriggerRecord(entry);
-        if (source != null && (match.admits(TargetPredicate.Kind.PERMANENT)
-                || match.admits(TargetPredicate.Kind.PLAYER)
-                || match.admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
-            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                    sourceCard, match.controllerId(), match.stackEffects(), event, source.getId(),
-                    new Permanent(source), eventValue));
-        } else {
-            gameData.enqueueTrigger(entry);
-        }
-        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers ({})", gameData.id, sourceCard.getName(), event);
-        return true;
+        return triggered;
     }
 
     /**

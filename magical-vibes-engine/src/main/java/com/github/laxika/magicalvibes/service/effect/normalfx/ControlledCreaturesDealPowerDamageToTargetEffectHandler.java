@@ -78,7 +78,7 @@ public class ControlledCreaturesDealPowerDamageToTargetEffectHandler implements 
             }
 
             int power = gameQueryService.getPowerBasedDamage(gameData, hunter);
-            StackEntry damageEntry = new StackEntry(entry.getEntryType(), hunter.getCard(),
+            StackEntry damageEntry = StackEntry.derivedFrom(entry, hunter.getCard(),
                     gameQueryService.findPermanentController(gameData, hunter.getId()),
                     entry.getDescription(), List.of(), target.getId(), hunter.getId());
             damageEntry.setSourcePermanentSnapshot(new Permanent(hunter));

@@ -18,6 +18,11 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  */
 public interface BattlefieldAndGraveyardCardChoosingEffect extends CardEffect {
 
+    @Override
+    default BattlefieldAndGraveyardCardChoosingEffect battlefieldAndGraveyardChoice() {
+        return this;
+    }
+
     /** The maximum number of cards the controller may choose across both zones ("up to N"). */
     int mixedZoneMaxTargets();
 

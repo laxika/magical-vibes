@@ -2003,13 +2003,8 @@ public class BattlefieldPlacementService {
     /** Creates the token copy of a land that entered with its land casualty cost paid, without using the stack. */
     private void createLandCasualtyCopy(GameData gameData, UUID controllerId, Permanent permanent) {
         CreateTokenCopyOfSourceEffect copyEffect = new CreateTokenCopyOfSourceEffect();
-        StackEntry copyEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                permanent.getCard(),
-                controllerId,
-                permanent.getCard().getName() + "'s land casualty",
-                new ArrayList<>(List.of(copyEffect)),
-                null,
+        StackEntry copyEntry = StackEntry.carrier(permanent.getCard(), controllerId,
+                permanent.getCard().getName() + "'s land casualty", new ArrayList<>(List.of(copyEffect)), null,
                 permanent.getId());
         createTokenCopyOfSourceEffectHandler.resolve(gameData, copyEntry, copyEffect);
     }

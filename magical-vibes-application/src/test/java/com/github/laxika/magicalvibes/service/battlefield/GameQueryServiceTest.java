@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
@@ -183,7 +185,7 @@ class GameQueryServiceTest {
     void permanentAbilityDamageUsesLifelinkIncludingLastKnownSource() {
         Permanent source = addPermanent(player1Id,
                 createCreatureWithKeywords("Lifelink creature", 3, 3, CardColor.WHITE, Set.of(Keyword.LIFELINK)));
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), player1Id,
+        StackEntry entry = TestStackDoor.triggered(source.getCard(), player1Id,
                 "Damage ability", List.of(), player2Id, source.getId());
 
         assertThat(gqs.shouldControllerSpellHaveLifelink(gd, entry)).isTrue();
@@ -588,7 +590,7 @@ class GameQueryServiceTest {
 
         private StackEntry triggerEntry() {
             Card card = createCreature("Belltower Sphinx", 2, 5, CardColor.BLUE);
-            return new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id, "trigger", List.of());
+            return TestStackDoor.triggered(card, player1Id, "trigger", List.of());
         }
 
         @Test
@@ -2537,9 +2539,7 @@ class GameQueryServiceTest {
             Permanent source = addPermanent(player1Id,
                     createCreatureWithSubtypes("Source", 2, 2, CardColor.RED, List.of(CardSubtype.BEAR)));
             gd.permanentDamageDoublingsThisTurn.put(source.getId(), 1);
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    source.getCard(),
+            StackEntry entry = TestStackDoor.triggered(source.getCard(),
                     player1Id,
                     "Source ability",
                     new ArrayList<>(),
@@ -3022,7 +3022,7 @@ class GameQueryServiceTest {
                     new AdditionalControllerDamageEffect(1, null, true)));
             Card ability = new Card();
             ability.setName("Tor Wauki's ability");
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, ability, player1Id,
+            StackEntry entry = TestStackDoor.triggered(ability, player1Id,
                     "Tor Wauki's ability", new ArrayList<>(), null, torWauki.getId());
 
             assertThat(gqs.getControllerDamageBonus(gd, entry)).isZero();
@@ -3036,7 +3036,7 @@ class GameQueryServiceTest {
                     new AdditionalControllerDamageEffect(1, null, true)));
             Card ability = new Card();
             ability.setName("Shock's ability");
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, ability, player1Id,
+            StackEntry entry = TestStackDoor.triggered(ability, player1Id,
                     "Shock's ability", new ArrayList<>(), null, UUID.randomUUID());
 
             assertThat(gqs.getControllerDamageBonus(gd, entry)).isEqualTo(1);
@@ -3530,8 +3530,7 @@ class GameQueryServiceTest {
         @DisplayName("uses explicit source when provided")
         void usesExplicitSource() {
             Permanent explicitSource = addPermanent(player1Id, createMirranCrusader());
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)), player1Id,
+            StackEntry entry = TestStackDoor.triggered(createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)), player1Id,
                     "Test", List.of());
 
             assertThat(gqs.sourceHasKeyword(gd, entry, explicitSource, Keyword.DOUBLE_STRIKE)).isTrue();
@@ -3541,8 +3540,7 @@ class GameQueryServiceTest {
         @DisplayName("falls back to entry source when no explicit source")
         void fallsBackToEntrySource() {
             Permanent source = addPermanent(player1Id, createMirranCrusader());
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, createMirranCrusader(), player1Id,
+            StackEntry entry = TestStackDoor.triggered(createMirranCrusader(), player1Id,
                     "Test", List.of(), null, source.getId());
 
             assertThat(gqs.sourceHasKeyword(gd, entry, null, Keyword.DOUBLE_STRIKE)).isTrue();
@@ -3552,8 +3550,7 @@ class GameQueryServiceTest {
         @DisplayName("returns false when entry source permanent lacks keyword")
         void returnsFalseWhenEntrySourceLacksKeyword() {
             Permanent source = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)), player1Id,
+            StackEntry entry = TestStackDoor.triggered(createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)), player1Id,
                     "Test", List.of(), null, source.getId());
 
             assertThat(gqs.sourceHasKeyword(gd, entry, null, Keyword.FLYING)).isFalse();
@@ -3562,8 +3559,7 @@ class GameQueryServiceTest {
         @Test
         @DisplayName("returns false when no source permanent")
         void returnsFalseWhenNoSource() {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)), player1Id,
+            StackEntry entry = TestStackDoor.triggered(createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)), player1Id,
                     "Test", List.of());
 
             assertThat(gqs.sourceHasKeyword(gd, entry, null, Keyword.FLYING)).isFalse();

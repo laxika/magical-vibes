@@ -84,10 +84,11 @@ class CurseOfSurveillanceTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(choice.validPlayerIds()).containsExactly(player2.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
+        // The enchanted controller isn't a legal target: choosing themselves ends the targets.
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPlayerIds()).containsExactlyInAnyOrder(player2.getId(), player1.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId()).size()).isEqualTo(handBefore + 1);

@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.cards.i.ICallForSlaughter;
 import com.github.laxika.magicalvibes.cards.m.MyLaughterEchoes;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -46,9 +47,7 @@ class PlotsThatSpanCenturiesTest extends BaseCardTest {
     }
 
     private StackEntry schemeEntry(Card scheme) {
-        return new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                scheme,
+        return TestStackDoor.triggered(scheme,
                 player1.getId(),
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects());

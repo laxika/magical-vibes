@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.state;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -21,7 +23,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StateTriggerKey;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerEffect;
@@ -32,14 +33,17 @@ import com.github.laxika.magicalvibes.model.trigger.StateTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
+import static org.mockito.Mockito.lenient;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -65,9 +69,8 @@ class StateTriggerServiceTest {
     private PredicateEvaluationService predicateEvaluationService;
 
     @Mock
-    private ConditionEvaluationService conditionEvaluationService;
+    private TriggeredAbilityStackService triggeredAbilityStackService;
 
-    @InjectMocks
     private StateTriggerService sut;
 
     private GameData gd;
@@ -91,6 +94,23 @@ class StateTriggerServiceTest {
         gd.playerBattlefields.put(player2Id, new ArrayList<>());
         gd.playerManaPools.put(player1Id, new ManaPool());
         gd.playerManaPools.put(player2Id, new ManaPool());
+        sut = new StateTriggerService(gameLogService, predicateEvaluationService, null,
+                triggeredAbilityStackService, null);
+        lenient().when(triggeredAbilityStackService.put(eq(gd), any()))
+                .thenAnswer(invocation -> putOnStack(invocation.getArgument(1)));
+    }
+
+    /**
+     * The stack door as these tests need it: the ability's entry of its effects as written, its source and controller,
+     * stamped with the request's record, on the stack.
+     */
+    private boolean putOnStack(TriggeredAbilityRequest request) {
+        StackEntry entry = TestStackDoor.triggered(request.sourceCard(),
+                request.controllerId(), request.description(), new ArrayList<>(request.ability().effects().stream()
+                .map(EffectRegistration::effect).toList()), null, request.sourcePermanentId());
+        request.record().stamp(entry);
+        gd.stack.add(entry);
+        return true;
     }
 
     private static Card createCardWithStateTrigger(String name, StateTrigger trigger, CardEffect... effects) {
@@ -110,7 +130,7 @@ class StateTriggerServiceTest {
         void firesGrantedStateTriggeredAbility() {
             GameQueryService gameQueryService = mock(GameQueryService.class);
             StateTriggerService service = new StateTriggerService(gameLogService, predicateEvaluationService,
-                    gameQueryService);
+                    gameQueryService, triggeredAbilityStackService, null);
             Card card = new Card();
             card.setName("Returned Creature");
             card.setType(CardType.CREATURE);
@@ -312,8 +332,8 @@ class StateTriggerServiceTest {
         }
 
         @Test
-        @DisplayName("Checks the intervening if as the game state triggers the ability and wraps it for resolution")
-        void checksInterveningIfAsItTriggers() {
+        @DisplayName("Hands the ability whole to the stack door and tracks it only once it triggered")
+        void tracksOnlyAnAbilityTheDoorPut() {
             StateTrigger trigger = Triggers.state((gameData, perm, controllerId) -> true);
             Card card = new Card();
             card.setName("Intervening Card");
@@ -322,19 +342,26 @@ class StateTriggerServiceTest {
                     new GainLifeEffect(1));
             Permanent perm = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(perm);
-            when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any())).thenReturn(false);
+            // The door judges the intervening "if" (CR 603.4): here it doesn't hold.
+            when(triggeredAbilityStackService.put(eq(gd), any())).thenReturn(false);
 
             sut.checkStateTriggers(gd);
 
-            assertThat(gd.stack).isEmpty();
+            assertThat(gd.stateTriggerOnStack).isEmpty();
+            ArgumentCaptor<TriggeredAbilityRequest> request = ArgumentCaptor.forClass(TriggeredAbilityRequest.class);
+            verify(triggeredAbilityStackService).put(eq(gd), request.capture());
+            assertThat(request.getValue().ability()).isEqualTo(card.getTriggeredAbilities().getFirst());
+            assertThat(request.getValue().sourcePermanent()).isSameAs(perm);
+            assertThat(request.getValue().controllerId()).isEqualTo(player1Id);
 
-            when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any())).thenReturn(true);
+            when(triggeredAbilityStackService.put(eq(gd), any()))
+                    .thenAnswer(invocation -> putOnStack(invocation.getArgument(1)));
 
             sut.checkStateTriggers(gd);
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getEffectsToResolve())
-                    .containsExactly(new ConditionalEffect(new ControllerTurn(), new GainLifeEffect(1)));
+            assertThat(gd.stack).singleElement().satisfies(entry ->
+                    assertThat(entry.getEffectsToResolve()).containsExactly(new GainLifeEffect(1)));
+            assertThat(gd.stateTriggerOnStack).contains(new StateTriggerKey(perm.getId(), 0));
         }
 
         @Test
@@ -432,9 +459,7 @@ class StateTriggerServiceTest {
 
             Card card = new Card();
             card.setName("Trigger Card");
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
+            StackEntry entry = TestStackDoor.triggered(card,
                     player1Id,
                     "Test trigger",
                     List.of(),
@@ -457,9 +482,7 @@ class StateTriggerServiceTest {
 
             Card card = new Card();
             card.setName("No Source Card");
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
+            StackEntry entry = TestStackDoor.triggered(card,
                     player1Id,
                     "No source trigger",
                     List.of()
@@ -495,9 +518,7 @@ class StateTriggerServiceTest {
 
             Card card = new Card();
             card.setName("ETB Card");
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
+            StackEntry entry = TestStackDoor.triggered(card,
                     player1Id,
                     "ETB trigger",
                     List.of(),

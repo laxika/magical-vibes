@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "OTJ", collectorNumber = "142")
 @CardRegistration(set = "SOA", collectorNumber = "47")
@@ -23,11 +22,7 @@ public class ReturnTheFavor extends Card {
         addCastingCost(new SpreeAdditionalManaCost(List.of("{1}", "{1}")));
         setAllowSharedTargets(true);
 
-        StackEntryPredicate copyTypes = new StackEntryTypeInPredicate(Set.of(
-                StackEntryType.INSTANT_SPELL,
-                StackEntryType.SORCERY_SPELL,
-                StackEntryType.ACTIVATED_ABILITY,
-                StackEntryType.TRIGGERED_ABILITY));
+        StackEntryPredicate copyTypes = new StackEntryTypeInPredicate(StackEntryType.abilitiesAnd(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL));
         StackEntryPredicate singleTarget = new StackEntryIsSingleTargetPredicate();
 
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(

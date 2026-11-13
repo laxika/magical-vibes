@@ -77,7 +77,7 @@ class FelidarSaviorTest extends BaseCardTest {
     void canDeclineAllTargetsWhenAnotherCreatureIsAvailable() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new BearCub());
         harness.enterBattlefieldAndReturn(player1, new FelidarSavior());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -90,9 +90,9 @@ class FelidarSaviorTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new BearCub());
         Permanent savior = harness.enterBattlefieldAndReturn(player1, new FelidarSavior());
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, savior.getId()))
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(savior.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handlePermanentChosen(player1, target.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

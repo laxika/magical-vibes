@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.testutil.TestCards;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AetherTide;
@@ -112,7 +114,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -1834,7 +1835,7 @@ class MediumAiDecisionEngineTest {
 
             when(mockGameQueryService.canActivateManaAbility(any(), any())).thenReturn(true);
             Mockito.doAnswer(inv -> {
-                mockGd.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature,
+                mockGd.stack.add(TestStackDoor.triggered(creature,
                         mockAiPlayer.getId(), "Test trigger", List.of()));
                 return null;
             }).when(mockMessageHandler).handleActivateAbility(any());

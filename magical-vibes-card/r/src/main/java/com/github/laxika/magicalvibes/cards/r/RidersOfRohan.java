@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSelfToHandIfDashCostPaidEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +24,6 @@ public class RidersOfRohan extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new CreateTokenEffect(2, "Human Knight", 2, 2, CardColor.RED,
                         List.of(CardSubtype.HUMAN, CardSubtype.KNIGHT),
-                        Set.of(Keyword.TRAMPLE, Keyword.HASTE), Set.of()),
-                new ReturnSelfToHandIfDashCostPaidEffect());
+                        Set.of(Keyword.TRAMPLE, Keyword.HASTE), Set.of()));
     }
 }

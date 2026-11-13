@@ -247,10 +247,11 @@ class TriggerPipelineTest extends BaseCardTest {
 
         assertThat(triggersOf(bears.getCard())).isEmpty();
         assertThat(gd.pendingInteractions).anySatisfy(interaction -> {
-            assertThat(interaction).isInstanceOf(PermanentChoiceContext.DeathTriggerTarget.class);
-            PermanentChoiceContext.DeathTriggerTarget target = (PermanentChoiceContext.DeathTriggerTarget) interaction;
-            assertThat(target.dyingCard().getId()).isEqualTo(bears.getCard().getId());
+            assertThat(interaction).isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
+            PermanentChoiceContext.AttackTriggerTarget target = (PermanentChoiceContext.AttackTriggerTarget) interaction;
+            assertThat(target.sourceCard().getId()).isEqualTo(bears.getCard().getId());
             assertThat(target.effects()).containsExactly(new DealDamageToAnyTargetEffect(2));
+            assertThat(target.triggerRecord().isParkedAtStackDoor()).isTrue();
         });
     }
 

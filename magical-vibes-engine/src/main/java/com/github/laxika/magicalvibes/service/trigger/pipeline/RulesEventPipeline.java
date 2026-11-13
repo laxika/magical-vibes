@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.ZoneChangeWatch;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -76,14 +78,17 @@ public class RulesEventPipeline {
     private final TriggeredAbilityStackService stackService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentRemovalService permanentRemovalService;
+    private final TriggerCollectionService triggerCollectionService;
 
     public RulesEventPipeline(TriggerIndex triggerIndex, TriggeredAbilityStackService stackService,
                               @Lazy PredicateEvaluationService predicateEvaluationService,
-                              @Lazy PermanentRemovalService permanentRemovalService) {
+                              @Lazy PermanentRemovalService permanentRemovalService,
+                              @Lazy TriggerCollectionService triggerCollectionService) {
         this.triggerIndex = triggerIndex;
         this.stackService = stackService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.permanentRemovalService = permanentRemovalService;
+        this.triggerCollectionService = triggerCollectionService;
     }
 
     /** Matches the events of {@code batch}, one occurrence that just ended, and triggers what they trigger. */
@@ -95,6 +100,8 @@ public class RulesEventPipeline {
                 events.add(zoneChange);
             } else if (event instanceof PermanentChangeEvent permanentChange) {
                 permanentChanges.add(permanentChange);
+            } else if (event instanceof LibraryEvent library) {
+                triggerLibraryEvent(gameData, library);
             }
         }
         if (!permanentChanges.isEmpty()) {
@@ -124,6 +131,19 @@ public class RulesEventPipeline {
             if (event.to() == Zone.GRAVEYARD) {
                 gameData.stampGraveyardEntryOnPendingTriggers(event.card().getId());
             }
+        }
+    }
+
+    /**
+     * The abilities a library search or shuffle triggers, collected by their library collectors
+     * ({@link TriggerCollectionService#checkLibrarySearchTriggers}, {@link TriggerCollectionService#checkLibraryShuffleTriggers}),
+     * which hand each to the stack door.
+     */
+    private void triggerLibraryEvent(GameData gameData, LibraryEvent event) {
+        switch (event.kind()) {
+            case SEARCHED -> triggerCollectionService.checkLibrarySearchTriggers(gameData, event.playerId());
+            case SHUFFLED -> triggerCollectionService.checkLibraryShuffleTriggers(gameData, event.playerId(),
+                    event.causingControllerId());
         }
     }
 

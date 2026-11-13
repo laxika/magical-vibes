@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -213,8 +215,7 @@ class LibraryChoiceHandlerServiceTest {
         org.springframework.test.util.ReflectionTestUtils.setField(service, "triggeredAbilityStackService", stackDoor);
         Card equipment = createCard("Equipment", CardType.ARTIFACT);
         List<UUID> ids = List.of(equipment.getId());
-        gd.pendingEffectResolutionEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                createCard("Source", CardType.CREATURE), player1Id, "Search", List.of());
+        gd.pendingEffectResolutionEntry = TestStackDoor.triggered(createCard("Source", CardType.CREATURE), player1Id, "Search", List.of());
         gd.interaction.beginInteraction(new PendingInteraction.LibraryRevealChoice(
                 player1Id, List.of(equipment), ids, false, false, false, true, false,
                 0, null, 1, "Choose.", false, 0, false, null, false,

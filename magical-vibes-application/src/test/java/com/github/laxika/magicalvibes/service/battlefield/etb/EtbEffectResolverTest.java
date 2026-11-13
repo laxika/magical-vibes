@@ -22,12 +22,14 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SnowManaSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.EntryFacts;
+import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfIfEvokedEffect;
+import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -49,9 +51,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit tests for {@link EtbEffectResolver}: verifies each mandatory ETB effect is unwrapped,
- * materialised, or intervening-if gated exactly as the former {@code BattlefieldEntryService}
- * cascade did.
+ * Unit tests for {@link EtbEffectResolver} and the trigger-time form of an entering permanent's own "when this enters"
+ * effects ({@code CardEffect.asItTriggersOnEntering}), judged with the facts the resolver's context gives: a fact fixed
+ * as the permanent entered is judged as the ability triggers, any other condition as it resolves.
  */
 @ExtendWith(MockitoExtension.class)
 class EtbEffectResolverTest {
@@ -73,6 +75,28 @@ class EtbEffectResolverTest {
         card.setName("Test Creature");
     }
 
+    /** The facts of {@code ctx}'s entering permanent, judged as the stack door judges them. */
+    private EntryFacts facts(EtbEffectContext ctx) {
+        ConditionEvaluationService conditions = new ConditionEvaluationService(gameQueryService,
+                predicateEvaluationService);
+        return new EntryFacts() {
+            @Override
+            public boolean isMet(Condition condition) {
+                return conditions.isMet(ctx.gameData(), condition, resolver.entryContext(ctx));
+            }
+
+            @Override
+            public boolean evoked() {
+                return ctx.evoked();
+            }
+
+            @Override
+            public boolean tributePaid() {
+                return ctx.sourcePermanent() != null && ctx.sourcePermanent().isTributePaid();
+            }
+        };
+    }
+
     private EtbEffectContext ctx(boolean wasCastFromHand, int etbMode, boolean kicked) {
         return new EtbEffectContext(gameData, card, controllerId, wasCastFromHand, etbMode, kicked, false, false);
     }
@@ -81,14 +105,14 @@ class EtbEffectResolverTest {
     @DisplayName("Unregistered effect passes through unchanged (default identity)")
     void defaultIdentity() {
         DrawCardEffect draw = new DrawCardEffect(1);
-        assertThat(resolver.resolve(ctx(true, 0, false), draw)).isSameAs(draw);
+        assertThat(draw.asItTriggersOnEntering(facts(ctx(true, 0, false)))).isSameAs(draw);
     }
 
     @Test
     void resolutionOnlyConditionIsNotEvaluatedDuringEntry() {
         CardEffect effect = new ConditionalEffect(new Metalcraft(), new DrawCardEffect(1));
 
-        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
+        assertThat(effect.asItTriggersOnEntering(facts(ctx(true, 0, false)))).isSameAs(effect);
     }
 
     @Test
@@ -100,54 +124,7 @@ class EtbEffectResolverTest {
 
         assertThat(resolver.ownEntryConditionMet(ctx(true, 0, false), notFromHand)).isFalse();
         assertThat(resolver.ownEntryConditionMet(ctx(false, 0, false), notFromHand)).isTrue();
-        assertThat(resolver.resolve(ctx(false, 0, false), phage)).isSameAs(lose);
-    }
-
-    @Test
-    @DisplayName("ChooseOne: unwraps the option chosen at cast time")
-    void chooseOneUnwrapsSelectedMode() {
-        DrawCardEffect opt0 = new DrawCardEffect(1);
-        GainLifeEffect opt1 = new GainLifeEffect(2);
-        ChooseOneEffect modal = new ChooseOneEffect(List.of(
-                new ChooseOneEffect.ChooseOneOption("Draw", opt0, null),
-                new ChooseOneEffect.ChooseOneOption("Gain", opt1, null)));
-
-        assertThat(resolver.resolve(ctx(true, 1, false), modal)).isSameAs(opt1);
-    }
-
-    @Test
-    @DisplayName("ChooseOne: unwraps every mode selected by a variable-count modal")
-    void chooseOneUnwrapsEverySelectedMode() {
-        DrawCardEffect opt0 = new DrawCardEffect(1);
-        GainLifeEffect opt1 = new GainLifeEffect(2);
-        ChooseOneEffect modal = ChooseOneEffect.oneOrMore(List.of(
-                new ChooseOneEffect.ChooseOneOption("Draw", opt0, null),
-                new ChooseOneEffect.ChooseOneOption("Gain", opt1, null)));
-
-        CardEffect resolved = resolver.resolve(ctx(true,
-                ChooseOneEffect.encodeModeSelection(1, 2, new int[]{0, 1}), false), modal);
-
-        assertThat(resolved).isEqualTo(SequenceEffect.of(opt0, opt1));
-    }
-
-    @Test
-    @DisplayName("ChooseOne: out-of-range mode falls back to the first option")
-    void chooseOneOutOfRangeFallsBackToFirst() {
-        DrawCardEffect opt0 = new DrawCardEffect(1);
-        ChooseOneEffect modal = new ChooseOneEffect(List.of(
-                new ChooseOneEffect.ChooseOneOption("Draw", opt0, null)));
-
-        assertThat(resolver.resolve(ctx(true, 5, false), modal)).isSameAs(opt0);
-    }
-
-    @Test
-    @DisplayName("ChooseOne: optional modal with etbMode -1 drops the trigger")
-    void optionalChooseOneSkipsWhenNoModeChosen() {
-        DrawCardEffect opt0 = new DrawCardEffect(1);
-        ChooseOneEffect modal = new ChooseOneEffect(List.of(
-                new ChooseOneEffect.ChooseOneOption("Draw", opt0, null)), true);
-
-        assertThat(resolver.resolve(ctx(true, -1, false), modal)).isNull();
+        assertThat(phage.asItTriggersOnEntering(facts(ctx(false, 0, false)))).isSameAs(lose);
     }
 
     @Test
@@ -156,8 +133,8 @@ class EtbEffectResolverTest {
         DrawCardEffect wrapped = new DrawCardEffect(1);
         ConditionalEffect kicked = new ConditionalEffect(new Kicked(), wrapped);
 
-        assertThat(resolver.resolve(ctx(true, 0, true), kicked)).isSameAs(wrapped);
-        assertThat(resolver.resolve(ctx(true, 0, false), kicked)).isEqualTo(new DrawCardEffect(0));
+        assertThat(kicked.asItTriggersOnEntering(facts(ctx(true, 0, true)))).isSameAs(wrapped);
+        assertThat(kicked.asItTriggersOnEntering(facts(ctx(true, 0, false)))).isEqualTo(new DrawCardEffect(0));
     }
 
     @Test
@@ -170,8 +147,8 @@ class EtbEffectResolverTest {
                 true, 0, false, false, false, true, false, null, List.of());
         EtbEffectContext normalContext = new EtbEffectContext(gameData, card, controllerId,
                 true, 0, false, false, false, false, false, null, List.of());
-        assertThat(resolver.resolve(madnessContext, madness)).isSameAs(wrapped);
-        assertThat(resolver.resolve(normalContext, madness)).isEqualTo(new DrawCardEffect(0));
+        assertThat(madness.asItTriggersOnEntering(facts(madnessContext))).isSameAs(wrapped);
+        assertThat(madness.asItTriggersOnEntering(facts(normalContext))).isEqualTo(new DrawCardEffect(0));
     }
 
     @Test
@@ -180,8 +157,8 @@ class EtbEffectResolverTest {
         DrawCardEffect wrapped = new DrawCardEffect(1);
         ConditionalEffect fromHand = new ConditionalEffect(new CastFromZone(Zone.HAND), wrapped);
 
-        assertThat(resolver.resolve(ctx(true, 0, false), fromHand)).isSameAs(wrapped);
-        assertThat(resolver.resolve(ctx(false, 0, false), fromHand)).isEqualTo(new DrawCardEffect(0));
+        assertThat(fromHand.asItTriggersOnEntering(facts(ctx(true, 0, false)))).isSameAs(wrapped);
+        assertThat(fromHand.asItTriggersOnEntering(facts(ctx(false, 0, false)))).isEqualTo(new DrawCardEffect(0));
     }
 
     @Test
@@ -195,11 +172,11 @@ class EtbEffectResolverTest {
 
         spent.put(com.github.laxika.magicalvibes.model.ManaColor.WHITE, 2);
         gameData.setSpellCastManaSpentByColor(card.getId(), spent);
-        assertThat(resolver.resolve(ctx(true, 0, false), twoWhite)).isSameAs(twoWhite);
+        assertThat(twoWhite.asItTriggersOnEntering(facts(ctx(true, 0, false)))).isSameAs(wrapped);
 
         spent.put(com.github.laxika.magicalvibes.model.ManaColor.WHITE, 1);
         gameData.setSpellCastManaSpentByColor(card.getId(), spent);
-        assertThat(resolver.resolve(ctx(true, 0, false), twoWhite)).isNull();
+        assertThat(twoWhite.asItTriggersOnEntering(facts(ctx(true, 0, false)))).isEqualTo(new DrawCardEffect(0));
     }
 
     @Test
@@ -209,10 +186,10 @@ class EtbEffectResolverTest {
         ConditionalEffect snowMana = new ConditionalEffect(new SnowManaSpentToCast(), wrapped);
 
         gameData.setSpellCastSnowManaSpent(card.getId(), 1);
-        assertThat(resolver.resolve(ctx(true, 0, false), snowMana)).isSameAs(wrapped);
+        assertThat(snowMana.asItTriggersOnEntering(facts(ctx(true, 0, false)))).isSameAs(wrapped);
 
         gameData.setSpellCastSnowManaSpent(card.getId(), 0);
-        assertThat(resolver.resolve(ctx(true, 0, false), snowMana)).isEqualTo(new DrawCardEffect(0));
+        assertThat(snowMana.asItTriggersOnEntering(facts(ctx(true, 0, false)))).isEqualTo(new DrawCardEffect(0));
     }
 
     @Test
@@ -223,12 +200,12 @@ class EtbEffectResolverTest {
         Permanent source = new Permanent(card);
 
         source.setCast(true);
-        assertThat(resolver.resolve(new EtbEffectContext(gameData, card, controllerId,
-                true, 0, false, false, false, source), wasCast)).isSameAs(wrapped);
+        assertThat(wasCast.asItTriggersOnEntering(facts(new EtbEffectContext(gameData, card, controllerId,
+                true, 0, false, false, false, source)))).isSameAs(wrapped);
 
         source.setCast(false);
-        assertThat(resolver.resolve(new EtbEffectContext(gameData, card, controllerId,
-                false, 0, false, false, false, source), wasCast)).isEqualTo(new DrawCardEffect(0));
+        assertThat(wasCast.asItTriggersOnEntering(facts(new EtbEffectContext(gameData, card, controllerId,
+                false, 0, false, false, false, source)))).isEqualTo(new DrawCardEffect(0));
     }
 
     @Test
@@ -241,7 +218,7 @@ class EtbEffectResolverTest {
 
         when(gameQueryService.isMetalcraftMet(gameData, controllerId)).thenReturn(false);
         assertThat(resolver.ownEntryConditionMet(ctx(true, 0, false), effect.condition())).isFalse();
-        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
+        assertThat(effect.asItTriggersOnEntering(facts(ctx(true, 0, false)))).isSameAs(effect);
     }
 
     @Test
@@ -254,7 +231,7 @@ class EtbEffectResolverTest {
 
         when(gameQueryService.isMorbidMet(gameData)).thenReturn(false);
         assertThat(resolver.ownEntryConditionMet(ctx(true, 0, false), effect.condition())).isFalse();
-        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
+        assertThat(effect.asItTriggersOnEntering(facts(ctx(true, 0, false)))).isSameAs(effect);
     }
 
     @Test
@@ -273,7 +250,7 @@ class EtbEffectResolverTest {
 
         when(predicateEvaluationService.matchesPermanentPredicate(eq(other), eq(filter), any())).thenReturn(false);
         assertThat(resolver.ownEntryConditionMet(ctx(true, 0, false), effect.condition())).isFalse();
-        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
+        assertThat(effect.asItTriggersOnEntering(facts(ctx(true, 0, false)))).isSameAs(effect);
     }
 
     @Test
@@ -285,7 +262,7 @@ class EtbEffectResolverTest {
 
         gameData.playersDeclaredAttackersThisTurn.add(controllerId);
         assertThat(resolver.ownEntryConditionMet(ctx(true, 0, false), effect.condition())).isTrue();
-        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
+        assertThat(effect.asItTriggersOnEntering(facts(ctx(true, 0, false)))).isSameAs(effect);
     }
 
     @Test
@@ -298,10 +275,10 @@ class EtbEffectResolverTest {
                 true, 0, false, false, false, source);
 
         source.setCollectEvidenceCostPaid(true);
-        assertThat(resolver.resolve(sourceContext, effect)).isSameAs(effect);
+        assertThat(effect.asItTriggersOnEntering(facts(sourceContext))).isSameAs(effect.wrapped());
 
         source.setCollectEvidenceCostPaid(false);
-        assertThat(resolver.resolve(sourceContext, effect)).isNull();
+        assertThat(effect.asItTriggersOnEntering(facts(sourceContext))).isEqualTo(new DrawCardEffect(0));
     }
 
     @Test
@@ -325,7 +302,7 @@ class EtbEffectResolverTest {
         when(predicateEvaluationService.matchesCardPredicate(eq(sacrificed), eq(filter), any(), eq(gameData), any()))
                 .thenReturn(false);
         assertThat(resolver.ownEntryConditionMet(sourceContext, effect.condition())).isFalse();
-        assertThat(resolver.resolve(sourceContext, effect)).isSameAs(effect);
+        assertThat(effect.asItTriggersOnEntering(facts(sourceContext))).isSameAs(effect);
     }
 
     @Test
@@ -334,6 +311,31 @@ class EtbEffectResolverTest {
         ConditionalEffect effect = new ConditionalEffect(
                 new TargetPermanentMatches(new PermanentIsCreaturePredicate()), new DrawCardEffect(1));
 
-        assertThat(resolver.resolve(ctx(true, 0, false), effect)).isSameAs(effect);
+        assertThat(effect.asItTriggersOnEntering(facts(ctx(true, 0, false)))).isSameAs(effect);
+    }
+
+    @Test
+    @DisplayName("Evoke's sacrifice is its controller's sacrifice when the evoke cost was paid, and doesn't trigger otherwise")
+    void evokeSacrificeIsJudgedAsItTriggers() {
+        SacrificeSelfIfEvokedEffect evokeSacrifice = new SacrificeSelfIfEvokedEffect();
+        EtbEffectContext evoked = new EtbEffectContext(gameData, card, controllerId, true, 0, false, true, false);
+
+        assertThat(evokeSacrifice.asItTriggersOnEntering(facts(evoked))).isEqualTo(new SacrificeSelfEffect(true));
+        assertThat(evokeSacrifice.asItTriggersOnEntering(facts(ctx(true, 0, false)))).isNull();
+    }
+
+    @Test
+    @DisplayName("\"If tribute wasn't paid\" is the wrapped effect when tribute wasn't paid, and doesn't trigger when it was")
+    void tributeIsJudgedAsItTriggers() {
+        DrawCardEffect wrapped = new DrawCardEffect(1);
+        TributeNotPaidEffect tribute = new TributeNotPaidEffect(wrapped);
+        Permanent source = new Permanent(card);
+        EtbEffectContext sourceContext = new EtbEffectContext(gameData, card, controllerId,
+                true, 0, false, false, false, source);
+
+        assertThat(tribute.asItTriggersOnEntering(facts(sourceContext))).isSameAs(wrapped);
+
+        source.setTributePaid(true);
+        assertThat(tribute.asItTriggersOnEntering(facts(sourceContext))).isNull();
     }
 }

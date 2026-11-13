@@ -64,9 +64,6 @@ public class DiscardRandomCardDealDiscardedPowerToTargetPlayerOrPlaneswalkerEffe
         triggerCollectionService.checkDiscardTriggers(gameData, controllerId, discarded);
 
         // Process any pending self-discard triggers (e.g. Guerrilla Tactics).
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-        }
 
         // Only a discarded creature card deals damage.
         if (!discarded.hasType(CardType.CREATURE)) {

@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -31,6 +33,21 @@ class TheTwelfthDoctorTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(doctor.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The demonstrate it gives is the spell's own triggered ability, not the Doctor's (CR 702.144a)")
+    void demonstrateIsTheSpellsOwnAbility() {
+        addDoctor();
+        harness.setGraveyard(player1, List.of(new LingeringSouls()));
+        addFlashbackMana();
+
+        harness.castFromGraveyard(player1, 0);
+
+        assertThat(gd.stack).hasSize(2);
+        assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Lingering Souls");
+        assertThat(gd.stack.getLast().getSourcePermanentId()).isNull();
     }
 
     @Test

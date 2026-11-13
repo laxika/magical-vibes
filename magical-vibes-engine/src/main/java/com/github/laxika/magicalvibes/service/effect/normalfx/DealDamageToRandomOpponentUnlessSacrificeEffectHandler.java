@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToRandomOpponentUnlessSacrificeEffect;
@@ -112,9 +111,7 @@ public class DealDamageToRandomOpponentUnlessSacrificeEffectHandler implements N
     private void dealDamage(GameData gameData, StackEntry sourceEntry,
             DealDamageToRandomOpponentUnlessSacrificeEffect effect, UUID opponentId) {
         var damage = new DealDamageToPlayersEffect(effect.damage(), DamageRecipient.TARGET_PLAYER);
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceEntry.getCard(),
+        StackEntry damageEntry = StackEntry.carrier(sourceEntry.getCard(),
                 sourceEntry.getControllerId(),
                 sourceEntry.getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(damage)),
@@ -125,9 +122,7 @@ public class DealDamageToRandomOpponentUnlessSacrificeEffectHandler implements N
     }
 
     private StackEntry syntheticEntry(StackEntry sourceEntry, CardEffect effect, UUID targetId) {
-        StackEntry result = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceEntry.getCard(),
+        StackEntry result = StackEntry.carrier(sourceEntry.getCard(),
                 sourceEntry.getControllerId(),
                 sourceEntry.getCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect)),
@@ -139,9 +134,7 @@ public class DealDamageToRandomOpponentUnlessSacrificeEffectHandler implements N
 
     private StackEntry syntheticEntry(PendingMayAbility ability, CardEffect effect,
             UUID sourceControllerId, UUID targetId) {
-        StackEntry result = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ability.sourceCard(),
+        StackEntry result = StackEntry.carrier(ability.sourceCard(),
                 sourceControllerId,
                 ability.sourceCard().getName() + "'s ability",
                 new ArrayList<>(List.of(effect)),

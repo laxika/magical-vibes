@@ -71,7 +71,7 @@ public class DealDamageToAnyTargetThenRemoveKeywordIfDamagedEffectHandler
                     if (damageEffect.exileInsteadOfDie()) {
                         recipient.setExileInsteadOfDieThisTurn(true);
                     }
-                    StackEntry recipientEntry = new StackEntry(entry.getEntryType(), entry.getCard(),
+                    StackEntry recipientEntry = StackEntry.derivedFrom(entry, entry.getCard(),
                             entry.getControllerId(), entry.getDescription(), java.util.List.of(),
                             recipient.getId(), entry.getSourcePermanentId());
                     removeKeywordEffectHandler.resolve(gameData, recipientEntry,

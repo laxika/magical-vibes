@@ -14,24 +14,13 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "TLE", collectorNumber = "63")
 public class KatarasReversal extends Card {
 
     public KatarasReversal() {
         StackEntryPredicateTargetFilter spellOrAbility = new StackEntryPredicateTargetFilter(
-                new StackEntryTypeInPredicate(Set.of(
-                        StackEntryType.CREATURE_SPELL,
-                        StackEntryType.ENCHANTMENT_SPELL,
-                        StackEntryType.SORCERY_SPELL,
-                        StackEntryType.INSTANT_SPELL,
-                        StackEntryType.ARTIFACT_SPELL,
-                        StackEntryType.PLANESWALKER_SPELL,
-                        StackEntryType.BATTLE_SPELL,
-                        StackEntryType.ACTIVATED_ABILITY,
-                        StackEntryType.TRIGGERED_ABILITY
-                )),
+                new StackEntryTypeInPredicate(StackEntryType.SPELLS_AND_ABILITIES),
                 "Target must be a spell or ability on the stack.");
         PermanentPredicateTargetFilter artifactOrCreature = new PermanentPredicateTargetFilter(
                 new PermanentAnyOfPredicate(List.of(

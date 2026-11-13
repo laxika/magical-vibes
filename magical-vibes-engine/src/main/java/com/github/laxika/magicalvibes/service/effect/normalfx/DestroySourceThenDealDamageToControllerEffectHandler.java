@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySourceThenDealDamageToControllerEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -49,9 +48,7 @@ public class DestroySourceThenDealDamageToControllerEffectHandler implements Nor
         int damage = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
 
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
+        StackEntry damageEntry = StackEntry.carrier(sourceCard,
                 entry.getControllerId(),
                 sourceCard.getName() + "'s ability",
                 List.of(),

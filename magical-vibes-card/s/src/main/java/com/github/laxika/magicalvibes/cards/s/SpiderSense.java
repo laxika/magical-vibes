@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "SPM", collectorNumber = "46")
 @CardRegistration(set = "SPM", collectorNumber = "284")
@@ -31,10 +30,8 @@ public class SpiderSense extends Card {
                 new ReturnPermanentsCost(1, tappedCreature))));
 
         target(new StackEntryPredicateTargetFilter(
-                new StackEntryTypeInPredicate(Set.of(
-                        StackEntryType.INSTANT_SPELL,
-                        StackEntryType.SORCERY_SPELL,
-                        StackEntryType.TRIGGERED_ABILITY)),
+                new StackEntryTypeInPredicate(StackEntryType.triggeredAbilitiesAnd(
+                        StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
                 "Target must be an instant or sorcery spell, or a triggered ability."));
         addSpellEffect(new CounterSpellEffect());
     }

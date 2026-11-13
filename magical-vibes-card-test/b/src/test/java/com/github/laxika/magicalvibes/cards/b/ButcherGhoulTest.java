@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.c.ControlMagic;
+import com.github.laxika.magicalvibes.cards.t.TeysaKarlov;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -14,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ButcherGhoul.class, LightningBolt.class, ControlMagic.class})
+@CardUsed({ButcherGhoul.class, LightningBolt.class, ControlMagic.class, TeysaKarlov.class})
 class ButcherGhoulTest extends BaseCardTest {
 
     @Test
@@ -95,6 +96,26 @@ class ButcherGhoulTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Butcher Ghoul");
         harness.assertInGraveyard(player1, "Butcher Ghoul");
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Undying is a dies ability: Teysa Karlov makes it trigger an additional time")
+    void undyingTriggersAgainUnderTeysaKarlov() {
+        harness.addToBattlefield(player1, new TeysaKarlov());
+        Permanent ghoul = harness.addToBattlefieldAndReturn(player1, new ButcherGhoul());
+        harness.setHand(player1, List.of(new LightningBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, ghoul.getId());
+
+        assertThat(gd.stack).hasSize(2).allSatisfy(trigger ->
+                assertThat(trigger.getDescription()).isEqualTo("Butcher Ghoul's undying ability"));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Butcher Ghoul").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE))
+                .isEqualTo(1);
         assertThat(gd.stack).isEmpty();
     }
 }

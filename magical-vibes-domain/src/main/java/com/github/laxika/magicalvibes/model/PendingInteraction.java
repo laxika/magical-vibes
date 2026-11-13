@@ -26,7 +26,7 @@ import java.util.UUID;
 public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.LandManaDrainContinuation,
         PendingMemoriesReturningChoice,
-        PendingSphinxAmbassadorChoice, PendingCapriciousEfreetState,
+        PendingSphinxAmbassadorChoice,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
         PendingStudyCounterExileReturn,
         PendingOpponentChoosesCardToHandRestToGraveyard,
@@ -185,7 +185,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice,
         PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice,
         PendingInteraction.OblivionSowerLandChoice,
-        PendingInteraction.ETBExiledCardTargetChoice,
         PendingInteraction.PermanentChoice,
         PendingInteraction.AdNauseamRepeatChoice,
         PendingInteraction.ForbiddenRitualRepeatChoice,
@@ -2793,9 +2792,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiPermanentPick(validIds, validPlayerIds, validCardIds,
-                    context instanceof MultiPermanentChoiceContext.SelfTriggeredAbilityTargets targets
-                            ? targets.minTargets() : 0, maxCount);
+            return new InteractionOptions.MultiPermanentPick(validIds, validPlayerIds, validCardIds, 0, maxCount);
         }
     }
 
@@ -6670,30 +6667,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    record ETBExiledCardTargetChoice(Card sourceCard, UUID controllerId,
-                                     java.util.List<CardEffect> effects,
-                                     UUID sourcePermanentId,
-                                     java.util.List<UUID> validCardIds,
-                                     java.util.List<UUID> validPermanentIds,
-                                     UUID triggeringPermanentId) implements PendingInteraction {
-        public ETBExiledCardTargetChoice {
-            effects = java.util.List.copyOf(effects);
-            validCardIds = java.util.List.copyOf(validCardIds);
-            validPermanentIds = java.util.List.copyOf(validPermanentIds);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return controllerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            java.util.List<UUID> validIds = new java.util.ArrayList<>(validCardIds);
-            validIds.addAll(validPermanentIds);
-            return new InteractionOptions.MultiCardPick(validIds, 1, 1);
-        }
-    }
     /**
      * Resumes a land drain after the current mana ability's choices finish; see
      * {@link ChoiceContext.LandManaDrainAbilityChoice} for {@code delayedColorless}.

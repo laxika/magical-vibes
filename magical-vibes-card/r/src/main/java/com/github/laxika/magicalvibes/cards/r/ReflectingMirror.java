@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "DRK", collectorNumber = "106")
 public class ReflectingMirror extends Card {
@@ -31,8 +30,7 @@ public class ReflectingMirror extends Card {
                 "{X}, {T}: Change the target of target spell with a single target if that target is you. The new target must be a player. X is twice the mana value of that spell.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
-                                new StackEntryNotPredicate(new StackEntryTypeInPredicate(Set.of(
-                                        StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY))),
+                                new StackEntryNotPredicate(new StackEntryTypeInPredicate(StackEntryType.ABILITIES)),
                                 new StackEntryIsSingleTargetPredicate()
                         )),
                         "Target must be a single-target spell."

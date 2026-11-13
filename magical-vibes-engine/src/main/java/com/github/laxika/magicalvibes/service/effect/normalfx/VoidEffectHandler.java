@@ -78,7 +78,7 @@ public class VoidEffectHandler implements NormalEffectHandlerBean {
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate())))));
-        StackEntry destroyEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
+        StackEntry destroyEntry = StackEntry.derivedFrom(entry, entry.getCard(), entry.getControllerId(),
                 entry.getDescription(), List.of(), chosenNumber);
         EffectHandler handler = effectHandlerRegistry.getHandler(destroyEffect);
         if (handler == null) {

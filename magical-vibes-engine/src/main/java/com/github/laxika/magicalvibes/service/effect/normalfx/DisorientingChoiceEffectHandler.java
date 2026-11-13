@@ -99,7 +99,7 @@ public class DisorientingChoiceEffectHandler implements NormalEffectHandlerBean 
                 new EventValue(),
                 new CardTypePredicate(CardType.LAND),
                 LibrarySearchDestination.BATTLEFIELD_TAPPED);
-        StackEntry searchEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
+        StackEntry searchEntry = StackEntry.derivedFrom(entry, entry.getCard(), entry.getControllerId(),
                 entry.getDescription(), List.of(search), entry.getTargetId(), entry.getSourcePermanentId());
         searchEntry.setEventValue(remainingOnBattlefield);
         searchEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());

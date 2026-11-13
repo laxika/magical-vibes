@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -7,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventBatch;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
@@ -429,8 +430,7 @@ class InputCompletionServiceTest {
 
     private StackEntry parkResolution() {
         Card card = namedCard("Paused ability");
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, card, playerId, card.getName(), List.of());
+        StackEntry entry = TestStackDoor.triggered(card, playerId, card.getName(), List.of());
         gameData.pendingEffectResolutionEntry = entry;
         gameData.pendingEffectResolutionIndex = 2;
         return entry;

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AddManaForEachOtherLandWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -67,7 +66,7 @@ public class AddManaForEachOtherLandWithSameNameEffectHandler implements NormalE
             pool.add(choices.getFirst(), matchingLandCount);
         } else {
             for (int i = 0; i < matchingLandCount; i++) {
-                StackEntry noFollowUp = new StackEntry(StackEntryType.TRIGGERED_ABILITY, entry.getCard(),
+                StackEntry noFollowUp = StackEntry.carrier(entry.getCard(),
                         recipientId, entry.getDescription(), new ArrayList<>(), null, entry.getSourcePermanentId());
                 noFollowUp.setNonTargeting(true);
                 AnyColorManaChoiceSupport.beginOrQueueChoice(interactionHandlerRegistry, gameData,

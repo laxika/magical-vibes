@@ -6,13 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CastingCost;
 import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,10 +26,6 @@ public class SabinMasterMonk extends Card {
         addCastingOption(new GraveyardCast(null, "{2}{R}{R}",
                 List.of(new DiscardCardCastingCost()), null));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF),
-                new SacrificeSelfAtEndStepEffect());
         addTrigger(Triggers.dies(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new CastForAlternateCost()),
                 new DrawCardEffect(1));

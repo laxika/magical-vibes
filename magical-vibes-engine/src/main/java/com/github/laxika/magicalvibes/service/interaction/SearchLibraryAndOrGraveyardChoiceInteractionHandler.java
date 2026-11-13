@@ -294,7 +294,7 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
                 || selectedCards.stream().anyMatch(card -> interaction.libraryCardIds().contains(card.getId()));
         if (interaction.librarySearchAllowed() && searchedLibrary) {
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(
-                    gameData, gameLogService, interaction.playerId());
+                    gameData, interaction.playerId());
         }
         // "If you search your library this way, shuffle": a graveyard-only find neither searches nor shuffles the library.
         if (interaction.shuffleAfterSearch() && searchedLibrary

@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -134,7 +136,7 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
 
                 ReorderTopCardsOfLibraryEffect effect =
                         new ReorderTopCardsOfLibraryEffect(new CardsInHand(CountScope.CONTROLLER));
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Sage Owl"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Sage Owl"),
                         player1Id, "Sage Owl", List.of(effect));
 
                 reorderTopCardsOfLibraryEffectHandler.resolve(gd, entry, effect);
@@ -147,7 +149,7 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
             @DisplayName("Empty library skips reorder")
             void emptyLibrarySkipsReorder() {
                 ReorderTopCardsOfLibraryEffect effect = new ReorderTopCardsOfLibraryEffect(2);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Sage Owl"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Sage Owl"),
                         player1Id, "Sage Owl", List.of(effect));
 
                 reorderTopCardsOfLibraryEffectHandler.resolve(gd, entry, effect);
@@ -163,7 +165,7 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
                 gd.playerDecks.get(player1Id).add(createCard("Grizzly Bears"));
 
                 ReorderTopCardsOfLibraryEffect effect = new ReorderTopCardsOfLibraryEffect(2);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Sage Owl"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Sage Owl"),
                         player1Id, "Sage Owl", List.of(effect));
 
                 reorderTopCardsOfLibraryEffectHandler.resolve(gd, entry, effect);
@@ -181,7 +183,7 @@ class ReorderTopCardsOfLibraryEffectHandlerTest {
                 gd.playerDecks.get(player1Id).add(createCard("Llanowar Elves"));
 
                 ReorderTopCardsOfLibraryEffect effect = new ReorderTopCardsOfLibraryEffect(2);
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Sage Owl"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Sage Owl"),
                         player1Id, "Sage Owl", List.of(effect));
 
                 reorderTopCardsOfLibraryEffectHandler.resolve(gd, entry, effect);

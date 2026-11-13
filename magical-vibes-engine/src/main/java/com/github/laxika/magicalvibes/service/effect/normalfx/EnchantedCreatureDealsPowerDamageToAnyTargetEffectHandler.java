@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -74,9 +73,7 @@ public class EnchantedCreatureDealsPowerDamageToAnyTargetEffectHandler implement
                     ((EnchantedCreatureDealsPowerDamageToAnyTargetEffect) effect).damageAmount(),
                     AmountContext.forStackEntry(entry, aura != null && aura.isAttached() ? aura : null));
         }
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                creature.getCard(),
+        StackEntry damageEntry = StackEntry.carrier(creature.getCard(),
                 controllerId,
                 creature.getCard().getName() + "'s ability",
                 List.of(),

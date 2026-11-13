@@ -51,7 +51,7 @@ public class TransmuteArtifactSearchEffectHandler implements NormalEffectHandler
 
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, controllerId);
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(controllerId)
@@ -65,7 +65,7 @@ public class TransmuteArtifactSearchEffectHandler implements NormalEffectHandler
                         card, artifactCard, null, gameData, controllerId))
                 .toList();
         if (matchingCards.isEmpty()) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, controllerId);
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(controllerId)

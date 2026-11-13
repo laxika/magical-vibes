@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -163,8 +165,7 @@ class ImprintDyingCreatureEffectHandlerTest {
                 gd.playerGraveyards.get(player2Id).add(dyingCard);
 
                 ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect();
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, vatCard, player1Id, "Mimic Vat trigger",
+                StackEntry entry = TestStackDoor.triggered(vatCard, player1Id, "Mimic Vat trigger",
                         List.of(effect), (UUID) null, vatPerm.getId()
                 );
                 entry.setTriggeringCardId(dyingCard.getId());
@@ -197,8 +198,7 @@ class ImprintDyingCreatureEffectHandlerTest {
                 gd.playerGraveyards.get(player2Id).add(dyingCard);
 
                 ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect();
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, vatCard, player1Id, "Mimic Vat trigger",
+                StackEntry entry = TestStackDoor.triggered(vatCard, player1Id, "Mimic Vat trigger",
                         List.of(effect), (UUID) null, vatPerm.getId()
                 );
                 entry.setTriggeringCardId(dyingCard.getId());
@@ -226,8 +226,7 @@ class ImprintDyingCreatureEffectHandlerTest {
                 Card vatCard = createCard("Mimic Vat");
 
                 ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect();
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, vatCard, player1Id, "Mimic Vat trigger",
+                StackEntry entry = TestStackDoor.triggered(vatCard, player1Id, "Mimic Vat trigger",
                         List.of(effect), (UUID) null, vatId
                 );
                 entry.setTriggeringCardId(dyingCard.getId());
@@ -249,8 +248,7 @@ class ImprintDyingCreatureEffectHandlerTest {
 
                 UUID dyingCardId = UUID.randomUUID();
                 ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect();
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, vatCard, player1Id, "Mimic Vat trigger",
+                StackEntry entry = TestStackDoor.triggered(vatCard, player1Id, "Mimic Vat trigger",
                         List.of(effect), (UUID) null, vatPerm.getId()
                 );
                 entry.setTriggeringCardId(dyingCardId);
@@ -272,8 +270,7 @@ class ImprintDyingCreatureEffectHandlerTest {
                 gd.playerGraveyards.get(player2Id).add(dyingCard);
 
                 ImprintDyingCreatureEffect effect = new ImprintDyingCreatureEffect();
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, vatCard, player1Id, "Mimic Vat trigger",
+                StackEntry entry = TestStackDoor.triggered(vatCard, player1Id, "Mimic Vat trigger",
                         List.of(effect), (UUID) null, vatPerm.getId()
                 );
                 entry.setTriggeringCardId(dyingCard.getId());

@@ -9,18 +9,13 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.Set;
 
 @CardRegistration(set = "40K", collectorNumber = "26")
 public class SisterOfSilence extends Card {
 
     public SisterOfSilence() {
         target(new StackEntryPredicateTargetFilter(
-                new StackEntryTypeInPredicate(Set.of(
-                        StackEntryType.INSTANT_SPELL,
-                        StackEntryType.SORCERY_SPELL,
-                        StackEntryType.ACTIVATED_ABILITY,
-                        StackEntryType.TRIGGERED_ABILITY)),
+                new StackEntryTypeInPredicate(StackEntryType.abilitiesAnd(StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
                 "Target must be an instant or sorcery spell, or an activated or triggered ability."
         )).addTrigger(Triggers.enters(ObjectRelation.THIS), new CounterSpellEffect());
     }

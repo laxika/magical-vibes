@@ -29,8 +29,7 @@ class OmnivorousFlytrapTest extends BaseCardTest {
 
         castFlytrap();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -103,8 +102,7 @@ class OmnivorousFlytrapTest extends BaseCardTest {
 
         castFlytrap();
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, firstTarget.getId());
-        harness.handlePermanentChosen(player1, secondTarget.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstTarget.getId(), secondTarget.getId()));
         harness.passBothPriorities();
 
         assertThat(firstTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);

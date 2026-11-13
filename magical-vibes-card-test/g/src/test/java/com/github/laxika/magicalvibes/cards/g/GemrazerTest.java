@@ -116,6 +116,6 @@ class GemrazerTest extends BaseCardTest {
     private void triggerMutation(Permanent gemrazer) {
         harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
                 gd, gemrazer, List.of(gemrazer.getCard()), player1.getId()));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
     }
 }

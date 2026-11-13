@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -7,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.CantSearchLibrariesEffect;
@@ -129,7 +130,7 @@ class EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffectHandlerTe
             }
 
             private StackEntry entry() {
-                return new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Old-Growth Dryads"),
+                return TestStackDoor.triggered(createCard("Old-Growth Dryads"),
                         player1Id, "Old-Growth Dryads", List.of(effect), 0, null, null);
             }
 

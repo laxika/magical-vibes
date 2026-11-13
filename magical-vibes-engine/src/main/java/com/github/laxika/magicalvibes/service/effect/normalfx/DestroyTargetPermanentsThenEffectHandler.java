@@ -63,7 +63,7 @@ public class DestroyTargetPermanentsThenEffectHandler implements NormalEffectHan
             return;
         }
 
-        StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
+        StackEntry thenEntry = StackEntry.derivedFrom(entry, entry.getCard(), entry.getControllerId(),
                 entry.getDescription(), List.of(e.thenEffect()), entry.getTargetId(), entry.getSourcePermanentId());
         thenEntry.setEventValue(destroyed.size());
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());

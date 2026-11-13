@@ -19,7 +19,6 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "MSC", collectorNumber = "2")
 public class MisterFantastic extends Card {
@@ -37,7 +36,7 @@ public class MisterFantastic extends Card {
                 "{R}{G}{W}{U}, {T}: Copy target triggered ability you control twice. You may choose new targets for the copies.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
-                                new StackEntryTypeInPredicate(Set.of(StackEntryType.TRIGGERED_ABILITY)),
+                                new StackEntryTypeInPredicate(StackEntryType.TRIGGERED_ABILITIES),
                                 new StackEntryControlledByPredicate())),
                         "Target must be a triggered ability you control.")));
     }

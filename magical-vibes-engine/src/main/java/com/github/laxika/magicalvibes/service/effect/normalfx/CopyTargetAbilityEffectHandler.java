@@ -42,7 +42,7 @@ public class CopyTargetAbilityEffectHandler implements NormalEffectHandlerBean {
         StackEntry targetEntry = null;
         for (StackEntry stackEntry : gameData.stack) {
             if (stackEntry.getTargetableId().equals(targetCardId)
-                    && Set.of(StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY)
+                    && StackEntryType.ABILITIES
                     .contains(stackEntry.getEntryType())) {
                 targetEntry = stackEntry;
                 break;

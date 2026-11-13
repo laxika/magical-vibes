@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.KinshipEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -66,8 +65,7 @@ public class KinshipHandler implements MayEffectHandlerBean {
                 }
                 // The revealed-card effects still happen if the source left the battlefield in response.
                 if (!kinship.revealEffects().isEmpty()) {
-                    StackEntry kinshipEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                            ability.sourceCard(), ability.controllerId(),
+                    StackEntry kinshipEntry = StackEntry.carrier(ability.sourceCard(), ability.controllerId(),
                             ability.sourceCard().getName() + " (Kinship)",
                             kinship.revealEffects(), 0, ability.sourcePermanentId());
                     effectResolutionService.resolveEffects(gameData, kinshipEntry);

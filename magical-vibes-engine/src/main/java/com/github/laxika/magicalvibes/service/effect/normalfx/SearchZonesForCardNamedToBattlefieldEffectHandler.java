@@ -285,7 +285,7 @@ public class SearchZonesForCardNamedToBattlefieldEffectHandler implements Normal
         if (!effect.alwaysShuffle()) {
             return;
         }
-        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
+        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, controllerId);
         com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
     }
 
@@ -320,7 +320,7 @@ public class SearchZonesForCardNamedToBattlefieldEffectHandler implements Normal
         int searchLimit = librarySearchSupport.opponentSearchTopCardsLimit(gameData, controllerId);
         List<Card> searched = new java.util.ArrayList<>(deck.subList(0, Math.min(deck.size(), searchLimit)));
         deck.removeAll(searched);
-        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
+        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, controllerId);
         if (searched.stream().noneMatch(card -> libraryNames.contains(card.getName()))) {
             deck.addAll(searched);
             com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);

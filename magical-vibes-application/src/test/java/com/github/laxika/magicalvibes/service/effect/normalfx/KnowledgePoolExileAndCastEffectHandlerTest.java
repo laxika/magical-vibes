@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -188,8 +190,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 KnowledgePoolExileAndCastEffect effect = new KnowledgePoolExileAndCastEffect();
                 // The cast trigger's entry: Knowledge Pool its source, the caster its "that player", the spell its
                 // triggering card.
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, kpCard, player1Id, kpCard.getName(),
+                StackEntry entry = TestStackDoor.triggered(kpCard, player1Id, kpCard.getName(),
                         List.of(effect), player1Id, kp.getId()
                 );
                 entry.setTriggeringCardId(UUID.randomUUID());
@@ -216,8 +217,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 KnowledgePoolExileAndCastEffect effect = new KnowledgePoolExileAndCastEffect();
                 // The cast trigger's entry: Knowledge Pool its source, the caster its "that player", the spell its
                 // triggering card.
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, kpCard, player1Id, kpCard.getName(),
+                StackEntry entry = TestStackDoor.triggered(kpCard, player1Id, kpCard.getName(),
                         List.of(effect), player1Id, kp.getId()
                 );
                 entry.setTriggeringCardId(originalCard.getId());
@@ -255,8 +255,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
                 KnowledgePoolExileAndCastEffect effect = new KnowledgePoolExileAndCastEffect();
                 // The cast trigger's entry: Knowledge Pool its source, the caster its "that player", the spell its
                 // triggering card.
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, kpCard, player1Id, kpCard.getName(),
+                StackEntry entry = TestStackDoor.triggered(kpCard, player1Id, kpCard.getName(),
                         List.of(effect), player1Id, kp.getId()
                 );
                 entry.setTriggeringCardId(originalCard.getId());

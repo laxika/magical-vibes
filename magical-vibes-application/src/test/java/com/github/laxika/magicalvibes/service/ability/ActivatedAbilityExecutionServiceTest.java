@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -1185,7 +1187,7 @@ class ActivatedAbilityExecutionServiceTest {
 
             // Simulate death trigger being added during sacrifice
             doAnswer(inv -> {
-                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id,
+                StackEntry trigger = TestStackDoor.triggered(card, player1Id,
                         "Death trigger", List.of(new DrawCardEffect(1)));
                 gameData.stack.add(trigger);
                 return null;
@@ -1208,7 +1210,7 @@ class ActivatedAbilityExecutionServiceTest {
             ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Exile graveyard");
 
             doAnswer(inv -> {
-                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id,
+                StackEntry trigger = TestStackDoor.triggered(card, player1Id,
                         "Death trigger", List.of(new DrawCardEffect(1)));
                 gameData.stack.add(trigger);
                 return null;
@@ -1231,7 +1233,7 @@ class ActivatedAbilityExecutionServiceTest {
             ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Exile graveyard");
 
             doAnswer(inv -> {
-                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id,
+                StackEntry trigger = TestStackDoor.triggered(card, player1Id,
                         "Death trigger", List.of(new DrawCardEffect(1)));
                 gameData.stack.add(trigger);
                 return null;
@@ -1254,7 +1256,7 @@ class ActivatedAbilityExecutionServiceTest {
             stubIsCreature(perm, false);
 
             doAnswer(inv -> {
-                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, player1Id,
+                StackEntry trigger = TestStackDoor.triggered(card, player1Id,
                         "Death trigger", List.of(new DrawCardEffect(1)));
                 gameData.stack.add(trigger);
                 return null;
@@ -1516,8 +1518,7 @@ class ActivatedAbilityExecutionServiceTest {
 
             // Simulate a death trigger being pushed onto the stack by sacrificePermanentToGraveyard
             doAnswer(inv -> {
-                gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                        new Card(), player2Id, "Viridian Revel trigger", List.of(new DrawCardEffect())));
+                gameData.stack.add(TestStackDoor.triggered(new Card(), player2Id, "Viridian Revel trigger", List.of(new DrawCardEffect())));
                 return true;
             }).when(permanentRemovalService).sacrificePermanentToGraveyard(gameData, perm);
 
@@ -1563,8 +1564,7 @@ class ActivatedAbilityExecutionServiceTest {
             gameData.priorityPassedBy.add(player2Id);
 
             doAnswer(inv -> {
-                gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                        new Card(), player2Id, "trigger", List.of()));
+                gameData.stack.add(TestStackDoor.triggered(new Card(), player2Id, "trigger", List.of()));
                 return true;
             }).when(permanentRemovalService).sacrificePermanentToGraveyard(gameData, perm);
 
@@ -1578,8 +1578,7 @@ class ActivatedAbilityExecutionServiceTest {
         @DisplayName("Non-mana ability with sacrifice flushes pending mana-ability triggers on top")
         void nonManaAbilityFlushesPendingManaAbilityTriggers() {
             // Pre-populate pending triggers (from a prior mana ability activation)
-            StackEntry pendingTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                    new Card(), player2Id, "Pending Viridian Revel", List.of());
+            StackEntry pendingTrigger = TestStackDoor.triggered(new Card(), player2Id, "Pending Viridian Revel", List.of());
             gameData.pendingManaAbilityTriggers.add(pendingTrigger);
 
             Card card = createCreature("Test Creature");

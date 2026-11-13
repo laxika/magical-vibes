@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnyOpponentMayTakeDamageSacrificeSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageRecipient;
@@ -88,9 +87,7 @@ public class AnyOpponentMayTakeDamageSacrificeSourceEffectHandler implements Nor
     public void dealDamage(GameData gameData, PendingMayAbility ability,
             AnyOpponentMayTakeDamageSacrificeSourceEffect effect, UUID opponentId) {
         DealDamageToPlayersEffect damage = new DealDamageToPlayersEffect(effect.damage(), DamageRecipient.TARGET_PLAYER);
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ability.sourceCard(),
+        StackEntry damageEntry = StackEntry.carrier(ability.sourceCard(),
                 effect.abilityControllerId(),
                 ability.sourceCard().getName() + "'s ability",
                 new ArrayList<>(List.of(damage)),
@@ -121,9 +118,7 @@ public class AnyOpponentMayTakeDamageSacrificeSourceEffectHandler implements Nor
             return;
         }
         SacrificeSelfEffect sac = new SacrificeSelfEffect();
-        StackEntry sacEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ability.sourceCard(),
+        StackEntry sacEntry = StackEntry.carrier(ability.sourceCard(),
                 effect.abilityControllerId(),
                 ability.sourceCard().getName() + "'s ability",
                 new ArrayList<>(List.of(sac)),

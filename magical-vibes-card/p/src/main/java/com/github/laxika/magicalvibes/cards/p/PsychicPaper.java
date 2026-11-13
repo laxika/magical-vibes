@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.AsThisBecomesAttachedEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
@@ -22,10 +23,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class PsychicPaper extends Card {
 
     public PsychicPaper() {
-        addTrigger(Triggers.becomesAttachedToCreature(),
-                SequenceEffect.of(
-                        new ChooseCardNameAtResolutionEffect(CardType.CREATURE),
-                        new ChooseSubtypeForSourceEffect()));
+        addStaticEffect(new AsThisBecomesAttachedEffect(SequenceEffect.of(
+                new ChooseCardNameAtResolutionEffect(CardType.CREATURE),
+                new ChooseSubtypeForSourceEffect())));
 
         addStaticEffect(new SetChosenNameAndCreatureTypeEffect(GrantScope.EQUIPPED_CREATURE));
         addStaticEffect(new GrantKeywordEffect(Keyword.WARD, GrantScope.EQUIPPED_CREATURE));

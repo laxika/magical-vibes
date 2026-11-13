@@ -27,18 +27,14 @@ class SilverSurferCosmicVoyagerTest extends BaseCardTest {
         harness.castFromHand(player1, new SilverSurferCosmicVoyager(), "{4}{U}{U}");
         resolveAllTriggers();
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validPermanentIds()).contains(bears.getId(), forest.getId());
-        assertThat(choice.validPermanentIds()).doesNotContain(opponentBears.getId(),
+        assertThat(choice.validIds()).contains(bears.getId(), forest.getId());
+        assertThat(choice.validIds()).doesNotContain(opponentBears.getId(),
                 harness.getPermanentId(player1, "Silver Surfer, Cosmic Voyager"));
 
-        harness.handlePermanentChosen(player1, bears.getId());
-        choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice.validPermanentIds()).containsExactly(forest.getId());
-        assertThat(choice.validPlayerIds()).contains(player1.getId());
-        harness.handlePermanentChosen(player1, forest.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId(), forest.getId()));
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -70,7 +66,7 @@ class SilverSurferCosmicVoyagerTest extends BaseCardTest {
         harness.castFromHand(player1, new SilverSurferCosmicVoyager(), "{4}{U}{U}");
         resolveAllTriggers();
 
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Forest");
@@ -85,8 +81,7 @@ class SilverSurferCosmicVoyagerTest extends BaseCardTest {
         harness.castFromHand(player1, new SilverSurferCosmicVoyager(), "{4}{U}{U}");
         resolveAllTriggers();
 
-        harness.handlePermanentChosen(player1, bears.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -107,8 +102,7 @@ class SilverSurferCosmicVoyagerTest extends BaseCardTest {
 
         harness.castFromHand(player1, new SilverSurferCosmicVoyager(), "{4}{U}{U}");
         resolveAllTriggers();
-        harness.handlePermanentChosen(player1, forest.getId());
-        harness.handlePermanentChosen(player1, borrowedBears.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId(), borrowedBears.getId()));
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Forest");
@@ -134,13 +128,12 @@ class SilverSurferCosmicVoyagerTest extends BaseCardTest {
         harness.castFromHand(player1, new SilverSurferCosmicVoyager(), "{4}{U}{U}");
         resolveAllTriggers();
 
-        for (Permanent forest : forests) {
-            PendingInteraction.PermanentChoice choice =
-                    gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-            assertThat(choice).isNotNull();
-            assertThat(choice.validPermanentIds()).contains(forest.getId());
-            harness.handlePermanentChosen(player1, forest.getId());
-        }
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.maxCount()).isEqualTo(100);
+        assertThat(choice.validIds()).containsAll(forests.stream().map(Permanent::getId).toList());
+        harness.handleMultiplePermanentsChosen(player1, forests.stream().map(Permanent::getId).toList());
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Forest");
@@ -156,7 +149,7 @@ class SilverSurferCosmicVoyagerTest extends BaseCardTest {
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.castFromHand(player1, new SilverSurferCosmicVoyager(), "{4}{U}{U}");
         harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
-        harness.handlePermanentChosen(player1, forest.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
         harness.withAutoStop(TurnStep.END_STEP, this::resolveAllTriggers);
 
         harness.assertNotOnBattlefield(player1, "Forest");
@@ -176,7 +169,7 @@ class SilverSurferCosmicVoyagerTest extends BaseCardTest {
         harness.castFromHand(player1, new SilverSurferCosmicVoyager(), "{4}{U}{U}");
         resolveAllTriggers();
         Permanent surfer = findPermanent(player1, "Silver Surfer, Cosmic Voyager");
-        harness.handlePermanentChosen(player1, forest.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().removePermanentToGraveyard(gd, surfer));
         resolveAllTriggers();
@@ -195,8 +188,7 @@ class SilverSurferCosmicVoyagerTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.castFromHand(player1, new SilverSurferCosmicVoyager(), "{4}{U}{U}");
         resolveAllTriggers();
-        harness.handlePermanentChosen(player1, bears.getId());
-        harness.handlePermanentChosen(player1, forest.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId(), forest.getId()));
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().removePermanentToGraveyard(gd, bears));
         resolveAllTriggers();
@@ -214,7 +206,7 @@ class SilverSurferCosmicVoyagerTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player1, new Forest());
         harness.castFromHand(player1, new SilverSurferCosmicVoyager(), "{4}{U}{U}");
         resolveAllTriggers();
-        harness.handlePermanentChosen(player1, forest.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
         resolveAllTriggers();
 
         assertThat(gd.removeFromExile(forest.getCard().getId())).isTrue();

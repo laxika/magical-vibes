@@ -59,11 +59,9 @@ import static org.mockito.Mockito.lenient;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
 /**
- * Unit tests for the "whenever [an object] enters" collector bodies the trigger pipeline hands its matches to
- * ({@link TriggerCollectionService#triggerZoneChange}), driving the {@link EnterTriggerCollectorService} handlers
- * through a real {@link TriggerCollectorRegistry} (mirrors {@code MiscTriggerCollectorServiceTest}'s setup). The tests
- * do the pipeline's matching themselves ({@code trigger}), and call the remaining choke-point collectors (evolve,
- * watchers, boons, emblems) where the old collector did both.
+ * Unit tests for the enter collectors of {@link TriggerCollectionService} that aren't the trigger pipeline's: an
+ * emblem's "whenever [an object] enters" and "is put into your graveyard" abilities, which go on the stack through the
+ * stack door.
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -94,8 +92,6 @@ class EnterTriggerCollectorServiceTest {
         lenient().when(gameQueryService.computeStaticBonus(any(GameData.class), any(Permanent.class), isNull()))
                 .thenReturn(EMPTY_BONUS);
         registry = new TriggerCollectorRegistry();
-        TriggerCollectorRegistry.scanBean(new EnterTriggerCollectorService(gameLogService, gameQueryService),
-                registry);
 
         service = new TriggerCollectionService(registry, gameOutcomeService, playerInputService,
                 triggeredAbilityQueueService, gameQueryService, predicateEvaluationService,
@@ -199,7 +195,7 @@ class EnterTriggerCollectorServiceTest {
         service.checkEmblemEntersTriggers(gd, player1Id, creatureCard);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)).isFalse();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
     }
 
     @Test

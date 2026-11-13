@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EquippedCreatureDealsDamageToDefendingPlayerEffect;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
@@ -61,9 +60,7 @@ public class EquippedCreatureDealsDamageToDefendingPlayerEffectHandler implement
             return;
         }
 
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                damageSourceCard,
+        StackEntry damageEntry = StackEntry.carrier(damageSourceCard,
                 creatureControllerId,
                 damageSourceCard.getName() + "'s ability",
                 List.of(),

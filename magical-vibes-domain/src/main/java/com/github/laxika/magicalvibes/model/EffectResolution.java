@@ -258,7 +258,7 @@ public final class EffectResolution {
             // 4 life") is an intervening-if trigger (CR 603.4): whether it triggers at all
             // depends on game state as the permanent enters, so the target can't be a
             // cast-time requirement. The target is chosen as the trigger goes on the stack
-            // (CR 603.3d) via the ETBTokenTargetTrigger path — and never chosen at all when
+            // (CR 603.3d) by the stack door — and never chosen at all when
             // the gate isn't met.
             if (e instanceof ConditionalEffect ce && ce.condition().isEtbTriggerGate()) continue;
             TargetSpec spec = e.targetSpec();

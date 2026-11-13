@@ -144,7 +144,7 @@ class VineshaperMysticTest extends BaseCardTest {
             harness.passBothPriorities();
 
             harness.assertOnBattlefield(player1, "Vineshaper Mystic");
-            harness.handlePermanentChosen(player1, player1.getId());
+            harness.handleMultiplePermanentsChosen(player1, List.of());
             assertThat(gd.stack).hasSize(1);
             harness.passBothPriorities();
             assertThat(gd.stack).isEmpty();
@@ -161,7 +161,7 @@ class VineshaperMysticTest extends BaseCardTest {
             harness.passBothPriorities();
 
             Permanent mystic = findPermanent(player1, "Vineshaper Mystic");
-            harness.handlePermanentChosen(player1, mystic.getId());
+            harness.handleMultiplePermanentsChosen(player1, List.of(mystic.getId()));
             harness.passBothPriorities();
 
             assertThat(gd.stack).isEmpty();

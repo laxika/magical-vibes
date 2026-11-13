@@ -28,8 +28,11 @@ public record ExileTargetCardFromGraveyardMayPlayUntilNextTurnEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.graveyardCard(ownGraveyardOnly
+        GraveyardSearchScope scope = ownGraveyardOnly
                 ? GraveyardSearchScope.CONTROLLERS_GRAVEYARD
-                : GraveyardSearchScope.ALL_GRAVEYARDS));
+                : GraveyardSearchScope.ALL_GRAVEYARDS;
+        return TargetSpec.benign(filter == null
+                ? TargetPredicates.graveyardCard(scope)
+                : TargetPredicates.graveyardCards(filter, scope));
     }
 }

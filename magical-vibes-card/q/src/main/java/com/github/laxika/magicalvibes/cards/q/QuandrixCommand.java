@@ -51,10 +51,7 @@ public class QuandrixCommand extends Card {
                         new StackEntryPredicateTargetFilter(
                                 new StackEntryAllOfPredicate(List.of(
                                         new StackEntryCardTypeInPredicate(Set.of(CardType.ARTIFACT, CardType.ENCHANTMENT)),
-                                        new StackEntryNotPredicate(new StackEntryTypeInPredicate(Set.of(
-                                                StackEntryType.ACTIVATED_ABILITY,
-                                                StackEntryType.TRIGGERED_ABILITY
-                                        )))
+                                        new StackEntryNotPredicate(new StackEntryTypeInPredicate(StackEntryType.ABILITIES))
                                 )),
                                 "Target must be an artifact or enchantment spell."
                         )),

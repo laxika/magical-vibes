@@ -38,6 +38,8 @@ public class Shriekmaw extends Card {
         // Fear is auto-loaded from Scryfall keywords.
         // Evoke {1}{B}: cast for the alternate cost instead of the mana cost; it's sacrificed on entry.
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{B}"))));
+        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
 
         // When this creature enters, destroy target nonartifact, nonblack creature.
         target(new PermanentPredicateTargetFilter(
@@ -49,8 +51,5 @@ public class Shriekmaw extends Card {
                 "Target must be a nonartifact, nonblack creature"
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new DestroyTargetPermanentEffect());
-
-        // Evoke sacrifice: if it was cast for its evoke cost, sacrifice it as it enters.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }
 }

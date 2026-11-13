@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -69,9 +68,7 @@ public class TargetCreatureDealsPowerDamageToAnyTargetEffectHandler implements N
 
             // Build a temporary entry whose source is the biting creature, so prevention,
             // protection and damage triggers key off the creature rather than the spell.
-            StackEntry damageEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    biter.getCard(),
+            StackEntry damageEntry = StackEntry.carrier(biter.getCard(),
                     controllerId,
                     biter.getCard().getName() + "'s ability",
                     List.of(),

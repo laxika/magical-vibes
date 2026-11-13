@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "M21", collectorNumber = "74")
 @CardRegistration(set = "M21", collectorNumber = "355")
@@ -28,9 +27,7 @@ public class SublimeEpiphany extends Card {
         setAllowSharedTargets(true);
 
         var abilityFilter = new StackEntryPredicateTargetFilter(
-                new StackEntryTypeInPredicate(Set.of(
-                        StackEntryType.ACTIVATED_ABILITY,
-                        StackEntryType.TRIGGERED_ABILITY)),
+                new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                 "Target must be an activated or triggered ability.");
         var playerFilter = new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),

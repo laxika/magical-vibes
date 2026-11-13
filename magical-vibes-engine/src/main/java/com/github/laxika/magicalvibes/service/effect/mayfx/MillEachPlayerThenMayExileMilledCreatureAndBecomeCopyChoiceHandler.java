@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect;
@@ -64,9 +63,7 @@ public class MillEachPlayerThenMayExileMilledCreatureAndBecomeCopyChoiceHandler
                 Triggers.upkeep(ActivePlayer.YOU)));
         // The exile and the copy are part of this ability's own resolution, so the chosen card is
         // applied to a resolving entry instead of creating another stack object.
-        gameData.resolvedMayTargetingEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ability.sourceCard(),
+        gameData.resolvedMayTargetingEntry = StackEntry.carrier(ability.sourceCard(),
                 ability.controllerId(),
                 ability.sourceCard().getName() + "'s ability",
                 new ArrayList<>(exileEffects),

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.state;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -92,6 +94,10 @@ class StateBasedActionServiceTest {
     @Mock
     private StoriedEffectHandler storiedEffectHandler;
 
+    @Mock
+    private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
+            triggeredAbilityStackService;
+
     private StateBasedActionService sut;
 
     private GameData gd;
@@ -106,6 +112,12 @@ class StateBasedActionServiceTest {
                 new DepartureService(gameQueryService, permanentRemovalService, graveyardService,
                         triggerCollectionService, gameLogService));
         ReflectionTestUtils.setField(sut, "storiedEffectHandler", storiedEffectHandler);
+        ReflectionTestUtils.setField(sut, "triggeredAbilityStackService", triggeredAbilityStackService);
+        // The stack door puts a delayed ability that names its object as it was made.
+        lenient().doAnswer(invocation -> {
+            com.github.laxika.magicalvibes.testutil.TestStackDoor.enqueue(gd, invocation.getArgument(1));
+            return null;
+        }).when(triggeredAbilityStackService).putDelayed(any(), any());
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -713,8 +725,7 @@ class StateBasedActionServiceTest {
             gd.playerBattlefields.get(player1Id).add(perm);
 
             // Put a triggered ability from this Saga on the stack
-            StackEntry chapterAbility = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, card, player1Id,
+            StackEntry chapterAbility = TestStackDoor.triggered(card, player1Id,
                     "Chapter III", List.of(), null, perm.getId());
             gd.stack.add(chapterAbility);
 
@@ -731,8 +742,7 @@ class StateBasedActionServiceTest {
             perm.setCounterCount(CounterType.LORE, 3);
             gd.playerBattlefields.get(player1Id).add(perm);
 
-            gd.pendingEffectResolutionEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, card, player1Id,
+            gd.pendingEffectResolutionEntry = TestStackDoor.triggered(card, player1Id,
                     "Chapter III", List.of(), null, perm.getId());
 
             sut.performStateBasedActions(gd);
@@ -750,8 +760,7 @@ class StateBasedActionServiceTest {
 
             // Unrelated triggered ability on the stack (different source permanent)
             Card otherCard = createCreatureCard("Some Creature");
-            StackEntry unrelatedAbility = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, otherCard, player1Id,
+            StackEntry unrelatedAbility = TestStackDoor.triggered(otherCard, player1Id,
                     "ETB trigger", List.of(), null, UUID.randomUUID());
             gd.stack.add(unrelatedAbility);
 

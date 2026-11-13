@@ -85,7 +85,7 @@ public class ActivePlayerExilesCardFromGraveyardEffectHandler implements NormalE
         if (noCardEffect == null) {
             return;
         }
-        StackEntry fallbackEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
+        StackEntry fallbackEntry = StackEntry.derivedFrom(entry, entry.getCard(), entry.getControllerId(),
                 entry.getDescription(), List.of(noCardEffect), entry.getTargetId(), entry.getSourcePermanentId());
         fallbackEntry.setActivePlayerId(entry.getActivePlayerId());
         fallbackEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());

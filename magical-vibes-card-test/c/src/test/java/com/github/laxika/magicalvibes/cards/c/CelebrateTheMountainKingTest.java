@@ -109,7 +109,10 @@ class CelebrateTheMountainKingTest extends BaseCardTest {
         prepareCast(new Forest(), new GrizzlyBears());
         harness.castEnchantment(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        while (!gd.stack.isEmpty()
+                && !(gd.interaction.activeInteraction() instanceof PendingInteraction.DiscardChoice)) {
+            harness.passBothPriorities();
+        }
         harness.handleCardChosen(player1, 1);
 
         harness.assertInGraveyard(player1, "Grizzly Bears");

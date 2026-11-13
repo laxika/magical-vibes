@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnyPlayerMayExileCardFromGraveyardAndAssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -49,9 +48,7 @@ public class AnyPlayerMayExileCardFromGraveyardAndAssignNoCombatDamageHandler
                 effects.add(new AnyPlayerMayExileCardFromGraveyardAndAssignNoCombatDamageEffect(
                         effect.cardsToExile(), remaining, effect.abilityControllerId(), effect.sourcePermanentId()));
             }
-            effectResolutionService.resolveEffects(gameData, new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(),
+            effectResolutionService.resolveEffects(gameData, StackEntry.carrier(ability.sourceCard(),
                     effect.abilityControllerId(),
                     ability.sourceCard().getName() + "'s ability",
                     effects,

@@ -396,7 +396,7 @@ class PlayerInputServiceTest {
                     new ChoiceContext.SagaChapterCounterAssignment(
                             createCard("Saga", CardType.ENCHANTMENT), PLAYER1_ID, List.of(),
                             UUID.randomUUID(), "II", CounterType.PLUS_ONE_PLUS_ONE,
-                            List.of(firstTargetId, finalTargetId), Map.of(firstTargetId, 1), 7, 1);
+                            List.of(firstTargetId, finalTargetId), Map.of(firstTargetId, 1), 7, 1, null);
 
             svc.beginSagaChapterCounterAssignmentChoice(gd, PLAYER1_ID, context);
 

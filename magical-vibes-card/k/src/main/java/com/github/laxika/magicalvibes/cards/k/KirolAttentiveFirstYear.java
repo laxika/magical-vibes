@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilt
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "ECL", collectorNumber = "231")
 @CardRegistration(set = "ECL", collectorNumber = "374")
@@ -30,7 +29,7 @@ public class KirolAttentiveFirstYear extends Card {
                 "Tap two untapped creatures you control: Copy target triggered ability you control. You may choose new targets for the copy. Activate only once each turn.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
-                                new StackEntryTypeInPredicate(Set.of(StackEntryType.TRIGGERED_ABILITY)),
+                                new StackEntryTypeInPredicate(StackEntryType.TRIGGERED_ABILITIES),
                                 new StackEntryControlledByPredicate()
                         )),
                         "Target must be a triggered ability you control."

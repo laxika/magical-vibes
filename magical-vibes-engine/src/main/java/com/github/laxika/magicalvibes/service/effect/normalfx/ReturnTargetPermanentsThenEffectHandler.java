@@ -93,7 +93,7 @@ public class ReturnTargetPermanentsThenEffectHandler implements NormalEffectHand
             return;
         }
 
-        StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), entry.getControllerId(),
+        StackEntry thenEntry = StackEntry.derivedFrom(entry, entry.getCard(), entry.getControllerId(),
                 entry.getDescription(), List.of(e.thenEffect()), entry.getTargetId(), entry.getSourcePermanentId());
         thenEntry.setEventValue(e.stat() == EventStat.NONE ? cardsReturned : eventValue);
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());

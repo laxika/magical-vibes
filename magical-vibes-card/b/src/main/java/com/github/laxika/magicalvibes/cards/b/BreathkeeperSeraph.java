@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.SourceCanSoulbond;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -31,6 +32,7 @@ public class BreathkeeperSeraph extends Card {
 
     public BreathkeeperSeraph() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
+                TriggerOptions.DEFAULT.withInterveningIf(new SourceCanSoulbond()),
                 new MayEffect(new SoulbondChoosePartnerEffect(),
                         "Pair Breathkeeper Seraph with another unpaired creature you control?"));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),

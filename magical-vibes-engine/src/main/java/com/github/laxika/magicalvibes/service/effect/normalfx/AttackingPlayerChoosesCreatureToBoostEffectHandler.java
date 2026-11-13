@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AttackingPlayerChoosesCreatureToBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -68,9 +67,7 @@ public class AttackingPlayerChoosesCreatureToBoostEffectHandler implements Norma
 
         BoostTargetCreatureEffect boost = new BoostTargetCreatureEffect(
                 context.powerBoost(), context.toughnessBoost());
-        StackEntry boostEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                context.sourceCard(),
+        StackEntry boostEntry = StackEntry.carrier(context.sourceCard(),
                 context.controllerId(),
                 context.sourceCard().getName() + "'s ability",
                 List.of(boost),

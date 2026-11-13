@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffect;
@@ -60,8 +59,7 @@ public class DiscardHandUnlessPaysLifeEffectHandler implements NormalEffectHandl
 
     /** Discard {@code targetPlayerId}'s entire hand, attributed to {@code casterId}. */
     public void discardTargetHand(GameData gameData, UUID casterId, UUID targetPlayerId, com.github.laxika.magicalvibes.model.Card sourceCard) {
-        StackEntry syntheticEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY, sourceCard, casterId,
+        StackEntry syntheticEntry = StackEntry.carrier(sourceCard, casterId,
                 sourceCard.getName() + " - discard hand",
                 List.of(new DiscardHandEffect(DiscardRecipient.TARGET_PLAYER)),
                 targetPlayerId, (UUID) null);

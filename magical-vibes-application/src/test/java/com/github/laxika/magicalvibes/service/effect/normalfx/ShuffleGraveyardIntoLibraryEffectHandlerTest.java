@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -139,7 +141,7 @@ player1Id = UUID.randomUUID();
 
                 ShuffleGraveyardIntoLibraryEffect effect = new ShuffleGraveyardIntoLibraryEffect(true);
                 // Saga chapter / triggered ability: no targetId
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("The Mending of Dominaria"),
+                StackEntry entry = TestStackDoor.triggered(createCard("The Mending of Dominaria"),
                         player1Id, "The Mending of Dominaria's chapter III ability", List.of(effect));
 
                 shuffleGraveyardIntoLibraryEffectHandler.resolve(gd, entry, effect);

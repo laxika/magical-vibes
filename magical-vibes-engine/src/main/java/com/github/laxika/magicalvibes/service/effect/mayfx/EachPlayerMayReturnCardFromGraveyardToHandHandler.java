@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayReturnCardFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToHandEffect;
@@ -36,9 +35,7 @@ public class EachPlayerMayReturnCardFromGraveyardToHandHandler implements MayEff
             var mayEffect = (EachPlayerMayReturnCardFromGraveyardToHandEffect) ability.effects().getFirst();
             var returnEffect = new ReturnCardsFromControllerGraveyardToHandEffect(
                     mayEffect.filter(), new Fixed(1), false);
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(),
+            StackEntry entry = StackEntry.carrier(ability.sourceCard(),
                     player.getId(),
                     ability.sourceCard().getName() + "'s ability",
                     new ArrayList<>(List.of(returnEffect)),

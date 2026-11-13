@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -10,7 +12,6 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
@@ -200,9 +201,7 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Stops when stack is non-empty")
         void stopsWhenStackIsNonEmpty() {
-            gd.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    new Card(),
+            gd.stack.add(TestStackDoor.triggered(new Card(),
                     player1Id,
                     "Test trigger",
                     List.of()
@@ -329,42 +328,6 @@ class AutoPassServiceTest {
         }
 
         @Test
-        @DisplayName("Processes pending spell-target triggers before loop")
-        void processesSpellTargetTriggers() {
-            gd.queueInteraction(
-                    new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            new Card(), player1Id, List.of(new DealDamageToAnyTargetEffect(1)), false));
-            // After trigger processing, stop via finished status
-            gd.status = GameStatus.RUNNING;
-            org.mockito.Mockito.doAnswer(inv -> {
-                gd.clearPendingInteractions(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
-                gd.status = GameStatus.FINISHED;
-                return null;
-            }).when(triggerCollectionService).processNextSpellTargetTrigger(gd);
-
-            sut.resolveAutoPass(gd, ignored -> {});
-
-            verify(triggerCollectionService).processNextSpellTargetTrigger(gd);
-        }
-
-        @Test
-        @DisplayName("Processes pending discard self-triggers before loop")
-        void processesDiscardSelfTriggers() {
-            gd.queueInteraction(
-                    new PermanentChoiceContext.DiscardTriggerAnyTarget(
-                            new Card(), player1Id, List.of(new DealDamageToAnyTargetEffect(1))));
-            org.mockito.Mockito.doAnswer(inv -> {
-                gd.clearPendingInteractions(PermanentChoiceContext.DiscardTriggerAnyTarget.class);
-                gd.status = GameStatus.FINISHED;
-                return null;
-            }).when(triggerCollectionService).processNextDiscardSelfTrigger(gd);
-
-            sut.resolveAutoPass(gd, ignored -> {});
-
-            verify(triggerCollectionService).processNextDiscardSelfTrigger(gd);
-        }
-
-        @Test
         @DisplayName("Processes pending attack trigger targets before loop")
         void processesAttackTriggerTargets() {
             gd.queueInteraction(
@@ -396,23 +359,6 @@ class AutoPassServiceTest {
             sut.resolveAutoPass(gd, ignored -> {});
 
             verify(triggerCollectionService).processNextEntersTriggerTarget(gd);
-        }
-
-        @Test
-        @DisplayName("Processes pending death trigger targets before loop")
-        void processesDeathTriggerTargets() {
-            gd.queueInteraction(
-                    new PermanentChoiceContext.DeathTriggerTarget(
-                            new Card(), player1Id, List.of(new DealDamageToAnyTargetEffect(1))));
-            org.mockito.Mockito.doAnswer(inv -> {
-                gd.clearPendingInteractions(PermanentChoiceContext.DeathTriggerTarget.class);
-                gd.status = GameStatus.FINISHED;
-                return null;
-            }).when(triggerCollectionService).processNextDeathTriggerTarget(gd);
-
-            sut.resolveAutoPass(gd, ignored -> {});
-
-            verify(triggerCollectionService).processNextDeathTriggerTarget(gd);
         }
 
         @Test
@@ -522,9 +468,7 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Flushes pending mana-ability triggers to stack (CR 603.3)")
         void flushesPendingManaAbilityTriggers() {
-            StackEntry pendingTrigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    new Card(), player2Id, "Viridian Revel trigger", List.of());
+            StackEntry pendingTrigger = TestStackDoor.triggered(new Card(), player2Id, "Viridian Revel trigger", List.of());
             gd.pendingManaAbilityTriggers.add(pendingTrigger);
             gd.priorityPassedBy.add(player1Id);
 
@@ -726,9 +670,7 @@ class AutoPassServiceTest {
         @DisplayName("Returns immediately when game is finished")
         void returnsImmediatelyWhenGameFinished() {
             gd.status = GameStatus.FINISHED;
-            gd.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    new Card(),
+            gd.stack.add(TestStackDoor.triggered(new Card(),
                     player1Id,
                     "Test trigger",
                     List.of()
@@ -743,9 +685,7 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Resolves stack when both players auto-pass")
         void resolvesStackWhenBothAutoPass() {
-            gd.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    new Card(),
+            gd.stack.add(TestStackDoor.triggered(new Card(),
                     player1Id,
                     "Test trigger",
                     List.of()
@@ -768,9 +708,7 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Stops when priority holder has playable cards")
         void stopsWhenPriorityHolderHasPlayableCards() {
-            gd.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    new Card(),
+            gd.stack.add(TestStackDoor.triggered(new Card(),
                     player1Id,
                     "Test trigger",
                     List.of()
@@ -788,9 +726,7 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Stops when priority holder has instant-speed activated ability")
         void stopsWhenPriorityHolderHasActivatedAbility() {
-            gd.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    new Card(),
+            gd.stack.add(TestStackDoor.triggered(new Card(),
                     player1Id,
                     "Test trigger",
                     List.of()
@@ -813,9 +749,7 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Returns when awaiting input")
         void returnsWhenAwaitingInput() {
-            gd.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    new Card(),
+            gd.stack.add(TestStackDoor.triggered(new Card(),
                     player1Id,
                     "Test trigger",
                     List.of()
@@ -831,9 +765,7 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Stops after resolution when pending may abilities exist")
         void stopsAfterResolutionWhenPendingMayAbilities() {
-            gd.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    new Card(),
+            gd.stack.add(TestStackDoor.triggered(new Card(),
                     player1Id,
                     "Test trigger",
                     List.of()
@@ -856,9 +788,7 @@ class AutoPassServiceTest {
         @Test
         @DisplayName("Stops after resolution when awaiting input")
         void stopsAfterResolutionWhenAwaitingInput() {
-            gd.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    new Card(),
+            gd.stack.add(TestStackDoor.triggered(new Card(),
                     player1Id,
                     "Test trigger",
                     List.of()

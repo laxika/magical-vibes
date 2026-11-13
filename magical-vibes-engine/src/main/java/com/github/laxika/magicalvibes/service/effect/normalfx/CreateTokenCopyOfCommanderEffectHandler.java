@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCommanderEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
@@ -58,7 +57,7 @@ public class CreateTokenCopyOfCommanderEffectHandler implements NormalEffectHand
         if (commander == null) {
             return;
         }
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, playerId,
+        StackEntry entry = StackEntry.carrier(sourceCard, playerId,
                 sourceCard == null ? "" : sourceCard.getName(), List.of());
         createTokenCopyOfCommander(gameData, entry, commander);
     }

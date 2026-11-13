@@ -20,10 +20,10 @@ public class SoulOfMigration extends Card {
 
     public SoulOfMigration() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{W}"))));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 2, "Bird", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()));
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeSelfIfEvokedEffect());
     }
 }

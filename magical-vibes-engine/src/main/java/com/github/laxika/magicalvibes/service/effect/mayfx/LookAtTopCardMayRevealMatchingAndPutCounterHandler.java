@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingAndPutCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -58,9 +57,7 @@ public class LookAtTopCardMayRevealMatchingAndPutCounterHandler implements MayEf
                     ? null
                     : gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
             if (source != null) {
-                StackEntry counterEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        ability.sourceCard(),
+                StackEntry counterEntry = StackEntry.carrier(ability.sourceCard(),
                         ability.controllerId(),
                         ability.sourceCard().getName() + "'s ability",
                         List.of(new PutCountersOnSelfEffect(effect.counterType())),

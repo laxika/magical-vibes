@@ -42,7 +42,7 @@ public class VerdantMasteryEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
+        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, controllerId);
         List<Card> deck = gameData.playerDecks.get(controllerId);
         if (deck == null || deck.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);

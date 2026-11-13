@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 
@@ -245,7 +247,7 @@ class DrawServiceTest {
                     ability.limitKey())) {
                 return false;
             }
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, request.sourceCard(),
+            StackEntry entry = TestStackDoor.triggered(request.sourceCard(),
                     request.controllerId(), request.description(),
                     new ArrayList<>(ability.effects().stream().map(EffectRegistration::effect).toList()), null,
                     request.sourcePermanentId());

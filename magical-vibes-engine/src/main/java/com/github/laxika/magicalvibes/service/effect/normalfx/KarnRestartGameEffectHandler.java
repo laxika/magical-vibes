@@ -170,21 +170,9 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
                 a -> a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP
                         || a.kind() == DelayedPermanentActionKind.SACRIFICE_AT_END_STEP);
         gameData.pendingMayAbilities.clear();
-        gameData.clearPendingInteractions(PermanentChoiceContext.DeathTriggerTarget.class);
-        gameData.clearPendingInteractions(PermanentChoiceContext.DiscardTriggerAnyTarget.class);
-        gameData.clearPendingInteractions(PermanentChoiceContext.PlotTriggerAnyTarget.class);
-        gameData.clearPendingInteractions(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.AttackTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.EntersTriggerTarget.class);
-        gameData.clearPendingInteractions(PermanentChoiceContext.ExploitTriggerTarget.class);
-        gameData.clearPendingInteractions(PermanentChoiceContext.ExploitPermanentTriggerTarget.class);
-        gameData.clearPendingInteractions(PermanentChoiceContext.ExploitPlayerTriggerTarget.class);
         gameData.clearPendingInteractions(PermanentChoiceContext.TriggeredModalTrigger.class);
-        gameData.clearPendingInteractions(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
-        gameData.clearPendingInteractions(PermanentChoiceContext.EmblemTriggerTarget.class);
-        gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepPlayerTargetTrigger.class);
-        gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepMultiPlayerTargetTrigger.class);
-        gameData.clearPendingInteractions(PermanentChoiceContext.UpkeepCopyTriggerTarget.class);
         gameData.emblems.clear();
         gameData.ringStates.clear();
         gameData.boons.clear();

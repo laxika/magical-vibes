@@ -155,6 +155,6 @@ class VadrokApexOfThunderTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
                 gd, vadrok, List.of(vadrok.getCard()), player1.getId()));
         harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .processNextSelfTriggeredAbilityTarget(gd));
+                .beginStackDoorChoices(gd));
     }
 }

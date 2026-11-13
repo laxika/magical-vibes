@@ -26,7 +26,7 @@ public class StockpilingCelebrant extends Card {
                         new PermanentNotPredicate(new PermanentIsLandPredicate()),
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
-                "Target must be another nonland permanent you control"), 0, 1)
+                "Target must be another nonland permanent you control"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new MayEffect(new ReturnTargetPermanentsThenEffect(new ScryEffect(2)),
                                 "Return the targeted permanent to its owner's hand?"));

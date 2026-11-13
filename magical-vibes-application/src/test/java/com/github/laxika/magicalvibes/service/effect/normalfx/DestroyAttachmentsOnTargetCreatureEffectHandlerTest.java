@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -197,7 +199,7 @@ class DestroyAttachmentsOnTargetCreatureEffectHandlerTest {
             otherCard.setSubtypes(List.of(CardSubtype.EQUIPMENT));
             addPermanent(player2Id, otherCard);
 
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Corrosive Ooze"),
+            StackEntry entry = TestStackDoor.triggered(createCard("Corrosive Ooze"),
                     player1Id, "Corrosive Ooze's end-of-combat ability", List.of(), departedCreatureId, (UUID) null);
             entry.setNonTargeting(true);
             entry.rememberLastKnownPermanentAttachments(departedCreatureId,

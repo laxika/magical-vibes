@@ -343,10 +343,6 @@ public class PlayerInteractionSupport {
         gameLogService.append(gameData, GameLog.textCardText(playerName + " discards ", drawn, "."));
         triggerCollectionService.checkDiscardTriggers(gameData, playerId, drawn);
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-        }
-
     }
     public void resolveDiscardCards(GameData gameData, UUID playerId, int amount) {
         resolveDiscardCards(gameData, playerId, amount, DiscardFollowUp.NONE);
@@ -465,9 +461,6 @@ public class PlayerInteractionSupport {
         triggerCollectionService.finishDiscardEvent(gameData);
 
         // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-        }
     
     }
     /**
@@ -527,9 +520,6 @@ public class PlayerInteractionSupport {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, discarded, null, false);
         }
 
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.DiscardTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextDiscardSelfTrigger(gameData);
-        }
     }
 
     /**

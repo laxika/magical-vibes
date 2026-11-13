@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToSelfEffect;
@@ -49,7 +48,7 @@ public class TargetCreatureDealsPowerDamageToSelfEffectHandler implements Normal
 
         int power = gameQueryService.getPowerBasedDamage(gameData, target);
         // The creature is the damage source, so its lifelink, infect and damage triggers apply.
-        StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, target.getCard(),
+        StackEntry damageEntry = StackEntry.carrier(target.getCard(),
                 gameQueryService.findPermanentController(gameData, target.getId()),
                 target.getCard().getName() + "'s ability", List.of(), null, target.getId());
         damageEntry.setSourcePermanentSnapshot(target);

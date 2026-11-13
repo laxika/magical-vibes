@@ -61,7 +61,7 @@ public class SearchLibraryForUpToTwoBasicLandsThenRollD20EffectHandler
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(controllerId)
                             + " searches their library but finds no basic land cards. Library is shuffled."));
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, controllerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, controllerId);
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
             insertRoll(gameData, entry, followUp, List.of());
             return;

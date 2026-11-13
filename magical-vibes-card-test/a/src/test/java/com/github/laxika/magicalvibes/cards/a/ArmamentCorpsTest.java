@@ -62,7 +62,7 @@ class ArmamentCorpsTest extends BaseCardTest {
         harness.castFromHand(player1, new ArmamentCorps(), "{2}{W}{B}{G}");
         harness.passBothPriorities();
         java.util.UUID corpsId = harness.getPermanentId(player1, "Armament Corps");
-        harness.handlePermanentChosen(player1, corpsId);
+        harness.handleMultiplePermanentsChosen(player1, List.of(corpsId));
         harness.passBothPriorities();
 
         Permanent corps = gd.playerBattlefields.get(player1.getId()).getFirst();

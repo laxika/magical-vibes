@@ -619,7 +619,7 @@ public class GameService {
                 triggerCollectionService.checkAllyRoomFullyUnlockedTriggers(
                         gameData, player.getId(), room);
             }
-            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
+            triggerCollectionService.beginStackDoorChoices(gameData);
             if (!gameData.interaction.isAwaitingInput()) {
                 triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
             }

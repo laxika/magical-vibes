@@ -2,30 +2,37 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TrainEffect;
+import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.trigger.CounterAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.CounterWatch;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Training (CR 702.149a): puts a +1/+1 counter on the creature, which then "trains"; each of its "whenever this
+ * creature trains" abilities triggers and goes on the stack through the stack door, which makes its choices as it goes
+ * there (Savior of Ollenbock's "up to one other target creature or creature card from a graveyard").
+ */
 @Component
 @RequiredArgsConstructor
 public class TrainEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GraveyardTargetingService graveyardTargetingService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final GameLogService gameLogService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,44 +54,14 @@ public class TrainEffectHandler implements NormalEffectHandlerBean {
         }
 
         Card card = source.getCard();
-        // Each "whenever this creature trains" ability is one object of all its effects (CR 603.3).
-        for (List<CardEffect> trainTriggers : CounterAbilityReader.printedEffectsByAbility(card,
-                CounterWatch.ON_SELF_TRAINS)) {
-            queueTrainsAbility(gameData, entry, source, card, trainTriggers);
+        UUID controllerId = entry.getControllerId();
+        for (TriggeredAbility ability : CounterAbilityReader.printed(card, CounterWatch.ON_SELF_TRAINS)) {
+            if (triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability, card, source,
+                    controllerId, card.getName() + "'s training ability",
+                    ConditionContext.forPermanent(source, controllerId),
+                    TriggeredAbilityRequest.TriggerRecord.NONE))) {
+                gameLogService.append(gameData, GameLog.abilityTriggers(card));
+            }
         }
-    }
-
-    private void queueTrainsAbility(GameData gameData, StackEntry entry, Permanent source, Card card,
-                                    List<CardEffect> trainTriggers) {
-        BattlefieldAndGraveyardCardChoosingEffect mixedZoneTrigger = trainTriggers.stream()
-                .filter(BattlefieldAndGraveyardCardChoosingEffect.class::isInstance)
-                .map(BattlefieldAndGraveyardCardChoosingEffect.class::cast)
-                .findFirst()
-                .orElse(null);
-        // The entry of an ability that chooses nothing, which is also the record its target choice carries
-        // (GameData.handOffTriggerRecord).
-        StackEntry trainsEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                entry.getControllerId(),
-                card.getName() + "'s training ability",
-                new ArrayList<>(trainTriggers),
-                0,
-                null,
-                source.getId(),
-                Map.of(),
-                null,
-                List.of(),
-                List.of()
-        );
-        gameData.handOffTriggerRecord(trainsEntry);
-        if (mixedZoneTrigger != null) {
-            graveyardTargetingService.handleBattlefieldAndGraveyardExileTargeting(
-                    gameData, entry.getControllerId(), card, trainTriggers, source.getId(),
-                    mixedZoneTrigger, card.getName() + "'s training ability");
-            return;
-        }
-
-        gameData.stack.add(trainsEntry);
     }
 }

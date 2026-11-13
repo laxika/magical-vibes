@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.cards.a.AlharuSolemnRitualist;
 import com.github.laxika.magicalvibes.cards.o.OmarthisGhostfireInitiate;
 import com.github.laxika.magicalvibes.cards.t.ThePrismaticPiper;
@@ -8,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -143,8 +144,7 @@ class IAmNeverAloneTest extends BaseCardTest {
         Permanent otherCreature = addCreatureReady(player1, new ThePrismaticPiper());
 
         resolveScheme();
-        harness.handlePermanentChosen(player1, otherCreature.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(otherCreature.getId()));
         resolveAllTriggers();
 
         assertThat(otherCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -221,9 +221,7 @@ class IAmNeverAloneTest extends BaseCardTest {
 
     private void resolveScheme() {
         IAmNeverAlone scheme = new IAmNeverAlone();
-        gd.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                scheme,
+        gd.stack.add(TestStackDoor.triggered(scheme,
                 player1.getId(),
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects()));

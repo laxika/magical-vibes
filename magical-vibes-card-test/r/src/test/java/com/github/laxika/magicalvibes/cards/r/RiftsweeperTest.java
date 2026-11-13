@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.b.BlindPhantasm;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -25,7 +26,7 @@ class RiftsweeperTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(exiledCard.getId()));
+        harness.handlePermanentChosen(player1, exiledCard.getId());
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(exiledCard.getId())).isNull();
@@ -57,7 +58,7 @@ class RiftsweeperTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(exiledCard.getId()));
+        harness.handlePermanentChosen(player1, exiledCard.getId());
         assertThat(gd.stack).hasSize(1);
 
         assertThat(gd.removeFromExile(exiledCard.getId())).isTrue();
@@ -81,9 +82,9 @@ class RiftsweeperTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.ETBExiledCardTargetChoice.class);
-        harness.handleMultipleCardsChosen(player1, List.of(exiledCard.getId()));
+        assertThat(gd.interaction.permanentChoiceContext())
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
+        harness.handlePermanentChosen(player1, exiledCard.getId());
 
         harness.passBothPriorities();
 
@@ -121,10 +122,10 @@ class RiftsweeperTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 
-        PendingInteraction.ETBExiledCardTargetChoice choice =
-                (PendingInteraction.ETBExiledCardTargetChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validCardIds()).containsExactly(faceUpCard.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(faceUpCard.getId()));
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validIds()).containsExactly(faceUpCard.getId());
+        harness.handlePermanentChosen(player1, faceUpCard.getId());
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(faceUpCard.getId())).isNull();

@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -9,7 +11,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -129,7 +130,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
             @DisplayName("Empty library does nothing")
             void emptyLibraryDoesNothing() {
                 var effect = createBottomRandomEffect(new CardTypePredicate(CardType.CREATURE));
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Gishath, Sun's Avatar"),
                         player1Id, "Gishath's triggered ability", List.of(effect), 7, null, null);
 
                 lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
@@ -144,7 +145,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
                 gd.playerDecks.get(player1Id).add(createCard("Some Card"));
 
                 var effect = createBottomRandomEffect(new CardTypePredicate(CardType.CREATURE));
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Gishath, Sun's Avatar"),
                         player1Id, "Gishath's triggered ability", List.of(effect), 0, null, null);
 
                 lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
@@ -164,7 +165,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
                 when(predicateEvaluationService.matchesCardPredicate(any(), any(), any(), any(), any())).thenReturn(false);
 
                 var effect = createBottomRandomEffect(new CardTypePredicate(CardType.CREATURE));
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Gishath, Sun's Avatar"),
                         player1Id, "Gishath's triggered ability", List.of(effect), 7, null, null);
 
                 lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
@@ -191,7 +192,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
                 when(predicateEvaluationService.matchesCardPredicate(eq(instant), any(), any(), any(), any())).thenReturn(false);
 
                 var effect = createBottomRandomEffect(new CardTypePredicate(CardType.CREATURE));
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Gishath, Sun's Avatar"),
                         player1Id, "Gishath's triggered ability", List.of(effect), 7, null, null);
 
                 lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);
@@ -213,7 +214,7 @@ class LookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandlerTest {
                 when(predicateEvaluationService.matchesCardPredicate(eq(dino), any(), any(), any(), any())).thenReturn(true);
 
                 var effect = createBottomRandomEffect(new CardTypePredicate(CardType.CREATURE));
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Gishath, Sun's Avatar"),
+                StackEntry entry = TestStackDoor.triggered(createCard("Gishath, Sun's Avatar"),
                         player1Id, "Gishath's triggered ability", List.of(effect), 7, null, null);
 
                 lookAtTopXCardsPermanentsToBattlefieldRestToGraveyardEffectHandler.resolve(gd, entry, effect);

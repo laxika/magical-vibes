@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureCardFromGraveyardDealPowerDamageToSourceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -67,9 +66,7 @@ public class ExileTargetCreatureCardFromGraveyardDealPowerDamageToSourceEffectHa
 
         UUID damageControllerId = targetCard.getOwnerId() != null
                 ? targetCard.getOwnerId() : entry.getControllerId();
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                targetCard,
+        StackEntry damageEntry = StackEntry.carrier(targetCard,
                 damageControllerId,
                 targetCard.getName() + "'s ability",
                 List.of(),

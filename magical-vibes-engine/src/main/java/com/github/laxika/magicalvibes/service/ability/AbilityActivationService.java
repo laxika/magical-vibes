@@ -2550,10 +2550,6 @@ public class AbilityActivationService {
 
     /** An activation trigger that targets a permanent chooses its target now, as it goes on the stack (CR 603.3d). */
     private void chooseActivationTriggerTarget(GameData gameData) {
-        if (!gameData.interaction.isAwaitingInput()
-                && gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
-            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
-        }
     }
 
     private void completeHandAbilityActivation(GameData gameData, Player player, Card card,
@@ -2703,7 +2699,7 @@ public class AbilityActivationService {
                 triggerCollectionService.checkCycleTriggers(gameData, playerId, card, xValue,
                         ability.isCyclingTriggerTargets() ? ability : null,
                         targetIds == null && targetId != null ? List.of(targetId) : targetIds);
-                triggerCollectionService.processNextDiscardControllerTriggerTarget(gameData);
+                triggerCollectionService.beginStackDoorChoices(gameData);
                 if (!gameData.interaction.isAwaitingInput()) {
                     triggerCollectionService.processNextETBSpellTargetTrigger(gameData);
                 }
@@ -2711,10 +2707,6 @@ public class AbilityActivationService {
                     triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
                 }
             }
-        }
-        if (!gameData.interaction.isAwaitingInput()
-                && gameData.hasPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class)) {
-            triggerCollectionService.processNextSelfTriggeredAbilityTarget(gameData);
         }
 
         gameLogService.append(gameData, GameLog.textCardText(
@@ -3206,7 +3198,7 @@ public class AbilityActivationService {
                 null
         );
         if (!gameData.interaction.isAwaitingInput()) {
-            triggerCollectionService.processNextDiscardControllerTriggerTarget(gameData);
+            triggerCollectionService.beginStackDoorChoices(gameData);
         }
     }
 

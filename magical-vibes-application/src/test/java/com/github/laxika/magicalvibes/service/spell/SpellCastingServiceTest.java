@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.spell;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
@@ -1685,9 +1687,7 @@ class SpellCastingServiceTest {
         @DisplayName("Flushes pending mana-ability triggers to stack (CR 603.3)")
         void flushesPendingManaAbilityTriggers() {
             // Simulate a mana ability that deferred a trigger (e.g. Viridian Revel from Shrine sacrifice)
-            var pendingTrigger = new com.github.laxika.magicalvibes.model.StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    new Card(), player2Id, "Viridian Revel trigger", List.of(new DrawCardEffect(1)));
+            var pendingTrigger = TestStackDoor.triggered(new Card(), player2Id, "Viridian Revel trigger", List.of(new DrawCardEffect(1)));
             gd.pendingManaAbilityTriggers.add(pendingTrigger);
 
             Card dummy = createCreature("Dummy", "{G}");

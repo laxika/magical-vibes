@@ -280,9 +280,9 @@ public class MayMiscHandlerService {
                                              PendingMayAbility ability,
                                              ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffect effect) {
         if (accepted) {
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(), ability.controllerId(), ability.sourceCard().getName(),
-                    new ArrayList<>(List.of(effect)));
+            // An action taken with the card from the opening hand (CR 103.6), resolved at once: never a stack object.
+            StackEntry entry = StackEntry.carrier(ability.sourceCard(), ability.controllerId(),
+                    ability.sourceCard().getName(), new ArrayList<>(List.of(effect)));
             exileSourceCardFromOpeningHandHandler.resolve(gameData, entry, effect);
         }
         completeOpeningHandReveal(gameData);
@@ -374,9 +374,7 @@ public class MayMiscHandlerService {
         }
 
         if (effect.kind() == DrawReplacementKind.ARCHMAGE_ASCENSION) {
-            StackEntry searchEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    ability.sourceCard(),
+            StackEntry searchEntry = StackEntry.carrier(ability.sourceCard(),
                     drawingPlayerId,
                     ability.sourceCard().getName() + "'s ability",
                     new ArrayList<>(List.of(new SearchLibraryEffect())),
@@ -539,11 +537,6 @@ public class MayMiscHandlerService {
 
         // Explore is complete — check for "whenever a creature you control explores" triggers
         triggerCollectionService.checkExploreTriggers(gameData, controllerId, exploredCard);
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
-            triggerCollectionService.processNextExploreTriggerTarget(gameData);
-            return;
-        }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }

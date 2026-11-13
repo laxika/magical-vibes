@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MassFightTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -93,7 +92,7 @@ public class MassFightTargetCreatureEffectHandler implements NormalEffectHandler
 
     private StackEntry creatureDamageEntry(GameData gameData, Permanent source, StackEntry resolvingEntry) {
         UUID sourceControllerId = gameQueryService.findPermanentController(gameData, source.getId());
-        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), sourceControllerId,
+        return StackEntry.carrier(source.getCard(), sourceControllerId,
                 resolvingEntry.getDescription(), List.of(), null, source.getId());
     }
 }

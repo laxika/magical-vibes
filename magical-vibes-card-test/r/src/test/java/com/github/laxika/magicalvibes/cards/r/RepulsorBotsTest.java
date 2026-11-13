@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,12 +29,14 @@ class RepulsorBotsTest extends BaseCardTest {
 
         GameData gd = harness.getGameData();
         UUID sourceId = harness.getPermanentId(player1, "Repulsor Bots");
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds())
                 .contains(creatureId, artifactId)
                 .doesNotContain(sourceId);
+        assertThat(choice.maxCount()).isEqualTo(2);
 
-        harness.handlePermanentChosen(player1, creatureId);
-        harness.handlePermanentChosen(player1, artifactId);
+        harness.handleMultiplePermanentsChosen(player1, List.of(creatureId, artifactId));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Repulsor Bots");
@@ -49,7 +52,7 @@ class RepulsorBotsTest extends BaseCardTest {
         UUID creatureId = addCreatureReady(player1, new GrizzlyBears()).getId();
         harness.castFromHand(player1, new RepulsorBots(), "{4}{U}{U}");
         resolveAllTriggers();
-        harness.handlePermanentChosen(player1, creatureId);
+        harness.handleMultiplePermanentsChosen(player1, List.of(creatureId));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Repulsor Bots");
@@ -64,7 +67,7 @@ class RepulsorBotsTest extends BaseCardTest {
         resolveAllTriggers();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
         harness.assertOnBattlefield(player1, "Repulsor Bots");
         harness.assertOnBattlefield(player1, "Island");
     }
@@ -77,7 +80,7 @@ class RepulsorBotsTest extends BaseCardTest {
         harness.castFromHand(player1, new RepulsorBots(), "{4}{U}{U}");
         resolveAllTriggers();
 
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Repulsor Bots");
@@ -95,10 +98,9 @@ class RepulsorBotsTest extends BaseCardTest {
         harness.castFromHand(player1, new RepulsorBots(), "{4}{U}{U}");
         resolveAllTriggers();
 
-        harness.handlePermanentChosen(player1, creatureId);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .doesNotContain(creatureId);
-        harness.handlePermanentChosen(player1, player1.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .hasSize(2);
+        harness.handleMultiplePermanentsChosen(player1, List.of(creatureId));
         resolveAllTriggers();
 
         harness.assertInHand(player2, "Grizzly Bears");
@@ -114,8 +116,7 @@ class RepulsorBotsTest extends BaseCardTest {
         harness.castFromHand(player1, new RepulsorBots(), "{4}{U}{U}");
         resolveAllTriggers();
 
-        harness.handlePermanentChosen(player1, creature.getId());
-        harness.handlePermanentChosen(player1, artifactId);
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId(), artifactId));
         var source = findPermanent(player1, "Repulsor Bots");
         harness.inMutationScope(() -> {
             harness.getPermanentRemovalService().removePermanentToGraveyard(gd, creature);

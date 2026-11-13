@@ -1,4 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -156,7 +158,7 @@ class ExileGraveyardCardsEffectHandlerTest {
 
             ExileGraveyardCardsEffect effect = new ExileGraveyardCardsEffect(
                     GraveyardExileScope.DYING_CREATURE_CONTROLLER);
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Burn Away"),
+            StackEntry entry = TestStackDoor.triggered(createCard("Burn Away"),
                     player1Id, "Burn Away triggers", List.of(effect), 0,
                     player2Id, null);
 
@@ -230,7 +232,7 @@ class ExileGraveyardCardsEffectHandlerTest {
         UUID sourcePermanentId = UUID.randomUUID();
 
         ExileGraveyardCardsEffect effect = ExileGraveyardCardsEffect.allOpponentsWithSource();
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, createCard("Author of Shadows"),
+        StackEntry entry = TestStackDoor.triggered(createCard("Author of Shadows"),
                 player1Id, "Author of Shadows", List.of(effect), 0, sourcePermanentId);
 
         handler.resolve(gd, entry, effect);

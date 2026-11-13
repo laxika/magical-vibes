@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeTextBoxesEffect;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -44,8 +43,7 @@ public class ExchangeTextBoxesAsEntersHandler implements MayEffectHandlerBean {
         Permanent entering = gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
         if (entering != null) {
             if (accepted) {
-                StackEntry exchange = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                        ability.sourceCard(), ability.controllerId(), ability.description(),
+                StackEntry exchange = StackEntry.carrier(ability.sourceCard(), ability.controllerId(), ability.description(),
                         ability.effects(), ability.targetCardId(), entering.getId());
                 exchange.setNonTargeting(true);
                 effectResolutionService.resolveEffects(gameData, exchange);

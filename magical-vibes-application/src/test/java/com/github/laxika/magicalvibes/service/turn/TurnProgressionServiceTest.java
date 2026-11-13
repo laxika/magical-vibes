@@ -1226,30 +1226,6 @@ class TurnProgressionServiceTest {
             verify(turnCleanupService).applyCleanupResets(gd);
         }
 
-        @Test
-        @DisplayName("processNextUpkeepPlayerTarget delegates to stepTriggerService")
-        void processNextUpkeepPlayerTargetDelegates() {
-            turnProgressionService.processNextUpkeepPlayerTarget(gd);
-
-            verify(stepTriggerService).processNextUpkeepPlayerTarget(gd);
-        }
-
-        @Test
-        @DisplayName("processNextUpkeepCopyTarget delegates to stepTriggerService")
-        void processNextUpkeepCopyTargetDelegates() {
-            turnProgressionService.processNextUpkeepCopyTarget(gd);
-
-            verify(stepTriggerService).processNextUpkeepCopyTarget(gd);
-        }
-
-        @Test
-        @DisplayName("processNextCapriciousEfreetTarget delegates to stepTriggerService")
-        void processNextCapriciousEfreetTargetDelegates() {
-            turnProgressionService.processNextCapriciousEfreetTarget(gd);
-
-            verify(stepTriggerService).processNextCapriciousEfreetTarget(gd);
-        }
-
     }
 
     // =========================================================================

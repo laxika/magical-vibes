@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnMilledPermanentToHandAndCreateFoodIfSquirrelEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -103,9 +102,7 @@ public class ReturnMilledPermanentToHandAndCreateFoodIfSquirrelHandler implement
             return;
         }
 
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
+        StackEntry entry = StackEntry.carrier(sourceCard,
                 ability.controllerId(),
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(foodEffect)),

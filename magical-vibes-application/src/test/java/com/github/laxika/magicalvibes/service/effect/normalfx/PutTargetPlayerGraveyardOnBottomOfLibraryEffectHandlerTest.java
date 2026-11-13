@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
+
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.PutTargetPlayerGraveyardOnBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -57,7 +58,7 @@ class PutTargetPlayerGraveyardOnBottomOfLibraryEffectHandlerTest {
         gameData.playerDecks.get(playerId).add(existing);
         PutTargetPlayerGraveyardOnBottomOfLibraryEffect effect =
                 new PutTargetPlayerGraveyardOnBottomOfLibraryEffect();
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card("Endurance"),
+        StackEntry entry = TestStackDoor.triggered(card("Endurance"),
                 playerId, "Endurance's triggered ability", List.of(effect), playerId, (Zone) null);
         when(graveyardService.takeGraveyardCardsForZoneChange(gameData, playerId))
                 .thenReturn(List.of(first, second));

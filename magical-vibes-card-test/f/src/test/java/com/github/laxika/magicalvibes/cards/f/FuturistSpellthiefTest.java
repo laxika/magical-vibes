@@ -159,7 +159,7 @@ class FuturistSpellthiefTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castInstant(player2, 0, player1.getId());
-        harness.castCreature(player1, 0, shock.getId());
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
     }
 

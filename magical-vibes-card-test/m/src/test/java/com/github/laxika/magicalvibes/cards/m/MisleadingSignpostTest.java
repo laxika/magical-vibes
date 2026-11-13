@@ -54,7 +54,7 @@ class MisleadingSignpostTest extends BaseCardTest {
 
         assertThat(gd.currentStep).isEqualTo(TurnStep.DECLARE_ATTACKERS);
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenTargetTrigger.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, attacker.getId());
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 

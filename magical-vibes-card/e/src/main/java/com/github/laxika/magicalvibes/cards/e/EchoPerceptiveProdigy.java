@@ -26,9 +26,7 @@ public class EchoPerceptiveProdigy extends Card {
                 "{1}, {T}: Copy target activated or triggered ability you control from a creature source. You may choose new targets for the copy.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
-                                new StackEntryTypeInPredicate(Set.of(
-                                        StackEntryType.ACTIVATED_ABILITY,
-                                        StackEntryType.TRIGGERED_ABILITY)),
+                                new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                                 new StackEntryControlledByPredicate(),
                                 new StackEntryCardTypeInPredicate(Set.of(CardType.CREATURE)))),
                         "Target must be an activated or triggered ability you control from a creature source.")));

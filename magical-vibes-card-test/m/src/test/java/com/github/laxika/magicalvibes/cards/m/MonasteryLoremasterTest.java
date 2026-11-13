@@ -76,6 +76,11 @@ class MonasteryLoremasterTest extends BaseCardTest {
         Permanent loremaster = castFaceDown();
 
         harness.inMutationScope(() -> gs.turnPermanentFaceUpWithoutPayingManaCost(gd, loremaster));
+        // Its "when this is turned face up" ability chooses its target as it goes on the stack, as the action that
+        // turned it face up ends (CR 603.3d).
+        harness.inMutationScope(() -> com.github.laxika.magicalvibes.testutil.GameTestEngineContext.get()
+                .getBean(com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService.class)
+                .beginStackDoorChoices(gd));
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
                 .validCardIds()).containsExactly(spell.getId());
         harness.handleMultipleCardsChosen(player1, List.of(spell.getId()));

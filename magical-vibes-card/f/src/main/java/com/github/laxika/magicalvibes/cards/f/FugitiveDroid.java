@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsPermanentPre
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "TMT", collectorNumber = "40")
 public class FugitiveDroid extends Card {
@@ -47,9 +46,7 @@ public class FugitiveDroid extends Card {
                 "{U}, Sacrifice this creature: Counter target spell that targets an artifact or creature you control.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
-                                new StackEntryNotPredicate(new StackEntryTypeInPredicate(Set.of(
-                                        StackEntryType.ACTIVATED_ABILITY,
-                                        StackEntryType.TRIGGERED_ABILITY))),
+                                new StackEntryNotPredicate(new StackEntryTypeInPredicate(StackEntryType.ABILITIES)),
                                 new StackEntryTargetsPermanentPredicate(controlledArtifactOrCreature))),
                         "Target must be a spell that targets an artifact or creature you control."
                 )

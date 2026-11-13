@@ -28,9 +28,7 @@ public class LouisoixsSacrifice extends Card {
                 "a legendary creature"));
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryAnyOfPredicate(List.of(
-                        new StackEntryTypeInPredicate(Set.of(
-                                StackEntryType.ACTIVATED_ABILITY,
-                                StackEntryType.TRIGGERED_ABILITY)),
+                        new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                         new StackEntryTypeInPredicate(Set.of(
                                 StackEntryType.ENCHANTMENT_SPELL,
                                 StackEntryType.SORCERY_SPELL,

@@ -60,7 +60,7 @@ public class GainControlOfAllPermanentsTargetPlayerControlsEffectHandler impleme
         GainControlOfTargetEffect controlEffect = new GainControlOfTargetEffect(duration);
         for (Permanent permanent : toSeize) {
             if (duration.isSourceLinked()) {
-                StackEntry individual = new StackEntry(entry.getEntryType(), entry.getCard(),
+                StackEntry individual = StackEntry.derivedFrom(entry, entry.getCard(),
                         entry.getControllerId(), entry.getDescription(), List.of(controlEffect),
                         permanent.getId(), entry.getSourcePermanentId());
                 individual.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());

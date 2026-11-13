@@ -63,7 +63,7 @@ public class PutTargetPermanentIntoLibraryNFromTopThenEffectHandler implements N
             case TARGET_OWNER_AS_TARGET -> targetOwnerId;
             default -> entry.getTargetId();
         };
-        StackEntry thenEntry = new StackEntry(entry.getEntryType(), entry.getCard(), thenControllerId,
+        StackEntry thenEntry = StackEntry.derivedFrom(entry, entry.getCard(), thenControllerId,
                 entry.getDescription(), List.of(e.thenEffect()), thenTargetId, entry.getSourcePermanentId());
         thenEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 

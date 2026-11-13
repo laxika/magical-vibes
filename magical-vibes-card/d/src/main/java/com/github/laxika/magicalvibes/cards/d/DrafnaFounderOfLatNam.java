@@ -40,9 +40,7 @@ public class DrafnaFounderOfLatNam extends Card {
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(
                                 new StackEntryCardTypeInPredicate(Set.of(CardType.ARTIFACT)),
-                                new StackEntryNotPredicate(new StackEntryTypeInPredicate(Set.of(
-                                        StackEntryType.TRIGGERED_ABILITY,
-                                        StackEntryType.ACTIVATED_ABILITY))),
+                                new StackEntryNotPredicate(new StackEntryTypeInPredicate(StackEntryType.ABILITIES)),
                                 new StackEntryControlledByPredicate()
                         )),
                         "Target must be an artifact spell you control.")));

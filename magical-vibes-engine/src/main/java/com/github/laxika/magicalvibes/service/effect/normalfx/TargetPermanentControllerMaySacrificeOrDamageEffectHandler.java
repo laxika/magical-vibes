@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerMaySacrificeOrDamageEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -112,9 +111,7 @@ public class TargetPermanentControllerMaySacrificeOrDamageEffectHandler
                 ? entry.getSourcePermanentSnapshot()
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (effect.targetIsDamageSource() && target != null) {
-            damageEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    target.getCard(),
+            damageEntry = StackEntry.carrier(target.getCard(),
                     playerId,
                     target.getCard().getName() + "'s ability",
                     new ArrayList<>(),
@@ -131,9 +128,7 @@ public class TargetPermanentControllerMaySacrificeOrDamageEffectHandler
     }
 
     private StackEntry syntheticEntry(PendingMayAbility ability, UUID sourceControllerId) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                ability.sourceCard(),
+        StackEntry entry = StackEntry.carrier(ability.sourceCard(),
                 sourceControllerId,
                 ability.sourceCard().getName() + "'s ability",
                 new ArrayList<>(),

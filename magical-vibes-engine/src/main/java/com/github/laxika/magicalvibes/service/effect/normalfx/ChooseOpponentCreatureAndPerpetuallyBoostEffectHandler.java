@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentCreatureAndPerpetuallyBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
@@ -75,9 +74,7 @@ public class ChooseOpponentCreatureAndPerpetuallyBoostEffectHandler implements N
 
     public void completeChoice(GameData gameData, UUID chosenPermanentId,
                                PermanentChoiceContext.ChooseOpponentCreatureAndPerpetuallyBoost context) {
-        StackEntry boostEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                context.sourceCard(),
+        StackEntry boostEntry = StackEntry.carrier(context.sourceCard(),
                 context.controllerId(),
                 context.sourceCard().getName() + "'s ability",
                 List.of(),

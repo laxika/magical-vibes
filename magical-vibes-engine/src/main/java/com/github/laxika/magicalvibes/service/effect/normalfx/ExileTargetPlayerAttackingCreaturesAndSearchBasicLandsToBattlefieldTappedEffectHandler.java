@@ -80,7 +80,7 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
         String playerName = gameData.playerIdToName.get(targetPlayerId);
 
         if (deck == null || deck.isEmpty()) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, targetPlayerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, targetPlayerId);
             String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
             gameLogService.append(gameData, GameLog.text(logMsg));
             return;
@@ -93,7 +93,7 @@ public class ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefield
                 .toList();
 
         if (basicLands.isEmpty() && exiledCount > 0) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, gameLogService, targetPlayerId);
+            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, targetPlayerId);
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
             gameLogService.append(gameData, GameLog.text(logMsg));

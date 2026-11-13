@@ -80,7 +80,7 @@ class BronzebeakForagersTest extends BaseCardTest {
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent foragers = harness.enterBattlefieldAndReturn(player1, new BronzebeakForagers());
 
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
@@ -240,7 +240,7 @@ class BronzebeakForagersTest extends BaseCardTest {
         Card returnedCard = gd.playerHands.get(player1.getId()).getFirst();
         harness.setHand(player1, List.of());
         Permanent reentered = harness.enterBattlefieldAndReturn(player1, returnedCard);
-        harness.handlePermanentChosen(player1, second.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
         harness.passBothPriorities();
         harness.passBothPriorities();
 

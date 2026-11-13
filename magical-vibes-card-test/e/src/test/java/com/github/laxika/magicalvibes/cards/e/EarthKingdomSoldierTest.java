@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -57,9 +58,11 @@ class EarthKingdomSoldierTest extends BaseCardTest {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new EarthKingdomSoldier());
         castUntilEntry();
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .doesNotContain(opponentCreature.getId());
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(opponentCreature.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
         assertThat(opponentCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
@@ -70,8 +73,7 @@ class EarthKingdomSoldierTest extends BaseCardTest {
         castUntilEntry();
         Permanent soldier = findPermanent(player1, "Earth Kingdom Soldier");
 
-        // With no other creature, nothing is left to choose after the soldier itself.
-        harness.handlePermanentChosen(player1, soldier.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(soldier.getId()));
         resolveAllTriggers();
 
         assertThat(soldier.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -82,11 +84,10 @@ class EarthKingdomSoldierTest extends BaseCardTest {
     void cannotChooseDuplicateTargets() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new EarthKingdomSoldier());
         castUntilEntry();
-        harness.handlePermanentChosen(player1, target.getId());
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(target.getId(), target.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -123,12 +124,7 @@ class EarthKingdomSoldierTest extends BaseCardTest {
     }
 
     private void chooseTargets(List<UUID> targetIds) {
-        for (UUID targetId : targetIds) {
-            harness.handlePermanentChosen(player1, targetId);
-        }
-        if (targetIds.size() < 2) {
-            harness.handlePermanentChosen(player1, player1.getId());
-        }
+        harness.handleMultiplePermanentsChosen(player1, targetIds);
     }
 
     private void addMana() {

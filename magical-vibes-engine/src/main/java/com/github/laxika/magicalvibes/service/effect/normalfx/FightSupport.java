@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 
 /**
  * Shared "two creatures fight" resolution (CR 701.14a): each of the two creatures deals damage
@@ -96,9 +95,7 @@ public class FightSupport {
             gameLogService.append(gameData, GameLog.cardTextCard(recipient.getCard(), " has protection — damage from ", source.getCard(), " prevented."));
             return;
         }
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                source.getCard(), gameQueryService.findPermanentController(gameData, source.getId()),
+        StackEntry damageEntry = StackEntry.carrier(source.getCard(), gameQueryService.findPermanentController(gameData, source.getId()),
                 source.getCard().getName() + " deals fight damage", java.util.List.of(),
                 recipient.getId(), source.getId());
         damageEntry.setNonTargeting(true);

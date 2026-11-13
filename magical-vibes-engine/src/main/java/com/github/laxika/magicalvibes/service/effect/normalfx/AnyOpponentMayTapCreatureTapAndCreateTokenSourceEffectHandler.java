@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -129,9 +128,7 @@ public class AnyOpponentMayTapCreatureTapAndCreateTokenSourceEffectHandler
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " is tapped."));
         }
 
-        StackEntry tokenEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
+        StackEntry tokenEntry = StackEntry.carrier(sourceCard,
                 effect.abilityControllerId(),
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.of(effect.tokenTemplate())));

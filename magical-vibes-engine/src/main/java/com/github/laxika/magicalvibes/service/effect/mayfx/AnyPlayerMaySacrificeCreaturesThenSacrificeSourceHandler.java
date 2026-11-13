@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AnyPlayerMaySacrificeCreaturesThenSacrificeSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
@@ -116,9 +115,7 @@ public class AnyPlayerMaySacrificeCreaturesThenSacrificeSourceHandler implements
         }
         destructionSupport.performSimultaneousSacrifice(gameData, all);
         gameData.deathReplacementsCanRerunEffect = false;
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
+        StackEntry entry = StackEntry.carrier(sourceCard,
                 effect.abilityControllerId(),
                 sourceCard.getName() + "'s ability",
                 new ArrayList<>(List.<CardEffect>of(new SacrificeSelfEffect())),

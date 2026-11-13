@@ -22,7 +22,7 @@ public class Orzhova extends Card {
         addTrigger(Triggers.planeswalkAwayFromThis(),
                 new EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect(Integer.MAX_VALUE, creature));
 
-        setMultiTargetConstraint(MultiTargetConstraint.ONE_PER_CONTROLLER_IF_ABLE);
+        setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(new GraveyardCardPredicateTargetFilter(creature, GraveyardSearchScope.OPPONENT_GRAVEYARD), 0, 99)
                 .addTrigger(Triggers.chaosEnsues(),
                         new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD,

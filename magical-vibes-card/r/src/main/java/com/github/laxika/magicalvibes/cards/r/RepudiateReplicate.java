@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "RNA", collectorNumber = "227")
 @CardRegistration(set = "RVR", collectorNumber = "249")
@@ -19,9 +18,7 @@ public class RepudiateReplicate extends Card {
 
     public RepudiateReplicate() {
         var abilityFilter = new StackEntryPredicateTargetFilter(
-                new StackEntryTypeInPredicate(Set.of(
-                        StackEntryType.ACTIVATED_ABILITY,
-                        StackEntryType.TRIGGERED_ABILITY)),
+                new StackEntryTypeInPredicate(StackEntryType.ABILITIES),
                 "Target must be an activated or triggered ability.");
 
         addSpellEffect(new ChooseOneEffect(List.of(

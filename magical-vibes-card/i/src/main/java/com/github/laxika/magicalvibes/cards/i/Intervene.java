@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "ULG", collectorNumber = "33")
 public class Intervene extends Card {
@@ -20,8 +19,7 @@ public class Intervene extends Card {
     public Intervene() {
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryAllOfPredicate(List.of(
-                        new StackEntryNotPredicate(new StackEntryTypeInPredicate(Set.of(
-                                StackEntryType.ACTIVATED_ABILITY, StackEntryType.TRIGGERED_ABILITY))),
+                        new StackEntryNotPredicate(new StackEntryTypeInPredicate(StackEntryType.ABILITIES)),
                         new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate()))),
                 "Target spell must target a creature."
         )).addSpellEffect(new CounterSpellEffect());
