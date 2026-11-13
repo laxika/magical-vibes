@@ -11,11 +11,14 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtRandomEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -182,18 +185,40 @@ public class SagaChapterService {
 
         String chapterName = chapter.numeral();
 
-        if (chapterEffects.size() == 1
-                && chapterEffects.getFirst() instanceof ChooseOneAtTriggerTimeEffect modal) {
-            gameData.handOffTriggerRecord(chapterEntry(card, controllerId, chapterName, chapterEffects,
-                    sagaPermanent, copied));
-            gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                    card, controllerId, modal.choice(), sourcePermanentId));
-            appendChapterTrigger(gameData, card, chapterName, "mode selection");
-            return;
-        }
-
         Set<TargetFilter> chapterTargetFilters = new LinkedHashSet<>(card.getSagaChapterTargetFilters(loreCount));
         List<SagaChapterTargetGroup> chapterTargetGroups = card.getSagaChapterTargetGroups(loreCount);
+        List<TriggeredAbility> chapterAbilities = card.getTriggeredAbilities().stream()
+                .filter(ability -> ability.hasTrigger(chapter)).toList();
+        boolean announcedMode = chapterEffects.size() == 1
+                && chapterEffects.getFirst().modesChosenAsItTriggers() != null;
+        boolean choosesTarget = chapterEffects.stream().anyMatch(e -> e.targetSpec() != TargetSpec.NONE)
+                || !chapterTargetFilters.isEmpty() || !chapterTargetGroups.isEmpty();
+        if (chapterAbilities.size() == 1 && (announcedMode || !choosesTarget
+                && chapterEffects.stream().noneMatch(e -> e.modesChosenAtRandomAsItTriggers() != null))) {
+            // A chapter ability whose mode is announced as it goes on the stack (CR 603.3c), or one that chooses
+            // nothing, goes on the stack through the stack door, whole (CR 603.3), recording the Saga as it was and
+            // whether the chapter was copied. A chapter's targets are its own groups, which the door doesn't read.
+            Permanent snapshot = sagaPermanent == null ? null : new Permanent(sagaPermanent);
+            boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
+                    chapterAbilities.getFirst(), card, sagaPermanent, controllerId,
+                    card.getName() + "'s chapter " + chapterName + " ability",
+                    sagaPermanent == null ? ConditionContext.forCard(card, controllerId)
+                            : ConditionContext.forPermanent(sagaPermanent, controllerId), entry -> {
+                        entry.setNonTargeting(true);
+                        if (snapshot != null) {
+                            entry.setSourcePermanentSnapshot(snapshot);
+                        }
+                        entry.setCopy(copied);
+                    }));
+            if (triggered) {
+                appendChapterTrigger(gameData, card, chapterName, null);
+            }
+            if (!copied && loreCount == card.getSagaFinalChapter()) {
+                triggerCollectionService.checkSagaFinalChapterAbilityTriggers(gameData, controllerId,
+                        card.getManaValue());
+            }
+            return;
+        }
         if (chapterEffects.size() == 1 && chapterEffects.getFirst() instanceof ChooseOneAtRandomEffect randomChoice
                 && sagaPermanent != null) {
             // The random mode (and so its targets) is picked as the chapter ability triggers.

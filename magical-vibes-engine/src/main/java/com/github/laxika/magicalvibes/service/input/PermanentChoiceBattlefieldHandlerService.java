@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -160,6 +163,10 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchS
 @Service
 @RequiredArgsConstructor
 public class PermanentChoiceBattlefieldHandlerService {
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
+            triggeredAbilityStackService;
     private final CreateTokensAndAttachEquipmentSupport createTokensAndAttachEquipmentSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenEffectHandler createTokenEffectHandler;
     private final PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler sacrificedEquipmentSupport;
@@ -1964,38 +1971,22 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         permanentRemovalService.removeOrphanedAuras(gameData);
 
-        // "When a creature is championed with this permanent, ..." (e.g. Mistbind Clique): each ability is one object
-        // of all its effects (CR 603.3); an untargeted one goes on the stack as written, a targeted one to its target
-        // choice (no card prints two targeted ones).
-        List<List<CardEffect>> championedAbilities = source != null
-                ? ActionAbilityReader.printedEffectsByAbility(source.getCard(), ActionWatch.ON_CHAMPIONED) : List.of();
-        List<CardEffect> targetedAbility = null;
-        for (List<CardEffect> effects : championedAbilities) {
-            if (effects.stream().anyMatch(effect -> effect.targetSpec().declaredTarget() != null)) {
-                if (targetedAbility != null) {
-                    throw new IllegalStateException("No champion collector reads two targeted championed abilities: "
-                            + source.getCard().getName());
+        // "When a creature is championed with this permanent, ..." (e.g. Mistbind Clique): each ability goes on the
+        // stack through the stack door, whole (CR 603.3), its target chosen as it goes there (CR 603.3d), with the
+        // active player as the ability triggered.
+        if (source != null) {
+            UUID activePlayerId = gameData.activePlayerId;
+            for (TriggeredAbility ability : ActionAbilityReader.printed(source.getCard(), ActionWatch.ON_CHAMPIONED)) {
+                boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
+                        source.getCard(), source, context.controllerId(), source.getCard().getName() + "'s ability",
+                        ConditionContext.forPermanent(source, context.controllerId()), entry -> {
+                            entry.setNonTargeting(true);
+                            entry.setActivePlayerId(activePlayerId);
+                        }));
+                if (triggered) {
+                    gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
                 }
-                targetedAbility = effects;
-            } else {
-                StackEntry championed = new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(),
-                        context.controllerId(), source.getCard().getName() + "'s ability",
-                        new ArrayList<>(effects), null, source.getId());
-                // The active player as the ability triggered, as the entry of a targeted one records.
-                championed.setActivePlayerId(gameData.activePlayerId);
-                gameData.enqueueTrigger(championed);
-                gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
             }
-        }
-        if (targetedAbility != null) {
-            // The entry of the ability when it chooses nothing is its record, handed off before its target choice.
-            List<CardEffect> targetedEffects = new ArrayList<>(targetedAbility);
-            ReflexiveAbilitySupport.route(gameData,
-                    new StackEntry(StackEntryType.TRIGGERED_ABILITY, source.getCard(), context.controllerId(),
-                            source.getCard().getName() + "'s ability", new ArrayList<>(targetedEffects), null,
-                            source.getId()),
-                    () -> beginChampionedTrigger(gameData, source, context.controllerId(), targetedEffects));
-            return;
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
@@ -2099,32 +2090,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
         soulbondSupport.pair(gameData, source, partner);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void beginChampionedTrigger(GameData gameData, Permanent source, UUID controllerId,
-                                        List<CardEffect> effects) {
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        TriggerTargetCollector.Result result = triggerTargetCollector.collect(
-                gameData, effects, source.getCard().getTargetFilter(), controllerId,
-                source.getCard(), TriggerTargetCollector.Options.END_STEP);
-
-        if (result.validTargets().isEmpty()) {
-            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s championed trigger has no valid targets."));
-            log.info("Game {} - {} championed trigger skipped (no valid targets)",
-                    gameData.id, source.getCard().getName());
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        gameData.interaction.setPermanentChoiceContext(
-                new PermanentChoiceContext.ChampionedTriggerTarget(
-                        source.getCard(), controllerId, effects, source.getId()));
-        playerInputService.beginPermanentChoice(gameData, controllerId, result.validTargets(),
-                source.getCard().getName() + "'s ability — Choose target player.");
-
-        gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s championed trigger — choose target player."));
-        log.info("Game {} - {} championed trigger awaiting target selection", gameData.id, source.getCard().getName());
     }
 
     public void handlePreventDamageSourceChoice(GameData gameData, UUID permanentId, PermanentChoiceContext.PreventDamageSourceChoice preventSource) {

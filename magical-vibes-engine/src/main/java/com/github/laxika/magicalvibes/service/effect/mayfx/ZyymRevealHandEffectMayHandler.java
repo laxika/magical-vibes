@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -19,8 +20,6 @@ import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryServic
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
-import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
-import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -123,7 +122,7 @@ public class ZyymRevealHandEffectMayHandler implements MayEffectHandlerBean {
         triggerCollectionService.beginDiscardEvent(gameData, playerId);
 
         boolean replacedByBattlefield = gameData.discardCausedByOpponent
-                && LibraryAbilityReader.printedEffects(card, LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+                && card.getStaticEffects(Zone.HAND).stream()
                 .anyMatch(EnterBattlefieldOnDiscardEffect.class::isInstance);
         if (replacedByBattlefield) {
             battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(

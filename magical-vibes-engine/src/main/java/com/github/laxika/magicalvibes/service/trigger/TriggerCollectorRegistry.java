@@ -13,8 +13,9 @@ import java.util.Map;
 
 /**
  * Registry that maps (EffectSlot, {@link ZoneChangeWatch}, {@link SpellAbilityWatch}, {@link CombatWatch},
- * {@link DamageWatch}, {@link CounterWatch}, {@link LibraryWatch}, {@link TapWatch}, {@link LifeWatch},
- * {@link SagaWatch}, {@link ActionWatch} or {@link MiscWatch}, CardEffect class) pairs to trigger collector handlers.
+ * {@link DamageWatch}, {@link CounterWatch}, {@link TapWatch} or {@link LifeWatch}, CardEffect class) pairs to trigger
+ * collector handlers. The library, player and keyword action, misc and Saga watches have none: their collectors hand
+ * each ability to the stack door.
  * <p>
  * Discovered automatically at startup by {@link com.github.laxika.magicalvibes.service.GameEngineConfig}.
  */
@@ -152,17 +153,6 @@ public class TriggerCollectorRegistry {
                 }
             }
 
-            CollectsLibraryTrigger singleLibrary = method.getAnnotation(CollectsLibraryTrigger.class);
-            if (singleLibrary != null) {
-                registerMethod(bean, method, singleLibrary.watch(), singleLibrary.value(), registry);
-            }
-            CollectsLibraryTriggers libraryContainer = method.getAnnotation(CollectsLibraryTriggers.class);
-            if (libraryContainer != null) {
-                for (CollectsLibraryTrigger clt : libraryContainer.value()) {
-                    registerMethod(bean, method, clt.watch(), clt.value(), registry);
-                }
-            }
-
             CollectsTapTrigger singleTap = method.getAnnotation(CollectsTapTrigger.class);
             if (singleTap != null) {
                 registerMethod(bean, method, singleTap.watch(), singleTap.value(), registry);
@@ -182,39 +172,6 @@ public class TriggerCollectorRegistry {
             if (lifeContainer != null) {
                 for (CollectsLifeTrigger clt : lifeContainer.value()) {
                     registerMethod(bean, method, clt.watch(), clt.value(), registry);
-                }
-            }
-
-            CollectsSagaTrigger singleSaga = method.getAnnotation(CollectsSagaTrigger.class);
-            if (singleSaga != null) {
-                registerMethod(bean, method, singleSaga.watch(), singleSaga.value(), registry);
-            }
-            CollectsSagaTriggers sagaContainer = method.getAnnotation(CollectsSagaTriggers.class);
-            if (sagaContainer != null) {
-                for (CollectsSagaTrigger cst : sagaContainer.value()) {
-                    registerMethod(bean, method, cst.watch(), cst.value(), registry);
-                }
-            }
-
-            CollectsActionTrigger singleAction = method.getAnnotation(CollectsActionTrigger.class);
-            if (singleAction != null) {
-                registerMethod(bean, method, singleAction.watch(), singleAction.value(), registry);
-            }
-            CollectsActionTriggers actionContainer = method.getAnnotation(CollectsActionTriggers.class);
-            if (actionContainer != null) {
-                for (CollectsActionTrigger cst : actionContainer.value()) {
-                    registerMethod(bean, method, cst.watch(), cst.value(), registry);
-                }
-            }
-
-            CollectsMiscTrigger singleMisc = method.getAnnotation(CollectsMiscTrigger.class);
-            if (singleMisc != null) {
-                registerMethod(bean, method, singleMisc.watch(), singleMisc.value(), registry);
-            }
-            CollectsMiscTriggers miscContainer = method.getAnnotation(CollectsMiscTriggers.class);
-            if (miscContainer != null) {
-                for (CollectsMiscTrigger cst : miscContainer.value()) {
-                    registerMethod(bean, method, cst.watch(), cst.value(), registry);
                 }
             }
 

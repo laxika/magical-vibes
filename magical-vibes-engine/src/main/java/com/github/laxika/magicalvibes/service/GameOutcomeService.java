@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingLossReplacement;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -38,6 +41,10 @@ public class GameOutcomeService {
     private final List<LossReplacer> lossReplacers;
     private final GameMutationCoordinator mutationCoordinator;
     private ConditionEvaluationService conditionEvaluationService;
+
+    @Autowired
+    @Lazy
+    private TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Autowired
     void setConditionEvaluationService(@Lazy ConditionEvaluationService conditionEvaluationService) {
@@ -232,39 +239,24 @@ public class GameOutcomeService {
         }
 
         gameData.forEachPermanent((controllerId, perm) -> {
-            // "Whenever a player loses the game, if ..." (CR 603.4): the ability's intervening "if" is judged as the
-            // player loses, "that player" being the player who lost, and stays around the effects for the check as
-            // the ability resolves.
-            if (ActionAbilityReader.printed(perm.getCard(), ActionWatch.ON_PLAYER_LOSES_GAME).isEmpty()) {
-                return;
-            }
-            TriggerJudge judge = conditionEvaluationService.judge(gameData,
-                    ConditionContext.forPermanent(perm, controllerId).withTargetId(losingPlayerId));
-            for (List<CardEffect> effects : ActionAbilityReader.printedEffectsByAbility(perm.getCard(),
-                    ActionWatch.ON_PLAYER_LOSES_GAME, judge)) {
-                queuePlayerLosesGameAbility(gameData, perm, controllerId, losingPlayerId, effects);
+            // "Whenever a player loses the game, if ..." (CR 603.4): the ability's intervening "if" is judged by the
+            // stack door as the player loses, "that player" being the player who lost, the non-targeting player its
+            // entry records.
+            for (TriggeredAbility ability : ActionAbilityReader.printed(perm.getCard(),
+                    ActionWatch.ON_PLAYER_LOSES_GAME)) {
+                boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
+                        perm.getCard(), perm, controllerId, perm.getCard().getName() + "'s triggered ability",
+                        ConditionContext.forPermanent(perm, controllerId).withTargetId(losingPlayerId), entry -> {
+                            entry.setTargetId(losingPlayerId);
+                            entry.setNonTargeting(true);
+                        }));
+                if (triggered) {
+                    gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
+                            "'s triggered ability goes on the stack ("
+                                    + gameData.playerIdToName.get(losingPlayerId) + " loses the game)."));
+                }
             }
         });
-    }
-
-    /** Puts one "whenever a player loses the game" ability of {@code perm} on the stack. */
-    private void queuePlayerLosesGameAbility(GameData gameData, Permanent perm, UUID controllerId,
-                                             UUID losingPlayerId, List<CardEffect> effects) {
-        StackEntry se = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                perm.getCard(),
-                controllerId,
-                perm.getCard().getName() + "'s triggered ability",
-                new ArrayList<>(effects),
-                null,
-                perm.getId());
-        // This is non-targeting event context: the player whose loss caused the trigger.
-        se.setTargetId(losingPlayerId);
-        se.setNonTargeting(true);
-        gameData.stack.add(se);
-
-        gameLogService.append(gameData, GameLog.cardThen(perm.getCard(), "'s triggered ability goes on the stack ("
-                + gameData.playerIdToName.get(losingPlayerId) + " loses the game)."));
     }
 
     /**

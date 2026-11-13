@@ -58,6 +58,11 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
 
     /** "That player may … target … of their choice": the active player who answers also chooses the target. */
     @Override
+    public boolean targetChosenByAnOpponent() {
+        return wrapped.targetChosenByAnOpponent();
+    }
+
+    @Override
     public boolean targetChosenByActivePlayer() {
         return choicePlayer == MayChoicePlayer.ACTIVE_PLAYER || wrapped.targetChosenByActivePlayer();
     }

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.DiscardTriggerCollectorService;
+import com.github.laxika.magicalvibes.service.trigger.DiscardRecords;
 import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -1703,7 +1703,7 @@ public class TriggeredAbilityQueueService {
                     if (pending.discardedCount() > 0) {
                         untargeted.setEventValue(pending.discardedCount());
                     }
-                    gameData.stack.add(DiscardTriggerCollectorService.recordDiscard(untargeted,
+                    gameData.stack.add(DiscardRecords.recordDiscard(untargeted,
                             pending.discardingPlayerId(), pending.discardedCards(), pending.discardedCardStays(),
                             false));
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
@@ -1717,28 +1717,6 @@ public class TriggeredAbilityQueueService {
                             gameData.id, pending.sourceCard().getName());
                 }
                 continue;
-            }
-
-            int exactTargets = pending.sourcePermanentId() == null
-                    ? pending.sourceCard().getSelfCycledTriggerPermanentTargets() : 0;
-            if (exactTargets > 0 && LibraryAbilityReader.printedEffectsByAbility(pending.sourceCard(),
-                    LibraryWatch.ON_SELF_CYCLED).contains(pending.effects())) {
-                gameData.pollPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
-                if (result.validTargets().size() < exactTargets) {
-                    gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
-                            "'s cycling trigger has too few valid targets."));
-                    log.info("Game {} - {} cycling trigger removed (fewer than {} valid targets)",
-                            gameData.id, pending.sourceCard().getName(), exactTargets);
-                    continue;
-                }
-                playerInputService.beginMultiPermanentChoice(gameData, pending.controllerId(),
-                        result.validTargets(), exactTargets,
-                        new MultiPermanentChoiceContext.SelfTriggeredAbilityTargets(
-                                pending.sourceCard(), pending.controllerId(), pending.effects(), "cycling",
-                                null, null, exactTargets),
-                        pending.sourceCard().getName() + "'s ability - Choose " + exactTargets
-                                + " target permanents.");
-                return;
             }
 
             String targetDescription = (result.canTargetPlayers() && result.canTargetPermanents()) ? "any target"
@@ -3413,12 +3391,22 @@ public class TriggeredAbilityQueueService {
                     ? maxTargets + " target " : "up to " + maxTargets + " target ";
             String prompt = pending.sourceCard().getName() + "'s ability — Choose " + countLabel + filterLabel
                     + (maxTargets == 1 ? "" : "s") + " from " + zoneLabel + ".";
+            // "Any number of target creature cards with total power 10 or less" (Nethroi, Apex of Death).
+            Integer maxTotalPower = pending.effects().stream()
+                    .map(CardEffect::graveyardCardChoice)
+                    .filter(java.util.Objects::nonNull)
+                    .map(GraveyardCardChoosingEffect::graveyardChoiceMaxTotalPower)
+                    .filter(java.util.Objects::nonNull)
+                    .findFirst().orElse(null);
             if (aggregateManaValueCap != null) {
                 prompt = prompt.substring(0, prompt.length() - 1)
                         + " with total mana value " + aggregateManaValueCap + " or less.";
                 playerInputService.beginMultiGraveyardChoiceWithMaximumManaValue(
                         gameData, pending.controllerId(), matchingCards, maxTargets, minTargets,
                         aggregateManaValueCap, prompt);
+            } else if (maxTotalPower != null) {
+                playerInputService.beginMultiGraveyardChoiceWithMaximumPower(gameData, pending.controllerId(),
+                        matchingCards, maxTargets, minTargets, maxTotalPower, prompt);
             } else {
                 playerInputService.beginMultiGraveyardChoice(gameData, pending.controllerId(), matchingCards,
                         maxTargets, minTargets, prompt);

@@ -2449,9 +2449,7 @@ public class SpellCastingService {
         gameData.exilePlayPermissions.put(card.getId(), playerId);
         gameData.exilePlayWithoutPayingManaCost.add(card.getId());
         triggerCollectionService.checkPlotTriggers(gameData, playerId, card);
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.PlotTriggerAnyTarget.class)) {
-            triggerCollectionService.processNextPlotTrigger(gameData);
-        }
+        triggerCollectionService.processNextPlotTrigger(gameData);
     }
 
     /**

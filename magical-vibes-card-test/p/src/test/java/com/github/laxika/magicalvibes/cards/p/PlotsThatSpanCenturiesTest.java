@@ -21,7 +21,7 @@ class PlotsThatSpanCenturiesTest extends BaseCardTest {
         PlotsThatSpanCenturies firstScheme = new PlotsThatSpanCenturies();
         StackEntry firstEntry = schemeEntry(firstScheme);
         gd.stack.add(firstEntry);
-        harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, firstEntry);
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, firstEntry));
         resolveAllTriggers();
 
         gd.playerBattlefields.get(player1.getId()).remove(plots);
@@ -30,7 +30,7 @@ class PlotsThatSpanCenturiesTest extends BaseCardTest {
         Card nextScheme = new ICallForSlaughter();
         StackEntry nextEntry = schemeEntry(nextScheme);
         gd.stack.add(nextEntry);
-        harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, nextEntry);
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, nextEntry));
 
         assertThat(gd.stack).filteredOn(entry -> entry.getCard() instanceof MyLaughterEchoes)
                 .hasSize(3);
@@ -38,7 +38,7 @@ class PlotsThatSpanCenturiesTest extends BaseCardTest {
         gd.stack.clear();
         StackEntry finalEntry = schemeEntry(new ICallForSlaughter());
         gd.stack.add(finalEntry);
-        harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, finalEntry);
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, finalEntry));
 
         assertThat(gd.stack).filteredOn(entry -> entry.getCard() instanceof MyLaughterEchoes)
                 .hasSize(1);

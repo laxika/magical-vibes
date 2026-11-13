@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -938,6 +939,25 @@ class TriggeredAbilityStackServiceTest {
         var choice = gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
         assertThat(choice.choosingPlayerId()).isEqualTo(PLAYER2_ID);
         assertThat(choice.attackedTargetId()).isEqualTo(PLAYER2_ID);
+    }
+
+    @Test
+    @DisplayName("Any target of an opponent's choice waits for the choice whose controller picks the opponent who chooses")
+    void anyTargetOfAnOpponentsChoiceIsChosenByAnOpponent() {
+        Card card = createCreature("Karplusan Minotaur", 3, 3);
+        Permanent creature = new Permanent(card);
+        var ability = new TriggeredAbility(Triggers.youLoseCoinFlip(),
+                DealDamageToAnyTargetEffect.toAnyTargetOfAnOpponentsChoice(1));
+
+        boolean triggered = stackService.put(gd, new TriggeredAbilityRequest(ability, card, creature, PLAYER1_ID,
+                "coin flip", ConditionContext.forPermanent(creature, PLAYER1_ID), TriggerRecord.NONE));
+
+        assertThat(triggered).isTrue();
+        assertThat(gd.stack).isEmpty();
+        var choice = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+        assertThat(choice.opponentChoosesTarget()).isTrue();
+        assertThat(choice.choosingPlayerId()).isNull();
+        assertThat(choice.sourcePermanentId()).isEqualTo(creature.getId());
     }
 
     @Test

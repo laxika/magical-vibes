@@ -152,6 +152,9 @@ public sealed interface TriggerContext {
     /** Context for a mill event containing one or more nonland cards. */
     record NonlandCardsMilled(UUID milledPlayerId, int nonlandCardCount) implements TriggerContext {}
 
+    /** Context for a player drawing a card, which the "triggers an additional time" effects of draws read. */
+    record Draw(UUID drawingPlayerId) implements TriggerContext {}
+
     /** Context for controller-scry triggers. */
     record Scry(UUID scryingPlayerId, int bottomedCardCount, int cardsLookedAt) implements TriggerContext {
         public Scry(UUID scryingPlayerId) {

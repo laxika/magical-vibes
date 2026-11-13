@@ -23,16 +23,8 @@ import com.github.laxika.magicalvibes.service.trigger.CollectsCounterTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsCounterTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsDamageTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsDamageTriggers;
-import com.github.laxika.magicalvibes.service.trigger.CollectsLibraryTrigger;
-import com.github.laxika.magicalvibes.service.trigger.CollectsLibraryTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsLifeTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsLifeTriggers;
-import com.github.laxika.magicalvibes.service.trigger.CollectsActionTrigger;
-import com.github.laxika.magicalvibes.service.trigger.CollectsActionTriggers;
-import com.github.laxika.magicalvibes.service.trigger.CollectsMiscTrigger;
-import com.github.laxika.magicalvibes.service.trigger.CollectsMiscTriggers;
-import com.github.laxika.magicalvibes.service.trigger.CollectsSagaTrigger;
-import com.github.laxika.magicalvibes.service.trigger.CollectsSagaTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsTapTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsTapTriggers;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
@@ -249,20 +241,6 @@ public class GameEngineConfig implements SmartInitializingSingleton {
                     }
                 }
 
-                CollectsLibraryTrigger librarySingle = method.getAnnotation(CollectsLibraryTrigger.class);
-                if (librarySingle != null) {
-                    registerTriggerHandler(bean, method, librarySingle.watch(), librarySingle.value());
-                    count++;
-                }
-
-                CollectsLibraryTriggers libraryContainer = method.getAnnotation(CollectsLibraryTriggers.class);
-                if (libraryContainer != null) {
-                    for (CollectsLibraryTrigger clt : libraryContainer.value()) {
-                        registerTriggerHandler(bean, method, clt.watch(), clt.value());
-                        count++;
-                    }
-                }
-
                 CollectsTapTrigger tapSingle = method.getAnnotation(CollectsTapTrigger.class);
                 if (tapSingle != null) {
                     registerTriggerHandler(bean, method, tapSingle.watch(), tapSingle.value());
@@ -291,47 +269,6 @@ public class GameEngineConfig implements SmartInitializingSingleton {
                     }
                 }
 
-                CollectsSagaTrigger sagaSingle = method.getAnnotation(CollectsSagaTrigger.class);
-                if (sagaSingle != null) {
-                    registerTriggerHandler(bean, method, sagaSingle.watch(), sagaSingle.value());
-                    count++;
-                }
-
-                CollectsSagaTriggers sagaContainer = method.getAnnotation(CollectsSagaTriggers.class);
-                if (sagaContainer != null) {
-                    for (CollectsSagaTrigger cst : sagaContainer.value()) {
-                        registerTriggerHandler(bean, method, cst.watch(), cst.value());
-                        count++;
-                    }
-                }
-
-                CollectsActionTrigger actionSingle = method.getAnnotation(CollectsActionTrigger.class);
-                if (actionSingle != null) {
-                    registerTriggerHandler(bean, method, actionSingle.watch(), actionSingle.value());
-                    count++;
-                }
-
-                CollectsActionTriggers actionContainer = method.getAnnotation(CollectsActionTriggers.class);
-                if (actionContainer != null) {
-                    for (CollectsActionTrigger cst : actionContainer.value()) {
-                        registerTriggerHandler(bean, method, cst.watch(), cst.value());
-                        count++;
-                    }
-                }
-
-                CollectsMiscTrigger miscSingle = method.getAnnotation(CollectsMiscTrigger.class);
-                if (miscSingle != null) {
-                    registerTriggerHandler(bean, method, miscSingle.watch(), miscSingle.value());
-                    count++;
-                }
-
-                CollectsMiscTriggers miscContainer = method.getAnnotation(CollectsMiscTriggers.class);
-                if (miscContainer != null) {
-                    for (CollectsMiscTrigger cst : miscContainer.value()) {
-                        registerTriggerHandler(bean, method, cst.watch(), cst.value());
-                        count++;
-                    }
-                }
             }
         }
 

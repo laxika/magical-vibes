@@ -42,6 +42,10 @@ import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupp
 import com.github.laxika.magicalvibes.service.effect.mayfx.BreathstealersCryptDrawReplacementHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -206,20 +210,53 @@ class DrawServiceTest {
     @Mock
     private PredicateEvaluationService predicateEvaluationService;
 
+    @Mock
+    private TriggeredAbilityStackService triggeredAbilityStackService;
+
     @InjectMocks
     private DrawService sut;
+
+    /** The requests the draw collectors handed to the stack door, in order. */
+    private final List<TriggeredAbilityRequest> doorRequests = new ArrayList<>();
 
     private GameData gd;
     private UUID player1Id;
     private UUID player2Id;
 
     @BeforeEach
-    void setUp() {
-        // The draw collectors judge each ability's intervening "if" and event condition through the service.
+    void setUp() throws ReflectiveOperationException {
+        // The draw collectors judge each ability's event condition through the service.
         lenient().when(conditionEvaluationService.triggerConditionsMet(any(), any(), any())).thenAnswer(invocation -> {
             TriggerOptions options = invocation.getArgument(1);
             return options.interveningIf() == null && options.eventCondition() == null;
         });
+        lenient().when(conditionEvaluationService.eventConditionMet(any(), any(), any()))
+                .thenAnswer(invocation -> ((TriggerOptions) invocation.getArgument(1)).eventCondition() == null);
+        // The stack door, as far as these collectors rely on it: it judges and marks the ability's limit and puts one
+        // entry of its effects as written, stamped with the collector's record, on the stack.
+        lenient().when(triggeredAbilityStackService.put(any(), any())).thenAnswer(invocation -> {
+            GameData game = invocation.getArgument(0);
+            TriggeredAbilityRequest request = invocation.getArgument(1);
+            doorRequests.add(request);
+            TriggeredAbility ability = request.ability();
+            UUID limitSource = request.sourcePermanent() != null ? request.sourcePermanentId()
+                    : request.sourceCard().getId();
+            if (TriggeredAbilityStackService.limitReached(game, ability.options().limit(), limitSource,
+                    ability.limitKey())) {
+                return false;
+            }
+            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, request.sourceCard(),
+                    request.controllerId(), request.description(),
+                    new ArrayList<>(ability.effects().stream().map(EffectRegistration::effect).toList()), null,
+                    request.sourcePermanentId());
+            request.record().stamp(entry);
+            game.stack.add(entry);
+            TriggeredAbilityStackService.markLimit(game, ability.options().limit(), limitSource, ability.limitKey());
+            return true;
+        });
+        var doorField = DrawService.class.getDeclaredField("triggeredAbilityStackService");
+        doorField.setAccessible(true);
+        doorField.set(sut, triggeredAbilityStackService);
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -307,18 +344,19 @@ class DrawServiceTest {
         }
 
         @Test
-        @DisplayName("duplicates a draw trigger when an additional-trigger effect applies")
-        void additionalTriggerEffectDuplicatesDrawTrigger() {
+        @DisplayName("hands the door the draw as the event the additional-trigger effects of draws judge")
+        void handsTheDoorTheDrawEvent() {
             Card crawlerCard = createCard("Psychosis Crawler", CardType.CREATURE);
             crawlerCard.addTrigger(Triggers.youDrawCard(), new BoostSelfEffect(1, 1));
             Permanent crawler = new Permanent(crawlerCard);
             gd.playerBattlefields.get(player1Id).add(crawler);
-            when(gameQueryService.countAdditionalDrawTriggeredAbilityTriggers(gd, player1Id, crawler))
-                    .thenReturn(1);
 
             sut.checkControllerDrawTriggers(gd, player1Id);
 
-            assertThat(gd.stack).hasSize(2);
+            assertThat(doorRequests).singleElement().satisfies(request -> {
+                assertThat(request.sourcePermanent()).isSameAs(crawler);
+                assertThat(request.event()).isEqualTo(new TriggerContext.Draw(player1Id));
+            });
         }
     }
 
@@ -419,7 +457,8 @@ class DrawServiceTest {
     }
 
     @Test
-    void targetedSecondDrawTriggerQueuesPermanentTargetChoice() {
+    @DisplayName("hands a targeted second-draw ability to the door whole, which chooses its target")
+    void targetedSecondDrawAbilityGoesToTheDoorWhole() {
         Card card = createCard("Mantle of Tides", CardType.ARTIFACT);
         AttachSourceEquipmentToTargetCreatureEffect effect = new AttachSourceEquipmentToTargetCreatureEffect();
         card.target(TargetFilters.creatureYouControl())
@@ -430,31 +469,28 @@ class DrawServiceTest {
 
         sut.checkControllerDrawTriggers(gd, player1Id);
 
-        assertThat(gd.peekPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class))
-                .isNotNull()
-                .satisfies(trigger -> {
-                    assertThat(trigger.sourcePermanentId()).isEqualTo(equipment.getId());
-                    assertThat(trigger.targetFilter()).isEqualTo(TargetFilters.creatureYouControl());
-                });
+        assertThat(doorRequests).singleElement().satisfies(request -> {
+            assertThat(request.ability()).isEqualTo(card.getTriggeredAbilities().getFirst());
+            assertThat(request.sourcePermanent()).isSameAs(equipment);
+        });
     }
 
     @Test
-    void targetedPlayerDrawTriggerQueuesTargetChoice() {
-        Card card = createCard("Queza, Augur of Agonies", CardType.CREATURE);
-        SequenceEffect effect = SequenceEffect.of(
-                new LoseLifeEffect(1, LoseLifeRecipient.TARGET_PLAYER),
-                new GainLifeEffect(1));
-        card.target(new PlayerPredicateTargetFilter(
-                        new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                        "Target must be an opponent"))
-                .addTrigger(Triggers.youDrawCard(), effect);
+    @DisplayName("an opponent's draw names the drawing player as the non-targeting \"that player\"")
+    void opponentDrawNamesTheDrawingPlayer() {
+        Card card = createCard("Fate Unraveler", CardType.ENCHANTMENT);
+        card.addTrigger(Triggers.opponentDrawsCard(), new BoostSelfEffect(1, 1));
         Permanent source = new Permanent(card);
         gd.playerBattlefields.get(player1Id).add(source);
 
-        sut.checkControllerDrawTriggers(gd, player1Id);
+        sut.checkOpponentDrawTriggers(gd, player2Id);
 
-        assertThat(gd.peekPendingInteraction(PermanentChoiceContext.DrawTriggerAnyTarget.class))
-                .isNotNull();
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getControllerId()).isEqualTo(player1Id);
+            assertThat(entry.getTargetId()).isEqualTo(player2Id);
+            assertThat(entry.isNonTargeting()).isTrue();
+            assertThat(entry.getTriggeringPlayerId()).isEqualTo(player2Id);
+        });
     }
 
     @Test

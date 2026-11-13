@@ -312,6 +312,11 @@ public class StackResolutionService {
             }
         }
 
+        triggerCollectionService.beginStackDoorChoices(gameData);
+        if (gameData.interaction.isAwaitingInput()) {
+            return;
+        }
+
         if (gameData.hasPendingInteraction(PermanentChoiceContext.ExploreTriggerTarget.class)) {
             triggerCollectionService.processNextExploreTriggerTarget(gameData);
             if (gameData.interaction.isAwaitingInput()) {

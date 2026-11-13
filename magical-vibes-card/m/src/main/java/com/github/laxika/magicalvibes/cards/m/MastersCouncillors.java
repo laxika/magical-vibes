@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -19,7 +22,10 @@ public class MastersCouncillors extends Card {
         addStaticEffect(new DynamicStaticBoostEffect(
                 new Scaled(sevenCardGraveyards, 2), new Fixed(0), GrantScope.SELF));
 
-        addTrigger(Triggers.youDrawSecondCardEachTurn(),
+        target(new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.ANY),
+                "Target must be a player"
+        )).addTrigger(Triggers.youDrawSecondCardEachTurn(),
                 new MillEffect(3, MillRecipient.TARGET_PLAYER));
     }
 }

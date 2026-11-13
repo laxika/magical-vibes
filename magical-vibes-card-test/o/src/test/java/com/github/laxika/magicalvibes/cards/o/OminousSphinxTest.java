@@ -37,7 +37,7 @@ class OminousSphinxTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
     }
 
     @Test
@@ -113,7 +113,7 @@ class OminousSphinxTest extends BaseCardTest {
         harness.activateHandAbility(player1, 0, null);
         harness.passBothPriorities();
 
-        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class)).isFalse();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -154,7 +154,7 @@ class OminousSphinxTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Censor");
         harness.assertInHand(player2, "Grizzly Bears");
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.DiscardControllerTriggerTarget.class)).isFalse();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isFalse();
         assertThat(gd.stack).isEmpty();
         assertThat(sphinx.getPowerModifier()).isZero();
     }

@@ -13,6 +13,6 @@ public class KarplusanMinotaur extends Card {
     public KarplusanMinotaur() {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), CumulativeUpkeepEffect.flipCoin());
         addTrigger(Triggers.youWinCoinFlip(), new DealDamageToAnyTargetEffect(1));
-        addTrigger(Triggers.youLoseCoinFlip(), new DealDamageToAnyTargetEffect(1));
+        addTrigger(Triggers.youLoseCoinFlip(), DealDamageToAnyTargetEffect.toAnyTargetOfAnOpponentsChoice(1));
     }
 }

@@ -16,8 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.YouAndOpponentChooseCardNamesOnEnterEffect;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
-import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -174,8 +172,7 @@ public class BattlefieldEntryService {
 
     public void putPermanentOntoBattlefieldFromOpponentDiscard(GameData gameData, UUID controllerId,
                                                                Permanent permanent) {
-        EnterBattlefieldOnDiscardEffect replacement = LibraryAbilityReader.printedEffects(permanent.getCard(),
-                        LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+        EnterBattlefieldOnDiscardEffect replacement = permanent.getCard().getStaticEffects(Zone.HAND).stream()
                 .filter(EnterBattlefieldOnDiscardEffect.class::isInstance)
                 .map(EnterBattlefieldOnDiscardEffect.class::cast)
                 .findFirst()

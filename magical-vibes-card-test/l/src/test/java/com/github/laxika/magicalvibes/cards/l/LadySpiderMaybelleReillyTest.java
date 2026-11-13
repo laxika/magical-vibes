@@ -37,7 +37,7 @@ class LadySpiderMaybelleReillyTest extends BaseCardTest {
         PendingInteraction.PermanentChoice choice =
                 (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         assertThat(choice.validPermanentIds()).contains(spider.getId()).doesNotContain(bears.getId());
     }
 

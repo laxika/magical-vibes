@@ -39,7 +39,7 @@ class MantleOfTidesTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.DrawTriggerPermanentTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opponentCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
 

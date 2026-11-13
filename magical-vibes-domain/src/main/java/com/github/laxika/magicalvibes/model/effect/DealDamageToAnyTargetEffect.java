@@ -93,6 +93,7 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
 
     private static final int ANY_OTHER_TARGET = -2;
     private static final int EVENT_OBJECT = -3;
+    private static final int OF_AN_OPPONENTS_CHOICE = -4;
 
     public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
                                        boolean exileInsteadOfDie, int targetGroup,
@@ -163,6 +164,19 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
      */
     public static DealDamageToAnyTargetEffect toEventObject(DynamicAmount damage) {
         return new DealDamageToAnyTargetEffect(damage, false, false, EVENT_OBJECT, null);
+    }
+
+    /**
+     * Damage to "any target of an opponent's choice" (Karplusan Minotaur): as the ability goes on the stack its
+     * controller chooses one of their opponents, who chooses the target.
+     */
+    public static DealDamageToAnyTargetEffect toAnyTargetOfAnOpponentsChoice(int damage) {
+        return new DealDamageToAnyTargetEffect(new Fixed(damage), false, false, OF_AN_OPPONENTS_CHOICE, null);
+    }
+
+    @Override
+    public boolean targetChosenByAnOpponent() {
+        return targetGroup == OF_AN_OPPONENTS_CHOICE;
     }
 
     /** Target filter for an any-target effect that excludes its source permanent. */

@@ -439,6 +439,11 @@ public class TriggeredAbilityStackService {
             // (Decimator Beetle): the record stays with the choice, whose handler builds the entry.
             gameData.queueInteraction(new PermanentChoiceContext.AttackCounterMoveFirstTarget(
                     card, controllerId, effects, entry.getSourcePermanentId(), entry.getDefendingPlayerId()));
+        } else if (choosing.stream().anyMatch(CardEffect::targetChosenByAnOpponent)) {
+            // "Any target of an opponent's choice" (Karplusan Minotaur): its controller chooses one of their opponents,
+            // who chooses the target; the record stays in hand for the entry the choice's handler builds.
+            gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
+                    card, controllerId, effects, entry.getSourcePermanentId(), null).chosenByAnOpponent());
         } else if (randomGraveyardTarget != null) {
             putWithRandomGraveyardTarget(gameData, entry, randomGraveyardTarget);
         } else if (choosing.stream().anyMatch(CardEffect::targetChosenAtRandom)) {

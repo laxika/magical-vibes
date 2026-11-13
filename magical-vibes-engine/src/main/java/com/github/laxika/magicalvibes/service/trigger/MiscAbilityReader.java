@@ -74,31 +74,22 @@ public final class MiscAbilityReader {
             return ability.options().limit();
         }
 
-        /** Whether the ability "triggers only once each turn", so nothing makes it trigger additional times. */
-        public boolean triggersOnlyOnceEachTurn() {
-            return limit() == TriggerLimit.ONCE_EACH_TURN;
-        }
-
         /**
-         * Whether the ability can't trigger for {@code sourceId} now: its limit is reached, or this ability has already
-         * triggered for "becomes crewed / saddled for the first time each turn" this turn (a mark of the ability's
-         * own, by its {@link TriggeredAbility#limitKey()}, so no other ability of the source uses it up).
+         * Whether this ability has already triggered for "becomes crewed / saddled for the first time each turn" this
+         * turn for {@code sourceId}: a mark of the ability's own, by its {@link TriggeredAbility#limitKey()}, so no
+         * other ability of the source uses it up. Its limit ("triggers only once each turn") is the stack door's.
          */
-        public boolean limitReached(GameData gameData, UUID sourceId) {
-            if (firstTimeEachTurn && TriggeredAbilityStackService.limitReached(gameData,
-                    TriggerLimit.ONCE_EACH_TURN, sourceId, firstTimeKey())) {
-                return true;
-            }
-            return TriggeredAbilityStackService.limitReached(gameData, limit(), sourceId, ability.limitKey());
+        public boolean firstTimeReached(GameData gameData, UUID sourceId) {
+            return firstTimeEachTurn && TriggeredAbilityStackService.limitReached(gameData,
+                    TriggerLimit.ONCE_EACH_TURN, sourceId, firstTimeKey());
         }
 
-        /** Marks the ability's limit, or its "for the first time each turn", as used by {@code sourceId}. */
-        public void markLimit(GameData gameData, UUID sourceId) {
+        /** Marks this ability's "for the first time each turn" as used by {@code sourceId}. */
+        public void markFirstTime(GameData gameData, UUID sourceId) {
             if (firstTimeEachTurn) {
                 TriggeredAbilityStackService.markLimit(gameData, TriggerLimit.ONCE_EACH_TURN, sourceId,
                         firstTimeKey());
             }
-            TriggeredAbilityStackService.markLimit(gameData, limit(), sourceId, ability.limitKey());
         }
 
         private String firstTimeKey() {

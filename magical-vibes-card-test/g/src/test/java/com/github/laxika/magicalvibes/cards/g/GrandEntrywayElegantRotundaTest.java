@@ -37,9 +37,7 @@ class GrandEntrywayElegantRotundaTest extends BaseCardTest {
         harness.addMana(player1, WHITE, 3);
 
         harness.unlockRoomDoor(player1, gd.playerBattlefields.get(player1.getId()).indexOf(room), 1);
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, firstCreature.getId());
-        harness.handlePermanentChosen(player1, secondCreature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstCreature.getId(), secondCreature.getId()));
         harness.passBothPriorities();
 
         assertThat(firstCreature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -61,8 +59,7 @@ class GrandEntrywayElegantRotundaTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new InnocuousRat());
 
         Permanent room = castRoom(1);
-        harness.handlePermanentChosen(player1, creature.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
         resolveAllTriggers();
 
         assertThat(room.isRoomDoorUnlocked(0)).isFalse();
@@ -77,7 +74,7 @@ class GrandEntrywayElegantRotundaTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new InnocuousRat());
 
         castRoom(1);
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -118,9 +115,7 @@ class GrandEntrywayElegantRotundaTest extends BaseCardTest {
         harness.addMana(player1, WHITE, 3);
 
         harness.unlockRoomDoor(player1, gd.playerBattlefields.get(player1.getId()).indexOf(room), 1);
-        harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, glimmer.getId());
-        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(glimmer.getId(), creature.getId()));
         gd.playerBattlefields.get(player1.getId()).remove(glimmer);
         resolveAllTriggers();
 

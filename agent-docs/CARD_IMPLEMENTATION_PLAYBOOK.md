@@ -224,7 +224,7 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/b/src/main/java/com/github/laxika/magicalvibes/cards/b/BlightsteelColossus.java`, `magical-vibes-card/l/src/main/java/com/github/laxika/magicalvibes/cards/l/LegacyWeapon.java`
 
 - Discard-to-battlefield replacement effect ("if opponent causes you to discard this card, put it onto the battlefield instead"):
-  - `addTrigger(Triggers.opponentCausesYouToDiscardThisCard(), new EnterBattlefieldOnDiscardEffect())` — checked in `CardChoiceHandlerService` during both self-discard-choice and revealed-hand-choice flows. Only applies when `gameData.discardCausedByOpponent` is true. Filtered out from triggered ability processing in `TriggerCollectionService`. ETB triggers still fire normally.
+  - `addStaticEffect(new EnterBattlefieldOnDiscardEffect())` (a replacement effect of a static ability that functions in the hand, CR 113.6m; not a trigger) — checked in `CardChoiceHandlerService` during both self-discard-choice and revealed-hand-choice flows. Only applies when `gameData.discardCausedByOpponent` is true. Filtered out from triggered ability processing in `TriggerCollectionService`. ETB triggers still fire normally.
   - For the variant that enters with counters, use `new EnterBattlefieldOnDiscardEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)`; the counters are applied during battlefield entry only for the discard replacement.
   - Example: `magical-vibes-card/o/src/main/java/com/github/laxika/magicalvibes/cards/o/ObstinateBaloth.java`
 

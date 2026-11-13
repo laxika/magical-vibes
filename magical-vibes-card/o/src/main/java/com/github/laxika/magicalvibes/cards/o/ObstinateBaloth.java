@@ -14,6 +14,6 @@ public class ObstinateBaloth extends Card {
 
     public ObstinateBaloth() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(4));
-        addTrigger(Triggers.opponentCausesYouToDiscardThisCard(), new EnterBattlefieldOnDiscardEffect());
+        addStaticEffect(new EnterBattlefieldOnDiscardEffect());
     }
 }

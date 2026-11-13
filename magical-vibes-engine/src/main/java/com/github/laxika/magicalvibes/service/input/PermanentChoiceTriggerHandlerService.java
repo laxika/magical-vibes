@@ -37,7 +37,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.RevealUntilCardPre
 import com.github.laxika.magicalvibes.service.effect.normalfx.TheMasterGallifreysEndEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseAttackTargetsForCreatedTokensEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
-import com.github.laxika.magicalvibes.service.trigger.DiscardTriggerCollectorService;
+import com.github.laxika.magicalvibes.service.trigger.DiscardRecords;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
@@ -1565,7 +1565,7 @@ public class PermanentChoiceTriggerHandlerService {
             if (dct.discardedCount() > 0) {
                 entry.setEventValue(dct.discardedCount());
             }
-            DiscardTriggerCollectorService.recordDiscard(entry, dct.discardingPlayerId(), dct.discardedCards(),
+            DiscardRecords.recordDiscard(entry, dct.discardingPlayerId(), dct.discardedCards(),
                     dct.discardedCardStays(), false);
             pushTriggeredEntry(gameData, entry);
 
@@ -1584,7 +1584,7 @@ public class PermanentChoiceTriggerHandlerService {
             if (dct.discardedCount() > 0) {
                 entry.setEventValue(dct.discardedCount());
             }
-            DiscardTriggerCollectorService.recordDiscard(entry, dct.discardingPlayerId(), dct.discardedCards(),
+            DiscardRecords.recordDiscard(entry, dct.discardingPlayerId(), dct.discardedCards(),
                     dct.discardedCardStays(), false);
             pushTriggeredEntry(gameData, entry);
             gameLogService.append(gameData, GameLog.cardThen(dct.sourceCard(), "'s ability targets nothing."));

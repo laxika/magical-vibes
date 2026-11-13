@@ -26,12 +26,13 @@ class ArchipelagoreTest extends BaseCardTest {
                 gd, archipelagore, List.of(archipelagore.getCard()), player1.getId()));
         harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd));
 
-        PendingInteraction.MultiPermanentChoice firstChoice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        // "Up to one target creature" after the first mutation: one choice, declined by choosing yourself.
+        PendingInteraction.PermanentChoice firstChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(firstChoice).isNotNull();
-        assertThat(firstChoice.maxCount()).isEqualTo(1);
+        assertThat(firstChoice.validPermanentIds()).contains(bear.getId(), elves.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId()));
+        harness.handlePermanentChosen(player1, bear.getId());
         resolveOneTrigger();
 
         assertThat(bear.isTapped()).isTrue();
@@ -42,12 +43,11 @@ class ArchipelagoreTest extends BaseCardTest {
                 gd, archipelagore, List.of(archipelagore.getCard()), player1.getId()));
         harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd));
 
-        PendingInteraction.MultiPermanentChoice secondChoice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(secondChoice).isNotNull();
-        assertThat(secondChoice.maxCount()).isEqualTo(2);
+        // "Up to two target creatures" after the second mutation: a dynamic count, chosen one target at a time.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNotNull();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId(), elves.getId()));
+        harness.handlePermanentChosen(player1, bear.getId());
+        harness.handlePermanentChosen(player1, elves.getId());
         resolveOneTrigger();
 
         assertThat(elves.isTapped()).isTrue();
@@ -76,7 +76,7 @@ class ArchipelagoreTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
                 gd, archipelagore, List.of(archipelagore.getCard()), player1.getId()));
         harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd));
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
         resolveOneTrigger();
 
         assertThat(creature.isTapped()).isFalse();
@@ -94,7 +94,7 @@ class ArchipelagoreTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getTriggerCollectionService().checkMutateTriggers(
                 gd, archipelagore, List.of(archipelagore.getCard()), player1.getId()));
         harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextSelfTriggeredAbilityTarget(gd));
-        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
+        harness.handlePermanentChosen(player1, creature.getId());
         resolveOneTrigger();
 
         harness.performUntapStep(player2);

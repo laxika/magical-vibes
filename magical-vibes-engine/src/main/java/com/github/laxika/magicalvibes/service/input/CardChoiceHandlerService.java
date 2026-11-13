@@ -99,8 +99,6 @@ import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
-import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import lombok.RequiredArgsConstructor;
@@ -3638,7 +3636,7 @@ public class CardChoiceHandlerService {
     }
 
     private boolean hasEnterBattlefieldOnDiscardEffect(Card card) {
-        return LibraryAbilityReader.printedEffects(card, LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+        return card.getStaticEffects(Zone.HAND).stream()
                 .anyMatch(e -> e instanceof EnterBattlefieldOnDiscardEffect);
     }
 

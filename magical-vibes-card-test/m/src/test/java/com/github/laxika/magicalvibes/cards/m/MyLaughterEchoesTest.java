@@ -54,7 +54,7 @@ class MyLaughterEchoesTest extends BaseCardTest {
                 scheme.getCastingCostsAndSpellEffects());
         gd.stack.add(schemeEntry);
 
-        harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, schemeEntry);
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, schemeEntry));
 
         assertThat(gd.stack).containsExactly(schemeEntry);
     }
@@ -71,7 +71,7 @@ class MyLaughterEchoesTest extends BaseCardTest {
                 scheme.getCastingCostsAndSpellEffects());
         gd.stack.add(schemeEntry);
 
-        harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, schemeEntry);
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, schemeEntry));
 
         assertThat(gd.stack).containsExactly(schemeEntry);
         resolveAllTriggers();
@@ -117,7 +117,7 @@ class MyLaughterEchoesTest extends BaseCardTest {
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects());
         gd.stack.add(schemeEntry);
-        harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, schemeEntry);
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, schemeEntry));
     }
 
     private PermanentSetup setUpEchoesAndScheme() {
@@ -130,7 +130,7 @@ class MyLaughterEchoesTest extends BaseCardTest {
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects());
         gd.stack.add(schemeEntry);
-        harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, schemeEntry);
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, schemeEntry));
         return new PermanentSetup(echoes);
     }
 

@@ -26,7 +26,7 @@ public class GainControlOfAuraAttachedPermanentEffectHandler implements NormalEf
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        Permanent aura = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
         Permanent enchanted = gameQueryService.findPermanentById(gameData, entry.getTargetId());
         if (aura == null || enchanted == null || !enchanted.getId().equals(aura.getAttachedTo())) {
             return;

@@ -31,7 +31,7 @@ class CrystallineResonanceTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(bears.getId())
                 .doesNotContain(resonance.getId());

@@ -73,6 +73,11 @@ public record ConditionalEffect(Condition condition, CardEffect wrapped)
     }
 
     @Override
+    public boolean targetChosenByAnOpponent() {
+        return wrapped.targetChosenByAnOpponent();
+    }
+
+    @Override
     public boolean targetChosenByActivePlayer() {
         return wrapped.targetChosenByActivePlayer();
     }

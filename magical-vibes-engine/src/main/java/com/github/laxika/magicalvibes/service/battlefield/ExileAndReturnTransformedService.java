@@ -308,16 +308,9 @@ public class ExileAndReturnTransformedService {
                 gameData, saga, CounterType.LORE, 1, controllerId);
         saga.setCounterCount(CounterType.LORE, loreCounters);
         triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(gameData, saga, controllerId);
-        List<CardEffect> chapterEffects = card.getTriggerEffects(Triggers.chapter(1));
-        if (!chapterEffects.isEmpty()) {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    card,
-                    controllerId,
-                    card.getName() + "'s chapter I ability",
-                    chapterEffects,
-                    null,
-                    saga.getId()));
+        // Each chapter its lore counters reach triggers, as for a Saga entering normally.
+        for (int loreCount = 1; loreCount <= loreCounters; loreCount++) {
+            sagaChapterService.triggerSagaChapter(gameData, saga, card, controllerId, loreCount);
         }
     }
 }

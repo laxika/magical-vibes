@@ -242,13 +242,13 @@ class MiscTriggerTest {
 
         assertThat(read.effect()).isSameAs(DRAW);
         assertThat(read.firstTimeEachTurn()).isTrue();
-        assertThat(read.limitReached(gameData, vehicleId)).isFalse();
+        assertThat(read.firstTimeReached(gameData, vehicleId)).isFalse();
 
-        read.markLimit(gameData, vehicleId);
+        read.markFirstTime(gameData, vehicleId);
 
-        assertThat(read.limitReached(gameData, vehicleId)).isTrue();
+        assertThat(read.firstTimeReached(gameData, vehicleId)).isTrue();
         assertThat(MiscAbilityReader.read(new TriggeredAbility(Triggers.becomesCrewed(), DRAW),
-                Triggers.becomesCrewed()).getFirst().limitReached(gameData, vehicleId)).isFalse();
+                Triggers.becomesCrewed()).getFirst().firstTimeReached(gameData, vehicleId)).isFalse();
         assertThatThrownBy(() -> MiscAbilityReader.read(new TriggeredAbility(
                 Triggers.becomesSaddledForFirstTimeEachTurn(),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW), Triggers.becomesSaddled()))
@@ -256,24 +256,16 @@ class MiscTriggerTest {
     }
 
     @Test
-    void theReaderGivesTheLimitMarkedByTheAbility() {
+    void theReaderGivesTheAbilityWhoseLimitTheDoorJudges() {
         Card equipment = new Card();
         equipment.addTrigger(Triggers.becomesAttachedToCreature(),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
         MiscAbilityReader.MiscEffect read = MiscAbilityReader.read(
                 MiscAbilityReader.printed(equipment, MiscWatch.ON_EQUIPMENT_ATTACHED),
                 MiscWatch.ON_EQUIPMENT_ATTACHED.trigger()).getFirst();
-        GameData gameData = new GameData(UUID.randomUUID(), "test", UUID.randomUUID(), "owner");
-        UUID sourceId = UUID.randomUUID();
 
-        assertThat(read.triggersOnlyOnceEachTurn()).isTrue();
-        assertThat(read.limitReached(gameData, sourceId)).isFalse();
-
-        read.markLimit(gameData, sourceId);
-
-        assertThat(read.limitReached(gameData, sourceId)).isTrue();
-        assertThat(gameData.keyedOncePerTurnTriggersFiredThisTurn.get(sourceId))
-                .containsExactly(read.ability().limitKey());
+        assertThat(read.limit()).isEqualTo(TriggerLimit.ONCE_EACH_TURN);
+        assertThat(read.ability()).isEqualTo(equipment.getTriggeredAbilities().getFirst());
         assertThatThrownBy(() -> MiscAbilityReader.printedEffects(equipment, MiscWatch.ON_EQUIPMENT_ATTACHED))
                 .isInstanceOf(IllegalStateException.class).hasMessageContaining("judges no door, first time or limit");
     }

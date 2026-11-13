@@ -59,6 +59,12 @@ public interface CardEffect {
     default boolean targetChosenByActivePlayer() { return false; }
 
     /**
+     * Returns whether this effect's target is "of an opponent's choice" (Karplusan Minotaur): as a triggered ability
+     * using it goes on the stack, its controller chooses one of their opponents, who chooses the target.
+     */
+    default boolean targetChosenByAnOpponent() { return false; }
+
+    /**
      * Returns whether a death trigger using this effect has its target chosen, as it is put on the stack, by the
      * controller of its triggering permanent as that permanent last existed on the battlefield (Necrotic Plague's
      * "its controller chooses target creature"), rather than by the ability's controller.

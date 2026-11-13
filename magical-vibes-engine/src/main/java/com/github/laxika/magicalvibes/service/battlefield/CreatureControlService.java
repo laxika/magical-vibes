@@ -471,52 +471,20 @@ public class CreatureControlService {
     }
 
     private void queueSelfControlChangeTriggers(GameData gameData, Permanent permanent, UUID controllerId) {
-        // Each ability is one object of all its effects (CR 603.3).
-        for (List<CardEffect> effects : selfControlChangeAbilities(permanent, MiscWatch.ON_SELF_BECOMES_CONTROLLED)) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    permanent.getCard(),
-                    controllerId,
-                    permanent.getCard().getName() + "'s ability",
-                    new ArrayList<>(effects),
-                    null,
-                    permanent.getId());
-            entry.setNonTargeting(true);
-            entry.setSourcePermanentSnapshot(new Permanent(permanent));
-            gameData.enqueueTrigger(entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+        if (triggerCollectionService == null) {
+            return;
         }
+        triggerCollectionService.checkSelfControlChangeTriggers(gameData, permanent, controllerId,
+                MiscWatch.ON_SELF_BECOMES_CONTROLLED);
     }
 
     private void queueSelfControlLossTriggers(GameData gameData, Permanent permanent,
                                               UUID controllerId) {
-        // Each ability is one object of all its effects (CR 603.3).
-        for (List<CardEffect> effects : selfControlChangeAbilities(permanent, MiscWatch.ON_SELF_LOSES_CONTROL)) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    permanent.getCard(),
-                    controllerId,
-                    permanent.getCard().getName() + "'s ability",
-                    new ArrayList<>(effects),
-                    null,
-                    permanent.getId());
-            entry.setNonTargeting(true);
-            entry.setSourcePermanentSnapshot(new Permanent(permanent));
-            gameData.enqueueTrigger(entry);
-            gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+        if (triggerCollectionService == null) {
+            return;
         }
-    }
-
-    /**
-     * The effects of {@code permanent}'s abilities {@code watch} reads, one list for each ability (one object on the
-     * stack, CR 603.3): its printed ones, then those granted to it for a duration and until it leaves, read through
-     * {@link MiscAbilityReader}; no control-change ability takes a limit.
-     */
-    private static List<List<CardEffect>> selfControlChangeAbilities(Permanent permanent, MiscWatch watch) {
-        List<TriggeredAbility> abilities = new ArrayList<>(MiscAbilityReader.printed(permanent.getCard(), watch));
-        abilities.addAll(WatchedAbilities.temporary(permanent, watch.trigger()));
-        abilities.addAll(WatchedAbilities.persistent(permanent, watch.trigger()));
-        return MiscAbilityReader.effectsByAbility(abilities, watch.trigger());
+        triggerCollectionService.checkSelfControlChangeTriggers(gameData, permanent, controllerId,
+                MiscWatch.ON_SELF_LOSES_CONTROL);
     }
 
     private void removeFromCombat(GameData gameData, Permanent permanent) {

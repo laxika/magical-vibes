@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
@@ -130,6 +131,10 @@ public class EtbTriggerService {
         this.predicateEvaluationService = predicateEvaluationService;
         this.graveyardTargetingSupport = graveyardTargetingSupport;
     }
+
+    @Autowired
+    @Lazy
+    private TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Autowired
     void setLegendRuleService(@Lazy LegendRuleService legendRuleService) {
@@ -1637,24 +1642,22 @@ public class EtbTriggerService {
                 if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                     continue;
                 }
-                // Each ability is one object of all its effects (CR 603.3).
-                for (List<CardEffect> effects : MiscAbilityReader.printedEffectsByAbility(permanent.getCard(),
+                // Each ability is one object of all its effects (CR 603.3), through the stack door.
+                for (TriggeredAbility ability : MiscAbilityReader.printed(permanent.getCard(),
                         MiscWatch.ON_PERMANENT_ENTERING_CAUSES_ABILITY_TO_TRIGGER)) {
-                    StackEntry entry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            permanent.getCard(),
-                            controllerId,
-                            permanent.getCard().getName() + "'s ability",
-                            new ArrayList<>(effects),
-                            triggeredAbility.getTargetableId(),
-                            Zone.STACK,
-                            permanent.getId());
-                    entry.setNonTargeting(true);
-                    entry.setTriggeringCardId(triggeredAbility.getTargetableId());
-                    entry.setTriggeringSpell(triggeredAbility);
-                    entry.setTriggeringPlayerId(triggeredAbility.getControllerId());
-                    gameData.stack.add(entry);
-                    gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+                    boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
+                            permanent.getCard(), permanent, controllerId, permanent.getCard().getName() + "'s ability",
+                            ConditionContext.forPermanent(permanent, controllerId), entry -> {
+                                entry.setNonTargeting(true);
+                                entry.setTargetId(triggeredAbility.getTargetableId());
+                                entry.setTargetZone(Zone.STACK);
+                                entry.setTriggeringCardId(triggeredAbility.getTargetableId());
+                                entry.setTriggeringSpell(triggeredAbility);
+                                entry.setTriggeringPlayerId(triggeredAbility.getControllerId());
+                            }));
+                    if (triggered) {
+                        gameLogService.append(gameData, GameLog.abilityTriggers(permanent.getCard()));
+                    }
                 }
             }
         });

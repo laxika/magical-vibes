@@ -100,8 +100,6 @@ public class DayNightService {
         transformDayNightPermanents(gameData, next);
         if (previous != DayNight.NEITHER && previous != next) {
             triggerCollectionService.checkDayNightChangeTriggers(gameData, previous, next);
-        } else {
-            triggerCollectionService.processNextDayNightTriggerTarget(gameData);
         }
     }
 

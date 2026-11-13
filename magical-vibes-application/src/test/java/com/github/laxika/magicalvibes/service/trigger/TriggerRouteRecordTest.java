@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.DayNight;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -2360,7 +2361,10 @@ class TriggerRouteRecordTest extends BaseCardTest {
         Permanent vehicle = harness.addToBattlefieldAndReturn(player1, vehicleCard);
         mainPhaseOf(player1);
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(vehicle), null, null);
-        if (gd.interaction.isAwaitingInput()) {
+        // The crew cost's choice of creature, unless the cost was paid at once and the choice awaited is an ability's
+        // that triggered as it was paid.
+        var crewChoice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        if (crewChoice != null && crewChoice.validPermanentIds().contains(creature.getId())) {
             harness.handlePermanentChosen(player1, creature.getId());
         }
     }
@@ -2386,7 +2390,8 @@ class TriggerRouteRecordTest extends BaseCardTest {
             mainPhaseOf(player1);
             harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(spacecraft),
                     null, null);
-            if (gd.interaction.isAwaitingInput()) {
+            var stationChoice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            if (stationChoice != null && stationChoice.validPermanentIds().contains(crew.getId())) {
                 harness.handlePermanentChosen(player1, crew.getId());
             }
             answerAll();

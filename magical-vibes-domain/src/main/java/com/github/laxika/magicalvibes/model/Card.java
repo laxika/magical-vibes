@@ -324,12 +324,6 @@ public class Card {
     /** Card-specific "cast this spell only when …" restriction, or null for normal timing. Defiant Stand. */
     private SpellCastTimingRestriction spellCastTimingRestriction;
     /**
-     * Exact number of permanent targets the card's "when you cycle this card" trigger needs, chosen as the
-     * trigger is put on the stack; the trigger is removed when fewer legal targets exist (Resounding Wave).
-     * Zero for a trigger that does not use this declaration.
-     */
-    private int selfCycledTriggerPermanentTargets;
-    /**
      * Card-specific "cast this spell only if …" condition, evaluated for the caster when computing
      * playability, or null for no such restriction. Talara's Battalion ("only if you've cast another
      * green spell this turn").
@@ -509,7 +503,6 @@ public class Card {
         this.morphDiscardCost = source.morphDiscardCost;
         this.morphLifeCost = source.morphLifeCost;
         this.spellCastTimingRestriction = source.spellCastTimingRestriction;
-        this.selfCycledTriggerPermanentTargets = source.selfCycledTriggerPermanentTargets;
         this.castCondition = source.castCondition;
         this.flashCastCondition = source.flashCastCondition;
         this.flashCastTargetPredicate = source.flashCastTargetPredicate;
@@ -647,7 +640,6 @@ public class Card {
         this.morphDiscardCost = face.morphDiscardCost;
         this.morphLifeCost = face.morphLifeCost;
         this.spellCastTimingRestriction = face.spellCastTimingRestriction;
-        this.selfCycledTriggerPermanentTargets = face.selfCycledTriggerPermanentTargets;
         this.castCondition = face.castCondition;
         this.flashCastCondition = face.flashCastCondition;
         this.attachRestriction = face.attachRestriction;
@@ -814,7 +806,6 @@ public class Card {
     public void setTargetControllersFixedAtCast(boolean targetControllersFixedAtCast) { assertMutable(); this.targetControllersFixedAtCast = targetControllersFixedAtCast; }
     public void setCastTimeTargetFilter(TargetFilter castTimeTargetFilter) { assertMutable(); this.castTimeTargetFilter = castTimeTargetFilter; }
     public void setSpellCastTimingRestriction(SpellCastTimingRestriction spellCastTimingRestriction) { assertMutable(); this.spellCastTimingRestriction = spellCastTimingRestriction; }
-    public void setSelfCycledTriggerPermanentTargets(int count) { assertMutable(); this.selfCycledTriggerPermanentTargets = count; }
     public void setCastCondition(Condition castCondition) { assertMutable(); this.castCondition = castCondition; }
     public void setFlashCastCondition(Condition flashCastCondition) { assertMutable(); this.flashCastCondition = flashCastCondition; }
     public void setFlashCastTargetPredicate(PermanentPredicate flashCastTargetPredicate) { assertMutable(); this.flashCastTargetPredicate = flashCastTargetPredicate; }

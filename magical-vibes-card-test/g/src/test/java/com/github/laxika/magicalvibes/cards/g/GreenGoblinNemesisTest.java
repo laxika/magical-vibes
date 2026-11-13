@@ -33,7 +33,7 @@ class GreenGoblinNemesisTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.DiscardControllerTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, goblin.getId());
         harness.passBothPriorities();
 

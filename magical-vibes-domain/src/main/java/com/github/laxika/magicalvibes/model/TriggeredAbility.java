@@ -120,8 +120,9 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
 
     /**
      * Rejects a {@link #targetFilter} on an ability with a trigger condition other than a cast trigger, "whenever you
-     * gain life", "whenever you draw a card", "whenever a creature dies" or "at the beginning of your upkeep": only the
-     * spell-cast collector, the emblems' life-gain, draw and creature-death readers (Teferi, Hero of Dominaria's
+     * gain life", "whenever you draw a card", "when you cycle this card", "whenever a creature dies" or "at the
+     * beginning of your upkeep": only the spell-cast collector, the stack door for a cycled card's own ability
+     * (Choking Tethers' "tap target creature", apart from the spell's target), the emblems' life-gain, draw and creature-death readers (Teferi, Hero of Dominaria's
      * "exile target permanent an opponent controls", Sephiroth, One-Winged Angel's "target opponent") and the
      * your-upkeep reader's player-target choice (a granted ability's "target opponent", Custody Battle) read the
      * ability's own target filter (the permanents' life collectors reject one as they read the ability).
@@ -133,12 +134,14 @@ public record TriggeredAbility(List<TriggerCondition> conditions, TriggerOptions
                 && life.player() == PlayerRelation.YOU && life.spellFilter() == null && !life.firstEachTurn())
                 && !(trigger instanceof LibraryTrigger draw && draw.event() == LibraryTrigger.LibraryEvent.DRAWS
                 && draw.player() == PlayerRelation.YOU && draw.qualifier() == null && draw.nth() == 0)
+                && !(trigger instanceof LibraryTrigger cycled && cycled.event() == LibraryTrigger.LibraryEvent.THIS_CYCLED)
                 && !(trigger instanceof ZoneChangeTrigger death && death.relation() == ObjectRelation.ANY
                 && death.from().equals(Set.of(Zone.BATTLEFIELD)) && death.to() == Zone.GRAVEYARD
                 && death.causes().isEmpty())
                 && !(trigger instanceof StepTrigger step && step.moment() == StepTrigger.Moment.UPKEEP
                 && step.player() == ActivePlayer.YOU))) {
-            throw new IllegalArgumentException("Only the spell-cast collector, the emblems' life-gain, draw and "
+            throw new IllegalArgumentException("Only the spell-cast collector, the cycled card's door, the emblems' "
+                    + "life-gain, draw and "
                     + "creature-death readers and the your-upkeep reader read an ability's own target filter: "
                     + conditions);
         }

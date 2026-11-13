@@ -10514,18 +10514,12 @@ public class GameQueryService {
      * Returns the number of additional copies for a triggered ability caused by a player drawing a card.
      * Only static effects restricted to draw-caused triggers (Krang, the All-Powerful) apply here.
      */
-    public int countAdditionalDrawTriggeredAbilityTriggers(GameData gameData, UUID controllerId,
-                                                           Permanent triggeringPermanent) {
-        return countAdditionalTriggeredAbilityTriggers(gameData, controllerId, triggeringPermanent,
-                false, null, true);
-    }
-
     public int countAdditionalTriggeredAbilityTriggers(GameData gameData, UUID controllerId,
                                                         Permanent triggeringPermanent,
                                                         boolean attackTrigger,
                                                         TriggerContext triggerContext) {
         return countAdditionalTriggeredAbilityTriggers(gameData, controllerId, triggeringPermanent,
-                attackTrigger, triggerContext, false);
+                attackTrigger, triggerContext, triggerContext instanceof TriggerContext.Draw);
     }
 
     private int countAdditionalTriggeredAbilityTriggers(GameData gameData, UUID controllerId,

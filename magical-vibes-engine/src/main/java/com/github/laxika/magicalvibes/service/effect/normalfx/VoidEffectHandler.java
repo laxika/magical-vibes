@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -22,8 +23,6 @@ import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
-import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
-import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -129,7 +128,7 @@ public class VoidEffectHandler implements NormalEffectHandlerBean {
     }
 
     private boolean hasEnterBattlefieldOnDiscardEffect(Card card) {
-        return LibraryAbilityReader.printedEffects(card, LibraryWatch.ON_SELF_DISCARDED_BY_OPPONENT).stream()
+        return card.getStaticEffects(Zone.HAND).stream()
                 .anyMatch(EnterBattlefieldOnDiscardEffect.class::isInstance);
     }
 }
