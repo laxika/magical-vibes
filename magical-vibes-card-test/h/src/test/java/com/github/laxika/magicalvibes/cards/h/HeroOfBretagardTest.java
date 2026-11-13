@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.e.Expel;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MercilessEviction;
+import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.m.MindSwords;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -18,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HeroOfBretagard.class, MindSwords.class, Expel.class, GrizzlyBears.class, Forest.class})
+@CardUsed({HeroOfBretagard.class, MindSwords.class, Expel.class, GrizzlyBears.class, Forest.class,
+        MercilessEviction.class, MindStone.class})
 class HeroOfBretagardTest extends BaseCardTest {
 
     @Test
@@ -54,6 +57,25 @@ class HeroOfBretagardTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(hero.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A spell exiling two permanents at once triggers it once for that many counters")
+    void exilingSeveralPermanentsAtOnceTriggersOnce() {
+        Permanent hero = addCreatureReady(player1, new HeroOfBretagard());
+        harness.addToBattlefield(player2, new MindStone());
+        harness.addToBattlefield(player2, new MindStone());
+        harness.setHand(player1, List.of(new MercilessEviction()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        // "One or more permanents ... put that many": one ability for the event (CR 603.2c).
+        harness.castAndResolveSorcery(player1, 0, 0);
+        assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Hero of Bretagard")).hasSize(1);
+        resolveAllTriggers();
+
+        assertThat(hero.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test

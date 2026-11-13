@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPer
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsTriggeringCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -30,7 +30,7 @@ public class IllicitMasquerade extends Card {
 
         var otherCreature = new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.CREATURE),
-                new CardNotPredicate(new CardIsSelfPredicate())));
+                new CardNotPredicate(new CardIsTriggeringCardPredicate())));
         addTrigger(Triggers.creatureDies(
                         new PermanentHasCountersPredicate(CounterType.IMPOSTOR),
                         ObjectRelation.YOU_CONTROL),

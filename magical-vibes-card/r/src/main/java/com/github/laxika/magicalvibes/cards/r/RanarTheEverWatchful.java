@@ -21,7 +21,7 @@ public class RanarTheEverWatchful extends Card {
         CreateTokenEffect spirit = CreateTokenEffect.whiteSpirit(1);
         addTrigger(new TriggerCondition(Triggers.exiledFrom(Set.of(Zone.HAND),
                 null, ObjectRelation.YOU_OWN)), TriggerOptions.ONE_OR_MORE, spirit);
-        addTrigger(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD),
-                null, ObjectRelation.ANOTHER).causedBy(PlayerRelation.YOU), spirit);
+        addTrigger(new TriggerCondition(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD),
+                null, ObjectRelation.ANOTHER).causedBy(PlayerRelation.YOU)), TriggerOptions.ONE_OR_MORE, spirit);
     }
 }

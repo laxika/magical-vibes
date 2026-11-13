@@ -82,6 +82,7 @@ import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsTriggeringCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostControlledLandsPredicate;
@@ -1337,6 +1338,7 @@ public class PredicateEvaluationService {
             // Only the graveyard count that has the resolving entry knows the triggering spell (AmountEvaluationService).
             case CardSharesNameWithTriggeringSpellPredicate ignored -> false;
             case CardSharesNameWithTriggeringPermanentPredicate ignored -> false;
+            case CardIsTriggeringCardPredicate ignored -> false;
             // Bound to the resolving entry's triggering spell by AmountEvaluationService.bindTriggeringSpellManaValue.
             case CardManaValueEqualsTriggeringSpellPredicate ignored -> false;
             // Bound to the event's value by the matchesCardPredicate overload that is given one (bindEventValue).

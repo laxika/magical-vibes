@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DiregrafHorde.class, NoviceOccultist.class})
+@CardUsed({DiregrafHorde.class, NoviceOccultist.class, DivineVisitation.class})
 class DiregrafHordeTest extends BaseCardTest {
 
     @Test
@@ -48,6 +48,25 @@ class DiregrafHordeTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Angels a replacement effect creates instead of the Zombies don't trigger the reflexive ability")
+    void replacedTokensDoNotTriggerTheReflexiveAbility() {
+        Card card = new NoviceOccultist();
+        harness.setGraveyard(player2, List.of(card));
+        harness.addToBattlefield(player1, new DivineVisitation());
+        harness.setHand(player1, List.of(new DiregrafHorde()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        // Ajani, Nacatl Avenger's ruling: creating different tokens instead doesn't trigger "when you do" (CR 603.12).
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(card);
+        assertThat(findPermanents(player1, "Angel")).hasSize(2);
     }
 
     @Test

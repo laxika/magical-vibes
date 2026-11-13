@@ -3567,6 +3567,7 @@ On the pre-targeted `BATTLEFIELD` path, a card reanimated out of a **different p
 | `CardSubtypePredicate` | `(CardSubtype subtype)` | cards of a given subtype (ZOMBIE, GOBLIN, etc.) |
 | `CardKeywordPredicate` | `(Keyword keyword)` | cards with a given keyword (INFECT, FLYING, etc.) |
 | `CardIsSelfPredicate` | `()` | only the source card itself (Squee-style self-return) |
+| `CardIsTriggeringCardPredicate` | `()` | the card the triggered ability's event was about ("it", "that card"); `CardNotPredicate` of it is "other" than the dying creature (Illicit Masquerade, Puca's Covenant), bound as the target is chosen |
 | `CardIsAuraPredicate` | `()` | aura cards |
 | `CardIsAuraEnchantCreaturePredicate` | `()` | Aura cards with enchant creature (read from the Aura's spell target filter) |
 | `CardIsPermanentPredicate` | `()` | permanent cards (creature, artifact, enchantment, planeswalker, land, kindred � not instant/sorcery) |

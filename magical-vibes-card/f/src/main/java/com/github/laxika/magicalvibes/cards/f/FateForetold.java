@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardForTriggeringPermanentControllerEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,6 +18,6 @@ public class FateForetold extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect())
                 // When enchanted creature dies, its controller draws a card.
                 .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
-                        new DrawCardForTargetPlayerEffect(1));
+                        new DrawCardForTriggeringPermanentControllerEffect());
     }
 }

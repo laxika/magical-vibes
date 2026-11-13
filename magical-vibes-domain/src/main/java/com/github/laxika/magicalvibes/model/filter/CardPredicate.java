@@ -102,6 +102,7 @@ public sealed interface CardPredicate permits
         CardManaValueEqualsEventValuePredicate,
         CardManaValueAtMostEventValuePredicate,
         CardSharesNameWithTriggeringPermanentPredicate,
+        CardIsTriggeringCardPredicate,
         CardSharesNameWithLegendaryControlledPermanentPredicate,
         CardSubtypePredicate,
         CardSupertypePredicate,

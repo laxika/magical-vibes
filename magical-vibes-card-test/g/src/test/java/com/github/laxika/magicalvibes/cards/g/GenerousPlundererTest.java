@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.AnointedProcession;
 import com.github.laxika.magicalvibes.cards.j.JaceReawakened;
 import com.github.laxika.magicalvibes.cards.m.MagdaTheHoardmaster;
 import com.github.laxika.magicalvibes.cards.t.TorporOrb;
@@ -17,7 +18,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GenerousPlunderer.class, TorporOrb.class, JaceReawakened.class, MagdaTheHoardmaster.class})
+@CardUsed({GenerousPlunderer.class, TorporOrb.class, JaceReawakened.class, MagdaTheHoardmaster.class,
+        AnointedProcession.class})
 class GenerousPlundererTest extends BaseCardTest {
 
     @Test
@@ -45,6 +47,30 @@ class GenerousPlundererTest extends BaseCardTest {
                 .hasSize(1)
                 .first()
                 .satisfies(treasure -> assertThat(treasure.isTapped()).isTrue());
+    }
+
+    @Test
+    @DisplayName("Each Treasure a doubler makes triggers the reflexive ability once, each with its own target")
+    void doubledTreasureTriggersTheReflexiveAbilityForEachToken() {
+        addCreatureReady(player1, new GenerousPlunderer());
+        harness.addToBattlefield(player1, new AnointedProcession());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(findPermanents(player1, "Treasure")).hasSize(2);
+
+        // Ajani, Nacatl Avenger's ruling: "when you do" triggers once for each token the action made (CR 603.12).
+        for (int ability = 0; ability < 2; ability++) {
+            PendingInteraction.PermanentChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(choice).as("the target of reflexive ability %d", ability + 1).isNotNull();
+            harness.handlePermanentChosen(player1, player2.getId());
+        }
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(findPermanents(player2, "Treasure")).hasSize(2);
     }
 
     @Test

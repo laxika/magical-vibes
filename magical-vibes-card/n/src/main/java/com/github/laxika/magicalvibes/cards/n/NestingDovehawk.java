@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.PopulateEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,6 +27,6 @@ public class NestingDovehawk extends Card {
                                         new PermanentIsCreaturePredicate())),
                                 ObjectRelation.YOU_CONTROL)),
                 TriggerOptions.DEFAULT,
-                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue()));
+                new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 1));
     }
 }

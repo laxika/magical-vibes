@@ -29,8 +29,8 @@ public class HeroOfBretagard extends Card {
                 CounterType.PLUS_ONE_PLUS_ONE, new EventValue());
         addTrigger(new TriggerCondition(Triggers.exiledFrom(Set.of(Zone.HAND),
                 null, ObjectRelation.YOU_OWN)), TriggerOptions.ONE_OR_MORE, counters);
-        addTrigger(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD),
-                null, ObjectRelation.ANOTHER).causedBy(PlayerRelation.YOU), counters);
+        addTrigger(new TriggerCondition(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD),
+                null, ObjectRelation.ANOTHER).causedBy(PlayerRelation.YOU)), TriggerOptions.ONE_OR_MORE, counters);
 
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.PLUS_ONE_PLUS_ONE),

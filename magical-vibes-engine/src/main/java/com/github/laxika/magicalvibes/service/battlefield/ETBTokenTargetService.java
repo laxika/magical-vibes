@@ -411,7 +411,8 @@ public class ETBTokenTargetService {
     }
 
     public void processNextETBTokenMultiTargetTrigger(GameData gameData) {
-        while (gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
+        while (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)) {
             PermanentChoiceContext.ETBTokenMultiTargetTrigger pending = gameData.peekPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
             Card card = pending.sourceCard();
             List<TargetGroup> groups = card.getTargetGroups();

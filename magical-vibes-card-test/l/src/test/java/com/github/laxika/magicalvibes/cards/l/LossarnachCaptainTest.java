@@ -44,7 +44,7 @@ class LossarnachCaptainTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, victim.getId());
         harness.passBothPriorities();
 
@@ -110,7 +110,7 @@ class LossarnachCaptainTest extends BaseCardTest {
 
         assertThat(countPermanents(player1, "Human Soldier")).isEqualTo(1);
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, victim.getId());
         harness.passBothPriorities();
         assertThat(victim.isTapped()).isTrue();

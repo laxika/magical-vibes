@@ -71,6 +71,7 @@ class NecroticPlagueTest extends BaseCardTest {
         // Advance to player2's upkeep — sacrifice trigger fires
         advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve sacrifice trigger — creature dies, death trigger fires
+        chooseReturnTarget(player2, myCreature);
         harness.passBothPriorities(); // resolve death trigger — aura returns to player1's creature
 
         // Player2's creature should be dead
@@ -152,6 +153,7 @@ class NecroticPlagueTest extends BaseCardTest {
         // ---- First cycle: player2's creature dies at player2's upkeep ----
         advanceToUpkeep(player2);
         harness.passBothPriorities(); // resolve sacrifice — creature2 dies
+        chooseReturnTarget(player2, creature1);
         harness.passBothPriorities(); // resolve death trigger — plague attaches to creature1
 
         // Creature2 dead, plague on creature1
@@ -166,6 +168,7 @@ class NecroticPlagueTest extends BaseCardTest {
         // ---- Second cycle: player1's creature dies at player1's upkeep ----
         advanceToUpkeep(player1);
         harness.passBothPriorities(); // resolve sacrifice — creature1 dies
+        chooseReturnTarget(player1, creature2b);
         harness.passBothPriorities(); // resolve death trigger — plague attaches to creature2b
 
         // Creature1 dead, plague on creature2b
@@ -233,6 +236,7 @@ class NecroticPlagueTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.castInstant(player1, 0, enchanted.getId());
         harness.passBothPriorities();
+        chooseReturnTarget(player2, recipient);
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Runeclaw Bear");
@@ -255,6 +259,18 @@ class NecroticPlagueTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Necrotic Plague");
         harness.assertNotOnBattlefield(player1, "Necrotic Plague");
         assertThat(gd.stack).isEmpty();
+    }
+
+    /**
+     * The dying creature's controller chooses the creature the Aura returns attached to, as the ability goes on the
+     * stack (CR 603.3d), even when only one creature can be chosen.
+     */
+    private void chooseReturnTarget(Player chooser, Permanent creature) {
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.playerId()).isEqualTo(chooser.getId());
+        harness.handlePermanentChosen(chooser, creature.getId());
     }
 
     private void castNecroticPlagueOn(Player caster, Permanent target) {

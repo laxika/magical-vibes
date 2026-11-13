@@ -68,7 +68,7 @@ class GruulRagebeastTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownGiant.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }

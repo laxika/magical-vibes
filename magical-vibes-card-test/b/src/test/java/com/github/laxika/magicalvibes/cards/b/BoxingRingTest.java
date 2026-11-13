@@ -30,7 +30,7 @@ class BoxingRingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, sameManaValue.getId());
         harness.passBothPriorities();
 

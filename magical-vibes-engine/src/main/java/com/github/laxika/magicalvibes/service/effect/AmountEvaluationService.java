@@ -296,6 +296,8 @@ import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIsTriggeringCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardIdSetPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -1147,7 +1149,19 @@ public class AmountEvaluationService {
      */
     public int evaluateAtDeath(GameData gameData, DynamicAmount amount, UUID controllerId,
                                Permanent dyingPermanent) {
-        AmountContext context = new AmountContext(controllerId, dyingPermanent, null, 0, 0);
+        return evaluateAtDeath(gameData, amount, controllerId, dyingPermanent, null);
+    }
+
+    /**
+     * {@link #evaluateAtDeath(GameData, DynamicAmount, UUID, Permanent)} with {@code record}, the triggered ability's
+     * record of the event, as the context's stack entry: an amount about the event ("that creature's mana value",
+     * {@code TriggeringPermanentManaValue}) reads it.
+     */
+    public int evaluateAtDeath(GameData gameData, DynamicAmount amount, UUID controllerId,
+                               Permanent dyingPermanent, StackEntry record) {
+        AmountContext context = record == null ? new AmountContext(controllerId, dyingPermanent, null, 0, 0)
+                : new AmountContext(controllerId, dyingPermanent, null, record.getXValue(), record.getEventValue(),
+                false, null, List.of(), null, record, null, null, 0, 0, List.of());
         if (amount instanceof PermanentCount count) {
             return countPermanents(gameData, count, context, true);
         }
@@ -2464,6 +2478,36 @@ public class AmountEvaluationService {
                 .findFirst()
                 .orElse(triggeringSpellSnapshot);
         return spell == null || spell.isCastFaceDown() ? null : spell.getCard().getName();
+    }
+
+    /**
+     * {@code filter} with "it" ({@link CardIsTriggeringCardPredicate}) bound to {@code triggeringCardId}, the card the
+     * ability's event was about: a target chosen as the ability goes on the stack ("up to one other target creature
+     * card", CR 603.3d) is judged against it. With no triggering card it matches nothing. A filter without the predicate
+     * is returned as it is.
+     */
+    public static CardPredicate bindTriggeringCard(CardPredicate filter, UUID triggeringCardId) {
+        return switch (filter) {
+            case null -> null;
+            case CardIsTriggeringCardPredicate ignored -> triggeringCardId == null
+                    ? new CardNotPredicate(new CardTruePredicate())
+                    : new CardIdSetPredicate(java.util.Set.of(triggeringCardId));
+            case CardAllOfPredicate all -> {
+                List<CardPredicate> parts = all.predicates().stream()
+                        .map(part -> bindTriggeringCard(part, triggeringCardId)).toList();
+                yield parts.equals(all.predicates()) ? filter : new CardAllOfPredicate(parts);
+            }
+            case CardAnyOfPredicate any -> {
+                List<CardPredicate> parts = any.predicates().stream()
+                        .map(part -> bindTriggeringCard(part, triggeringCardId)).toList();
+                yield parts.equals(any.predicates()) ? filter : new CardAnyOfPredicate(parts);
+            }
+            case CardNotPredicate not -> {
+                CardPredicate bound = bindTriggeringCard(not.predicate(), triggeringCardId);
+                yield bound.equals(not.predicate()) ? filter : new CardNotPredicate(bound);
+            }
+            default -> filter;
+        };
     }
 
     /**

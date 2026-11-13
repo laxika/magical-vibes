@@ -86,12 +86,14 @@ public class DealDamageToEnchantedPermanentControllerEffectHandler implements No
 
         // The enchanted permanent is gone: its last-known controller (CR 608.2h), recorded on the entry as it left
         // (the Aura's abilities already on the stack), or when the entry records the permanent the Aura was attached
-        // to. An orphaned Aura's death trigger has the controller captured when the permanent died as its targetId.
+        // to, or the enchanted permanent its death trigger records (CR 603.10a). An orphaned Aura's death trigger has the
+        // controller captured when the permanent died as its targetId.
         UUID departedControllerId = aura == null ? null : entry.lastKnownPermanentController(aura.getAttachedTo());
         if (departedControllerId != null) {
             return departedControllerId;
         }
-        if (entry.getAttachedPermanentSnapshot() != null && entry.getTriggeringPermanentControllerId() != null) {
+        if ((entry.getAttachedPermanentSnapshot() != null || entry.getTriggeringPermanentSnapshot() != null)
+                && entry.getTriggeringPermanentControllerId() != null) {
             return entry.getTriggeringPermanentControllerId();
         }
         UUID capturedControllerId = entry.getTargetId();

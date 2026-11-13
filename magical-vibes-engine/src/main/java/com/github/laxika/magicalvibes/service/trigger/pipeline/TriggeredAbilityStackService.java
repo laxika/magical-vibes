@@ -11,9 +11,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
-import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -44,7 +42,6 @@ import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
-import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -87,12 +84,10 @@ import java.util.function.Consumer;
  * effect-slot-refactor.md). It is one stack object (CR 603.3): a modal one waits for its mode (CR 603.3c), one that
  * targets for its targets as it goes on the stack and is removed if none is legal (CR 603.3d), and any other goes on
  * the stack through {@link GameData#enqueueTrigger}.
- * An ability that watches another object die ("whenever a creature you control dies", a relation other than
- * {@code THIS}) goes through {@link #triggerOnce} instead: its options are checked the same way, and its effects go on
- * the stack through its {@link CreatureDeathWatch}'s collector, which records the death whatever they are. So does an
- * ability of
- * one of the other zone-change families step 12a of effect-slot-refactor.md moved, through its
- * {@link ZoneChangeWatch}.
+ * An ability that watches another object's zone change ("whenever a creature you control dies", a relation other
+ * than {@code THIS}, its {@link ZoneChangeWatch} or {@link CreatureDeathWatch}) goes through {@link #triggerOnce}:
+ * its collector records the event ({@link TriggerCollectionService#zoneChangeRequest}) and it goes through
+ * {@link #put}.
  * APNAP ordering (CR 603.3b) happens later, in {@code TriggeredAbilityQueueService.beginTriggerOrder}.
  */
 @Service
@@ -264,10 +259,6 @@ public class TriggeredAbilityStackService {
         }
         CreatureDeathWatch deathWatch = zoneChangeWatch == null ? CreatureDeathWatch.of(trigger, candidate.zone())
                 : null;
-        if (TriggerCollectionService.keepsLegacyZoneChangeRoute(zoneChangeWatch)) {
-            triggerLegacyZoneChange(gameData, candidate, events, trigger, zoneChangeWatch, deathWatch);
-            return;
-        }
         TriggeredAbilityRequest request = triggerCollectionService.zoneChangeRequest(gameData, candidate,
                 zoneChangeWatch, deathWatch, events, context);
         if (request != null && put(gameData, request)) {
@@ -303,47 +294,6 @@ public class TriggeredAbilityStackService {
         if (put(gameData, triggerCollectionService.permanentChangeRequest(gameData, candidate, watch, events,
                 context))) {
             gameLogService.append(gameData, GameLog.abilityTriggers(candidate.sourceCard()));
-        }
-    }
-
-    /**
-     * Triggers {@code candidate}'s ability of another object's zone change the way its old collector does, for the
-     * watches still on it ({@link TriggerCollectionService#keepsLegacyZoneChangeRoute}): its options are checked here,
-     * and its effects, the intervening "if" wrapped around each (CR 603.4), go to the collector of its
-     * {@link ZoneChangeWatch} or {@link CreatureDeathWatch}, which records the event whatever they are.
-     */
-    private void triggerLegacyZoneChange(GameData gameData, TriggerCandidate candidate, List<ZoneChangeEvent> events,
-                                         ZoneChangeTrigger trigger, ZoneChangeWatch zoneChangeWatch,
-                                         CreatureDeathWatch watch) {
-        TriggerOptions options = candidate.ability().options();
-        Permanent source = candidate.sourceAsPermanent();
-        Condition interveningIf = options.interveningIf();
-        if (!conditionsMet(gameData, options,
-                triggeringContext(gameData, source, candidate.controllerId(), events.getFirst()))) {
-            return;
-        }
-        UUID sourceId = candidate.sourceObjectId();
-        String limitKey = limitKey(candidate);
-        if (limitReached(gameData, options.limit(), sourceId, limitKey)) {
-            return;
-        }
-        List<CardEffect> effects = new ArrayList<>();
-        for (EffectRegistration registration : candidate.ability().effects()) {
-            effects.add(withInterveningIf(interveningIf, registration.effect(), trigger.to() == Zone.BATTLEFIELD));
-        }
-        boolean triggered;
-        if (zoneChangeWatch != null) {
-            triggered = triggerCollectionService.triggerZoneChange(gameData, zoneChangeWatch, candidate, effects, events);
-        } else {
-            List<CreatureDeath> deaths = events.stream().map(CreatureDeath::of).toList();
-            triggered = options.multiplicity() == TriggerMultiplicity.ONE_OR_MORE
-                    ? triggerCollectionService.triggerCreatureDeaths(gameData, watch, source, candidate.controllerId(),
-                            effects, options.limit(), onceEachTurnActionKey(candidate.ability()), deaths)
-                    : triggerCollectionService.triggerCreatureDeath(gameData, watch, source, candidate.controllerId(),
-                            effects, options.limit(), onceEachTurnActionKey(candidate.ability()), deaths.getFirst());
-        }
-        if (triggered) {
-            markLimit(gameData, options.limit(), sourceId, limitKey);
         }
     }
 
@@ -545,9 +495,10 @@ public class TriggeredAbilityStackService {
         }
         List<CardEffect> choosing = effects.stream().filter(effect -> !effect.targetsChosenByReflexiveAbility())
                 .toList();
-        boolean ownDeparture = entry.getTriggeringPermanentSnapshot() != null
-                && entry.getSourcePermanentId() != null
-                && entry.getTriggeringPermanentSnapshot().getId().equals(entry.getSourcePermanentId());
+        // A permanent that left the battlefield is the event's (its own departure, or another's: "whenever a creature
+        // you control dies", "when the haunted creature dies").
+        boolean departure = entry.getTriggeringPermanentSnapshot() != null
+                && gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentSnapshot().getId()) == null;
         TargetPredicate.GraveyardCards randomGraveyardTarget = randomGraveyardTarget(choosing);
         if (modes != null) {
             entry.setParkedAtStackDoor(true);
@@ -603,7 +554,7 @@ public class TriggeredAbilityStackService {
                     java.util.Collections.nCopies(firstGroup, 0), entry.getXValue())
                     .withEventValue(entry.getEventValue()).withTriggerRecord(entry));
         } else if (choosing.stream().anyMatch(effect -> choosesGraveyardCard(effect)
-                || choosesDescribedGraveyardCard(effect, ownDeparture))
+                || choosesDescribedGraveyardCard(effect, departure))
                 && choosing.stream().noneMatch(TriggeredAbilityStackService::choosesBattlefieldOrPlayer)) {
             entry.setParkedAtStackDoor(true);
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
@@ -699,12 +650,13 @@ public class TriggeredAbilityStackService {
     }
 
     /**
-     * Whether {@code effect}, an effect of an ability its source's own departure triggered ({@code ownDeparture}),
-     * returns target graveyard cards it describes itself and chooses them as the ability goes on the stack (CR 603.3d):
-     * "return any number of target Spirit cards from your graveyard" (Iname, Life Aspect).
+     * Whether {@code effect}, an effect of an ability a permanent leaving the battlefield triggered ({@code departure}:
+     * its source's own, or another's), returns target graveyard cards it describes itself and chooses them as the
+     * ability goes on the stack (CR 603.3d): "return any number of target Spirit cards from your graveyard" (Iname, Life
+     * Aspect), "return target creature card from your graveyard" when the haunted creature dies (Exhumer Thrull).
      */
-    private boolean choosesDescribedGraveyardCard(CardEffect effect, boolean ownDeparture) {
-        return ownDeparture && graveyardTargetingSupport.findTarget(List.of(effect)) != null;
+    private boolean choosesDescribedGraveyardCard(CardEffect effect, boolean departure) {
+        return departure && graveyardTargetingSupport.findTarget(List.of(effect)) != null;
     }
 
     /**
@@ -1065,22 +1017,6 @@ public class TriggeredAbilityStackService {
     }
 
     /**
-     * The mana value limit of the graveyard target of {@code effects} ({@code ReturnCardFromGraveyardEffect
-     * .dynamicMaxManaValue()}), evaluated as the ability triggers with {@code lastKnown}, the object that moved as it
-     * last existed, as the amount's source, so it looks back at the others that died with it (CR 603.10a): Soulshift X
-     * counts the Kodama, "with lesser mana value" is the dying object's. The choice carries it to the stack entry.
-     * {@code null} when the effects have no such limit.
-     */
-    private Integer graveyardTargetMaxManaValue(GameData gameData, UUID controllerId, List<CardEffect> effects,
-                                                Permanent lastKnown) {
-        var target = graveyardTargetingSupport.findTarget(effects);
-        if (target == null || target.maximumManaValue() == null) {
-            return null;
-        }
-        return amountEvaluationService.evaluateAtDeath(gameData, target.maximumManaValue(), controllerId, lastKnown);
-    }
-
-    /**
      * The mana value limit of the graveyard target of {@code effects} when the record's triggering permanent has left
      * the battlefield: evaluated with that permanent as it last existed as the amount's source, so it looks back at
      * the others that left with it (CR 603.10a; Soulshift X counts the Kodama, "with lesser mana value" is the dying
@@ -1091,7 +1027,12 @@ public class TriggeredAbilityStackService {
         if (departed == null || gameQueryService.findPermanentById(gameData, departed.getId()) != null) {
             return null;
         }
-        return graveyardTargetMaxManaValue(gameData, entry.getControllerId(), effects, departed);
+        var target = graveyardTargetingSupport.findTarget(effects);
+        if (target == null || target.maximumManaValue() == null) {
+            return null;
+        }
+        return amountEvaluationService.evaluateAtDeath(gameData, target.maximumManaValue(), entry.getControllerId(),
+                departed, entry);
     }
 
     /**

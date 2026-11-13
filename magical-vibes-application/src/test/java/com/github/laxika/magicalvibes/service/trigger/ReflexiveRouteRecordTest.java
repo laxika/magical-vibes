@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
+import com.github.laxika.magicalvibes.cards.a.AnointedProcession;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -17,6 +18,9 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentThenExileMatchingPermanentsEffect;
@@ -31,6 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostEventValuePredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -69,9 +74,10 @@ import static org.assertj.core.api.Assertions.fail;
  * the choices the reflexive ability asks, and compares the reflexive entry's record of the trigger event, field by
  * field, with the entry that made it. The continuations are the effect handlers' ("when you do" after a counter is
  * removed, cards are exiled or drawn) and the choice handlers' follow-ups (after a card is discarded, a permanent is
- * returned to its owner's hand, another creature is sacrificed, a permanent is exiled).</p>
+ * returned to its owner's hand, another creature is sacrificed, a permanent is exiled), the accepted "you may" of
+ * the resolving ability, a paid cost's "if you do", and a target group of the card walked target by target.</p>
  */
-@CardUsed({GrizzlyBears.class, AirElemental.class})
+@CardUsed({GrizzlyBears.class, AirElemental.class, AnointedProcession.class})
 class ReflexiveRouteRecordTest extends BaseCardTest {
 
     private static final Pattern RECORD_FIELD_NAME = Pattern.compile("^(triggering|event)[A-Z].*|.*AtTrigger$");
@@ -109,7 +115,10 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
         CREATE_TOKEN_ABOUT_THAT_TOKEN(effect -> CreateTokenThenEffect.aboutThatToken(
                 CreateTokenEffect.ofTreasureToken(1), effect)),
         EXILE_OWN_GRAVEYARD_CARD(effect -> new ExileOwnGraveyardCardThenEffect(
-                new CardTypePredicate(CardType.CREATURE), effect));
+                new CardTypePredicate(CardType.CREATURE), effect)),
+        MAY_THEN(effect -> new MayEffect(new QueueReflexiveAbilityEffect(effect), "Do it?")),
+        PAID_COST_THEN(effect -> new ForcedCostOrElseEffect(new PayLifeCost(1), List.of(), true,
+                List.of(new QueueReflexiveAbilityEffect(effect))));
 
         private final Function<CardEffect, CardEffect> wrap;
 
@@ -119,12 +128,12 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
     }
 
     enum Route {
-        PLAIN, TARGET, GRAVEYARD_CARD;
+        PLAIN, TARGET, GRAVEYARD_CARD, TARGET_GROUP;
 
         CardEffect effect() {
             return switch (this) {
                 case PLAIN -> new GainLifeEffect(1);
-                case TARGET -> new DestroyTargetPermanentEffect();
+                case TARGET, TARGET_GROUP -> new DestroyTargetPermanentEffect();
                 case GRAVEYARD_CARD -> ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardTypePredicate(CardType.CREATURE))
@@ -158,7 +167,15 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
                 Arguments.of(Continuation.CREATE_TOKEN_ABOUT_THAT_TOKEN, Route.TARGET),
                 Arguments.of(Continuation.EXILE_OWN_GRAVEYARD_CARD, Route.PLAIN),
                 Arguments.of(Continuation.EXILE_OWN_GRAVEYARD_CARD, Route.TARGET),
-                Arguments.of(Continuation.EXILE_OWN_GRAVEYARD_CARD, Route.GRAVEYARD_CARD));
+                Arguments.of(Continuation.EXILE_OWN_GRAVEYARD_CARD, Route.GRAVEYARD_CARD),
+                Arguments.of(Continuation.QUEUE_REFLEXIVE, Route.TARGET_GROUP),
+                Arguments.of(Continuation.REMOVE_COUNTER, Route.TARGET_GROUP),
+                Arguments.of(Continuation.MAY_THEN, Route.PLAIN),
+                Arguments.of(Continuation.MAY_THEN, Route.TARGET),
+                Arguments.of(Continuation.MAY_THEN, Route.GRAVEYARD_CARD),
+                Arguments.of(Continuation.PAID_COST_THEN, Route.PLAIN),
+                Arguments.of(Continuation.PAID_COST_THEN, Route.TARGET),
+                Arguments.of(Continuation.PAID_COST_THEN, Route.GRAVEYARD_CARD));
     }
 
     private Permanent target;
@@ -174,7 +191,14 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
         fixture.setManaCost("{1}");
         fixture.setPower(2);
         fixture.setToughness(2);
-        fixture.addTrigger(Triggers.dealsCombatDamageToPlayer(), continuation.wrap.apply(route.effect()));
+        CardEffect reflexiveEffect = route.effect();
+        if (route == Route.TARGET_GROUP) {
+            // "Up to two target creatures": the card's group, walked target by target as the ability goes on the stack.
+            fixture.target(TargetFilters.creature(), 0, 2).addTrigger(Triggers.dealsCombatDamageToPlayer(),
+                    continuation.wrap.apply(reflexiveEffect));
+        } else {
+            fixture.addTrigger(Triggers.dealsCombatDamageToPlayer(), continuation.wrap.apply(reflexiveEffect));
+        }
 
         List<Card> graveyard = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
@@ -210,7 +234,8 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
         assertThat(entry).as("the reflexive ability is a new stack object").isNotSameAs(made.getFirst());
         if (route != Route.PLAIN) {
             assertThat(entry.getTargetId() != null
-                    || entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty())
+                    || entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty()
+                    || !entry.getTargetIds().isEmpty())
                     .as("the %s route chose a target", route).isTrue();
         }
 
@@ -239,6 +264,31 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
                     + " ability that made it (field: ability -> reflexive ability):\n  "
                     + String.join("\n  ", differences));
         }
+    }
+
+    @Test
+    @DisplayName("Each token a doubler adds to a one-token action triggers its \"when you do\" once, on the same record")
+    void doubledTokenTriggersTheReflexiveAbilityForEachToken() {
+        Card fixture = new Card();
+        fixture.setName("Reflexive Token Fixture");
+        fixture.setType(CardType.CREATURE);
+        fixture.setManaCost("{1}");
+        fixture.setPower(2);
+        fixture.setToughness(2);
+        fixture.addTrigger(Triggers.dealsCombatDamageToPlayer(), new CreateTokenThenEffect(
+                CreateTokenEffect.ofTreasureToken(1), new GainLifeEffect(1)));
+        harness.addToBattlefield(player1, new AnointedProcession());
+        Permanent source = addCreatureReady(player1, fixture);
+        source.setAttacking(true);
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
+        StackEntry parent = new StackEntry(entriesOf(fixture).getFirst());
+
+        harness.passBothPriorities();
+
+        // Ajani, Nacatl Avenger's ruling: two Treasures, two reflexive abilities (CR 603.12).
+        List<StackEntry> reflexive = entriesOf(fixture);
+        assertThat(reflexive).as("one reflexive ability for each Treasure").hasSize(2);
+        assertThat(reflexive).allSatisfy(entry -> assertThat(record(entry)).isEqualTo(record(parent)));
     }
 
     @Test

@@ -9,12 +9,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TriggeredModalEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -40,10 +38,6 @@ public class EnterTriggerCollectorService {
         this.gameQueryService = gameQueryService;
     }
 
-    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_CREATURE_ENTERS_BATTLEFIELD)
-    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_CREATURES_ENTERS_BATTLEFIELD)
-    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURES_ENTERS_BATTLEFIELD)
-    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_SELF_OR_ALLY_CREATURE_ENTERS_BATTLEFIELD)
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_PERMANENT_ENTERS_BATTLEFIELD)
     private boolean handleEnterDefault(TriggerMatchContext match, TriggerContext ctx) {
         TriggerContext.PermanentEnters pe = (TriggerContext.PermanentEnters) ctx;
@@ -137,34 +131,6 @@ public class EnterTriggerCollectorService {
         logTriggered(match);
     }
 
-    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD)
-    @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_OPPONENT_TOKEN_ENTERS_BATTLEFIELD)
-    private boolean handleTokenEnterDefault(TriggerMatchContext match, TriggerContext ctx) {
-        TriggerContext.TokensEnter tokensEnter = (TriggerContext.TokensEnter) ctx;
-        Card sourceCard = match.permanent().getCard();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                match.stackEffects(),
-                null,
-                match.permanent().getId());
-        entry.setEventValue(tokensEnter.count());
-        entry.setNonTargeting(true);
-        entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
-        recordEnteringTokens(match.gameData(), entry, tokensEnter);
-        if (match.targets()) {
-            queueTokenEnterTargetChoices(match, tokensEnter, entry);
-            return true;
-        }
-        for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
-            match.gameData().enqueueTrigger(entry.copyForNewStackObject());
-        }
-        logTriggered(match);
-        return true;
-    }
-
     /**
      * Records the tokens a "whenever one or more tokens enter" event was about on {@code entry}, whatever the ability's
      * effects are: "them" (the entry's triggering permanents), "it" when the event was one token's (its triggering
@@ -184,26 +150,6 @@ public class EnterTriggerCollectorService {
                 recordEnteringPermanent(gameData, entry, token.getCard(), token, null);
             }
         }
-    }
-
-    /**
-     * Queues the target choice of a targeted "whenever a token enters" ability, once for each time it triggers, its
-     * targets chosen as it goes on the stack (CR 603.3d). When the event is one token's ("whenever a token enters",
-     * triggering for each), that token is the entry's triggering permanent, "it" for the effects that read it ("a token
-     * that's a copy of it"), and a target restricted by it ("target player other than its controller") is judged
-     * against it. The choice carries the ability's "do this only once each turn" mark (CR 603.2h) to its entry, and
-     * each is handed a copy of {@code plainEntry}, the entry of an ability that chooses nothing, as its record.
-     */
-    private void queueTokenEnterTargetChoices(TriggerMatchContext match, TriggerContext.TokensEnter tokensEnter,
-                                              StackEntry plainEntry) {
-        UUID enteringTokenId = tokensEnter.permanentIds().size() == 1 ? tokensEnter.permanentIds().getFirst() : null;
-        var choice = new PermanentChoiceContext.EntersTriggerTarget(match.permanent().getCard(), match.controllerId(),
-                match.stackEffects(), match.permanent().getId(), enteringTokenId);
-        for (int i = 0; i < tokensEnter.perEffectTriggerCount(); i++) {
-            match.gameData().handOffTriggerRecord(plainEntry.copyForNewStackObject());
-            match.gameData().queueInteraction(choice.withOnceEachTurnActionKey(match.onceEachTurnActionKey()));
-        }
-        logTriggered(match);
     }
 
     @CollectsWatchTrigger(value = CardEffect.class, watch = ZoneChangeWatch.ON_ANY_OTHER_CREATURE_ENTERS_BATTLEFIELD)

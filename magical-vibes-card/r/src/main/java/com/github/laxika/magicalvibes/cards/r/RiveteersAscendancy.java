@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.amount.TriggeringCardManaValue;
+import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentManaValue;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 
 @CardRegistration(set = "SNC", collectorNumber = "216")
 public class RiveteersAscendancy extends Card {
@@ -25,7 +24,7 @@ public class RiveteersAscendancy extends Card {
         ReturnCardFromGraveyardEffect returnCreature = ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
-                .dynamicMaxManaValue(new Sum(new TriggeringCardManaValue(), new Fixed(-1)))
+                .dynamicMaxManaValue(new Sum(new TriggeringPermanentManaValue(), new Fixed(-1)))
                 .targetGraveyard(true)
                 .enterTapped(true)
                 .build();

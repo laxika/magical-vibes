@@ -603,14 +603,11 @@ the `SpellGraveyardTargetTrigger` before the resolution-time may choice, so the 
 already on the stack entry when the optional sacrifice resolves.
 
 **Graveyard-targeting death triggers** ("When ~ dies, exile target card from an opponent's graveyard" —
-Ruin Rat) use the same trigger-time graveyard selection on `Triggers.dies(THIS)` and `Triggers.creatureDies(YOU_CONTROL)`.
-`handleDeathDefault` and `TriggerCollectionService.triggerCreatureDeath` (`CreatureDeathWatch.ALLY`) route any death
-effect whose `targetSpec().admits(Kind.GRAVEYARD_CARD)` to a `DeathTriggerTarget` (alongside the
-permanent/player routing). `TriggeredAbilityQueueService.processNextDeathTriggerTarget` detects the
-graveyard target and calls `beginDeathGraveyardTarget`, which searches the declared scope and prompts a
-`MultiGraveyardChoice`. Optional up-to-one targets may be declined; a mandatory target with no legal
-card skips the trigger. An ally-death target may carry an excluded dying-card ID for an "other"
-restriction, so `CardNotPredicate(CardIsSelfPredicate())` is evaluated against the actual dying card.
+Ruin Rat) use the same trigger-time graveyard selection on `Triggers.dies(THIS)` and `Triggers.creatureDies(YOU_CONTROL)`:
+the stack door parks any death ability whose effect chooses a graveyard card (its `targetSpec` admits
+`Kind.GRAVEYARD_CARD`, or it describes its own graveyard target) for one `MultiGraveyardChoice`. Optional up-to-one
+targets may be declined; a mandatory target with no legal card removes the ability (CR 603.3d). "Other than it" (the dying creature) is `CardNotPredicate(CardIsTriggeringCardPredicate())`;
+`CardIsSelfPredicate` is always the source's own card.
 Use `Triggers.dies(THIS)`, never `Triggers.leavesBattlefield(THIS)` (Offalsnout), for a "dies" trigger — the latter
 also fires on exile/bounce.
 

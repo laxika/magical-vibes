@@ -178,9 +178,9 @@ public enum ZoneChangeWatch {
     /** "Whenever one or more permanents you control leave the battlefield". */
     ON_ALLY_PERMANENTS_LEAVE_BATTLEFIELD(battlefield(Triggers.leavesBattlefield(null, ObjectRelation.YOU_CONTROL),
             TriggerMultiplicity.ONE_OR_MORE)),
-    /** "Whenever a spell or ability you control exiles another permanent". */
+    /** "Whenever a spell or ability you control exiles one or more other permanents". */
     ON_CONTROLLER_SPELL_OR_ABILITY_EXILES_PERMANENT(battlefield(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD), null,
-            ObjectRelation.ANOTHER).causedBy(PlayerRelation.YOU))),
+            ObjectRelation.ANOTHER).causedBy(PlayerRelation.YOU), TriggerMultiplicity.ONE_OR_MORE)),
     /** "Whenever a permanent is returned to a player's hand". */
     ON_ANY_PERMANENT_RETURNED_TO_HAND(
             battlefield(Triggers.putIntoHandFrom(Zone.BATTLEFIELD, null, ObjectRelation.ANY))),

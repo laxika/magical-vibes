@@ -14,8 +14,6 @@ import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGraveyardToHandOfOpponentsChoiceEffectHandler;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.DiscardRecords;
-import com.github.laxika.magicalvibes.service.trigger.LibraryAbilityReader;
-import com.github.laxika.magicalvibes.service.trigger.LibraryWatch;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.service.trigger.CastAbility;
@@ -1029,7 +1027,8 @@ public class TriggeredAbilityQueueService {
     }
 
     public void processNextAttackTriggerTarget(GameData gameData) {
-        while (gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
+        while (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)) {
             PermanentChoiceContext.AttackTriggerTarget pending = gameData.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
             UUID choosingPlayerId = pending.choosingPlayerId();
             Permanent sourcePermanent = pending.sourcePermanentId() == null
@@ -1394,7 +1393,8 @@ public class TriggeredAbilityQueueService {
     }
 
     public void processNextTriggeredModalTrigger(GameData gameData) {
-        while (gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
+        while (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)) {
             PermanentChoiceContext.TriggeredModalTrigger pending =
                     gameData.pollPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
             ChooseOneEffect effect = pending.effect();
@@ -2986,7 +2986,8 @@ public class TriggeredAbilityQueueService {
     }
 
     public void processNextSpellGraveyardTargetTrigger(GameData gameData) {
-        while (gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
+        while (!gameData.interaction.isAwaitingInput()
+                && gameData.hasPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class)) {
             PermanentChoiceContext.SpellGraveyardTargetTrigger pending =
                     gameData.peekPendingInteraction(PermanentChoiceContext.SpellGraveyardTargetTrigger.class);
 
@@ -3194,6 +3195,11 @@ public class TriggeredAbilityQueueService {
             // "Target card with the same name as that spell" (Harness the Storm) is chosen against the spell the
             // ability triggered on, as it goes on the stack (CR 603.3d).
             filter = AmountEvaluationService.bindTriggeringSpellName(gameData, filter, null, pending.triggeringSpell());
+            StackEntry triggeringCardRecord = gameData.queuedTriggerRecord(pending) != null
+                    ? gameData.queuedTriggerRecord(pending) : pending.triggerRecord();
+            // "Other than it" (Illicit Masquerade): the card the event was about.
+            filter = AmountEvaluationService.bindTriggeringCard(filter,
+                    triggeringCardRecord == null ? null : triggeringCardRecord.getTriggeringCardId());
             // A target restricted by the event ("mana value equal to the damage dealt", "lesser mana value" than the
             // sacrificed creature) is chosen against the record of the event, the entry the collector built for the
             // ability that chooses nothing, as it is judged against the entry as the ability resolves; the choice's

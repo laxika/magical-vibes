@@ -45,7 +45,7 @@ class FallajiVanguardTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 

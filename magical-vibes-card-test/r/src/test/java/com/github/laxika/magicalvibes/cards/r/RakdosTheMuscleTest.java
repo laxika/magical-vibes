@@ -37,7 +37,7 @@ class RakdosTheMuscleTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+        assertThat(gd.interaction.permanentChoiceContext()).isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 

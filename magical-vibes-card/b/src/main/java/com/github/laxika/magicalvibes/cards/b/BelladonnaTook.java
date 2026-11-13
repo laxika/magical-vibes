@@ -20,7 +20,7 @@ public class BelladonnaTook extends Card {
 
     public BelladonnaTook() {
         addTrigger(new TriggerCondition(Triggers.enters(Triggers.TOKEN, ObjectRelation.YOU_CONTROL)),
-                TriggerOptions.ONE_OR_MORE, SequenceEffect.of(
+                TriggerOptions.DEFAULT, SequenceEffect.of(
                 new ConditionalEffect(new NthAbilityResolutionThisTurn(1), new GainLifeEffect(1)),
                 new ConditionalEffect(new NthAbilityResolutionThisTurn(2), new DrawCardEffect(1)),
                 new ConditionalEffect(new NthAbilityResolutionThisTurn(3),

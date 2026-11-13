@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,10 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BlowflyInfestation extends Card {
 
     public BlowflyInfestation() {
-        // Whenever a creature dies, if it had a -1/-1 counter on it, put a -1/-1 counter on target creature.
-        // The intervening-if is evaluated against the dying permanent's counters; the death-trigger target
-        // pipeline restricts the target to creatures.
-        addTrigger(Triggers.creatureDies(
+        target(TargetFilters.creature()).addTrigger(Triggers.creatureDies(
                         new PermanentHasCountersPredicate(CounterType.MINUS_ONE_MINUS_ONE),
                         ObjectRelation.ANY),
                 new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1));

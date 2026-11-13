@@ -38,10 +38,17 @@ public class BecomeCopyOfCreatureCardInOpponentGraveyardEffectHandler implements
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (entry.getTriggeringCards().isEmpty()) {
+        // "That card": the card the event put into the graveyard, wherever it is now (exiled in response, its
+        // characteristics are still the ones it had in the graveyard).
+        Card graveyardCard = !entry.getTriggeringCards().isEmpty() ? entry.getTriggeringCards().getFirst()
+                : entry.getTriggeringCardId() == null ? null
+                : gameQueryService.findCardInGraveyardById(gameData, entry.getTriggeringCardId());
+        if (graveyardCard == null && entry.getTriggeringCardId() != null) {
+            graveyardCard = gameQueryService.findCardInExileById(gameData, entry.getTriggeringCardId());
+        }
+        if (graveyardCard == null) {
             return;
         }
-        Card graveyardCard = entry.getTriggeringCards().getFirst();
 
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) {

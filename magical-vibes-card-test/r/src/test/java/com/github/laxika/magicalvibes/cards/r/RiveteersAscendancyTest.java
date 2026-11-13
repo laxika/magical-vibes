@@ -43,6 +43,27 @@ class RiveteersAscendancyTest extends BaseCardTest {
     }
 
     @Test
+    void sacrificedTokenUsesItsLastKnownManaValue() {
+        addAscendancyAndMarket();
+        Card tokenGiant = new HillGiant();
+        tokenGiant.setToken(true);
+        harness.addToBattlefield(player1, tokenGiant);
+        Card lowerManaValueCreature = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(lowerManaValueCreature));
+
+        // The token ceases to exist once it is in the graveyard (CR 111.7): "lesser mana value" is the token's as it
+        // last existed on the battlefield (CR 603.10a).
+        harness.activateAbility(player1, 1, 1, null, null);
+        chooseGraveyardTarget(lowerManaValueCreature);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == lowerManaValueCreature);
+    }
+
+    @Test
     void triggersOnlyOnceEachTurn() {
         harness.addToBattlefield(player1, new RiveteersAscendancy());
         harness.addToBattlefield(player1, new HighMarket());
