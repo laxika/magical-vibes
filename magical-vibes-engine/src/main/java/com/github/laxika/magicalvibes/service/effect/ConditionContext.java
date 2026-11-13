@@ -672,6 +672,19 @@ public record ConditionContext(
                 attackedTargetId, resolutionResults, sourceGraveyardEntryVersion, casualtyCostPaid, triggeringSpell);
     }
 
+    /** The same context, the activation the ability triggered on paid with Treasure mana or not. */
+    public ConditionContext withTreasureManaSpentToActivate(boolean spent) {
+        return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
+                kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, xValue,
+                targetId, triggeringCard, staticEvaluation, putCounterCostPaid, beholdCostPaid,
+                triggeringPermanentId, triggeringPermanentPowerAtTrigger, sacrificedCard,
+                repeatedAdditionalCosts, alternateCost, spectacle, controlledMountAsCast,
+                controlledFaerieAsCast, collectEvidenceCostPaid, castDuringMainPhase, eventValue,
+                waterbendCostPaid, giftPromised, revealCardFromHandCostPaid, controlledDragonAsCast,
+                spent, teamworkCostPaid, controlledModifiedCreatureAsCast, copiedSpell,
+                attackedTargetId, resolutionResults, sourceGraveyardEntryVersion, casualtyCostPaid, triggeringSpell);
+    }
+
     public ConditionContext withTeamworkCostPaid(boolean paid) {
         return new ConditionContext(controllerId, sourcePermanentId, sourcePermanent, sourceCard,
                 kicked, buyback, prowl, madness, castForForetell, overloaded, sourceZone, xValue,

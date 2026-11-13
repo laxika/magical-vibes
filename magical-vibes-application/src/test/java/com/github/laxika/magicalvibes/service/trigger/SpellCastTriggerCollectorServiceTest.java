@@ -90,6 +90,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -137,6 +138,13 @@ class SpellCastTriggerCollectorServiceTest {
     @Mock
     private TargetLegalityService targetLegalityService;
 
+    @Mock
+    private com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport graveyardTargetingSupport;
+    @Mock
+    private TriggerCollectionService triggerCollectionService;
+    @Mock
+    private TriggerTargetCollector triggerTargetCollector;
+
     @InjectMocks
     private SpellCastTriggerCollectorService sut;
 
@@ -155,6 +163,16 @@ class SpellCastTriggerCollectorServiceTest {
 
         registry = new TriggerCollectorRegistry();
         TriggerCollectorRegistry.scanBean(sut, registry);
+        // An ability without an event condition triggers on its event.
+        lenient().when(conditionEvaluationService.eventConditionMet(any(), any(), any()))
+                .thenAnswer(invocation -> invocation.<com.github.laxika.magicalvibes.model.trigger.TriggerOptions>
+                        getArgument(1).eventCondition() == null);
+        // The collector hands every ability to the stack door, which builds its entry.
+        org.springframework.test.util.ReflectionTestUtils.setField(sut, "triggeredAbilityStackService",
+                new com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService(
+                        conditionEvaluationService, gameQueryService, graveyardTargetingSupport, gameLogService,
+                        triggerCollectionService, amountEvaluationService, predicateEvaluationService,
+                        triggerTargetCollector));
     }
 
     // ===== Helpers =====
@@ -244,12 +262,12 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(player1Result).isTrue();
             assertThat(player2Result).isTrue();
             var pending = gd.pendingInteractions.stream()
-                    .filter(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance)
-                    .map(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::cast)
+                    .filter(PermanentChoiceContext.AttackTriggerTarget.class::isInstance)
+                    .map(PermanentChoiceContext.AttackTriggerTarget.class::cast)
                     .toList();
-            assertThat(pending).extracting(PermanentChoiceContext.SpellTargetTriggerAnyTarget::triggeringPlayerId)
+            assertThat(pending).extracting(PermanentChoiceContext.AttackTriggerTarget::triggeringPlayerId)
                     .containsExactly(player1Id, player2Id);
-            assertThat(pending).allSatisfy(queued -> assertThat(queued.targetFilter())
+            assertThat(pending).allSatisfy(queued -> assertThat(queued.triggerRecord().getTargetFilter())
                     .isEqualTo(ability.targetFilter()));
         }
 
@@ -271,7 +289,7 @@ class SpellCastTriggerCollectorServiceTest {
                     new TriggerContext.SpellCast(secondSpell, player1Id, true), false);
 
             assertThat(result).isFalse();
-            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance)
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.AttackTriggerTarget.class::isInstance)
                     .hasSize(1);
         }
     }
@@ -327,7 +345,7 @@ class SpellCastTriggerCollectorServiceTest {
 
         assertThat(result).isTrue();
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
+        assertThat(gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class))
                 .isNotNull();
     }
 
@@ -624,11 +642,11 @@ class SpellCastTriggerCollectorServiceTest {
             boolean result = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()), effect, ctx,
                     true);
 
-            // The ability's own group takes one target, so it is not the card's "up to one" multi-target choice.
+            // The ability's own group takes one target, so it is not the card's "up to one" group-by-group choice.
             assertThat(result).isTrue();
             assertThat(gd.pendingInteractions).singleElement()
-                    .isInstanceOfSatisfying(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class, queued ->
-                            assertThat(queued.targetFilter()).isSameAs(source.getTargetGroups().get(1).getFilter()));
+                    .isInstanceOfSatisfying(PermanentChoiceContext.AttackTriggerTarget.class, queued ->
+                            assertThat(queued.effects()).containsExactly(new BoostTargetCreatureEffect(1, 1)));
         }
 
         @Test
@@ -648,8 +666,8 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance).hasSize(1);
-            var queued = (PermanentChoiceContext.SpellTargetTriggerAnyTarget) gd.pendingInteractions.getFirst();
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.AttackTriggerTarget.class::isInstance).hasSize(1);
+            var queued = (PermanentChoiceContext.AttackTriggerTarget) gd.pendingInteractions.getFirst();
             assertThat(queued.controllerId()).isEqualTo(player1Id);
             assertThat(queued.effects()).containsExactly(pay);
         }
@@ -712,8 +730,12 @@ class SpellCastTriggerCollectorServiceTest {
     void filteredPoisonTriggerQueuesItsPlayerTarget() {
         Permanent perm = createPermanent("Hand of the Praetors");
         CardEffect poison = new GivePoisonCountersEffect(1, PoisonRecipient.TARGET_PLAYER);
-        CastAbility ability = castAbility(
-                Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)), poison);
+        // "Target player": the ability declares its target, beside the caster its event names.
+        CastAbility ability = new CastAbility(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)).filter(),
+                List.of(poison), null, new PlayerPredicateTargetFilter(
+                        new com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate(
+                                com.github.laxika.magicalvibes.model.filter.PlayerRelation.ANY),
+                        "Target must be a player"));
         Card spellCard = createCard("Plague Stinger");
         gd.stack.add(new StackEntry(StackEntryType.CREATURE_SPELL, spellCard, player1Id, "Plague Stinger",
                 new ArrayList<>()));
@@ -723,9 +745,8 @@ class SpellCastTriggerCollectorServiceTest {
                 new TriggerContext.SpellCast(spellCard, player1Id, true), false);
 
         assertThat(result).isTrue();
-        PermanentChoiceContext.SpellTargetTriggerAnyTarget queued =
-                gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
-        assertThat(queued.playerTargetOnly()).isTrue();
+        PermanentChoiceContext.AttackTriggerTarget queued =
+                gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
         assertThat(queued.effects()).containsExactly(poison);
     }
 
@@ -857,7 +878,7 @@ class SpellCastTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("queues targeting triggered ability as a SpellTargetTriggerAnyTarget interaction")
+        @DisplayName("queues targeting triggered ability for its target choice")
         void putsTargetingTriggeredAbilityIntoPendingQueue() {
             Permanent perm = createPermanent("Guttersnipe");
             var innerEffect = new DealDamageToAnyTargetEffect(2);
@@ -873,11 +894,11 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance).hasSize(1);
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.AttackTriggerTarget.class::isInstance).hasSize(1);
         }
 
         @Test
-        @DisplayName("queues a modal triggered ability for mode selection")
+        @DisplayName("puts a modal triggered ability on the stack, its mode announced there")
         void queuesModalTriggeredAbility() {
             Permanent perm = createPermanent("Kykar, Zephyr Awakener");
             var modal = new ChooseOneEffect(List.of(
@@ -896,17 +917,14 @@ class SpellCastTriggerCollectorServiceTest {
             boolean result = sut.collectCastAbility(match(perm, player1Id, effect), effect,
                     ctx, true);
 
+            // Its modes can be announced on the stack (CR 603.3c), where the stacked-mode choice asks for them.
             assertThat(result).isTrue();
-            assertThat(gd.stack).isEmpty();
             assertThat(gd.pendingInteractions)
-                    .filteredOn(PermanentChoiceContext.TriggeredModalTrigger.class::isInstance)
-                    .hasSize(1);
-            var pending = gd.pendingInteractions.stream()
-                    .filter(PermanentChoiceContext.TriggeredModalTrigger.class::isInstance)
-                    .map(PermanentChoiceContext.TriggeredModalTrigger.class::cast)
-                    .findFirst()
-                    .orElseThrow();
-            assertThat(pending.triggeringCardId()).isEqualTo(spellCard.getId());
+                    .noneMatch(PermanentChoiceContext.TriggeredModalTrigger.class::isInstance);
+            assertThat(gd.stack).singleElement().satisfies(entry -> {
+                assertThat(entry.getEffectsToResolve()).containsExactly(modal);
+                assertThat(entry.getTriggeringCardId()).isEqualTo(spellCard.getId());
+            });
         }
 
         @Test
@@ -938,7 +956,7 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(pending.effect()).isEqualTo(modal);
             assertThat(pending.modesResetEachTurn()).isTrue();
             assertThat(pending.consumeModes()).isFalse();
-            assertThat(pending.triggeringCardId()).isEqualTo(spellCard.getId());
+            assertThat(pending.triggerRecord().getTriggeringCardId()).isEqualTo(spellCard.getId());
         }
 
         @Test
@@ -978,7 +996,7 @@ class SpellCastTriggerCollectorServiceTest {
             assertThat(pending.effect()).isEqualTo(modal);
             assertThat(pending.modeCount())
                     .isEqualTo(new PermanentChoiceContext.TriggeredModalTrigger.ModeCount(0, 2));
-            assertThat(pending.triggeringCardId()).isEqualTo(spellCard.getId());
+            assertThat(pending.triggerRecord().getTriggeringCardId()).isEqualTo(spellCard.getId());
         }
 
         @Test
@@ -1030,7 +1048,8 @@ class SpellCastTriggerCollectorServiceTest {
 
         private boolean collectCopy(Permanent perm, SpellFilter filter, StackEntry copiedSpell, UUID copyingPlayerId,
                                     CardEffect... effects) {
-            return sut.collectCopyAbility(match(perm, player1Id, effects[0]), filter, List.of(effects),
+            return sut.collectCopyAbility(match(perm, player1Id, effects[0]),
+                    new TriggeredAbility(Triggers.youCopySpell(), effects), filter,
                     new TriggerContext.SpellCopy(copiedSpell, copyingPlayerId));
         }
 
@@ -1102,10 +1121,11 @@ class SpellCastTriggerCollectorServiceTest {
             boolean result = collectCopy(perm, SpellFilter.ANY, copiedSpell, player1Id, setPower);
 
             assertThat(result).isTrue();
-            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class))
+            assertThat(gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class))
                     .satisfies(queued -> {
-                        assertThat(queued.targetFilter()).isSameAs(source.getTargetGroups().getFirst().getFilter());
-                        assertThat(queued.triggeringCardId()).isEqualTo(copiedSpell.getCard().getId());
+                        assertThat(queued.effects()).containsExactly(setPower);
+                        assertThat(queued.triggerRecord().getTriggeringCardId())
+                                .isEqualTo(copiedSpell.getCard().getId());
                     });
             assertThat(gd.stack).isEmpty();
         }
@@ -1310,22 +1330,7 @@ class SpellCastTriggerCollectorServiceTest {
 
             assertThat(result).isTrue();
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class::isInstance).hasSize(1);
-        }
-
-        @Test
-        @DisplayName("broadcasts log message when targeting is needed")
-        void broadcastsLogWhenTargeting() {
-            Permanent perm = createPermanent("Some Card");
-            var innerEffect = new DealDamageToAnyTargetEffect(3);
-            var effect = castAbility(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
-            Card spellCard = createInstant("Lightning Bolt");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, false);
-            everySpellMatches();
-
-            sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()), effect, ctx, true);
-
-            verify(gameLogService).append(eq(gd), any(GameLogEntry.class));
+            assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.AttackTriggerTarget.class::isInstance).hasSize(1);
         }
     }
 
@@ -1349,10 +1354,10 @@ class SpellCastTriggerCollectorServiceTest {
                     new TriggerContext.SpellCast(spellCard, player2Id, true), true);
 
             assertThat(result).isTrue();
-            var queued = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+            var queued = gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
             assertThat(queued.effects()).containsExactly(damage);
-            assertThat(queued.triggeringSpellManaValue()).isEqualTo(2);
-            assertThat(queued.triggeringCardId()).isEqualTo(spellCard.getId());
+            assertThat(queued.eventValue()).isEqualTo(2);
+            assertThat(queued.triggerRecord().getTriggeringCardId()).isEqualTo(spellCard.getId());
         }
     }
 
@@ -1380,9 +1385,9 @@ class SpellCastTriggerCollectorServiceTest {
                     new TriggerContext.SpellCast(spellCard, player1Id, true), true);
 
             assertThat(result).isTrue();
-            var queued = gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
-            assertThat(queued.targetFilter()).isEqualTo(targetFilter);
-            assertThat(queued.spellManaSpentX()).isEqualTo(4);
+            var queued = gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
+            assertThat(queued.triggerRecord().getTargetFilter()).isEqualTo(targetFilter);
+            assertThat(queued.xValue()).isEqualTo(4);
             assertThat(queued.effects()).containsExactly(new MayEffect(gainControl, "Gain control?"));
         }
     }
@@ -1398,13 +1403,15 @@ class SpellCastTriggerCollectorServiceTest {
             var effect = new CounterUnlessPaysEffect(2);
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+            gd.stack.add(new StackEntry(StackEntryType.CREATURE_SPELL, spellCard, player2Id, "Grizzly Bears",
+                    new ArrayList<>()));
 
             everySpellMatches();
             boolean result = sut.collectCastAbility(match(perm, player1Id, effect),
                     castAbility(Triggers.opponentCastsSpell().anySpell(), effect), ctx, false);
 
             assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
+            assertThat(gd.stack).hasSize(2);
             var stackEntry = gd.stack.getLast();
             assertThat(stackEntry.getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
             assertThat(stackEntry.getDescription()).contains("Chalice of the Void");
@@ -1621,8 +1628,8 @@ class SpellCastTriggerCollectorServiceTest {
         }
 
         @Test
-        @DisplayName("a card-advantage ability with an intervening \"if\" fails loudly")
-        void cardAdvantageAbilityWithAnInterveningIfThrows() {
+        @DisplayName("a card-advantage ability's intervening \"if\" is judged by the stack door")
+        void cardAdvantageAbilityInterveningIfIsJudged() {
             Permanent perm = createPermanent("Toofer, Keeper of the Full Grip");
             CardEffect loseLife = new LoseLifeEffect(2, LoseLifeRecipient.EACH_OPPONENT);
             TriggeredAbility ability = new TriggeredAbility(Triggers.yourSpellCausesYouToGainCardAdvantage(),
@@ -1630,9 +1637,10 @@ class SpellCastTriggerCollectorServiceTest {
             StackEntry spell = new StackEntry(StackEntryType.INSTANT_SPELL, createInstant("Divination"), player1Id,
                     "Divination", new ArrayList<>());
 
-            assertThatThrownBy(() -> sut.collectCardAdvantageAbility(match(perm, player1Id, loseLife), ability,
-                    new TriggerContext.SpellCardAdvantage(spell)))
-                    .isInstanceOf(IllegalStateException.class);
+            when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any())).thenReturn(false);
+
+            assertThat(sut.collectCardAdvantageAbility(match(perm, player1Id, loseLife), ability,
+                    new TriggerContext.SpellCardAdvantage(spell))).isFalse();
             assertThat(gd.stack).isEmpty();
         }
 
@@ -1652,9 +1660,10 @@ class SpellCastTriggerCollectorServiceTest {
                     new ArrayList<>()));
             gd.stack.add(new StackEntry(StackEntryType.INSTANT_SPELL, other, player2Id, "Annul", new ArrayList<>()));
             everySpellMatches();
-            when(targetLegalityService.matchesStackEntryPredicate(eq(gd), any(StackEntry.class), eq(sharesName),
-                    eq(player1Id), eq(perm)))
-                    .thenAnswer(call -> call.<StackEntry>getArgument(1).getCard() == matching);
+            // The stack door judges the intervening "if" on the context's triggering spell.
+            when(conditionEvaluationService.isMet(eq(gd), eq(new TriggeringSpellMatches(sharesName)),
+                    any(ConditionContext.class)))
+                    .thenAnswer(call -> call.<ConditionContext>getArgument(2).triggeringSpell().getCard() == matching);
 
             boolean matched = sut.collectCastAbility(match(perm, player1Id, copy), ability,
                     new TriggerContext.SpellCast(matching, player2Id, true), false);

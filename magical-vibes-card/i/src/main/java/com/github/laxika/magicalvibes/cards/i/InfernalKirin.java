@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -17,7 +20,10 @@ public class InfernalKirin extends Card {
     public InfernalKirin() {
         // "With that spell's mana value": the triggering spell's, read as the ability resolves (the spell as it last
         // existed on the stack once it has left).
-        addTrigger(Triggers.youCastSpell().withFilter(new CardAnyOfPredicate(List.of(
+        target(new PlayerPredicateTargetFilter(
+                new PlayerRelationPredicate(PlayerRelation.ANY),
+                "Target must be a player"
+        )).addTrigger(Triggers.youCastSpell().withFilter(new CardAnyOfPredicate(List.of(
                         new CardSubtypePredicate(CardSubtype.SPIRIT),
                         new CardSubtypePredicate(CardSubtype.ARCANE)
                 ))),

@@ -641,19 +641,6 @@ public class MiscTriggerCollectorService {
                 "an opponent gaining control of a permanent");
     }
 
-    /**
-     * "Whenever a mana ability of this creature resolves, put a number of +1/+1 counters on it equal to the amount of
-     * mana this creature produced" (Tyvar the Bellicose's grant): the activating player and the mana produced (the event
-     * value), recorded whatever the effects are ({@link #queueEventAbility}); its "triggers only once each turn" is the
-     * reader's limit.
-     */
-    @CollectsSpellAbilityTrigger(value = CardEffect.class, watch = SpellAbilityWatch.ON_SELF_MANA_ABILITY_RESOLVES)
-    private boolean handleManaAbilityResolvedDefault(TriggerMatchContext match, TriggerContext ctx) {
-        TriggerContext.ManaAbilityResolved mana = (TriggerContext.ManaAbilityResolved) ctx;
-        return queueEventAbility(match, EventRecord.of(mana.activatingPlayerId()).withEventValue(mana.manaProduced()),
-                "a mana ability resolving");
-    }
-
     @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_CONTROLLER_PROLIFERATES)
     private boolean handleProliferateDefault(TriggerMatchContext match, TriggerContext ctx) {
         var gameData = match.gameData();

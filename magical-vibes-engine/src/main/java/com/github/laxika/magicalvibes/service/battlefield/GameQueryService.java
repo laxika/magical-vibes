@@ -10535,6 +10535,12 @@ public class GameQueryService {
                                                          boolean drawCaused) {
         if (controllerId == null || triggeringPermanent == null) return 0;
         int count = 0;
+        // A creature its controller controls becoming the target, for an ability of a permanent that player controls.
+        if (triggerContext instanceof TriggerContext.BecomesTarget target && target.targetPermanent() != null
+                && controllerId.equals(target.targetControllerId())) {
+            count += countAdditionalTriggeredAbilityTriggersForAllyCreatureBecomesTarget(gameData,
+                    target.targetControllerId(), target.targetPermanent(), target.targetPermanent());
+        }
         Map<UUID, List<Permanent>> staticSources = new HashMap<>();
         gameData.playerBattlefields.forEach((playerId, battlefield) ->
                 staticSources.put(playerId, new ArrayList<>(battlefield)));

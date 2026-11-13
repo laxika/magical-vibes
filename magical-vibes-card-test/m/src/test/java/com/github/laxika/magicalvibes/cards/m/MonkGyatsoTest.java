@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.a.AnnieJoinsUp;
 import com.github.laxika.magicalvibes.cards.e.ElaborateFirecannon;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -16,7 +17,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MonkGyatso.class, GrizzlyBears.class, Shock.class, ElaborateFirecannon.class, MishrasFactory.class})
+@CardUsed({MonkGyatso.class, GrizzlyBears.class, Shock.class, ElaborateFirecannon.class, MishrasFactory.class,
+        AnnieJoinsUp.class})
 class MonkGyatsoTest extends BaseCardTest {
 
     @Test
@@ -37,6 +39,23 @@ class MonkGyatsoTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(target.getOriginalCard().getId())).isNotNull();
         assertThat(gd.exilePlayPermissions.get(target.getOriginalCard().getId())).isEqualTo(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Annie Joins Up makes the legendary Monk's becomes-the-target ability trigger an additional time")
+    void annieJoinsUpDoublesTheBecomesTheTargetAbility() {
+        harness.addToBattlefield(player1, new AnnieJoinsUp());
+        harness.addToBattlefield(player1, new MonkGyatso());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        harness.castInstant(player1, 0, target.getId());
+
+        // Shock and two Monk Gyatso abilities (CR 603.3).
+        assertThat(gd.stack).hasSize(3);
+        assertThat(gd.stack.subList(1, 3))
+                .allSatisfy(entry -> assertThat(entry.getCard().getName()).isEqualTo("Monk Gyatso"));
     }
 
     @Test

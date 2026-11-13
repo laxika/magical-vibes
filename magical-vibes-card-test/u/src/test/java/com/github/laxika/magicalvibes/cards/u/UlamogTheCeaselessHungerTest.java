@@ -114,8 +114,7 @@ class UlamogTheCeaselessHungerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 10);
 
         harness.castCreature(player1, 0);
-        harness.handlePermanentChosen(player1, firstTarget.getId());
-        harness.handlePermanentChosen(player1, secondTarget.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstTarget.getId(), secondTarget.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.findExiledCard(firstTarget.getOriginalCard().getId())).isNotNull();

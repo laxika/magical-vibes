@@ -235,15 +235,10 @@ class TriggerRouteRecordTest extends BaseCardTest {
         excluded.put("an opponent discards a card / GRAVE", noGraveyardRoute);
         excluded.put("a player cycles a card / GRAVE", noGraveyardRoute);
         for (Variant targeted : List.of(Variant.TARGET, Variant.TWO_GROUPS, Variant.GRAVE)) {
-            excluded.put("your spell causes you to gain card advantage / " + targeted, "the card-advantage reader "
-                    + "refuses an ability that chooses a target (IllegalStateException): it has one route");
             excluded.put("a creature you control crews a Vehicle / " + targeted, "the crew collector refuses an "
                     + "ability that chooses a target (IllegalStateException): it has one route");
         }
         for (Variant targeted : List.of(Variant.TARGET, Variant.TWO_GROUPS, Variant.GRAVE)) {
-            excluded.put("an ability of an attacking creature you control triggers / " + targeted, "the "
-                    + "attacking-creature ability reader refuses an ability that chooses a target "
-                    + "(IllegalStateException): it has one route");
             excluded.put("this enlists a creature / " + targeted, "the enlist collector refuses an ability that "
                     + "chooses a target (IllegalStateException): it has one route");
         }
@@ -262,6 +257,18 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         + "card): the ability is removed");
         excluded.put("a player draws a card / GRAVE", "the emblem draw collector refuses an ability with a target "
                 + "that isn't a permanent (IllegalStateException)");
+        // A target the variant chooses as it goes on the stack is the watched event again (CR 603.3d through
+        // CR 601.2c): the plain ability and the variant trigger for each target the variant chooses, without end.
+        String targetRetriggers = "the variant's own target is the watched event again: both abilities trigger "
+                + "for each target it chooses, without end";
+        for (String watch : List.of("a creature becomes the target of a spell or ability",
+                "a creature an opponent controls becomes the target of your spell or ability",
+                "a player chooses targets", "a player or permanent becomes the target of your ability")) {
+            for (Variant targeted : List.of(Variant.TARGET, Variant.TWO_GROUPS, Variant.MODAL_TARGET)) {
+                excluded.put(watch + " / " + targeted, targetRetriggers);
+            }
+        }
+        excluded.put("a player chooses targets / " + Variant.GRAVE, targetRetriggers);
         return Map.copyOf(excluded);
     }
 

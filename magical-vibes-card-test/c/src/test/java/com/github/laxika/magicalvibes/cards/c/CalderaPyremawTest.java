@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -70,9 +71,11 @@ class CalderaPyremawTest extends BaseCardTest {
 
         harness.castInstant(player1, 0, player2.getId());
 
+        // The target choice offers only the opponent, and choosing oneself is rejected.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPlayerIds())
+                .containsExactly(player2.getId());
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be an opponent");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

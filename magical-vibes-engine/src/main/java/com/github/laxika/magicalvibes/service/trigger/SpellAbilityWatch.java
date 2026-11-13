@@ -12,18 +12,15 @@ import java.util.List;
 /**
  * Which of the old spell, land-play and activation slot collectors reads a triggered ability, now that the ability has
  * a real trigger (effect-slot-refactor.md step 13, family 2). Each constant is named after the slot whose collector it
- * stands for and names the trigger its cards were converted to and the zone the collector reads them in. Its
- * {@link CollectsSpellAbilityTrigger} handlers bind the event data the effects need and choose how the ability reaches
- * the stack, as the slot's handlers did, until steps 14 and 15 of the refactor replace them with trigger options and
- * effects that read the event.
+ * stands for and names the trigger its cards were converted to and the zone the collector reads them in.
  * <p>
  * Every collector of these watches reads the abilities themselves, so the legacy
  * view gives none of them and {@link #effectsOf} and {@link #registrationsOf} throw. A cast ability (a battlefield or
- * exile one without a spell filter as "any spell"), a copy ability with a spell filter and a land-play ability with a land filter or zone go to the spell-cast, spell-copy and land-play collectors,
- * which judge the filters, the options and the effects as one stack object; any other ability's options are judged by
- * its reader (its limit, event condition and intervening "if"), and its effects are handed to the watch's
- * {@link CollectsSpellAbilityTrigger} handlers, the intervening "if" wrapped around each for the check as it resolves
- * (CR 603.4). The one activation collector ({@code TriggerCollectionService.collectActivationTriggers}) reads every
+ * exile one without a spell filter as "any spell"), a copy ability with a spell filter and a land-play ability with a
+ * land filter or zone go to the spell-cast, spell-copy and land-play collectors, which judge the filters and the event
+ * condition; any other ability's event condition is judged by its reader. Each hands the ability whole to the stack
+ * door, which judges its limit and intervening "if" (CR 603.4) and puts it on the stack as one object of its effects
+ * with the event recorded. The one activation collector ({@code TriggerCollectionService.collectActivationTriggers}) reads every
  * activation ability by {@link com.github.laxika.magicalvibes.model.trigger.AbilityTrigger#unfiltered()}, once the
  * activated ability is on the stack.
  */

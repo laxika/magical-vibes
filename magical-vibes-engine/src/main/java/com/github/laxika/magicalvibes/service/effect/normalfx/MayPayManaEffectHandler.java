@@ -75,8 +75,12 @@ public class MayPayManaEffectHandler implements NormalEffectHandlerBean {
             case TARGET_PERMANENT_CONTROLLER -> targetPermanentController(gameData, entry);
             case TARGET_PLAYER_OR_PERMANENT_CONTROLLER -> targetPlayerOrPermanentController(gameData,
                     entry.getTargetId());
-            case TRIGGERING_PLAYER -> entry.getTargetId();
-            case TRIGGERING_SPELL_CONTROLLER -> entry.getTargetId();
+            // "That player": the player the entry names, or the event's player once the entry is aimed at a spell.
+            case TRIGGERING_PLAYER -> entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())
+                    ? entry.getTargetId() : entry.getTriggeringPlayerId();
+            // "That spell's controller": the controller of the spell the event was about, as it was then.
+            case TRIGGERING_SPELL_CONTROLLER -> entry.getTriggeringSpellSnapshot() != null
+                    ? entry.getTriggeringSpellSnapshot().getControllerId() : entry.getTargetId();
             case ACTIVE_PLAYER -> entry.getActivePlayerId() != null
                     ? entry.getActivePlayerId() : gameData.activePlayerId;
             case ANY_PLAYER, ANY_OTHER_PLAYER, ANY_OPPONENT -> null;

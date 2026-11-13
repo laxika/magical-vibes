@@ -34,11 +34,9 @@ class ElderDeepFiendTest extends BaseCardTest {
 
         harness.castCreature(player1, 0);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, a.getId());
-        harness.handlePermanentChosen(player1, b.getId());
-        harness.handlePermanentChosen(player1, c.getId());
-        harness.handlePermanentChosen(player1, d.getId()); // max 4 — trigger on stack
+        // "Up to four target permanents" are announced together, in one choice.
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(a.getId(), b.getId(), c.getId(), d.getId()));
 
         harness.passBothPriorities(); // resolve cast trigger
         harness.passBothPriorities(); // resolve creature spell
@@ -60,8 +58,7 @@ class ElderDeepFiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 
         harness.castCreature(player1, 0);
-        harness.handlePermanentChosen(player1, a.getId());
-        harness.handlePermanentChosen(player1, player1.getId()); // stop after one
+        harness.handleMultiplePermanentsChosen(player1, List.of(a.getId()));
 
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -79,7 +76,7 @@ class ElderDeepFiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 
         harness.castCreature(player1, 0);
-        harness.handlePermanentChosen(player1, player1.getId()); // stop with zero
+        harness.handleMultiplePermanentsChosen(player1, List.of());
 
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -101,9 +98,8 @@ class ElderDeepFiendTest extends BaseCardTest {
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of(bearsId));
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, opponent.getId());
-        // Only one legal permanent left after sacrifice — choosing it completes targeting.
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(opponent.getId()));
 
         harness.passBothPriorities();
         harness.passBothPriorities();
@@ -140,9 +136,8 @@ class ElderDeepFiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 
         harness.castCreature(player1, 0);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, bears.getId());
-        harness.handlePermanentChosen(player1, player1.getId()); // stop; leave spare untapped
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId())); // leave spare untapped
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
@@ -165,7 +160,7 @@ class ElderDeepFiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 8);
 
         harness.castCreature(player1, 0);
-        harness.handlePermanentChosen(player1, island.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(island.getId()));
         harness.passBothPriorities();
 
         assertThat(island.isTapped()).isTrue();
@@ -186,7 +181,7 @@ class ElderDeepFiendTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 2);
 
         harness.castCreatureWithAlternateCost(player1, 0, List.of(sacrificed.getId()));
-        harness.handlePermanentChosen(player1, island.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(island.getId()));
         harness.passBothPriorities();
         harness.passBothPriorities();
 

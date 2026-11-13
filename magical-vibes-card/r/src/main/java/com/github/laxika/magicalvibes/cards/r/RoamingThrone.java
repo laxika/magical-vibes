@@ -28,10 +28,5 @@ public class RoamingThrone extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSourceChosenSubtypePredicate()))));
-        addStaticEffect(new AdditionalTriggeredAbilityEffect(
-                new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentHasSourceChosenSubtypePredicate())),
-                null, false, false, false, false, true));
     }
 }

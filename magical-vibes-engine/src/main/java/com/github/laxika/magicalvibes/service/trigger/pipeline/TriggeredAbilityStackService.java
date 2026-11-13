@@ -26,7 +26,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.Condition;
-import com.github.laxika.magicalvibes.model.condition.DeclaredAttackCondition;
+import com.github.laxika.magicalvibes.model.condition.EventFactCondition;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.model.condition.EntryFactCondition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -313,7 +315,7 @@ public class TriggeredAbilityStackService {
         }
         List<CardEffect> effects = new ArrayList<>(written.size());
         for (CardEffect effect : written) {
-            boolean judgedOnce = interveningIf == null || DeclaredAttackCondition.isDeclaredAttackFact(interveningIf)
+            boolean judgedOnce = interveningIf == null || EventFactCondition.isEventFact(interveningIf)
                     || effect.modesChosenAsItTriggers() != null;
             effects.add(judgedOnce ? effect : new ConditionalEffect(interveningIf, effect));
         }
@@ -385,6 +387,7 @@ public class TriggeredAbilityStackService {
             entry.setTargetFilter(request.ability().targetFilter());
         }
         request.record().stamp(entry);
+        aimAtTriggeringSpell(gameData, entry, effects);
         gameData.handOffTriggerRecord(entry);
         ChooseOneEffect modes = null;
         for (CardEffect effect : effects) {
@@ -417,6 +420,19 @@ public class TriggeredAbilityStackService {
                     modes.choicesMaxCondition(), request.ifContext())) {
                 modeChoice = modeChoice.withModeCount(modes.choicesRequired(), modes.choicesRequired());
             }
+            // "Choose up to X" (Riku of Many Paths): X is read as the ability goes on the stack, from its record; with
+            // no mode to choose, the ability is removed (CR 700.2b).
+            DynamicAmount maximum = effects.size() == 1 ? effects.getFirst().maximumModesChosenAsItTriggers() : null;
+            if (maximum != null) {
+                int maximumModes = Math.min(modes.choicesMax(), Math.max(0, amountEvaluationService.evaluate(
+                        gameData, maximum, AmountContext.forStackEntry(entry, request.sourcePermanent()))));
+                if (maximumModes == 0) {
+                    gameLogService.append(gameData, GameLog.cardThen(card,
+                            "'s triggered ability has no modes to choose."));
+                    return;
+                }
+                modeChoice = modeChoice.withModeCount(0, maximumModes);
+            }
             gameData.queueInteraction(modeChoice);
         } else if (choosing.stream().anyMatch(AttackCounterMoveEffect.class::isInstance)) {
             // Two targets chosen one after the other, the second "up to one" among the defending player's creatures
@@ -448,6 +464,7 @@ public class TriggeredAbilityStackService {
                     graveyardChoiceMaxTargets(entry, choosing), entry.getTriggeringPermanentPowerAtTrigger(),
                     entry.isAlternateCost(), entry.getTriggeringPermanentId(), entry.getSourcePermanentId(),
                     entry.getOnceEachTurnActionKey(), entry.getAttackingPermanentSnapshots(), null, null)
+                    .withTriggeringSpell(entry.getTriggeringSpellSnapshot())
                     .withTriggerRecord(entry));
         } else if (choosesTarget(gameData, card, entry, choosing)) {
             entry.setParkedAtStackDoor(true);
@@ -479,6 +496,30 @@ public class TriggeredAbilityStackService {
             gameData.enqueueTrigger(entry);
             notifyAttackingSourceTriggered(gameData, entry);
         }
+    }
+
+    /**
+     * Aims {@code entry} at "that spell or ability" when one of {@code effects} acts only on a spell or ability on the
+     * stack ("counter it unless its controller pays", ward, "copy that spell"): the spell or ability its event was about,
+     * its record's triggering spell, which it acts on without targeting it (CR 115.10a), unless the record names
+     * another object than a player.
+     */
+    private static void aimAtTriggeringSpell(GameData gameData, StackEntry entry, List<CardEffect> effects) {
+        if (entry.getTriggeringSpellSnapshot() == null
+                || entry.getTargetId() != null && !gameData.playerIds.contains(entry.getTargetId())
+                || effects.stream().noneMatch(TriggeredAbilityStackService::actsOnlyOnASpell)) {
+            return;
+        }
+        entry.setTargetId(entry.getTriggeringSpellSnapshot().getTargetableId());
+        entry.setTargetZone(Zone.STACK);
+        entry.setNonTargeting(true);
+    }
+
+    /** Whether {@code effect} acts only on a spell or ability on the stack. */
+    private static boolean actsOnlyOnASpell(CardEffect effect) {
+        TargetSpec spec = effect.targetSpec();
+        return spec.admits(TargetPredicate.Kind.SPELL) && !spec.admits(TargetPredicate.Kind.PERMANENT)
+                && !spec.admits(TargetPredicate.Kind.PLAYER);
     }
 
     /**
@@ -726,7 +767,9 @@ public class TriggeredAbilityStackService {
         boolean eventNamesObject = entry.isNonTargeting() && entry.getTargetId() != null
                 && (!entry.getTargetId().equals(entry.getSourcePermanentId())
                 || entry.getTargetId().equals(entry.getTriggeringPermanentId()));
-        if (!eventNamesObject) {
+        // An ability with a target filter of its own (an emblem's or a granted ability's "target opponent") declares
+        // its target.
+        if (!eventNamesObject || entry.getTargetFilter() != null) {
             return true;
         }
         return targeting.stream().anyMatch(effect -> declaresTarget(card, effect)

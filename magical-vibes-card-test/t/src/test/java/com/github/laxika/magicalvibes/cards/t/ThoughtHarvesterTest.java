@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.p.PaintersServant;
@@ -57,9 +58,11 @@ class ThoughtHarvesterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new ThoughtHarvester());
         harness.castFromHand(player1, new Spellbook(), "{0}");
 
+        // The target choice offers only the opponent, and choosing oneself is rejected.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPlayerIds())
+                .containsExactly(player2.getId());
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Target must be an opponent");
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test

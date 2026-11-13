@@ -10,6 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -23,7 +25,9 @@ public class PawpatchRecruit extends Card {
     public PawpatchRecruit() {
         PermanentPredicate creatureYouControl = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
-                new PermanentControlledBySourceControllerPredicate()
+                new PermanentControlledBySourceControllerPredicate(),
+                // "Other than that creature": the creature that became the target.
+                new PermanentNotPredicate(new PermanentIsTriggeringPermanentPredicate())
         ));
 
         addStaticEffect(new KickerEffect("{2}"));

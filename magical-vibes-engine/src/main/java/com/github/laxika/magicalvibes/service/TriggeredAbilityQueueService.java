@@ -1104,7 +1104,8 @@ public class TriggeredAbilityQueueService {
                     || abilityTargetFilter instanceof com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter) {
                 List<UUID> legalPlayers = validTargetService.filterValidPlayerTargetsChosenBy(gameData,
                         abilityTargetFilter, candidateTargets.stream().filter(gameData.playerIds::contains).toList(),
-                        choosingPlayerId, pending.controllerId(), pending.sourcePermanentId());
+                        choosingPlayerId, pending.controllerId(), pending.sourcePermanentId(),
+                        pending.triggeringPlayerId());
                 candidateTargets.removeIf(id -> gameData.playerIds.contains(id) && !legalPlayers.contains(id));
             }
             candidateTargets.addAll(result.validGraveyardCardIds());

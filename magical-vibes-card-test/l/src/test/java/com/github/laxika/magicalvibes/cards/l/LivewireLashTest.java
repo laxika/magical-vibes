@@ -206,7 +206,7 @@ class LivewireLashTest extends BaseCardTest {
         assertThat(trigger.getTargetId()).isEqualTo(player2.getId());
         assertThat(gd.gameLog)
                 .extracting(GameLogEntry::plainText)
-                .contains("Grizzly Bears's triggered ability targets Bob.");
+                .contains("Grizzly Bears's ability targets Bob.");
     }
 
     @Test

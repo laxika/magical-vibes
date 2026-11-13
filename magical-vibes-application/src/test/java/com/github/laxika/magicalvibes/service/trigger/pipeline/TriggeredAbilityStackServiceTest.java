@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToActivate;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import static org.mockito.ArgumentMatchers.any;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -1018,5 +1024,139 @@ class TriggeredAbilityStackServiceTest {
         assertThat(gd.stack.getFirst().isTriggeredBySourceAttacking()).isTrue();
         verify(triggerCollectionService).checkAttackingCreatureTriggeredAbilityTriggers(gd, attacker,
                 gd.stack.getFirst());
+    }
+
+    @Test
+    @DisplayName("An effect that acts only on a spell is aimed at the spell the event was about, without targeting it")
+    void spellOnlyEffectIsAimedAtTheTriggeringSpell() {
+        Card card = createCreature("Warded", 2, 2);
+        Permanent warded = new Permanent(card);
+        StackEntry spell = new StackEntry(StackEntryType.INSTANT_SPELL, createCreature("Bolt", 0, 0), PLAYER2_ID,
+                "Bolt", List.of());
+
+        stackService.put(gd, new TriggeredAbilityRequest(new TriggeredAbility(
+                Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2)), card, warded,
+                PLAYER1_ID, "ward", ConditionContext.forPermanent(warded, PLAYER1_ID), entry -> {
+                    entry.setTargetId(PLAYER2_ID);
+                    entry.setNonTargeting(true);
+                    entry.setTriggeringSpell(spell);
+                }));
+
+        StackEntry entry = gd.stack.getFirst();
+        assertThat(entry.getTargetId()).isEqualTo(spell.getTargetableId());
+        assertThat(entry.getTargetZone()).isEqualTo(Zone.STACK);
+        assertThat(entry.isNonTargeting()).isTrue();
+    }
+
+    @Test
+    @DisplayName("A permanent the record names keeps the entry aimed at it beside an effect that acts on a spell")
+    void namedPermanentIsNotReplacedByTheTriggeringSpell() {
+        Card card = createCreature("Watcher", 2, 2);
+        Permanent watcher = new Permanent(card);
+        Permanent named = new Permanent(createCreature("Named", 1, 1));
+        StackEntry spell = new StackEntry(StackEntryType.INSTANT_SPELL, createCreature("Bolt", 0, 0), PLAYER2_ID,
+                "Bolt", List.of());
+
+        stackService.put(gd, new TriggeredAbilityRequest(new TriggeredAbility(
+                Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2)), card, watcher,
+                PLAYER1_ID, "watch", ConditionContext.forPermanent(watcher, PLAYER1_ID), entry -> {
+                    entry.setTargetId(named.getId());
+                    entry.setNonTargeting(true);
+                    entry.setTriggeringSpell(spell);
+                }));
+
+        assertThat(gd.stack.getFirst().getTargetId()).isEqualTo(named.getId());
+    }
+
+    @Test
+    @DisplayName("An intervening \"if\" that is a fact of the event is judged as the ability triggers, not again")
+    void eventFactInterveningIfIsJudgedOnce() {
+        Card card = createCreature("Negotiator", 3, 3);
+        Permanent source = new Permanent(card);
+        var condition = new TreasureManaSpentToActivate();
+        when(conditionEvaluationService.isMet(eq(gd), eq(condition), any(ConditionContext.class))).thenReturn(true);
+
+        stackService.put(gd, new TriggeredAbilityRequest(new TriggeredAbility(Triggers.opponentActivatesAbility(),
+                TriggerOptions.DEFAULT.withInterveningIf(condition), new GainLifeEffect(1)), card, source,
+                PLAYER1_ID, "activation", ConditionContext.forPermanent(source, PLAYER1_ID),
+                TriggeredAbilityRequest.TriggerRecord.NONE));
+
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(new GainLifeEffect(1));
+    }
+
+    @Test
+    @DisplayName("\"Choose up to X\" reads X as the ability goes on the stack; with none to choose it is removed")
+    void chooseUpToXReadsXAsItGoesOnTheStack() {
+        Card card = createCreature("Riku", 2, 2);
+        Permanent source = new Permanent(card);
+        var modes = ChooseOneEffect.oneOrMore(List.of(
+                new ChooseOneEffect.ChooseOneOption("Draw", new DrawCardEffect(1)),
+                new ChooseOneEffect.ChooseOneOption("Gain life", new GainLifeEffect(1))));
+        var maximum = new Fixed(1);
+        var ability = new TriggeredAbility(Triggers.youCastSpell(), new ChooseOneAtTriggerTimeEffect(modes, maximum));
+        when(amountEvaluationService.evaluate(eq(gd), eq(maximum), any())).thenReturn(0, 1);
+
+        stackService.put(gd, new TriggeredAbilityRequest(ability, card, source, PLAYER1_ID, "cast",
+                ConditionContext.forPermanent(source, PLAYER1_ID), TriggeredAbilityRequest.TriggerRecord.NONE));
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class)).isFalse();
+        assertThat(gd.stack).isEmpty();
+
+        stackService.put(gd, new TriggeredAbilityRequest(ability, card, source, PLAYER1_ID, "cast",
+                ConditionContext.forPermanent(source, PLAYER1_ID), TriggeredAbilityRequest.TriggerRecord.NONE));
+        var modeChoice = gd.peekPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
+        assertThat(modeChoice.modeCount()).isEqualTo(
+                new PermanentChoiceContext.TriggeredModalTrigger.ModeCount(0, 1));
+    }
+
+    @Test
+    @DisplayName("A \"you may pay\" beside another effect has the target of what it offers chosen as it goes on the stack")
+    void youMayPayBesideAnotherEffectChoosesItsTarget() {
+        Card card = createCreature("Talisman", 0, 0);
+        Permanent source = new Permanent(card);
+        var pay = new MayPayManaEffect("{1}", new DealDamageToTargetCreatureEffect(1), "Pay {1}?");
+
+        stackService.put(gd, new TriggeredAbilityRequest(new TriggeredAbility(Triggers.youCastSpell(), pay,
+                new GainLifeEffect(1)), card, source, PLAYER1_ID, "cast",
+                ConditionContext.forPermanent(source, PLAYER1_ID), TriggeredAbilityRequest.TriggerRecord.NONE));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class).effects())
+                .containsExactly(pay, new GainLifeEffect(1));
+    }
+
+    @Test
+    @DisplayName("An ability with a target filter of its own chooses its target beside the player the event names")
+    void abilityTargetFilterDeclaresItsTarget() {
+        Card card = createCreature("Emblem", 0, 0);
+        Permanent source = new Permanent(card);
+        var ability = new TriggeredAbility(Triggers.youCastSpell(),
+                new DiscardEffect(1, DiscardRecipient.TARGET_PLAYER))
+                .withTargetFilter(new PlayerPredicateTargetFilter(
+                        new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent"));
+
+        stackService.put(gd, new TriggeredAbilityRequest(ability, card, source, PLAYER1_ID, "cast",
+                ConditionContext.forPermanent(source, PLAYER1_ID), entry -> {
+                    entry.setTargetId(PLAYER1_ID);
+                    entry.setNonTargeting(true);
+                }));
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isTrue();
+    }
+
+    @Test
+    @DisplayName("The doublers judge a becomes-the-target ability with its event")
+    void doublersReadTheTargetEvent() {
+        Card card = createCreature("Watcher", 2, 2);
+        Permanent watcher = new Permanent(card);
+        var event = new com.github.laxika.magicalvibes.service.trigger.TriggerContext.BecomesTarget(watcher,
+                PLAYER1_ID);
+
+        stackService.put(gd, new TriggeredAbilityRequest(new TriggeredAbility(
+                Triggers.becomesTargetOfSpellOrAbility(), new GainLifeEffect(1)), card, watcher, PLAYER1_ID,
+                "watch", ConditionContext.forPermanent(watcher, PLAYER1_ID),
+                TriggeredAbilityRequest.TriggerRecord.NONE).withEvent(event));
+
+        verify(gameQueryService).countAdditionalTriggeredAbilityTriggers(gd, PLAYER1_ID, watcher, false, event);
     }
 }

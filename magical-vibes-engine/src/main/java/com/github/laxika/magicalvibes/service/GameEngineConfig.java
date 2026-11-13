@@ -25,8 +25,6 @@ import com.github.laxika.magicalvibes.service.trigger.CollectsDamageTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsDamageTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsLibraryTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsLibraryTriggers;
-import com.github.laxika.magicalvibes.service.trigger.CollectsSpellAbilityTrigger;
-import com.github.laxika.magicalvibes.service.trigger.CollectsSpellAbilityTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsLifeTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsLifeTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsActionTrigger;
@@ -205,20 +203,6 @@ public class GameEngineConfig implements SmartInitializingSingleton {
                 if (watchContainer != null) {
                     for (CollectsWatchTrigger cwt : watchContainer.value()) {
                         registerTriggerHandler(bean, method, cwt.watch(), cwt.value());
-                        count++;
-                    }
-                }
-
-                CollectsSpellAbilityTrigger spellSingle = method.getAnnotation(CollectsSpellAbilityTrigger.class);
-                if (spellSingle != null) {
-                    registerTriggerHandler(bean, method, spellSingle.watch(), spellSingle.value());
-                    count++;
-                }
-
-                CollectsSpellAbilityTriggers spellContainer = method.getAnnotation(CollectsSpellAbilityTriggers.class);
-                if (spellContainer != null) {
-                    for (CollectsSpellAbilityTrigger cst : spellContainer.value()) {
-                        registerTriggerHandler(bean, method, cst.watch(), cst.value());
                         count++;
                     }
                 }

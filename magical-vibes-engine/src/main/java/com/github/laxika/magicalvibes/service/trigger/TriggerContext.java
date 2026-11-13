@@ -67,6 +67,13 @@ public sealed interface TriggerContext {
      */
     record SpellCardAdvantage(StackEntry spell) implements TriggerContext {}
 
+    /**
+     * A permanent, or a player when {@code targetPermanent} is {@code null}, became the target of a spell or ability:
+     * "if a creature you control becoming the target of a spell or ability causes a triggered ability of a permanent
+     * you control to trigger" (Valiant Emberkin) reads the permanent and its controller.
+     */
+    record BecomesTarget(Permanent targetPermanent, UUID targetControllerId) implements TriggerContext {}
+
     /** Context for a scheme being set in motion. */
     record SchemeSetInMotion(StackEntry schemeEntry, UUID settingPlayerId) implements TriggerContext {}
 

@@ -1484,10 +1484,23 @@ public class ValidTargetService {
     public List<UUID> filterValidPlayerTargetsChosenBy(GameData gameData, TargetFilter targetFilter,
                                                        List<UUID> candidates, UUID chooserId,
                                                        UUID abilityControllerId, UUID sourcePermanentId) {
+        return filterValidPlayerTargetsChosenBy(gameData, targetFilter, candidates, chooserId, abilityControllerId,
+                sourcePermanentId, null);
+    }
+
+    /**
+     * {@link #filterValidPlayerTargetsChosenBy(GameData, TargetFilter, List, UUID, UUID, UUID)} with
+     * {@code triggeringPlayerId}, the player the trigger event was about, which "another target player" ({@code
+     * PlayerOtherThanTriggeringPlayerPredicate}) excludes.
+     */
+    public List<UUID> filterValidPlayerTargetsChosenBy(GameData gameData, TargetFilter targetFilter,
+                                                       List<UUID> candidates, UUID chooserId,
+                                                       UUID abilityControllerId, UUID sourcePermanentId,
+                                                       UUID triggeringPlayerId) {
         List<UUID> result = new ArrayList<>();
         for (UUID playerId : candidates) {
             if (isValidPlayerTarget(gameData, targetFilter, playerId, chooserId, sourcePermanentId, null,
-                    abilityControllerId)) {
+                    abilityControllerId, triggeringPlayerId)) {
                 result.add(playerId);
             }
         }

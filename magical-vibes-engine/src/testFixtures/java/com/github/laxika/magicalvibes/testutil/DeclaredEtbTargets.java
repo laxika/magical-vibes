@@ -239,6 +239,10 @@ final class DeclaredEtbTargets {
             return false;
         }
         if (active instanceof PendingInteraction.MultiPermanentChoice choice
+                && choice.context() instanceof MultiPermanentChoiceContext.AttackTriggerTargets door) {
+            return answerDoorTargets(choice, door.pending());
+        }
+        if (active instanceof PendingInteraction.MultiPermanentChoice choice
                 && etbTargetGroup(choice.context()) != null) {
             return answerTargetGroup(choice, etbTargetGroup(choice.context()));
         }
@@ -247,6 +251,24 @@ final class DeclaredEtbTargets {
             return answerOptionalTarget(choice, optional.pending());
         }
         return false;
+    }
+
+    /** Answers the stack door's prompt for the targets of one group of several with the declared targets it offers. */
+    private boolean answerDoorTargets(PendingInteraction.MultiPermanentChoice choice,
+                                      PermanentChoiceContext.AttackTriggerTarget door) {
+        Declaration declaration = find(door.sourceCard(), door.sourcePermanentId());
+        if (declaration == null) {
+            return false;
+        }
+        List<UUID> chosen = declaration.targetIds.stream()
+                .filter(id -> choice.validIds().contains(id) || choice.validPlayerIds().contains(id))
+                .limit(choice.maxCount())
+                .toList();
+        if (chosen.isEmpty() && !declaration.targetIds.isEmpty()) {
+            return false;
+        }
+        answer(choice.playerId(), new InteractionAnswer.PermanentsChosen(chosen), declaration, door.sourceCard());
+        return true;
     }
 
     /** Answers an optional single-target prompt, choosing no target when none were declared. */
@@ -421,6 +443,13 @@ final class DeclaredEtbTargets {
         } else if (interaction instanceof PendingInteraction.MultiPermanentChoice choice
                 && choice.context() instanceof MultiPermanentChoiceContext.EtbOptionalTarget optional) {
             context = optional.pending();
+        } else if (interaction instanceof PendingInteraction.MultiPermanentChoice choice
+                && choice.context() instanceof MultiPermanentChoiceContext.AttackTriggerTargets door) {
+            context = door.pending();
+        }
+        if (context instanceof PermanentChoiceContext.AttackTriggerTarget door) {
+            return interaction instanceof PendingInteraction.MultiPermanentChoice
+                    && door.sourceCard().getId().equals(card.getId());
         }
         if (context instanceof PermanentChoiceContext.ETBTokenTargetTrigger single) {
             return single.sourceCard().getId().equals(card.getId());

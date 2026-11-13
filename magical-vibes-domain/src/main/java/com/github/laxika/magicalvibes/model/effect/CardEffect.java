@@ -169,6 +169,12 @@ public interface CardEffect {
     default ChooseOneEffect modesChosenAsItTriggers() { return null; }
 
     /**
+     * The most modes that may be chosen as a triggered ability made of this effect alone is put on the stack ("choose
+     * up to X", X read then), or {@code null} for the modal's own count.
+     */
+    default com.github.laxika.magicalvibes.model.amount.DynamicAmount maximumModesChosenAsItTriggers() { return null; }
+
+    /**
      * The modal this effect is ("choose one —"), whatever its modes depend on, or {@code null} for an effect that isn't
      * one: the stack door chooses the mode of a triggered ability made of it alone as it goes on the stack when the
      * mode can't be announced once the ability is there (CR 603.3c).

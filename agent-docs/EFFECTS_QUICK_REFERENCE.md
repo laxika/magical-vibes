@@ -2132,7 +2132,7 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
   and “an ability of [a permanent]” `.withSource(permanentPredicate)` (Ceaseless Searblades, “of a Chandra
   planeswalker” Keral Keep Disciples, “this creature's outlast ability” `new PermanentIsSourceCardPredicate()`,
   Herald of Anafenza). The activation collectors judge the kind, the source and the ability's options
-  themselves (`TriggerCollectionService.activationEffects`)
+  themselves (`TriggerCollectionService.activationTriggers`)
 - Gone: `CombatOpponentReferencingEffect` (run 17z11c). On a block or "becomes blocked by a creature" ability, of
   the creature or of an Aura or Equipment, a permanent target the card doesn't declare is "that creature": the
   collectors record the creature on the other side of the block as the entry's triggering permanent and
@@ -4083,7 +4083,7 @@ source card is no longer in the graveyard, the library card is not exiled and no
 - `RemoveDelayCounterFromExiledSpellEffect(UUID cardId)` — the paired upkeep trigger; on the last delay counter the card leaves exile and is put back onto the stack (not cast) with its original X and targets
 - `ExileTargetPermanentMayPlayUntilNextTurnEffect()` — exile the target permanent, its owner may play it until end of their next turn (e.g. Suspend Aggression; pair with a permanent target filter). Tokens exiled this way cease to exist
 - `ExileTargetPermanentMayPlayWithOpponentTaxEffect()` — exile target nonland permanent; its owner may play it for as long as it remains exiled, and spells cast by an opponent of the effect controller this way cost {2} more (Soul Partition)
-- `AirbendTargetPermanentEffect()` — exile the target nonland permanent (or each target in a bound multi-target group); its owner may cast each card for {2} rather than its mana cost while it remains exiled (Aang, the Last Airbender; Appa, Steadfast Guardian)
+- `AirbendTargetPermanentEffect()` / `(PermanentPredicate restriction)` — exile the target nonland permanent (a creature with `PermanentIsCreaturePredicate`: "airbend that creature", Monk Gyatso) (or each target in a bound multi-target group); its owner may cast each card for {2} rather than its mana cost while it remains exiled (Aang, the Last Airbender; Appa, Steadfast Guardian)
 - `AirbendTargetCreatureOrSpellEffect()` — exile the target creature or spell; its owner may cast the card for {2} rather than its mana cost while it remains exiled (Aang, Swift Savior)
 - `ExileUpToOneCardFromGraveyardEffect()` — "you may exile target card from a graveyard" as a non-targeting, resolution-time, cross-graveyard "up to one" select (choose zero = the optional "you may"). Rides any resolution path — `Triggers.dies(THIS)` and a folded cycling ability `[this, DrawCardEffect(1)]` (Grixis Sojourners). Completed in `GraveyardChoiceHandlerService.handleMultipleCardsChosen` via `graveyardTargetOperation.resolutionTimeExileResume`: exiles the chosen card, then resumes remaining effects (e.g. the cycling draw). Graveyard analogue of `ExileUpToNAttackingCreaturesEffect`
 - `ExileTargetCardFromGraveyardAndTrackWithSourceThenEffect(CardPredicate filter, GraveyardSearchScope scope, CardEffect thenEffect)` — optionally exile a targeted matching graveyard card with the source permanent, then resolve `thenEffect` only if the exile succeeds (Nyla, Shirshu Sleuth)

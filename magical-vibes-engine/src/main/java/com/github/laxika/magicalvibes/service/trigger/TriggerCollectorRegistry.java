@@ -119,17 +119,6 @@ public class TriggerCollectorRegistry {
                 }
             }
 
-            CollectsSpellAbilityTrigger singleSpell = method.getAnnotation(CollectsSpellAbilityTrigger.class);
-            if (singleSpell != null) {
-                registerMethod(bean, method, singleSpell.watch(), singleSpell.value(), registry);
-            }
-            CollectsSpellAbilityTriggers spellContainer = method.getAnnotation(CollectsSpellAbilityTriggers.class);
-            if (spellContainer != null) {
-                for (CollectsSpellAbilityTrigger cst : spellContainer.value()) {
-                    registerMethod(bean, method, cst.watch(), cst.value(), registry);
-                }
-            }
-
             CollectsCombatTrigger singleCombat = method.getAnnotation(CollectsCombatTrigger.class);
             if (singleCombat != null) {
                 registerMethod(bean, method, singleCombat.watch(), singleCombat.value(), registry);

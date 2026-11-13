@@ -872,23 +872,6 @@ class MiscTriggerCollectorServiceTest {
                 assertThat(entry.isNonTargeting()).isTrue();
             });
         }
-
-        @Test
-        @DisplayName("Mana ability resolved: the mana produced is the event value")
-        void manaAbilityResolvedRecordsTheManaProduced() {
-            Permanent creature = createPermanent("Elf");
-            var effect = new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, new EventValue());
-
-            registry.dispatch(match(creature, player1Id, effect), SpellAbilityWatch.ON_SELF_MANA_ABILITY_RESOLVES,
-                    new TriggerContext.ManaAbilityResolved(player1Id, 2));
-
-            assertThat(gd.stack).singleElement().satisfies(entry -> {
-                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
-                assertThat(entry.getEventValue()).isEqualTo(2);
-                assertThat(entry.getTriggeringPlayerId()).isEqualTo(player1Id);
-                assertThat(entry.getSourcePermanentSnapshot()).isNotNull();
-            });
-        }
     }
 
     @Test

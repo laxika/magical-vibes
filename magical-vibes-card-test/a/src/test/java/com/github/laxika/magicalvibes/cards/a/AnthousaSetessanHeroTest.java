@@ -34,9 +34,7 @@ class AnthousaSetessanHeroTest extends BaseCardTest {
 
         UUID anthousaId = harness.getPermanentId(player1, "Anthousa, Setessan Hero");
         harness.castInstant(player1, 0, anthousaId);
-        harness.handlePermanentChosen(player1, first.getId());
-        harness.handlePermanentChosen(player1, second.getId());
-        harness.handlePermanentChosen(player1, third.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId(), third.getId()));
         harness.passBothPriorities();
 
         for (Permanent land : List.of(first, second, third)) {
@@ -62,8 +60,7 @@ class AnthousaSetessanHeroTest extends BaseCardTest {
 
         UUID anthousaId = harness.getPermanentId(player1, "Anthousa, Setessan Hero");
         harness.castInstant(player1, 0, anthousaId);
-        harness.handlePermanentChosen(player1, forest.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
         harness.passBothPriorities();
 
         assertThat(forest.isAnimatedUntilEndOfTurn()).isTrue();
@@ -92,7 +89,7 @@ class AnthousaSetessanHeroTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, anthousa.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -125,7 +122,7 @@ class AnthousaSetessanHeroTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
 
         harness.castInstant(player1, 0, anthousa.getId());
-        harness.handlePermanentChosen(player1, forest.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
         harness.passBothPriorities();
 
         assertThat(gqs.isCreature(gd, forest)).isTrue();

@@ -13,9 +13,8 @@ import java.util.List;
  * Which of the old becomes-the-target slot collectors reads a triggered ability, now that the ability has a real
  * trigger (effect-slot-refactor.md step 13, family 6). Each constant is named after the slot whose collector it stands
  * for and names the trigger its cards were converted to and the zone the collector reads them in. The collectors in
- * {@code TriggerCollectionService} still decide when the ability triggers, how its effects group into stack objects
- * and which event data it is bound to, as the slot's did, until step 15 of the refactor replaces them with effects that
- * read the event.
+ * {@code TriggerCollectionService} decide when the ability triggers and record the event, and hand the ability whole to
+ * the stack door.
  * <p>
  * Every collector of these watches reads the abilities themselves, through
  * {@link TargetAbilityReader}: the trigger's filter on the permanent, "a spell [or ability] you control" and the limit

@@ -20,6 +20,11 @@ public interface TriggeredModalEffect extends CardEffect {
         return null;
     }
 
+    @Override
+    default DynamicAmount maximumModesChosenAsItTriggers() {
+        return maximumChoices();
+    }
+
     /**
      * The modal of an ability made of {@code effect} alone, whose modes its controller chooses as the ability is put
      * on the stack (CR 700.2b): a {@link TriggeredModalEffect}'s choice, a {@link ChooseOneEffect} itself; {@code

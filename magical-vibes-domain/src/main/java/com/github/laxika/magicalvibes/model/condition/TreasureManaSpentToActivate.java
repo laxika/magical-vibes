@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.model.condition;
 
 /** At least one mana produced by a Treasure was spent to activate the source ability. */
-public record TreasureManaSpentToActivate() implements Condition {
+public record TreasureManaSpentToActivate() implements Condition, EventFactCondition {
 
     @Override
     public String conditionName() {

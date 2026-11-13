@@ -40,10 +40,13 @@ public class LozhanDragonsLegacy extends Card {
         );
         DealDamageToAnyTargetEffect damage = new DealDamageToAnyTargetEffect(new TargetSpellManaValue());
 
-        target(nonCommanderAnyTarget).addTrigger(Triggers.youCastSpell()
+        // "Whenever you cast an Adventure spell or a Dragon spell": two trigger conditions of the one ability's
+        // target, each its own ability of the same text.
+        var target = target(nonCommanderAnyTarget);
+        target.addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardSubtypePredicate(CardSubtype.DRAGON)),
                 damage);
-        target(nonCommanderAnyTarget).addTrigger(Triggers.youCastSpell()
+        target.addTrigger(Triggers.youCastSpell()
                         .withStackEntryFilter(new StackEntryCastWithAdventurePredicate()),
                 damage);
     }

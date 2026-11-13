@@ -581,6 +581,10 @@ public class ConditionEvaluationService {
     @Lazy
     private TurnCleanupService turnCleanupService;
 
+    @Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.target.TargetLegalityService targetLegalityService;
+
     /**
      * Evaluates whether the given condition is currently met.
      */
@@ -1409,7 +1413,11 @@ public class ConditionEvaluationService {
             case SpellCounteredThisWay ignored -> ctx.resolutionResults().counteredSpell();
             case SpellCopiedThisWay ignored -> ctx.resolutionResults().copiedSpell();
             // The context carries no triggering spell: EffectResolutionService judges it against the resolving entry's.
-            case TriggeringSpellMatches ignored -> false;
+            // "If it has a single target": the spell or ability the event was about, as the ability triggers (CR 603.4),
+            // judged from the ability's controller and source.
+            case TriggeringSpellMatches matches -> ctx.triggeringSpell() != null
+                    && targetLegalityService.matchesStackEntryPredicate(gameData, ctx.triggeringSpell(),
+                    matches.filter(), ctx.controllerId(), ctx.sourcePermanent());
             case VoidCondition ignored ->
                     gameData.nonlandPermanentLeftBattlefieldThisTurn || gameData.spellWarpedThisTurn;
             case DidntActivateLoyaltyAbilityThisTurn ignored ->

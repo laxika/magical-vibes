@@ -49,7 +49,7 @@ class GargosViciousWatcherTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
 
         harness.handlePermanentChosen(player1, opponentCreature.getId());
         assertThat(gd.stack).anyMatch(entry ->

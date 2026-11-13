@@ -8,7 +8,7 @@ package com.github.laxika.magicalvibes.model.condition;
  * resolves the answer is the same, as the attack already happened, so the attack collectors take its wrapper off once
  * judged rather than recount attackers that may have left combat since.
  */
-public interface DeclaredAttackCondition {
+public interface DeclaredAttackCondition extends EventFactCondition {
 
     /**
      * Whether {@code condition} is a fact about the attack as declared: a {@link DeclaredAttackCondition}, or an

@@ -5,26 +5,17 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
-import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
-import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCardExiledWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
 import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
@@ -45,24 +36,25 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryCouldTargetAnotherP
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
-import com.github.laxika.magicalvibes.model.condition.TriggeringSpellMatches;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.Set;
 
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 
 /**
@@ -82,12 +74,17 @@ public class SpellCastTriggerCollectorService {
     private final ConditionEvaluationService conditionEvaluationService;
     private final ValidTargetService validTargetService;
 
+    @Autowired
+    @Lazy
+    private TriggeredAbilityStackService triggeredAbilityStackService;
+
     /**
-     * Collects a "whenever [a player] casts a [quality] spell" ability: judges its spell filter and intervening "if"
-     * and puts it on the stack, its targets chosen as it does (CR 603.3d). {@code perManaFromSource} says whether a
-     * "when you spend this mana to cast …" rider is collected once for each mana its source produced that was spent
-     * on the spell: such a rider on a mana ability is a separate delayed trigger for each of them (CR 106.6), which
-     * the "whenever you cast" collector reads.
+     * Collects a "whenever [a player] casts a [quality] spell" ability: judges its spell filter and event condition and
+     * hands it to the stack door, which judges its intervening "if" and limit, puts it on the stack and chooses its mode
+     * and targets as it does (CR 603.3c, 603.3d). {@code perManaFromSource} says whether a "when you spend this mana to
+     * cast …" rider is collected once for each mana its source produced that was spent on the spell: such a rider on a
+     * mana ability is a separate delayed trigger for each of them (CR 106.6), which the "whenever you cast" collector
+     * reads.
      *
      * @return whether the ability triggered
      */
@@ -106,34 +103,27 @@ public class SpellCastTriggerCollectorService {
     /**
      * Collects a "whenever a spell you control causes you to gain card advantage" ability (Toofer, Keeper of the Full
      * Grip) for the spell {@code event} names, which just finished resolving and gave the ability's controller card
-     * advantage: the ability goes on the stack as written, one object of its effects (CR 603.3), with the spell
-     * recorded as the entry's triggering spell. Its reader judges its limit; an option, a target or a "you may" the
-     * reader doesn't read throws.
+     * advantage: its event condition is judged here and the stack door puts it on the stack as written (CR 603.3), the
+     * spell recorded as the entry's triggering spell.
      *
      * @return whether the ability triggered
      */
     public boolean collectCardAdvantageAbility(TriggerMatchContext match, TriggeredAbility ability,
                                                TriggerContext.SpellCardAdvantage event) {
-        TriggerOptions options = ability.options();
-        if (options.interveningIf() != null || options.eventCondition() != null
-                || options.multiplicity() != TriggerMultiplicity.EACH) {
-            throw new IllegalStateException("The card-advantage reader judges no intervening \"if\", event condition "
-                    + "or multiplicity: " + ability);
-        }
-        List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect).toList();
-        if (effects.stream().anyMatch(effect -> triggerTargetSpec(effect).declaredTarget() != null)) {
-            throw new IllegalStateException("The card-advantage reader chooses no target: " + ability);
-        }
         Card sourceCard = match.sourceCard() != null ? match.sourceCard() : match.permanent().getCard();
+        ConditionContext context = match.permanent() == null
+                ? ConditionContext.forCard(sourceCard, match.controllerId())
+                : ConditionContext.forPermanent(match.permanent(), match.controllerId());
+        if (!conditionEvaluationService.eventConditionMet(match.gameData(), ability.options(), context)) {
+            return false;
+        }
         StackEntry spell = event.spell();
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
-                abilityDescription(sourceCard), new ArrayList<>(effects), null,
-                match.permanent() == null ? null : match.permanent().getId());
-        entry.setTriggeringCardId(spell.getTargetableId());
-        entry.setTriggeringSpell(spell);
-        entry.setNonTargeting(true);
-        match.gameData().stack.add(entry);
-        return true;
+        return triggeredAbilityStackService.put(match.gameData(), new TriggeredAbilityRequest(ability, sourceCard,
+                match.permanent(), match.controllerId(), abilityDescription(sourceCard), context, entry -> {
+                    entry.setNonTargeting(true);
+                    entry.setTriggeringCardId(spell.getTargetableId());
+                    entry.setTriggeringSpell(spell);
+                }));
     }
 
     private int kickedCount(StackEntry spellEntry) {
@@ -152,13 +142,14 @@ public class SpellCastTriggerCollectorService {
 
     /**
      * Collects a "whenever [a player] copies a [quality] spell" ability: judges the copied spell and its stack object
-     * against the copy trigger's {@code filter} (a copy isn't cast, so that is all the filter says) and puts the
-     * ability's {@code effects} on the stack as one object (CR 603.3), its targets chosen as it does (CR 603.3d) from
-     * the target group its effects are bound to.
+     * against the copy trigger's {@code filter} (a copy isn't cast, so that is all the filter says) and hands the
+     * ability to the stack door, the copy recorded as its triggering spell, the copying player as "that player" and the
+     * copy's mana value as the event's value, whatever its effects are; its targets are chosen as it goes on the stack
+     * (CR 603.3d).
      *
      * @return whether the ability triggered
      */
-    public boolean collectCopyAbility(TriggerMatchContext match, SpellFilter filter, List<CardEffect> effects,
+    public boolean collectCopyAbility(TriggerMatchContext match, TriggeredAbility ability, SpellFilter filter,
                                       TriggerContext.SpellCopy spellCopy) {
         boolean isSpell = switch (spellCopy.copiedSpell().getEntryType()) {
             case CREATURE_SPELL, ENCHANTMENT_SPELL, SORCERY_SPELL, INSTANT_SPELL,
@@ -180,59 +171,24 @@ public class SpellCastTriggerCollectorService {
                 spellCopy.copyingPlayerId())) {
             return false;
         }
-
-        List<CardEffect> resolved = List.copyOf(effects);
-        // A copy ability declares its target as a target group of the card, bound to its effects.
-        Card sourceCard = match.permanent().getCard();
-        List<Integer> boundGroups = boundTargetGroups(sourceCard, effects);
-        TargetFilter targetFilter = boundTargetFilter(sourceCard, effects);
-        boolean optionalTarget = !boundGroups.isEmpty()
-                && sourceCard.getTargetGroups().get(boundGroups.getFirst()).getMinTargets() == 0;
+        ConditionContext context = ConditionContext.forPermanent(match.permanent(), match.controllerId())
+                .withTriggeringSpell(spellCopy.copiedSpell());
+        if (!conditionEvaluationService.eventConditionMet(match.gameData(), ability.options(), context)) {
+            return false;
+        }
         Card copiedCard = spellCopy.copiedSpell().getCard();
         int copiedSpellManaValue = copiedCard.getManaValue()
                 + (copiedCard.getParsedManaCost() == null ? 0
                 : spellCopy.copiedSpell().getXValue() * copiedCard.getParsedManaCost().getXSymbolCount());
-        boolean needsPlayerTarget = resolved.stream()
-                .anyMatch(effect -> triggerTargetSpec(effect).admits(TargetPredicate.Kind.PLAYER));
-        boolean needsPermanentTarget = resolved.stream()
-                .anyMatch(effect -> triggerTargetSpec(effect).admits(TargetPredicate.Kind.PERMANENT));
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                match.permanent().getCard(),
-                match.controllerId(),
-                match.permanent().getCard().getName() + "'s ability",
-                resolved,
-                spellCopy.copyingPlayerId(),
-                match.permanent().getId());
-        entry.setTriggeringCardId(spellCopy.copiedSpell().getCard().getId());
-        entry.setTriggeringSpell(spellCopy.copiedSpell());
-        entry.setEventValue(copiedSpellManaValue);
-        entry.setNonTargeting(true);
-        match.gameData().handOffTriggerRecord(entry);
-        if (needsPlayerTarget || needsPermanentTarget) {
-            // "That spell": the copy the event was about, which the entry takes as its triggering spell once the
-            // targets are chosen.
-            match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    match.permanent().getCard(), match.controllerId(), resolved,
-                    needsPlayerTarget && !needsPermanentTarget, targetFilter, 0,
-                    match.permanent().getId(), null, optionalTarget, null, null,
-                    match.controllerId(), copiedSpellManaValue, null, false,
-                    spellCopy.copiedSpell().getCard().getId()));
-            gameLogService.append(match.gameData(), GameLog.cardThen(match.permanent().getCard(),
-                    "'s triggered ability triggers — choose a target."));
-            return true;
-        }
-
-        boolean needsGraveyardTarget = resolved.stream()
-                .anyMatch(effect -> triggerTargetSpec(effect).admits(TargetPredicate.Kind.GRAVEYARD_CARD));
-        if (needsGraveyardTarget) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    match.permanent().getCard(), match.controllerId(), resolved));
-            return true;
-        }
-
-        match.gameData().stack.add(entry);
-        return true;
+        Card sourceCard = match.permanent().getCard();
+        return triggeredAbilityStackService.put(match.gameData(), new TriggeredAbilityRequest(ability, sourceCard,
+                match.permanent(), match.controllerId(), sourceCard.getName() + "'s ability", context, entry -> {
+                    entry.setTargetId(spellCopy.copyingPlayerId());
+                    entry.setNonTargeting(true);
+                    entry.setTriggeringCardId(copiedCard.getId());
+                    entry.setTriggeringSpell(spellCopy.copiedSpell());
+                    entry.setEventValue(copiedSpellManaValue);
+                }).withEvent(spellCopy));
     }
 
     private static boolean mentionsXInManaCost(CardPredicate predicate) {
@@ -283,11 +239,12 @@ public class SpellCastTriggerCollectorService {
         // its source (CR 113.7) and each instance triggers separately (CR 702.85c).
         if (trigger.filter().grantedToTheSpell() && match.sourceCard() != spellCard) {
             boolean queued = false;
-            TriggerMatchContext spellSourced = new TriggerMatchContext(match.gameData(), match.permanent(),
-                    match.controllerId(), match.effects(), spellCard, match.sourcePlanarObject(),
+            TriggerMatchContext spellSourced = new TriggerMatchContext(match.gameData(), null,
+                    match.controllerId(), List.of(), spellCard, match.sourcePlanarObject(),
                     match.onceEachTurnActionKey(), match.triggersOnlyOnceEachTurn());
-            for (CardEffect cascade : trigger.effects()) {
-                queued |= handleGenericSpellCastTrigger(spellSourced, trigger.withEffects(List.of(cascade)),
+            for (EffectRegistration cascade : trigger.ability().effects()) {
+                queued |= handleGenericSpellCastTrigger(spellSourced,
+                        CastAbility.of(trigger.ability().withEffects(List.of(cascade)), trigger.filter()),
                         spellCard, castingPlayerId, exiledSourcePermanentId, castZone);
             }
             return queued;
@@ -394,19 +351,6 @@ public class SpellCastTriggerCollectorService {
                 interveningContext)) {
             return false;
         }
-        // An intervening "if" on the triggering spell ("if it has the same name as one of the cards exiled with this
-        // artifact", Spellweaver Helix) is judged on the spell as it is cast, from the ability's source, and again as
-        // the ability resolves through the ConditionalEffect around each effect (CR 603.4).
-        if (trigger.interveningIf() instanceof TriggeringSpellMatches matches) {
-            if (triggeringSpell == null || !matchesCastSpellPredicate(match, triggeringSpell, matches.filter(),
-                    exiledSourcePermanentId)) {
-                return false;
-            }
-        } else if (trigger.interveningIf() != null
-                && !conditionEvaluationService.isMet(match.gameData(), trigger.interveningIf(),
-                interveningContext)) {
-            return false;
-        }
 
         // Repartee-style condition on the cast spell's chosen targets (e.g. "targets a creature"),
         // or source-relative mana-value gates (e.g. Imminent Doom — MV equals counters on source).
@@ -419,207 +363,72 @@ public class SpellCastTriggerCollectorService {
                     exiledSourcePermanentId)) return false;
         }
 
-        // A lone plain "you may [pay {N}]" goes on the stack as the card wrote it and is asked as the ability resolves
-        // (CR 603.5); the targets of what it offers are chosen now (CR 603.3d), so the effects are judged without it.
-        List<CardEffect> resolved = new ArrayList<>(trigger.effectsTargetsAreChosenFor());
-        List<CardEffect> optionalAbility = resolved.equals(trigger.effects()) ? null
-                : trigger.effects().stream()
-                        .map(effect -> trigger.interveningIf() == null ? effect
-                                : (CardEffect) new ConditionalEffect(trigger.interveningIf(), effect))
-                        .toList();
-        if (trigger.interveningIf() != null) {
-            resolved = resolved.stream()
-                    .map(effect -> (CardEffect) new ConditionalEffect(trigger.interveningIf(), effect))
-                    .toList();
-        }
-        boolean needsPlayerTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).admits(TargetPredicate.Kind.PLAYER));
-        boolean needsPermanentTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).admits(TargetPredicate.Kind.PERMANENT));
-        boolean needsGraveyardTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).admits(TargetPredicate.Kind.GRAVEYARD_CARD));
-        boolean needsSpellTarget = resolved.stream().anyMatch(e -> triggerTargetSpec(e).admits(TargetPredicate.Kind.SPELL));
-        boolean needsTargeting = needsPlayerTarget || needsPermanentTarget;
-        boolean playerTargetOnly = needsPlayerTarget && !needsPermanentTarget;
-        // A permanent target restricted by "that spell's mana value" (Skyfire Kirin) is chosen now, as the ability goes
-        // on the stack (CR 603.3d), against the spell's mana value as the ability's X.
-        boolean targetRestrictedBySpellManaValue = needsPermanentTarget && readsManaValueX(
-                trigger.targetFilter() != null ? trigger.targetFilter() : boundTargetFilter(sourceCard, trigger.effects()));
-        // Otherwise the ability's X is the spell's: an effect's own filter "with that spell's mana value" (Celestial
-        // Kirin's destroy, Infernal Kirin's discard), "the amount of mana spent to cast that spell" (ManaSpentToCast, the
-        // mana-spent conditions) and "for each color of mana spent to cast that spell" (ColorsSpentToCast) read the
-        // triggering spell as the ability resolves.
-        int abilityX = targetRestrictedBySpellManaValue
+        // A permanent target restricted by "that spell's mana value" (Skyfire Kirin) is chosen as the ability goes on
+        // the stack (CR 603.3d), against the spell's mana value as the ability's X. Otherwise the ability's X is the
+        // spell's: an effect's own filter "with that spell's mana value" (Celestial Kirin's destroy, Infernal Kirin's
+        // discard), "the amount of mana spent to cast that spell" and "for each color of mana spent to cast that spell"
+        // read the triggering spell as the ability resolves.
+        TargetFilter abilityTargetFilter = trigger.targetFilter() != null ? trigger.targetFilter()
+                : boundTargetFilter(sourceCard, trigger.effects());
+        int abilityX = readsManaValueX(abilityTargetFilter)
                 ? spellManaValue(match.gameData(), spellCard)
                 : spellXValue != null ? spellXValue : 0;
         // The cast event's value, recorded on every entry and choice whatever the effects are: the number of kicks for a
         // kicked-spell ability, else the spell's mana value as the ability triggers (with the chosen X, CR 202.3e). An
         // effect reads "that spell's mana value" as it resolves (TargetSpellManaValue: the live spell, else the entry's
         // snapshot of it, CR 608.2h), so this value is only the fallback where neither is kept.
-        int triggeringSpellManaValue = (trigger.filter().kicker() != SpellFilter.Kicker.ANY) ? kickCount
+        int eventValue = interveningSpellManaValueCondition ? interveningSpellManaValue
+                : (trigger.filter().kicker() != SpellFilter.Kicker.ANY) ? kickCount
                 : spellManaValue(match.gameData(), spellCard);
-
-        if (optionalAbility != null) {
-            resolved = optionalAbility;
-        }
-        // The entry of an ability that chooses nothing, built first: a mode, a target or a graveyard card chosen as the
-        // ability goes on the stack is handed it as the record of the cast.
-        StackEntry entry = abilityX > 0
-                ? new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
-                    abilityDescription(sourceCard), resolved, abilityX,
-                    null, sourcePermanentId, null, null, null, null)
-                : new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
-                    abilityDescription(sourceCard), resolved, null,
-                    sourcePermanentId);
-        entry.setTargetId(castingPlayerId);
-        entry.setNonTargeting(true);
-        // The player the cast was about, whom "another target player" (The Lord of Pain) excludes.
-        entry.setTriggeringPlayerId(castingPlayerId);
-        // Contextual "it" = the spell that caused the trigger, still on the stack below this
-        // ability (Bloodlord of Vaasgoth's bloodthirst grant), and as it was then once it has left (CR 608.2h).
-        entry.setTriggeringCardId(spellCard.getId());
-        entry.setTriggeringSpell(triggeringSpell);
-        entry.setTriggeringSpellCastIndex(
-                match.gameData().getSpellCastIndexThisTurn(castingPlayerId, spellCard.getId()));
-        entry.setTriggeringSpellTurnCastIndex(match.gameData().getSpellCastOrdinalThisTurn(spellCard.getId()) - 1);
-        // "Its targets" (Bloodlord of Vaasgoth's grant) are the spell's targets as it was cast, kept once it has left.
+        List<UUID> spellTargets = new ArrayList<>();
         if (triggeringSpell != null) {
-            List<UUID> spellTargets = new ArrayList<>();
             if (triggeringSpell.getTargetId() != null) {
                 spellTargets.add(triggeringSpell.getTargetId());
             }
             spellTargets.addAll(triggeringSpell.getDeclaredTargetIds());
-            entry.setTriggeringSpellTargetIds(List.copyOf(spellTargets));
         }
-        entry.setTriggeringCardSnapshot(spellCard);
-        entry.setEventValue(triggeringSpellManaValue);
-        if (interveningSpellManaValueCondition) {
-            entry.setEventValue(interveningSpellManaValue);
-        }
-        // The source as the ability goes on the stack, whatever the effects are: its last known information once it
-        // has left the battlefield (CR 608.2h), and what a transform instruction compares (CR 701.27f).
-        if (match.permanent() != null) {
-            entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        }
-        preservePlanarSource(entry, match);
-        entry.setOnceEachTurnActionKey(match.onceEachTurnActionKey());
-        match.gameData().handOffTriggerRecord(entry);
-        if (resolved.size() == 1 && resolved.getFirst() instanceof ChooseOneAtTriggerTimeEffect atTriggerTime
-                && atTriggerTime.maximumChoices() != null) {
-            // "Choose up to X" (Riku of Many Paths): X is read as the ability goes on the stack, where its modes are
-            // chosen (CR 603.3c), from the triggering spell; with no mode to choose, the ability is removed (CR 700.2b).
-            StackEntry ability = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, match.controllerId(),
-                    abilityDescription(sourceCard), resolved);
-            ability.setTriggeringCardId(spellCard.getId());
-            ability.setTriggeringSpell(triggeringSpell);
-            ChooseOneEffect choice = atTriggerTime.choice();
-            int maximumChoices = Math.min(choice.choicesMax(), Math.max(0, amountEvaluationService.evaluate(
-                    match.gameData(), atTriggerTime.maximumChoices(),
-                    AmountContext.forStackEntry(ability, match.permanent()))));
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-            if (maximumChoices == 0) {
-                gameLogService.append(match.gameData(), GameLog.cardThen(sourceCard,
-                        "'s triggered ability has no modes to choose."));
-                match.gameData().handOffTriggerRecord(null);
-                return true;
+        int castIndex = match.gameData().getSpellCastIndexThisTurn(castingPlayerId, spellCard.getId());
+        int turnCastIndex = match.gameData().getSpellCastOrdinalThisTurn(spellCard.getId()) - 1;
+        Permanent source = match.permanent();
+        com.github.laxika.magicalvibes.model.planar.PlanarObject planarObject = match.sourcePlanarObject();
+        // What the cast event was, whatever the effects are: "that player" is the caster, the entry's non-targeting
+        // player; "that spell" is its triggering card and spell ("counter that spell", "copy it", Bloodlord of
+        // Vaasgoth's "it" and "its targets" as the spell was cast), as it last existed once it has left (CR 608.2h);
+        // the source as the ability triggered, its last known information once it has left the battlefield and what a
+        // transform instruction compares (CR 701.27f).
+        TriggerRecord record = entry -> {
+            entry.setTargetId(castingPlayerId);
+            entry.setNonTargeting(true);
+            entry.setTriggeringPlayerId(castingPlayerId);
+            entry.setCounteredSpellControllerId(castingPlayerId);
+            entry.setTriggeringCardId(spellCard.getId());
+            entry.setTriggeringSpell(triggeringSpell);
+            entry.setTriggeringSpellCastIndex(castIndex);
+            entry.setTriggeringSpellTurnCastIndex(turnCastIndex);
+            if (triggeringSpell != null) {
+                entry.setTriggeringSpellTargetIds(List.copyOf(spellTargets));
             }
-            match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                    sourceCard, match.controllerId(), choice, sourcePermanentId, spellCard.getId())
-                    .withModeCount(0, maximumChoices));
-        } else if (resolved.size() == 1 && resolved.getFirst() instanceof ChooseOneEffect chooseOneEffect) {
-            // The mode is chosen as the ability goes on the stack (CR 603.3c); a "hasn't been chosen (this turn)"
-            // modal offers only the modes its source hasn't chosen (TriggeredModalTrigger reads the restriction).
-            match.gameData().queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                    sourceCard, match.controllerId(), chooseOneEffect, sourcePermanentId,
-                    spellCard.getId()));
-            gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        } else if (needsGraveyardTarget) {
-            // The graveyard target is chosen now, as the ability goes on the stack (CR 603.3d), with the X the entry
-            // of an ability that chooses nothing has: a target restricted by "that spell's mana value" (Krile
-            // Baldesion) reads the triggering spell from the record, as the entry does as it resolves.
-            // A graveyard target restricted by "that spell" ("the same name as that spell", Harness the Storm) is chosen
-            // against the triggering spell, which the stack entry keeps for the check as the ability resolves.
-            match.gameData().queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    sourceCard, match.controllerId(), resolved, null, 0, abilityX, 0, null, false, null,
-                    sourcePermanentId, match.onceEachTurnActionKey()).withTriggeringSpell(triggeringSpell));
-            log.info("Game {} - {} spell-cast graveyard-target trigger queued",
-                    match.gameData().id, sourceCard.getName());
-        } else if (needsSpellTarget && !needsTargeting) {
-            StackEntry spellTargetEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    match.controllerId(),
-                    abilityDescription(sourceCard),
-                    resolved,
-                    0,
-                    spellCard.getId(),
-                    sourcePermanentId,
-                    Map.of(),
-                    Zone.STACK,
-                    List.of(),
-                    List.of()
-            );
-            spellTargetEntry.setTriggeringCardId(spellCard.getId());
-            spellTargetEntry.setTriggeringSpell(triggeringSpell);
-            spellTargetEntry.setTriggeringSpellCastIndex(
-                    match.gameData().getSpellCastIndexThisTurn(castingPlayerId, spellCard.getId()));
-            spellTargetEntry.setTriggeringSpellTurnCastIndex(
-                    match.gameData().getSpellCastOrdinalThisTurn(spellCard.getId()) - 1);
-            spellTargetEntry.setEventValue(triggeringSpellManaValue);
-            // The caster stays known if the spell leaves the stack (e.g. is countered) before this resolves.
-            spellTargetEntry.setCounteredSpellControllerId(castingPlayerId);
-            preservePlanarSource(spellTargetEntry, match);
-            spellTargetEntry.setNonTargeting(true);
-            // This entry chooses nothing either and is its own record.
-            match.gameData().handOffTriggerRecord(spellTargetEntry);
-            match.gameData().stack.add(spellTargetEntry);
-        } else if (needsTargeting) {
-            // "You may pay {C}. If you do, [targeted effect]" (Malachite Talisman): the target is chosen
-            // as the trigger goes on the stack (CR 603.3d), while the payment choice waits for resolution
-            // (CR 603.5).
-            List<CardEffect> queued = resolved;
-            // The ability's own target groups when its effects are bound to them, else every group of the card.
-            List<Integer> boundGroups = boundTargetGroups(sourceCard, trigger.effects());
-            List<com.github.laxika.magicalvibes.model.TargetGroup> abilityGroups = boundGroups.isEmpty()
-                    ? sourceCard.getTargetGroups()
-                    : boundGroups.stream().map(sourceCard.getTargetGroups()::get).toList();
-            boolean multiTarget = abilityGroups.size() > 1
-                    || abilityGroups.stream()
-                    .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0);
-            if (multiTarget) {
-                // The walk chooses against the X the entry of an ability that chooses nothing has, as the
-                // single-target choice below does.
-                match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        sourceCard, match.controllerId(), queued, sourcePermanentId,
-                        List.of(), 0, 0, List.of(), abilityX,
-                        List.of(), false, spellCard.getId(),
-                        null, triggeringSpellManaValue));
-            } else {
-                match.gameData().queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        sourceCard, match.controllerId(), queued, playerTargetOnly,
-                        trigger.targetFilter() != null ? trigger.targetFilter()
-                                : boundTargetFilter(sourceCard, trigger.effects()),
-                        abilityX, sourcePermanentId, null, false, null, null,
-                        match.controllerId(), triggeringSpellManaValue,
-                        match.sourcePlanarObject() == null ? null : match.sourcePlanarObject().copy(),
-                        false, spellCard.getId()
-                ).withTriggeringPlayer(castingPlayerId));
+            entry.setTriggeringCardSnapshot(spellCard);
+            entry.setEventValue(eventValue);
+            entry.setXValue(abilityX);
+            if (source != null) {
+                entry.setSourcePermanentSnapshot(new Permanent(source));
             }
-            gameLogService.append(match.gameData(), GameLog.cardThen(sourceCard,
-                    "'s triggered ability triggers — choose a target."));
-        } else {
-            // An ability that chooses no target goes on the stack the same way whatever its effects are. "That
-            // player" is the caster, the entry's non-targeting player; "that spell" is its triggering card and
-            // triggering spell, which "counter that spell", "reveal ... if it shares a card type with that spell" and
-            // "any player may pay ... If a player does, counter that spell" read as they resolve: the ability has no
-            // target, so it still resolves once the spell has left the stack (CR 608.2b removes only an ability whose
-            // targets are all illegal). "Enchanted creature" of an Aura's ability is read from the source, or from its
-            // snapshot below once it has left the battlefield (CR 608.2h).
-            match.gameData().stack.add(entry);
-            // "Whenever a player kicks a spell": once for each time it was kicked.
-            for (int kick = 1; (trigger.filter().kicker() == SpellFilter.Kicker.EACH_KICK) && kick < kickCount; kick++) {
-                StackEntry again = new StackEntry(entry);
-                match.gameData().stack.add(again);
+            if (planarObject != null) {
+                entry.setSourcePlanarObject(planarObject.copy());
             }
+        };
+        TriggeredAbilityRequest request = new TriggeredAbilityRequest(trigger.ability(), sourceCard, source,
+                match.controllerId(), abilityDescription(sourceCard), interveningContext, record)
+                .withEvent(new TriggerContext.SpellCast(spellCard, castingPlayerId, castZone,
+                        exiledSourcePermanentId));
+        boolean triggered = triggeredAbilityStackService.put(match.gameData(), request);
+        // "Whenever a player kicks a spell": once for each time it was kicked.
+        for (int kick = 1; triggered && trigger.filter().kicker() == SpellFilter.Kicker.EACH_KICK && kick < kickCount;
+             kick++) {
+            triggeredAbilityStackService.put(match.gameData(), request);
         }
-        return true;
+        return triggered;
     }
 
     /**
@@ -758,12 +567,6 @@ public class SpellCastTriggerCollectorService {
         return false;
     }
 
-    private void preservePlanarSource(StackEntry entry, TriggerMatchContext match) {
-        if (match.sourcePlanarObject() != null) {
-            entry.setSourcePlanarObject(match.sourcePlanarObject().copy());
-        }
-    }
-
     private boolean isNthMatchingSpell(GameData gameData, CastAbility trigger, UUID playerId) {
         return matchingSpellCount(gameData, trigger, playerId) == trigger.filter().nthThisTurn();
     }
@@ -788,26 +591,6 @@ public class SpellCastTriggerCollectorService {
                     .count();
         }
         return matchingSpells;
-    }
-
-    private boolean hasOptionalSingleTarget(Card card, CardEffect effect) {
-        if (card.getTargetGroups().size() != 1) {
-            return false;
-        }
-        var target = card.getTargetGroups().getFirst();
-        return target.getMinTargets() == 0
-                && target.getMaxTargets() == 1
-                && card.getEffectTargetIndex(effect) == target.getIndex();
-    }
-
-    /**
-     * The targeting a spell-cast trigger must resolve before it goes on the stack. A lone plain "you may pay {X}. If
-     * you do, [targeted effect]" is judged by what it offers ({@link CastAbility#effectsTargetsAreChosenFor()}); any
-     * other {@link MayPayManaEffect} (another player's payment, a dynamic cost) settles everything at resolution, so it
-     * opens no target choice.
-     */
-    private static TargetSpec triggerTargetSpec(CardEffect effect) {
-        return effect instanceof MayPayManaEffect ? TargetSpec.NONE : effect.targetSpec();
     }
 
     private StackEntry findStackEntryForCard(com.github.laxika.magicalvibes.model.GameData gameData, UUID cardId) {

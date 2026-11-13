@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AirbendTargetCreatureOrSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.AirbendTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,6 +13,6 @@ public class MonkGyatso extends Card {
 
     public MonkGyatso() {
         addTrigger(Triggers.anotherCreatureYouControlBecomesTargetOfSpellOrAbility(),
-                new MayEffect(new AirbendTargetCreatureOrSpellEffect(), "Airbend that creature?"));
+                new MayEffect(new AirbendTargetPermanentEffect(new PermanentIsCreaturePredicate()), "Airbend that creature?"));
     }
 }
