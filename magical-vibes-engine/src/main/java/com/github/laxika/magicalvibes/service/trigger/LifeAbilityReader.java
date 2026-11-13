@@ -168,34 +168,8 @@ public final class LifeAbilityReader {
      * ability rejects "one or more" as it is built.
      */
     public static List<LifeEffect> read(TriggeredAbility ability, Trigger watched) {
-        LifeTrigger condition = watchedCondition(ability, watched);
+        LifeTrigger condition = trigger(ability, watched);
         TriggerOptions options = ability.options();
-        TriggerLimit limit = options.limit();
-        if (limit != TriggerLimit.NONE && limit != TriggerLimit.ONCE_EACH_TURN
-                && limit != TriggerLimit.DO_ONLY_ONCE_EACH_TURN) {
-            throw new IllegalStateException("No life collector reads " + limit + ": " + ability);
-        }
-        if (ability.targetFilter() != null) {
-            throw new IllegalStateException("No permanent's life collector reads an ability's own target filter: "
-                    + ability);
-        }
-        if (condition.spellFilter() != null && condition.player() != PlayerRelation.YOU) {
-            throw new IllegalStateException("No life collector judges the spell of " + condition + ": " + ability);
-        }
-        if (condition.firstEachTurn()) {
-            if (condition.player() != PlayerRelation.YOU || condition.event() == LifeEvent.PAYS) {
-                throw new IllegalStateException("No life collector counts " + condition + ": " + ability);
-            }
-            if (limit != TriggerLimit.NONE) {
-                throw new IllegalStateException("No life collector reads a limit next to \"for the first time each "
-                        + "turn\": " + ability);
-            }
-        }
-        if (condition.event() == LifeEvent.LOSES_FOR_FIRST_TIME_DURING_THEIR_TURN
-                && !options.equals(TriggerOptions.DEFAULT)) {
-            throw new IllegalStateException("The \"an opponent loses life\" collector reads no options on \"for the "
-                    + "first time during each of their turns\": " + ability);
-        }
         Condition interveningIf = options.interveningIf();
         List<LifeEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
@@ -289,6 +263,43 @@ public final class LifeAbilityReader {
      * {@code ability}'s life condition watched as {@code watched} (one whose {@link Trigger#watchKey()} it is). Several
      * are read as one, so they must be the same condition.
      */
+    /**
+     * The life condition of {@code ability} watched as {@code watched}, its trigger-level parts ("for the first time each
+     * turn", the spell that causes the life gain, the event) for the collector to judge, checked against what the life
+     * collectors read: this throws on a limit, filter or count none of them reads.
+     */
+    public static LifeTrigger trigger(TriggeredAbility ability, Trigger watched) {
+        LifeTrigger condition = watchedCondition(ability, watched);
+        TriggerOptions options = ability.options();
+        TriggerLimit limit = options.limit();
+        if (limit != TriggerLimit.NONE && limit != TriggerLimit.ONCE_EACH_TURN
+                && limit != TriggerLimit.DO_ONLY_ONCE_EACH_TURN) {
+            throw new IllegalStateException("No life collector reads " + limit + ": " + ability);
+        }
+        if (ability.targetFilter() != null) {
+            throw new IllegalStateException("No permanent's life collector reads an ability's own target filter: "
+                    + ability);
+        }
+        if (condition.spellFilter() != null && condition.player() != PlayerRelation.YOU) {
+            throw new IllegalStateException("No life collector judges the spell of " + condition + ": " + ability);
+        }
+        if (condition.firstEachTurn()) {
+            if (condition.player() != PlayerRelation.YOU || condition.event() == LifeEvent.PAYS) {
+                throw new IllegalStateException("No life collector counts " + condition + ": " + ability);
+            }
+            if (limit != TriggerLimit.NONE) {
+                throw new IllegalStateException("No life collector reads a limit next to \"for the first time each "
+                        + "turn\": " + ability);
+            }
+        }
+        if (condition.event() == LifeEvent.LOSES_FOR_FIRST_TIME_DURING_THEIR_TURN
+                && !options.equals(TriggerOptions.DEFAULT)) {
+            throw new IllegalStateException("The \"an opponent loses life\" collector reads no options on \"for the "
+                    + "first time during each of their turns\": " + ability);
+        }
+        return condition;
+    }
+
     private static LifeTrigger watchedCondition(TriggeredAbility ability, Trigger watched) {
         List<LifeTrigger> conditions = ability.conditions().stream().map(TriggerCondition::trigger)
                 .filter(LifeTrigger.class::isInstance).map(LifeTrigger.class::cast)

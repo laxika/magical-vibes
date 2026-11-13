@@ -296,7 +296,7 @@ public class TriggeredAbilityStackService {
         }
         UUID limitSourceId = request.sourcePermanent() != null ? request.sourcePermanentId()
                 : request.sourceCard().getId();
-        if (limitReached(gameData, options.limit(), limitSourceId, ability.limitKey())) {
+        if (limitReached(gameData, options.limit(), limitSourceId, ability.limitKey(), request.limitCreatureId())) {
             return false;
         }
         List<CardEffect> written = new ArrayList<>(ability.effects().size());
@@ -328,7 +328,7 @@ public class TriggeredAbilityStackService {
         } finally {
             gameData.restoreTriggeredAbilityCopies(previousCopies);
         }
-        markLimit(gameData, options.limit(), limitSourceId, ability.limitKey());
+        markLimit(gameData, options.limit(), limitSourceId, ability.limitKey(), request.limitCreatureId());
         return true;
     }
 
@@ -1089,7 +1089,7 @@ public class TriggeredAbilityStackService {
             case DO_ONLY_ONCE_EACH_TURN -> actionTaken(gameData, sourceId, key);
             case ONCE -> gameData.keyedOnceOnlyTriggersFired.getOrDefault(sourceId, Set.of()).contains(key);
             case ONCE_EACH_TURN_FOR_EACH_CREATURE -> throw new IllegalStateException(
-                    "Once each turn for each creature is read only by the damage and counter collectors");
+                    "Once each turn for each creature is judged only for an event that names the creature");
             // "For the first time each turn" counts the turn's events, which the collectors of those events judge.
             case FIRST_TIME_EACH_TURN -> false;
         };
@@ -1158,7 +1158,7 @@ public class TriggeredAbilityStackService {
      */
     public static boolean limitReached(GameData gameData, TriggerLimit limit, UUID sourceId, String key,
                                        UUID creatureId) {
-        if (limit == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
+        if (limit == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE && creatureId != null) {
             return gameData.oncePerCreatureTriggersFiredThisTurn.getOrDefault(sourceId, Set.of()).contains(creatureId);
         }
         return limitReached(gameData, limit, sourceId, key);
@@ -1170,7 +1170,7 @@ public class TriggeredAbilityStackService {
      * source, every other limit as {@link #markLimit(GameData, TriggerLimit, UUID, String)} says.
      */
     public static void markLimit(GameData gameData, TriggerLimit limit, UUID sourceId, String key, UUID creatureId) {
-        if (limit == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE) {
+        if (limit == TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE && creatureId != null) {
             gameData.oncePerCreatureTriggersFiredThisTurn
                     .computeIfAbsent(sourceId, ignored -> ConcurrentHashMap.newKeySet()).add(creatureId);
             return;

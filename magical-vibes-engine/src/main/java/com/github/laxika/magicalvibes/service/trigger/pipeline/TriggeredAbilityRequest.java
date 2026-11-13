@@ -27,10 +27,13 @@ import java.util.UUID;
  *                         additional time" effects that count only those read, and whether its source was one of them
  * @param event            the event as the "triggers an additional time" effects that judge it read it (a combat
  *                         damage event's source and the damage it dealt to players), or {@code null}
+ * @param limitCreatureId  the creature the event names, which "triggers only once each turn for each creature" judges
+ *                         and marks the ability's limit by, or {@code null}
  */
 public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard, Permanent sourcePermanent,
                                       UUID controllerId, String description, ConditionContext ifContext,
-                                      TriggerRecord record, AttackCause attack, TriggerContext event) {
+                                      TriggerRecord record, AttackCause attack, TriggerContext event,
+                                      UUID limitCreatureId) {
 
     public TriggeredAbilityRequest {
         Objects.requireNonNull(ability, "ability");
@@ -46,13 +49,13 @@ public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard,
                                    UUID controllerId, String description, ConditionContext ifContext,
                                    TriggerRecord record) {
         this(ability, sourceCard, sourcePermanent, controllerId, description, ifContext, record, AttackCause.NONE,
-                null);
+                null, null);
     }
 
     /** This request for an ability creatures attacking caused to trigger, its source not among them. */
     public TriggeredAbilityRequest causedByAttack() {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, AttackCause.ATTACK, event);
+                record, AttackCause.ATTACK, event, limitCreatureId);
     }
 
     /**
@@ -62,13 +65,22 @@ public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard,
      */
     public TriggeredAbilityRequest causedBySourceAttacking() {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, AttackCause.SOURCE_ATTACKED, event);
+                record, AttackCause.SOURCE_ATTACKED, event, limitCreatureId);
     }
 
     /** This request with {@code event} as the event the "triggers an additional time" effects judge. */
     public TriggeredAbilityRequest withEvent(TriggerContext event) {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, attack, event);
+                record, attack, event, limitCreatureId);
+    }
+
+    /**
+     * This request for an event about the creature {@code creatureId}, which "triggers only once each turn for each
+     * creature" judges and marks the ability's limit by (Stalwart Successor).
+     */
+    public TriggeredAbilityRequest withLimitCreature(UUID creatureId) {
+        return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
+                record, attack, event, creatureId);
     }
 
     /** Whether creatures attacking caused the ability to trigger (CR 508.3a). */

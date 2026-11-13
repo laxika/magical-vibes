@@ -57,4 +57,10 @@ public record SacrificeSelfThenEffect(CardEffect thenEffect, boolean reflexive, 
         return new TargetSpec(payload.declaredTarget(), payload.harmful(), payload.predicate(), true,
                 payload.playerTargetCount());
     }
+
+    /** "When you do": a reflexive payload's targets are its own ability's, chosen as that ability triggers. */
+    @Override
+    public boolean targetsChosenByReflexiveAbility() {
+        return reflexive;
+    }
 }

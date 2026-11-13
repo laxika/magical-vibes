@@ -1,20 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.CounterAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.CounterWatch;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +16,7 @@ import org.springframework.stereotype.Component;
 public class ClassLevelUpEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,46 +34,16 @@ public class ClassLevelUpEffectHandler implements NormalEffectHandlerBean {
         }
 
         source.setClassLevel(levelUp.level());
-        // The level's "when this Class becomes level N" abilities, each one object of all its effects (CR 603.3).
-        List<List<CardEffect>> levelAbilities = levelUp.gainedEffects().isEmpty()
-                ? CounterAbilityReader.printedEffectsByAbility(source.getCard(), levelUp.level() == 2
-                        ? CounterWatch.ON_SELF_REACHES_LEVEL_TWO : CounterWatch.ON_SELF_REACHES_LEVEL_THREE)
-                : List.of(levelUp.gainedEffects());
-        for (List<CardEffect> levelEffects : levelAbilities) {
-            queueLevelAbility(gameData, entry, source, levelUp, levelEffects);
-        }
-    }
-
-    private void queueLevelAbility(GameData gameData, StackEntry entry, Permanent source, ClassLevelUpEffect levelUp,
-                                   List<CardEffect> levelEffects) {
-        List<CardEffect> gainedEffects = new ArrayList<>(levelEffects);
-        // "When this Class becomes level N" is an ability of the Class: the entry it has when it chooses nothing is
-        // its record whichever way it reaches the stack.
-        StackEntry levelAbility = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                source.getCard(),
-                entry.getControllerId(),
-                source.getCard().getName() + "'s level ability",
-                gainedEffects,
-                null,
-                source.getId());
-        ReflexiveAbilitySupport.route(gameData, levelAbility,
-                () -> putLevelAbilityOnStackOrChoose(gameData, entry, source, levelUp, gainedEffects, levelAbility));
-    }
-
-    private void putLevelAbilityOnStackOrChoose(GameData gameData, StackEntry entry, Permanent source,
-                                                ClassLevelUpEffect levelUp, List<CardEffect> gainedEffects,
-                                                StackEntry levelAbility) {
-        if (gainedEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD))) {
-            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    source.getCard(), entry.getControllerId(), gainedEffects));
-        } else if (gainedEffects.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || e.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
-            gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                    source.getCard(), entry.getControllerId(), gainedEffects,
-                    "becomes level " + levelUp.level(), source.getId()));
+        // The level's "when this Class becomes level N" abilities, each whole (CR 603.3); a level whose card writes the
+        // ability's effects into its level-up is that ability.
+        CounterWatch watch = levelUp.level() == 2
+                ? CounterWatch.ON_SELF_REACHES_LEVEL_TWO : CounterWatch.ON_SELF_REACHES_LEVEL_THREE;
+        if (levelUp.gainedEffects().isEmpty()) {
+            permanentCounterSupport.putOwnCounterAbilities(gameData, source, entry.getControllerId(), watch);
         } else {
-            gameData.stack.add(levelAbility);
+            permanentCounterSupport.putOwnCounterAbility(gameData, new TriggeredAbility(watch.trigger(),
+                    levelUp.gainedEffects().toArray(CardEffect[]::new)), source, entry.getControllerId());
         }
     }
+
 }

@@ -92,6 +92,7 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
     }
 
     private static final int ANY_OTHER_TARGET = -2;
+    private static final int EVENT_OBJECT = -3;
 
     public DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRegenerate,
                                        boolean exileInsteadOfDie, int targetGroup,
@@ -156,6 +157,14 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
         return new DealDamageToAnyTargetEffect(damage, false, false, ANY_OTHER_TARGET, null);
     }
 
+    /**
+     * Damage to the permanent or player the trigger event names ("deals 2 damage to that permanent or player", Ghyrson
+     * Starn), the entry's non-targeting target (CR 115.10a): the ability targets nothing.
+     */
+    public static DealDamageToAnyTargetEffect toEventObject(DynamicAmount damage) {
+        return new DealDamageToAnyTargetEffect(damage, false, false, EVENT_OBJECT, null);
+    }
+
     /** Target filter for an any-target effect that excludes its source permanent. */
     public static TargetFilter anyOtherTargetFilter() {
         return new AnyTargetPredicateTargetFilter(
@@ -168,6 +177,9 @@ public record DealDamageToAnyTargetEffect(DynamicAmount damage, boolean cantRege
 
     @Override
     public TargetSpec targetSpec() {
+        if (targetGroup == EVENT_OBJECT) {
+            return TargetSpec.NONE;
+        }
         return targetGroup == ANY_OTHER_TARGET
                 ? TargetSpec.harmful(TargetPredicates.anyTarget(),
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))

@@ -247,6 +247,16 @@ class TriggerRouteRecordTest extends BaseCardTest {
                     + "target group is a creature can't stay attached to a planeswalker: it is put into the "
                     + "graveyard before the damage is dealt");
         }
+        // The combat damage step holds the plain ability's entry off the stack while state-based actions run, so the
+        // creature it names that dies isn't stamped with its last-known information; a parked choice's record is.
+        for (String watch : List.of("deals damage to a creature", "a creature you control deals damage to a creature")) {
+            for (Variant targeted : List.of(Variant.TARGET, Variant.TWO_GROUPS, Variant.GRAVE, Variant.MODAL,
+                    Variant.MODAL_TARGET)) {
+                excluded.put(watch + " / " + targeted, "the combat damage step holds the plain ability's entry off "
+                        + "the stack as the damaged creature dies, so only the parked record gets its last-known "
+                        + "information (C32)");
+            }
+        }
         excluded.put("this champions a creature / GRAVE", "the championed ability's target choice offers players "
                 + "and permanents only (no card prints a graveyard card): the ability is removed");
         excluded.put("a creature you control becomes the target of an opponent's spell or ability / GRAVE",

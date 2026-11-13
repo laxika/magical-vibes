@@ -283,7 +283,7 @@ public class DamageSupport {
 
             if (gameQueryService.isPlaneswalker(gameData, target)) {
                 triggerCollectionService.checkAllyDealtDamageToPlaneswalkerTriggers(
-                        gameData, reflectionSource, sourceControllerId, target.getId(), damage, false, null);
+                        gameData, reflectionSource, sourceControllerId, target.getId(), damage, false);
             }
 
             // All three slots below trigger on damage dealt *to a creature* — "whenever a creature …

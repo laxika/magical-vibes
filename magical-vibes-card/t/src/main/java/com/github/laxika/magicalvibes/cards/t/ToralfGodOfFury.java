@@ -5,6 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -17,8 +22,13 @@ public class ToralfGodOfFury extends Card {
         setBackFaceCard(new ToralfHammer());
         setModalDoubleFaced(true);
 
-        addTrigger(Triggers.creatureOrPlaneswalkerOpponentControlsDealtExcessNoncombatDamage(),
-                new DealDamageToAnyTargetEffect(new EventValue()));
+        // "Any target other than that permanent": the permanent dealt the excess damage.
+        target(new AnyTargetPredicateTargetFilter(
+                new PermanentNotPredicate(new PermanentIsTriggeringPermanentPredicate()),
+                new PlayerRelationPredicate(PlayerRelation.ANY),
+                "Target must be other than the permanent dealt excess damage."))
+                .addTrigger(Triggers.creatureOrPlaneswalkerOpponentControlsDealtExcessNoncombatDamage(),
+                        new DealDamageToAnyTargetEffect(new EventValue()));
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Toralf, God of Fury", List.of())
                         .withManaCost("{2}{R}{R}"),

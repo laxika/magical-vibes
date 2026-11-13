@@ -731,6 +731,26 @@ class TriggeredAbilityStackServiceTest {
     }
 
     @Test
+    @DisplayName("\"Once each turn for each creature\" is judged and marked by the creature the event names")
+    void doorMarksTheLimitForEachCreature() {
+        Card card = createCreature("Blocker", 1, 1);
+        Permanent blocker = new Permanent(card);
+        Permanent attacker = new Permanent(createCreature("Attacker", 2, 2));
+        Permanent otherAttacker = new Permanent(createCreature("Other attacker", 2, 2));
+        var ability = new TriggeredAbility(Triggers.blocks(),
+                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN_FOR_EACH_CREATURE),
+                new GainLifeEffect(1));
+
+        assertThat(stackService.put(gd, blockRequest(ability, card, blocker, attacker)
+                .withLimitCreature(attacker.getId()))).isTrue();
+        assertThat(stackService.put(gd, blockRequest(ability, card, blocker, attacker)
+                .withLimitCreature(attacker.getId()))).isFalse();
+        assertThat(stackService.put(gd, blockRequest(ability, card, blocker, otherAttacker)
+                .withLimitCreature(otherAttacker.getId()))).isTrue();
+        assertThat(gd.stack).hasSize(2);
+    }
+
+    @Test
     @DisplayName("Each additional time the ability triggers is another stack object")
     void doorAddsAStackObjectForEachAdditionalTrigger() {
         Card card = createCreature("Blocker", 1, 1);

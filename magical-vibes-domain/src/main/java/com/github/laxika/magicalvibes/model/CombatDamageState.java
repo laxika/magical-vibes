@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageDraw;
 import com.github.laxika.magicalvibes.model.action.DelayedCombatDamageLookAtHandAndDraw;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 
 import java.util.*;
 
@@ -84,17 +83,15 @@ public class CombatDamageState {
     public final Set<UUID> combatDamageToBlockingCreatureSources = new HashSet<>();
     public final Map<Permanent, UUID> combatDamageDealerControllers = new HashMap<>();
     /**
-     * The granted "whenever this creature deals combat damage" abilities each source had as the damage was dealt: one
-     * list of effects for each ability, each one object on the stack (CR 603.3).
+     * The granted "whenever this creature deals combat damage" abilities each source had as the damage was dealt, each
+     * handed whole to the stack door (CR 603.3).
      */
-    public final Map<Permanent, List<List<CardEffect>>> selfDealsCombatDamageEffects = new HashMap<>();
-    /** As {@link #selfDealsCombatDamageEffects}, for "deals combat damage to a player or planeswalker". */
-    public final Map<Permanent, List<List<CardEffect>>> selfDealsCombatDamageToPlayerOrPlaneswalkerEffects = new HashMap<>();
-    /** As {@link #selfDealsCombatDamageEffects}, for "deals combat damage to a player or battle". */
-    public final Map<Permanent, List<List<CardEffect>>> selfDealsCombatDamageToPlayerOrBattleEffects = new HashMap<>();
+    public final Map<Permanent, List<TriggeredAbility>> selfDealsCombatDamageAbilities = new HashMap<>();
+    /** As {@link #selfDealsCombatDamageAbilities}, for "deals combat damage to a player or planeswalker". */
+    public final Map<Permanent, List<TriggeredAbility>> selfDealsCombatDamageToPlayerOrPlaneswalkerAbilities = new HashMap<>();
+    /** As {@link #selfDealsCombatDamageAbilities}, for "deals combat damage to a player or battle". */
+    public final Map<Permanent, List<TriggeredAbility>> selfDealsCombatDamageToPlayerOrBattleAbilities = new HashMap<>();
     public final Map<Permanent, List<TriggeredAbility>> selfDealsDamageAbilities = new HashMap<>();
-    public final List<StackEntry> enchantedCreatureDealsDamageTriggers = new ArrayList<>();
-    public final List<StackEntry> allyCreatureDealsDamageToPlaneswalkerTriggers = new ArrayList<>();
     public final List<DelayedCombatDamageDrawQualification> delayedCombatDamageDrawQualifications = new ArrayList<>();
     public final List<DelayedCombatDamageLookAtHandAndDrawQualification>
             delayedCombatDamageLookAtHandAndDrawQualifications = new ArrayList<>();

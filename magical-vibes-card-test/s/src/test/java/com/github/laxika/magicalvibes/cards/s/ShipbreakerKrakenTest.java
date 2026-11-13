@@ -47,9 +47,7 @@ class ShipbreakerKrakenTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        for (Permanent target : targets) {
-            harness.handlePermanentChosen(player1, target.getId());
-        }
+        harness.handleMultiplePermanentsChosen(player1, targets.stream().map(Permanent::getId).toList());
         harness.passBothPriorities();
 
         assertThat(targets).allMatch(Permanent::isTapped);
@@ -67,7 +65,7 @@ class ShipbreakerKrakenTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
         addMonstrosityMana();
 
@@ -88,7 +86,7 @@ class ShipbreakerKrakenTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(kraken.isMonstrous()).isTrue();
@@ -105,8 +103,7 @@ class ShipbreakerKrakenTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, creature.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
 
         harness.performUntapStep(player2);
@@ -125,8 +122,7 @@ class ShipbreakerKrakenTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, creature.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
         assertThat(creature.isTapped()).isTrue();
 

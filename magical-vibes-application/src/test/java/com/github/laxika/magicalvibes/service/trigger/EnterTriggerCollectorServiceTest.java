@@ -98,7 +98,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -312,31 +311,6 @@ class EnterTriggerCollectorServiceTest {
         entering.setPower(power);
         entering.setToughness(toughness);
         return entering;
-    }
-
-    @Test
-    @DisplayName("Life-gain once-per-turn triggers fire only for the first life-gain event")
-    void lifeGainOncePerTurnTriggerFiresOnlyOnce() {
-        when(gameQueryService.computeStaticBonus(eq(gd), any(Permanent.class), isNull())).thenReturn(EMPTY_BONUS);
-        CardEffect inner = new GainLifeEffect(1);
-        Card source = new Card();
-        source.setName("Source");
-        source.addTrigger(Triggers.youGainLife(), TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), inner);
-        gd.playerBattlefields.get(player1Id).add(new Permanent(source));
-
-        AtomicInteger dispatchCount = new AtomicInteger();
-        registry.register(LifeWatch.ON_CONTROLLER_GAINS_LIFE, CardEffect.class,
-                (match, context) -> {
-                    dispatchCount.incrementAndGet();
-                    return true;
-                });
-
-        service.checkLifeGainTriggers(gd, player1Id, 3);
-        service.checkLifeGainTriggers(gd, player1Id, 3);
-
-        assertThat(dispatchCount).hasValue(1);
-        assertThat(gd.keyedOncePerTurnTriggersFiredThisTurn.get(gd.playerBattlefields.get(player1Id).getFirst().getId()))
-                .containsExactly(source.getTriggeredAbilities().getFirst().limitKey());
     }
 
     @Test

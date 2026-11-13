@@ -252,16 +252,13 @@ public class CombatDamageService {
      * other permanents' static abilities grant it, in that order, for a collector that reads no filter, limit or
      * multiplicity.
      */
-    private List<List<CardEffect>> grantedCombatAbilities(GameData gameData, Permanent permanent, CombatWatch watch) {
+    private List<TriggeredAbility> grantedCombatAbilities(GameData gameData, Permanent permanent, CombatWatch watch) {
         Trigger watched = watch.trigger();
         List<TriggeredAbility> granted = new ArrayList<>(WatchedAbilities.temporary(permanent, watched));
         granted.addAll(WatchedAbilities.persistent(permanent, watched));
         granted.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(gameData, permanent, watched));
-        List<List<CardEffect>> abilities = new ArrayList<>();
-        for (List<CombatAbilityReader.CombatEffect> ability : plainAbilities(granted, watched)) {
-            abilities.add(CombatAbilityReader.effectsOf(ability));
-        }
-        return abilities;
+        plainAbilities(granted, watched);
+        return granted;
     }
 
     /**
@@ -794,25 +791,24 @@ public class CombatDamageService {
 
         for (var entry : state.combatDamageDealt.entrySet()) {
             if (entry.getValue() > 0) {
-                triggerCollectionService.collectEnchantedCreatureDealsDamageTriggers(
-                        gameData, entry.getKey(), entry.getValue(), state.enchantedCreatureDealsDamageTriggers);
+                triggerCollectionService.queueEnchantedCreatureDealsDamageTriggers(
+                        gameData, entry.getKey(), entry.getValue());
             }
         }
 
         for (var sourceEntry : state.combatDamageAmountsToCreatures.entrySet()) {
             for (var targetEntry : sourceEntry.getValue().entrySet()) {
-                triggerCollectionService.collectEnchantedCreatureDealsDamageToCreatureTriggers(
-                        gameData, sourceEntry.getKey(), targetEntry.getKey(), targetEntry.getValue(),
-                        state.enchantedCreatureDealsDamageTriggers);
+                triggerCollectionService.queueEnchantedCreatureDealsDamageToCreatureTriggers(
+                        gameData, sourceEntry.getKey(), targetEntry.getKey(), targetEntry.getValue());
             }
         }
 
         for (Permanent source : state.combatDamageDealt.keySet()) {
-            state.selfDealsCombatDamageEffects.put(source,
+            state.selfDealsCombatDamageAbilities.put(source,
                     grantedCombatAbilities(gameData, source, CombatWatch.ON_SELF_DEALS_COMBAT_DAMAGE));
-            state.selfDealsCombatDamageToPlayerOrPlaneswalkerEffects.put(source, grantedCombatAbilities(
+            state.selfDealsCombatDamageToPlayerOrPlaneswalkerAbilities.put(source, grantedCombatAbilities(
                     gameData, source, CombatWatch.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_PLANESWALKER));
-            state.selfDealsCombatDamageToPlayerOrBattleEffects.put(source, grantedCombatAbilities(
+            state.selfDealsCombatDamageToPlayerOrBattleAbilities.put(source, grantedCombatAbilities(
                     gameData, source, CombatWatch.ON_SELF_DEALS_COMBAT_DAMAGE_TO_PLAYER_OR_BATTLE));
         }
 
@@ -942,8 +938,6 @@ public class CombatDamageService {
         // combat-damage trigger batch below.
         updateMonarchFromCombatDamage(gameData, state, defenderId);
         queueInitiativeTransferFromCombatDamage(gameData, state, defenderId);
-        gameData.stack.addAll(state.allyCreatureDealsDamageToPlaneswalkerTriggers);
-        gameData.stack.addAll(state.enchantedCreatureDealsDamageTriggers);
         processSelfDealsCombatDamageTriggers(gameData, state, defenderId, allyCombatDamageWatchers);
         processSelfDealsCombatDamageToPlayerOrPlaneswalkerTriggers(gameData, state);
         processSelfDealsCombatDamageToPlayerOrBattleTriggers(gameData, state);
@@ -2047,7 +2041,7 @@ public class CombatDamageService {
                     gameData, source.getCard(), controllerId, source.getId(), damageDealt,
                     state.combatDamageDealtToPlayer.getOrDefault(source, 0),
                     state.combatDamagePlayerRecipients.getOrDefault(source, defenderId),
-                    state.selfDealsCombatDamageEffects.get(source),
+                    state.selfDealsCombatDamageAbilities.get(source),
                     allyCombatDamageWatchers.getOrDefault(controllerId, List.of()));
         }
     }
@@ -2865,7 +2859,7 @@ public class CombatDamageService {
             triggerCollectionService.queueSourceDealsCombatDamageToPlayerOrPlaneswalkerTriggers(
                     gameData, source.getCard(), controllerId, source.getId(), damageDealtToPlayerOrPlaneswalker,
                     state.combatDamageDealtToPlayer.getOrDefault(source, 0),
-                    state.selfDealsCombatDamageToPlayerOrPlaneswalkerEffects.get(source));
+                    state.selfDealsCombatDamageToPlayerOrPlaneswalkerAbilities.get(source));
         }
     }
 
@@ -2883,7 +2877,7 @@ public class CombatDamageService {
             triggerCollectionService.queueSourceDealsCombatDamageToPlayerOrBattleTriggers(
                     gameData, source.getCard(), controllerId, source.getId(), totalDamage,
                     state.combatDamageDealtToPlayer.getOrDefault(source, 0),
-                    state.selfDealsCombatDamageToPlayerOrBattleEffects.get(source));
+                    state.selfDealsCombatDamageToPlayerOrBattleAbilities.get(source));
         }
     }
 
@@ -3391,8 +3385,7 @@ public class CombatDamageService {
                             firedBatchedAllyAbilities, false);
                 }
                 triggerCollectionService.checkAllyDealtDamageToPlaneswalkerTriggers(
-                        gameData, source, sourceControllerId, amountEntry.getKey(), amountEntry.getValue(), true,
-                        state.allyCreatureDealsDamageToPlaneswalkerTriggers);
+                        gameData, source, sourceControllerId, amountEntry.getKey(), amountEntry.getValue(), true);
             }
         }
     }

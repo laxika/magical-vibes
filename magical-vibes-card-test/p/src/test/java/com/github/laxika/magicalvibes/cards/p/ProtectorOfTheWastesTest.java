@@ -58,8 +58,7 @@ class ProtectorOfTheWastesTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
-        harness.handlePermanentChosen(player1, ownArtifact.getId());
-        harness.handlePermanentChosen(player1, opposingEnchantment.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownArtifact.getId(), opposingEnchantment.getId()));
         harness.passBothPriorities();
 
         assertThat(protector.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
@@ -122,7 +121,7 @@ class ProtectorOfTheWastesTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         resolveAllTriggers();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         assertThat(protector.isMonstrous()).isTrue();

@@ -53,7 +53,7 @@ class CaretakersTalentTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.validIds()).containsExactly(wall.getId());
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
 
         harness.handlePermanentChosen(player1, wall.getId());
         resolveAllTriggers();

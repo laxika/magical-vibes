@@ -28,11 +28,10 @@ import java.util.List;
 public class BrashTaunter extends Card {
 
     public BrashTaunter() {
-        addTrigger(Triggers.dealtDamage(),
-                new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER)
-                        .withTriggeredTargetFilter(new PlayerPredicateTargetFilter(
-                                new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                                "Target must be an opponent")));
+        target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                "Target must be an opponent"))
+                .addTrigger(Triggers.dealtDamage(),
+                        new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

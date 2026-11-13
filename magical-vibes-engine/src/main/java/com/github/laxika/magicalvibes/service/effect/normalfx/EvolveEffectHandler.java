@@ -2,21 +2,15 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EvolveEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.CounterAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.CounterWatch;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -25,7 +19,6 @@ public class EvolveEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
-    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -52,19 +45,7 @@ public class EvolveEffectHandler implements NormalEffectHandlerBean {
         if (controllerId == null) {
             return;
         }
-        // Each ability is one object of all its effects (CR 603.3).
-        for (List<CardEffect> effects : CounterAbilityReader.printedEffectsByAbility(source.getCard(),
-                CounterWatch.ON_SELF_EVOLVES)) {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    source.getCard(),
-                    controllerId,
-                    source.getCard().getName() + "'s triggered ability",
-                    new ArrayList<>(effects),
-                    null,
-                    source.getId()
-            ));
-            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s evolve trigger triggers."));
-        }
+        // Each ability, whole (CR 603.3).
+        permanentCounterSupport.putOwnCounterAbilities(gameData, source, controllerId, CounterWatch.ON_SELF_EVOLVES);
     }
 }

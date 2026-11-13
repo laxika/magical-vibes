@@ -45,12 +45,10 @@ public class DonnaNoble extends Card {
                 new MayEffect(new SoulbondPairWithEnteringEffect(),
                         "Pair Donna Noble with that creature?"));
 
-        DealDamageToPlayersEffect reflectedDamage = new DealDamageToPlayersEffect(
-                new EventValue(), DamageRecipient.TARGET_PLAYER)
-                .withTriggeredTargetFilter(new PlayerPredicateTargetFilter(
-                        new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                        "Target must be an opponent"));
-        addTrigger(Triggers.permanentYouControlDealtDamage().withFilter(new PermanentIsSourceOrPairedPredicate()),
-                reflectedDamage);
+        target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.OPPONENT),
+                "Target must be an opponent"))
+                .addTrigger(Triggers.permanentYouControlDealtDamage()
+                                .withFilter(new PermanentIsSourceOrPairedPredicate()),
+                        new DealDamageToPlayersEffect(new EventValue(), DamageRecipient.TARGET_PLAYER));
     }
 }

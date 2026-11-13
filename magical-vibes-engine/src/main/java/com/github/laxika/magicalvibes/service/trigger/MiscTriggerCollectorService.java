@@ -9,6 +9,13 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetSpec;
+import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
+import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
+import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.effect.KayaSpiritsJusticeEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -78,129 +85,6 @@ public class MiscTriggerCollectorService {
                 match.permanent().getId()));
         gameLogService.append(match.gameData(),
                 GameLog.abilityTriggers(match.permanent().getCard()));
-        return true;
-    }
-
-    @CollectsTapTrigger(value = CardEffect.class, watch = TapWatch.ON_SELF_BECOMES_UNTAPPED)
-    private boolean handleSelfBecomesUntapped(TriggerMatchContext match, TriggerContext ctx) {
-        TriggerContext.SelfBecomesUntapped su = (TriggerContext.SelfBecomesUntapped) ctx;
-        Card card = match.permanent().getCard();
-        // The collector judged the ability's intervening "if"; its effects go on the stack as written, one object
-        // (CR 603.3), an intervening "if" still around them for the check as the ability resolves (CR 603.4).
-        List<CardEffect> triggeredEffects = match.effects();
-
-        boolean needsTarget = triggeredEffects.stream()
-                .anyMatch(triggeredEffect ->
-                        triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                                || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                                || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)
-                                || card.getEffectTargetIndex(triggeredEffect) >= 0);
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                su.controllerId(),
-                card.getName() + "'s ability",
-                new ArrayList<>(triggeredEffects),
-                null,
-                match.permanent().getId());
-        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        match.gameData().handOffTriggerRecord(entry);
-        if (needsTarget) {
-            boolean multiTarget = card.getTargetGroups().stream()
-                    .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0)
-                    || card.getTargetGroups().size() > 1;
-            if (multiTarget) {
-                match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        card, su.controllerId(), new ArrayList<>(triggeredEffects), match.permanent().getId(),
-                        List.of(), 0, 0, List.of(), 0));
-            } else {
-                match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                        card, su.controllerId(), new ArrayList<>(triggeredEffects),
-                        "becomes untapped", match.permanent().getId()));
-            }
-        } else {
-            match.gameData().enqueueTrigger(entry);
-        }
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(card));
-        log.info("Game {} - {} triggers on becoming untapped", match.gameData().id, card.getName());
-        return true;
-    }
-
-    /**
-     * "Whenever you untap one or more permanents during your untap step, …" (The Millennium Calendar's "put that many
-     * time counters"): the ability goes on the stack as written, once for the untap step, with the number of
-     * permanents untapped as its event value ("that many") and the source as it was, whatever its effects are.
-     */
-    @CollectsTapTrigger(value = CardEffect.class, watch = TapWatch.ON_CONTROLLER_UNTAPS_DURING_UNTAP_STEP)
-    private boolean handleUntapStepDefault(TriggerMatchContext match, TriggerContext ctx) {
-        TriggerContext.UntapStep untapStep = (TriggerContext.UntapStep) ctx;
-        GameData gameData = match.gameData();
-        Card card = match.permanent().getCard();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                match.controllerId(),
-                card.getName() + "'s ability",
-                match.stackEffects(),
-                null,
-                match.permanent().getId());
-        entry.setEventValue(untapStep.untappedPermanentCount());
-        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        gameData.enqueueTrigger(entry);
-        gameLogService.append(gameData, GameLog.abilityTriggers(card));
-        log.info("Game {} - {} triggers on untap step", gameData.id, card.getName());
-        return true;
-    }
-
-    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_SELF_BECOMES_MONSTROUS)
-    private boolean handleSelfBecomesMonstrous(TriggerMatchContext match, TriggerContext ctx) {
-        TriggerContext.SelfBecomesMonstrous sm = (TriggerContext.SelfBecomesMonstrous) ctx;
-        Card card = match.permanent().getCard();
-        // One "when this becomes monstrous" ability, whole (CR 603.3).
-        List<CardEffect> triggeredEffects = match.effects();
-
-        boolean needsTarget = triggeredEffects.stream().anyMatch(triggeredEffect ->
-                triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                        || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
-                        || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                sm.controllerId(),
-                card.getName() + "'s ability",
-                new ArrayList<>(triggeredEffects),
-                sm.xValue(),
-                null,
-                match.permanent().getId(),
-                Map.of(),
-                null,
-                List.of(),
-                List.of());
-        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        match.gameData().handOffTriggerRecord(entry);
-        if (needsTarget) {
-            boolean multiTarget = card.getTargetGroups().stream()
-                    .anyMatch(target -> target.getMaxTargets() > 1 || target.getMinTargets() == 0)
-                    || card.getTargetGroups().size() > 1;
-            if (multiTarget) {
-                match.gameData().queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        card, sm.controllerId(), new ArrayList<>(triggeredEffects), match.permanent().getId(),
-                        List.of(), 0, 0, List.of(), sm.xValue()));
-                if (!match.gameData().interaction.isAwaitingInput()) {
-                    etbTokenTargetService.processNextETBTokenMultiTargetTrigger(match.gameData());
-                }
-            } else {
-                match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                        card, sm.controllerId(), new ArrayList<>(triggeredEffects),
-                        "becomes monstrous", match.permanent().getId()));
-            }
-        } else {
-            match.gameData().stack.add(entry);
-        }
-        gameLogService.append(match.gameData(), GameLog.cardThen(card,
-                "'s ability triggers (became monstrous)."));
-        log.info("Game {} - {} triggers on becoming monstrous", match.gameData().id,
-                card.getName());
         return true;
     }
 
@@ -394,49 +278,6 @@ public class MiscTriggerCollectorService {
     }
 
     /**
-     * "Whenever enchanted permanent becomes tapped": the ability is the Aura's (CR 113.7), and its entry records the
-     * tapped permanent and its controller whatever its effects are ("destroy it", "its controller loses 2 life", "that
-     * player mills three cards", read as the ability resolves, else from its last known information), the controller as
-     * the non-targeting "that player" and the Aura as it was. A targeted ability's target is chosen as it goes on the
-     * stack (CR 603.3d), the choice carrying the same record. A "choose one" (Relic Bind) goes on the stack the same
-     * way, with the same record, its mode and that mode's target announced there before a player gets priority
-     * (CR 603.3c, {@link StackedModalTriggerService}): a mode that declares its target chooses it, and the chosen
-     * target takes the place of the non-targeting "that player".
-     */
-    @CollectsTapTrigger(value = CardEffect.class, watch = TapWatch.ON_ENCHANTED_PERMANENT_TAPPED)
-    private boolean handleEnchantedPermanentTapDefault(TriggerMatchContext match, TriggerContext ctx) {
-        TriggerContext.EnchantedPermanentTap ept = (TriggerContext.EnchantedPermanentTap) ctx;
-        Card sourceCard = match.permanent().getCard();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s triggered ability",
-                match.stackEffects(),
-                ept.tappedPermanentControllerId(),
-                match.permanent().getId());
-        entry.setNonTargeting(true);
-        entry.setTriggeringPermanentId(ept.tappedPermanent().getId());
-        entry.setTriggeringPermanentControllerId(ept.tappedPermanentControllerId());
-        entry.setSourcePermanentSnapshot(new Permanent(match.permanent()));
-        match.gameData().handOffTriggerRecord(entry);
-        if (match.admits(TargetPredicate.Kind.PERMANENT)
-                || match.admits(TargetPredicate.Kind.PLAYER)) {
-            match.gameData().queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                    sourceCard, match.controllerId(), match.stackEffects(),
-                    "enchanted permanent became tapped", match.permanent().getId(),
-                    new Permanent(match.permanent()), null, false)
-                    .withTriggeringPermanent(ept.tappedPermanent()));
-        } else {
-            match.gameData().enqueueTrigger(entry);
-        }
-        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on enchanted permanent tap ({})",
-                match.gameData().id, sourceCard.getName(), ept.tappedPermanent().getCard().getName());
-        return true;
-    }
-
-    /**
      * What a player, counter or control event an ability triggered on records on its stack entry (or target choice),
      * whatever the ability's effects are: the player the event was about ({@code triggeringPlayerId}), the other player
      * an ability that chooses no target names as its non-targeting "that player" ({@code thatPlayerId}, {@code null} for
@@ -506,10 +347,10 @@ public class MiscTriggerCollectorService {
             var choice = new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
                     sourceCard, match.controllerId(), match.stackEffects(),
                     !match.admits(TargetPredicate.Kind.PERMANENT),
-                    DamageTriggerCollectorService.targetFilterForTriggeredEffect(sourceCard,
+                    targetFilterForTriggeredEffect(sourceCard,
                             match.targetingEffect()), 0,
                     source.getId(), new Permanent(source),
-                    DamageTriggerCollectorService.hasOptionalTarget(sourceCard,
+                    hasOptionalTarget(sourceCard,
                             match.targetingEffect()), triggeringPermanentId, null,
                     match.controllerId(), null, null, false, event.triggeringCardId(), null, null,
                     match.onceEachTurnActionKey(), null, Set.of(), event.triggeringPlayerId())
@@ -563,72 +404,6 @@ public class MiscTriggerCollectorService {
     }
 
     /**
-     * "Whenever you get one or more {E}" (Territorial Gorger, Fabrication Module's target, Brotherhood Scribe's
-     * intervening "if"): the player and the energy gained ("that much") recorded whatever the effects are
-     * ({@link #queueEventAbility}).
-     */
-    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_CONTROLLER_GETS_ENERGY)
-    private boolean handleEnergyGainDefault(TriggerMatchContext match, TriggerContext ctx) {
-        TriggerContext.EnergyGain energy = (TriggerContext.EnergyGain) ctx;
-        return queueEventAbility(match,
-                EventRecord.of(energy.gainingPlayerId()).withEventValue(energy.energyGainedAmount()), "energy gain");
-    }
-
-    /**
-     * "Whenever you put one or more counters on a permanent or player, … deals that much damage to target …" (All Will
-     * Be One): the placing player and the number of counters put ("that much"), recorded whatever the effects are
-     * ({@link #queueEventAbility}).
-     */
-    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_YOU_PUT_COUNTERS_ON_PERMANENT_OR_PLAYER)
-    private boolean handleCountersPlacedDefault(TriggerMatchContext match, TriggerContext ctx) {
-        TriggerContext.CountersPlaced placed = (TriggerContext.CountersPlaced) ctx;
-        return queueEventAbility(match, EventRecord.of(placed.placingPlayerId()).withEventValue(placed.amount()),
-                "counters being put");
-    }
-
-    /**
-     * "Whenever you put a lore counter on a Saga you control, put a +1/+1 counter on up to one other target creature"
-     * (Sigurd, Jarl of Ravensthorpe, whose target group says "up to one other"): the placing player and the Saga as
-     * the triggering permanent, recorded whatever the effects are ({@link #queueEventAbility}).
-     */
-    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_YOU_PUT_LORE_COUNTERS_ON_SAGA)
-    private boolean handleLoreCounterPlacedDefault(TriggerMatchContext match, TriggerContext ctx) {
-        TriggerContext.LoreCounterPlaced lore = (TriggerContext.LoreCounterPlaced) ctx;
-        return queueEventAbility(match, EventRecord.of(lore.placingPlayerId()).withPermanent(lore.saga(),
-                lore.placingPlayerId()),
-                "a lore counter being put on a Saga");
-    }
-
-    /**
-     * "Whenever one or more loyalty counters are removed from this, it deals that much damage to target opponent or
-     * planeswalker" (Chandra, Fire Artisan) and "whenever one or more counters are removed from a permanent you
-     * control" (Cloudsculpt Armorer's seek): the permanent the counters were removed from with its controller and the
-     * number removed ("that much"), recorded whatever the effects are ({@link #queueEventAbility}).
-     */
-    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_SELF_LOYALTY_COUNTERS_REMOVED)
-    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_ALLY_COUNTERS_REMOVED_FROM_PERMANENT)
-    private boolean handleCountersRemovedDefault(TriggerMatchContext match, TriggerContext ctx) {
-        Permanent permanent;
-        int amount;
-        switch (ctx) {
-            case TriggerContext.LoyaltyCountersRemoved loyalty -> {
-                permanent = loyalty.permanent();
-                amount = loyalty.amount();
-            }
-            case TriggerContext.CountersRemovedFromPermanent removed -> {
-                permanent = removed.permanent();
-                amount = removed.amount();
-            }
-            default -> throw new IllegalStateException("No counter-removal default reads " + ctx);
-        }
-        if (amount <= 0 || match.permanent() == null) {
-            return false;
-        }
-        return queueEventAbility(match, EventRecord.of(match.controllerId()).withEventValue(amount)
-                .withPermanent(permanent, match.controllerId()), "counters being removed");
-    }
-
-    /**
      * "Whenever an opponent gains control of a permanent from you, you create a Treasure token" (Zidane, Tantalus
      * Thief): the permanent with its new controller, who is the triggering player and the non-targeting "that player",
      * recorded whatever the effects are ({@link #queueEventAbility}).
@@ -639,23 +414,6 @@ public class MiscTriggerCollectorService {
         return queueEventAbility(match, new EventRecord(change.newControllerId(), change.newControllerId(),
                         null, change.changedPermanent(), change.newControllerId(), null),
                 "an opponent gaining control of a permanent");
-    }
-
-    @CollectsCounterTrigger(value = CardEffect.class, watch = CounterWatch.ON_CONTROLLER_PROLIFERATES)
-    private boolean handleProliferateDefault(TriggerMatchContext match, TriggerContext ctx) {
-        var gameData = match.gameData();
-        Card sourceCard = match.permanent().getCard();
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                match.controllerId(),
-                sourceCard.getName() + "'s ability",
-                match.stackEffects(),
-                null,
-                match.permanent().getId()));
-        gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
-        log.info("Game {} - {} triggers on proliferate", gameData.id, sourceCard.getName());
-        return true;
     }
 
     @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_CONTROLLER_WINS_COIN_FLIP)
@@ -1727,5 +1485,70 @@ public class MiscTriggerCollectorService {
         if (cards.size() == 1) {
             entry.setTriggeringCard(cards.getFirst().getId(), gameData.graveyardEntryVersion(cards.getFirst().getId()));
         }
+    }
+
+    /**
+     * "Whenever a creature you control fights, [effect]" (Foe-Razer Regent's "put two +1/+1 counters on it at the
+     * beginning of the next end step"): the card's effect goes on the stack as written, the fighting creature its
+     * triggering permanent ("it", CR 701.14a).
+     */
+    @CollectsActionTrigger(value = CardEffect.class, watch = ActionWatch.ON_ALLY_CREATURE_FIGHTS)
+    private boolean handleAllyCreatureFights(TriggerMatchContext match, TriggerContext ctx) {
+        TriggerContext.CreatureFights fights = (TriggerContext.CreatureFights) ctx;
+        Permanent fightingCreature = fights.fightingCreature();
+        if (fightingCreature == null) return false;
+
+        Card sourceCard = match.permanent().getCard();
+        StackEntry entry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                sourceCard,
+                match.controllerId(),
+                sourceCard.getName() + "'s ability",
+                match.stackEffects(),
+                null,
+                match.permanent().getId());
+        entry.setNonTargeting(true);
+        entry.setTriggeringPermanentId(fightingCreature.getId());
+        match.gameData().enqueueTrigger(entry);
+        gameLogService.append(match.gameData(), GameLog.abilityTriggers(sourceCard));
+        log.info("Game {} - {} triggers after {} fought",
+                match.gameData().id, sourceCard.getName(), fightingCreature.getCard().getName());
+        return true;
+    }
+
+    /**
+     * The target filter of a triggered ability's target choice: the one the card declares for {@code effect}, else the
+     * effect's triggered filter, else the card's. With none, an effect whose player half is "target opponent"
+     * ({@link CardEffect#targetPlayerRelation()}: "target opponent or planeswalker") is offered the opponents only, and
+     * its permanent half (the planeswalkers) as its target predicate restricts it: the choice reads no relation of its
+     * own.
+     */
+    static TargetFilter targetFilterForTriggeredEffect(Card card, CardEffect effect) {
+        int targetIndex = card.getEffectTargetIndex(effect);
+        if (targetIndex >= 0 && targetIndex < card.getTargetGroups().size()) {
+            return card.getTargetGroups().get(targetIndex).getFilter();
+        }
+        if (effect instanceof DamageDealingEffect damageEffect
+                && damageEffect.triggeredTargetFilter() != null) {
+            return damageEffect.triggeredTargetFilter();
+        }
+        TargetFilter cardFilter = card.getTargetFilter();
+        if (cardFilter != null || effect.targetPlayerRelation() != PlayerRelation.OPPONENT
+                || !effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
+            return cardFilter;
+        }
+        PlayerRelationPredicate opponent = new PlayerRelationPredicate(PlayerRelation.OPPONENT);
+        if (!effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+            return new PlayerPredicateTargetFilter(opponent, "Target must be an opponent");
+        }
+        return new AnyTargetPredicateTargetFilter(
+                effect.targetSpec().targetPredicate().permanentRestriction().orElse(new PermanentTruePredicate()),
+                opponent, "Target must be an opponent or planeswalker");
+    }
+
+    static boolean hasOptionalTarget(Card card, CardEffect effect) {
+        int targetIndex = card.getEffectTargetIndex(effect);
+        return targetIndex >= 0 && targetIndex < card.getTargetGroups().size()
+                && card.getTargetGroups().get(targetIndex).getMinTargets() == 0;
     }
 }

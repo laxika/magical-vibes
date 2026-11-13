@@ -968,14 +968,8 @@ public sealed interface TriggerContext {
     }
 
     record CreatureDealsDamageToPlaneswalker(Permanent damageSource, UUID damagedPlaneswalkerId,
-                                              int damage, boolean combatDamage,
-                                              java.util.List<StackEntry> deferredTriggers)
+                                              int damage, boolean combatDamage)
             implements TriggerContext {
-
-        public CreatureDealsDamageToPlaneswalker(Permanent damageSource, UUID damagedPlaneswalkerId,
-                                                  int damage, boolean combatDamage) {
-            this(damageSource, damagedPlaneswalkerId, damage, combatDamage, null);
-        }
     }
 
     /**

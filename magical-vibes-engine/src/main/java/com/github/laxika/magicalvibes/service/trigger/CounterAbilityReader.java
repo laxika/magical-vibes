@@ -229,11 +229,8 @@ public final class CounterAbilityReader {
 
     /** The effects of {@code ability}, as its collector reads them for the condition watched as {@code watched}. */
     public static List<CounterEffect> read(TriggeredAbility ability, Trigger watched) {
-        CounterTrigger condition = watchedCondition(ability, watched);
+        CounterTrigger condition = trigger(ability, watched);
         TriggerOptions options = ability.options();
-        if (options.multiplicity() != TriggerMultiplicity.EACH) {
-            throw new IllegalStateException("No counter collector reads " + options.multiplicity() + ": " + ability);
-        }
         Condition interveningIf = options.interveningIf();
         List<CounterEffect> effects = new ArrayList<>(ability.effects().size());
         for (EffectRegistration registration : ability.effects()) {
@@ -309,6 +306,20 @@ public final class CounterAbilityReader {
         List<CounterEffect> effects = read(abilities, watched);
         effects.forEach(effect -> requireNothingToJudge(effect, watched));
         return effects;
+    }
+
+    /**
+     * {@code ability}'s counter condition watched as {@code watched}, its trigger-level parts (the filter on the
+     * permanent, the narrower event, the kind of counter) for the collector to judge; this throws on "once for each"
+     * other than each event, which no counter collector reads.
+     */
+    public static CounterTrigger trigger(TriggeredAbility ability, Trigger watched) {
+        CounterTrigger condition = watchedCondition(ability, watched);
+        if (ability.options().multiplicity() != TriggerMultiplicity.EACH) {
+            throw new IllegalStateException("No counter collector reads " + ability.options().multiplicity() + ": "
+                    + ability);
+        }
+        return condition;
     }
 
     /** {@code ability}'s counter condition watched as {@code watched}: the one whose {@link Trigger#watchKey()} it is. */

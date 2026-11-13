@@ -49,7 +49,7 @@ class ShacklesOfTreacheryTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         assertThat(((PendingInteraction.PermanentChoice) gd.interaction.activeInteraction()).validIds())
                 .contains(attachedEquipment.getId())
                 .doesNotContain(unattachedEquipment.getId());

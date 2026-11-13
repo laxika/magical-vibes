@@ -833,7 +833,15 @@ public class TriggeredAbilityQueueService {
                 .filter(index -> index >= 0 && index < sourceCard.getTargetGroups().size())
                 .findFirst()
                 .orElse(-1);
-        return targetGroupIndex < 0 ? null : sourceCard.getTargetGroups().get(targetGroupIndex);
+        if (targetGroupIndex >= 0) {
+            return sourceCard.getTargetGroups().get(targetGroupIndex);
+        }
+        // A card's one bare group, bound to no effect, is the target of each of its abilities (Protector of the Wastes'
+        // "up to two target artifacts and/or enchantments" as it enters and as it becomes monstrous); an Aura's first
+        // group is what it enchants.
+        List<TargetGroup> groups = sourceCard.getTargetGroups();
+        return groups.size() == 1 && !sourceCard.isAura()
+                && !sourceCard.bindsEffectToTargetGroup(groups.getFirst().getIndex()) ? groups.getFirst() : null;
     }
 
     private void enqueueSelfTriggeredAbilityWithoutTargets(GameData gameData,

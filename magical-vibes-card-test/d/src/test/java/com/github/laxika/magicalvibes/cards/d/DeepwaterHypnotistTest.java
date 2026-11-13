@@ -30,7 +30,7 @@ class DeepwaterHypnotistTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         assertThat(((PendingInteraction.PermanentChoice) gd.interaction.activeInteraction()).validIds())
                 .contains(bears.getId());
     }
