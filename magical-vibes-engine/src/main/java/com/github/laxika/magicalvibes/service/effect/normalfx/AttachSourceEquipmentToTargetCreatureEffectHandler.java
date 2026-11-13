@@ -82,8 +82,7 @@ public class AttachSourceEquipmentToTargetCreatureEffectHandler implements Norma
                         "AttachSourceEquipmentToTargetCreatureEffect is not part of the resolving entry");
             }
             entry.insertEffectsToResolve(effectIndex + 1, List.of(
-                    new QueueReflexiveAbilityEffect(
-                            attachEffect.thenEffect(), attachEffect.thenEffectOptionalTarget())));
+                    QueueReflexiveAbilityEffect.of(attachEffect.thenEffect(), attachEffect.thenEffectOptionalTarget())));
         }
     }
 

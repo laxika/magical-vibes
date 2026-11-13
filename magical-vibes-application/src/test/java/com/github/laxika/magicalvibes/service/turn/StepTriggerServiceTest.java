@@ -2059,9 +2059,10 @@ class StepTriggerServiceTest {
 
             sut.handleEndStepTriggers(gd);
 
-            // One group of any number of targets is announced in one choice (CR 601.2c).
+            // The targets are chosen one by one and the division announced as the ability goes on the stack
+            // (CR 601.2c, 601.2d via CR 603.3d).
             assertThat(gd.stack).isEmpty();
-            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class)).isTrue();
+            assertThat(gd.hasPendingInteraction(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class)).isTrue();
         }
 
         @Test

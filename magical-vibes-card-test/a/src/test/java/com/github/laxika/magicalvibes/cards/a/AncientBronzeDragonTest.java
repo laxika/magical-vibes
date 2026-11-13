@@ -45,11 +45,10 @@ class AncientBronzeDragonTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice.validIds()).contains(firstTarget.getId(), secondTarget.getId());
-        harness.handlePermanentChosen(player1, firstTarget.getId());
-        harness.handlePermanentChosen(player1, secondTarget.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstTarget.getId(), secondTarget.getId()));
         resolveAllTriggers();
 
         assertThat(firstTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(7);
@@ -64,7 +63,7 @@ class AncientBronzeDragonTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -80,8 +79,7 @@ class AncientBronzeDragonTest extends BaseCardTest {
         resolveAllTriggers();
         assertThat(gameLogContains("rolls a d20 for Ancient Bronze Dragon: 1.")).isTrue();
         assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        harness.handlePermanentChosen(player1, dragon.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(dragon.getId()));
         resolveAllTriggers();
 
         assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -96,8 +94,7 @@ class AncientBronzeDragonTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        harness.handlePermanentChosen(player1, dragon.getId());
-        harness.handlePermanentChosen(player1, target.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(dragon.getId(), target.getId()));
         resolveAllTriggers();
 
         assertThat(dragon.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(20);
@@ -113,8 +110,7 @@ class AncientBronzeDragonTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         resolveAllTriggers();
-        harness.handlePermanentChosen(player1, firstTarget.getId());
-        harness.handlePermanentChosen(player1, secondTarget.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstTarget.getId(), secondTarget.getId()));
         gd.playerBattlefields.get(player1.getId()).remove(firstTarget);
         gd.playerGraveyards.get(player1.getId()).add(firstTarget.getCard());
         resolveAllTriggers();

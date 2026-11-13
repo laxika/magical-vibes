@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePermanentThenExileMatchingPermanentsEffect;
@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +25,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ExilePermanentThenExileMatchingPermanentsEffectHandler implements NormalEffectHandlerBean {
 
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final ExileSupport exileSupport;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
@@ -57,19 +57,13 @@ public class ExilePermanentThenExileMatchingPermanentsEffectHandler implements N
                         entry.getCard(), entry.getSourcePermanentId(), controllerId,
                         exileEffect.choiceFilter(), exileEffect.matchingFilter(),
                         exileEffect.choiceLabel());
-        // The "when you do" ability records what the resolving entry was about whether the permanent is the only
-        // one or is chosen: the entry built once it is exiled takes this record.
-        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry,
-                List.of(new ExileAllPermanentsEffect(exileEffect.matchingFilter())));
-        ReflexiveAbilitySupport.route(gameData, record, () -> {
-            if (matchingIds.size() == 1) {
-                exileChosenAndMatching(gameData, matchingIds.getFirst(), context);
-                return;
-            }
-            gameData.interaction.setPermanentChoiceContext(context);
-            playerInputService.beginPermanentChoice(gameData, controllerId, matchingIds, context,
-                    entry.getCard().getName() + " — choose a " + exileEffect.choiceLabel() + " to exile.");
-        });
+        if (matchingIds.size() == 1) {
+            exileChosenAndMatching(gameData, matchingIds.getFirst(), context, entry);
+            return;
+        }
+        gameData.interaction.setPermanentChoiceContext(context);
+        playerInputService.beginPermanentChoice(gameData, controllerId, matchingIds, context,
+                entry.getCard().getName() + " — choose a " + exileEffect.choiceLabel() + " to exile.");
     }
 
     public void completeChoice(GameData gameData, UUID permanentId,
@@ -81,37 +75,28 @@ public class ExilePermanentThenExileMatchingPermanentsEffectHandler implements N
                         context.sourcePermanentId(), context.choiceFilter())) {
             throw new IllegalStateException("Chosen permanent is no longer a matching permanent you control");
         }
-        exileChosenAndMatching(gameData, permanentId, context);
+        exileChosenAndMatching(gameData, permanentId, context,
+                ReflexiveAbilitySupport.resolvingEntryOf(gameData, context.sourceCard(), context.sourcePermanentId()));
     }
 
     private void exileChosenAndMatching(GameData gameData, UUID chosenId,
-                                        PermanentChoiceContext.ExilePermanentThenExileMatchingPermanents context) {
+                                        PermanentChoiceContext.ExilePermanentThenExileMatchingPermanents context,
+                                        StackEntry resolving) {
         Permanent chosen = gameQueryService.findPermanentById(gameData, chosenId);
         if (chosen == null) {
             return;
         }
-        // The record handed off for the "when you do" ability waits out the exile: an ability of this card the
-        // exile triggers is not that ability.
-        StackEntry record = gameData.handOffTriggerRecord(null);
         exileSupport.exilePermanentAndLog(gameData, chosen, context.sourceCard().getName());
 
         // "When you do" is a reflexive trigger (CR 603.12): the matching exile goes on the stack above
         // the resolving ability and resolves separately, so the matching permanents stay on the
-        // battlefield until it resolves.
-        StackEntry reflexiveEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                context.sourceCard(),
-                context.controllerId(),
-                context.sourceCard().getName() + "'s reflexive ability",
-                new ArrayList<>(List.of(new ExileAllPermanentsEffect(context.matchingFilter()))),
-                0,
-                context.sourcePermanentId());
+        // battlefield until it resolves. It records what the resolving entry was about.
+        StackEntry reflexiveEntry = ReflexiveAbilitySupport.recordFor(gameData, resolving, context.sourceCard(),
+                context.controllerId(), List.of(new ExileAllPermanentsEffect(context.matchingFilter())),
+                context.sourceCard().getName() + "'s reflexive ability", context.sourcePermanentId());
         reflexiveEntry.setNonTargeting(true);
         reflexiveEntry.setReflexiveTrigger(true);
-        if (record != null) {
-            reflexiveEntry.carryTriggerRecord(record);
-        }
-        gameData.stack.add(reflexiveEntry);
+        triggeredAbilityStackService.putMade(gameData, reflexiveEntry);
     }
 
     private boolean matches(GameData gameData, Permanent permanent, Card sourceCard,

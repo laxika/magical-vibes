@@ -122,6 +122,7 @@ import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectCondit
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import org.springframework.beans.factory.ObjectProvider;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -159,6 +160,7 @@ public class DamagePreventionService {
     private final ObjectProvider<DestructionSupport> destructionSupportProvider;
     private final GameLogService gameLogService;
     private final TriggerCollectionService triggerCollectionService;
+    private final ObjectProvider<TriggeredAbilityStackService> triggeredAbilityStackServiceProvider;
 
     public DamagePreventionService(GameQueryService gameQueryService,
                                    ObjectProvider<LayerSystemService> layerSystemServiceProvider,
@@ -172,7 +174,8 @@ public class DamagePreventionService {
                                    ObjectProvider<PlayerInputService> playerInputServiceProvider,
                                    ObjectProvider<DestructionSupport> destructionSupportProvider,
                                    GameLogService gameLogService,
-                                   TriggerCollectionService triggerCollectionService) {
+                                   TriggerCollectionService triggerCollectionService,
+                                   ObjectProvider<TriggeredAbilityStackService> triggeredAbilityStackServiceProvider) {
         this.gameQueryService = gameQueryService;
         this.layerSystemServiceProvider = layerSystemServiceProvider;
         this.predicateEvaluationService = predicateEvaluationService;
@@ -187,6 +190,7 @@ public class DamagePreventionService {
         this.destructionSupportProvider = destructionSupportProvider;
         this.gameLogService = gameLogService;
         this.triggerCollectionService = triggerCollectionService;
+        this.triggeredAbilityStackServiceProvider = triggeredAbilityStackServiceProvider;
     }
 
     /** Applies a one-shot replacement that destroys a target creature instead of dealing damage. */
@@ -883,8 +887,10 @@ public class DamagePreventionService {
 
     /**
      * Outfitted Jouster: "When damage is prevented this way, sacrifice an Equipment attached to Outfitted
-     * Jouster." The sacrifice is a reflexive trigger put on the stack after the prevention, and its
-     * controller chooses which attached Equipment they control is sacrificed.
+     * Jouster." The prevention, a replacement effect of Jouster's static ability, makes a delayed triggered ability
+     * whose source is Jouster and whose controller is Jouster's controller (CR 603.7f); it goes on the stack through
+     * the stack door after the prevention, and its controller chooses which attached Equipment is sacrificed as it
+     * resolves.
      */
     private boolean preventDamageAndSacrificeAttachedEquipment(GameData gameData, Permanent creature) {
         if (!hasAttachedEquipment(gameData, creature)) return false;
@@ -895,13 +901,13 @@ public class DamagePreventionService {
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                 new PermanentAttachedToSourcePermanentPredicate(),
                 new PermanentControlledBySourceControllerPredicate()));
-        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, creature.getCard(), controllerId,
+        StackEntry trigger = TriggeredAbilityStackService.madeAbility(creature.getCard(), controllerId,
                 creature.getCard().getName() + "'s triggered ability",
-                new ArrayList<>(List.of(new SacrificePermanentsEffect(1, attachedEquipment,
-                        SacrificeRecipient.CONTROLLER))),
-                null, creature.getId());
+                List.of(new SacrificePermanentsEffect(1, attachedEquipment, SacrificeRecipient.CONTROLLER)),
+                (UUID) null, creature.getId());
         trigger.setNonTargeting(true);
-        gameData.enqueueTrigger(trigger);
+        trigger.setSourcePermanentSnapshot(new Permanent(creature));
+        triggeredAbilityStackServiceProvider.getObject().putDelayed(gameData, trigger);
         gameLogService.append(gameData, GameLog.cardThen(creature.getCard(), "'s ability triggers."));
         return true;
     }
@@ -1118,24 +1124,17 @@ public class DamagePreventionService {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "another target")
                 : null;
-        List<CardEffect> effects = List.of(new DealDamageToAnyTargetEffect(new EventValue()));
-        // The ability always targets, so no entry of it chooses nothing: the record is what its target choice's
-        // entry records, the damage prevented as the event's value and the source as it was.
-        StackEntry triggerRecord = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                permanent.getCard(),
-                controllerId,
+        // A delayed triggered ability of the permanent whose static ability prevented the damage (CR 603.7f): its
+        // target is chosen as it goes on the stack (CR 603.3d), "that much" is the damage prevented.
+        StackEntry trigger = TriggeredAbilityStackService.madeAbility(permanent.getCard(), controllerId,
                 permanent.getCard().getName() + "'s ability",
-                new ArrayList<>(effects),
-                (UUID) null,
-                permanent.getId());
-        triggerRecord.setEventValue(damageAmount);
-        triggerRecord.setSourcePermanentSnapshot(new Permanent(permanent));
-        gameData.handOffTriggerRecord(triggerRecord);
-        gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                permanent.getCard(), controllerId,
-                effects,
-                false, targetFilter, 0, permanent.getId(), new Permanent(permanent)));
+                List.of(new DealDamageToAnyTargetEffect(new EventValue())), (UUID) null, permanent.getId());
+        trigger.setEventValue(damageAmount);
+        trigger.setSourcePermanentSnapshot(new Permanent(permanent));
+        if (targetFilter != null) {
+            trigger.setTargetFilter(targetFilter);
+        }
+        triggeredAbilityStackServiceProvider.getObject().putDelayed(gameData, trigger);
         gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), "'s ability triggers."));
     }
 
@@ -1709,17 +1708,12 @@ public class DamagePreventionService {
             lifeSupport.applyGainLife(gameData, playerId, damage, "prevented damage");
             return;
         }
-        StackEntry lifeGain = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                playerId,
-                card.getName() + "'s triggered ability",
-                List.of(new GainLifeEffect(new EventValue())),
-                (UUID) null,
-                (UUID) null);
+        StackEntry lifeGain = TriggeredAbilityStackService.madeAbility(card, playerId,
+                card.getName() + "'s triggered ability", List.of(new GainLifeEffect(new EventValue())),
+                (UUID) null, (UUID) null);
         // "That much" is the event's value: the damage prevented.
         lifeGain.setEventValue(damage);
-        gameData.enqueueTrigger(lifeGain);
+        triggeredAbilityStackServiceProvider.getObject().putDelayed(gameData, lifeGain);
     }
 
     /**
@@ -1897,18 +1891,15 @@ public class DamagePreventionService {
             return;
         }
         Card card = shield.damageSourceControllerCard();
-        StackEntry reflexive = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                card,
-                shield.playerId(),
+        // "That source's controller": the player the ability is about, which it doesn't target.
+        StackEntry reflexive = TriggeredAbilityStackService.madeAbility(card, shield.playerId(),
                 card.getName() + "'s triggered ability",
                 List.of(new DealDamageToAnyTargetEffect(new EventValue(), false, false, -1, null, false, false),
                         new DrawCardEffect(new EventValue())),
-                sourceControllerId,
-                (UUID) null);
+                sourceControllerId, (UUID) null);
         // "That much" and "that many" are the event's value: the damage prevented.
         reflexive.setEventValue(damage);
-        gameData.enqueueTrigger(reflexive);
+        triggeredAbilityStackServiceProvider.getObject().putDelayed(gameData, reflexive);
     }
 
     /**

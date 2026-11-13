@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyThenDestroyTargetPermanentEffect;
@@ -24,6 +24,7 @@ import java.util.UUID;
 public class PayEnergyThenDestroyTargetPermanentEffectHandler implements NormalEffectHandlerBean {
 
     private final AmountEvaluationService amountEvaluationService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
 
@@ -61,6 +62,7 @@ public class PayEnergyThenDestroyTargetPermanentEffectHandler implements NormalE
                 List.of(new DestroyTargetPermanentEffect()), entry.getCard().getName() + "'s destruction trigger");
         destruction.setTargetId(target.getId());
         destruction.setNonTargeting(true);
-        gameData.stack.add(destruction);
+        // "When you do, destroy that permanent" (CR 603.12): the permanent paid for, without targeting it.
+        triggeredAbilityStackService.putMade(gameData, destruction);
     }
 }

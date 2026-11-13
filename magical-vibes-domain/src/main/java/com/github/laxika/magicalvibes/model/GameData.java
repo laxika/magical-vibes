@@ -2679,32 +2679,19 @@ public class GameData {
      *  source permanent id, then by rider, to the number of units still to be tagged. */
     public final Map<UUID, Map<ManaCopyRider, Integer>> pendingCopyRiderManaChoices = new ConcurrentHashMap<>();
 
-    /** Pending one-shot "when you next cast an instant or sorcery spell this turn, copy that spell"
-     *  delayed triggers (e.g. Chandra, the Firebrand's −2). Each value tracks how many copies are
-     *  pending for that player. Decremented when an instant/sorcery is cast; unlike Primal
-     *  Wellspring's mana-linked copy rider these survive mana drain and are cleared at end of turn. */
-    public final Map<UUID, Integer> pendingNextInstantSorceryCopyThisTurnCount = new ConcurrentHashMap<>();
-    /** How many of the copies in {@link #pendingNextInstantSorceryCopyThisTurnCount} come from separate
-     *  one-copy delayed triggers (Teach by Example). Each one triggers on its own (CR 603.7), so when the next
-     *  spell is cast they are queued as separate copy triggers rather than one trigger copying several times. */
-    public final Map<UUID, Integer> pendingNextInstantSorceryCopyThisTurnSingleTriggerCount = new ConcurrentHashMap<>();
-    /** The source card of the delayed trigger counted in {@link #pendingNextInstantSorceryCopyThisTurnCount},
-     *  so the copy trigger's source is the object that created it (CR 603.7e), not the spell it copies. */
-    public final Map<UUID, Card> pendingNextInstantSorceryCopyThisTurnCountSource = new ConcurrentHashMap<>();
+    /**
+     * The pending "when you next cast an instant or sorcery spell this turn, copy that spell" delayed triggered
+     * abilities of each player (Chandra, the Firebrand's −2, Teach by Example, Sea Gate Stormcaller), one element per
+     * ability, in the order they were made: when the next such spell is cast, each element that applies to it is one
+     * stack object (CR 603.7), and is used up. A mana ability's has resolution 0. Unlike Primal Wellspring's mana-linked copy rider these survive mana
+     * drain; they are cleared at end of turn.
+     */
+    public final Map<UUID, List<PendingSpellCopy>> pendingNextInstantSorceryCopies = new ConcurrentHashMap<>();
     /** Pending one-shot grants that give the next instant or sorcery spell Storm this turn. */
     public final Map<UUID, Integer> pendingNextInstantSorceryStormThisTurnCount = new ConcurrentHashMap<>();
     public final Map<UUID, Integer> pendingNextInstantSorceryCastFromHandToHandThisTurnCount =
             new ConcurrentHashMap<>();
 
-    /** Pending mana-value-limited one-shot spell copy triggers for the current turn. */
-    public final Map<UUID, List<Integer>> pendingNextInstantSorceryCopyThisTurnMaxManaValues =
-            new ConcurrentHashMap<>();
-    /** Pending one-shot spell-copy counts evaluated when the next instant or sorcery is cast. */
-    public final Map<UUID, List<DynamicAmount>> pendingNextInstantSorceryCopyThisTurnDynamicCounts =
-            new ConcurrentHashMap<>();
-    /** Source cards of {@link #pendingNextInstantSorceryCopyThisTurnDynamicCounts}, in the same order. */
-    public final Map<UUID, List<Card>> pendingNextInstantSorceryCopyThisTurnDynamicSources =
-            new ConcurrentHashMap<>();
     /** Pending one-shot "when you next cast a spell this turn, copy that spell" delayed triggers. */
     public final Map<UUID, Integer> pendingNextSpellCopyThisTurnCount = new ConcurrentHashMap<>();
     /** Pending one-shot filtered spell-copy triggers for the current turn. */
@@ -2730,27 +2717,78 @@ public class GameData {
     public final Map<UUID, Integer> pendingNextLoyaltyAbilityCopyThisTurnCount = new ConcurrentHashMap<>();
 
     /**
-     * Players whose pending instant/sorcery and loyalty-ability copies come from one shared delayed
-     * trigger (Repeated Reverberation). Whichever event consumes that trigger consumes both counts.
-     */
-    public final Set<UUID> pendingNextSpellOrLoyaltyCopyLinkedThisTurn = ConcurrentHashMap.newKeySet();
-
-    /**
      * The source of each pending loyalty-ability copy in {@link #pendingNextLoyaltyAbilityCopyThisTurnCount},
      * in the order the copies were granted, so each copy trigger keeps the object that created it.
      */
     public final Map<UUID, List<PendingCopySource>> pendingNextLoyaltyAbilityCopySourcesThisTurn =
             new ConcurrentHashMap<>();
 
-    /** The card and permanent (null for a non-permanent source) that granted a pending copy. */
-    public record PendingCopySource(Card card, UUID sourcePermanentId) {}
+    /**
+     * The card and permanent (null for a non-permanent source) that granted a pending copy, and the delayed ability it
+     * shares with a pending spell copy ({@link PendingSpellCopy#link()}), or {@code null}.
+     */
+    public record PendingCopySource(Card card, UUID sourcePermanentId, UUID link) {
+
+        public PendingCopySource(Card card, UUID sourcePermanentId) {
+            this(card, sourcePermanentId, null);
+        }
+    }
 
     /**
-     * One pending dynamic-count instant/sorcery copy trigger: an element of
-     * {@link #pendingNextInstantSorceryCopyThisTurnDynamicCounts} paired with the source card at the same index of
-     * {@link #pendingNextInstantSorceryCopyThisTurnDynamicSources} ({@code null} when none was recorded).
+     * One pending "when you next cast an instant or sorcery spell this turn, copy that spell" delayed triggered ability
+     * (CR 603.7): its source, how many copies it makes ({@code copies}, or {@code dynamicCopies} counted as it resolves),
+     * the mana value limits a spell must meet ("with mana value 2 or less", one per copy of a kicked Sea Gate
+     * Stormcaller's "copy that spell twice instead"; empty for none), the resolution that made it, and {@code link}: the
+     * id it shares with the pending loyalty-ability copy of the same ability ("the next instant or sorcery spell you cast
+     * or loyalty ability you activate", Repeated Reverberation), whichever event uses it up, or {@code null}.
      */
-    public record PendingDynamicCopy(DynamicAmount count, Card source) {}
+    public record PendingSpellCopy(Card sourceCard, UUID sourcePermanentId, int copies, DynamicAmount dynamicCopies,
+                                   List<Integer> maxManaValues, long resolution, UUID link) {
+
+        public PendingSpellCopy {
+            maxManaValues = List.copyOf(maxManaValues);
+        }
+
+        /** This ability with {@code maxManaValue} as one more limit (one more copy, CR 603.7). */
+        public PendingSpellCopy withLimit(int maxManaValue) {
+            List<Integer> limits = new ArrayList<>(maxManaValues);
+            limits.add(maxManaValue);
+            return new PendingSpellCopy(sourceCard, sourcePermanentId, copies, dynamicCopies, limits, resolution, link);
+        }
+    }
+
+    /**
+     * How many copies {@code playerId}'s pending "copy the next instant or sorcery spell" abilities make with a fixed
+     * count, over all of them.
+     */
+    public int pendingSpellCopyCount(UUID playerId) {
+        List<PendingSpellCopy> pending = pendingNextInstantSorceryCopies.getOrDefault(playerId, List.of());
+        synchronized (pending) {
+            return pending.stream().mapToInt(copy -> copy.maxManaValues().isEmpty() ? copy.copies()
+                    : copy.maxManaValues().size()).sum();
+        }
+    }
+
+    /**
+     * Makes {@code copy} a pending ability of {@code playerId}'s. A limit made by the same resolution of the same source
+     * as the last pending limited copy is one more copy of that ability (a kicked Sea Gate Stormcaller's "twice
+     * instead"), not an ability of its own.
+     */
+    public void addPendingSpellCopy(UUID playerId, PendingSpellCopy copy) {
+        List<PendingSpellCopy> pending = pendingNextInstantSorceryCopies.computeIfAbsent(playerId,
+                ignored -> Collections.synchronizedList(new ArrayList<>()));
+        synchronized (pending) {
+            if (copy.maxManaValues().size() == 1 && !pending.isEmpty()) {
+                PendingSpellCopy last = pending.getLast();
+                if (!last.maxManaValues().isEmpty() && copy.resolution() > 0 && last.resolution() == copy.resolution()
+                        && last.sourceCard() == copy.sourceCard() && last.link() == null && copy.link() == null) {
+                    pending.set(pending.size() - 1, last.withLimit(copy.maxManaValues().getFirst()));
+                    return;
+                }
+            }
+            pending.add(copy);
+        }
+    }
 
     /** Permanents whose source subtype choice is temporary and expires during cleanup. */
     public final Set<UUID> temporaryChosenSubtypePermanentIds = ConcurrentHashMap.newKeySet();
@@ -5252,28 +5290,9 @@ public class GameData {
                     listMapEntries(playerNextDamageFromMatchingSourcesPrevented);
             case GAME_NEXT_ENCHANTMENT_CREATURE_ENTRY_ADDITIONAL_COUNTERS ->
                     new HashMap<>(pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn);
-            case GAME_NEXT_INSTANT_SORCERY_COPIES -> new HashMap<>(pendingNextInstantSorceryCopyThisTurnCount);
-            case GAME_NEXT_INSTANT_SORCERY_COPY_SINGLE_TRIGGERS ->
-                    new HashMap<>(pendingNextInstantSorceryCopyThisTurnSingleTriggerCount);
-            case GAME_NEXT_INSTANT_SORCERY_COPY_SOURCES ->
-                    Set.copyOf(plainMapEntries(pendingNextInstantSorceryCopyThisTurnCountSource));
-            case GAME_NEXT_INSTANT_SORCERY_COPY_MAX_MANA_VALUES ->
-                    listMapEntries(pendingNextInstantSorceryCopyThisTurnMaxManaValues);
-            case GAME_NEXT_INSTANT_SORCERY_DYNAMIC_COPIES -> {
-                List<Map.Entry<UUID, PendingDynamicCopy>> entries = new ArrayList<>();
-                pendingNextInstantSorceryCopyThisTurnDynamicCounts.forEach((playerId, counts) -> {
-                    List<Card> sources = pendingNextInstantSorceryCopyThisTurnDynamicSources
-                            .getOrDefault(playerId, List.of());
-                    for (int i = 0; i < counts.size(); i++) {
-                        entries.add(Map.entry(playerId,
-                                new PendingDynamicCopy(counts.get(i), i < sources.size() ? sources.get(i) : null)));
-                    }
-                });
-                yield entries;
-            }
+            case GAME_NEXT_INSTANT_SORCERY_COPIES -> synchronizedListMapEntries(pendingNextInstantSorceryCopies);
             case GAME_NEXT_LOYALTY_ABILITY_COPIES -> new HashMap<>(pendingNextLoyaltyAbilityCopyThisTurnCount);
             case GAME_NEXT_LOYALTY_ABILITY_COPY_SOURCES -> listMapEntries(pendingNextLoyaltyAbilityCopySourcesThisTurn);
-            case GAME_NEXT_SPELL_OR_LOYALTY_COPY_LINKED -> pendingNextSpellOrLoyaltyCopyLinkedThisTurn;
             case GAME_NEXT_EXHAUST_ABILITY_COPIES -> new HashMap<>(pendingNextExhaustAbilityCopyThisTurnCount);
             case GAME_NEXT_EXHAUST_ABILITY_COPY_SOURCES -> listMapEntries(pendingNextExhaustAbilityCopySourcesThisTurn);
             case GAME_SEN_TRIPLETS_HAND_PERMISSION -> senControllerPlayerId == null || senControlledPlayerId == null
@@ -5620,29 +5639,14 @@ public class GameData {
                     playerNextDamageFromMatchingSourcesPrevented, (List<Map.Entry<UUID, PermanentPredicate>>) value);
             case GAME_NEXT_ENCHANTMENT_CREATURE_ENTRY_ADDITIONAL_COUNTERS ->
                     addCounts(pendingAdditionalCountersForNextEnchantmentCreatureEntryThisTurn, (Map<UUID, Integer>) value);
-            case GAME_NEXT_INSTANT_SORCERY_COPIES ->
-                    addCounts(pendingNextInstantSorceryCopyThisTurnCount, (Map<UUID, Integer>) value);
-            case GAME_NEXT_INSTANT_SORCERY_COPY_SINGLE_TRIGGERS ->
-                    addCounts(pendingNextInstantSorceryCopyThisTurnSingleTriggerCount, (Map<UUID, Integer>) value);
-            case GAME_NEXT_INSTANT_SORCERY_COPY_SOURCES -> ((Set<Map.Entry<UUID, Card>>) value).forEach(entry ->
-                    pendingNextInstantSorceryCopyThisTurnCountSource.putIfAbsent(entry.getKey(), entry.getValue()));
-            case GAME_NEXT_INSTANT_SORCERY_COPY_MAX_MANA_VALUES -> ((List<Map.Entry<UUID, Integer>>) value)
-                    .forEach(entry -> pendingNextInstantSorceryCopyThisTurnMaxManaValues
-                            .computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).add(entry.getValue()));
-            case GAME_NEXT_INSTANT_SORCERY_DYNAMIC_COPIES -> ((List<Map.Entry<UUID, PendingDynamicCopy>>) value)
-                    .forEach(entry -> {
-                        pendingNextInstantSorceryCopyThisTurnDynamicCounts
-                                .computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).add(entry.getValue().count());
-                        pendingNextInstantSorceryCopyThisTurnDynamicSources
-                                .computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).add(entry.getValue().source());
-                    });
+            case GAME_NEXT_INSTANT_SORCERY_COPIES -> ((List<Map.Entry<UUID, PendingSpellCopy>>) value)
+                    .forEach(entry -> pendingNextInstantSorceryCopies.computeIfAbsent(entry.getKey(),
+                            key -> Collections.synchronizedList(new ArrayList<>())).add(entry.getValue()));
             case GAME_NEXT_LOYALTY_ABILITY_COPIES ->
                     addCounts(pendingNextLoyaltyAbilityCopyThisTurnCount, (Map<UUID, Integer>) value);
             case GAME_NEXT_LOYALTY_ABILITY_COPY_SOURCES -> ((List<Map.Entry<UUID, PendingCopySource>>) value)
                     .forEach(entry -> pendingNextLoyaltyAbilityCopySourcesThisTurn
                             .computeIfAbsent(entry.getKey(), key -> new ArrayList<>()).add(entry.getValue()));
-            case GAME_NEXT_SPELL_OR_LOYALTY_COPY_LINKED ->
-                    pendingNextSpellOrLoyaltyCopyLinkedThisTurn.addAll((Set<UUID>) value);
             case GAME_NEXT_EXHAUST_ABILITY_COPIES ->
                     addCounts(pendingNextExhaustAbilityCopyThisTurnCount, (Map<UUID, Integer>) value);
             case GAME_NEXT_EXHAUST_ABILITY_COPY_SOURCES -> ((List<Map.Entry<UUID, PendingCopySource>>) value)
@@ -10322,14 +10326,12 @@ public class GameData {
         copy.exiledVoyageControllerIds.putAll(this.exiledVoyageControllerIds);
         copy.foretoldCardCosts.putAll(this.foretoldCardCosts);
         copy.foretoldCardTurnsTaken.putAll(this.foretoldCardTurnsTaken);
-        this.pendingNextInstantSorceryCopyThisTurnDynamicSources.forEach((playerId, sources) ->
-                copy.pendingNextInstantSorceryCopyThisTurnDynamicSources.put(playerId, new ArrayList<>(sources)));
-        this.pendingNextInstantSorceryCopyThisTurnMaxManaValues.forEach((playerId, maxManaValues) ->
-                copy.pendingNextInstantSorceryCopyThisTurnMaxManaValues.put(
-                        playerId, new ArrayList<>(maxManaValues)));
-        this.pendingNextInstantSorceryCopyThisTurnDynamicCounts.forEach((playerId, counts) ->
-                copy.pendingNextInstantSorceryCopyThisTurnDynamicCounts.put(
-                        playerId, new ArrayList<>(counts)));
+        this.pendingNextInstantSorceryCopies.forEach((playerId, copies) -> {
+            synchronized (copies) {
+                copy.pendingNextInstantSorceryCopies.put(playerId,
+                        Collections.synchronizedList(new ArrayList<>(copies)));
+            }
+        });
         copy.pendingNextSpellCopyThisTurnCount.putAll(this.pendingNextSpellCopyThisTurnCount);
         this.pendingNextFilteredSpellCopiesThisTurn.forEach((playerId, effects) ->
                 copy.pendingNextFilteredSpellCopiesThisTurn.put(playerId, new ArrayList<>(effects)));
@@ -11389,9 +11391,6 @@ public class GameData {
         copy.pendingPathOfAncestryManaChoices.putAll(this.pendingPathOfAncestryManaChoices);
         this.pendingCopyRiderManaChoices.forEach((sourceId, riders) ->
                 copy.pendingCopyRiderManaChoices.put(sourceId, new ConcurrentHashMap<>(riders)));
-        copy.pendingNextInstantSorceryCopyThisTurnCount.putAll(this.pendingNextInstantSorceryCopyThisTurnCount);
-        copy.pendingNextInstantSorceryCopyThisTurnCountSource.putAll(this.pendingNextInstantSorceryCopyThisTurnCountSource);
-        copy.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount.putAll(this.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount);
         copy.pendingNextInstantSorceryStormThisTurnCount.putAll(this.pendingNextInstantSorceryStormThisTurnCount);
         copy.pendingNextInstantSorceryCastFromHandToHandThisTurnCount
                 .putAll(this.pendingNextInstantSorceryCastFromHandToHandThisTurnCount);
@@ -11401,7 +11400,6 @@ public class GameData {
         copy.pendingNextInstantSorceryUncounterableThisTurnCount.putAll(
                 this.pendingNextInstantSorceryUncounterableThisTurnCount);
         copy.pendingNextLoyaltyAbilityCopyThisTurnCount.putAll(this.pendingNextLoyaltyAbilityCopyThisTurnCount);
-        copy.pendingNextSpellOrLoyaltyCopyLinkedThisTurn.addAll(this.pendingNextSpellOrLoyaltyCopyLinkedThisTurn);
         this.pendingNextLoyaltyAbilityCopySourcesThisTurn.forEach((playerId, sources) ->
                 copy.pendingNextLoyaltyAbilityCopySourcesThisTurn.put(playerId, new ArrayList<>(sources)));
         copy.pendingNextXActivatedAbilityCopyThisTurnCount

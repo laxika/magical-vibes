@@ -38,9 +38,10 @@ class KishlaTrawlersTest extends BaseCardTest {
                 .validCardIds()).containsExactly(creature.getId());
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class))
-                .isNotNull();
-        harness.handleGraveyardCardChosen(player1, 1);
+        // The reflexive ability's target is chosen as it goes on the stack (CR 603.3d).
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).cards())
+                .containsExactly(instant, sorcery);
+        harness.handleMultipleCardsChosen(player1, List.of(sorcery.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).extracting(card -> card.getName())
@@ -98,6 +99,7 @@ class KishlaTrawlersTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
                 .validCardIds()).containsExactly(trawlers.getId());
         harness.handleMultipleCardsChosen(player1, List.of(trawlers.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(spell.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(trawlers);
@@ -127,6 +129,7 @@ class KishlaTrawlersTest extends BaseCardTest {
 
         castKishlaTrawlers();
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(spell.getId()));
 
         harness.assertInGraveyard(player1, "Frontline Rush");
         harness.assertNotInHand(player1, "Frontline Rush");
@@ -152,6 +155,9 @@ class KishlaTrawlersTest extends BaseCardTest {
 
         castKishlaTrawlers();
         harness.handleMultipleCardsChosen(player1, List.of(exiledCreature.getId()));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).cards())
+                .containsExactly(instant);
+        harness.handleMultipleCardsChosen(player1, List.of(instant.getId()));
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Frontline Rush");

@@ -2690,8 +2690,7 @@ public class CombatDamageService {
                 }
             }
             if (creatureDealtDamage) {
-                StackEntry se = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry se = TriggeredAbilityStackService.madeAbility(
                         loot.sourceCard(),
                         loot.controllerId(),
                         loot.sourceCard().getName() + "'s delayed trigger",
@@ -2699,7 +2698,7 @@ public class CombatDamageService {
                                 new DiscardEffect(loot.discardAmount(), DiscardRecipient.CONTROLLER))
                 );
                 se.setNonTargeting(true);
-                gameData.stack.add(se);
+                triggeredAbilityStackService.putDelayed(gameData, se);
                 gameLogService.append(gameData, GameLog.cardThen(loot.sourceCard(),
                         "'s delayed trigger fires — draw " + loot.drawAmount()
                                 + ", discard " + loot.discardAmount() + "."));
@@ -2720,15 +2719,14 @@ public class CombatDamageService {
             }
             for (var damageEntry : combatDamageDealtToPlayer.entrySet()) {
                 if (damageEntry.getValue() <= 0) continue;
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                         delayed.sourceCard(),
                         delayed.controllerId(),
                         delayed.sourceCard().getName() + "'s delayed trigger",
                         List.of(delayed.tokenEffect())
                 );
                 trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
+                triggeredAbilityStackService.putDelayed(gameData, trigger);
                 gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(),
                         "'s delayed trigger goes on the stack."));
             }
@@ -2748,14 +2746,13 @@ public class CombatDamageService {
                             state.combatDamageDealerControllers.getOrDefault(entry.getKey(), activeId)));
             if (!creatureDealtDamage) continue;
 
-            StackEntry trigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                     delayed.sourceCard(),
                     delayed.controllerId(),
                     delayed.sourceCard().getName() + "'s delayed trigger",
                     List.of(new BecomeMonarchEffect()));
             trigger.setNonTargeting(true);
-            gameData.stack.add(trigger);
+            triggeredAbilityStackService.putDelayed(gameData, trigger);
             gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(),
                     "'s delayed trigger goes on the stack."));
         }
@@ -2778,14 +2775,13 @@ public class CombatDamageService {
             for (UUID sourceId : qualification.sourceIds()) {
                 Permanent creature = damageSources.get(sourceId);
                 if (creature == null) continue;
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                         delayed.sourceCard(),
                         delayed.controllerId(),
                         delayed.sourceCard().getName() + "'s delayed trigger",
                         List.of(new DrawCardEffect(1)));
                 trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
+                triggeredAbilityStackService.putDelayed(gameData, trigger);
                 gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(),
                         "'s delayed trigger fires — draw a card."));
             }
@@ -2808,8 +2804,7 @@ public class CombatDamageService {
                 if (controllerId == null) controllerId = gameData.findControllerOf(creature);
                 if (!delayed.controllerId().equals(controllerId)) continue;
 
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                         delayed.sourceCard(),
                         delayed.controllerId(),
                         delayed.sourceCard().getName() + "'s delayed trigger",
@@ -2817,7 +2812,7 @@ public class CombatDamageService {
                         (UUID) null,
                         delayed.sourcePermanentId());
                 trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
+                triggeredAbilityStackService.putDelayed(gameData, trigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(delayed.sourceCard()));
             }
         }
@@ -2828,8 +2823,7 @@ public class CombatDamageService {
         for (CombatDamageState.DelayedCombatDamageLookAtHandAndDrawQualification qualification
                 : state.delayedCombatDamageLookAtHandAndDrawQualifications) {
             DelayedCombatDamageLookAtHandAndDraw delayed = qualification.delayedAction();
-            StackEntry trigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                     delayed.sourceCard(),
                     delayed.controllerId(),
                     delayed.sourceCard().getName() + "'s delayed trigger",
@@ -2838,7 +2832,7 @@ public class CombatDamageService {
                     (UUID) null
             );
             trigger.setNonTargeting(true);
-            gameData.stack.add(trigger);
+            triggeredAbilityStackService.putDelayed(gameData, trigger);
             gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(),
                     "'s delayed trigger fires — look at "
                             + gameData.playerIdToName.get(qualification.damagedPlayerId())
@@ -2981,8 +2975,7 @@ public class CombatDamageService {
                 Permanent attacker = dmgEntry.getKey();
                 int damage = dmgEntry.getValue();
                 if (damage <= 0) continue;
-                StackEntry se = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry se = TriggeredAbilityStackService.madeAbility(
                         attacker.getCard(),
                         reflection.protectedPlayerId(),
                         reflection.sourceCard().getName() + "'s reflected combat damage",
@@ -2994,7 +2987,7 @@ public class CombatDamageService {
                 se.setEventValue(damage);
                 se.setTriggeringPermanentId(attacker.getId());
                 se.setTriggeringPermanentControllerId(attackerId);
-                gameData.stack.add(se);
+                triggeredAbilityStackService.putDelayed(gameData, se);
                 gameLogService.append(gameData, GameLog.cardTextCard(reflection.sourceCard(),
                         " reflects " + damage + " combat damage from ", attacker.getCard(),
                         " to " + gameData.playerIdToName.get(attackerId) + "."));
@@ -3128,8 +3121,7 @@ public class CombatDamageService {
                         continue;
                     }
 
-                    StackEntry trigger = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
+                    StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                             delayed.sourceCard(),
                             delayed.controllerId(),
                             delayed.sourceCard().getName() + "'s delayed trigger",
@@ -3137,7 +3129,7 @@ public class CombatDamageService {
                             damagedCreatureId,
                             (UUID) null);
                     trigger.setNonTargeting(true);
-                    gameData.stack.add(trigger);
+                    triggeredAbilityStackService.putDelayed(gameData, trigger);
                     gameLogService.append(gameData, GameLog.abilityTriggers(delayed.sourceCard()));
                 }
             }
@@ -3160,8 +3152,7 @@ public class CombatDamageService {
                     continue;
                 }
 
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                         delayed.sourceCard(),
                         delayed.controllerId(),
                         delayed.sourceCard().getName() + "'s delayed trigger",
@@ -3170,7 +3161,7 @@ public class CombatDamageService {
                         (UUID) null
                 );
                 trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
+                triggeredAbilityStackService.putDelayed(gameData, trigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(delayed.sourceCard()));
             }
         }
@@ -3200,8 +3191,7 @@ public class CombatDamageService {
                     continue;
                 }
 
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                         watch.sourceCard(),
                         watch.controllerId(),
                         watch.sourceCard().getName() + "'s delayed trigger",
@@ -3210,7 +3200,7 @@ public class CombatDamageService {
                         entry.getKey().getId());
                 trigger.setGrantingPermanentId(watch.creatingPermanentId());
                 trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
+                triggeredAbilityStackService.putDelayed(gameData, trigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
             }
         }
@@ -3232,8 +3222,7 @@ public class CombatDamageService {
                     continue;
                 }
 
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                         watch.sourceCard(),
                         watch.controllerId(),
                         watch.sourceCard().getName() + "'s delayed trigger",
@@ -3241,7 +3230,7 @@ public class CombatDamageService {
                         (UUID) null,
                         (UUID) null);
                 trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
+                triggeredAbilityStackService.putDelayed(gameData, trigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
             }
         }

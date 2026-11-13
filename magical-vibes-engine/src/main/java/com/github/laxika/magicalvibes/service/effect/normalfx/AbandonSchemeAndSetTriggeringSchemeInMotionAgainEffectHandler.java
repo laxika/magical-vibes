@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
+import java.util.UUID;
 import com.github.laxika.magicalvibes.model.effect.AbandonSchemeAndSetTriggeringSchemeInMotionAgainEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -11,14 +12,13 @@ import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-
 /** Resolves My Laughter Echoes' abandon-and-repeat instruction. */
 @Component
 @RequiredArgsConstructor
 public class AbandonSchemeAndSetTriggeringSchemeInMotionAgainEffectHandler
         implements NormalEffectHandlerBean {
 
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final GameQueryService gameQueryService;
     private final SchemeAbandonSupport schemeAbandonSupport;
     private final TriggerCollectionService triggerCollectionService;
@@ -44,15 +44,16 @@ public class AbandonSchemeAndSetTriggeringSchemeInMotionAgainEffectHandler
             return;
         }
 
-        StackEntry replay = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
+        // Setting the scheme in motion again triggers its "when you set this scheme in motion" ability again
+        // (CR 701.32b): a new ability, whose targets are chosen anew as it goes on the stack (CR 603.3d).
+        StackEntry replay = TriggeredAbilityStackService.madeAbility(
                 schemeSnapshot.getCard(),
                 entry.getControllerId(),
                 schemeSnapshot.getDescription(),
-                new ArrayList<>(schemeSnapshot.getEffectsToResolve()),
-                schemeSnapshot.getTargetId(),
+                schemeSnapshot.getEffectsToResolve(),
+                (UUID) null,
                 schemeSnapshot.getSourcePermanentId());
-        gameData.enqueueTrigger(replay);
+        triggeredAbilityStackService.putMade(gameData, replay);
         triggerCollectionService.checkSchemeSetInMotionTriggers(gameData, replay);
     }
 }

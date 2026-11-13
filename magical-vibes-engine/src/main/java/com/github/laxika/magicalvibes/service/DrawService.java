@@ -3011,34 +3011,19 @@ public class DrawService {
                 requireOnlyPlainTriggers(ability, emblem);
                 Card source = emblem.sourceCard();
                 String description = source.getName() + "'s emblem";
-                List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect).toList();
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        source,
-                        emblem.controllerId(),
-                        description,
-                        new ArrayList<>(effects));
-                entry.setNonTargeting(true);
-                entry.setTriggeringPlayerId(drawingPlayerId);
-                gameData.handOffTriggerRecord(entry);
-                if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
-                    gameData.queueInteraction(new PermanentChoiceContext.EmblemTriggerTarget(
-                            description, emblem.controllerId(), new ArrayList<>(effects), source,
-                            ability.targetFilter()));
-                    continue;
-                }
-                if (effects.stream().anyMatch(effect -> effect.targetSpec() != TargetSpec.NONE)) {
-                    throw new IllegalStateException(description + " has a draw ability whose target its reader "
-                            + "doesn't choose: " + ability);
-                }
-                gameData.stack.add(entry);
+                // An emblem's ability functions in the command zone (CR 114.4): the stack door puts it on the stack,
+                // its target ("exile target permanent an opponent controls", its own filter) chosen as it goes there
+                // (CR 603.3d).
+                triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability, source, null,
+                        emblem.controllerId(), description, ConditionContext.forCard(source, emblem.controllerId()),
+                        entry -> {
+                            entry.setMadeByResolution(true);
+                            entry.setNonTargeting(true);
+                            entry.setTriggeringPlayerId(drawingPlayerId);
+                        }).ofEmblem());
                 gameLogService.append(gameData, GameLog.text(description + " triggers."));
                 log.info("Game {} - {} triggers when a player draws", gameData.id, description);
             }
-        }
-
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class)) {
-            triggeredAbilityQueueService.processNextEmblemTriggerTarget(gameData);
         }
     }
 

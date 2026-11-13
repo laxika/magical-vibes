@@ -5,16 +5,15 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentsToTargetCreatureThenEffect;
-import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,7 +24,7 @@ public class AttachTargetEquipmentsToTargetCreatureThenEffectHandler implements 
     private final EquipSupport equipSupport;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -68,18 +67,10 @@ public class AttachTargetEquipmentsToTargetCreatureThenEffectHandler implements 
             return;
         }
 
-        StackEntry reflexiveContext = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                entry.getCard(),
-                entry.getControllerId(),
-                entry.getCard().getName() + "'s reflexive ability",
-                new ArrayList<>(),
-                0,
-                creature.getId());
-        reflexiveContext.setSourcePermanentSnapshot(new Permanent(creature));
-        queueReflexiveAbilityEffectHandler.resolve(
-                gameData,
-                reflexiveContext,
-                new QueueReflexiveAbilityEffect(attachEffect.thenEffect(), true));
+        // "That creature deals damage equal to its power": the creature is the reflexive ability's source permanent.
+        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(attachEffect.thenEffect()),
+                entry.getCard().getName() + "'s reflexive ability", creature.getId());
+        record.setSourcePermanentSnapshot(new Permanent(creature));
+        triggeredAbilityStackService.putMade(gameData, record);
     }
 }

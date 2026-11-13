@@ -548,25 +548,30 @@ class DrawServiceTest {
     }
 
     @Test
-    void emblemTargetedDrawTriggerQueuesItsTargetChoiceWithTheAbilitysTargetFilter() {
+    void emblemTargetedDrawTriggerGoesToTheStackDoorWithTheAbilitysTargetFilter() {
         Card source = createCard("Teferi, Hero of Dominaria", CardType.PLANESWALKER);
         TargetFilter opponentsPermanent = TargetFilters.permanentAnOpponentControls();
-        gd.emblems.add(new Emblem(player1Id, List.of(), source, List.of(), 0L,
-                List.of(new TriggeredAbility(Triggers.youDrawCard(), new ExileTargetPermanentEffect())
-                        .withTargetFilter(opponentsPermanent))));
+        TriggeredAbility ability = new TriggeredAbility(Triggers.youDrawCard(), new ExileTargetPermanentEffect())
+                .withTargetFilter(opponentsPermanent);
+        gd.emblems.add(new Emblem(player1Id, List.of(), source, List.of(), 0L, List.of(ability)));
 
         sut.checkControllerDrawTriggers(gd, player2Id);
-        assertThat(gd.hasPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class)).isFalse();
+        assertThat(doorRequests).isEmpty();
 
         sut.checkControllerDrawTriggers(gd, player1Id);
 
-        PermanentChoiceContext.EmblemTriggerTarget choice =
-                gd.peekPendingInteraction(PermanentChoiceContext.EmblemTriggerTarget.class);
-        assertThat(choice.controllerId()).isEqualTo(player1Id);
-        assertThat(choice.effects()).containsExactly(new ExileTargetPermanentEffect());
-        assertThat(choice.targetFilter()).isEqualTo(opponentsPermanent);
-        assertThat(gd.stack).isEmpty();
-        verify(triggeredAbilityQueueService).processNextEmblemTriggerTarget(gd);
+        // The door chooses the target, with the ability's own filter, as it goes on the stack (CR 603.3d).
+        assertThat(doorRequests).singleElement().satisfies(request -> {
+            assertThat(request.ability()).isEqualTo(ability);
+            assertThat(request.sourceCard()).isEqualTo(source);
+            assertThat(request.sourcePermanent()).isNull();
+            assertThat(request.controllerId()).isEqualTo(player1Id);
+            assertThat(request.emblemAbility()).isTrue();
+        });
+        assertThat(gd.stack).singleElement().satisfies(entry -> {
+            assertThat(entry.getTriggeringPlayerId()).isEqualTo(player1Id);
+            assertThat(entry.isMadeByResolution()).isTrue();
+        });
     }
 
     @Test

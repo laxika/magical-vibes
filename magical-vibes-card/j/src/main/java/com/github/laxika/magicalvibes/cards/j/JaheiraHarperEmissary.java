@@ -82,7 +82,8 @@ public class JaheiraHarperEmissary extends Card {
     }
 
     public static List<CardEffect> specializedTrigger(CardColor color) {
-        CardEffect destroy = new DestroyTargetPermanentEffect(false, null, 0,
+        // The white face's two target groups are read by position; another face's one target is the ability's.
+        CardEffect destroy = new DestroyTargetPermanentEffect(false, null, color == CardColor.WHITE ? 0 : -1,
                 artifactOrEnchantment());
         CardEffect rider = switch (color) {
             case WHITE -> new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE);

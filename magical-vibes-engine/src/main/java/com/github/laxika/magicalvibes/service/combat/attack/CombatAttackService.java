@@ -59,7 +59,9 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CanOnlyAttackAloneEffect;
@@ -1086,8 +1088,7 @@ public class CombatAttackService {
                         gameData, attacker, watcherRead.filter())) {
                     continue;
                 }
-                StackEntry delayedTrigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry delayedTrigger = TriggeredAbilityStackService.madeAbility(
                         watcher.sourceCard(),
                         watcher.controllerId(),
                         watcher.sourceCard().getName() + "'s delayed trigger",
@@ -1096,7 +1097,7 @@ public class CombatAttackService {
                         attacker.getId());
                 delayedTrigger.setNonTargeting(true);
                 delayedTrigger.setTriggeringPermanentId(attacker.getId());
-                gameData.stack.add(delayedTrigger);
+                triggeredAbilityStackService.putDelayed(gameData, delayedTrigger);
                 gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             }
         }
@@ -1894,8 +1895,7 @@ public class CombatAttackService {
             if (boost.controllerId().equals(playerId)) continue;
             for (int idx : attackerIndices) {
                 Permanent attacker = battlefield.get(idx);
-                StackEntry boostTrigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry boostTrigger = TriggeredAbilityStackService.madeAbility(
                         boost.sourceCard(),
                         boost.controllerId(),
                         boost.sourceCard().getName() + "'s delayed trigger",
@@ -1903,7 +1903,7 @@ public class CombatAttackService {
                         attacker.getId(),
                         attacker.getId());
                 boostTrigger.setNonTargeting(true);
-                gameData.stack.add(boostTrigger);
+                triggeredAbilityStackService.putDelayed(gameData, boostTrigger);
                 gameLogService.append(gameData, GameLog.cardTextCard(
                         boost.sourceCard(), " — ", attacker.getCard(),
                         " gets " + formatBoostPair(boost.power(), boost.toughness())
@@ -2043,6 +2043,17 @@ public class CombatAttackService {
             abilities.addAll(WatchedAbilities.temporary(attacker, onAttack));
             abilities.addAll(WatchedAbilities.persistent(attacker, onAttack));
         }
+        // "You may exert this creature as it attacks" is an optional cost to attack (CR 701.43d, 508.1g), asked as the
+        // creature attacks and carried out at once; its "when you do" is a triggered ability linked to it.
+        if (gameQueryService.getActiveStaticEffects(gameData, attacker).stream()
+                .anyMatch(effect -> effect instanceof ExertAsItAttacksEffect exert && (exert.condition() == null
+                        || conditionEvaluationService.isMet(gameData, exert.condition(),
+                        ConditionContext.forPermanent(attacker, playerId))))) {
+            gameData.queueMayAbilityForPlayer(attacker.getCard(), playerId,
+                    new MayEffect(SkipNextUntapEffect.exert(),
+                            "Exert " + attacker.getCard().getName() + " as it attacks?"),
+                    null, attacker.getId(), playerId, new Permanent(attacker));
+        }
         // Each ability's event condition (CR 603.2: "attacks while you control a Dinosaur", "attacks alone") and
         // intervening "if" (CR 603.4), read from the attacker with the number of attackers and its attack target.
         ConditionContext attackTriggerContext = ConditionContext.forPermanent(attacker, playerId)
@@ -2069,17 +2080,6 @@ public class CombatAttackService {
                 continue;
             }
             if (!conditionEvaluationService.eventConditionMet(gameData, options, attackTriggerContext)) {
-                continue;
-            }
-            if (exertsAsItAttacks(ability)) {
-                // "You may exert this creature as it attacks" is an optional cost to attack (CR 701.43d), not an
-                // ability on the stack: the answer carries the exertion out at once.
-                if (conditionEvaluationService.triggerConditionsMet(gameData, options, attackTriggerContext)) {
-                    gameData.queueMayAbilityForPlayer(attacker.getCard(), playerId,
-                            (MayEffect) ability.effects().getFirst().effect(), null, attacker.getId(), playerId,
-                            new Permanent(attacker));
-                    logSelfAttackTrigger(gameData, attacker);
-                }
                 continue;
             }
             boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
@@ -2110,13 +2110,6 @@ public class CombatAttackService {
             throw new IllegalStateException("The collector of " + watched + " reads no filter, limit or "
                     + "multiplicity: " + ability);
         }
-    }
-
-    /** Whether {@code ability} is "you may exert this creature as it attacks" (CR 701.43d), its one effect. */
-    private static boolean exertsAsItAttacks(TriggeredAbility ability) {
-        return ability.effects().size() == 1 && ability.options().interveningIf() == null
-                && ability.effects().getFirst().effect() instanceof MayEffect may
-                && may.targetSpec().declaredTarget() == null && may.exertsAsItAttacks();
     }
 
     private void logSelfAttackTrigger(GameData gameData, Permanent attacker) {
@@ -2537,8 +2530,7 @@ public class CombatAttackService {
         for (DelayedAttackerBoost boost : gameData.getDelayedActions(DelayedAttackerBoost.class)) {
             for (int idx : attackerIndices) {
                 Permanent attacker = battlefield.get(idx);
-                StackEntry se = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry se = TriggeredAbilityStackService.madeAbility(
                         boost.sourceCard(),
                         boost.controllerId(),
                         boost.sourceCard().getName() + "'s delayed trigger",
@@ -2546,7 +2538,7 @@ public class CombatAttackService {
                         attacker.getId(),
                         attacker.getId());
                 se.setNonTargeting(true);
-                gameData.stack.add(se);
+                triggeredAbilityStackService.putDelayed(gameData, se);
                 gameLogService.append(gameData, GameLog.cardTextCard(
                         boost.sourceCard(), " — ", attacker.getCard(),
                         " gets +" + boost.power() + "/+" + boost.toughness() + " until end of turn."));
@@ -2575,8 +2567,7 @@ public class CombatAttackService {
                     continue;
                 }
 
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                         watch.sourceCard(),
                         watch.controllerId(),
                         watch.sourceCard().getName() + "'s delayed trigger",
@@ -2584,7 +2575,7 @@ public class CombatAttackService {
                         (UUID) null,
                         attacker.getId());
                 trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
+                triggeredAbilityStackService.putDelayed(gameData, trigger);
                 gameLogService.append(gameData,
                         GameLog.builder().card(watch.sourceCard()).text("'s ability triggers.").build());
             }
@@ -2605,8 +2596,7 @@ public class CombatAttackService {
                 : gameData.getDelayedActions(DelayedAttackerKeywordGrant.class)) {
             for (int idx : attackerIndices) {
                 Permanent attacker = battlefield.get(idx);
-                StackEntry se = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry se = TriggeredAbilityStackService.madeAbility(
                         grant.sourceCard(),
                         grant.controllerId(),
                         grant.sourceCard().getName() + "'s delayed trigger",
@@ -2616,7 +2606,7 @@ public class CombatAttackService {
                         attacker.getId(),
                         (UUID) null);
                 se.setNonTargeting(true);
-                gameData.stack.add(se);
+                triggeredAbilityStackService.putDelayed(gameData, se);
                 gameLogService.append(gameData, GameLog.cardTextCard(
                         grant.sourceCard(), " — ", attacker.getCard(),
                         " gains " + grant.keywords() + " until end of turn."));
@@ -2637,14 +2627,13 @@ public class CombatAttackService {
 
         for (DelayedNontokenAttackTokenCreation action
                 : gameData.getDelayedActions(DelayedNontokenAttackTokenCreation.class)) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(
                     action.sourceCard(),
                     action.controllerId(),
                     action.sourceCard().getName() + "'s delayed trigger",
                     List.of(new CreateTokensAttackingEffect(nontokenAttackers, action.tokenEffect())));
             entry.setNonTargeting(true);
-            gameData.stack.add(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed ability triggers."));
             log.info("Game {} - {} delayed token creation trigger fires for {} nontoken attacker(s)",
                     gameData.id, action.sourceCard().getName(), nontokenAttackers);
@@ -2661,15 +2650,14 @@ public class CombatAttackService {
         if (matchingActions.isEmpty()) return;
 
         for (DelayedAttackUntap action : matchingActions) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(
                     action.sourceCard(),
                     action.controllerId(),
                     action.sourceCard().getName() + "'s delayed trigger",
                     List.of(new UntapPermanentsEffect(TapUntapScope.CONTROLLED,
                             new PermanentIsCreaturePredicate())));
             entry.setNonTargeting(true);
-            gameData.stack.add(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed ability triggers."));
             log.info("Game {} - {} delayed attack untap trigger fires", gameData.id, action.sourceCard().getName());
         }
@@ -2703,15 +2691,14 @@ public class CombatAttackService {
     }
 
     private void addDelayedAttackTokenCreationTrigger(GameData gameData, DelayedAttackTokenCreation action) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
+        StackEntry entry = TriggeredAbilityStackService.madeAbility(
                 action.sourceCard(),
                 action.controllerId(),
                 action.sourceCard().getName() + "'s delayed trigger",
                 List.of(new CreateTokensAttackingEffect(
                         action.amount(), action.tokenEffect(), action.sacrificeAtEndStep())));
         entry.setNonTargeting(true);
-        gameData.stack.add(entry);
+        triggeredAbilityStackService.putDelayed(gameData, entry);
         gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed ability triggers."));
         log.info("Game {} - {} delayed attack token creation trigger fires",
                 gameData.id, action.sourceCard().getName());
@@ -2731,8 +2718,7 @@ public class CombatAttackService {
                 continue;
             }
 
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(
                     action.sourceCard(),
                     action.controllerId(),
                     action.sourceCard().getName() + "'s delayed trigger",
@@ -2741,7 +2727,7 @@ public class CombatAttackService {
                     action.targetPermanentId(),
                     action.sourcePermanentId());
             entry.setNonTargeting(true);
-            gameData.stack.add(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed ability triggers."));
             log.info("Game {} - {} delayed attack damage trigger fires", gameData.id,
                     action.sourceCard().getName());

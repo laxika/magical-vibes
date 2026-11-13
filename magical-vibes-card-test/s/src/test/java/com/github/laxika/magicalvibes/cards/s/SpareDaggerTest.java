@@ -43,7 +43,7 @@ class SpareDaggerTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.MayAbilityTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
         resolveCombat();
@@ -210,7 +210,7 @@ class SpareDaggerTest extends BaseCardTest {
             if (gd.interaction.activeInteraction() instanceof PendingInteraction.MayAbilityChoice) {
                 harness.handleMayAbilityChosen(player1, true);
             } else if (gd.interaction.permanentChoiceContext()
-                    instanceof PermanentChoiceContext.MayAbilityTriggerTarget) {
+                    instanceof PermanentChoiceContext.AttackTriggerTarget) {
                 harness.handlePermanentChosen(player1, player2.getId());
             } else {
                 harness.passBothPriorities();

@@ -1,29 +1,23 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
-import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenCastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsSourceCountersPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.IntStream;
 
 /** Resolves Wishing Well's counter placement and reflexive graveyard-cast trigger. */
 @Component
@@ -32,8 +26,8 @@ public class PutCounterOnSelfThenCastTargetInstantOrSorceryFromGraveyardEffectHa
         implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final PermanentCounterSupport permanentCounterSupport;
-    private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -77,42 +71,11 @@ public class PutCounterOnSelfThenCastTargetInstantOrSorceryFromGraveyardEffectHa
                 true,
                 e.exileInsteadOfGraveyard(),
                 new CardManaValueEqualsSourceCountersPredicate(e.counterType()));
-        // The ability records what the resolving entry was about, and its source with the counter just put on it,
-        // whether its one legal card is targeted or a card is chosen.
+        // "When you do" is an ability of its own (CR 603.12): its graveyard target is chosen as it goes on the stack.
+        // It records what the resolving entry was about, and its source with the counter just put on it.
         StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(castEffect),
                 entry.getCard().getName() + "'s ability");
         record.setSourcePermanentSnapshot(new Permanent(source));
-        ReflexiveAbilitySupport.route(gameData, record, () -> {
-            if (matchingCards.size() == 1) {
-                putReflexiveTriggerOnStack(gameData, entry, castEffect, matchingCards.getFirst().getId());
-                return;
-            }
-            List<Integer> validIndices = IntStream.range(0, matchingCards.size()).boxed().toList();
-            interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
-                    .builder(controllerId, validIndices, GraveyardChoiceDestination.MAY_ABILITY_TARGET,
-                            "Choose an instant or sorcery card with mana value " + requiredManaValue
-                                    + " from your graveyard to target.")
-                    .cardPool(new ArrayList<>(matchingCards))
-                    .mayAbilityContext(entry.getCard(), controllerId, List.of(castEffect), sourcePermanentId)
-                    .build());
-        });
-    }
-
-    private void putReflexiveTriggerOnStack(GameData gameData, StackEntry entry, CardEffect castEffect,
-                                             UUID targetCardId) {
-        StackEntry reflexiveTrigger = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                entry.getCard(),
-                entry.getControllerId(),
-                entry.getCard().getName() + "'s ability",
-                List.of(castEffect),
-                0,
-                targetCardId,
-                entry.getSourcePermanentId(),
-                null,
-                Zone.GRAVEYARD,
-                null,
-                null);
-        gameData.stack.add(reflexiveTrigger);
+        triggeredAbilityStackService.putMade(gameData, record);
     }
 }

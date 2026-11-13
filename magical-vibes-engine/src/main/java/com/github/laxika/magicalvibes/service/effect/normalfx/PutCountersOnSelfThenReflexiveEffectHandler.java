@@ -69,7 +69,6 @@ public class PutCountersOnSelfThenReflexiveEffectHandler implements NormalEffect
             throw new IllegalStateException("PutCountersOnSelfThenReflexiveEffect is not part of the resolving entry");
         }
         entry.insertEffectsToResolve(effectIndex + 1,
-                List.of(new QueueReflexiveAbilityEffect(reflexiveEffect,
-                        counterThen.reflexiveOptionalTarget())));
+                List.of(QueueReflexiveAbilityEffect.of(reflexiveEffect, counterThen.reflexiveOptionalTarget())));
     }
 }

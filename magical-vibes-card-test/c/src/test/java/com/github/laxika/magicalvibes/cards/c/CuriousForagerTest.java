@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
@@ -29,7 +30,7 @@ class CuriousForagerTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, food.getId());
-        harness.handleGraveyardCardChosen(player1, 0);
+        chooseGraveyardTargetNamed("Grizzly Bears");
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Grizzly Bears");
@@ -49,6 +50,7 @@ class CuriousForagerTest extends BaseCardTest {
         harness.handleGraveyardCardChosen(player1, 1);
         harness.handleGraveyardCardChosen(player1, 1);
         harness.handleGraveyardCardChosen(player1, 1);
+        chooseOnlyGraveyardTarget();
         harness.passBothPriorities();
 
         harness.assertInHand(player1, "Grizzly Bears");
@@ -118,10 +120,13 @@ class CuriousForagerTest extends BaseCardTest {
         castForager();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.withAutoStop(gd.currentStep, () -> harness.handlePermanentChosen(player1, food.getId()));
+        harness.withAutoStop(gd.currentStep, () -> {
+            harness.handlePermanentChosen(player1, food.getId());
+            chooseOnlyGraveyardTarget();
+        });
 
         assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getTargetId()).isEqualTo(forest.getId());
+        assertThat(gd.stack.getLast().getTargetCardIds()).containsExactly(forest.getId());
         harness.assertInGraveyard(player1, "Forest");
         harness.passBothPriorities();
 
@@ -150,5 +155,23 @@ class CuriousForagerTest extends BaseCardTest {
         Permanent permanent = harness.addToBattlefieldAndReturn(player1, food);
         permanent.setSummoningSick(false);
         return permanent;
+    }
+
+    /** The reflexive ability's one legal graveyard target, chosen as it goes on the stack (CR 603.3d). */
+    private void chooseOnlyGraveyardTarget() {
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.cards()).hasSize(1);
+        harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
+    }
+
+    /** The reflexive ability's graveyard target named {@code name}, chosen as it goes on the stack (CR 603.3d). */
+    private void chooseGraveyardTargetNamed(String name) {
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of(choice.cards().stream()
+                .filter(card -> card.getName().equals(name)).findFirst().orElseThrow().getId()));
     }
 }

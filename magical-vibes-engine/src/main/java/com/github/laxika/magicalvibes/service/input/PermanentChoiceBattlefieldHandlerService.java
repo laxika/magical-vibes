@@ -51,14 +51,12 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AuraCopyService;
 import com.github.laxika.magicalvibes.service.effect.turnup.TurnFaceUpCopyService;
-import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.trigger.ActionAbilityReader;
@@ -139,7 +137,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentCrea
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 
-import com.github.laxika.magicalvibes.service.effect.ReflexiveModalChoiceService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -172,7 +170,6 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler sacrificedEquipmentSupport;
 
     private final InputCompletionService inputCompletionService;
-    private final ReflexiveModalChoiceService reflexiveModalChoiceService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.VillainousChoiceSupport villainousChoiceSupport;
     private final ExquisiteArchangelLossReplacer exquisiteArchangelLossReplacer;
     private final GameQueryService gameQueryService;
@@ -206,8 +203,6 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final StateBasedActionService stateBasedActionService;
     private final TriggerCollectionService triggerCollectionService;
     private final TriggerTargetCollector triggerTargetCollector;
-    private final TargetPredicateEvaluationService targetPredicateEvaluationService;
-    private final com.github.laxika.magicalvibes.service.target.ValidTargetService validTargetService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final CreatureControlService creatureControlService;
     private final PopulateSupport populateSupport;
@@ -1725,51 +1720,16 @@ public class PermanentChoiceBattlefieldHandlerService {
                 boolean needsTarget = targetSpec.admits(TargetPredicate.Kind.PERMANENT)
                         || targetSpec.admits(TargetPredicate.Kind.PLAYER);
                 if (needsTarget) {
-                    List<UUID> validPermanentTargets = new ArrayList<>();
-                    if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
-                        TargetPredicate declared = targetSpec.targetPredicate();
-                        FilterContext filterContext = new FilterContext(
-                                gameData, context.sourceCard().getId(), context.controllerId(), null, null);
-                        for (UUID playerId : gameData.orderedPlayerIds) {
-                            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                            if (battlefield == null) {
-                                continue;
-                            }
-                            for (Permanent permanent : battlefield) {
-                                if (targetPredicateEvaluationService.matchesPermanent(
-                                        declared, permanent, filterContext)) {
-                                    validPermanentTargets.add(permanent.getId());
-                                }
-                            }
-                        }
-                    }
-                    List<UUID> validPlayerTargets = targetSpec.admits(TargetPredicate.Kind.PLAYER)
-                            ? new ArrayList<>(gameData.orderedPlayerIds)
-                            : List.of();
-                    if (validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty()) {
-                        gameLogService.append(gameData,
-                                GameLog.cardThen(context.sourceCard(), "'s ability has no valid targets."));
-                    } else {
-                        // The targeted follow-up is an ability of its own: the entry its target is chosen for
-                        // records what the resolving entry was about.
-                        ReflexiveAbilitySupport.route(gameData, bounceFollowUpRecord(gameData, context, thenEffects),
-                                () -> {
-                                    gameData.interaction.setPermanentChoiceContext(
-                                            new PermanentChoiceContext.MayAbilityTriggerTarget(
-                                                    context.sourceCard(), context.controllerId(), thenEffects));
-                                    playerInputService.beginAnyTargetChoice(gameData, context.controllerId(),
-                                            validPermanentTargets, validPlayerTargets,
-                                            context.sourceCard().getName() + " — Choose any target.");
-                                });
-                        return;
-                    }
+                    // The targeted follow-up is an ability of its own (CR 603.12): it records what the resolving
+                    // entry was about, and the stack door chooses its target as it goes on the stack (CR 603.3d).
+                    triggeredAbilityStackService.putMade(gameData, bounceFollowUpRecord(gameData, context, thenEffects));
                 } else if (gameData.pendingEffectResolutionEntry != null) {
                     // "If you do, …" is part of the same resolution, not a new ability; a "when you do"
                     // payoff wraps itself in QueueReflexiveAbilityEffect to reach the stack (CR 603.12).
                     gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
                             gameData.pendingEffectResolutionIndex, thenEffects);
                 } else {
-                    gameData.stack.add(bounceFollowUpRecord(gameData, context, thenEffects));
+                    triggeredAbilityStackService.putMade(gameData, bounceFollowUpRecord(gameData, context, thenEffects));
                 }
             }
         }
@@ -2667,59 +2627,20 @@ public class PermanentChoiceBattlefieldHandlerService {
         CardEffect damageEffect = targetRestriction == null
                 ? new DealDamageToAnyTargetEffect(damage)
                 : new DealDamageToTargetCreatureEffect(damage, false, targetRestriction);
-        TargetSpec targetSpec = damageEffect.targetSpec();
         List<CardEffect> reflexiveEffects = new ArrayList<>();
         reflexiveEffects.add(damageEffect);
         reflexiveEffects.addAll(reflexiveFollowUps);
-        TargetPredicate targetPredicate = damageEffect.targetSpec().targetPredicate();
-        FilterContext filterContext = new FilterContext(
-                gameData, sourceCard.getId(), controllerId, null, null);
-        List<UUID> validPermanentTargets = new ArrayList<>();
-        if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-                if (battlefield == null) {
-                    continue;
-                }
-                for (Permanent permanent : battlefield) {
-                    if (targetPredicateEvaluationService.matchesPermanent(
-                            targetPredicate, permanent, filterContext)) {
-                        validPermanentTargets.add(permanent.getId());
-                    }
-                }
-            }
-        }
-
-        List<UUID> validPlayerTargets = targetSpec.admits(TargetPredicate.Kind.PLAYER)
-                ? new ArrayList<>(gameData.orderedPlayerIds)
-                : List.of();
-        if (validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty()) {
-            gameLogService.append(gameData,
-                    GameLog.cardThen(sourceCard, "'s reflexive trigger has no valid targets."));
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        // "When you do" is an ability of its own (CR 603.12): the entry its target is chosen for records what the
-        // resolving entry was about.
+        // "When you do" is an ability of its own (CR 603.12): it records what the resolving entry was about and the
+        // creature sacrificed, and the stack door chooses its target as it goes on the stack (CR 603.3d); with no
+        // legal target it is removed.
         StackEntry record = ReflexiveAbilitySupport.recordFor(gameData,
                 ReflexiveAbilitySupport.resolvingEntryOf(gameData, sourceCard, sourcePermanentId),
                 sourceCard, controllerId, reflexiveEffects, sourceCard.getName() + "'s reflexive ability",
                 sourcePermanentId);
         record.setSacrificedPermanentSnapshot(sacrificed);
         record.setSacrificedPower(power);
-        ReflexiveAbilitySupport.route(gameData, record, () -> {
-            gameData.interaction.setPermanentChoiceContext(
-                    new PermanentChoiceContext.MayAbilityTriggerTarget(
-                            sourceCard, controllerId, reflexiveEffects, sourcePermanentId, null));
-            playerInputService.beginAnyTargetChoice(
-                    gameData, controllerId, validPermanentTargets,
-                    validPlayerTargets,
-                    sourceCard.getName() + " — Choose "
-                            + (targetRestriction == null ? "any target" : "target creature") + ".");
-        });
-        gameLogService.append(gameData,
-                GameLog.cardThen(sourceCard, " — choose a target for the reflexive trigger."));
+        triggeredAbilityStackService.putMade(gameData, record);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleSacrificeAnotherCreatureGainLifeAndDraw(GameData gameData, UUID permanentId,
@@ -2899,139 +2820,30 @@ public class PermanentChoiceBattlefieldHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
             return;
         }
-        // "When you do" is an ability of its own. Whichever way it reaches the stack (a mode, a target, a graveyard
-        // card, or nothing to choose) it records what the resolving entry was about and the permanent sacrificed.
-        List<CardEffect> recordEffects = new ArrayList<>(List.of(ctx.thenEffect()));
-        List<UUID> recordTargetCardIds = originalEntry == null || originalEntry.getTargetCardIds() == null
-                ? List.of() : new ArrayList<>(originalEntry.getTargetCardIds());
-        StackEntry record;
-        if (originalEntry != null) {
-            record = ReflexiveAbilitySupport.record(gameData, originalEntry, recordEffects,
-                    ctx.sourceCard().getName() + "'s effect", sourcePermanentId);
-        } else {
-            record = new StackEntry(StackEntryType.TRIGGERED_ABILITY, ctx.sourceCard(), ctx.controllerId(),
-                    ctx.sourceCard().getName() + "'s effect", recordEffects, 0, sourcePermanentId);
+        // "When you do" is an ability of its own (CR 603.12): it records what the resolving entry was about and the
+        // permanent sacrificed, and the stack door announces its mode and chooses its targets as it goes on the stack
+        // (CR 603.3c, 603.3d).
+        List<CardEffect> recordEffects = List.of(ctx.thenEffect());
+        StackEntry record = originalEntry != null
+                ? ReflexiveAbilitySupport.record(gameData, originalEntry, recordEffects,
+                        ctx.sourceCard().getName() + "'s effect", sourcePermanentId)
+                : TriggeredAbilityStackService.madeAbility(ctx.sourceCard(), ctx.controllerId(),
+                        ctx.sourceCard().getName() + "'s effect", recordEffects, 0, sourcePermanentId);
+        if (originalEntry != null && originalEntry.getTargetCardIds() != null
+                && !originalEntry.getTargetCardIds().isEmpty()
+                && ctx.thenEffect().targetSpec().declaredTarget() == null
+                && ctx.sourceCard().getEffectTargetIndex(ctx.thenEffect()) < 0) {
+            // "Those cards": the cards the resolving entry targeted, which an ability that chooses no target of its
+            // own acts on.
+            record.setTargetCardIds(new ArrayList<>(originalEntry.getTargetCardIds()));
         }
-        record.setTargetCardIds(recordTargetCardIds);
         record.setSacrificedPermanentSnapshot(sacrificedSnapshot);
         record.setSacrificedPower(sacrificedPower);
         record.setSacrificedColorCount(sacrificedColorCount);
         record.setSacrificedToughness(sacrificedToughness);
         record.setSourcePermanentSnapshot(sourcePermanentSnapshot);
-        UUID reflexiveSourcePermanentId = sourcePermanentId;
-        boolean chosen = ReflexiveAbilitySupport.route(gameData, record, () -> putSacrificeFollowUpOnStackOrChoose(
-                gameData, ctx, record, reflexiveSourcePermanentId, sourcePermanentSnapshot, sacrificedSnapshot,
-                sacrificedPower, sacrificedColorCount, sacrificedToughness));
-        if (chosen) {
-            return;
-        }
+        triggeredAbilityStackService.putMade(gameData, record);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * Routes a sacrifice's reflexive follow-up. Returns {@code true} when a choice is awaiting input or the caller
-     * has nothing left to do, {@code false} when the caller goes on to the next pending ability.
-     */
-    private boolean putSacrificeFollowUpOnStackOrChoose(
-            GameData gameData, PermanentChoiceContext.SacrificePermanentThen ctx, StackEntry record,
-            UUID sourcePermanentId, Permanent sourcePermanentSnapshot, Permanent sacrificedSnapshot,
-            int sacrificedPower, int sacrificedColorCount, int sacrificedToughness) {
-        if (reflexiveModalChoiceService.beginModeChoice(gameData, record, ctx.thenEffect())) {
-            // A modal reflexive ability ("When you do, choose two —") has its modes and their targets chosen as
-            // it's put on the stack, before anyone gets priority.
-            return true;
-        }
-        {
-            List<CardEffect> thenEffects = new ArrayList<>(List.of(ctx.thenEffect()));
-            int targetGroupIndex = ctx.sourceCard().getEffectTargetIndex(ctx.thenEffect());
-            if (targetGroupIndex >= 0) {
-                List<Integer> precedingGroupSizes = new ArrayList<>();
-                for (int i = 0; i < targetGroupIndex; i++) {
-                    precedingGroupSizes.add(0);
-                }
-                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        ctx.sourceCard(), ctx.controllerId(), thenEffects, sourcePermanentId,
-                        List.of(), targetGroupIndex, 0, precedingGroupSizes, 0, List.of(), false));
-                triggerCollectionService.processNextETBTokenMultiTargetTrigger(gameData);
-                return gameData.interaction.isAwaitingInput();
-            }
-            var targetSpec = ctx.thenEffect().targetSpec();
-            boolean needsGraveyardTarget = targetSpec.admits(TargetPredicate.Kind.GRAVEYARD_CARD);
-            boolean needsTarget = targetSpec.admits(TargetPredicate.Kind.PERMANENT)
-                    || targetSpec.admits(TargetPredicate.Kind.PLAYER);
-            if (needsGraveyardTarget && !needsTarget) {
-                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        ctx.sourceCard(), ctx.controllerId(), thenEffects));
-                triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
-                return gameData.interaction.isAwaitingInput();
-            } else if (needsTarget) {
-                List<UUID> validPermanentTargets = new ArrayList<>();
-                if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
-                    // The rider's own declared target decides which permanents are legal — Sorin's
-                    // is "any target" (CR 115.4), so the restriction is evaluated rather than
-                    // re-implemented here and stays layer-aware (CR 613.1d).
-                    TargetPredicate declared = targetSpec.targetPredicate();
-                    FilterContext filterContext = new FilterContext(
-                            gameData, ctx.sourceCard().getId(), ctx.controllerId(), null,
-                            sourcePermanentSnapshot, sourcePermanentId);
-                    for (UUID pid : gameData.orderedPlayerIds) {
-                        List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
-                        if (battlefield == null) {
-                            continue;
-                        }
-                        for (Permanent p : battlefield) {
-                            if (targetPredicateEvaluationService.matchesPermanent(declared, p, filterContext)
-                                    && !validTargetService.isBlockedByHexproofOrGrantedEffect(
-                                    gameData, p, ctx.controllerId())) {
-                                validPermanentTargets.add(p.getId());
-                            }
-                        }
-                    }
-                }
-                List<UUID> validPlayerTargets = new ArrayList<>();
-                if (targetSpec.admits(TargetPredicate.Kind.PLAYER)) {
-                    TargetPredicate declared = targetSpec.targetPredicate();
-                    boolean opponentOnly = ctx.thenEffect()
-                            instanceof com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect damage
-                            && damage.playerRelation()
-                            == com.github.laxika.magicalvibes.model.filter.PlayerRelation.OPPONENT;
-                    for (UUID playerId : gameData.orderedPlayerIds) {
-                        if (opponentOnly && playerId.equals(ctx.controllerId())) {
-                            continue;
-                        }
-                        if (targetPredicateEvaluationService.matchesPlayer(
-                                declared, playerId, ctx.controllerId(), gameData)) {
-                            validPlayerTargets.add(playerId);
-                        }
-                    }
-                }
-                if (validPermanentTargets.isEmpty() && validPlayerTargets.isEmpty()) {
-                    gameLogService.append(gameData,
-                            GameLog.cardThen(ctx.sourceCard(), "'s ability has no valid targets."));
-                    log.info("Game {} - {} sacrifice-then rider skipped (no valid targets)",
-                            gameData.id, ctx.sourceCard().getName());
-                } else {
-                    gameData.interaction.setPermanentChoiceContext(
-                            new PermanentChoiceContext.MayAbilityTriggerTarget(
-                                    ctx.sourceCard(), ctx.controllerId(), thenEffects,
-                                    sourcePermanentId, sourcePermanentSnapshot,
-                                    sacrificedSnapshot, sacrificedPower, sacrificedColorCount,
-                                    sacrificedToughness));
-                    playerInputService.beginAnyTargetChoice(gameData, ctx.controllerId(),
-                            validPermanentTargets, validPlayerTargets,
-                            ctx.sourceCard().getName() + " — Choose any target.");
-                    gameLogService.append(gameData,
-                            GameLog.cardThen(ctx.sourceCard(),
-                                    " — choose a target for the reflexive trigger."));
-                    log.info("Game {} - {} sacrifice-then rider awaiting any-target",
-                            gameData.id, ctx.sourceCard().getName());
-                    return true;
-                }
-            } else {
-                gameData.stack.add(record);
-            }
-        }
-        return false;
     }
 
     public void handleSacrificePermanentAndReturnTargetCards(

@@ -121,6 +121,9 @@ class TurnCleanupServiceTest {
     @Mock
     private GameQueryService gameQueryService;
 
+    @Mock
+    private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService triggeredAbilityStackService;
+
     @InjectMocks
     private TurnCleanupService sut;
 
@@ -131,6 +134,14 @@ class TurnCleanupServiceTest {
     @BeforeEach
     void setUp() {
         org.springframework.test.util.ReflectionTestUtils.setField(sut, "gameQueryService", gameQueryService);
+        // The stack door puts a delayed ability on the stack (its own routes are TriggeredAbilityStackServiceTest's).
+        org.springframework.test.util.ReflectionTestUtils.setField(sut, "triggeredAbilityStackService",
+                triggeredAbilityStackService);
+        org.mockito.Mockito.lenient().doAnswer(invocation -> {
+            invocation.<GameData>getArgument(0).enqueueTrigger(invocation.getArgument(1));
+            return null;
+        }).when(triggeredAbilityStackService).putDelayed(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any());
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

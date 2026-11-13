@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.cards.w.WyllPactBoundDuelist;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeWyllEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -20,9 +20,12 @@ import java.util.List;
 public class SpecializeWyllEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
-    public SpecializeWyllEffectHandler(GameQueryService gameQueryService) {
+    public SpecializeWyllEffectHandler(GameQueryService gameQueryService,
+                                       TriggeredAbilityStackService triggeredAbilityStackService) {
         this.gameQueryService = gameQueryService;
+        this.triggeredAbilityStackService = triggeredAbilityStackService;
     }
 
     @Override
@@ -52,17 +55,15 @@ public class SpecializeWyllEffectHandler implements NormalEffectHandlerBean {
         }
         source.exchangeCard(specialized);
 
-        StackEntry trigger = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                specialized,
-                entry.getControllerId(),
-                specialized.getName() + "'s ability",
-                List.of(WyllPactBoundDuelist.specializedTrigger(color)),
-                0,
+        // "When this creature specializes" is an ability of the specialized face (CR 603.2), put on the stack by the
+        // stack door, which chooses its targets as it goes there (CR 603.3d).
+        StackEntry trigger = TriggeredAbilityStackService.madeAbility(specialized, entry.getControllerId(),
+                specialized.getName() + "'s ability", List.of(WyllPactBoundDuelist.specializedTrigger(color)), 0,
                 source.getId());
-        trigger.setTargetFilter(targetFilter);
-        trigger.setNonTargeting(targetFilter == null);
-        gameData.enqueueTrigger(trigger);
+        if (targetFilter != null) {
+            trigger.setTargetFilter(targetFilter);
+        }
+        triggeredAbilityStackService.putMade(gameData, trigger);
     }
 
     private void setFaceCharacteristics(Card card, CardColor color) {

@@ -321,6 +321,40 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy gives each player's pending spell-copy abilities a list of its own")
+    void deepCopyGivesPendingSpellCopiesTheirOwnList() {
+        gd.addPendingSpellCopy(player1.getId(), new GameData.PendingSpellCopy(new SerraAngel(), null, 1, null,
+                List.of(2), 7L, null));
+
+        GameData copy = gd.simulationCopy();
+        copy.pendingNextInstantSorceryCopies.get(player1.getId()).clear();
+
+        assertThat(gd.pendingNextInstantSorceryCopies.get(player1.getId())).singleElement()
+                .satisfies(pending -> assertThat(pending.maxManaValues()).containsExactly(2));
+    }
+
+    @Test
+    @DisplayName("Deep copy keeps a parked record's mark of an ability a resolution made")
+    void deepCopyKeepsMadeByResolutionMark() {
+        StackEntry record = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY, new SerraAngel(), player1.getId(), "Reflexive ability", List.of());
+        record.setParkedAtStackDoor(true);
+        record.setMadeByResolution(true);
+        gd.queueInteraction(new com.github.laxika.magicalvibes.model.PermanentChoiceContext.AttackTriggerTarget(
+                new SerraAngel(), player1.getId(), List.of(), null, player1.getId(), null, null)
+                .withTriggerRecord(record));
+
+        GameData copy = gd.simulationCopy();
+        var copied = (com.github.laxika.magicalvibes.model.PermanentChoiceContext.AttackTriggerTarget)
+                copy.pendingInteractions.getFirst();
+
+        assertThat(copied.triggerRecord()).isNotSameAs(record);
+        assertThat(copied.triggerRecord().isMadeByResolution()).isTrue();
+        copied.triggerRecord().setMadeByResolution(false);
+        assertThat(record.isMadeByResolution()).isTrue();
+    }
+
+    @Test
     @DisplayName("Deep copy gives a queued door choice its own record, with its planar source copied")
     void deepCopyGivesQueuedDoorChoiceItsOwnRecord() {
         StackEntry record = new StackEntry(

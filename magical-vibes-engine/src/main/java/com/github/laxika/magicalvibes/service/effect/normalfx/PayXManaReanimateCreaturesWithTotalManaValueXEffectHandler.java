@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.Card;
@@ -11,7 +12,6 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaReanimateCreaturesWithTotalManaValueXEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
@@ -28,7 +28,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -37,6 +36,7 @@ import java.util.UUID;
 public class PayXManaReanimateCreaturesWithTotalManaValueXEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final GameQueryService gameQueryService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
@@ -104,41 +104,15 @@ public class PayXManaReanimateCreaturesWithTotalManaValueXEffectHandler implemen
 
     private void beginReflexiveTrigger(GameData gameData, StackEntry entry,
                                        UUID controllerId, int x) {
-        UUID damagedPlayerId = entry.getTargetId();
         Card sourceCard = entry.getCard();
         ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect = RETURN_WITHIN_TOTAL_MANA_VALUE_X;
 
-        List<Card> candidates = reanimationCandidates(gameData, entry, controllerId, x);
-        // The ability records what the resolving entry was about, with the X paid as its X, whether it targets no
-        // card or cards are chosen.
+        // "When you do" is an ability of its own (CR 603.12): its graveyard targets are chosen as it goes on the stack,
+        // against the X paid. It records what the resolving entry was about.
         StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(returnEffect),
                 sourceCard.getName() + "'s ability");
         record.setXValue(x);
-        ReflexiveAbilitySupport.route(gameData, record,
-                () -> putOnStackOrChooseCards(gameData, entry, controllerId, x, returnEffect, candidates));
-    }
-
-    private void putOnStackOrChooseCards(GameData gameData, StackEntry entry, UUID controllerId, int x,
-                                         ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect,
-                                         List<Card> candidates) {
-        Card sourceCard = entry.getCard();
-        if (candidates.isEmpty()) {
-            putReflexiveTriggerOnStack(gameData, entry, controllerId, x, returnEffect, List.of());
-            return;
-        }
-
-        gameData.graveyardTargetOperation.card = sourceCard;
-        gameData.graveyardTargetOperation.controllerId = controllerId;
-        gameData.graveyardTargetOperation.effects = new ArrayList<>(List.of(returnEffect));
-        gameData.graveyardTargetOperation.xValue = x;
-        gameData.graveyardTargetOperation.anyNumber = true;
-        gameData.graveyardTargetOperation.singleGraveyard = true;
-        gameData.graveyardTargetOperation.sourcePermanentId = entry.getSourcePermanentId();
-
-        String prompt = "Choose any number of target creature cards from that player's graveyard "
-                + "with total mana value " + x + " or less.";
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiGraveyardChoice(
-                controllerId, candidates, candidates.size(), prompt, 0, x));
+        triggeredAbilityStackService.putMade(gameData, record);
     }
 
     /** Creature cards in the damaged player's graveyard with mana value at most {@code x} that can be targeted. */
@@ -157,29 +131,6 @@ public class PayXManaReanimateCreaturesWithTotalManaValueXEffectHandler implemen
             }
         }
         return candidates;
-    }
-
-    private void putReflexiveTriggerOnStack(GameData gameData, StackEntry entry, UUID controllerId,
-                                            int x, ReturnTargetCardsFromGraveyardToBattlefieldEffect effect,
-                                            List<UUID> targetCardIds) {
-        Card sourceCard = entry.getCard();
-        StackEntry triggeredEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                controllerId,
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(effect)),
-                x,
-                null,
-                entry.getSourcePermanentId(),
-                Map.of(),
-                null,
-                new ArrayList<>(targetCardIds),
-                List.of());
-        gameData.stack.add(triggeredEntry);
-        gameLogService.append(gameData, GameLog.text(
-                sourceCard.getName() + "'s ability triggers targeting no cards."));
-        log.info("Game {} - {}'s reflexive reanimate trigger has no targets", gameData.id, sourceCard.getName());
     }
 
     private void beginXPrompt(GameData gameData, UUID controllerId, String cardName) {

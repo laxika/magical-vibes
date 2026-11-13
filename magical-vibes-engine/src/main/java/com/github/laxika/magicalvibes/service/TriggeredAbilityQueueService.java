@@ -872,7 +872,16 @@ public class TriggeredAbilityQueueService {
         if (pending.triggerRecord() != null && pending.triggerRecord().getTargetFilter() != null) {
             return pending.triggerRecord().getTargetFilter();
         }
-        return targetFilterForTriggeredEffects(pending.sourceCard(), pending.effects());
+        List<CardEffect> abilityEffects = pending.effects();
+        if (pending.triggerRecord() != null && pending.triggerRecord().isMadeByResolution()) {
+            // An ability a resolution made is no other ability's: only a group its own effects are bound to is its.
+            Card card = pending.sourceCard();
+            return abilityEffects.stream().mapToInt(card::getEffectTargetIndex)
+                    .filter(index -> index >= 0 && index < card.getTargetGroups().size())
+                    .mapToObj(index -> card.getTargetGroups().get(index).getFilter())
+                    .findFirst().orElse(null);
+        }
+        return targetFilterForTriggeredEffects(pending.sourceCard(), abilityEffects);
     }
 
     public TargetFilter targetFilterForTriggeredEffects(Card sourceCard, List<CardEffect> effects) {
@@ -1102,7 +1111,8 @@ public class TriggeredAbilityQueueService {
                     TriggerTargetCollector.Options.ATTACK,
                     targetingSource,
                     defendingPlayerId(gameData, pending.attackedTargetId()),
-                    pending.xValue(), pending.triggeringPermanentId(), pending.triggeringPlayerId());
+                    pending.xValue(), pending.triggeringPermanentId(), pending.triggeringPlayerId(), null,
+                    pending.eventValue());
             boolean optionalTarget = isOptionalSingleTarget(pending.sourceCard(), pending.effects());
             TargetGroup targetGroup = targetGroupForTriggeredEffects(pending.sourceCard(), pending.effects());
             List<UUID> candidateTargets = new ArrayList<>(result.validTargets());
@@ -3375,7 +3385,9 @@ public class TriggeredAbilityQueueService {
                     : describedTarget.maximumTargetCount() != null
                     ? Math.max(0, amountEvaluationService.evaluate(gameData,
                     describedTarget.maximumTargetCount(),
-                    new AmountContext(pending.controllerId(), null, null, pending.xValue(), 0)))
+                    // "Up to that many" (Loamcrafter Faun): the count the event recorded.
+                    new AmountContext(pending.controllerId(), null, null, pending.xValue(),
+                            eventValue == null ? 0 : eventValue)))
                     : describedTarget.maxTargets();
             if (oneOfEachFilterEffect == null && pending.maxCount() == 0 && declaredGroup != null
                     && (describedTarget == null || describedTarget.maximumTargetCount() == null)) {

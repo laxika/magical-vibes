@@ -940,126 +940,6 @@ public class PermanentChoiceTriggerHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleMayAbilityTrigger(GameData gameData, UUID permanentId, PermanentChoiceContext.MayAbilityTriggerTarget mat) {
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-        boolean isPlayerTarget = gameData.playerIds.contains(permanentId);
-        boolean declined = mat.optionalTarget()
-                && isPlayerTarget
-                && mat.controllerId().equals(permanentId);
-        StackEntry spellOnStack = null;
-        if (!declined && target == null && !isPlayerTarget) {
-            for (StackEntry se : gameData.stack) {
-                if (se.getTargetableId().equals(permanentId)) {
-                    spellOnStack = se;
-                    break;
-                }
-            }
-        }
-
-        if (declined) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    mat.sourceCard(),
-                    mat.controllerId(),
-                    mat.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(mat.effects()));
-            entry.setAttackedTargetId(mat.attackedTargetId());
-            entry.setEventValue(mat.eventValue());
-            entry.setTriggeringPlayerId(mat.triggeringPlayerId());
-            pushTriggeredEntry(gameData, entry);
-            gameLogService.append(gameData, GameLog.builder().card(mat.sourceCard())
-                    .text("'s ability targets nothing.").build());
-        } else if (target != null || isPlayerTarget || spellOnStack != null) {
-            StackEntry entry;
-            if (spellOnStack != null) {
-                entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        mat.sourceCard(),
-                        mat.controllerId(),
-                        mat.sourceCard().getName() + "'s ability",
-                        new ArrayList<>(mat.effects()),
-                        permanentId,
-                        Zone.STACK
-                );
-            } else if (mat.xValue() != 0 && mat.sourcePermanentId() != null) {
-                entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        mat.sourceCard(),
-                        mat.controllerId(),
-                        mat.sourceCard().getName() + "'s ability",
-                        new ArrayList<>(mat.effects()),
-                        mat.xValue(),
-                        mat.sourcePermanentId());
-                entry.setTargetId(permanentId);
-                entry.setSourcePermanentSnapshot(mat.sourcePermanentSnapshot());
-            } else if (mat.xValue() != 0) {
-                entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        mat.sourceCard(),
-                        mat.controllerId(),
-                        mat.sourceCard().getName() + "'s ability",
-                        new ArrayList<>(mat.effects()),
-                        mat.xValue());
-                entry.setTargetId(permanentId);
-            } else if (mat.sourcePermanentId() != null) {
-                entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        mat.sourceCard(),
-                        mat.controllerId(),
-                        mat.sourceCard().getName() + "'s ability",
-                        new ArrayList<>(mat.effects()),
-                        permanentId,
-                        mat.sourcePermanentId());
-                entry.setSourcePermanentSnapshot(mat.sourcePermanentSnapshot());
-            } else {
-                entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        mat.sourceCard(),
-                        mat.controllerId(),
-                        mat.sourceCard().getName() + "'s ability",
-                        new ArrayList<>(mat.effects())
-                );
-                entry.setTargetId(permanentId);
-            }
-            entry.setAttackedTargetId(mat.attackedTargetId());
-            entry.setEventValue(mat.eventValue());
-            // "That player controls" is rechecked as the ability resolves against the player its trigger event was about.
-            entry.setTriggeringPlayerId(mat.triggeringPlayerId());
-            entry.setSacrificedPermanentSnapshot(mat.sacrificedPermanentSnapshot());
-            if (mat.sacrificedPermanentSnapshot() != null) {
-                entry.setSacrificedCardSnapshot(mat.sacrificedPermanentSnapshot().getCard());
-            }
-            entry.setSacrificedPower(mat.sacrificedPower());
-            entry.setSacrificedColorCount(mat.sacrificedColorCount());
-            entry.setSacrificedToughness(mat.sacrificedToughness());
-            pushTriggeredEntry(gameData, entry);
-
-            if (isPlayerTarget) {
-                String playerName = gameData.playerIdToName.get(permanentId);
-                
-                gameLogService.append(gameData, GameLog.builder().card(mat.sourceCard()).text("'s ability targets " + playerName + ".").build());
-                log.info("Game {} - {} may-ability trigger targets player {}", gameData.id, mat.sourceCard().getName(), playerName);
-            } else if (spellOnStack != null) {
-                gameLogService.append(gameData, GameLog.cardTextCard(mat.sourceCard(), "'s ability targets ", spellOnStack.getCard(), "."));
-                log.info("Game {} - {} may-ability trigger targets spell {}", gameData.id, mat.sourceCard().getName(), spellOnStack.getCard().getName());
-            } else {
-                
-                gameLogService.append(gameData, GameLog.cardTextCard(mat.sourceCard(), "'s ability targets ", target.getCard(), "."));
-                log.info("Game {} - {} may-ability trigger targets {}", gameData.id, mat.sourceCard().getName(), target.getCard().getName());
-            }
-        } else {
-            gameLogService.append(gameData, GameLog.cardThen(mat.sourceCard(), "'s ability has no valid target."));
-            log.info("Game {} - {} may-ability trigger target no longer exists", gameData.id, mat.sourceCard().getName());
-        }
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handleRandomOpponentDamageChoice(GameData gameData, UUID permanentId,
                                                   PermanentChoiceContext.RandomOpponentDamageChoice choice) {
         StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
@@ -1253,6 +1133,8 @@ public class PermanentChoiceTriggerHandlerService {
         boolean player = target == null && gameData.playerIdToName.containsKey(chosenId);
         boolean graveyardCard = target == null && !exiledCard && !player
                 && gameQueryService.findCardInGraveyardById(gameData, chosenId) != null;
+        boolean spell = target == null && !exiledCard && !player && !graveyardCard
+                && gameData.stack.stream().anyMatch(stacked -> chosenId.equals(stacked.getTargetableId()));
         boolean declined = player && chosenId.equals(att.controllerId())
                 && triggerCollectionService.isOptionalSingleTarget(att.sourceCard(), att.effects());
         if (declined) {
@@ -1264,17 +1146,20 @@ public class PermanentChoiceTriggerHandlerService {
             gameLogService.append(gameData, GameLog.cardThen(att.sourceCard(), "'s ability targets nothing."));
             return;
         }
-        if (target == null && !player && !exiledCard && !graveyardCard) {
+        if (target == null && !player && !exiledCard && !graveyardCard && !spell) {
             gameLogService.append(gameData, GameLog.cardThen(att.sourceCard(), "'s ability has no valid target."));
             return;
         }
-        TargetFilter targetFilter = exiledCard || graveyardCard ? null : triggerCollectionService.targetFilterOf(att);
+        TargetFilter targetFilter = exiledCard || graveyardCard || spell ? null
+                : triggerCollectionService.targetFilterOf(att);
         triggeredAbilityStackService.finishParked(gameData, att.triggerRecord(), entry -> {
             entry.replaceEffectsToResolve(att.effects());
             entry.setTargetId(chosenId);
             entry.setNonTargeting(false);
             if (exiledCard || graveyardCard) {
                 entry.setTargetZone(graveyardCard ? Zone.GRAVEYARD : Zone.EXILE);
+            } else if (spell) {
+                entry.setTargetZone(Zone.STACK);
             } else if (targetFilter != null) {
                 entry.setTargetFilter(targetFilter);
             }

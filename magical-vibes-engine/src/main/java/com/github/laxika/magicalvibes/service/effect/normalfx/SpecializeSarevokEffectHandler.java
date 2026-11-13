@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.cards.s.SarevokTheUsurper;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeSarevokEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,6 +25,7 @@ import java.util.Set;
 public class SpecializeSarevokEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -61,16 +62,11 @@ public class SpecializeSarevokEffectHandler implements NormalEffectHandlerBean {
 
     private void enqueueSpecializationTrigger(GameData gameData, StackEntry sourceEntry,
                                                Card sourceCard, CardEffect effect) {
-        StackEntry trigger = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                sourceEntry.getControllerId(),
-                sourceCard.getName() + "'s ability",
-                List.of(effect),
-                0,
-                sourceEntry.getSourcePermanentId());
-        trigger.setNonTargeting(true);
-        gameData.enqueueTrigger(trigger);
+        // "When this creature specializes" is an ability of the specialized face (CR 603.2), put on the stack by the
+        // stack door, which chooses its targets as it goes there (CR 603.3d).
+        triggeredAbilityStackService.putMade(gameData, TriggeredAbilityStackService.madeAbility(sourceCard,
+                sourceEntry.getControllerId(), sourceCard.getName() + "'s ability", List.of(effect), 0,
+                sourceEntry.getSourcePermanentId()));
     }
 
     private void setFaceCharacteristics(Card card, CardColor color) {

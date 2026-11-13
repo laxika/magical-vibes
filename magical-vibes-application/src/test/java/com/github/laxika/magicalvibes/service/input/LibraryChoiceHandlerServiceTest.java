@@ -209,6 +209,8 @@ class LibraryChoiceHandlerServiceTest {
 
     @Test
     void simultaneousSelectionPassesEnteredPermanentsToFollowUp() {
+        var stackDoor = mock(com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService.class);
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "triggeredAbilityStackService", stackDoor);
         Card equipment = createCard("Equipment", CardType.ARTIFACT);
         List<UUID> ids = List.of(equipment.getId());
         gd.pendingEffectResolutionEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
@@ -223,11 +225,13 @@ class LibraryChoiceHandlerServiceTest {
         ArgumentCaptor<Permanent> entered = ArgumentCaptor.forClass(Permanent.class);
         verify(battlefieldEntryService).putPermanentOntoBattlefield(
                 eq(gd), eq(player1Id), entered.capture(), any(Set.class), any(List.class), isNull());
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(new MayEffect(
+        // The optional follow-up is a reflexive ability, handed to the stack door with the entered permanents.
+        ArgumentCaptor<StackEntry> followUp = ArgumentCaptor.forClass(StackEntry.class);
+        verify(stackDoor).putMade(eq(gd), followUp.capture());
+        assertThat(followUp.getValue().getEffectsToResolve()).containsExactly(new MayEffect(
                 new AttachOneOfEquipmentToSamuraiEffect(),
                 "Attach one of those Equipment to a Samurai you control?"));
-        assertThat(gd.stack.getFirst().getResolutionResults().pickedIds())
+        assertThat(followUp.getValue().getResolutionResults().pickedIds())
                 .containsExactly(entered.getValue().getId());
     }
 

@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnedPermanentReturnsTargetPermanentCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class ReturnedPermanentReturnsTargetPermanentCardFromGraveyardEffectHandler
         implements NormalEffectHandlerBean {
 
-    private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final GameQueryService gameQueryService;
 
     @Override
@@ -59,17 +59,12 @@ public class ReturnedPermanentReturnsTargetPermanentCardFromGraveyardEffectHandl
                 .upTo(true)
                 .build();
 
-        StackEntry reflexiveContext = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                entry.getCard(),
-                entry.getControllerId(),
-                entry.getCard().getName() + "'s reflexive ability",
-                List.of(),
-                0,
-                returnedPermanent.getId());
-        reflexiveContext.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
-        queueReflexiveAbilityEffectHandler.resolve(gameData, reflexiveContext,
-                new QueueReflexiveAbilityEffect(returnEffect));
+        // The returned permanent is the reflexive ability's source permanent (CR 603.12); its graveyard target is
+        // chosen as it goes on the stack.
+        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(returnEffect),
+                entry.getCard().getName() + "'s reflexive ability", returnedPermanent.getId());
+        record.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+        triggeredAbilityStackService.putMade(gameData, record);
     }
 
     private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {

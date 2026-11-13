@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -15,9 +17,15 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *
  * @param counterType the kind of counter moved
  * @param amount      the number of counters to move, evaluated as the effect resolves
+ * @param anotherTarget whether the target is "another target creature", never the source itself
  */
-public record MoveCounterFromSourceToTargetCreatureEffect(CounterType counterType, DynamicAmount amount)
+public record MoveCounterFromSourceToTargetCreatureEffect(CounterType counterType, DynamicAmount amount,
+                                                          boolean anotherTarget)
         implements CardEffect {
+
+    public MoveCounterFromSourceToTargetCreatureEffect(CounterType counterType, DynamicAmount amount) {
+        this(counterType, amount, false);
+    }
 
     public MoveCounterFromSourceToTargetCreatureEffect(CounterType counterType) {
         this(counterType, new Fixed(1));
@@ -27,8 +35,17 @@ public record MoveCounterFromSourceToTargetCreatureEffect(CounterType counterTyp
         this(counterType, new Fixed(amount));
     }
 
+    /** "Move [amount] counters from this creature onto another target creature" (Tester of the Tangential). */
+    public static MoveCounterFromSourceToTargetCreatureEffect ontoAnotherCreature(CounterType counterType,
+                                                                                 DynamicAmount amount) {
+        return new MoveCounterFromSourceToTargetCreatureEffect(counterType, amount, true);
+    }
+
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.creature());
+        return anotherTarget
+                ? TargetSpec.benign(TargetPredicates.creature(),
+                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))
+                : TargetSpec.benign(TargetPredicates.creature());
     }
 }

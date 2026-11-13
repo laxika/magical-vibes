@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.UUID;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,7 +21,7 @@ import java.util.List;
 public class RemoveCounterAndSacrificeSelfOnLastEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final PermanentCounterSupport permanentCounterSupport;
 
     @Override
@@ -51,13 +50,9 @@ public class RemoveCounterAndSacrificeSelfOnLastEffectHandler implements NormalE
             return;
         }
 
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                entry.getCard(),
-                entry.getControllerId(),
-                entry.getCard().getName() + "'s ability",
-                List.of(new SacrificeSelfEffect()),
-                null,
-                source.getId()));
+        // "When the last is removed this way, sacrifice it" (CR 603.12).
+        triggeredAbilityStackService.putMade(gameData, TriggeredAbilityStackService.madeAbility(entry.getCard(),
+                entry.getControllerId(), entry.getCard().getName() + "'s ability", List.of(new SacrificeSelfEffect()),
+                (UUID) null, source.getId()));
     }
 }

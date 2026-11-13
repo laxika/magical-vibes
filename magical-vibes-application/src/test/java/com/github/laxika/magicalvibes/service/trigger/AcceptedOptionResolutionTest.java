@@ -11,12 +11,10 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentOfTriggeringPlayerMayDrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetArtifactCreatureThenMaySearchLibraryForNoncreatureArtifactEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -128,9 +126,8 @@ class AcceptedOptionResolutionTest extends BaseCardTest {
     @DisplayName("\"You may exert this creature as it attacks\" is asked as attackers are declared, not from the stack")
     void exertIsChosenAsTheCreatureAttacks() {
         Card champion = creature("Fixture Champion");
-        champion.addTrigger(Triggers.attacks(), new MayEffect(SequenceEffect.of(
-                SkipNextUntapEffect.exert(),
-                new QueueReflexiveAbilityEffect(new GainLifeEffect(3))), "Exert Fixture Champion?"));
+        champion.addStaticEffect(new ExertAsItAttacksEffect());
+        champion.addTrigger(Triggers.exertedAsItAttacks(), new GainLifeEffect(3));
         Permanent attacker = addCreatureReady(player1, champion);
 
         declareAttackers(player1, List.of(0));

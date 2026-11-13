@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
@@ -32,6 +32,7 @@ public class CemeteryDesecratorEffectHandler implements NormalEffectHandlerBean 
     private static final String DEBUFF_MODE =
             "Target creature an opponent controls gets -X/-X until end of turn";
 
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final GameLogService gameLogService;
     private final GraveyardReturnSupport graveyardReturnSupport;
     private final PlayerInputService playerInputService;
@@ -121,12 +122,11 @@ public class CemeteryDesecratorEffectHandler implements NormalEffectHandlerBean 
         gameLogService.append(gameData,
                 GameLog.textCardText(entry.getCard().getName() + " exiles ", chosen,
                         " from a graveyard."));
-        // "When you do" is an ability of its own: whichever mode it has, it records what the resolving entry was about.
+        // "When you do" is an ability of its own (CR 603.12): its mode is announced and its target chosen at the stack
+        // door (CR 603.3c, 603.3d), and it records what the resolving entry was about.
         // "X is the mana value of the exiled card" is the record's event value, which both modes read.
         StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(MODAL));
         record.setEventValue(chosen.getManaValue());
-        ReflexiveAbilitySupport.route(gameData, record,
-                () -> gameData.queueInteraction(new PermanentChoiceContext.TriggeredModalTrigger(
-                        entry.getCard(), entry.getControllerId(), MODAL, entry.getSourcePermanentId())));
+        triggeredAbilityStackService.putMade(gameData, record);
     }
 }

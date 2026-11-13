@@ -1093,20 +1093,20 @@ class RunedTerrorTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 2);
         harness.addMana(player2, ManaColor.COLORLESS, 2);
         harness.castAndResolveInstant(player2, 0);
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).containsEntry(player2.getId(), 2);
+        assertThat(gd.pendingSpellCopyCount(player2.getId())).isEqualTo(2);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).containsEntry(player2.getId(), 2);
+        assertThat(gd.pendingSpellCopyCount(player2.getId())).isEqualTo(2);
         assertThat(gd.pendingNextLoyaltyAbilityCopyThisTurnCount).containsEntry(player2.getId(), 2);
         assertThat(gd.pendingNextLoyaltyAbilityCopySourcesThisTurn.get(player2.getId())).hasSize(2)
                 .allMatch(source -> source.card() instanceof RepeatedReverberation);
-        assertThat(gd.pendingNextSpellOrLoyaltyCopyLinkedThisTurn).containsExactly(player2.getId());
+        assertThat(gd.pendingNextLoyaltyAbilityCopySourcesThisTurn.get(player2.getId()))
+                .allMatch(source -> source.link() != null);
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).isEmpty();
+        assertThat(gd.pendingNextInstantSorceryCopies.values()).allMatch(java.util.List::isEmpty);
         assertThat(gd.pendingNextLoyaltyAbilityCopyThisTurnCount).isEmpty();
         assertThat(gd.pendingNextLoyaltyAbilityCopySourcesThisTurn).isEmpty();
-        assertThat(gd.pendingNextSpellOrLoyaltyCopyLinkedThisTurn).isEmpty();
     }
 
     @Test
@@ -1122,10 +1122,9 @@ class RunedTerrorTest extends BaseCardTest {
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
 
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).isEmpty();
+        assertThat(gd.pendingNextInstantSorceryCopies.values()).allMatch(java.util.List::isEmpty);
         assertThat(gd.pendingNextLoyaltyAbilityCopyThisTurnCount).isEmpty();
         assertThat(gd.pendingNextLoyaltyAbilityCopySourcesThisTurn).isEmpty();
-        assertThat(gd.pendingNextSpellOrLoyaltyCopyLinkedThisTurn).isEmpty();
     }
 
     @Test
@@ -1137,43 +1136,34 @@ class RunedTerrorTest extends BaseCardTest {
         Card secondSource = new Shock();
         Fixed firstDynamic = new Fixed(2);
         Fixed secondDynamic = new Fixed(3);
-        gd.pendingNextInstantSorceryCopyThisTurnCount.merge(player1.getId(), 1, Integer::sum);
-        gd.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount.merge(player1.getId(), 1, Integer::sum);
-        gd.pendingNextInstantSorceryCopyThisTurnCountSource.put(player1.getId(), firstSource);
-        gd.pendingNextInstantSorceryCopyThisTurnMaxManaValues
-                .computeIfAbsent(player1.getId(), id -> new java.util.ArrayList<>()).add(3);
-        gd.pendingNextInstantSorceryCopyThisTurnDynamicCounts
-                .computeIfAbsent(player1.getId(), id -> new java.util.ArrayList<>()).add(firstDynamic);
-        gd.pendingNextInstantSorceryCopyThisTurnDynamicSources
-                .computeIfAbsent(player1.getId(), id -> new java.util.ArrayList<>()).add(firstSource);
+        GameData.PendingSpellCopy firstCopy = new GameData.PendingSpellCopy(firstSource, null, 1, null,
+                java.util.List.of(), 1, null);
+        GameData.PendingSpellCopy firstLimited = new GameData.PendingSpellCopy(firstSource, null, 0, null,
+                java.util.List.of(3), 2, null);
+        GameData.PendingSpellCopy firstDynamicCopy = new GameData.PendingSpellCopy(firstSource, null, 0, firstDynamic,
+                java.util.List.of(), 3, null);
+        gd.addPendingSpellCopy(player1.getId(), firstCopy);
+        gd.addPendingSpellCopy(player1.getId(), firstLimited);
+        gd.addPendingSpellCopy(player1.getId(), firstDynamicCopy);
         gs.advanceStep(gd);
         assertThat(gd.activePlayerId).isEqualTo(player2.getId());
-        gd.pendingNextInstantSorceryCopyThisTurnCount.merge(player1.getId(), 1, Integer::sum);
-        gd.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount.merge(player1.getId(), 1, Integer::sum);
-        gd.pendingNextInstantSorceryCopyThisTurnCountSource.put(player1.getId(), secondSource);
-        gd.pendingNextInstantSorceryCopyThisTurnMaxManaValues.get(player1.getId()).add(2);
-        gd.pendingNextInstantSorceryCopyThisTurnDynamicCounts.get(player1.getId()).add(secondDynamic);
-        gd.pendingNextInstantSorceryCopyThisTurnDynamicSources.get(player1.getId()).add(secondSource);
+        GameData.PendingSpellCopy secondCopy = new GameData.PendingSpellCopy(secondSource, null, 1, null,
+                java.util.List.of(), 4, null);
+        GameData.PendingSpellCopy secondLimited = new GameData.PendingSpellCopy(secondSource, null, 0, null,
+                java.util.List.of(2), 5, null);
+        GameData.PendingSpellCopy secondDynamicCopy = new GameData.PendingSpellCopy(secondSource, null, 0,
+                secondDynamic, java.util.List.of(), 6, null);
+        gd.addPendingSpellCopy(player1.getId(), secondCopy);
+        gd.addPendingSpellCopy(player1.getId(), secondLimited);
+        gd.addPendingSpellCopy(player1.getId(), secondDynamicCopy);
 
         harness.passUntilWithNoAttackers(player1, TurnStep.CLEANUP);
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).containsExactly(Map.entry(player1.getId(), 1));
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount)
-                .containsExactly(Map.entry(player1.getId(), 1));
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCountSource)
-                .containsExactly(Map.entry(player1.getId(), secondSource));
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnMaxManaValues.get(player1.getId())).containsExactly(2);
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnDynamicCounts.get(player1.getId()))
-                .containsExactly(secondDynamic);
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnDynamicSources.get(player1.getId()))
-                .containsExactly(secondSource);
+        // Each pending ability made under player 2's phase outlives player 1's cleanup step; the others end there.
+        assertThat(gd.pendingNextInstantSorceryCopies.get(player1.getId()))
+                .containsExactly(secondCopy, secondLimited, secondDynamicCopy);
 
         harness.passUntil(player2, TurnStep.CLEANUP);
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).isEmpty();
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount).isEmpty();
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCountSource).isEmpty();
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnMaxManaValues).isEmpty();
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnDynamicCounts).isEmpty();
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnDynamicSources).isEmpty();
+        assertThat(gd.pendingNextInstantSorceryCopies.values()).allMatch(java.util.List::isEmpty);
     }
 
     @Test

@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Dungeon;
 import com.github.laxika.magicalvibes.model.DungeonProgress;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -47,6 +46,7 @@ import java.util.List;
 public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final TriggerCollectionService triggerCollectionService;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
     private final com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector triggerTargetCollector;
@@ -141,47 +141,20 @@ public class VentureIntoDungeonEffectHandler implements NormalEffectHandlerBean 
     }
 
     private void queueRoomAbility(GameData gameData, StackEntry entry, DungeonProgress progress) {
-        int previousCopies = gameData.beginTriggeredAbilityCopies(
+        Card sourceCard = new Card();
+        sourceCard.setName(switch (progress.dungeon()) {
+            case LOST_MINE_OF_PHANDELVER -> "Lost Mine of Phandelver";
+            case TOMB_OF_ANNIHILATION -> "Tomb of Annihilation";
+            case DUNGEON_OF_THE_MAD_MAGE -> "Dungeon of the Mad Mage";
+            case UNDERCITY -> "Undercity";
+        });
+        sourceCard.setOwnerId(entry.getControllerId());
+        // "When you move your venture marker into this room, [effect]" (CR 309.4c): its targets are chosen as it goes
+        // on the stack, once for each time the room's ability triggers.
+        StackEntry roomAbility = TriggeredAbilityStackService.madeAbility(sourceCard, entry.getControllerId(),
+                roomName(progress.dungeon(), progress.roomIndex()) + " room ability", roomEffects(progress));
+        triggeredAbilityStackService.putMade(gameData, roomAbility,
                 1 + countAdditionalDungeonRoomTriggers(gameData, entry.getControllerId()));
-        try {
-            Card sourceCard = new Card();
-            sourceCard.setName(switch (progress.dungeon()) {
-                case LOST_MINE_OF_PHANDELVER -> "Lost Mine of Phandelver";
-                case TOMB_OF_ANNIHILATION -> "Tomb of Annihilation";
-                case DUNGEON_OF_THE_MAD_MAGE -> "Dungeon of the Mad Mage";
-                case UNDERCITY -> "Undercity";
-            });
-            sourceCard.setOwnerId(entry.getControllerId());
-            List<CardEffect> effects = roomEffects(progress);
-            // A room ability's entry when it chooses nothing is its record whichever way it reaches the stack.
-            StackEntry roomAbility = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    entry.getControllerId(),
-                    roomName(progress.dungeon(), progress.roomIndex()) + " room ability",
-                    effects,
-                    0,
-                    (java.util.UUID) null);
-            ReflexiveAbilitySupport.route(gameData, roomAbility,
-                    () -> putRoomAbilityOnStackOrChoose(gameData, entry, sourceCard, effects, roomAbility));
-        } finally {
-            gameData.restoreTriggeredAbilityCopies(previousCopies);
-        }
-    }
-
-    private void putRoomAbilityOnStackOrChoose(GameData gameData, StackEntry entry, Card sourceCard,
-                                               List<CardEffect> effects, StackEntry roomAbility) {
-        if (effects.stream().anyMatch(roomEffect -> roomEffect.targetSpec() != com.github.laxika.magicalvibes.model.effect.TargetSpec.NONE)) {
-            var targets = triggerTargetCollector.collect(gameData, effects, null, entry.getControllerId(),
-                    sourceCard, com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector.Options.UPKEEP);
-            if (!targets.validTargets().isEmpty()) {
-                gameData.queueInteraction(new com.github.laxika.magicalvibes.model.PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        sourceCard, entry.getControllerId(), effects, !targets.canTargetPermanents(),
-                        null, 0, null, null, false, null, null, entry.getControllerId(), null, null, false));
-            }
-            return;
-        }
-        gameData.stack.add(roomAbility);
     }
 
     private int countAdditionalDungeonRoomTriggers(GameData gameData, java.util.UUID controllerId) {

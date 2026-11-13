@@ -69,7 +69,6 @@ class ObscuraInterceptorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         discardByName("Mountain");
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();

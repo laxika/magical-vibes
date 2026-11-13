@@ -54,7 +54,8 @@ public record SequenceEffect(List<CardEffect> steps, boolean optionalTarget, boo
 
     public SequenceEffect {
         steps = List.copyOf(steps);
-        if (steps.size() < 2) {
+        // One step is a sequence only to mark its target "up to one" ({@link #upToOneTarget}).
+        if (steps.size() < (optionalTarget ? 1 : 2)) {
             throw new IllegalArgumentException("SequenceEffect requires at least two steps, got " + steps.size());
         }
     }
@@ -80,7 +81,10 @@ public record SequenceEffect(List<CardEffect> steps, boolean optionalTarget, boo
         return new SequenceEffect(newSteps, optionalTarget, simultaneous);
     }
 
-    /** Creates a sequence whose single declared target may be omitted. */
+    /**
+     * Creates a sequence whose single declared target may be omitted ("up to one target"); one step is allowed, to
+     * mark that step's target so.
+     */
     public static SequenceEffect upToOneTarget(CardEffect... steps) {
         return new SequenceEffect(List.of(steps), true, false);
     }
@@ -108,11 +112,6 @@ public record SequenceEffect(List<CardEffect> steps, boolean optionalTarget, boo
             }
         }
         return implicitSourceSpec;
-    }
-
-    @Override
-    public boolean exertsAsItAttacks() {
-        return steps.stream().anyMatch(CardEffect::exertsAsItAttacks);
     }
 
     @Override

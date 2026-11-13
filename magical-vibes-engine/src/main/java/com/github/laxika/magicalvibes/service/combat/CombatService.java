@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.model.action.DestroyCombatOpponentsAtEndOfCombat;
 import com.github.laxika.magicalvibes.model.action.TapCombatOpponentsAtEndOfCombat;
@@ -60,6 +61,9 @@ public class CombatService {
     private static final RemoveCounterFromSourceEffect REMOVE_PARALYZATION_COUNTER_EFFECT =
             new RemoveCounterFromSourceEffect(CounterType.PARALYZATION, 1);
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService triggeredAbilityStackService;
     private final CombatAttackService combatAttackService;
     private final AttackLegalityService attackLegalityService;
     private final CombatBlockService combatBlockService;
@@ -184,17 +188,17 @@ public class CombatService {
             Card source = action.sourceCard() != null ? action.sourceCard() : perm == null ? null : perm.getCard();
             if (action.tokenForSacrificingPlayer() != null && source != null
                     && action.controllerId() != null) {
-                StackEntry delayed = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                StackEntry delayed = TriggeredAbilityStackService.madeAbility(
                         source, action.controllerId(), source.getName() + "'s delayed ability",
                         List.of(new com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect(
                                 true, action.tokenForSacrificingPlayer())),
                         (UUID) null, action.permanentId());
                 delayed.setNonTargeting(true);
-                gameData.enqueueTrigger(delayed);
+                triggeredAbilityStackService.putDelayed(gameData, delayed);
                 continue;
             }
             if (action.damageToController() > 0 && action.controllerId() != null && source != null) {
-                StackEntry delayed = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                StackEntry delayed = TriggeredAbilityStackService.madeAbility(
                         source, action.controllerId(), source.getName() + "'s delayed ability",
                         List.of(new com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect(),
                                 new com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect(
@@ -203,20 +207,20 @@ public class CombatService {
                         (UUID) null, action.permanentId());
                 delayed.setNonTargeting(true);
                 if (perm != null) delayed.setSourcePermanentSnapshot(new Permanent(perm));
-                gameData.enqueueTrigger(delayed);
+                triggeredAbilityStackService.putDelayed(gameData, delayed);
                 continue;
             }
             if (perm != null && source != null) {
                 UUID controllerId = action.controllerId() != null ? action.controllerId()
                         : gameQueryService.findPermanentController(gameData, action.permanentId());
                 if (controllerId == null) continue;
-                StackEntry delayed = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                StackEntry delayed = TriggeredAbilityStackService.madeAbility(
                         source, controllerId, source.getName() + "'s delayed ability",
                         List.of(new com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect()),
                         (UUID) null, action.permanentId());
                 delayed.setNonTargeting(true);
                 delayed.setSourcePermanentSnapshot(new Permanent(perm));
-                gameData.enqueueTrigger(delayed);
+                triggeredAbilityStackService.putDelayed(gameData, delayed);
             }
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
@@ -278,8 +282,7 @@ public class CombatService {
             }
             // "At end of combat, destroy ..." is a delayed triggered ability (CR 603.7), so it uses
             // the stack and players may respond before the creatures are destroyed.
-            StackEntry trigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                     action.sourceCard(),
                     action.controllerId(),
                     action.sourceCard().getName() + "'s delayed trigger",
@@ -289,7 +292,7 @@ public class CombatService {
                     action.creatureId());
             trigger.setNonTargeting(true);
             trigger.setTriggeringPermanentIds(List.copyOf(action.combatOpponentIds()));
-            gameData.stack.add(trigger);
+            triggeredAbilityStackService.putDelayed(gameData, trigger);
             gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed trigger triggers."));
         }
     }
@@ -301,13 +304,13 @@ public class CombatService {
      */
     public void processEndOfCombatCombatOpponentTaps(GameData gameData) {
         for (TapCombatOpponentsAtEndOfCombat action : gameData.drainDelayedActions(TapCombatOpponentsAtEndOfCombat.class)) {
-            StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, action.sourceCard(),
+            StackEntry trigger = TriggeredAbilityStackService.madeAbility(action.sourceCard(),
                     action.controllerId(), action.sourceCard().getName() + "'s delayed trigger",
                     new ArrayList<>(List.of(new TapCombatOpponentsOfTargetAtEndOfCombatEffect(false))),
                     (UUID) null, (UUID) null);
             trigger.setNonTargeting(true);
             trigger.setTriggeringPermanentIds(action.creatureIds());
-            gameData.stack.add(trigger);
+            triggeredAbilityStackService.putDelayed(gameData, trigger);
             gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(), "'s delayed trigger triggers."));
         }
     }
@@ -341,12 +344,12 @@ public class CombatService {
             if (target == null || action.damage() <= 0 || action.sourceCard() == null) {
                 continue;
             }
-            StackEntry damageEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, action.sourceCard(),
+            StackEntry damageEntry = TriggeredAbilityStackService.madeAbility(action.sourceCard(),
                     action.controllerId(), action.sourceCard().getName(),
                     List.of(new com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect(
                             action.damage())), action.permanentId(), action.sourcePermanentId());
             damageEntry.setNonTargeting(true);
-            gameData.enqueueTrigger(damageEntry);
+            triggeredAbilityStackService.putDelayed(gameData, damageEntry);
         }
     }
 
@@ -361,14 +364,14 @@ public class CombatService {
             if (perm == null || action.amount() <= 0) {
                 continue;
             }
-            StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+            StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                     perm.getCard(), gameQueryService.findPermanentController(gameData, perm.getId()),
                     perm.getCard().getName() + "'s delayed ability",
                     List.of(new com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect(
                             action.counterType(), action.amount())), null, perm.getId());
             trigger.setNonTargeting(true);
             trigger.setSourcePermanentSnapshot(new Permanent(perm));
-            gameData.enqueueTrigger(trigger);
+            triggeredAbilityStackService.putDelayed(gameData, trigger);
         }
     }
 }

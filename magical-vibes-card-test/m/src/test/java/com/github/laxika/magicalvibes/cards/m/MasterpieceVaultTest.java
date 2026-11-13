@@ -112,7 +112,6 @@ class MasterpieceVaultTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Card selected = chooseDraftedCard();
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -161,7 +160,6 @@ class MasterpieceVaultTest extends BaseCardTest {
                         "Sword of Light and Shadow", "Sword of War and Peace");
         Card selected = choice.allCards().getFirst();
         harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
-        assertThat(gd.interaction.activeInteraction()).isNotNull();
         return selected;
     }
 }

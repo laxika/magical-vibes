@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -13,7 +14,6 @@ import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +26,7 @@ import org.springframework.stereotype.Component;
 public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implements NormalEffectHandlerBean {
 
     private final DamageSupport damageSupport;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final LibraryRevealSupport libraryRevealSupport;
@@ -159,11 +160,8 @@ public class RevealUntilNonlandBottomThenDealManaValueDamageEffectHandler implem
         if (nonland != null && reflexive) {
             // "Damage equal to that card's mana value": the ability records what the resolving entry was about, the
             // revealed card's mana value as its event value, whichever way it reaches the stack.
-            List<CardEffect> damageEffects = List.of(REFLEXIVE_DAMAGE);
-            ReflexiveAbilitySupport.route(gameData, ReflexiveAbilitySupport.record(gameData, entry, damageEffects),
-                    () -> gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            entry.getCard(), entry.getControllerId(), damageEffects, false, null, 0,
-                            entry.getSourcePermanentId())));
+            triggeredAbilityStackService.putMade(gameData,
+                    ReflexiveAbilitySupport.record(gameData, entry, List.of(REFLEXIVE_DAMAGE)));
         }
     }
 }

@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnOtherSharedTypeCreaturesWithExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnCardFromGraveyardThenPutCountersOnSharedTypeCreaturesEffect;
@@ -30,6 +30,7 @@ import java.util.UUID;
 public class ExileOwnCardFromGraveyardThenPutCountersOnSharedTypeCreaturesEffectHandler
         implements NormalEffectHandlerBean {
 
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final GraveyardReturnSupport graveyardReturnSupport;
@@ -114,6 +115,6 @@ public class ExileOwnCardFromGraveyardThenPutCountersOnSharedTypeCreaturesEffect
                         effect.counterType(), effect.counterCount())));
         reflexive.setNonTargeting(true);
         reflexive.setExiledCostCardSnapshot(card);
-        gameData.stack.add(reflexive);
+        triggeredAbilityStackService.putMade(gameData, reflexive);
     }
 }

@@ -1,18 +1,15 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import java.util.ArrayList;
-import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfAndTriggerWhenPowerBecomesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,10 +20,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BoostSelfAndTriggerWhenPowerBecomesEffectHandler implements NormalEffectHandlerBean {
 
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final BoostSelfEffectHandler boostSelfEffectHandler;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -60,13 +57,8 @@ public class BoostSelfAndTriggerWhenPowerBecomesEffectHandler implements NormalE
         }
 
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s triggered ability triggers."));
-        // The ability's entry when it chooses nothing is its record whichever way it reaches the stack.
-        ReflexiveAbilitySupport.route(gameData,
-                new StackEntry(StackEntryType.TRIGGERED_ABILITY, entry.getCard(), entry.getControllerId(),
-                        entry.getCard().getName() + "'s ability", new ArrayList<>(List.of(e.triggeredEffect())), 0, sourcePermanentId),
-                () -> gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    entry.getCard(), entry.getControllerId(), List.of(e.triggeredEffect()),
-                    false, null, 0, sourcePermanentId)));
-        triggerCollectionService.processNextSpellTargetTrigger(gameData);
+        // "When its power becomes 20 this way" is a reflexive ability (CR 603.12): the stack door chooses its target.
+        triggeredAbilityStackService.putMade(gameData, ReflexiveAbilitySupport.record(gameData, entry,
+                List.of(e.triggeredEffect()), entry.getCard().getName() + "'s ability", sourcePermanentId));
     }
 }

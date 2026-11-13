@@ -3,13 +3,11 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AKH", collectorNumber = "17")
@@ -18,17 +16,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class GustWalker extends Card {
 
     public GustWalker() {
-        // Exert: "You may exert this creature as it attacks. When you do, it gets +1/+1 and gains
-        // flying until end of turn." Modeled as an optional attack trigger (matching Glory-Bound
-        // Initiate). Choosing to exert also keeps the creature tapped through its next untap step.
-        addTrigger(Triggers.attacks(), new MayEffect(
-                SequenceEffect.of(
-                        SkipNextUntapEffect.exert(),
-                        new QueueReflexiveAbilityEffect(SequenceEffect.of(
+        addStaticEffect(new ExertAsItAttacksEffect());
+        addTrigger(Triggers.exertedAsItAttacks(), SequenceEffect.of(
                                 new BoostSelfEffect(1, 1),
-                                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)))
-                ),
-                "Exert Gust Walker as it attacks? (It gets +1/+1 and gains flying until end of turn.)"
-        ));
+                                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
     }
 }

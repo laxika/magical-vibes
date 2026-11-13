@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -24,8 +25,7 @@ class GlorifierOfSufferingTest extends BaseCardTest {
         castGlorifier();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.handlePermanentChosen(player1, firstTarget.getId());
-        harness.handlePermanentChosen(player1, secondTarget.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstTarget.getId(), secondTarget.getId()));
         harness.passBothPriorities();
 
         assertThat(firstTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -42,8 +42,7 @@ class GlorifierOfSufferingTest extends BaseCardTest {
         castGlorifier();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -70,7 +69,7 @@ class GlorifierOfSufferingTest extends BaseCardTest {
         castGlorifier();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Deconstruction Hammer");
@@ -88,8 +87,7 @@ class GlorifierOfSufferingTest extends BaseCardTest {
         var sourceId = harness.getPermanentId(player1, "Glorifier of Suffering");
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.handlePermanentChosen(player1, sourceId);
-        harness.handlePermanentChosen(player1, opposingTarget.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sourceId, opposingTarget.getId()));
 
         assertThat(opposingTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).hasSize(1);
@@ -129,8 +127,7 @@ class GlorifierOfSufferingTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, sacrifice.getId());
-        harness.handlePermanentChosen(player1, latecomer.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(latecomer.getId()));
 
         assertThat(latecomer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gd.stack).singleElement().satisfies(entry ->

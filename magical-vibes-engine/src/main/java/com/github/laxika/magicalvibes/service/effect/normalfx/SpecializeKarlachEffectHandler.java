@@ -1,16 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import java.util.ArrayList;
-import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.cards.k.KarlachRagingTiefling;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
@@ -32,6 +29,7 @@ import java.util.UUID;
 public class SpecializeKarlachEffectHandler implements NormalEffectHandlerBean {
 
     private final BattlefieldEntryService battlefieldEntryService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final PermanentRemovalService permanentRemovalService;
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
@@ -85,14 +83,13 @@ public class SpecializeKarlachEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         graveyard.replaceAll(card -> card.getId().equals(sourceCard.getId()) ? specialized : card);
-        gameData.enqueueTrigger(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                specialized,
-                entry.getControllerId(),
-                specialized.getName() + "'s ability",
-                List.of(new SpecializeKarlachEffect(color, true)),
-                0,
-                (UUID) null));
+        // "When this card specializes from your graveyard, return it" (CR 603.2): an ability of the card in the
+        // graveyard.
+        StackEntry returnAbility = TriggeredAbilityStackService.madeAbility(specialized, entry.getControllerId(),
+                specialized.getName() + "'s ability", List.of(new SpecializeKarlachEffect(color, true)), 0,
+                (UUID) null);
+        returnAbility.setNonTargeting(true);
+        triggeredAbilityStackService.putMade(gameData, returnAbility);
     }
 
     /** Resolves "return it from your graveyard to the battlefield", then queues the face's own trigger. */
@@ -127,26 +124,14 @@ public class SpecializeKarlachEffectHandler implements NormalEffectHandlerBean {
     private void enqueueSpecializationTrigger(GameData gameData, Card sourceCard,
                                               UUID sourcePermanentId, TargetFilter targetFilter,
                                               UUID controllerId, CardEffect triggerEffect) {
+        // "When this creature specializes" is an ability of the specialized face (CR 603.2), put on the stack by the
+        // stack door, which chooses its targets as it goes there (CR 603.3d).
+        StackEntry trigger = TriggeredAbilityStackService.madeAbility(sourceCard, controllerId,
+                sourceCard.getName() + "'s ability", List.of(triggerEffect), 0, sourcePermanentId);
         if (targetFilter != null) {
-            // The ability's entry when it chooses nothing is its record whichever way it reaches the stack.
-            ReflexiveAbilitySupport.route(gameData,
-                    new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId,
-                            sourceCard.getName() + "'s ability", new ArrayList<>(List.of(triggerEffect)), 0, sourcePermanentId),
-                    () -> gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                        sourceCard, controllerId, List.of(triggerEffect), "specialize", sourcePermanentId, (Integer) null)));
-            return;
+            trigger.setTargetFilter(targetFilter);
         }
-        StackEntry trigger = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                controllerId,
-                sourceCard.getName() + "'s ability",
-                List.of(triggerEffect),
-                0,
-                sourcePermanentId);
-        trigger.setTargetFilter(targetFilter);
-        trigger.setNonTargeting(targetFilter == null);
-        gameData.enqueueTrigger(trigger);
+        triggeredAbilityStackService.putMade(gameData, trigger);
     }
 
     private void setFaceCharacteristics(Card card, CardColor color) {

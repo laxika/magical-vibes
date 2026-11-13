@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -7,22 +8,15 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaAnyNumberOfTimesPutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -33,13 +27,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PayManaAnyNumberOfTimesPutCountersOnSelfEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
-    private final PermanentCounterSupport permanentCounterSupport;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final GameLogService gameLogService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
-    private final ETBTokenTargetService etbTokenTargetService;
-    private final TriggerCollectionService triggerCollectionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -89,7 +80,7 @@ public class PayManaAnyNumberOfTimesPutCountersOnSelfEffectHandler implements No
                 StackEntry reflexive = ReflexiveAbilitySupport.record(gameData, entry,
                         List.of(new PutCountersOnSelfEffect(e.counterType(), new XValue())));
                 reflexive.setXValue(chosenPayments);
-                gameData.stack.add(reflexive);
+                triggeredAbilityStackService.putMade(gameData, reflexive);
             }
             return;
         }
@@ -122,22 +113,7 @@ public class PayManaAnyNumberOfTimesPutCountersOnSelfEffectHandler implements No
         // the chosen number as its X.
         StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(thenEffect));
         record.setXValue(paymentCount);
-        ReflexiveAbilitySupport.route(gameData, record, () -> chooseReflexiveAbilityTargets(gameData, entry, thenEffect, paymentCount));
-    }
-
-    private void chooseReflexiveAbilityTargets(GameData gameData, StackEntry entry,
-                                               CardEffect thenEffect, int paymentCount) {
-        if (thenEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
-            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    entry.getCard(), entry.getControllerId(), List.of(thenEffect), null, 0, 0, paymentCount,
-                    null, entry.isAlternateCost(), entry.getTriggeringPermanentId(), entry.getSourcePermanentId()));
-            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
-            return;
-        }
-        gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                entry.getCard(), entry.getControllerId(), List.of(thenEffect), entry.getSourcePermanentId(),
-                List.of(), 0, 0, List.of(), paymentCount, List.of(), false));
-        etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
+        triggeredAbilityStackService.putMade(gameData, record);
     }
 
     private int maxPotentialPayments(GameData gameData, UUID playerId, String manaCost) {

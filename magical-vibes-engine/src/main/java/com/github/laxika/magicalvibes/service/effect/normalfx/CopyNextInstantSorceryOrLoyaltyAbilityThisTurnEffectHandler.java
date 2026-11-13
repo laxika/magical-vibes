@@ -24,14 +24,18 @@ public class CopyNextInstantSorceryOrLoyaltyAbilityThisTurnEffectHandler impleme
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        gameData.pendingNextInstantSorceryCopyThisTurnCount.merge(controllerId, COPIES_PER_EVENT, Integer::sum);
+        // One delayed triggered ability, used up by whichever comes first: the next instant or sorcery spell or the
+        // next loyalty ability (CR 603.7). Its spell and loyalty halves share a link.
+        UUID link = UUID.randomUUID();
+        gameData.addPendingSpellCopy(controllerId, new GameData.PendingSpellCopy(entry.getCard(),
+                entry.getSourcePermanentId(), COPIES_PER_EVENT, null, java.util.List.of(), gameData.resolutionOrdinal,
+                link));
         gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.merge(controllerId, COPIES_PER_EVENT, Integer::sum);
         for (int i = 0; i < COPIES_PER_EVENT; i++) {
             gameData.pendingNextLoyaltyAbilityCopySourcesThisTurn
                     .computeIfAbsent(controllerId, ignored -> new ArrayList<>())
-                    .add(new GameData.PendingCopySource(entry.getCard(), entry.getSourcePermanentId()));
+                    .add(new GameData.PendingCopySource(entry.getCard(), entry.getSourcePermanentId(), link));
         }
-        gameData.pendingNextSpellOrLoyaltyCopyLinkedThisTurn.add(controllerId);
         log.info("Game {} - {} will copy their next instant, sorcery, or loyalty ability this turn",
                 gameData.id, controllerId);
     }

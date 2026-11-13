@@ -66,6 +66,9 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
             // Exert (CR 701.43a): the creature is exerted now, which is what "whenever you exert a creature" watches.
             source.setSkipUntapControllerId(entry.getControllerId());
             triggerCollectionService.checkExertTriggers(gameData, entry.getControllerId(), source.getId());
+            if (e.exertsAsItAttacks()) {
+                triggerCollectionService.checkExertedAsItAttacksTriggers(gameData, entry.getControllerId(), source);
+            }
         }
 
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " won't untap during its controller's next untap step."));

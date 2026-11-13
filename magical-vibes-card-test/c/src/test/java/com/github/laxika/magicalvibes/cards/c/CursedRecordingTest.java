@@ -64,7 +64,7 @@ class CursedRecordingTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(recording.isTapped()).isTrue();
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(1);
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -72,7 +72,7 @@ class CursedRecordingTest extends BaseCardTest {
 
         assertThat(gd.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && entry.getDescription().startsWith("Copy Lightning Bolt"));
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).doesNotContainKey(player1.getId());
+        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
     }
 
     @Test

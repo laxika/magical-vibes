@@ -62,7 +62,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
@@ -139,6 +138,9 @@ public class ChoiceHandlerService {
     private com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     @Autowired @Lazy
     private PermanentChoiceSpellHandlerService permanentChoiceSpellHandlerService;
+    @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
+            triggeredAbilityStackService;
     @Autowired @Lazy
     private PermanentChoiceHandlerService permanentChoiceHandlerService;
     @Autowired @Lazy
@@ -6442,11 +6444,25 @@ public class ChoiceHandlerService {
             snapshot.setLastKnownColors(Set.copyOf(gameQueryService.getEffectiveColors(gameData, source)));
             entry.setSourcePermanentSnapshot(snapshot);
         }
-        if (ctx.triggerRecord() != null) {
-            // The collector's record of the trigger event, the same as for an ability of it that chooses nothing.
-            entry.carryTriggerRecord(ctx.triggerRecord());
+        if (com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
+                .parkedAtDoor(ctx.triggerRecord())) {
+            // An ability the stack door parked for its targets and division: it goes on the stack through the door
+            // with the targets and division announced (CR 601.2d via CR 603.3d).
+            Permanent sourceSnapshot = entry.getSourcePermanentSnapshot();
+            triggeredAbilityStackService.finishParked(gameData, ctx.triggerRecord(), parked -> {
+                parked.replaceEffectsToResolve(entry.getEffectsToResolve());
+                parked.adoptChosenTargets(entry);
+                if (sourceSnapshot != null) {
+                    parked.setSourcePermanentSnapshot(sourceSnapshot);
+                }
+            });
+        } else {
+            if (ctx.triggerRecord() != null) {
+                // The collector's record of the trigger event, the same as for an ability of it that chooses nothing.
+                entry.carryTriggerRecord(ctx.triggerRecord());
+            }
+            gameData.stack.add(entry);
         }
-        gameData.stack.add(entry);
         gameLogService.append(gameData, GameLog.cardThen(ctx.sourceCard(),
                 ctx.counterType() == null ? "'s damage division is set." : "'s counter distribution is set."));
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

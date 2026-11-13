@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastT
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -22,35 +22,25 @@ public class CopyNextInstantOrSorceryCastThisTurnManaAbilityEffectHandler implem
 
     public void resolve(GameData gameData, UUID playerId, Player player, Permanent permanent,
                         int manaMultiplier, boolean creatureSource) {
-        gameData.pendingNextInstantSorceryCopyThisTurnCount.merge(playerId, 1, Integer::sum);
-        gameData.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount.merge(playerId, 1, Integer::sum);
-        log.info("Game {} - {} will copy their next instant or sorcery spell this turn",
-                gameData.id, playerId);
+        resolve(gameData, playerId, permanent, new CopyNextInstantOrSorceryCastThisTurnEffect());
     }
 
     @Override
     public void resolve(GameData gameData, UUID playerId, Player player, Permanent permanent,
                         CardEffect effect, int manaMultiplier, boolean creatureSource) {
-        CopyNextInstantOrSorceryCastThisTurnEffect copyEffect =
-                (CopyNextInstantOrSorceryCastThisTurnEffect) effect;
-        if (copyEffect.dynamicCopyCount() != null) {
-            gameData.pendingNextInstantSorceryCopyThisTurnDynamicCounts
-                    .computeIfAbsent(playerId, ignored -> new ArrayList<>())
-                    .add(copyEffect.dynamicCopyCount());
-            gameData.pendingNextInstantSorceryCopyThisTurnDynamicSources
-                    .computeIfAbsent(playerId, ignored -> new ArrayList<>())
-                    .add(permanent != null ? permanent.getCard() : null);
-            log.info("Game {} - {} will copy their next instant or sorcery spell this turn",
-                    gameData.id, playerId);
-            return;
-        } else if (copyEffect.maxManaValue() == null) {
-            resolve(gameData, playerId, player, permanent, manaMultiplier, creatureSource);
-            return;
-        }
-        gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues
-                .computeIfAbsent(playerId, ignored -> new ArrayList<>())
-                .add(copyEffect.maxManaValue());
-        log.info("Game {} - {} will copy their next instant or sorcery spell with mana value at most {} this turn",
-                gameData.id, playerId, copyEffect.maxManaValue());
+        resolve(gameData, playerId, permanent, (CopyNextInstantOrSorceryCastThisTurnEffect) effect);
+    }
+
+    /**
+     * Makes the mana ability's delayed triggered ability (CR 603.7), its source the mana ability's (CR 603.7e). A mana
+     * ability resolves on no stack, so each activation's ability is its own ({@code resolution} 0).
+     */
+    private void resolve(GameData gameData, UUID playerId, Permanent permanent,
+                         CopyNextInstantOrSorceryCastThisTurnEffect copyEffect) {
+        gameData.addPendingSpellCopy(playerId, new GameData.PendingSpellCopy(
+                permanent != null ? permanent.getCard() : null, permanent != null ? permanent.getId() : null,
+                copyEffect.dynamicCopyCount() == null ? 1 : 0, copyEffect.dynamicCopyCount(),
+                copyEffect.maxManaValue() == null ? List.of() : List.of(copyEffect.maxManaValue()), 0, null));
+        log.info("Game {} - {} will copy their next instant or sorcery spell this turn", gameData.id, playerId);
     }
 }

@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
@@ -26,6 +25,7 @@ import java.util.UUID;
 public class FlipCoinCopyTriggeringSpellOrDealDamageEffectHandler implements NormalEffectHandlerBean, ChoosesCoinFlipResultsFirst {
 
     private final CoinFlipService coinFlipService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final TriggerCollectionService triggerCollectionService;
@@ -62,21 +62,11 @@ public class FlipCoinCopyTriggeringSpellOrDealDamageEffectHandler implements Nor
 
         if (wonFlip && result.isActualCoinFlip()) {
             triggerCollectionService.checkControllerWinsCoinFlipTriggers(gameData, controllerId);
-            gameData.enqueueTrigger(coinFlipRecord(gameData, entry, WON_FLIP, triggeringSpell));
+            triggeredAbilityStackService.putMade(gameData, coinFlipRecord(gameData, entry, WON_FLIP, triggeringSpell));
             return;
         }
 
-        List<CardEffect> damageEffects = LOST_FLIP;
-        ReflexiveAbilitySupport.route(gameData,
-                coinFlipRecord(gameData, entry, damageEffects, triggeringSpell),
-                () -> gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        entry.getCard(),
-                        controllerId,
-                        damageEffects,
-                        false,
-                        null,
-                        0,
-                        entry.getSourcePermanentId())));
+        triggeredAbilityStackService.putMade(gameData, coinFlipRecord(gameData, entry, LOST_FLIP, triggeringSpell));
     }
 
     /**

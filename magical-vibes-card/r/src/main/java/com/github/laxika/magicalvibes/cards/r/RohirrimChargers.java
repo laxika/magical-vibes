@@ -3,9 +3,8 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -15,9 +14,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class RohirrimChargers extends Card {
 
     public RohirrimChargers() {
-        addTrigger(Triggers.attacks(), new MayEffect(
-                SkipNextUntapEffect.exert(),
-                "Exert Rohirrim Chargers as it attacks?"));
+        addStaticEffect(new ExertAsItAttacksEffect());
 
         addTrigger(Triggers.youExertCreature(),
                 new RevealUntilCardPredicateRestOnBottomRandomEffect(

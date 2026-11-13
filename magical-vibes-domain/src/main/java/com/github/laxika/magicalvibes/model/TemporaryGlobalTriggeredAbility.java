@@ -13,7 +13,7 @@ import java.util.UUID;
  * turn.
  * The optional watched permanent identifies a particular object for a delayed event trigger.
  *
- * @param ability            the ability, one effect in a legacy slot
+ * @param ability            the ability: every effect of it goes on the stack as one object (CR 603.3)
  * @param sourcePermanentId  the permanent that was the source of the ability that registered this one, which is this
  *                           one's source too (CR 603.7e), recorded whatever the effects are: the "this" of "whenever you
  *                           cast a spell or play a land from among cards exiled with this" (Apple of Eden, Isu Relic),
@@ -104,10 +104,5 @@ public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard
     /** The legacy slot whose collectors decide when {@link #ability} triggers. */
     public EffectSlot slot() {
         return LegacySlots.slotOf(ability);
-    }
-
-    /** The effect of {@link #ability}. */
-    public CardEffect effect() {
-        return ability.effects().getFirst().effect();
     }
 }

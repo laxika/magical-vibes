@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.b.BeholdThePowerOfDestruction;
 import com.github.laxika.magicalvibes.cards.f.FearMyAuthority;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.ICallForSlaughter;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +14,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MyLaughterEchoes.class, ICallForSlaughter.class, FearMyAuthority.class})
+@CardUsed({MyLaughterEchoes.class, ICallForSlaughter.class, FearMyAuthority.class,
+        BeholdThePowerOfDestruction.class, GrizzlyBears.class})
 class MyLaughterEchoesTest extends BaseCardTest {
 
     @Test
@@ -28,6 +31,35 @@ class MyLaughterEchoesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(setup.echoes());
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(setup.echoes().getCard());
         assertThat(countPermanents(player1, "Devil")).isEqualTo(6);
+    }
+
+    @Test
+    void repeatedSchemeChoosesItsTargetAgain() {
+        harness.addToBattlefieldAndReturn(player1, new MyLaughterEchoes());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        BeholdThePowerOfDestruction scheme = new BeholdThePowerOfDestruction();
+        StackEntry schemeEntry = new StackEntry(
+                StackEntryType.TRIGGERED_ABILITY,
+                scheme,
+                player1.getId(),
+                scheme.getName(),
+                scheme.getCastingCostsAndSpellEffects());
+        schemeEntry.setTargetId(player2.getId());
+        gd.stack.add(schemeEntry);
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkSchemeSetInMotionTriggers(gd, schemeEntry));
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        // Setting it in motion again triggers its ability again, whose target is chosen as it goes on the stack.
+        PendingInteraction.PermanentChoice targetChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(targetChoice).as("the repeated ability chooses its target").isNotNull();
+        assertThat(targetChoice.validPlayerIds()).containsExactly(player2.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(bears);
     }
 
     @Test

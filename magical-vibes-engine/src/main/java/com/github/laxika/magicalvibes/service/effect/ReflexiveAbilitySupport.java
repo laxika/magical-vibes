@@ -5,9 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import java.util.ArrayList;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -59,14 +58,8 @@ public final class ReflexiveAbilitySupport {
      */
     public static StackEntry record(GameData gameData, StackEntry resolving, List<CardEffect> effects,
                                     String description, UUID sourcePermanentId) {
-        StackEntry record = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                resolving.getCard(),
-                resolving.getControllerId(),
-                description,
-                new ArrayList<>(effects),
-                resolving.getXValue(),
-                sourcePermanentId);
+        StackEntry record = TriggeredAbilityStackService.madeAbility(resolving.getCard(),
+                resolving.getControllerId(), description, effects, resolving.getXValue(), sourcePermanentId);
         recordResolving(gameData, record, resolving);
         return record;
     }
@@ -114,14 +107,8 @@ public final class ReflexiveAbilitySupport {
      */
     public static StackEntry recordFor(GameData gameData, StackEntry resolving, Card sourceCard, UUID controllerId,
                                        List<CardEffect> effects, String description, UUID sourcePermanentId) {
-        StackEntry record = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                controllerId,
-                description,
-                new ArrayList<>(effects),
-                resolving == null ? 0 : resolving.getXValue(),
-                sourcePermanentId);
+        StackEntry record = TriggeredAbilityStackService.madeAbility(sourceCard, controllerId, description, effects,
+                resolving == null ? 0 : resolving.getXValue(), sourcePermanentId);
         if (resolving != null) {
             recordResolving(gameData, record, resolving);
         }
@@ -146,14 +133,8 @@ public final class ReflexiveAbilitySupport {
      */
     public static StackEntry mayAbilityRecord(PendingMayAbility ability, Card sourceCard, List<CardEffect> effects,
                                               String description, UUID sourcePermanentId, int xValuePaid) {
-        StackEntry record = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                ability.controllerId(),
-                description,
-                new ArrayList<>(effects),
-                ability.targetCardId(),
-                sourcePermanentId);
+        StackEntry record = TriggeredAbilityStackService.madeAbility(sourceCard, ability.controllerId(), description,
+                effects, ability.targetCardId(), sourcePermanentId);
         if (ability.sourcePermanentId() == null) {
             record.setXValue(xValuePaid);
         }

@@ -51,11 +51,14 @@ class BackForMoreTest extends BaseCardTest {
     void reflexiveFightCannotTargetYourOwnCreature() {
         MosscoatGoriak returnedCard = new MosscoatGoriak();
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new AlmightyBrushwagg());
+        // With no creature to fight, "up to one target" has nothing to offer and no choice is asked.
+        Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new AlmightyBrushwagg());
         prepareCast(returnedCard);
 
         harness.castAndResolveInstant(player1, 0, returnedCard.getId());
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(opposingCreature.getId())
                 .doesNotContain(ownCreature.getId());
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, ownCreature.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -67,7 +70,6 @@ class BackForMoreTest extends BaseCardTest {
         prepareCast(returnedCard);
 
         harness.castAndResolveInstant(player1, 0, returnedCard.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Mosscoat Goriak");

@@ -2,12 +2,10 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "172")
@@ -15,17 +13,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ClockworkDroid extends Card {
 
     public ClockworkDroid() {
-        // Exert: "You may exert this creature as it attacks. When you do, it can't be blocked this
-        // turn and you scry 1." Choosing to exert also keeps the creature tapped through its next
-        // untap step.
-        addTrigger(Triggers.attacks(), new MayEffect(
-                SequenceEffect.of(
-                        SkipNextUntapEffect.exert(),
-                        new QueueReflexiveAbilityEffect(SequenceEffect.of(
+        addStaticEffect(new ExertAsItAttacksEffect());
+        addTrigger(Triggers.exertedAsItAttacks(), SequenceEffect.of(
                                 new MakeCreatureUnblockableEffect(true),
-                                new ScryEffect(1)))
-                ),
-                "Exert Clockwork Droid as it attacks? (It can't be blocked this turn and you scry 1.)"
-        ));
+                                new ScryEffect(1)));
     }
 }

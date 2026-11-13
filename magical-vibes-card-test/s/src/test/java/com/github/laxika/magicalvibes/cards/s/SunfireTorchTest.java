@@ -43,7 +43,7 @@ class SunfireTorchTest extends BaseCardTest {
 
         harness.handlePermanentChosen(player1, torch.getId());
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.MayAbilityTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
 

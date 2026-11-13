@@ -274,4 +274,13 @@ public record DealDividedDamageEffect(
                         : TargetPredicates.creature();
         return new TargetSpec(declaredTarget, true, targetRestriction, false, 1);
     }
+
+    /**
+     * A triggered ability's division of damage among the card's declared target group is announced as its targets are
+     * chosen, target by target, as it goes on the stack (CR 601.2d via CR 603.3d).
+     */
+    @Override
+    public boolean dividesAmongTargetsAsItGoesOnTheStack() {
+        return mode == DivisionMode.CHOSEN && etbAssignments && targetRestriction != null;
+    }
 }

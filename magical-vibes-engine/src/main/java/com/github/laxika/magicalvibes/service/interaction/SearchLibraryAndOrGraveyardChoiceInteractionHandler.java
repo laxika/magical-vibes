@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.AttachSelectedEquipmentToCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
@@ -304,22 +303,18 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
         }
     }
 
+    /**
+     * "If an Equipment is put onto the battlefield this way, you may attach it to a creature you control" (Vault 101:
+     * Birthday Party) is part of the resolving ability (CR 608.2c), not an ability of its own: the optional attachment
+     * is the resolving entry's next step, about the Equipment it put onto the battlefield.
+     */
     private void queueEquipmentAttachmentFollowUp(GameData gameData, UUID equipmentId) {
         StackEntry sourceEntry = gameData.pendingEffectResolutionEntry;
         if (sourceEntry == null) {
             return;
         }
-        StackEntry attachEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceEntry.getCard(),
-                sourceEntry.getControllerId(),
-                sourceEntry.getCard().getName() + "'s reflexive ability",
-                List.of(new MayEffect(
-                        new AttachSelectedEquipmentToCreatureEffect(),
-                        "Attach that Equipment to a creature you control?")),
-                null,
-                sourceEntry.getSourcePermanentId());
-        attachEntry.recordPicks(List.of(equipmentId));
-        gameData.stack.add(attachEntry);
+        sourceEntry.recordPicks(List.of(equipmentId));
+        sourceEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(new MayEffect(
+                new AttachSelectedEquipmentToCreatureEffect(), "Attach that Equipment to a creature you control?")));
     }
 }

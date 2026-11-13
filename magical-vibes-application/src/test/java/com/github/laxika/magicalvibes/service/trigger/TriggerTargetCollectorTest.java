@@ -98,6 +98,23 @@ class TriggerTargetCollectorTest {
                         invocation.<Permanent>getArgument(0),
                         invocation.<PermanentPredicate>getArgument(1),
                         invocation.<FilterContext>getArgument(2)));
+        // The player restriction a target declares is judged by the legality service: its player relation, as the
+        // real service judges it.
+        lenient().when(targetLegalityService.matchesPlayerPredicate(any(), any(), any(),
+                        any(com.github.laxika.magicalvibes.model.filter.PlayerPredicate.class), any(), any()))
+                .thenAnswer(invocation -> {
+                    UUID controllerId = invocation.getArgument(1);
+                    UUID playerId = invocation.getArgument(2);
+                    if (invocation.getArgument(3)
+                            instanceof com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate relation) {
+                        return switch (relation.relation()) {
+                            case SELF -> playerId.equals(controllerId);
+                            case OPPONENT -> !playerId.equals(controllerId);
+                            case ANY -> true;
+                        };
+                    }
+                    return true;
+                });
     }
 
     @Test

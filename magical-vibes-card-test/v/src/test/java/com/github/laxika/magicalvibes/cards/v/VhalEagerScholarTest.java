@@ -130,7 +130,7 @@ class VhalEagerScholarTest extends BaseCardTest {
 
         activateSpecialization(3);
         resolveAllTriggers();
-        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Sylvan Shepherd");

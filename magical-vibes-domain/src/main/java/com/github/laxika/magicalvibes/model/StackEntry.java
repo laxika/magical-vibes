@@ -88,6 +88,12 @@ public class StackEntry {
      */
     @Getter(AccessLevel.NONE) @Setter private boolean parkedAtStackDoor;
     /**
+     * Whether this entry is an ability a resolving spell or ability made ({@code TriggeredAbilityStackService.putMade}):
+     * a reflexive ability (CR 603.12) or a delayed one (CR 603.7). Its targets are those its effects declare, or the
+     * card's target group an effect of it is bound to; no other ability's group of its card is its target.
+     */
+    @Getter(AccessLevel.NONE) @Setter private boolean madeByResolution;
+    /**
      * Whether this triggered ability's source attacking caused it to trigger (CR 508.3a): "whenever a creature you
      * control attacking causes a triggered ability of that creature to trigger" (Firebender Ascension) watches its
      * arrival on the stack, also once its targets are chosen.
@@ -1237,6 +1243,7 @@ public class StackEntry {
         this.triggerRecordSettled = source.triggerRecordSettled;
         this.triggerRecordCarried = source.triggerRecordCarried;
         this.parkedAtStackDoor = source.parkedAtStackDoor;
+        this.madeByResolution = source.madeByResolution;
         this.triggeredBySourceAttacking = source.triggeredBySourceAttacking;
         this.description = source.description;
         this.effectsToResolve = new ArrayList<>(source.effectsToResolve);
@@ -1623,6 +1630,11 @@ public class StackEntry {
     /** Whether this ability's source attacking caused it to trigger (see {@link #triggeredBySourceAttacking}). */
     public boolean isTriggeredBySourceAttacking() {
         return triggeredBySourceAttacking;
+    }
+
+    /** Whether a resolving spell or ability made this ability (see {@link #madeByResolution}). */
+    public boolean isMadeByResolution() {
+        return madeByResolution;
     }
 
     /** Whether the stack door holds this entry while its controller makes a choice (see {@link #parkedAtStackDoor}). */

@@ -80,8 +80,10 @@ class CaseOfTheMarketMeleeTest extends BaseCardTest {
         assertThat(targets).isNotNull();
         assertThat(targets.validPlayerIds()).contains(player2.getId());
         harness.handleMultiplePermanentsChosen(player1, List.of(player2.getId()));
+        // The division is announced as the ability goes on the stack (CR 601.2d via CR 603.3d).
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
+        harness.handleListChoice(player1, "3");
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 3);
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
     }

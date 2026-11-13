@@ -153,6 +153,11 @@ public record ObjectActionTrigger(ObjectAction action, ObjectRelation object, Ca
          */
         ENTERING_CAUSES_ABILITY_TO_TRIGGER,
         /**
+         * The creature is exerted as it attacks: the "when you do" printed with "you may exert this creature as it
+         * attacks", linked to that static ability (CR 701.43d, 607.2h).
+         */
+        EXERTED_AS_IT_ATTACKS,
+        /**
          * One of the Room's doors becomes unlocked: it gets that half's unlocked designation, as it enters or later
          * (CR 709.5h). Which door is the trigger's {@code door}.
          */

@@ -3,11 +3,8 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -25,20 +22,12 @@ public class Glorybringer extends Card {
     public Glorybringer() {
         // Flying and haste are Scryfall-loaded keywords — no wiring needed.
 
-        // Exert: "You may exert this creature as it attacks. When you do, it deals 4 damage to
-        // target non-Dragon creature an opponent controls." Exerting is chosen as it attacks; the
-        // "when you do" reflexive trigger then picks its target (matching Ahn-Crop Crasher).
-        addTrigger(Triggers.attacks(), new MayEffect(
-                SequenceEffect.of(
-                        SkipNextUntapEffect.exert(),
-                        new QueueReflexiveAbilityEffect(new DealDamageToTargetCreatureEffect(4,
+        addStaticEffect(new ExertAsItAttacksEffect());
+        addTrigger(Triggers.exertedAsItAttacks(), new DealDamageToTargetCreatureEffect(4,
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DRAGON))
-                                ))))
-                ),
-                "Exert Glorybringer as it attacks? (It deals 4 damage to target non-Dragon creature an opponent controls.)"
-        ));
+                                ))));
     }
 }

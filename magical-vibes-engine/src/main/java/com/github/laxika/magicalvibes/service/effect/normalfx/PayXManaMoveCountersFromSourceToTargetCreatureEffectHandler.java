@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -8,23 +9,17 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaMoveCountersFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -37,14 +32,13 @@ import java.util.UUID;
 public class PayXManaMoveCountersFromSourceToTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final GameQueryService gameQueryService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final PlayerInputService playerInputService;
     private final PotentialManaService potentialManaService;
-    private final TargetLegalityService targetLegalityService;
 
     private static final CardEffect MOVE_X_COUNTERS =
-            new MoveCounterFromSourceToTargetCreatureEffect(CounterType.PLUS_ONE_PLUS_ONE, new XValue());
+            MoveCounterFromSourceToTargetCreatureEffect.ontoAnotherCreature(CounterType.PLUS_ONE_PLUS_ONE,
+                    new XValue());
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -93,34 +87,9 @@ public class PayXManaMoveCountersFromSourceToTargetCreatureEffectHandler impleme
         List<CardEffect> moveEffects = List.of(MOVE_X_COUNTERS);
         StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, moveEffects);
         record.setXValue(counterCount);
-        ReflexiveAbilitySupport.route(gameData, record, () -> chooseReflexiveTarget(gameData, entry, moveEffects));
-    }
-
-    private void chooseReflexiveTarget(GameData gameData, StackEntry entry, List<CardEffect> moveEffects) {
-        UUID sourcePermanentId = entry.getSourcePermanentId();
-        List<UUID> validTargets = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            for (Permanent permanent : battlefield) {
-                if (!permanent.getId().equals(sourcePermanentId)
-                        && gameQueryService.isCreature(gameData, permanent)
-                        && targetLegalityService.checkTriggeredPermanentTargetableReason(
-                        gameData, permanent, entry.getCard(), entry.getControllerId()).isEmpty()) {
-                    validTargets.add(permanent.getId());
-                }
-            }
-        }
-
-        if (validTargets.isEmpty()) {
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s reflexive ability has no legal target."));
-            return;
-        }
-
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
-                entry.getCard(), entry.getControllerId(), moveEffects, sourcePermanentId, null));
-        playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), validTargets,
-                entry.getCard().getName() + "'s reflexive ability - Choose another target creature.");
+        // "When you do, move X +1/+1 counters ... onto another target creature" (CR 603.12): its target is chosen
+        // as it goes on the stack.
+        triggeredAbilityStackService.putMade(gameData, record);
     }
 
     private int maxPotentialX(GameData gameData, UUID controllerId) {

@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import java.util.ArrayList;
-import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.cards.v.VhalEagerScholar;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -9,9 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveVhalStudyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeVhalEffect;
@@ -33,6 +30,7 @@ import java.util.List;
 public class SpecializeVhalEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -66,36 +64,28 @@ public class SpecializeVhalEffectHandler implements NormalEffectHandlerBean {
 
     public void enqueueSpecializedTrigger(GameData gameData, StackEntry entry, Card specialized,
                                           CardColor color, int removedStudyCounters) {
-        CardEffect specializedTrigger = VhalEagerScholar.specializedTrigger(color);
-        if (specialized.getTargetGroups().isEmpty()) {
-            enqueueNonTargetingTrigger(gameData, entry, specialized, specializedTrigger, removedStudyCounters);
-        } else {
-            // The ability's entry when it chooses nothing is its record whichever way it reaches the stack: the
-            // study counters removed are its event value.
-            StackEntry record = new StackEntry(StackEntryType.TRIGGERED_ABILITY, specialized, entry.getControllerId(),
-                    specialized.getName() + "'s ability", new ArrayList<>(List.of(specializedTrigger)),
-                    color == CardColor.BLACK ? removedStudyCounters : 0, entry.getSourcePermanentId());
-            record.setEventValue(removedStudyCounters);
-            ReflexiveAbilitySupport.route(gameData, record,
-                    () -> gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        specialized,
-                        entry.getControllerId(),
-                        List.of(specializedTrigger),
-                        entry.getSourcePermanentId(),
-                        List.of(),
-                        0,
-                        0,
-                        List.of(),
-                        color == CardColor.BLACK ? removedStudyCounters : 0,
-                        List.of(),
-                        false,
-                        null,
-                        null,
-                        removedStudyCounters)));
-        }
+        // The face's target group is its specialize ability's, bound to that ability's effect as the face was made.
+        CardEffect specializedTrigger = specialized.getTargetGroups().isEmpty()
+                ? VhalEagerScholar.specializedTrigger(color)
+                : specialized.getEffectsBoundToTargetGroup(0).getFirst();
+        // "When this creature specializes" is an ability of the specialized face (CR 603.2), put on the stack by the
+        // stack door, which chooses its targets as it goes there (CR 603.3d).
+        // The study counters removed are its event value (and, for the black face, its X).
+        StackEntry trigger = TriggeredAbilityStackService.madeAbility(specialized, entry.getControllerId(),
+                specialized.getName() + "'s ability", List.of(specializedTrigger),
+                color == CardColor.BLACK ? removedStudyCounters : 0, entry.getSourcePermanentId());
+        trigger.setEventValue(removedStudyCounters);
+        triggeredAbilityStackService.putMade(gameData, trigger);
     }
 
     private void installSpecializedTargets(Card specialized, CardColor color) {
+        installSpecializedTargetGroup(specialized, color);
+        if (!specialized.getTargetGroups().isEmpty()) {
+            specialized.registerEffectTargetIndex(VhalEagerScholar.specializedTrigger(color), 0);
+        }
+    }
+
+    private void installSpecializedTargetGroup(Card specialized, CardColor color) {
         switch (color) {
             case WHITE -> specialized.targetUpTo(new com.github.laxika.magicalvibes.model.amount.EventValue(),
                     TargetFilters.creature(), 100);
@@ -115,17 +105,12 @@ public class SpecializeVhalEffectHandler implements NormalEffectHandlerBean {
 
     private void enqueueNonTargetingTrigger(GameData gameData, StackEntry sourceEntry,
                                             Card sourceCard, CardEffect effect, int eventValue) {
-        StackEntry trigger = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                sourceEntry.getControllerId(),
-                sourceCard.getName() + "'s ability",
-                List.of(effect),
-                0,
-                sourceEntry.getSourcePermanentId());
+        // "When this creature specializes" (CR 603.2): the study counters are removed as it resolves.
+        StackEntry trigger = TriggeredAbilityStackService.madeAbility(sourceCard, sourceEntry.getControllerId(),
+                sourceCard.getName() + "'s ability", List.of(effect), 0, sourceEntry.getSourcePermanentId());
         trigger.setEventValue(eventValue);
         trigger.setNonTargeting(true);
-        gameData.enqueueTrigger(trigger);
+        triggeredAbilityStackService.putMade(gameData, trigger);
     }
 
     private void setFaceCharacteristics(Card card, CardColor color) {

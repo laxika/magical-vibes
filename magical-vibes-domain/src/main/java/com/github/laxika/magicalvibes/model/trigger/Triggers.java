@@ -1981,6 +1981,14 @@ public final class Triggers {
         return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.EXERTS, PlayerRelation.YOU);
     }
 
+    /**
+     * "When you do" of "you may exert this creature as it attacks" (CR 701.43d): this creature was exerted as it
+     * attacked. The card writes the static ability with {@code ExertAsItAttacksEffect}.
+     */
+    public static ObjectActionTrigger exertedAsItAttacks() {
+        return new ObjectActionTrigger(ObjectActionTrigger.ObjectAction.EXERTED_AS_IT_ATTACKS, ObjectRelation.THIS);
+    }
+
     /** "Whenever you collect evidence" */
     public static PlayerActionTrigger youCollectEvidence() {
         return new PlayerActionTrigger(PlayerActionTrigger.PlayerAction.COLLECTS_EVIDENCE, PlayerRelation.YOU);

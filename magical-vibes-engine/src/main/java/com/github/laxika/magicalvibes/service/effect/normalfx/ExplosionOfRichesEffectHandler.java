@@ -1,11 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToRandomOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExplosionOfRichesEffect;
@@ -13,7 +14,6 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ExplosionOfRichesEffectHandler implements NormalEffectHandlerBean {
 
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final GameLogService gameLogService;
 
@@ -91,25 +92,21 @@ public class ExplosionOfRichesEffectHandler implements NormalEffectHandlerBean {
         return gameData.cardsDrawnThisTurn.getOrDefault(playerId, 0) - before;
     }
 
+    /**
+     * "Whenever a card is drawn this way": one reflexive ability for each card drawn (CR 603.12), each put on the stack
+     * by the door, which picks its "target opponent chosen at random" as it goes there (CR 603.3d).
+     */
     private void queueDamageTriggers(GameData gameData, Card sourceCard, UUID controllerId, int count) {
-        List<UUID> opponents = AnyOpponentMayTakeDamageSacrificeSourceEffectHandler
-                .apnapOpponents(gameData, controllerId);
-        if (opponents.isEmpty()) {
+        if (AnyOpponentMayTakeDamageSacrificeSourceEffectHandler.apnapOpponents(gameData, controllerId).isEmpty()) {
             return;
         }
-
+        StackEntry resolving = ReflexiveAbilitySupport.resolvingEntryOf(gameData, sourceCard, null);
         for (int i = 0; i < count; i++) {
-            UUID targetId = opponents.get(ThreadLocalRandom.current().nextInt(opponents.size()));
-            DealDamageToRandomOpponentEffect damage = DealDamageToRandomOpponentEffect.targeted(5);
-            gameData.enqueueTrigger(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    sourceCard,
-                    controllerId,
-                    sourceCard.getName() + "'s reflexive ability",
-                    new ArrayList<>(List.of(damage)),
-                    targetId,
-                    (UUID) null));
             gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
+            triggeredAbilityStackService.putMade(gameData, ReflexiveAbilitySupport.recordFor(gameData, resolving,
+                    sourceCard, controllerId, List.of(DealDamageToRandomOpponentEffect.targeted(5)),
+                    sourceCard.getName() + "'s reflexive ability", null));
         }
     }
+
 }

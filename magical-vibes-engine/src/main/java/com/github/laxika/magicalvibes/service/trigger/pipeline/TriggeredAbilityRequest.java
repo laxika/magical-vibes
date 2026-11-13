@@ -32,11 +32,14 @@ import java.util.UUID;
  * @param creatureDying    whether a creature dying caused the ability to trigger, which "if a creature dying causes a
  *                         triggered ability to trigger, it triggers an additional time" effects count (Teysa Karlov):
  *                         not for an ability that triggers on the sacrifice that made the creature die
+ * @param emblemAbility    whether the ability is an emblem's (CR 114.4), which the effects that make an emblem's
+ *                         creature-death ability trigger an additional time count; an emblem isn't a permanent
+ *                         (CR 110.1), so no other "triggers an additional time" effect does
  */
 public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard, Permanent sourcePermanent,
                                       UUID controllerId, String description, ConditionContext ifContext,
                                       TriggerRecord record, AttackCause attack, TriggerContext event,
-                                      UUID limitCreatureId, boolean creatureDying) {
+                                      UUID limitCreatureId, boolean creatureDying, boolean emblemAbility) {
 
     public TriggeredAbilityRequest {
         Objects.requireNonNull(ability, "ability");
@@ -52,13 +55,13 @@ public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard,
                                    UUID controllerId, String description, ConditionContext ifContext,
                                    TriggerRecord record) {
         this(ability, sourceCard, sourcePermanent, controllerId, description, ifContext, record, AttackCause.NONE,
-                null, null, false);
+                null, null, false, false);
     }
 
     /** This request for an ability creatures attacking caused to trigger, its source not among them. */
     public TriggeredAbilityRequest causedByAttack() {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, AttackCause.ATTACK, event, limitCreatureId, creatureDying);
+                record, AttackCause.ATTACK, event, limitCreatureId, creatureDying, emblemAbility);
     }
 
     /**
@@ -68,13 +71,13 @@ public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard,
      */
     public TriggeredAbilityRequest causedBySourceAttacking() {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, AttackCause.SOURCE_ATTACKED, event, limitCreatureId, creatureDying);
+                record, AttackCause.SOURCE_ATTACKED, event, limitCreatureId, creatureDying, emblemAbility);
     }
 
     /** This request with {@code event} as the event the "triggers an additional time" effects judge. */
     public TriggeredAbilityRequest withEvent(TriggerContext event) {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, attack, event, limitCreatureId, creatureDying);
+                record, attack, event, limitCreatureId, creatureDying, emblemAbility);
     }
 
     /**
@@ -83,13 +86,19 @@ public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard,
      */
     public TriggeredAbilityRequest withLimitCreature(UUID creatureId) {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, attack, event, creatureId, creatureDying);
+                record, attack, event, creatureId, creatureDying, emblemAbility);
     }
 
     /** This request for an ability a creature dying caused to trigger (other than by being sacrificed). */
     public TriggeredAbilityRequest withCreatureDying() {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, attack, event, limitCreatureId, true);
+                record, attack, event, limitCreatureId, true, emblemAbility);
+    }
+
+    /** This request for an ability of an emblem (CR 114.4). */
+    public TriggeredAbilityRequest ofEmblem() {
+        return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
+                record, attack, event, limitCreatureId, creatureDying, true);
     }
 
     /** Whether creatures attacking caused the ability to trigger (CR 508.3a). */

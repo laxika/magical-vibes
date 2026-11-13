@@ -1060,8 +1060,6 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleRedirectPlayerDamageSourceChoice(gameData, permanentId, redirectToPlayer);
         } else if (context instanceof PermanentChoiceContext.ReflectDamageToSourceControllerChoice reflectDamage) {
             battlefieldHandler.handleReflectDamageToSourceControllerChoice(gameData, permanentId, reflectDamage);
-        } else if (context instanceof PermanentChoiceContext.MayAbilityTriggerTarget mat) {
-            triggerHandler.handleMayAbilityTrigger(gameData, permanentId, mat);
         } else if (context instanceof PermanentChoiceContext.RandomOpponentDamageChoice randomDamage) {
             triggerHandler.handleRandomOpponentDamageChoice(gameData, permanentId, randomDamage);
         } else if (context instanceof PermanentChoiceContext.EarthbendThenFightTarget earthbendFight) {

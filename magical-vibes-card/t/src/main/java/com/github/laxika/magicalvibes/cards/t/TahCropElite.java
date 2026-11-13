@@ -2,11 +2,8 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AKH", collectorNumber = "31")
@@ -14,15 +11,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TahCropElite extends Card {
 
     public TahCropElite() {
-        // Exert: "You may exert this creature as it attacks. When you do, creatures you control get
-        // +1/+1 until end of turn." Modeled as an optional attack trigger (matching Glory-Bound
-        // Initiate). Choosing to exert also keeps the creature tapped through its next untap step.
-        addTrigger(Triggers.attacks(), new MayEffect(
-                SequenceEffect.of(
-                        SkipNextUntapEffect.exert(),
-                        new QueueReflexiveAbilityEffect(new BoostAllOwnCreaturesEffect(1, 1))
-                ),
-                "Exert Tah-Crop Elite as it attacks? (Creatures you control get +1/+1 until end of turn.)"
-        ));
+        addStaticEffect(new ExertAsItAttacksEffect());
+        addTrigger(Triggers.exertedAsItAttacks(), new BoostAllOwnCreaturesEffect(1, 1));
     }
 }

@@ -31,15 +31,13 @@ class TwinfernoTest extends BaseCardTest {
         harness.castModalInstant(player1, 0, 0, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount)
-                .containsEntry(player1.getId(), 1);
+        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(1);
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
 
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount)
-                .doesNotContainKey(player1.getId());
+        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
     }
 
     @Test

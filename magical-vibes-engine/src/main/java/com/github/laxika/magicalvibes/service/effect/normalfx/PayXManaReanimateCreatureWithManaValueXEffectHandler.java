@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -11,8 +12,6 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaReanimateCreatureWithManaValueXEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -21,13 +20,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -46,9 +43,9 @@ import java.util.UUID;
 public class PayXManaReanimateCreatureWithManaValueXEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
-    private final PredicateEvaluationService predicateEvaluationService;
 
     /** "Creature card with mana value X": X is the X paid, which the reflexive ability's entry has as its X. */
     private static final CardPredicate CREATURE_WITH_MANA_VALUE_X = new CardAllOfPredicate(List.of(
@@ -127,54 +124,10 @@ public class PayXManaReanimateCreatureWithManaValueXEffectHandler implements Nor
         StackEntry record = ReflexiveAbilitySupport.record(
                 gameData, entry, List.of(returnEffect), sourceCard.getName() + "'s ability");
         record.setXValue(x);
-        ReflexiveAbilitySupport.route(gameData, record,
-                () -> chooseReflexiveTarget(gameData, entry, returnEffect, controllerId, x));
+        // "When you do" is an ability of its own (CR 603.12): its graveyard target is chosen as it goes on the stack,
+        // against the X paid.
+        triggeredAbilityStackService.putMade(gameData, record);
     }
-
-    private void chooseReflexiveTarget(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect returnEffect,
-                                       UUID controllerId, int x) {
-        Card sourceCard = entry.getCard();
-        List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
-        List<Integer> matchingIndices = new ArrayList<>();
-        if (graveyard != null) {
-            for (int i = 0; i < graveyard.size(); i++) {
-                if (predicateEvaluationService.matchesCardPredicate(
-                        graveyard.get(i), returnEffect.filter(), sourceCard.getId(), gameData, controllerId,
-                        entry.getSourcePermanentId(), null, x)) {
-                    matchingIndices.add(i);
-                }
-            }
-        }
-
-        if (matchingIndices.isEmpty()) {
-            gameLogService.append(gameData, GameLog.cardThen(sourceCard,
-                    "'s ability has no creature card with mana value " + x + " to target."));
-            log.info("Game {} - {} reflexive reanimate trigger has no legal target (X={})",
-                    gameData.id, sourceCard.getName(), x);
-            return;
-        }
-
-        String description = sourceCard.getName() + "'s ability";
-        if (matchingIndices.size() == 1) {
-            Card targetCard = graveyard.get(matchingIndices.getFirst());
-            // Zone-aware entry: the target lives in the graveyard, so CR 608.2b legality on
-            // resolution must look there rather than on the battlefield.
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
-                    new ArrayList<>(List.of(returnEffect)), x, targetCard.getId(),
-                    entry.getSourcePermanentId(), null, Zone.GRAVEYARD, null, null));
-            gameLogService.append(gameData, GameLog.builder().card(sourceCard)
-                    .text("'s ability targets ").card(targetCard).text(" in graveyard.").build());
-            return;
-        }
-
-        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
-                .builder(controllerId, matchingIndices, GraveyardChoiceDestination.MAY_ABILITY_TARGET,
-                        "Choose a creature card with mana value " + x + " to return to the battlefield.")
-                .mayAbilityContext(sourceCard, controllerId, List.of(returnEffect), entry.getSourcePermanentId())
-                .build());
-    }
-
 
     private void beginXPrompt(GameData gameData, UUID controllerId, String cardName) {
         int maxX = maxPotentialX(gameData, controllerId);

@@ -3,6 +3,15 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AnointedProcession;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandThenFightEffect;
+import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
+import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
+import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -77,7 +86,7 @@ import static org.assertj.core.api.Assertions.fail;
  * returned to its owner's hand, another creature is sacrificed, a permanent is exiled), the accepted "you may" of
  * the resolving ability, a paid cost's "if you do", and a target group of the card walked target by target.</p>
  */
-@CardUsed({GrizzlyBears.class, AirElemental.class, AnointedProcession.class})
+@CardUsed({GrizzlyBears.class, AirElemental.class, AnointedProcession.class, Divination.class, Forest.class})
 class ReflexiveRouteRecordTest extends BaseCardTest {
 
     private static final Pattern RECORD_FIELD_NAME = Pattern.compile("^(triggering|event)[A-Z].*|.*AtTrigger$");
@@ -118,7 +127,21 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
                 new CardTypePredicate(CardType.CREATURE), effect)),
         MAY_THEN(effect -> new MayEffect(new QueueReflexiveAbilityEffect(effect), "Do it?")),
         PAID_COST_THEN(effect -> new ForcedCostOrElseEffect(new PayLifeCost(1), List.of(), true,
-                List.of(new QueueReflexiveAbilityEffect(effect))));
+                List.of(new QueueReflexiveAbilityEffect(effect)))),
+        LIBRARY_FOLLOW_UP(effect -> LookAtTopCardsEffect.mayPutMatchingOntoBattlefieldRestOnBottomRandom(3,
+                new CardTypePredicate(CardType.CREATURE), new LibrarySelectionFollowUp() {
+                    @Override
+                    public CardEffect effect() {
+                        return effect;
+                    }
+
+                    @Override
+                    public String prompt() {
+                        return "Follow up?";
+                    }
+                })),
+        AFTER_CAST(effect -> new CastTargetInstantOrSorceryFromGraveyardEffect(GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
+                true, false, new CardTypePredicate(CardType.SORCERY), new QueueReflexiveAbilityEffect(effect)));
 
         private final Function<CardEffect, CardEffect> wrap;
 
@@ -175,7 +198,11 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
                 Arguments.of(Continuation.MAY_THEN, Route.GRAVEYARD_CARD),
                 Arguments.of(Continuation.PAID_COST_THEN, Route.PLAIN),
                 Arguments.of(Continuation.PAID_COST_THEN, Route.TARGET),
-                Arguments.of(Continuation.PAID_COST_THEN, Route.GRAVEYARD_CARD));
+                Arguments.of(Continuation.PAID_COST_THEN, Route.GRAVEYARD_CARD),
+                Arguments.of(Continuation.LIBRARY_FOLLOW_UP, Route.PLAIN),
+                Arguments.of(Continuation.LIBRARY_FOLLOW_UP, Route.TARGET),
+                Arguments.of(Continuation.AFTER_CAST, Route.PLAIN),
+                Arguments.of(Continuation.AFTER_CAST, Route.TARGET));
     }
 
     private Permanent target;
@@ -204,7 +231,14 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
         for (int i = 0; i < 3; i++) {
             graveyard.add(new GrizzlyBears());
         }
+        if (continuation == Continuation.AFTER_CAST) {
+            graveyard.add(new Divination());
+        }
         harness.setGraveyard(player1, graveyard);
+        if (continuation == Continuation.LIBRARY_FOLLOW_UP) {
+            harness.setLibrary(player1, new ArrayList<>(List.of(new GrizzlyBears(), new GrizzlyBears(),
+                    new GrizzlyBears(), new GrizzlyBears())));
+        }
         Card inHand = new GrizzlyBears();
         harness.setHand(player1, List.of(inHand));
         target = addCreatureReady(player2, new GrizzlyBears());
@@ -214,6 +248,10 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
         source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
         source.setAttacking(true);
         harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
+        // "Cast target sorcery card from your graveyard": the card is chosen as the ability goes on the stack.
+        for (int round = 0; round < 2 && gd.interaction.isAwaitingInput(); round++) {
+            answerOnce();
+        }
 
         List<StackEntry> made = entriesOf(fixture);
         assertThat(made).as("the combat damage ability on the stack").hasSize(1);
@@ -226,7 +264,8 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
             answerOnce();
         }
 
-        List<StackEntry> reflexive = entriesOf(fixture);
+        List<StackEntry> reflexive = entriesOf(fixture).stream()
+                .filter(candidate -> candidate.getEntryType() == StackEntryType.TRIGGERED_ABILITY).toList();
         assertThat(reflexive)
                 .as("the reflexive ability on the stack; the game is waiting for %s", gd.interaction.activeInteraction())
                 .hasSize(1);
@@ -264,6 +303,83 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
                     + " ability that made it (field: ability -> reflexive ability):\n  "
                     + String.join("\n  ", differences));
         }
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("exertRoutes")
+    @DisplayName("The \"when you do\" of exerting a creature as it attacks records the exerted creature on every route")
+    void exertReflexiveAbilityRecordsTheAttack(Route route) {
+        Card fixture = new Card();
+        fixture.setName("Exert Fixture " + route);
+        fixture.setType(CardType.CREATURE);
+        fixture.setManaCost("{1}");
+        fixture.setPower(2);
+        fixture.setToughness(2);
+        fixture.addStaticEffect(new ExertAsItAttacksEffect());
+        fixture.addTrigger(Triggers.exertedAsItAttacks(), route.effect());
+        harness.setGraveyard(player1, new ArrayList<>(List.of(new GrizzlyBears())));
+        fodder = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, fixture);
+        target = addCreatureReady(player2, new GrizzlyBears());
+        declareAttackers(player1, List.of(1));
+        for (int round = 0; round < 8 && gd.interaction.isAwaitingInput(); round++) {
+            answerOnce();
+        }
+
+        List<StackEntry> reflexive = entriesOf(fixture);
+        assertThat(reflexive)
+                .as("the reflexive ability on the stack; the game is waiting for %s", gd.interaction.activeInteraction())
+                .hasSize(1);
+        StackEntry entry = reflexive.getFirst();
+        assertThat(entry.getSourcePermanentSnapshot()).as("the exerted creature as it attacked").isNotNull();
+        assertThat(entry.getSourcePermanentSnapshot().getCard().getName()).isEqualTo(fixture.getName());
+        if (route != Route.PLAIN) {
+            assertThat(entry.getTargetId() != null
+                    || entry.getTargetCardIds() != null && !entry.getTargetCardIds().isEmpty())
+                    .as("the %s route chose a target", route).isTrue();
+        }
+    }
+
+    static Stream<Route> exertRoutes() {
+        return Stream.of(Route.PLAIN, Route.TARGET, Route.GRAVEYARD_CARD);
+    }
+
+    @Test
+    @DisplayName("Earthbend's \"when you do\" fight records the trigger event of the ability that made it")
+    void earthbendFightRecordsTheTriggerEvent() {
+        Card fixture = new Card();
+        fixture.setName("Reflexive Earthbend Fixture");
+        fixture.setType(CardType.CREATURE);
+        fixture.setManaCost("{1}");
+        fixture.setPower(2);
+        fixture.setToughness(2);
+        fixture.target(TargetFilters.landYouControl())
+                .addTrigger(Triggers.dealsCombatDamageToPlayer(), new EarthbendTargetLandThenFightEffect(1));
+        Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
+        target = addCreatureReady(player2, new GrizzlyBears());
+        target.tap();
+        fodder = addCreatureReady(player1, new GrizzlyBears());
+        Permanent source = addCreatureReady(player1, fixture);
+        source.setAttacking(true);
+        harness.withAutoStop(TurnStep.COMBAT_DAMAGE, () -> resolveCombat());
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, land.getId());
+        }
+        StackEntry parent = new StackEntry(entriesOf(fixture).getFirst());
+
+        harness.passBothPriorities();
+        for (int round = 0; round < 8 && gd.interaction.isAwaitingInput(); round++) {
+            answerOnce();
+        }
+
+        List<StackEntry> reflexive = entriesOf(fixture);
+        assertThat(reflexive)
+                .as("the fight on the stack; the game is waiting for %s", gd.interaction.activeInteraction())
+                .hasSize(1);
+        assertThat(reflexive.getFirst().getTargetIds()).as("the fighting creatures").contains(target.getId());
+        Map<String, String> expected = record(parent);
+        Map<String, String> actual = record(reflexive.getFirst());
+        assertThat(actual).as("the fight records the earthbend ability's event").isEqualTo(expected);
     }
 
     @Test
@@ -410,6 +526,22 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
         answers.add(() -> harness.handleMultipleCardsChosen(player1, graveyardCreature));
         answers.add(() -> harness.handleGraveyardCardChosen(player1, 0));
         answers.add(() -> harness.handleMayAbilityChosen(player1, true));
+        // A library card or graveyard card the active choice offers: the first it allows.
+        var libraryChoice = gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        if (libraryChoice != null && !libraryChoice.validCardIds().isEmpty()) {
+            answers.addFirst(() -> harness.handleMultipleCardsChosen(player1,
+                    List.of(libraryChoice.validCardIds().getFirst())));
+        }
+        var multiGraveyardChoice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        if (multiGraveyardChoice != null && !multiGraveyardChoice.cards().isEmpty()) {
+            answers.addFirst(() -> harness.handleMultipleCardsChosen(player1,
+                    List.of(multiGraveyardChoice.cards().getFirst().getId())));
+        }
+        var graveyardChoice = gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        if (graveyardChoice != null && !graveyardChoice.validIndices().isEmpty()) {
+            answers.addFirst(() -> harness.handleGraveyardCardChosen(player1,
+                    graveyardChoice.validIndices().getFirst()));
+        }
         for (Runnable answer : answers) {
             try {
                 answer.run();

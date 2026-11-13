@@ -1,28 +1,21 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerThenIfMilledEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -35,13 +28,11 @@ import org.springframework.stereotype.Component;
 public class MillControllerThenIfMilledEffectHandler implements NormalEffectHandlerBean {
 
     private final GraveyardService graveyardService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
-    private final TargetPredicateEvaluationService targetPredicateEvaluationService;
-    private final PlayerInputService playerInputService;
-    private final ValidTargetService validTargetService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -84,50 +75,9 @@ public class MillControllerThenIfMilledEffectHandler implements NormalEffectHand
     }
 
     private void beginReflexiveTargetChoice(GameData gameData, StackEntry entry, CardEffect effect) {
-        // The ability records what the resolving entry was about whichever way it reaches the stack.
-        ReflexiveAbilitySupport.route(gameData,
-                ReflexiveAbilitySupport.record(gameData, entry, List.of(effect)),
-                () -> chooseReflexiveAbilityTarget(gameData, entry, effect));
-    }
-
-    private void chooseReflexiveAbilityTarget(GameData gameData, StackEntry entry, CardEffect effect) {
-        TargetSpec targetSpec = effect.targetSpec();
-        TargetPredicate targetPredicate = targetSpec.targetPredicate();
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId())
-                .withSourcePermanentId(entry.getSourcePermanentId());
-        List<UUID> validPermanents = new ArrayList<>();
-        if (targetSpec.admits(TargetPredicate.Kind.PERMANENT)) {
-            gameData.playerBattlefields.values().stream()
-                    .flatMap(List::stream)
-                    .filter(permanent -> targetPredicateEvaluationService.matchesPermanent(
-                            targetPredicate, permanent, filterContext))
-                    .filter(permanent -> !validTargetService.isBlockedByHexproofOrGrantedEffect(
-                            gameData, permanent, entry.getControllerId()))
-                    .map(Permanent::getId)
-                    .forEach(validPermanents::add);
-        }
-        List<UUID> validPlayers = targetSpec.admits(TargetPredicate.Kind.PLAYER)
-                ? gameData.orderedPlayerIds.stream()
-                        .filter(playerId -> targetPredicateEvaluationService.matchesPlayer(
-                                targetPredicate, playerId, entry.getControllerId(), gameData))
-                        .toList()
-                : List.of();
-        if (validPermanents.isEmpty() && validPlayers.isEmpty()) {
-            return;
-        }
-
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
-                entry.getCard(), entry.getControllerId(), List.of(effect), entry.getSourcePermanentId(),
-                entry.getSourcePermanentSnapshot(), entry.getEventValue(), entry.getXValue()));
-        String prompt = entry.getCard().getName() + "'s reflexive ability - Choose target.";
-        if (validPlayers.isEmpty()) {
-            playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), validPermanents, prompt);
-        } else {
-            playerInputService.beginAnyTargetChoice(
-                    gameData, entry.getControllerId(), validPermanents, validPlayers, prompt);
-        }
+        // "When you do" is an ability of its own (CR 603.12): its target is chosen as it goes on the stack, and it
+        // records what the resolving entry was about.
+        triggeredAbilityStackService.putMade(gameData, ReflexiveAbilitySupport.record(gameData, entry, List.of(effect)));
     }
 
     private void dispatch(GameData gameData, StackEntry entry, CardEffect effect) {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.c.CorruptedConviction;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.m.Murder;
@@ -27,6 +28,7 @@ class HaloForagerTest extends BaseCardTest {
         castHaloForager();
 
         harness.handleXValueChosen(player1, 1);
+        chooseGraveyardTarget(shock);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
@@ -45,6 +47,7 @@ class HaloForagerTest extends BaseCardTest {
         castHaloForager();
 
         harness.handleXValueChosen(player1, 1);
+        chooseGraveyardTarget(bolt);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
@@ -65,11 +68,11 @@ class HaloForagerTest extends BaseCardTest {
 
         harness.handleXValueChosen(player1, 1);
 
-        PendingInteraction.GraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(0, 1);
-        harness.handleGraveyardCardChosen(player1, 1);
+        assertThat(choice.cards()).containsExactlyInAnyOrder(shock, bolt);
+        harness.handleMultipleCardsChosen(player1, List.of(bolt.getId()));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
@@ -87,6 +90,7 @@ class HaloForagerTest extends BaseCardTest {
         castHaloForager();
 
         harness.handleXValueChosen(player1, 1);
+        chooseGraveyardTarget(shock);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, false);
 
@@ -112,6 +116,7 @@ class HaloForagerTest extends BaseCardTest {
         castHaloForager();
 
         harness.handleXValueChosen(player1, 1);
+        chooseOnlyGraveyardTarget();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
@@ -132,6 +137,7 @@ class HaloForagerTest extends BaseCardTest {
         castHaloForager();
 
         harness.handleXValueChosen(player1, 2);
+        chooseOnlyGraveyardTarget();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -149,6 +155,7 @@ class HaloForagerTest extends BaseCardTest {
         castHaloForager();
 
         harness.handleXValueChosen(player1, 1);
+        chooseGraveyardTarget(shock);
         harness.setGraveyard(player1, List.of());
         harness.setExile(player1, List.of(shock));
         harness.passBothPriorities();
@@ -193,6 +200,7 @@ class HaloForagerTest extends BaseCardTest {
         castHaloForager();
 
         harness.handleXValueChosen(player1, 2);
+        chooseOnlyGraveyardTarget();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -200,6 +208,21 @@ class HaloForagerTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Wrenn's Resolve");
         assertThat(gd.exiledCards).extracting(entry -> entry.card().getName())
                 .doesNotContain("Wrenn's Resolve");
+    }
+
+    /** The reflexive ability's one legal graveyard target, chosen as it goes on the stack (CR 603.3d). */
+    private void chooseOnlyGraveyardTarget() {
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.cards()).hasSize(1);
+        harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
+    }
+
+    /** The reflexive ability's graveyard target, chosen as it goes on the stack (CR 603.3d). */
+    private void chooseGraveyardTarget(Card card) {
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of(card.getId()));
     }
 
     private void castHaloForager() {

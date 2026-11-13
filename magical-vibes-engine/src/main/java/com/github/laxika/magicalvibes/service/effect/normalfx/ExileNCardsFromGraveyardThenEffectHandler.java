@@ -1,17 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -29,11 +26,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ExileNCardsFromGraveyardThenEffectHandler implements NormalEffectHandlerBean {
 
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final ExileService exileService;
     private final GraveyardService graveyardService;
-    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -112,17 +109,8 @@ public class ExileNCardsFromGraveyardThenEffectHandler implements NormalEffectHa
                 gameData.playerIdToName.get(controllerId) + " exiles " + cards.size()
                         + " cards from their graveyard."));
 
-        // The ability records what the resolving entry was about whichever way it reaches the stack.
-        StackEntry record = ReflexiveAbilitySupport.record(
-                gameData, entry, List.of(effect.thenEffect()), entry.getCard().getName() + "'s ability");
-        ReflexiveAbilitySupport.route(gameData, record, () -> {
-            if (effect.thenEffect().targetSpec().equals(TargetSpec.NONE)) {
-                gameData.stack.add(record);
-            } else {
-                gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                        entry.getCard(), controllerId, List.of(effect.thenEffect())));
-                triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
-            }
-        });
+        // "When you do" is an ability of its own (CR 603.12): the stack door chooses its target as it goes on the stack.
+        triggeredAbilityStackService.putMade(gameData, ReflexiveAbilitySupport.record(
+                gameData, entry, List.of(effect.thenEffect()), entry.getCard().getName() + "'s ability"));
     }
 }

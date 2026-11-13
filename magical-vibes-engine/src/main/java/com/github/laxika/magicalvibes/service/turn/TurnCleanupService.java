@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -81,6 +82,9 @@ public class TurnCleanupService {
     private final ThreadLocal<Boolean> checkingGrantedHandSizeEffects = ThreadLocal.withInitial(() -> false);
     private final ThreadLocal<Boolean> computingMaxHandSize = ThreadLocal.withInitial(() -> false);
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService triggeredAbilityStackService;
     @Autowired
     @Lazy
     private GameQueryService gameQueryService;
@@ -101,12 +105,11 @@ public class TurnCleanupService {
     public void applyCleanupResets(GameData gameData) {
         for (var delayed : gameData.drainDelayedActions(
                 DelayedCleanupTrigger.class)) {
-            var entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            var entry = TriggeredAbilityStackService.madeAbility(
                     delayed.sourceCard(), delayed.controllerId(),
                     delayed.sourceCard().getName() + "'s cleanup trigger", List.of(delayed.effect()));
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
         }
         permanentRemovalService.processDelayedPermanentActions(
                 gameData, DelayedPermanentActionKind.EXILE_TOKEN_AT_NEXT_CLEANUP);
@@ -179,15 +182,14 @@ public class TurnCleanupService {
         for (Permanent permanent : doomed) {
             permanent.setSacrificeAtNextCleanup(false);
             UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
-            var entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            var entry = TriggeredAbilityStackService.madeAbility(
                     permanent.getCard(), controllerId,
                     permanent.getCard().getName() + "'s cleanup trigger",
                     List.of(new SacrificePermanentsEffect(1,
                             new PermanentIsSpecificPermanentPredicate(permanent.getId()),
                             SacrificeRecipient.EACH_PLAYER)));
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
         }
     }
 
@@ -607,14 +609,9 @@ public class TurnCleanupService {
         gameData.playersMayPlayFaceUpCardsFromExileThisTurn.clear();
         gameData.playersPuttingCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurn.clear();
         gameData.spellCopyGrantsUntilEndOfTurn.clear();
-        gameData.pendingNextInstantSorceryCopyThisTurnCount.clear();
-        gameData.pendingNextInstantSorceryCopyThisTurnCountSource.clear();
-        gameData.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount.clear();
+        gameData.pendingNextInstantSorceryCopies.clear();
         gameData.pendingNextInstantSorceryStormThisTurnCount.clear();
         gameData.pendingNextInstantSorceryCastFromHandToHandThisTurnCount.clear();
-        gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues.clear();
-        gameData.pendingNextInstantSorceryCopyThisTurnDynamicCounts.clear();
-        gameData.pendingNextInstantSorceryCopyThisTurnDynamicSources.clear();
         gameData.pendingNextSpellCopyThisTurnCount.clear();
         gameData.pendingNextFilteredSpellCopiesThisTurn.clear();
         gameData.pendingNextXActivatedAbilityCopyThisTurnCount.clear();
@@ -624,7 +621,6 @@ public class TurnCleanupService {
         gameData.pendingNextInstantSorceryUncounterableThisTurnCount.clear();
         gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.clear();
         gameData.pendingNextLoyaltyAbilityCopySourcesThisTurn.clear();
-        gameData.pendingNextSpellOrLoyaltyCopyLinkedThisTurn.clear();
         // A retained id's "until end of turn" choice was made during another player's phase (Runed Terror ruling,
         // CR 514.2): it keeps its chosen type, and the id is put back when the retained state is re-applied below.
         Set<UUID> retainedTemporaryChosenSubtypes = Set.copyOf(retainedGameState.<UUID>elements(

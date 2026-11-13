@@ -3,11 +3,9 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,16 +14,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ChampionOfRhonas extends Card {
 
     public ChampionOfRhonas() {
-        // Exert: "You may exert this creature as it attacks. When you do, you may put a creature card
-        // from your hand onto the battlefield." Modeled as an optional attack trigger (matching
-        // Glorybringer): the outer MayEffect is the exert decision, which skips the next untap.
-        // The declinable hand-card choice covers the inner "you may put".
-        addTrigger(Triggers.attacks(), new MayEffect(
-                SequenceEffect.of(
-                        SkipNextUntapEffect.exert(),
-                        new QueueReflexiveAbilityEffect(new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature"))
-                ),
-                "Exert Champion of Rhonas as it attacks? (You may put a creature card from your hand onto the battlefield.)"
-        ));
+        addStaticEffect(new ExertAsItAttacksEffect());
+        addTrigger(Triggers.exertedAsItAttacks(), new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature"));
     }
 }

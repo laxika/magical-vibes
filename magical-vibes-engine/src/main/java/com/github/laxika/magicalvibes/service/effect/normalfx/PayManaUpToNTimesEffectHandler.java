@@ -1,25 +1,19 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.VirtualManaPool;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaUpToNTimesEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.effect.ReflexiveModalChoiceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -31,12 +25,9 @@ import java.util.UUID;
 public class PayManaUpToNTimesEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final ReflexiveModalChoiceService reflexiveModalChoiceService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
-    private final ETBTokenTargetService etbTokenTargetService;
-    private final TriggerCollectionService triggerCollectionService;
-    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -112,26 +103,8 @@ public class PayManaUpToNTimesEffectHandler implements NormalEffectHandlerBean {
         // the chosen number as its X.
         StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(thenEffect));
         record.setXValue(paymentCount);
-        ReflexiveAbilitySupport.route(gameData, record,
-                () -> chooseReflexiveAbilityTargets(gameData, entry, record, thenEffect, paymentCount));
-    }
-
-    private void chooseReflexiveAbilityTargets(GameData gameData, StackEntry entry, StackEntry record,
-                                               CardEffect thenEffect, int paymentCount) {
-        // "Choose up to that many": the number paid is the record's X, which the mode choice reads.
-        if (reflexiveModalChoiceService.beginModeChoice(gameData, record, thenEffect)) {
-            return;
-        }
-        if (thenEffect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
-            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    entry.getCard(), entry.getControllerId(), List.of(thenEffect), null, 0, 0, paymentCount));
-            triggerCollectionService.processNextSpellGraveyardTargetTrigger(gameData);
-            return;
-        }
-        gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                entry.getCard(), entry.getControllerId(), List.of(thenEffect), entry.getSourcePermanentId(),
-                List.of(), 0, 0, List.of(), paymentCount, List.of(), false));
-        etbTokenTargetService.processNextETBTokenMultiTargetTrigger(gameData);
+        // "Choose up to that many" reads the number paid, the record's X, as its modes are chosen.
+        triggeredAbilityStackService.putMade(gameData, record);
     }
 
     private int maxPotentialPayments(GameData gameData, UUID playerId,

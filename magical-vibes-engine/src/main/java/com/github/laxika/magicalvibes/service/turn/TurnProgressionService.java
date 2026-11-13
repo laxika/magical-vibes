@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -86,6 +87,9 @@ public class TurnProgressionService {
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService predicateEvaluationService;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService triggeredAbilityStackService;
     private final CombatService combatService;
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
@@ -692,8 +696,7 @@ public class TurnProgressionService {
                         pending.sourcePermanentId(), gambit, id -> findPermanentOnAnyBattlefield(gameData, id));
                 return;
             }
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
                     pending.sourceCard(),
                     pending.controllerId(),
                     pending.sourceCard().getName() + "'s additional combat trigger",

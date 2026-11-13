@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.c.ChildOfNight;
 import com.github.laxika.magicalvibes.cards.d.Disperse;
 import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
@@ -34,6 +35,7 @@ class IsarethTheAwakenerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities(); // resolve the attack trigger -> prompts for X
         harness.handleXValueChosen(player1, 2);
+        chooseOnlyGraveyardTarget();
         harness.passBothPriorities(); // resolve the reflexive return trigger
 
         Permanent returned = findPermanent(player1, "Greenwood Sentinel");
@@ -53,6 +55,7 @@ class IsarethTheAwakenerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 2);
+        chooseOnlyGraveyardTarget();
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Greenwood Sentinel");
@@ -74,7 +77,7 @@ class IsarethTheAwakenerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 2);
-        harness.handleGraveyardCardChosen(player1, 1); // Child of Night
+        chooseGraveyardTargetNamed("Child of Night");
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Child of Night")).isNotNull();
@@ -121,6 +124,7 @@ class IsarethTheAwakenerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 0);
+        chooseOnlyGraveyardTarget();
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Ornithopter");
@@ -139,6 +143,7 @@ class IsarethTheAwakenerTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         harness.handleXValueChosen(player1, 0);
+        chooseOnlyGraveyardTarget();
         resolveAllTriggers();
 
         harness.assertOnBattlefield(player1, "Ornithopter");
@@ -177,6 +182,7 @@ class IsarethTheAwakenerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 2);
+        chooseOnlyGraveyardTarget();
         harness.passBothPriorities();
 
         Permanent returned = findPermanent(player1, "Greenwood Sentinel");
@@ -203,6 +209,7 @@ class IsarethTheAwakenerTest extends BaseCardTest {
         declareAttackers(player1, List.of(0));
         harness.passBothPriorities();
         harness.handleXValueChosen(player1, 2);
+        chooseOnlyGraveyardTarget();
         harness.assertInGraveyard(player1, "Greenwood Sentinel");
         harness.castAndResolveInstant(player1, 0, isareth.getId());
         harness.assertInHand(player1, "Isareth the Awakener");
@@ -217,5 +224,23 @@ class IsarethTheAwakenerTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Greenwood Sentinel");
         assertThat(gd.exiledCards).extracting(entry -> entry.card().getName())
                 .contains("Greenwood Sentinel");
+    }
+
+    /** The reflexive ability's one legal graveyard target, chosen as it goes on the stack (CR 603.3d). */
+    private void chooseOnlyGraveyardTarget() {
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.cards()).hasSize(1);
+        harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
+    }
+
+    /** The reflexive ability's graveyard target named {@code name}, chosen as it goes on the stack (CR 603.3d). */
+    private void chooseGraveyardTargetNamed(String name) {
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of(choice.cards().stream()
+                .filter(card -> card.getName().equals(name)).findFirst().orElseThrow().getId()));
     }
 }

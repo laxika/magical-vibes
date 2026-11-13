@@ -76,6 +76,10 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
     @Autowired
     @org.springframework.context.annotation.Lazy
     private com.github.laxika.magicalvibes.service.effect.WaterbendPaymentService waterbendPaymentService;
+    @Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService
+            triggeredAbilityStackService;
 
     @Autowired
     public ForcedCostOrElseEffectHandler(DestructionSupport destructionSupport,
@@ -206,7 +210,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
         if (sourcePermanentSnapshot != null) {
             entry.setSourcePermanentSnapshot(sourcePermanentSnapshot);
         }
-        if (payerIsNotSourceController && !cumulativeUpkeep && effectResolutionService != null) {
+        if (payerIsNotSourceController && !cumulativeUpkeep) {
             // "That player may pay {cost}. If they do, they ..." is one resolution of the original
             // ability, not a new trigger; the paying player (not the source's controller) acts.
             effectResolutionService.resolveEffectsFrom(gameData, entry, 0);
@@ -217,7 +221,15 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
             }
             return;
         }
-        gameData.enqueueTrigger(entry);
+        if (echoPayment) {
+            // "When this creature's echo is paid, ..." (Shah of Naar Isle) is a triggered ability of its own, which the
+            // payment triggers (CR 603.2): it goes on the stack through the stack door.
+            triggeredAbilityStackService.putMade(gameData, entry);
+            return;
+        }
+        // "If you do, ..." is part of the resolution that asked for the cost (CR 608.2c), never an ability of its
+        // own: only a "when you do" among the effects (QueueReflexiveAbilityEffect) makes one (CR 603.12).
+        effectResolutionService.resolveNestedInParkedResolution(gameData, entry);
     }
 
     /**

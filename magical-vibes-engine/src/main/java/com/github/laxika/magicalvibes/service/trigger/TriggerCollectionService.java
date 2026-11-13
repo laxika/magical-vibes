@@ -593,14 +593,9 @@ public class TriggerCollectionService {
                 gameData.delayedActions.remove(delayed);
             }
 
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    delayed.sourceCard(),
-                    delayed.controllerId(),
-                    delayed.sourceCard().getName() + "'s delayed trigger",
-                    new ArrayList<>(delayed.resolvedEffects()),
-                    null,
-                    delayed.sourcePermanentId());
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(), delayed.controllerId(),
+                    delayed.sourceCard().getName() + "'s delayed trigger", delayed.resolvedEffects(),
+                    (UUID) null, delayed.sourcePermanentId());
             entry.setTriggeringCardId(spellCard.getId());
             entry.setTriggeringSpell(spellEntry);
             if (spellEntry != null) {
@@ -609,27 +604,11 @@ public class TriggerCollectionService {
             entry.setEventValue(spellManaValue(gameData, spellCard));
             entry.setSourcePermanentSnapshot(delayed.sourcePermanentSnapshot());
             entry.setNonTargeting(true);
-            gameData.handOffTriggerRecord(entry);
 
             if (delayed.targetFilter() != null) {
-                boolean optionalTarget = delayed.resolvedEffects().stream()
-                        .anyMatch(effect -> effect instanceof OptionalTargetEffect || effect.hasOptionalTarget());
-                gameData.queueInteraction(new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        delayed.sourceCard(),
-                        delayed.controllerId(),
-                        new ArrayList<>(delayed.resolvedEffects()),
-                        delayed.targetFilter() instanceof PlayerPredicateTargetFilter,
-                        delayed.targetFilter(),
-                        0,
-                        delayed.sourcePermanentId(),
-                        delayed.sourcePermanentSnapshot(),
-                        optionalTarget,
-                        null,
-                        null,
-                        delayed.controllerId(),
-                        spellManaValue(gameData, spellCard),
-                        null,
-                        false));
+                // Its target, restricted by the registration's filter, is chosen as it goes on the stack (CR 603.3d).
+                entry.setTargetFilter(delayed.targetFilter());
+                triggeredAbilityStackService.putMade(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardTextCard(
                         delayed.sourceCard(), "'s delayed trigger fires for ", spellCard, "."));
                 log.info("Game {} - {} delayed spell-cast trigger awaits a target for {}",
@@ -637,11 +616,32 @@ public class TriggerCollectionService {
                 continue;
             }
 
-            gameData.stack.add(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.cardTextCard(
                     delayed.sourceCard(), "'s delayed trigger fires for ", spellCard, "."));
             log.info("Game {} - {} delayed spell-cast trigger fires for {}",
                     gameData.id, delayed.sourceCard().getName(), spellCard.getName());
+        }
+    }
+
+    /**
+     * Uses up the loyalty-ability half of the delayed ability {@code link} names, whose instant-or-sorcery half just
+     * triggered ("copy the next instant or sorcery spell you cast or loyalty ability you activate this turn").
+     */
+    private static void removeLinkedLoyaltyCopies(GameData gameData, UUID playerId, UUID link) {
+        List<GameData.PendingCopySource> sources = gameData.pendingNextLoyaltyAbilityCopySourcesThisTurn.get(playerId);
+        if (sources == null) {
+            return;
+        }
+        int before = sources.size();
+        sources.removeIf(source -> link.equals(source.link()));
+        int removed = before - sources.size();
+        if (removed > 0) {
+            gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.computeIfPresent(playerId,
+                    (ignored, count) -> count - removed > 0 ? count - removed : null);
+        }
+        if (sources.isEmpty()) {
+            gameData.pendingNextLoyaltyAbilityCopySourcesThisTurn.remove(playerId);
         }
     }
 
@@ -980,16 +980,14 @@ public class TriggerCollectionService {
         int pathOfAncestryScries = gameData.getSpellCastPathOfAncestryManaSpent(spellCard.getId());
         gameData.clearSpellCastPathOfAncestryManaSpent(spellCard.getId());
         for (int i = 0; i < pathOfAncestryScries; i++) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    spellCard,
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(spellCard,
                     castingPlayerId,
                     "Path of Ancestry's ability",
                     new ArrayList<>(List.of(new ScryEffect(1)))
             );
             entry.setTriggeringCardId(spellCard.getId());
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
         }
         if (pathOfAncestryScries > 0) {
             gameLogService.append(gameData, GameLog.text("Path of Ancestry triggers."));
@@ -1137,15 +1135,13 @@ public class TriggerCollectionService {
         int pendingCreatureSpellCascades = gameData.consumeNextCreatureSpellCascade(
                 castingPlayerId, spellCard);
         for (int i = 0; i < pendingCreatureSpellCascades; i++) {
-            StackEntry cascadeTrigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    spellCard,
+            StackEntry cascadeTrigger = TriggeredAbilityStackService.madeAbility(spellCard,
                     castingPlayerId,
                     spellCard.getName() + "'s ability",
                     new ArrayList<>(List.of(new CascadeEffect())));
             cascadeTrigger.setTriggeringCardId(spellCard.getId());
             cascadeTrigger.setEventValue(spellManaValue(gameData, spellCard));
-            gameData.stack.add(cascadeTrigger);
+            triggeredAbilityStackService.putDelayed(gameData, cascadeTrigger);
             gameLogService.append(gameData, GameLog.cardThen(
                     spellCard, " has cascade from Sloppity Bilepiper."));
         }
@@ -1158,14 +1154,12 @@ public class TriggerCollectionService {
         // each goes on the stack above the spell as its own triggered ability.
         for (DelayedSpellCastTrigger delayed : gameData.consumeNextCreatureSpellDelayedTriggers(
                 castingPlayerId, spellCard)) {
-            StackEntry delayedTrigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    delayed.source(),
+            StackEntry delayedTrigger = TriggeredAbilityStackService.madeAbility(delayed.source(),
                     castingPlayerId,
                     delayed.source().getName() + "'s ability",
                     new ArrayList<>(List.of(delayed.effect())));
             delayedTrigger.setTriggeringCardId(spellCard.getId());
-            gameData.stack.add(delayedTrigger);
+            triggeredAbilityStackService.putDelayed(gameData, delayedTrigger);
             gameLogService.append(gameData, GameLog.abilityTriggers(delayed.source()));
             log.info("Game {} - delayed cast trigger of {} queued for {}",
                     gameData.id, delayed.source().getName(), spellCard.getName());
@@ -1204,17 +1198,11 @@ public class TriggerCollectionService {
             }
         }
 
-        // "When you next cast an instant or sorcery spell this turn, copy that spell"
-        // (e.g. Chandra, the Firebrand −2). Same one-shot shape as Primal Wellspring's trigger, but
-        // tracked in the turn-scoped counter so it survives mana drain.
-        Integer pendingTurnCopies = gameData.pendingNextInstantSorceryCopyThisTurnCount.get(castingPlayerId);
-        List<Integer> pendingMaxManaValues =
-                gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues.get(castingPlayerId);
-        List<DynamicAmount> pendingDynamicCounts =
-                gameData.pendingNextInstantSorceryCopyThisTurnDynamicCounts.get(castingPlayerId);
-        if ((pendingTurnCopies != null && pendingTurnCopies > 0
-                || pendingMaxManaValues != null && !pendingMaxManaValues.isEmpty()
-                || pendingDynamicCounts != null && !pendingDynamicCounts.isEmpty())
+        // "When you next cast an instant or sorcery spell this turn, copy that spell" (Chandra, the Firebrand's −2,
+        // Teach by Example, Sea Gate Stormcaller): each pending delayed ability that applies to the spell triggers
+        // and is used up, one stack object each (CR 603.7), with the object that made it as its source (CR 603.7e).
+        List<GameData.PendingSpellCopy> pendingCopies = gameData.pendingNextInstantSorceryCopies.get(castingPlayerId);
+        if (pendingCopies != null && !pendingCopies.isEmpty()
                 && (spellCard.hasType(CardType.INSTANT) || spellCard.hasType(CardType.SORCERY))) {
             StackEntry spellEntry = null;
             for (StackEntry se : gameData.stack) {
@@ -1224,85 +1212,46 @@ public class TriggerCollectionService {
                 }
             }
             if (spellEntry != null) {
-                int limitedCopies = 0;
-                if (pendingMaxManaValues != null) {
-                    int manaValue = spellCard.getManaValue();
-                    if (spellCard.getParsedManaCost() != null) {
-                        manaValue += spellEntry.getXValue() * spellCard.getParsedManaCost().getXSymbolCount();
-                    }
-                    for (int i = pendingMaxManaValues.size() - 1; i >= 0; i--) {
-                        if (manaValue <= pendingMaxManaValues.get(i)) {
-                            pendingMaxManaValues.remove(i);
-                            limitedCopies++;
+                int manaValue = spellCard.getManaValue();
+                if (spellCard.getParsedManaCost() != null) {
+                    manaValue += spellEntry.getXValue() * spellCard.getParsedManaCost().getXSymbolCount();
+                }
+                List<GameData.PendingSpellCopy> triggered = new ArrayList<>();
+                synchronized (pendingCopies) {
+                    for (GameData.PendingSpellCopy pending : List.copyOf(pendingCopies)) {
+                        int limitsMet = 0;
+                        for (int limit : pending.maxManaValues()) {
+                            if (manaValue <= limit) {
+                                limitsMet++;
+                            }
                         }
-                    }
-                    if (pendingMaxManaValues.isEmpty()) {
-                        gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues.remove(castingPlayerId);
+                        if (!pending.maxManaValues().isEmpty() && limitsMet == 0) {
+                            continue;
+                        }
+                        pendingCopies.remove(pending);
+                        triggered.add(pending.maxManaValues().isEmpty() ? pending
+                                : new GameData.PendingSpellCopy(pending.sourceCard(), pending.sourcePermanentId(),
+                                limitsMet, null, List.of(), pending.resolution(), pending.link()));
                     }
                 }
-                int unrestrictedCopies = pendingTurnCopies == null ? 0 : pendingTurnCopies;
-                if (pendingDynamicCounts != null) {
-                    List<Card> dynamicSources = gameData.pendingNextInstantSorceryCopyThisTurnDynamicSources
-                            .getOrDefault(castingPlayerId, List.of());
-                    for (int dynamicIndex = 0; dynamicIndex < pendingDynamicCounts.size(); dynamicIndex++) {
-                        DynamicAmount dynamicCount = pendingDynamicCounts.get(dynamicIndex);
-                        Card triggerSource = dynamicIndex < dynamicSources.size()
-                                && dynamicSources.get(dynamicIndex) != null
-                                ? dynamicSources.get(dynamicIndex) : spellCard;
-                        // The delayed trigger always triggers; how many copies it makes is counted as it resolves.
-                        gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                                triggerSource, castingPlayerId, "Copy " + spellCard.getName(),
-                                List.of(new CopyControllerCastSpellEffect(
-                                        new StackEntry(spellEntry), castingPlayerId, dynamicCount))));
+                StackEntry snapshot = new StackEntry(spellEntry);
+                for (GameData.PendingSpellCopy copy : triggered) {
+                    CopyControllerCastSpellEffect copyEffect = copy.dynamicCopies() != null
+                            // How many copies it makes is counted as it resolves.
+                            ? new CopyControllerCastSpellEffect(new StackEntry(spellEntry), castingPlayerId,
+                            copy.dynamicCopies())
+                            : new CopyControllerCastSpellEffect(snapshot, castingPlayerId, copy.copies());
+                    triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
+                            copy.sourceCard() != null ? copy.sourceCard() : spellCard, castingPlayerId,
+                            "Copy " + spellCard.getName(), List.of(copyEffect), 0, copy.sourcePermanentId()));
+                    if (copy.link() != null) {
+                        removeLinkedLoyaltyCopies(gameData, castingPlayerId, copy.link());
                     }
-                    gameData.pendingNextInstantSorceryCopyThisTurnDynamicCounts.remove(castingPlayerId);
-                    gameData.pendingNextInstantSorceryCopyThisTurnDynamicSources.remove(castingPlayerId);
                 }
-                int totalCopies = unrestrictedCopies + limitedCopies;
-                if (totalCopies > 0) {
-                    StackEntry snapshot = new StackEntry(spellEntry);
-                    Card countSource = unrestrictedCopies > 0
-                            ? gameData.pendingNextInstantSorceryCopyThisTurnCountSource
-                            .getOrDefault(castingPlayerId, spellCard) : spellCard;
-                    // Each one-copy delayed trigger (Teach by Example) triggers separately (CR 603.7); the
-                    // remaining unrestricted copies belong to a single multi-copy trigger ("copy it X times").
-                    int separateTriggers = Math.min(unrestrictedCopies, Math.max(0,
-                            gameData.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount
-                                    .getOrDefault(castingPlayerId, 0)));
-                    int multiCopies = unrestrictedCopies - separateTriggers;
-                    if (multiCopies > 0) {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY, countSource, castingPlayerId,
-                                "Copy " + spellCard.getName(),
-                                List.of(new CopyControllerCastSpellEffect(snapshot, castingPlayerId, multiCopies))));
-                    }
-                    for (int i = 0; i < separateTriggers; i++) {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY, countSource, castingPlayerId,
-                                "Copy " + spellCard.getName(),
-                                List.of(new CopyControllerCastSpellEffect(snapshot, castingPlayerId, 1))));
-                    }
-                    // The mana-value-limited copies the spell matches are one entry: a kicked Sea Gate
-                    // Stormcaller's "copy that spell twice instead" is two limits of one delayed ability, and the
-                    // list keeps no resolution to tell them from the limits of two Stormcallers.
-                    if (limitedCopies > 0) {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY, spellCard, castingPlayerId,
-                                "Copy " + spellCard.getName(),
-                                List.of(new CopyControllerCastSpellEffect(snapshot, castingPlayerId, limitedCopies))));
-                    }
-                    if (unrestrictedCopies > 0) {
-                        gameData.pendingNextInstantSorceryCopyThisTurnCount.remove(castingPlayerId);
-                        gameData.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount.remove(castingPlayerId);
-                        gameData.pendingNextInstantSorceryCopyThisTurnCountSource.remove(castingPlayerId);
-                        if (gameData.pendingNextSpellOrLoyaltyCopyLinkedThisTurn.remove(castingPlayerId)) {
-                            gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.remove(castingPlayerId);
-                            gameData.pendingNextLoyaltyAbilityCopySourcesThisTurn.remove(castingPlayerId);
-                        }
-                    }
+                if (!triggered.isEmpty()) {
                     gameLogService.append(gameData, GameLog.cardThen(spellCard, " is copied."));
                     log.info("Game {} - {} delayed spell-copy trigger(s) queued for {}",
-                            gameData.id, totalCopies, spellCard.getName());
+                            gameData.id, triggered.size(), spellCard.getName());
                 }
             }
         }
@@ -1347,9 +1296,7 @@ public class TriggerCollectionService {
                 // Each "copy the next spell you cast this turn" is a delayed triggered ability of the resolution
                 // that created it, so each is a stack object of its own (CR 603.7a).
                 for (int i = 0; i < pendingSpellCopies; i++) {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            spellCard,
+                    triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(spellCard,
                             castingPlayerId,
                             "Copy " + spellCard.getName(),
                             new ArrayList<>(List.of(new CopyControllerCastSpellEffect(
@@ -1400,9 +1347,7 @@ public class TriggerCollectionService {
                     // Each "when you next cast a ... spell this turn, copy it" is a delayed triggered ability of
                     // the resolution that created it, so each is a stack object of its own (CR 603.7a).
                     for (CopyNextSpellCastThisTurnEffect copyEffect : matchingCopies) {
-                        gameData.stack.add(new StackEntry(
-                                StackEntryType.TRIGGERED_ABILITY,
-                                spellCard,
+                        triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(spellCard,
                                 castingPlayerId,
                                 "Copy " + spellCard.getName(),
                                 new ArrayList<>(List.of(new CopyControllerCastSpellEffect(
@@ -1446,9 +1391,7 @@ public class TriggerCollectionService {
                     StackEntry snapshot = new StackEntry(spellEntry);
                     CopyControllerCastSpellEffect copyEffect =
                             new CopyControllerCastSpellEffect(snapshot, castingPlayerId);
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            spellCard,
+                    triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(spellCard,
                             castingPlayerId,
                             "Copy " + spellCard.getName(),
                             new ArrayList<>(List.of(copyEffect))
@@ -1562,9 +1505,7 @@ public class TriggerCollectionService {
                 // Each mana with "when you spend this mana to cast a spell, copy that spell" is a delayed triggered
                 // ability of the mana ability that added it, so each is a stack object of its own (CR 603.7a).
                 for (int i = 0; i < pendingSpellOrAbilityCopies; i++) {
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            spellCard,
+                    triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(spellCard,
                             castingPlayerId,
                             "Copy " + spellCard.getName(),
                             new ArrayList<>(List.of(new CopyControllerCastSpellEffect(
@@ -2521,18 +2462,14 @@ public class TriggerCollectionService {
                 continue;
             }
 
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.sourceCard(),
-                    watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(watcher.effect())));
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s ability", temporaryEffects(watcher));
             entry.setTargetId(discardingPlayerId);
             entry.setNonTargeting(true);
             if (discardedCard != null) {
                 entry.setEventCardIds(List.of(discardedCard.getId()));
             }
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} temporary global discard trigger fires", gameData.id,
                     watcher.sourceCard().getName());
@@ -2890,8 +2827,8 @@ public class TriggerCollectionService {
                 continue;
             }
             Trigger anyCombatDamage = CombatWatch.ON_ANY_CREATURE_COMBAT_DAMAGE_TO_PLAYER.trigger();
-            CombatAbilityReader.CombatEffect read = CombatAbilityReader.read(watcher.ability(), anyCombatDamage)
-                    .getFirst();
+            List<CombatAbilityReader.CombatEffect> reads = CombatAbilityReader.read(watcher.ability(), anyCombatDamage);
+            CombatAbilityReader.CombatEffect read = reads.getFirst();
             CombatAbilityReader.requireNoLimitOrMultiplicity(read, anyCombatDamage);
             if (read.filter() != null
                     && !predicateEvaluationService.matchesPermanentPredicate(creature, read.filter(),
@@ -2900,14 +2837,9 @@ public class TriggerCollectionService {
                             .withSourceControllerId(watcher.controllerId()))) {
                 continue;
             }
-            CardEffect resolvedEffect = read.effect();
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.sourceCard(),
-                    watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s triggered ability",
-                    new ArrayList<>(List.of(resolvedEffect)),
-                    damagedPlayerId,
+            List<CardEffect> resolvedEffects = CombatAbilityReader.effectsOf(reads);
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s triggered ability", resolvedEffects, damagedPlayerId,
                     creature.getId());
             entry.setTriggeringPermanentId(creature.getId());
             entry.setTriggeringPermanentControllerId(creatureControllerId);
@@ -2916,18 +2848,14 @@ public class TriggerCollectionService {
             // "That player" is the player dealt damage, recorded whatever the ability chooses.
             entry.setTriggeringPlayerId(damagedPlayerId);
             entry.setAttackedTargetId(damagedPlayerId);
-            gameData.handOffTriggerRecord(entry);
-            if (resolvedEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
+            if (resolvedEffects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT))) {
                 // The target is chosen as the trigger is put on the stack (CR 603.3d), by the watcher's
                 // controller; "that much" is the damage dealt.
-                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                        watcher.sourceCard(), watcher.controllerId(), List.of(resolvedEffect),
-                        creature.getId(), watcher.controllerId(), damagedPlayerId, creature.getId())
-                        .withEventValue(damageDealt).withTriggeringPlayer(damagedPlayerId));
+                triggeredAbilityStackService.putMade(gameData, entry);
                 gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
                 continue;
             }
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} temporary global ON_ANY_CREATURE_COMBAT_DAMAGE_TO_PLAYER trigger fires",
                     gameData.id, watcher.sourceCard().getName());
@@ -3187,18 +3115,14 @@ public class TriggerCollectionService {
                 }
                 Card source = emblem.sourceCard() != null ? emblem.sourceCard() : creature.getCard();
                 String description = emblemName(emblem);
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        source,
-                        emblem.controllerId(),
-                        description,
-                        new ArrayList<>(ability.effects().stream().map(EffectRegistration::effect).toList()));
-                entry.setTriggeringPermanentId(creature.getId());
-                entry.setTriggeringPermanentControllerId(creatureControllerId);
-                entry.setTriggeringPlayerId(damagedPlayerId);
-                entry.setEventValue(damageDealt);
-                entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                putEmblemAbility(gameData, emblem, ability, source, description,
+                        ConditionContext.forCard(source, emblem.controllerId()), entry -> {
+                            entry.setTriggeringPermanentId(creature.getId());
+                            entry.setTriggeringPermanentControllerId(creatureControllerId);
+                            entry.setTriggeringPlayerId(damagedPlayerId);
+                            entry.setEventValue(damageDealt);
+                            entry.setNonTargeting(true);
+                        }, false);
                 gameLogService.append(gameData, GameLog.text(description + " triggers."));
                 log.info("Game {} - {} triggers for combat damage dealt to a player", gameData.id, description);
             }
@@ -4194,9 +4118,7 @@ public class TriggerCollectionService {
                 : gameData.getDelayedActions(DelayedWatchedCreatureDealsDamage.class)) {
             if (!watch.watchedPermanentId().equals(sourcePermanentId)) continue;
 
-            StackEntry trigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watch.sourceCard(),
+            StackEntry trigger = TriggeredAbilityStackService.madeAbility(watch.sourceCard(),
                     watch.controllerId(),
                     watch.sourceCard().getName() + "'s delayed trigger",
                     new ArrayList<>(watch.effects()),
@@ -4204,7 +4126,7 @@ public class TriggerCollectionService {
                     (UUID) null);
             trigger.setNonTargeting(true);
             trigger.setEventValue(totalDamage);
-            gameData.stack.add(trigger);
+            triggeredAbilityStackService.putDelayed(gameData, trigger);
             gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
         }
     }
@@ -4225,9 +4147,7 @@ public class TriggerCollectionService {
                 : gameData.getDelayedActions(DelayedWatchedCreatureDealtDamageByAttackingCreature.class)) {
             if (!watch.watchedPermanentId().equals(damagedCreature.getId())) continue;
 
-            StackEntry trigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watch.sourceCard(),
+            StackEntry trigger = TriggeredAbilityStackService.madeAbility(watch.sourceCard(),
                     watch.controllerId(),
                     watch.sourceCard().getName() + "'s delayed trigger",
                     new ArrayList<>(watch.effects()),
@@ -4235,7 +4155,7 @@ public class TriggerCollectionService {
                     (UUID) null);
             trigger.setNonTargeting(true);
             trigger.setEventValue(damage);
-            gameData.stack.add(trigger);
+            triggeredAbilityStackService.putDelayed(gameData, trigger);
             gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
         }
     }
@@ -4877,9 +4797,7 @@ public class TriggerCollectionService {
                         watcher.controllerId(), watcher.sourceCard(), watcher.effect(), remainingUses));
             }
 
-            gameData.enqueueTrigger(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.sourceCard(),
+            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
                     watcher.controllerId(),
                     watcher.sourceCard().getName() + "'s ability",
                     new ArrayList<>(List.of(watcher.effect()))));
@@ -7261,9 +7179,7 @@ public class TriggerCollectionService {
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
             if (!watcher.ability().hasWatchedTrigger(watch.trigger())
                     || !sourcePermanentId.equals(watcher.watchedPermanentId())) continue;
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.sourceCard(),
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
                     watcher.controllerId(),
                     watcher.sourceCard().getName() + "'s delayed trigger",
                     new ArrayList<>(CombatAbilityReader.effects(List.of(watcher.ability()), watch.trigger())),
@@ -7271,7 +7187,7 @@ public class TriggerCollectionService {
                     sourcePermanentId);
             entry.setEventValue(totalDamage);
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
         }
     }
@@ -7426,9 +7342,7 @@ public class TriggerCollectionService {
                 continue;
             }
 
-            StackEntry trigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watch.sourceCard(),
+            StackEntry trigger = TriggeredAbilityStackService.madeAbility(watch.sourceCard(),
                     watch.controllerId(),
                     watch.sourceCard().getName() + "'s delayed trigger",
                     new ArrayList<>(watch.effects()),
@@ -7440,7 +7354,7 @@ public class TriggerCollectionService {
             trigger.setDamageSourceControllerId(
                     gameQueryService.findPermanentController(gameData, damagedCreature.getId()));
             trigger.setSourcePermanentSnapshot(new Permanent(damagedCreature));
-            gameData.enqueueTrigger(trigger);
+            triggeredAbilityStackService.putDelayed(gameData, trigger);
             gameLogService.append(gameData, GameLog.abilityTriggers(watch.sourceCard()));
             log.info("Game {} - {} delayed trigger fires after damage to watched creature",
                     gameData.id, watch.sourceCard().getName());
@@ -7488,7 +7402,8 @@ public class TriggerCollectionService {
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
             Trigger anyAttacks = CombatWatch.ON_ANY_CREATURE_ATTACKS.trigger();
             if (!watcher.ability().hasWatchedTrigger(anyAttacks)) continue;
-            CombatAbilityReader.CombatEffect read = CombatAbilityReader.read(watcher.ability(), anyAttacks).getFirst();
+            List<CombatAbilityReader.CombatEffect> reads = CombatAbilityReader.read(watcher.ability(), anyAttacks);
+            CombatAbilityReader.CombatEffect read = reads.getFirst();
             CombatAbilityReader.requireNoLimitOrMultiplicity(read, anyAttacks);
             // "Whenever a [filter] creature [you control] attacks this turn": the trigger's filter on the attacker, from
             // the registering player's point of view.
@@ -7502,23 +7417,24 @@ public class TriggerCollectionService {
                     ConditionContext.forPermanent(attacker, watcher.controllerId()))) {
                 continue;
             }
-            CardEffect triggeredEffect = read.effect();
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, watcher.sourceCard(),
-                    watcher.controllerId(), watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(triggeredEffect)), null, attacker.getId());
-            entry.setTargetId(attacker.getId());
-            entry.setSourcePermanentSnapshot(new Permanent(attacker));
-            entry.setNonTargeting(true);
-            gameData.handOffTriggerRecord(entry);
-            if (triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                        watcher.sourceCard(), watcher.controllerId(),
-                        new ArrayList<>(List.of(triggeredEffect)), null));
+            List<CardEffect> triggeredEffects = CombatAbilityReader.effectsOf(reads);
+            if (triggeredEffects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
+                    || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
+                // A target of its own ("target creature an opponent controls gets -1/-1") is chosen as it goes on the
+                // stack (CR 603.3d); the attacker is no object it acts on.
+                StackEntry targeted = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
+                        watcher.controllerId(), watcher.sourceCard().getName() + "'s ability", triggeredEffects);
+                targeted.setSourcePermanentSnapshot(new Permanent(attacker));
+                triggeredAbilityStackService.putMade(gameData, targeted);
                 gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
                 continue;
             }
-            gameData.enqueueTrigger(entry);
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s ability", triggeredEffects, attacker.getId(),
+                    attacker.getId());
+            entry.setSourcePermanentSnapshot(new Permanent(attacker));
+            entry.setNonTargeting(true);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
         }
     }
@@ -7542,20 +7458,14 @@ public class TriggerCollectionService {
                 continue;
             }
 
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.sourceCard(),
-                    watcher.controllerId(),
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
                     watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(CombatAbilityReader.effects(List.of(watcher.ability()),
-                            CombatWatch.ON_CREATURE_ATTACKS_YOU.trigger())),
-                    null,
-                    attacker.getId());
-            entry.setTargetId(attacker.getId());
+                    CombatAbilityReader.effects(List.of(watcher.ability()), CombatWatch.ON_CREATURE_ATTACKS_YOU.trigger()),
+                    attacker.getId(), attacker.getId());
             entry.setTriggeringPermanentId(attacker.getId());
             entry.setSourcePermanentSnapshot(new Permanent(attacker));
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} temporary attacks-you trigger fires for {} attacking",
                     gameData.id, watcher.sourceCard().getName(), attacker.getCard().getName());
@@ -7570,23 +7480,12 @@ public class TriggerCollectionService {
                 continue;
             }
 
-            CardEffect triggeredEffect = CombatAbilityReader.effects(List.of(watcher.ability()),
-                    CombatWatch.ON_ALLY_CREATURES_ATTACK.trigger()).getFirst();
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.sourceCard(), watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(triggeredEffect)));
+            List<CardEffect> triggeredEffects = CombatAbilityReader.effects(List.of(watcher.ability()),
+                    CombatWatch.ON_ALLY_CREATURES_ATTACK.trigger());
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s ability", triggeredEffects);
             entry.setNonTargeting(true);
-            gameData.handOffTriggerRecord(entry);
-            if (triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                    || triggeredEffect.targetSpec().admits(TargetPredicate.Kind.PLAYER)) {
-                gameData.queueInteraction(new PermanentChoiceContext.AttackTriggerTarget(
-                        watcher.sourceCard(), watcher.controllerId(),
-                        new ArrayList<>(List.of(triggeredEffect)), null));
-            } else {
-                gameData.enqueueTrigger(entry);
-            }
+            triggeredAbilityStackService.putMade(gameData, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} temporary ally attack trigger fires",
                     gameData.id, watcher.sourceCard().getName());
@@ -7622,6 +7521,18 @@ public class TriggerCollectionService {
         for (Permanent permanent : List.copyOf(battlefield)) {
             dispatchWatch(gameData, permanent, exertingPlayerId, ActionWatch.ON_CONTROLLER_EXERTS, context);
         }
+    }
+
+    /**
+     * The "when you do" of {@code exertedCreatureId}'s "you may exert this creature as it attacks" (CR 701.43d), the
+     * triggered ability linked to it (CR 607.2h), once its controller exerted it as it attacked.
+     */
+    public void checkExertedAsItAttacksTriggers(GameData gameData, UUID exertingPlayerId, Permanent exertedCreature) {
+        if (exertingPlayerId == null || exertedCreature == null) {
+            return;
+        }
+        dispatchWatch(gameData, exertedCreature, exertingPlayerId, ActionWatch.ON_EXERTED_AS_IT_ATTACKS,
+                new TriggerContext.Exert(exertingPlayerId, exertedCreature.getId()));
     }
 
     /**
@@ -7720,8 +7631,9 @@ public class TriggerCollectionService {
                 continue;
             }
             // A registered tap ability's filter is on the tapped permanent ("a creature an opponent controls").
-            TapAbilityReader.TapEffect tapRead = slot instanceof TapWatch tapWatch
-                    ? TapAbilityReader.read(watcher.ability(), tapWatch.trigger()).getFirst() : null;
+            List<TapAbilityReader.TapEffect> tapReads = slot instanceof TapWatch tapWatch
+                    ? TapAbilityReader.read(watcher.ability(), tapWatch.trigger()) : null;
+            TapAbilityReader.TapEffect tapRead = tapReads == null ? null : tapReads.getFirst();
             if (tapRead != null) {
                 TapAbilityReader.requireNotFirstTime(tapRead, ((TapWatch) slot).trigger());
                 TapAbilityReader.requireNoOneOrMore(tapRead, ((TapWatch) slot).trigger());
@@ -7741,9 +7653,10 @@ public class TriggerCollectionService {
             // A registered "creature you control deals combat damage to a player" ability is collected here with its
             // plain effect. Any other combat ability's filter on the triggering creature is the trigger's
             // (Benefactor's Draught's "a creature an opponent controls blocks").
-            CombatAbilityReader.CombatEffect combatRead = slot instanceof CombatWatch combatWatch
+            List<CombatAbilityReader.CombatEffect> combatReads = slot instanceof CombatWatch combatWatch
                     && slot != CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER
-                    ? CombatAbilityReader.read(watcher.ability(), combatWatch.trigger()).getFirst() : null;
+                    ? CombatAbilityReader.read(watcher.ability(), combatWatch.trigger()) : null;
+            CombatAbilityReader.CombatEffect combatRead = combatReads == null ? null : combatReads.getFirst();
             if (combatRead != null) {
                 CombatAbilityReader.requireNoLimitOrMultiplicity(combatRead, ((CombatWatch) slot).trigger());
                 if (combatRead.filter() != null) {
@@ -7758,8 +7671,9 @@ public class TriggerCollectionService {
                 }
             }
             // A registered damage ability's filter is on the damaged permanent ("a creature an opponent controls").
-            DamageAbilityReader.DamageEffect damageRead = slot instanceof DamageWatch damageWatch
-                    ? DamageAbilityReader.read(watcher.ability(), damageWatch.trigger()).getFirst() : null;
+            List<DamageAbilityReader.DamageEffect> damageReads = slot instanceof DamageWatch damageWatch
+                    ? DamageAbilityReader.read(watcher.ability(), damageWatch.trigger()) : null;
+            DamageAbilityReader.DamageEffect damageRead = damageReads == null ? null : damageReads.getFirst();
             if (damageRead != null) {
                 DamageAbilityReader.requireNoLimitOrMultiplicity(damageRead, ((DamageWatch) slot).trigger());
                 if (damageRead.filter() != null) {
@@ -7774,17 +7688,18 @@ public class TriggerCollectionService {
                 }
             }
             // A registered life ability (False Cure's "whenever a player gains life") is read without a count or limit.
-            CardEffect lifeEffect = slot instanceof LifeWatch lifeWatch
-                    ? LifeAbilityReader.effects(List.of(watcher.ability()), lifeWatch.trigger()).getFirst() : null;
-            CardEffect resolvedEffect = slot == CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER
-                    ? watcher.effect() : combatRead != null ? combatRead.effect()
-                    : damageRead != null ? damageRead.effect() : tapRead != null ? tapRead.effect()
-                    : lifeEffect;
-            if (resolvedEffect == null) {
+            List<CardEffect> lifeEffects = slot instanceof LifeWatch lifeWatch
+                    ? LifeAbilityReader.effects(List.of(watcher.ability()), lifeWatch.trigger()) : null;
+            List<CardEffect> resolvedEffects = slot == CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER
+                    ? temporaryEffects(watcher) : combatReads != null ? CombatAbilityReader.effectsOf(combatReads)
+                    : damageReads != null ? DamageAbilityReader.effectsOf(damageReads)
+                    : tapReads != null ? TapAbilityReader.effectsOf(tapReads)
+                    : lifeEffects;
+            if (resolvedEffects == null || resolvedEffects.isEmpty()) {
                 throw new IllegalStateException("No temporary global watcher is read for " + slot);
             }
 
-            enqueueTemporaryGlobalTrigger(gameData, watcher, resolvedEffect, targetId, eventValue);
+            enqueueTemporaryGlobalTrigger(gameData, watcher, resolvedEffects, targetId, eventValue);
         }
     }
 
@@ -7801,26 +7716,26 @@ public class TriggerCollectionService {
     private void enqueueTemporaryGlobalTrigger(GameData gameData,
                                                 TemporaryGlobalTriggeredAbility watcher,
                                                 UUID targetId, int eventValue) {
-        enqueueTemporaryGlobalTrigger(gameData, watcher, watcher.effect(), targetId, eventValue);
+        enqueueTemporaryGlobalTrigger(gameData, watcher, temporaryEffects(watcher), targetId, eventValue);
     }
 
     private void enqueueTemporaryGlobalTrigger(GameData gameData,
                                                 TemporaryGlobalTriggeredAbility watcher,
-                                                CardEffect effect,
+                                                List<CardEffect> effects,
                                                 UUID targetId, int eventValue) {
-        enqueueTemporaryGlobalTrigger(gameData, watcher, effect, targetId, eventValue, null);
+        enqueueTemporaryGlobalTrigger(gameData, watcher, effects, targetId, eventValue, null);
     }
 
+    /**
+     * Puts {@code watcher}'s ability, a delayed triggered ability with a stated duration (CR 603.7b), on the stack as
+     * {@code effects} for the event about {@code targetId}, the object or player it acts on without targeting it.
+     */
     private void enqueueTemporaryGlobalTrigger(GameData gameData,
                                                 TemporaryGlobalTriggeredAbility watcher,
-                                                CardEffect effect,
+                                                List<CardEffect> effects,
                                                 UUID targetId, int eventValue, UUID triggeringPermanentId) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                watcher.sourceCard(),
-                watcher.controllerId(),
-                watcher.sourceCard().getName() + "'s ability",
-                new ArrayList<>(List.of(effect)));
+        StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
+                watcher.sourceCard().getName() + "'s ability", effects);
         entry.setTargetId(targetId);
         entry.setEventValue(eventValue);
         entry.setLinkedExiledCardId(watcher.linkedExiledCardId());
@@ -7835,7 +7750,7 @@ public class TriggerCollectionService {
                 || watcher.ability().hasTrigger(TapWatch.ON_OPPONENT_PERMANENT_BECOMES_TAPPED.trigger())) {
             entry.setTriggeringPermanentId(targetId);
         }
-        gameData.enqueueTrigger(entry);
+        triggeredAbilityStackService.putDelayed(gameData, entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
         log.info("Game {} - {} temporary global {} trigger fires",
                 gameData.id, watcher.sourceCard().getName(), LegacySlots.label(watcher.ability()));
@@ -8689,9 +8604,7 @@ public class TriggerCollectionService {
                 && ability.getManaCost() != null && new ManaCost(ability.getManaCost()).hasX()) {
             StackEntry snapshot = new StackEntry(abilityEntry);
             for (int i = 0; i < pendingXCopies; i++) {
-                gameData.enqueueTrigger(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        abilityEntry.getCard(),
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(abilityEntry.getCard(),
                         activatingPlayerId,
                         "Copy " + abilityEntry.getCard().getName() + "'s ability",
                         new ArrayList<>(List.of(
@@ -8717,9 +8630,7 @@ public class TriggerCollectionService {
                 GameData.PendingCopySource source = i < sources.size() ? sources.get(i) : null;
                 Card copySourceCard = source != null ? source.card() : abilityEntry.getCard();
                 UUID copySourcePermanentId = source != null ? source.sourcePermanentId() : null;
-                gameData.enqueueTrigger(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        copySourceCard,
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(copySourceCard,
                         activatingPlayerId,
                         "Copy " + abilityEntry.getCard().getName() + "'s loyalty ability",
                         List.of(new CopyControllerActivatedAbilityEffect(snapshot, ability, activatingPlayerId)),
@@ -8729,9 +8640,12 @@ public class TriggerCollectionService {
             }
             gameData.pendingNextLoyaltyAbilityCopyThisTurnCount.remove(activatingPlayerId);
             gameData.pendingNextLoyaltyAbilityCopySourcesThisTurn.remove(activatingPlayerId);
-            if (gameData.pendingNextSpellOrLoyaltyCopyLinkedThisTurn.remove(activatingPlayerId)) {
-                gameData.pendingNextInstantSorceryCopyThisTurnCount.remove(activatingPlayerId);
-                gameData.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount.remove(activatingPlayerId);
+            // A delayed ability shared with the next instant or sorcery spell is used up (Repeated Reverberation).
+            Set<UUID> links = sources.stream().map(GameData.PendingCopySource::link)
+                    .filter(java.util.Objects::nonNull).collect(java.util.stream.Collectors.toSet());
+            List<GameData.PendingSpellCopy> spellCopies = gameData.pendingNextInstantSorceryCopies.get(activatingPlayerId);
+            if (spellCopies != null && !links.isEmpty()) {
+                spellCopies.removeIf(copy -> copy.link() != null && links.contains(copy.link()));
             }
         }
 
@@ -8742,9 +8656,7 @@ public class TriggerCollectionService {
                     .getOrDefault(activatingPlayerId, List.of());
             for (int i = 0; i < pendingExhaustCopies; i++) {
                 GameData.PendingCopySource source = i < sources.size() ? sources.get(i) : null;
-                gameData.enqueueTrigger(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        source != null ? source.card() : abilityEntry.getCard(),
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(source != null ? source.card() : abilityEntry.getCard(),
                         activatingPlayerId,
                         "Copy " + abilityEntry.getCard().getName() + "'s exhaust ability",
                         new ArrayList<>(List.of(
@@ -8770,9 +8682,7 @@ public class TriggerCollectionService {
                     FilterContext.of(gameData).withSourceControllerId(activatingPlayerId))) {
                 continue;
             }
-            gameData.enqueueTrigger(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    delayedCopy.sourceCard(),
+            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(delayedCopy.sourceCard(),
                     activatingPlayerId,
                     delayedCopy.sourceCard().getName() + "'s delayed ability",
                     new ArrayList<>(List.of(new CopyControllerActivatedAbilityEffect(
@@ -9143,33 +9053,15 @@ public class TriggerCollectionService {
                 }
                 Card source = emblem.sourceCard();
                 String description = emblemName(emblem);
-                List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect).toList();
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        source,
-                        gainingPlayerId,
-                        description,
-                        new ArrayList<>(effects));
-                entry.setEventValue(lifeGainedAmount);
-                if (effects.stream().anyMatch(effect -> effect.targetSpec() != TargetSpec.NONE)) {
-                    boolean playerTargetOnly = effects.stream()
-                            .noneMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT));
-                    queueTargetChoice(gameData, entry, new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                            source, gainingPlayerId, new ArrayList<>(effects), playerTargetOnly,
-                            ability.targetFilter(), 0, null, null, false, null, null, gainingPlayerId,
-                            (PlanarObject) null).withEventValue(lifeGainedAmount));
-                } else {
-                    gameData.enqueueTrigger(entry);
-                }
+                putEmblemAbility(gameData, emblem, ability, source, description,
+                        ConditionContext.forCard(source, gainingPlayerId).withEventValue(lifeGainedAmount),
+                        entry -> entry.setEventValue(lifeGainedAmount), false);
                 gameLogService.append(gameData, GameLog.text(description + " triggers."));
                 log.info("Game {} - {} triggers on life gain ({} life)",
                         gameData.id, description, lifeGainedAmount);
             }
         }
-        if (gameData.hasPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class)
-                && !gameData.interaction.isAwaitingInput()) {
-            processNextSpellTargetTrigger(gameData);
-        }
+        beginStackDoorChoices(gameData);
     }
 
     /** Fires triggers for a player's positive energy-counter change. */
@@ -9247,16 +9139,14 @@ public class TriggerCollectionService {
             if (!watcher.controllerId().equals(gainingPlayerId)) {
                 continue;
             }
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.sourceCard(),
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
                     watcher.controllerId(),
                     watcher.sourceCard().getName() + "'s ability",
                     new ArrayList<>(List.of(new LoseLifeEffect(new EventValue(), LoseLifeRecipient.EACH_OPPONENT))),
                     (UUID) null,
                     (UUID) null);
             entry.setEventValue(lifeGainedAmount);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} triggers (controller gained {} life), each opponent loses that much life",
                     gameData.id, watcher.sourceCard().getName(), lifeGainedAmount);
@@ -9991,14 +9881,13 @@ public class TriggerCollectionService {
                     || !dyingPermanent.getId().equals(watcher.watchedPermanentId())) {
                 return;
             }
-            CardEffect effect = ZoneChangeAbilityReader.strictEffect(watcher.ability());
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, watcher.sourceCard(),
-                    watcher.controllerId(), watcher.sourceCard().getName() + "'s ability", List.of(effect));
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s ability", temporaryEffects(watcher));
             entry.setTargetId(dyingControllerId);
             entry.setTriggeringPermanentId(dyingPermanent.getId());
             entry.setTriggeringPermanentControllerId(dyingControllerId);
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             return;
         }
         if (trigger.relation() == ObjectRelation.THIS) {
@@ -10033,16 +9922,12 @@ public class TriggerCollectionService {
 
     private void enqueueRegisteredCreatureDeathTrigger(GameData gameData, TemporaryGlobalTriggeredAbility watcher,
                                                        UUID targetId, int eventValue) {
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                watcher.sourceCard(),
-                watcher.controllerId(),
-                watcher.sourceCard().getName() + "'s ability",
-                new ArrayList<>(List.of(ZoneChangeAbilityReader.strictEffect(watcher.ability()))));
+        StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
+                watcher.sourceCard().getName() + "'s ability", temporaryEffects(watcher));
         entry.setTargetId(targetId);
         entry.setEventValue(eventValue);
         entry.setNonTargeting(true);
-        gameData.enqueueTrigger(entry);
+        triggeredAbilityStackService.putDelayed(gameData, entry);
         gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
         log.info("Game {} - {} temporary global creature-death trigger fires",
                 gameData.id, watcher.sourceCard().getName());
@@ -10233,18 +10118,15 @@ public class TriggerCollectionService {
                                                                  Permanent lastKnown, UUID controllerId) {
         Card source = emblem.sourceCard() != null ? emblem.sourceCard() : card;
         String description = emblemName(emblem);
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                source,
-                emblem.controllerId(),
-                description,
-                new ArrayList<>(ability.effects().stream().map(EffectRegistration::effect).toList()));
-        entry.setTriggeringCard(card.getId(), gameData.graveyardEntryVersion(card.getId()));
-        entry.setTriggeringPermanentId(lastKnown.getId());
-        entry.setTriggeringPermanent(lastKnown);
-        entry.setTriggeringPermanentControllerId(controllerId);
-        entry.setNonTargeting(true);
-        gameData.stack.add(entry);
+        long graveyardEntryVersion = gameData.graveyardEntryVersion(card.getId());
+        putEmblemAbility(gameData, emblem, ability, source, description,
+                ConditionContext.forCard(source, emblem.controllerId()), entry -> {
+                    entry.setTriggeringCard(card.getId(), graveyardEntryVersion);
+                    entry.setTriggeringPermanentId(lastKnown.getId());
+                    entry.setTriggeringPermanent(lastKnown);
+                    entry.setTriggeringPermanentControllerId(controllerId);
+                    entry.setNonTargeting(true);
+                }, false);
         gameLogService.append(gameData, GameLog.text(description + " triggers for " + card.getName()
                 + " put into a graveyard."));
         log.info("Game {} - {} triggers for {} put into a graveyard from the battlefield", gameData.id, description,
@@ -10282,9 +10164,7 @@ public class TriggerCollectionService {
         }
         if (spellEntry == null) return;
         for (int copyNumber = 0; copyNumber < copies; copyNumber++) {
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    spellCard,
+            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(spellCard,
                     castingPlayerId,
                     "Copy " + spellCard.getName(),
                     new ArrayList<>(List.of(new CopyControllerCastSpellEffect(
@@ -10311,9 +10191,7 @@ public class TriggerCollectionService {
         for (int i = 0; i < pendingCopies; i++) {
             CardEffect copyEffect = new CopyControllerActivatedAbilityEffect(
                     new StackEntry(abilityEntry), ability, activatingPlayerId);
-            gameData.enqueueTrigger(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    abilityEntry.getCard(),
+            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(abilityEntry.getCard(),
                     activatingPlayerId,
                     abilityEntry.getCard().getName() + "'s ability",
                     new ArrayList<>(List.of(copyEffect))
@@ -10430,15 +10308,13 @@ public class TriggerCollectionService {
             if (watcher.onlyOthers() && dyingPermanent.getId().equals(watcher.sourcePermanentId())) {
                 continue;
             }
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.sourceCard(),
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
                     watcher.controllerId(),
                     watcher.sourceCard().getName() + "'s ability",
                     new ArrayList<>(List.of(watcher.effect())),
                     (UUID) null,
                     watcher.sourcePermanentId());
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} triggers because a creature died",
                     gameData.id, watcher.sourceCard().getName());
@@ -10452,16 +10328,14 @@ public class TriggerCollectionService {
             if (dyingPermanent.getCounterCount(watcher.counterType()) <= 0) {
                 continue;
             }
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.sourceCard(),
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
                     watcher.controllerId(),
                     watcher.sourceCard().getName() + "'s ability",
                     new ArrayList<>(List.of(watcher.effect())),
                     (UUID) null,
                     (UUID) null);
             entry.setTriggeringPermanentId(dyingPermanent.getId());
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} triggers because its watched creature died",
                     gameData.id, watcher.sourceCard().getName());
@@ -10482,9 +10356,7 @@ public class TriggerCollectionService {
                     .getOrDefault(watcher.damageSourceId(), Set.of()).contains(dyingCardId)) {
                 continue;
             }
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.sourceCard(),
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
                     watcher.controllerId(),
                     watcher.sourceCard().getName() + "'s ability",
                     new ArrayList<>(List.of(watcher.effect())),
@@ -10493,7 +10365,7 @@ public class TriggerCollectionService {
             entry.setTriggeringCardId(dyingCardId);
             // "Its controller" is the dying creature's last-known controller (CR 608.2h), whatever the effects are.
             entry.setTriggeringPermanentControllerId(dyingCreatureControllerId);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} triggers because a creature it damaged died",
                     gameData.id, watcher.sourceCard().getName());
@@ -10515,17 +10387,10 @@ public class TriggerCollectionService {
     private void collectEmblemCreatureDeathTriggers(GameData gameData, Card dyingCard,
                                                      TriggerContext.CreatureDeath context) {
         for (Emblem emblem : List.copyOf(gameData.emblems)) {
-            int previousCopies = gameData.beginTriggeredAbilityCopies(1 +
-                    gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggersForEmblem(
-                            gameData, emblem.controllerId()));
-            try {
-                for (TriggeredAbility ability : emblem.triggeredAbilities()) {
-                    if (emblemSeesCreatureDie(gameData, emblem, ability, context)) {
-                        putEmblemDeathAbilityOnStack(gameData, emblem, ability, dyingCard, context);
-                    }
+            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
+                if (emblemSeesCreatureDie(gameData, emblem, ability, context)) {
+                    putEmblemDeathAbilityOnStack(gameData, emblem, ability, dyingCard, context);
                 }
-            } finally {
-                gameData.restoreTriggeredAbilityCopies(previousCopies);
             }
         }
     }
@@ -10551,36 +10416,17 @@ public class TriggerCollectionService {
                                               Card dyingCard, TriggerContext.CreatureDeath death) {
         Card source = emblem.sourceCard() != null ? emblem.sourceCard() : dyingCard;
         String description = emblemName(emblem);
-        List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect).toList();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                source,
-                emblem.controllerId(),
-                description,
-                new ArrayList<>(effects));
-        entry.setTriggeringCardId(dyingCard.getId());
-        if (death.dyingPermanent() != null) {
-            entry.setTriggeringPermanent(death.dyingPermanent());
-        }
-        entry.setTriggeringPermanentControllerId(death.dyingCreatureControllerId());
-        entry.setNonTargeting(true);
-        if (effects.stream().anyMatch(effect -> effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
-                || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER))) {
-            PermanentChoiceContext.DeathTriggerTarget choice = new PermanentChoiceContext.DeathTriggerTarget(
-                    source, emblem.controllerId(), new ArrayList<>(effects), null, null, ability.targetFilter());
-            gameData.handOffTriggerRecord(entry);
-            gameData.queueInteraction(death.dyingPermanent() != null
-                    ? choice.withTriggeringPermanent(death.dyingPermanent()) : choice);
-            gameLogService.append(gameData, GameLog.text(description + " triggers (a creature died)."));
-            log.info("Game {} - {} triggers for {} dying, awaiting its target", gameData.id, description,
-                    dyingCard.getName());
-            return;
-        }
-        if (effects.stream().anyMatch(effect -> effect.targetSpec() != TargetSpec.NONE)) {
-            throw new IllegalStateException(description + " has a death ability whose target its reader doesn't "
-                    + "choose: " + ability);
-        }
-        gameData.stack.add(entry);
+        // "If a creature dying causes a triggered ability of an emblem you control to trigger, it triggers an
+        // additional time": the stack door counts it for an emblem's creature-death ability.
+        putEmblemAbility(gameData, emblem, ability, source, description,
+                ConditionContext.forCard(source, emblem.controllerId()), entry -> {
+                    entry.setTriggeringCardId(dyingCard.getId());
+                    if (death.dyingPermanent() != null) {
+                        entry.setTriggeringPermanent(death.dyingPermanent());
+                    }
+                    entry.setTriggeringPermanentControllerId(death.dyingCreatureControllerId());
+                    entry.setNonTargeting(true);
+                }, true);
         gameLogService.append(gameData, GameLog.text(description + " triggers (a creature died)."));
         log.info("Game {} - {} triggers for {} dying", gameData.id, description, dyingCard.getName());
     }
@@ -10604,7 +10450,7 @@ public class TriggerCollectionService {
                 action -> action.watchedPermanentId().equals(target.getId()))) {
             CardEffect effect = delayed.effectsByDestination().get(destination);
             if (effect == null) continue;
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, delayed.sourceCard(),
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
                     delayed.controllerId(), delayed.sourceCard().getName() + "'s delayed trigger",
                     new ArrayList<>(List.of(effect)), null, delayed.sourcePermanentId());
             entry.setTriggeringCardId(target.getOriginalCard().getId());
@@ -10616,7 +10462,7 @@ public class TriggerCollectionService {
             entry.setTriggeringCardGraveyardEntryVersion(
                     destination == Zone.GRAVEYARD ? -1L : 0L);
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
         }
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
             if (!watcher.ability().conditions().getFirst().trigger()
@@ -10624,16 +10470,11 @@ public class TriggerCollectionService {
                     || !target.getId().equals(watcher.watchedPermanentId())) {
                 continue;
             }
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.sourceCard(),
-                    watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s delayed trigger",
-                    new ArrayList<>(List.of(ZoneChangeAbilityReader.strictEffect(watcher.ability()))),
-                    null,
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s delayed trigger", temporaryEffects(watcher), (UUID) null,
                     target.getId());
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
         }
     }
@@ -10652,16 +10493,14 @@ public class TriggerCollectionService {
         for (DelayedSacrificeSourceWhenTargetLeaves delayed : gameData.drainDelayedActions(
                 DelayedSacrificeSourceWhenTargetLeaves.class,
                 d -> leavingId.equals(d.watchedPermanentId()))) {
-            StackEntry se = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    delayed.sourceCard(),
+            StackEntry se = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
                     delayed.controllerId(),
                     delayed.sourceCard().getName() + "'s delayed trigger",
                     new ArrayList<>(List.of(new SacrificeSelfEffect())),
                     null,
                     delayed.sourcePermanentId());
             se.setNonTargeting(true);
-            gameData.enqueueTrigger(se);
+            triggeredAbilityStackService.putDelayed(gameData, se);
             gameLogService.append(gameData,
                     GameLog.text(delayed.sourceCard().getName() + "'s delayed trigger triggers."));
             log.info("Game {} - {} delayed leave-trigger fires (watched {} left); sacrifice source {}",
@@ -10685,16 +10524,14 @@ public class TriggerCollectionService {
         for (DelayedSacrificeTargetWhenSourceLeaves delayed : gameData.drainDelayedActions(
                 DelayedSacrificeTargetWhenSourceLeaves.class,
                 d -> leavingId.equals(d.watchedPermanentId()))) {
-            StackEntry se = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    delayed.sourceCard(),
+            StackEntry se = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
                     delayed.controllerId(),
                     delayed.sourceCard().getName() + "'s delayed trigger",
                     new ArrayList<>(List.of(new SacrificeSelfEffect())),
                     null,
                     delayed.targetPermanentId());
             se.setNonTargeting(true);
-            gameData.enqueueTrigger(se);
+            triggeredAbilityStackService.putDelayed(gameData, se);
             gameLogService.append(gameData,
                     GameLog.text(delayed.sourceCard().getName() + "'s delayed trigger triggers."));
             log.info("Game {} - {} delayed leave-trigger fires (source {} left); sacrifice target {}",
@@ -10757,20 +10594,17 @@ public class TriggerCollectionService {
 
     private void enqueueDelayedDestroyTarget(GameData gameData, DelayedDestroyTargetWhenSourceLeaves delayed,
                                              Permanent watchedPermanent) {
-        StackEntry se = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
+        StackEntry se = TriggeredAbilityStackService.madeAbility(
                 delayed.sourceCard(),
                 delayed.controllerId(),
                 delayed.sourceCard().getName() + "'s delayed trigger",
-                new ArrayList<>(List.of(delayed.exile()
+                List.of(delayed.exile()
                         ? new com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect(
                                 com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect.Mode.EXILE,
                                 delayed.targetPermanentId())
-                        : new DestroyLinkedPermanentEffect(true, delayed.targetPermanentId()))),
-                null,
-                List.of());
+                        : new DestroyLinkedPermanentEffect(true, delayed.targetPermanentId())));
         se.setNonTargeting(true);
-        gameData.enqueueTrigger(se);
+        triggeredAbilityStackService.putDelayed(gameData, se);
         gameLogService.append(gameData,
                 GameLog.text(delayed.sourceCard().getName() + "'s delayed trigger triggers."));
         log.info("Game {} - {} delayed trigger fires (source {}); destroy target {}",
@@ -10803,9 +10637,7 @@ public class TriggerCollectionService {
                 if (!pending.controllerId().equals(delayed.controllerId())) {
                     continue;
                 }
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        delayed.sourceCard(),
+                StackEntry trigger = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
                         delayed.controllerId(),
                         delayed.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(new PutCounterOnTargetPermanentEffect(
@@ -10813,7 +10645,7 @@ public class TriggerCollectionService {
                         returnedPermanentId,
                         (UUID) null);
                 trigger.setNonTargeting(true);
-                gameData.enqueueTrigger(trigger);
+                triggeredAbilityStackService.putDelayed(gameData, trigger);
                 gameLogService.append(gameData,
                         GameLog.cardThen(delayed.sourceCard(), "'s delayed ability triggers."));
                 log.info("Game {} - {} delayed return counter trigger queued for {}",
@@ -11014,9 +10846,7 @@ public class TriggerCollectionService {
             UUID triggerControllerId = delayedReturn.controllerId();
             Card triggerSource = delayedReturn.sourceCard() != null ? delayedReturn.sourceCard() : graveyardCard;
 
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    triggerSource,
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(triggerSource,
                     triggerControllerId,
                     "Return " + graveyardCard.getName() + " to the battlefield",
                     new ArrayList<>(List.of(new ReturnTriggeringCardFromGraveyardToBattlefieldEffect(
@@ -11025,7 +10855,7 @@ public class TriggerCollectionService {
             entry.setTriggeringCardId(graveyardCard.getId());
             entry.setTriggeringCardGraveyardEntryVersion(
                     gameData.graveyardEntryVersion(graveyardCard.getId()));
-            gameData.stack.add(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
 
             gameLogService.append(gameData, GameLog.cardThen(graveyardCard, " will return to the battlefield (it died this turn)."));
             log.info("Game {} - Delayed return trigger: {} will return to the battlefield", gameData.id, graveyardCard.getName());
@@ -11074,14 +10904,10 @@ public class TriggerCollectionService {
                     ConditionContext.forCard(registration.sourceCard(), registration.controllerId()))) {
                 continue;
             }
-            StackEntry delayedEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    registration.sourceCard(),
+            StackEntry delayedEntry = TriggeredAbilityStackService.madeAbility(registration.sourceCard(),
                     registration.controllerId(),
                     registration.sourceCard().getName() + " triggers (a creature dealt damage this way died)",
-                    new ArrayList<>(List.of(effect)),
-                    dyingPermanentControllerId,
-                    registration.sourcePermanentId());
+                    List.of(effect), dyingPermanentControllerId, registration.sourcePermanentId());
             delayedEntry.setEventValue(Math.max(0, dyingPermanentPower));
             delayedEntry.setDyingPermanentManaValue(Math.max(0, dyingPermanentManaValue));
             delayedEntry.setTriggeringCardId(dyingPermanentCardId);
@@ -11090,16 +10916,14 @@ public class TriggerCollectionService {
             delayedEntry.setTriggeringPermanent(dyingPermanent);
             if (effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                     || effect.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
-                gameData.handOffTriggerRecord(delayedEntry);
-                gameData.queueInteraction(new PermanentChoiceContext.DeathTriggerTarget(
-                        registration.sourceCard(), registration.controllerId(), List.of(effect),
-                        null, null, false).withTriggeringPermanent(dyingPermanent));
-                log.info("Game {} - Delayed death trigger: {} awaits a target",
-                        gameData.id, registration.sourceCard().getName());
+                // A target of its own is chosen as it goes on the stack (CR 603.3d), not the dying creature's
+                // controller.
+                delayedEntry.setTargetId(null);
+                triggeredAbilityStackService.putMade(gameData, delayedEntry);
                 continue;
             }
 
-            gameData.stack.add(delayedEntry);
+            triggeredAbilityStackService.putDelayed(gameData, delayedEntry);
 
             log.info("Game {} - Delayed death trigger: {} triggers (a creature it damaged died this turn)",
                     gameData.id, registration.sourceCard().getName());
@@ -11187,15 +11011,13 @@ public class TriggerCollectionService {
             if (!watcher.controllerId().equals(controllerId) || enteringPermanent == null) {
                 continue;
             }
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.sourceCard(),
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
                     watcher.controllerId(),
                     watcher.sourceCard().getName() + "'s ability",
                     new ArrayList<>(List.of(watcher.effect())));
             entry.setTargetId(enteringPermanent.getId());
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
         }
 
@@ -11209,14 +11031,10 @@ public class TriggerCollectionService {
                 continue;
             }
 
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.sourceCard(),
-                    watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(ZoneChangeAbilityReader.strictEffect(watcher.ability()))));
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s ability", temporaryEffects(watcher));
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} temporary ally creature-enters trigger fires",
                     gameData.id, watcher.sourceCard().getName());
@@ -11259,12 +11077,12 @@ public class TriggerCollectionService {
             if (boon.remainingUses() > 1) {
                 gameData.boons.add(boon.withRemainingUses(boon.remainingUses() - 1));
             }
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, boon.sourceCard(),
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(boon.sourceCard(),
                     boon.controllerId(), boon.sourceCard().getName() + "'s boon",
                     new ArrayList<>(List.of(boon.effect())));
             entry.setTriggeringCardId(spellCard.getId());
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(boon.sourceCard()));
         }
     }
@@ -11322,17 +11140,13 @@ public class TriggerCollectionService {
                     Permanent matching = gameQueryService.findPermanentById(gameData, matchingId);
                     if (matching == null) continue;
                     usesLeft--;
-                    StackEntry perCreatureEntry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
-                            boon.sourceCard(),
-                            boon.controllerId(),
-                            boon.sourceCard().getName() + "'s boon",
-                            new ArrayList<>(List.of(resolved)));
+                    StackEntry perCreatureEntry = TriggeredAbilityStackService.madeAbility(boon.sourceCard(),
+                            boon.controllerId(), boon.sourceCard().getName() + "'s boon", List.of(resolved));
                     perCreatureEntry.setTargetId(matching.getId());
                     perCreatureEntry.setTriggeringPermanentId(matching.getId());
                     perCreatureEntry.setTriggeringCardId(matching.getCard().getId());
                     perCreatureEntry.setNonTargeting(true);
-                    gameData.enqueueTrigger(perCreatureEntry);
+                    triggeredAbilityStackService.putDelayed(gameData, perCreatureEntry);
                     gameLogService.append(gameData, GameLog.abilityTriggers(boon.sourceCard()));
                 }
                 if (usesLeft > 0) {
@@ -11359,27 +11173,24 @@ public class TriggerCollectionService {
                                 ? new PermanentAllOfPredicate(List.of(existing.predicate(), entered)) : entered,
                         "Target must be one of the creatures that entered");
             }
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    boon.sourceCard(),
-                    boon.controllerId(),
-                    boon.sourceCard().getName() + "'s boon",
-                    new ArrayList<>(List.of(resolved)));
-            entry.setTargetId(enteringPermanent.getId());
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(boon.sourceCard(), boon.controllerId(),
+                    boon.sourceCard().getName() + "'s boon", List.of(resolved), enteringPermanent.getId(),
+                    sourcePermanent == null ? null : sourcePermanent.getId());
             entry.setTriggeringPermanentId(enteringPermanent.getId());
+            entry.setTriggeringPermanentControllerId(controllerId);
             entry.setTriggeringCardId(enteringPermanent.getCard().getId());
+            entry.rememberLastKnownPermanentCard(enteringPermanent.getId(), enteringPermanent.getCard());
             entry.setNonTargeting(true);
             if (boonTargetFilter != null
                     && resolved.targetSpec().admits(TargetPredicate.Kind.PERMANENT)) {
-                queueEntersTargetChoice(gameData, entry, new PermanentChoiceContext.EntersTriggerTarget(
-                        boon.sourceCard(), boon.controllerId(), new ArrayList<>(List.of(resolved)),
-                        sourcePermanent == null ? null : sourcePermanent.getId(), enteringPermanent.getId(),
-                        null, boonTargetFilter));
-                gameLogService.append(gameData, GameLog.abilityTriggers(boon.sourceCard()));
+                // "Attached to one of them": its target, restricted by the boon's filter, is chosen as it goes on the
+                // stack (CR 603.3d).
+                entry.setTargetFilter(boonTargetFilter);
+                triggeredAbilityStackService.putMade(gameData, entry);
             } else {
-                gameData.enqueueTrigger(entry);
-                gameLogService.append(gameData, GameLog.abilityTriggers(boon.sourceCard()));
+                triggeredAbilityStackService.putDelayed(gameData, entry);
             }
+            gameLogService.append(gameData, GameLog.abilityTriggers(boon.sourceCard()));
         }
     }
 
@@ -11509,14 +11320,10 @@ public class TriggerCollectionService {
                 continue;
             }
 
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.sourceCard(),
-                    watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(ZoneChangeAbilityReader.strictEffect(watcher.ability()))));
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s ability", temporaryEffects(watcher));
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} temporary creature-or-enchantment-enter trigger fires",
                     gameData.id, watcher.sourceCard().getName());
@@ -11545,10 +11352,10 @@ public class TriggerCollectionService {
                 continue;
             }
 
-            CardEffect resolvedEffect = ZoneChangeAbilityReader.strictEffect(watcher.ability());
+            List<CardEffect> resolvedEffects = temporaryEffects(watcher);
 
             // "A copy of that creature" (Theoretical Duplication) is the stack entry's triggering permanent.
-            enqueueTemporaryGlobalTrigger(gameData, watcher, resolvedEffect, enteringPermanent.getId(), 0,
+            enqueueTemporaryGlobalTrigger(gameData, watcher, resolvedEffects, enteringPermanent.getId(), 0,
                     enteringPermanent.getId());
         }
     }
@@ -11605,14 +11412,12 @@ public class TriggerCollectionService {
             List<Card> sources = gameData.untapAttackedCreaturesEachCombatThisTurnSources.get(controllerId);
             if (sources == null) continue;
             for (Card sourceCard : new ArrayList<>(sources)) {
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        sourceCard,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(sourceCard,
                         controllerId,
                         sourceCard.getName() + "'s delayed ability",
                         List.of(new UntapPermanentsEffect(TapUntapScope.ATTACKED_CREATURES)));
                 entry.setNonTargeting(true);
-                gameData.enqueueTrigger(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                         "'s delayed ability triggers."));
                 log.info("Game {} - {} delayed combat trigger queued", gameData.id, sourceCard.getName());
@@ -11727,6 +11532,34 @@ public class TriggerCollectionService {
     }
 
     /**
+     * Puts {@code ability} of {@code emblem} on the stack through the stack door: an ability of an emblem functions in
+     * the command zone (CR 114.4), {@code source} its source, and it records the event with {@code record}. Its targets
+     * are only those its effects or its own target filter declare: no ability of the card that made the emblem is it.
+     */
+    private void putEmblemAbility(GameData gameData, Emblem emblem, TriggeredAbility ability, Card source,
+                                  String description, ConditionContext ifContext, TriggerRecord record,
+                                  boolean creatureDying) {
+        TriggeredAbilityRequest request = new TriggeredAbilityRequest(ability, source, null, emblem.controllerId(),
+                description, ifContext, entry -> {
+                    entry.setMadeByResolution(true);
+                    record.stamp(entry);
+                }).ofEmblem();
+        triggeredAbilityStackService.put(gameData, creatureDying ? request.withCreatureDying() : request);
+    }
+
+    /**
+     * The effects of {@code watcher}'s ability, every one of them as written (CR 603.3), its intervening "if" wrapped
+     * around each to be judged again as it resolves (CR 603.4).
+     */
+    private static List<CardEffect> temporaryEffects(TemporaryGlobalTriggeredAbility watcher) {
+        Condition interveningIf = watcher.ability().options().interveningIf();
+        return watcher.ability().effects().stream()
+                .map(EffectRegistration::effect)
+                .map(effect -> interveningIf == null ? effect : (CardEffect) new ConditionalEffect(interveningIf, effect))
+                .toList();
+    }
+
+    /**
      * Puts {@code ability} of {@code emblem} on the stack for the event {@code triggering} was about, as its triggering
      * permanent: a targeted ability through its target choice, which keeps the triggering permanent, any other one as
      * a non-targeting entry. An emblem without a source card (one a test built) is described as "Emblem's emblem",
@@ -11736,24 +11569,14 @@ public class TriggerCollectionService {
                                          Permanent triggering, UUID triggeringControllerId, String event) {
         Card source = emblem.sourceCard() != null ? emblem.sourceCard() : triggering.getCard();
         String description = emblemName(emblem);
-        List<CardEffect> effects = ability.effects().stream().map(EffectRegistration::effect).toList();
-        StackEntry entry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                source,
-                emblem.controllerId(),
-                description,
-                new ArrayList<>(effects));
-        entry.setTriggeringPermanentId(triggering.getId());
-        entry.setTriggeringPermanentControllerId(triggeringControllerId);
-        entry.setTriggeringCardId(triggering.getCard().getId());
-        entry.setNonTargeting(true);
-        if (effects.stream().anyMatch(effect -> effect.targetSpec() != TargetSpec.NONE)) {
-            queueTargetChoice(gameData, entry, new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                    source, emblem.controllerId(), new ArrayList<>(effects), false, null, 0, null, null, false,
-                    triggering.getId(), null, emblem.controllerId(), (PlanarObject) null));
-        } else {
-            gameData.enqueueTrigger(entry);
-        }
+        putEmblemAbility(gameData, emblem, ability, source, description,
+                ConditionContext.forCard(source, emblem.controllerId()).withTriggeringPermanentId(triggering.getId()),
+                entry -> {
+                    entry.setTriggeringPermanentId(triggering.getId());
+                    entry.setTriggeringPermanentControllerId(triggeringControllerId);
+                    entry.setTriggeringCardId(triggering.getCard().getId());
+                    entry.setNonTargeting(true);
+                }, false);
         gameLogService.append(gameData, GameLog.text(description + " triggers for " + triggering.getCard().getName()
                 + " " + event + "."));
         log.info("Game {} - {} triggers for {} {}", gameData.id, description, triggering.getCard().getName(), event);
@@ -11809,23 +11632,16 @@ public class TriggerCollectionService {
 
                 String description = (emblem.sourceCard() != null ? emblem.sourceCard().getName() : "Emblem")
                         + "'s emblem";
-                Condition interveningIf = options.interveningIf();
-                List<CardEffect> effects = ability.effects().stream()
-                        .map(EffectRegistration::effect)
-                        .map(effect -> interveningIf == null ? effect : (CardEffect) new ConditionalEffect(interveningIf, effect))
-                        .toList();
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
-                        source,
-                        controllerId,
-                        description,
-                        new ArrayList<>(effects),
-                        damagedPlayerId,
-                        (UUID) null);
-                entry.setNonTargeting(true);
-                entry.setTriggeringPlayerId(damagedPlayerId);
-                entry.setEventValue(damage);
-                gameData.enqueueTrigger(entry);
+                // The stack door judges the intervening "if" again as it triggers and wraps each effect in it, so it
+                // is checked again as the ability resolves (CR 603.4).
+                putEmblemAbility(gameData, emblem, ability, source, description,
+                        ConditionContext.forCard(source, controllerId).withTargetId(damagedPlayerId)
+                                .withEventValue(damage), entry -> {
+                            entry.setTargetId(damagedPlayerId);
+                            entry.setNonTargeting(true);
+                            entry.setTriggeringPlayerId(damagedPlayerId);
+                            entry.setEventValue(damage);
+                        }, false);
                 gameLogService.append(gameData, GameLog.text(
                         description + " triggers for combat damage dealt to an opponent."));
                 log.info("Game {} - {} triggers for combat damage dealt to an opponent",
@@ -11868,17 +11684,16 @@ public class TriggerCollectionService {
                 continue;
             }
 
-            StackEntry triggerEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, watcher.sourceCard(), watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(List.of(watcher.effect())));
+            StackEntry triggerEntry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(),
+                    watcher.controllerId(), watcher.sourceCard().getName() + "'s ability", temporaryEffects(watcher));
             triggerEntry.setNonTargeting(true);
+            triggerEntry.setTriggeringCardId(spellCard.getId());
             if (watcher.targetFilter() != null) {
-                queueTargetChoice(gameData, triggerEntry, new PermanentChoiceContext.SpellTargetTriggerAnyTarget(
-                        watcher.sourceCard(), watcher.controllerId(), List.of(watcher.effect()),
-                        false, watcher.targetFilter(), 0, null, true));
+                // Its target, restricted by the registration's filter, is chosen as it goes on the stack (CR 603.3d).
+                triggerEntry.setTargetFilter(watcher.targetFilter());
+                triggeredAbilityStackService.putMade(gameData, triggerEntry);
             } else {
-                gameData.stack.add(triggerEntry);
+                triggeredAbilityStackService.putDelayed(gameData, triggerEntry);
             }
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
         }
@@ -11910,12 +11725,8 @@ public class TriggerCollectionService {
             }
             requireNoLimit(watcher.ability(), watcher.sourceCard());
 
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
-                    watcher.sourceCard(),
-                    watcher.controllerId(),
-                    watcher.sourceCard().getName() + "'s ability",
-                    new ArrayList<>(watcher.ability().effects().stream().map(EffectRegistration::effect).toList()));
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(watcher.sourceCard(), watcher.controllerId(),
+                    watcher.sourceCard().getName() + "'s ability", temporaryEffects(watcher));
             entry.setTargetId(castingPlayerId);
             entry.setTriggeringPlayerId(castingPlayerId);
             entry.setTriggeringCardId(spellCard.getId());
@@ -11924,7 +11735,7 @@ public class TriggerCollectionService {
                 entry.setTriggeringSpell(spellEntry);
             }
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.abilityTriggers(watcher.sourceCard()));
             log.info("Game {} - {} temporary global spell-cast trigger fires",
                     gameData.id, watcher.sourceCard().getName());
@@ -12227,7 +12038,7 @@ public class TriggerCollectionService {
      * registering card, and the permanent that registered it as its "this" (CR 603.7e).
      */
     private static TriggerMatchContext registeredMatch(GameData gameData, TemporaryGlobalTriggeredAbility watcher) {
-        return new TriggerMatchContext(gameData, null, watcher.controllerId(), List.of(watcher.effect()),
+        return new TriggerMatchContext(gameData, null, watcher.controllerId(), temporaryEffects(watcher),
                 watcher.sourceCard(), null, null, false, watcher.sourcePermanentId());
     }
 
@@ -12558,10 +12369,13 @@ public class TriggerCollectionService {
                 continue;
             }
 
-            gameData.queueMayAbility(exiled.card(), controllerId, new MayEffect(
-                    new PutVoyageCounterOnExiledCardEffect(),
-                    "Put a voyage counter on Cosima?",
-                    new ReturnVoyagingCardFromExileEffect()));
+            StackEntry voyage = TriggeredAbilityStackService.madeAbility(exiled.card(), controllerId,
+                    exiled.card().getName() + "'s ability", List.of(new MayEffect(
+                            new PutVoyageCounterOnExiledCardEffect(),
+                            "Put a voyage counter on Cosima?",
+                            new ReturnVoyagingCardFromExileEffect())));
+            voyage.setNonTargeting(true);
+            triggeredAbilityStackService.putDelayed(gameData, voyage);
             gameLogService.append(gameData, GameLog.abilityTriggers(exiled.card()));
             log.info("Game {} - {} exiled voyage landfall trigger queued", gameData.id,
                     exiled.card().getName());

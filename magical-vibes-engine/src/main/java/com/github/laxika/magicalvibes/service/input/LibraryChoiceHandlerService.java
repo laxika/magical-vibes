@@ -158,6 +158,8 @@ public class LibraryChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
 
     @Autowired @Lazy
+    private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService triggeredAbilityStackService;
+    @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.battlefield.BattlefieldPlacementService battlefieldPlacementService;
     @Autowired @Lazy
     private com.github.laxika.magicalvibes.service.battlefield.AsEntersInteractionService asEntersInteractionService;
@@ -4360,7 +4362,9 @@ public class LibraryChoiceHandlerService {
             StackEntry record = ReflexiveAbilitySupport.record(gameData, sourceEntry,
                     List.of(new MayEffect(followUpEffect, followUp.prompt())));
             recordSelectedPermanents(record, selectedPermanentIds);
-            gameData.stack.add(record);
+            // An optional follow-up is a reflexive ability of its own (CR 603.12), put on the stack through the stack
+            // door; its "you may" is asked as it resolves (CR 603.5).
+            triggeredAbilityStackService.putMade(gameData, record);
         } else {
             recordSelectedPermanents(sourceEntry, selectedPermanentIds);
             sourceEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex, List.of(followUpEffect));

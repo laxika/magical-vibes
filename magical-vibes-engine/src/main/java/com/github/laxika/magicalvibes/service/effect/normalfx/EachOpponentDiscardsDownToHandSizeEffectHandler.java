@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsDownToHandSizeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -22,6 +21,7 @@ public class EachOpponentDiscardsDownToHandSizeEffectHandler implements NormalEf
 
     private final PlayerInteractionSupport playerInteractionSupport;
     private final GameQueryService gameQueryService;
+    private final org.springframework.beans.factory.ObjectProvider<com.github.laxika.magicalvibes.service.effect.EffectResolutionService> effectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -67,10 +67,14 @@ public class EachOpponentDiscardsDownToHandSizeEffectHandler implements NormalEf
         if (thenEffect == null) {
             return;
         }
-        StackEntry completion = ReflexiveAbilitySupport.record(
-                gameData, entry, List.of(thenEffect), entry.getCard().getName() + "'s effect", null);
-        completion.setNonTargeting(true);
-        gameData.stack.add(completion);
+        // "Then if fewer than three cards were discarded this way, ..." is the rest of this resolution (CR 608.2c).
+        if (entry.getResolvingEffectIndex() >= 0) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(thenEffect));
+        } else {
+            effectResolutionService.getObject().resolveEffects(gameData,
+                    ReflexiveAbilitySupport.record(gameData, entry, List.of(thenEffect),
+                            entry.getCard().getName() + "'s effect", null));
+        }
     }
 
     /** Active player first, then the remaining opponents in seating order. */

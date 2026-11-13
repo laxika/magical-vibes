@@ -80,11 +80,6 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
     }
 
     @Override
-    public boolean exertsAsItAttacks() {
-        return wrapped.exertsAsItAttacks();
-    }
-
-    @Override
     public boolean resolvesWhenTargetIllegal() {
         return wrapped.resolvesWhenTargetIllegal();
     }

@@ -652,14 +652,13 @@ public class StepTriggerService {
                 if (gameQueryService.findPermanentById(gameData, action.permanentId()) == null) {
                     continue; // the creature is gone — nothing to put counters on
                 }
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), action.controllerId(),
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(action.sourceCard(), action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(new PutCounterOnTargetPermanentEffect(
                                 action.counterType(), action.amount()))),
                         action.permanentId(), (UUID) null);
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed ability triggers."));
                 log.info("Game {} - {} delayed upkeep counter trigger pushed onto stack",
@@ -683,15 +682,14 @@ public class StepTriggerService {
                         new PermanentAnyOfPredicate(remainingLandIds.stream()
                                 .<PermanentPredicate>map(PermanentIsSpecificPermanentPredicate::new)
                                 .toList())));
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         action.sourceCard(),
                         action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(new RemoveAllMireCountersFromChosenLandEffect(
                                 action.actionId(), trackedLandFilter))));
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameData.queueDelayedAction(action);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed ability triggers."));
@@ -718,13 +716,12 @@ public class StepTriggerService {
             for (List<ExilePermanentAtNextUpkeep> batch : batches.values()) {
                 ExilePermanentAtNextUpkeep first = batch.getFirst();
                 List<UUID> permanentIds = batch.stream().map(ExilePermanentAtNextUpkeep::permanentId).toList();
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, first.sourceCard(), first.controllerId(),
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(first.sourceCard(), first.controllerId(),
                         first.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(new ExileTargetPermanentEffect())),
                         (UUID) null, permanentIds);
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(first.sourceCard(),
                         "'s delayed ability triggers."));
                 log.info("Game {} - {} delayed upkeep exile trigger pushed onto stack",
@@ -738,13 +735,12 @@ public class StepTriggerService {
                     action -> action.anyPlayerNextUpkeep()
                             || action.controllerId().equals(gameData.activePlayerId));
             for (DelayedCreateTokenAtNextUpkeep action : pendingTokens) {
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), action.controllerId(),
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(action.sourceCard(), action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(action.tokenEffect())));
                 entry.setNonTargeting(true);
                 entry.setEventValue(action.eventValue());
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed ability triggers."));
                 log.info("Game {} - {} delayed upkeep token creation trigger pushed onto stack",
@@ -769,13 +765,12 @@ public class StepTriggerService {
                     continue;
                 }
 
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), action.controllerId(),
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(action.sourceCard(), action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(ReturnCardExiledWithSourceToBattlefieldEffect.ownedByActivePlayer())),
                         0, sourceCardId);
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameData.queueDelayedAction(action);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed ability triggers."));
@@ -798,14 +793,13 @@ public class StepTriggerService {
                 if (pending.upTo()) {
                     // Arcane Denial: "may draw up to two cards" — a delayed triggered ability that uses
                     // the stack, with its original controller and a separate drawing recipient.
-                    StackEntry entry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY, pending.sourceCard(), pending.triggerControllerId(),
+                    StackEntry entry = TriggeredAbilityStackService.madeAbility(pending.sourceCard(), pending.triggerControllerId(),
                             pending.sourceCard().getName() + "'s delayed ability",
                             new ArrayList<>(List.of(new DrawUpToNCardsEffect(pending.count(),
                                     com.github.laxika.magicalvibes.model.effect.DrawUpToRecipient.TARGET_PLAYER))),
                             pending.controllerId(), (UUID) null);
                     entry.setNonTargeting(true);
-                    gameData.stack.add(entry);
+                    triggeredAbilityStackService.putDelayed(gameData, entry);
                     gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                             "'s delayed ability triggers."));
                     log.info("Game {} - {} may draw up to {} from delayed upkeep trigger ({})",
@@ -813,15 +807,14 @@ public class StepTriggerService {
                     continue;
                 }
                 boolean drawerIsNotTriggerController = !pending.controllerId().equals(pending.triggerControllerId());
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, pending.sourceCard(), pending.triggerControllerId(),
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(pending.sourceCard(), pending.triggerControllerId(),
                         pending.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(drawerIsNotTriggerController
                                 ? new DrawCardForTargetPlayerEffect(pending.count())
                                 : new DrawCardEffect(pending.count()))),
                         drawerIsNotTriggerController ? pending.controllerId() : (UUID) null, (UUID) null);
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s delayed ability triggers."));
                 log.info("Game {} - {} delayed upkeep draw trigger pushed onto stack for {} card(s) ({})",
@@ -834,15 +827,14 @@ public class StepTriggerService {
                     RandomDiscardCardsAtNextUpkeep.class,
                     action -> action.controllerId().equals(gameData.activePlayerId));
             for (RandomDiscardCardsAtNextUpkeep pending : pendingDiscards) {
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         pending.sourceCard(),
                         pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed trigger — discard " + pending.count() + " cards",
                         new ArrayList<>(List.of(new DiscardEffect(
                                 pending.count(), DiscardRecipient.CONTROLLER, true))));
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData,
                         GameLog.cardThen(pending.sourceCard(), "'s delayed trigger discards cards at random."));
                 log.info("Game {} - {} delayed random discard trigger pushed onto stack",
@@ -899,8 +891,7 @@ public class StepTriggerService {
                     continue; // targeted planeswalker is gone — trigger fizzles
                 }
 
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), action.spellControllerId(),
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(action.sourceCard(), action.spellControllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(action.damage()))),
                         action.targetId(), (UUID) null));
@@ -921,8 +912,7 @@ public class StepTriggerService {
             List<PoisonAtNextUpkeepUnlessPays> pendingPoison = gameData.drainDelayedActions(
                     PoisonAtNextUpkeepUnlessPays.class, a -> a.playerId().equals(gameData.activePlayerId));
             for (PoisonAtNextUpkeepUnlessPays action : pendingPoison) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
                         action.sourceCard(),
                         action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
@@ -947,8 +937,7 @@ public class StepTriggerService {
                         new PayManaCost(action.manaCost()),
                         new ArrayList<>(List.of(new ControllerLosesGameEffect())),
                         true);
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
                         action.sourceCard(),
                         action.playerId(),
                         action.sourceCard().getName() + "'s delayed ability",
@@ -987,8 +976,7 @@ public class StepTriggerService {
             for (Map.Entry<List<Object>, List<UUID>> batch : unplayedBySource.entrySet()) {
                 ExileToOwnerGraveyardAtNextUpkeep first = firstBySource.get(batch.getKey());
                 String sourceName = first.sourceCard() != null ? first.sourceCard().getName() : "an effect";
-                StackEntry cleanup = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry cleanup = TriggeredAbilityStackService.madeAbility(
                         first.sourceCard() != null ? first.sourceCard()
                                 : gameData.findExiledCard(batch.getValue().getFirst()).card(),
                         first.controllerId(),
@@ -996,7 +984,7 @@ public class StepTriggerService {
                         new ArrayList<>(List.of(new PutUnplayedExiledCardsIntoOwnersGraveyardEffect())),
                         new ArrayList<>(batch.getValue()));
                 cleanup.setNonTargeting(true);
-                gameData.stack.add(cleanup);
+                triggeredAbilityStackService.putDelayed(gameData, cleanup);
                 log.info("Game {} - delayed cleanup for unplayed cards exiled with {} pushed onto stack",
                         gameData.id, sourceName);
             }
@@ -1024,8 +1012,7 @@ public class StepTriggerService {
             List<TransformSourceAtNextUpkeep> pending =
                     gameData.drainDelayedActions(TransformSourceAtNextUpkeep.class);
             for (TransformSourceAtNextUpkeep action : pending) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
                         action.sourceCard(),
                         action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability — transform",
@@ -1044,8 +1031,7 @@ public class StepTriggerService {
                     GrantChosenLandwalkAtNextUpkeep.class,
                     action -> action.controllerId().equals(gameData.activePlayerId));
             for (GrantChosenLandwalkAtNextUpkeep action : pending) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
                         action.sourceCard(),
                         action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
@@ -2182,12 +2168,12 @@ public class StepTriggerService {
                 continue;
             }
             if (!activePlayerId.equals(delayed.controllerId())) continue;
-            StackEntry triggerEntry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, delayed.sourceCard(),
+            StackEntry triggerEntry = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
                     delayed.controllerId(), delayed.sourceCard().getName() + "'s delayed ability",
                     new ArrayList<>(List.of(delayed.effect())), affected.getId(), source.getId());
             triggerEntry.setNonTargeting(true);
             triggerEntry.setSourcePermanentSnapshot(new Permanent(source));
-            gameData.stack.add(triggerEntry);
+            triggeredAbilityStackService.putDelayed(gameData, triggerEntry);
             gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(), "'s delayed ability triggers."));
         }
     }
@@ -2222,8 +2208,7 @@ public class StepTriggerService {
             for (LoseLifeAtNextDrawStepUnlessPays action : pending) {
                 // The delayed ability belongs to whoever controlled the ability that created it
                 // (CR 603.7d); the drawing player is the one who loses life.
-                StackEntry delayed = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry delayed = TriggeredAbilityStackService.madeAbility(
                         action.sourceCard(),
                         action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
@@ -2232,7 +2217,7 @@ public class StepTriggerService {
                         activePlayerId,
                         (UUID) null);
                 delayed.setNonTargeting(true);
-                gameData.stack.add(delayed);
+                triggeredAbilityStackService.putDelayed(gameData, delayed);
 
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed ability triggers — " + gameData.playerIdToName.get(activePlayerId)
@@ -2437,8 +2422,7 @@ public class StepTriggerService {
                         manaEffect,
                         "Add " + reward.amount() + " " + reward.color().getCode() + "?");
             }
-            gameData.stack.add(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
                     reward.sourceCard(),
                     reward.controllerId(),
                     reward.sourceCard().getName() + "'s delayed ability",
@@ -2462,15 +2446,14 @@ public class StepTriggerService {
                 .filter(gameData.playerIds::contains)
                 .count();
         for (DrawCardsAtNextMainPhase pending : pendingDraws) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(
                     pending.sourceCard(),
                     pending.controllerId(),
                     pending.sourceCard().getName() + "'s delayed ability",
                     new ArrayList<>(List.of(new DrawCardEffect(damagedPlayers)))
             );
             entry.setNonTargeting(true);
-            gameData.stack.add(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                     "'s delayed ability triggers — draw " + damagedPlayers + " card(s)."));
             log.info("Game {} - {} delayed main-phase draw trigger pushed onto the stack for {} card(s)",
@@ -2595,8 +2578,7 @@ public class StepTriggerService {
         List<DelayedEndOfCombatTrigger> delayedTriggers =
                 gameData.drainDelayedActions(DelayedEndOfCombatTrigger.class);
         for (DelayedEndOfCombatTrigger delayedTrigger : delayedTriggers) {
-            StackEntry delayedEntry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            StackEntry delayedEntry = TriggeredAbilityStackService.madeAbility(
                     delayedTrigger.sourceCard(),
                     delayedTrigger.controllerId(),
                     delayedTrigger.sourceCard().getName() + "'s end-of-combat ability",
@@ -2608,7 +2590,7 @@ public class StepTriggerService {
             delayedEntry.setTriggeringPermanentId(delayedTrigger.triggeringPermanentId());
             delayedEntry.rememberLastKnownPermanentAttachments(delayedTrigger.affectedPermanentId(),
                     delayedTrigger.affectedPermanentAttachments());
-            gameData.stack.add(delayedEntry);
+            triggeredAbilityStackService.putDelayed(gameData, delayedEntry);
 
             gameLogService.append(gameData, GameLog.cardThen(
                     delayedTrigger.sourceCard(), "'s end-of-combat ability triggers."));
@@ -2840,7 +2822,7 @@ public class StepTriggerService {
             Card triggerSource = pending.triggerSourceCard() == null ? pending.card() : pending.triggerSourceCard();
             UUID triggerController = pending.triggerControllerId() == null
                     ? pending.controllerId() : pending.triggerControllerId();
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, triggerSource,
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(triggerSource,
                     triggerController, triggerSource.getName() + "'s delayed return ability",
                     new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.ResolvePendingExileReturnEffect(pending))));
             entry.setNonTargeting(true);
@@ -2849,7 +2831,7 @@ public class StepTriggerService {
             entry.setTriggeringCardExileEntryVersion(exileVersionWhenQueued != null
                     ? exileVersionWhenQueued
                     : gameData.exileEntryVersions.getOrDefault(pending.card().getId(), -1L));
-            gameData.stack.add(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
         }
     }
 
@@ -3183,8 +3165,7 @@ public class StepTriggerService {
                             gameData.id, pending.cardId());
                     continue;
                 }
-                StackEntry lostEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry lostEntry = TriggeredAbilityStackService.madeAbility(
                         exiled.card(),
                         pending.upkeepPlayerId(),
                         exiled.card().getName() + "'s delayed return ability",
@@ -3193,7 +3174,7 @@ public class StepTriggerService {
                 lostEntry.setTriggeringCardId(exiled.card().getId());
                 lostEntry.setTriggeringCardGraveyardEntryVersion(-1);
                 lostEntry.setNonTargeting(true);
-                gameData.enqueueTrigger(lostEntry);
+                triggeredAbilityStackService.putDelayed(gameData, lostEntry);
                 gameLogService.append(gameData,
                         GameLog.cardThen(exiled.card(), "'s delayed return ability triggers."));
                 continue;
@@ -3204,8 +3185,7 @@ public class StepTriggerService {
                         gameData.id, pending.cardId());
                 continue;
             }
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(
                     cardToReturn,
                     pending.upkeepPlayerId(),
                     cardToReturn.getName() + "'s delayed return ability",
@@ -3216,7 +3196,7 @@ public class StepTriggerService {
                     pending.graveyardEntryVersion() >= 0 ? pending.graveyardEntryVersion()
                             : gameData.graveyardEntryVersion(cardToReturn.getId()));
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData,
                     GameLog.cardThen(cardToReturn, "'s delayed return ability triggers."));
         }
@@ -3233,12 +3213,12 @@ public class StepTriggerService {
                 gameData.drainDelayedActions(DelayedGraveyardCardsToBattlefieldUnderControl.class,
                         action -> action.controllerId().equals(gameData.activePlayerId));
         for (DelayedGraveyardCardsToBattlefieldUnderControl pending : pendingReturns) {
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, pending.sourceCard(),
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(pending.sourceCard(),
                     pending.controllerId(), pending.sourceCard().getName() + "'s delayed ability",
                     new ArrayList<>(List.of(new ReturnGraveyardCardsToBattlefieldUnderControlEffect(
                             pending.cardIds(), pending.graveyardEntryVersions()))));
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData,
                     GameLog.cardThen(pending.sourceCard(), "'s delayed return ability triggers."));
         }
@@ -3271,24 +3251,20 @@ public class StepTriggerService {
         handleBedtimeStoryLoreCounters(gameData);
         for (var delayed : gameData.drainDelayedActions(
                 com.github.laxika.magicalvibes.model.action.DelayedEndStepTrigger.class)) {
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, delayed.sourceCard(),
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
                     delayed.controllerId(), delayed.sourceCard().getName() + "'s delayed ability",
                     new ArrayList<>(List.of(delayed.effect())), delayed.affectedPermanentId(),
                     delayed.sourcePermanentId());
-            entry.setDeclaredTargetIds(delayed.affectedPermanentIds());
             entry.setNonTargeting(true);
             // "That creature" of the delayed ability is its event's object on every route: an ability that also
             // chooses a target (Swooping Pteranodon's "target land deals 3 damage to that creature") reads it there.
             entry.setTriggeringPermanentId(delayed.affectedPermanentId());
-            gameData.handOffTriggerRecord(entry);
             if (delayed.targetGroups().isEmpty()) {
-                gameData.enqueueTrigger(entry);
+                entry.setDeclaredTargetIds(delayed.affectedPermanentIds());
+                triggeredAbilityStackService.putDelayed(gameData, entry);
             } else {
-                gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                        delayed.sourceCard(), delayed.controllerId(),
-                        new ArrayList<>(List.of(delayed.effect())), delayed.sourcePermanentId(),
-                        List.of(), 0, 0, List.of(), 0, List.of(), false, null,
-                        delayed.affectedPermanentId()));
+                // Its targets, the groups its runtime card declares, are chosen as it goes on the stack (CR 603.3d).
+                triggeredAbilityStackService.putMade(gameData, entry);
             }
         }
         for (var delayed : gameData.drainDelayedActions(DelayedEndStepIfStillInHandTrigger.class)) {
@@ -3299,8 +3275,7 @@ public class StepTriggerService {
             if (!stillSameHandEntry) {
                 continue;
             }
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(
                     delayed.sourceCard(),
                     delayed.controllerId(),
                     delayed.sourceCard().getName() + "'s delayed ability",
@@ -3308,7 +3283,7 @@ public class StepTriggerService {
                     null,
                     delayed.sourcePermanentId());
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
         }
         for (var delayed : gameData.drainDelayedActions(DelayedStillExiledCardsEndStepTrigger.class)) {
             boolean anyStillExiled = delayed.cardIds().stream()
@@ -3316,8 +3291,7 @@ public class StepTriggerService {
             if (!anyStillExiled) {
                 continue;
             }
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(
                     delayed.sourceCard(),
                     delayed.controllerId(),
                     delayed.sourceCard().getName() + "'s delayed ability",
@@ -3325,17 +3299,17 @@ public class StepTriggerService {
                     null,
                     delayed.sourcePermanentId());
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
         }
         // "At the beginning of your next end step" (Foggy Swamp Visions): only the controller's end step fires.
         for (var delayed : gameData.drainDelayedActions(
                 com.github.laxika.magicalvibes.model.action.DelayedControllerEndStepTrigger.class,
                 pending -> pending.controllerId().equals(gameData.activePlayerId))) {
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, delayed.sourceCard(),
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
                     delayed.controllerId(), delayed.sourceCard().getName() + "'s delayed ability",
                     new ArrayList<>(List.of(delayed.effect())), null, delayed.sourcePermanentId());
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
         }
         // "At the beginning of your next end step" (Desert Warfare): only the scheduling player's end
         // step fires it, and the return goes on the stack like any other triggered ability.
@@ -3349,14 +3323,14 @@ public class StepTriggerService {
                         gameData.id, delayed.cardId());
                 continue;
             }
-            StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, delayed.sourceCard(),
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(delayed.sourceCard(),
                     delayed.controllerId(), delayed.sourceCard().getName() + "'s delayed ability",
                     new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.ReturnTriggeringCardFromGraveyardToBattlefieldEffect(
                             false, true))));
             entry.setTriggeringCardId(cardToReturn.getId());
             entry.setTriggeringCardGraveyardEntryVersion(delayed.graveyardEntryVersion());
             entry.setNonTargeting(true);
-            gameData.enqueueTrigger(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.cardThen(cardToReturn, "'s delayed return ability triggers."));
         }
         collectEmblemStepTriggers(gameData, StepTrigger.Moment.END_STEP, ActivePlayer.YOU);
@@ -3371,8 +3345,7 @@ public class StepTriggerService {
                         new ArrayList<>(List.of(new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(
                                 action.cardId()))),
                         true);
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         action.sourceCard(),
                         action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
@@ -3380,7 +3353,7 @@ public class StepTriggerService {
                         null,
                         action.sourcePermanentId());
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed ability triggers — return the exiled card unless its controller pays {3}{B}."));
                 log.info("Game {} - {} delayed return trigger pushed onto stack",
@@ -3395,13 +3368,12 @@ public class StepTriggerService {
                 if (gameQueryService.findPermanentById(gameData, action.permanentId()) == null) {
                     continue;
                 }
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), action.controllerId(),
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(action.sourceCard(), action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(action.effect())),
                         action.permanentId(), (UUID) null);
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed ability triggers."));
                 log.info("Game {} - {} delayed end-step counter trigger pushed onto stack",
@@ -3421,8 +3393,7 @@ public class StepTriggerService {
                                     && draw.drawingPlayerId().equals(draw.controllerId())));
             for (DrawCardsAtNextEndStep pending : pendingDraws) {
                 boolean drawerIsController = pending.drawingPlayerId().equals(pending.controllerId());
-                StackEntry drawEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry drawEntry = TriggeredAbilityStackService.madeAbility(
                         pending.sourceCard(),
                         pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed ability",
@@ -3435,7 +3406,7 @@ public class StepTriggerService {
                     drawEntry.setTargetId(pending.drawingPlayerId());
                     drawEntry.setNonTargeting(true);
                 }
-                gameData.stack.add(drawEntry);
+                triggeredAbilityStackService.putDelayed(gameData, drawEntry);
                 gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s delayed ability triggers — draw " + pending.count() + " card(s)."));
                 log.info("Game {} - {} delayed draw trigger pushed onto stack for {} card(s)",
@@ -3454,8 +3425,7 @@ public class StepTriggerService {
                                         java.util.Set.copyOf(action.cardIds())),
                                 com.github.laxika.magicalvibes.model.amount.CountScope.ANY_PLAYER),
                         action.damagePerCard());
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         action.sourceCard(),
                         action.controllerId(),
                         action.sourceCard().getName() + "'s delayed trigger",
@@ -3464,7 +3434,7 @@ public class StepTriggerService {
                         null,
                         action.sourcePermanentId());
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed damage trigger is put onto the stack."));
                 log.info("Game {} - {} delayed damage trigger pushed onto stack",
@@ -3476,14 +3446,13 @@ public class StepTriggerService {
             List<UnattachEquipmentAtNextEndStep> pendingUnattaches =
                     gameData.drainDelayedActions(UnattachEquipmentAtNextEndStep.class);
             for (UnattachEquipmentAtNextEndStep pending : pendingUnattaches) {
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         pending.sourceCard(),
                         pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(new UnattachEquipmentEffect(pending.equipmentId()))));
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData,
                         GameLog.cardThen(pending.sourceCard(), "'s delayed ability triggers to unattach the Equipment."));
             }
@@ -3501,8 +3470,7 @@ public class StepTriggerService {
                 UUID triggerControllerId = pending.currentControllersEndStepOnly()
                         ? gameQueryService.findPermanentController(gameData, pending.permanentId())
                         : pending.controllerId();
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         pending.sourceCard(),
                         triggerControllerId,
                         pending.sourceCard().getName() + "'s delayed ability",
@@ -3511,7 +3479,7 @@ public class StepTriggerService {
                         null,
                         pending.permanentId());
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(
                         pending.sourceCard(), "'s delayed sacrifice ability triggers."));
             }
@@ -3532,8 +3500,7 @@ public class StepTriggerService {
                         action.cost(),
                         new ArrayList<>(List.of(new SacrificeSelfEffect())),
                         true);
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         action.sourceCard(),
                         action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
@@ -3541,7 +3508,7 @@ public class StepTriggerService {
                         null,
                         action.permanentId());
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed ability triggers â€” sacrifice the token unless you pay " + action.manaCost() + "."));
             }
@@ -3552,15 +3519,14 @@ public class StepTriggerService {
             List<EachPlayerHandExileReturnAtNextEndStep> pending = gameData.drainDelayedActions(
                     EachPlayerHandExileReturnAtNextEndStep.class);
             for (EachPlayerHandExileReturnAtNextEndStep action : pending) {
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         action.sourceCard(),
                         action.controllerId(),
                         action.sourceCard().getName() + "'s delayed trigger",
                         new ArrayList<>(List.of(new DiscardEachPlayerHandAndReturnExiledCardsEffect(
                                 action.players()))));
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed trigger returns the exiled hands at the next end step."));
             }
@@ -3574,15 +3540,14 @@ public class StepTriggerService {
                     action -> gameData.turnNumber > action.registeredTurnNumber()
                             && action.playerId().equals(gameData.activePlayerId));
             for (TargetPlayerHandExileReturnAtNextTurnEndStep action : pending) {
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         action.sourceCard(),
                         action.controllerId(),
                         action.sourceCard().getName() + "'s delayed trigger",
                         new ArrayList<>(List.of(new ReturnExiledCardsToTargetPlayerHandEffect(
                                 action.playerId(), action.cardIds()))));
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed trigger returns the exiled hand at the target player's next end step."));
             }
@@ -3602,14 +3567,13 @@ public class StepTriggerService {
                 if (effects.isEmpty()) {
                     continue;
                 }
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         action.sourceCard(),
                         action.controllerId(),
                         action.sourceCard().getName() + "'s delayed trigger — discard those cards",
                         new ArrayList<>(effects));
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed trigger discards the returned cards."));
             }
@@ -3637,20 +3601,18 @@ public class StepTriggerService {
                         : gameData.findExiledCard(remaining.getFirst().cardId()).card();
                 StackEntry entry;
                 if (action.groupId() == null) {
-                    entry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY, sourceCard, action.controllerId(),
+                    entry = TriggeredAbilityStackService.madeAbility(sourceCard, action.controllerId(),
                             sourceCard.getName() + "'s delayed ability",
                             new ArrayList<>(List.of(new PutTargetCardFromExileIntoOwnersGraveyardEffect())),
                             action.cardId(), Zone.EXILE, null);
                 } else {
-                    entry = new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY, sourceCard, action.controllerId(),
+                    entry = TriggeredAbilityStackService.madeAbility(sourceCard, action.controllerId(),
                             sourceCard.getName() + "'s delayed ability",
                             new ArrayList<>(List.of(new PutExiledCardsIntoOwnersGraveyardEffect(
                                     remaining.stream().map(ExileToOwnerGraveyardAtNextEndStep::cardId).toList()))));
                 }
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(sourceCard,
                         "'s delayed ability triggers."));
                 log.info("Game {} - {} delayed exile-to-graveyard ability pushed onto stack",
@@ -3689,8 +3651,7 @@ public class StepTriggerService {
                     continue;
                 }
                 Card sourceCard = action.sourceCard() != null ? action.sourceCard() : exiled.card();
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, sourceCard, action.controllerId(),
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(sourceCard, action.controllerId(),
                         sourceCard.getName() + "'s delayed ability — return exiled card to hand",
                         new ArrayList<>(returns)));
                 gameLogService.append(gameData, GameLog.cardThen(sourceCard, "'s delayed ability triggers."));
@@ -3709,14 +3670,14 @@ public class StepTriggerService {
                 }
 
                 // A delayed triggered ability: it goes on the stack so players can respond to it.
-                StackEntry delayedTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                StackEntry delayedTrigger = TriggeredAbilityStackService.madeAbility(
                         action.sourceCard(), action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(
                                 new com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffect())),
                         action.permanentId(), (UUID) null);
                 delayedTrigger.setNonTargeting(true);
-                gameData.stack.add(delayedTrigger);
+                triggeredAbilityStackService.putDelayed(gameData, delayedTrigger);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed sacrifice triggers."));
             }
@@ -3726,8 +3687,7 @@ public class StepTriggerService {
             List<DelayedCoinFlipSacrificeTargetPermanentAtEndStep> pending = gameData.drainDelayedActions(
                     DelayedCoinFlipSacrificeTargetPermanentAtEndStep.class);
             for (DelayedCoinFlipSacrificeTargetPermanentAtEndStep action : pending) {
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         action.sourceCard(),
                         action.controllerId(),
                         action.sourceCard().getName() + "'s delayed trigger",
@@ -3735,7 +3695,7 @@ public class StepTriggerService {
                         0,
                         action.permanentId());
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData,
                         GameLog.cardThen(action.sourceCard(), "'s delayed trigger flips a coin."));
                 log.info("Game {} - {} delayed coin-flip trigger pushed onto stack",
@@ -3757,12 +3717,12 @@ public class StepTriggerService {
                                 new com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate(
                                         action.maxManaValue()))),
                         SacrificeRecipient.CONTROLLER);
-                StackEntry delayedTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                StackEntry delayedTrigger = TriggeredAbilityStackService.madeAbility(
                         action.sourceCard() != null ? action.sourceCard() : permanent.getCard(),
                         action.controllerId(), "Delayed conditional sacrifice",
                         List.of(sacrifice), 0, (UUID) null);
                 delayedTrigger.setNonTargeting(true);
-                gameData.stack.add(delayedTrigger);
+                triggeredAbilityStackService.putDelayed(gameData, delayedTrigger);
                 gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(),
                         "'s delayed sacrifice triggers."));
             }
@@ -3784,11 +3744,11 @@ public class StepTriggerService {
                 CardEffect sacrifice = new SacrificePermanentsEffect(1,
                         new PermanentIsSpecificPermanentPredicate(action.permanentId()),
                         SacrificeRecipient.CONTROLLER);
-                StackEntry delayedTrigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                StackEntry delayedTrigger = TriggeredAbilityStackService.madeAbility(
                         permanent.getCard(), action.controllerId(), "Delayed conditional sacrifice",
                         List.of(sacrifice), 0, (UUID) null);
                 delayedTrigger.setNonTargeting(true);
-                gameData.stack.add(delayedTrigger);
+                triggeredAbilityStackService.putDelayed(gameData, delayedTrigger);
                 gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(),
                         "'s delayed sacrifice triggers."));
             }
@@ -3820,8 +3780,7 @@ public class StepTriggerService {
                 if (permanent == null) {
                     continue;
                 }
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         permanent.getCard(),
                         action.controllerId(),
                         permanent.getCard().getName() + "'s delayed ability",
@@ -3829,7 +3788,7 @@ public class StepTriggerService {
                         permanent.getId(),
                         permanent.getId());
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData,
                         GameLog.cardThen(permanent.getCard(), "'s delayed exile ability triggers."));
                 log.info("Game {} - {} delayed exile ability triggers at its controller's end step",
@@ -3853,14 +3812,13 @@ public class StepTriggerService {
                         action.excludeSummoningSickFromDestruction()
                                 ? new com.github.laxika.magicalvibes.model.filter.PermanentControlledContinuouslySinceBeginningOfTurnPredicate()
                                 : new com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate()));
-                StackEntry delayed = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY, action.sourceCard(), action.controllerId(),
+                StackEntry delayed = TriggeredAbilityStackService.madeAbility(action.sourceCard(), action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
                         new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect(
                                 filter, com.github.laxika.magicalvibes.model.effect.EachPermanentScope.TARGET_PLAYER, null))));
                 delayed.setTargetId(action.playerId());
                 delayed.setNonTargeting(true);
-                gameData.stack.add(delayed);
+                triggeredAbilityStackService.putDelayed(gameData, delayed);
             }
         }
 
@@ -3873,7 +3831,7 @@ public class StepTriggerService {
                 if (perm == null || perm.isAttackedThisTurn()) {
                     continue;
                 }
-                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                         action.sourceCard() == null ? perm.getCard() : action.sourceCard(),
                         action.controllerId() == null ? gameQueryService.findPermanentController(gameData, perm.getId()) : action.controllerId(),
                         "Destroy creature that didn't attack",
@@ -3882,7 +3840,7 @@ public class StepTriggerService {
                         null, (UUID) null);
                 trigger.setTriggeringPermanentId(perm.getId());
                 trigger.setNonTargeting(true);
-                gameData.enqueueTrigger(trigger);
+                triggeredAbilityStackService.putDelayed(gameData, trigger);
             }
         }
 
@@ -3900,14 +3858,14 @@ public class StepTriggerService {
                     continue;
                 }
                 Permanent first = gameQueryService.findPermanentById(gameData, stillDestructible.getFirst());
-                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                         action.sourceCard() == null ? first.getCard() : action.sourceCard(),
                         action.controllerId() == null ? gameQueryService.findPermanentController(gameData, first.getId()) : action.controllerId(),
                         "Destroy chosen creatures that didn't attack",
                         new ArrayList<>(List.of(new com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect())),
                         null, stillDestructible);
                 trigger.setNonTargeting(true);
-                gameData.enqueueTrigger(trigger);
+                triggeredAbilityStackService.putDelayed(gameData, trigger);
             }
         }
 
@@ -3931,8 +3889,7 @@ public class StepTriggerService {
                             : gameData.turnNumber > action.registeredTurnNumber()
                             && action.playerId().equals(gameData.activePlayerId));
             for (LoseGameAtEndStep action : toLose) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
                         action.sourceCard(),
                         action.playerId(),
                         action.sourceCard().getName() + "'s delayed trigger — you lose the game",
@@ -3966,8 +3923,7 @@ public class StepTriggerService {
                 int triggerCount = totalCountersToAdd / 2; // each trigger adds 2 counters
                 for (int i = 0; i < triggerCount; i++) {
                     PutCountersOnSourceEffect effect = new PutCountersOnSourceEffect(1, 1, 2);
-                    gameData.stack.add(new StackEntry(
-                            StackEntryType.TRIGGERED_ABILITY,
+                    triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
                             perm.getCard(),
                             controllerId,
                             perm.getCard().getName() + "'s delayed +1/+1 counter trigger",
@@ -4000,8 +3956,7 @@ public class StepTriggerService {
                         counterEntry.permanentId(), counterEntry.totalCounters(), counterEntry.controllerId(),
                         counterEntry.sourceCard(), counterEntry.shieldId(), counterEntry.remainingShield(), true));
                 var boonSource = counterEntry.sourceCard() != null ? counterEntry.sourceCard() : perm.getCard();
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
                         boonSource,
                         controllerId,
                         boonSource.getName() + "'s delayed +0/+1 counter trigger",
@@ -4017,8 +3972,7 @@ public class StepTriggerService {
             List<RemoveCounterFromPermanentAtNextEndStep> pendingRemovals =
                     gameData.drainDelayedActions(RemoveCounterFromPermanentAtNextEndStep.class);
             for (RemoveCounterFromPermanentAtNextEndStep action : pendingRemovals) {
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         action.sourceCard(),
                         action.controllerId(),
                         action.sourceCard().getName() + "'s delayed ability",
@@ -4027,7 +3981,7 @@ public class StepTriggerService {
                         action.permanentId(),
                         (UUID) null);
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                         "'s delayed ability triggers to remove " + action.count() + " counter(s)."));
             }
@@ -4038,8 +3992,7 @@ public class StepTriggerService {
             List<DelayedUntapPermanents> pendingUntaps =
                     gameData.drainDelayedActions(DelayedUntapPermanents.class);
             for (DelayedUntapPermanents pending : pendingUntaps) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
                         pending.sourceCard(),
                         pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed trigger — untap up to " + pending.count() + " permanent(s)",
@@ -4057,8 +4010,7 @@ public class StepTriggerService {
             List<DelayedExileCreatedPermanentsAtEndStep> pendingExiles =
                     gameData.drainDelayedActions(DelayedExileCreatedPermanentsAtEndStep.class);
             for (DelayedExileCreatedPermanentsAtEndStep pending : pendingExiles) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
                         pending.sourceCard(),
                         pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed trigger — exile created permanents",
@@ -4077,8 +4029,7 @@ public class StepTriggerService {
             List<DelayedCreateToken> pendingTokens =
                     gameData.drainDelayedActions(DelayedCreateToken.class);
             for (DelayedCreateToken pending : pendingTokens) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
                         pending.sourceCard(),
                         pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed trigger — create token",
@@ -4095,8 +4046,7 @@ public class StepTriggerService {
             List<DelayedRevealCreatureCardsToBattlefield> pendingReveals =
                     gameData.drainDelayedActions(DelayedRevealCreatureCardsToBattlefield.class);
             for (DelayedRevealCreatureCardsToBattlefield pending : pendingReveals) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
                         pending.sourceCard(),
                         pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed trigger — reveal creature cards",
@@ -4117,8 +4067,7 @@ public class StepTriggerService {
             for (DelayedCreateTokenCopy pending : pendingCopies) {
                 String sourceName = pending.sourceCard() != null
                         ? pending.sourceCard().getName() : pending.copiedCard().getName();
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
                         pending.copiedCard(),
                         pending.controllerId(),
                         sourceName + "'s delayed trigger — create token copy",
@@ -4139,8 +4088,7 @@ public class StepTriggerService {
                 if (gameQueryService.findPermanentById(gameData, pending.sourcePermanentId()) == null) {
                     continue;
                 }
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         pending.sourceCard(),
                         pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed trigger — choose an opponent",
@@ -4148,7 +4096,7 @@ public class StepTriggerService {
                         null,
                         pending.sourcePermanentId());
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData,
                         GameLog.cardThen(pending.sourceCard(), "'s delayed trigger — choose an opponent."));
             }
@@ -4158,15 +4106,14 @@ public class StepTriggerService {
             List<DiscardCardsAtNextEndStep> pendingDiscards =
                     gameData.drainDelayedActions(DiscardCardsAtNextEndStep.class);
             for (DiscardCardsAtNextEndStep pending : pendingDiscards) {
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         pending.sourceCard(),
                         pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed trigger — discard " + pending.count() + " cards",
                         new ArrayList<>(List.of(new DiscardEffect(pending.count(), DiscardRecipient.CONTROLLER)))
                 );
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData,
                         GameLog.cardThen(pending.sourceCard(), "'s delayed trigger discards cards."));
                 log.info("Game {} - {} delayed discard trigger pushed onto stack",
@@ -4182,14 +4129,13 @@ public class StepTriggerService {
                 List<CardEffect> discards = pending.cardIds().stream()
                         .<CardEffect>map(DiscardSpecificCardEffect::new)
                         .toList();
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         pending.sourceCard(),
                         pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed trigger — discard those cards",
                         new ArrayList<>(discards));
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData,
                         GameLog.cardThen(pending.sourceCard(), "'s delayed trigger discards those cards."));
                 log.info("Game {} - {} delayed specific discard trigger pushed onto stack",
@@ -4201,8 +4147,7 @@ public class StepTriggerService {
             List<ExileCardsFromOwnGraveyardAtNextEndStep> pendingExiles =
                     gameData.drainDelayedActions(ExileCardsFromOwnGraveyardAtNextEndStep.class);
             for (ExileCardsFromOwnGraveyardAtNextEndStep pending : pendingExiles) {
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         pending.sourceCard(),
                         pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed trigger — exile cards from graveyard",
@@ -4210,7 +4155,7 @@ public class StepTriggerService {
                                 pending.count(), GraveyardExileScope.OWN)))
                 );
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData,
                         GameLog.cardThen(pending.sourceCard(), "'s delayed trigger exiles cards from graveyard."));
                 log.info("Game {} - {} delayed graveyard exile trigger pushed onto stack",
@@ -4222,8 +4167,7 @@ public class StepTriggerService {
             List<DelayedDestroyAllPermanents> pendingWipes =
                     gameData.drainDelayedActions(DelayedDestroyAllPermanents.class);
             for (DelayedDestroyAllPermanents pending : pendingWipes) {
-                gameData.stack.add(new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
                         pending.sourceCard(),
                         pending.controllerId(),
                         pending.sourceCard().getName() + "'s delayed trigger — destroy all permanents",
@@ -4242,8 +4186,7 @@ public class StepTriggerService {
             List<DelayedLoseLifeAndReturnFromGraveyard> pendingReturns =
                     gameData.drainDelayedActions(DelayedLoseLifeAndReturnFromGraveyard.class);
             for (DelayedLoseLifeAndReturnFromGraveyard pending : pendingReturns) {
-                StackEntry delayedEntry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry delayedEntry = TriggeredAbilityStackService.madeAbility(
                         pending.sourceCard(),
                         pending.controllerId(),
                         pending.sourceCard().getName()
@@ -4255,7 +4198,7 @@ public class StepTriggerService {
                         ))
                 );
                 delayedEntry.setSourceGraveyardEntryVersion(pending.graveyardEntryVersion());
-                gameData.stack.add(delayedEntry);
+                triggeredAbilityStackService.putDelayed(gameData, delayedEntry);
                 gameLogService.append(gameData, GameLog.cardThen(pending.sourceCard(),
                         "'s delayed trigger — lose " + pending.lifeLoss()
                                 + " life and return to hand."));
@@ -4309,15 +4252,14 @@ public class StepTriggerService {
                 }
                 Card sourceCard = pending.sourceCard() != null
                         ? pending.sourceCard() : exiledEntry.card();
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         sourceCard,
                         pending.ownerId(),
                         sourceCard.getName() + "'s delayed ability",
                         new ArrayList<>(List.of(new ReturnExiledCardToHandEffect(
                                 pending.cardId(), pending.ownerId()))));
                 entry.setNonTargeting(true);
-                gameData.stack.add(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(
                         sourceCard, "'s delayed return ability triggers."));
             }
@@ -4334,13 +4276,13 @@ public class StepTriggerService {
                         || gameData.graveyardEntryVersion(returningCard.getId()) != pending.graveyardEntryVersion()) {
                     continue;
                 }
-                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                         returningCard, pending.controllerId(), returningCard.getName() + "'s delayed return ability",
                         List.of(new com.github.laxika.magicalvibes.model.effect.ReturnSourceTransformedFromGraveyardEffect()));
                 trigger.setTriggeringCardId(returningCard.getId());
                 trigger.setTriggeringCardGraveyardEntryVersion(gameData.graveyardEntryVersion(returningCard.getId()));
                 trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
+                triggeredAbilityStackService.putDelayed(gameData, trigger);
                 gameLogService.append(gameData, GameLog.cardThen(returningCard, "'s delayed return ability triggers."));
             }
         }
@@ -4358,12 +4300,12 @@ public class StepTriggerService {
                     continue;
                 }
 
-                StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                         auraCard, pending.auraOwnerId(), auraCard.getName() + "'s delayed return ability",
                         new ArrayList<>(List.of(new ReturnAuraFromGraveyardAttachedToPermanentEffect(
                                 pending.auraCardId(), pending.auraOwnerId(), pending.enchantedPermanentId()))));
                 trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
+                triggeredAbilityStackService.putDelayed(gameData, trigger);
                 gameLogService.append(gameData, GameLog.cardThen(auraCard, "'s delayed return ability triggers."));
             }
         }
@@ -4376,12 +4318,12 @@ public class StepTriggerService {
                 if (curseCard == null) {
                     continue;
                 }
-                StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         curseCard, pending.attachedPlayerId(), curseCard.getName() + "'s delayed return ability",
                         new ArrayList<>(List.of(new ReturnDelayedCurseAttachedToPlayerEffect(pending))));
                 entry.setNonTargeting(true);
                 entry.setTriggeringCardId(pending.cardId());
-                gameData.enqueueTrigger(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData, GameLog.cardThen(curseCard, "'s delayed return ability triggers."));
             }
         }
@@ -4396,8 +4338,7 @@ public class StepTriggerService {
                     continue;
                 }
 
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         auraCard,
                         pending.controllerId(),
                         auraCard.getName() + "'s delayed return ability",
@@ -4406,7 +4347,7 @@ public class StepTriggerService {
                 entry.setTriggeringCardId(auraCard.getId());
                 entry.setTriggeringCardGraveyardEntryVersion(
                         gameData.graveyardEntryVersion(auraCard.getId()));
-                gameData.enqueueTrigger(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData,
                         GameLog.cardThen(auraCard, "'s delayed return ability triggers."));
             }
@@ -4427,8 +4368,7 @@ public class StepTriggerService {
                 Permanent sourcePermanent = pending.sourcePermanentId() == null
                         ? null : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
                 Card sourceCard = sourcePermanent != null ? sourcePermanent.getCard() : returningCard;
-                StackEntry entry = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry entry = TriggeredAbilityStackService.madeAbility(
                         sourceCard,
                         pending.triggerControllerId(),
                         sourceCard.getName() + "'s delayed return ability",
@@ -4438,7 +4378,7 @@ public class StepTriggerService {
                                 : new ReturnDelayedGraveyardCardUnderControlEffect(pending))));
                 entry.setNonTargeting(true);
                 entry.setTriggeringCardId(pending.cardId());
-                gameData.enqueueTrigger(entry);
+                triggeredAbilityStackService.putDelayed(gameData, entry);
                 gameLogService.append(gameData,
                         GameLog.cardThen(sourceCard, "'s delayed return ability triggers."));
             }
@@ -4552,14 +4492,13 @@ public class StepTriggerService {
                     ConditionContext.forCard(boon.sourceCard(), activePlayerId))) {
                 continue;
             }
-            StackEntry trigger = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                     boon.sourceCard(),
                     boon.controllerId(),
                     boon.sourceCard().getName() + "'s boon",
                     new ArrayList<>(List.of(boon.effect())));
             trigger.setNonTargeting(true);
-            gameData.stack.add(trigger);
+            triggeredAbilityStackService.putDelayed(gameData, trigger);
             gameLogService.append(gameData, GameLog.abilityTriggers(boon.sourceCard()));
         }
 
@@ -4696,8 +4635,7 @@ public class StepTriggerService {
         List<RemoveCountersFromPermanentAtNextCleanup> pendingRemovals =
                 gameData.drainDelayedActions(RemoveCountersFromPermanentAtNextCleanup.class);
         for (RemoveCountersFromPermanentAtNextCleanup action : pendingRemovals) {
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(
                     action.sourceCard(),
                     action.controllerId(),
                     action.sourceCard().getName() + "'s delayed ability",
@@ -4706,7 +4644,7 @@ public class StepTriggerService {
                     action.permanentId(),
                     (UUID) null);
             entry.setNonTargeting(true);
-            gameData.stack.add(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.cardThen(action.sourceCard(),
                     "'s delayed ability triggers to remove counters."));
         }
@@ -4806,14 +4744,11 @@ public class StepTriggerService {
         List<DelayedBeginningOfCombatTrigger> delayedTriggers =
                 gameData.drainDelayedActions(DelayedBeginningOfCombatTrigger.class);
         for (DelayedBeginningOfCombatTrigger trigger : delayedTriggers) {
-            // A delayed ability records nothing of an event; its targets are always chosen as it goes on the stack.
-            gameData.handOffTriggerRecord(new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY, trigger.sourceCard(), trigger.controllerId(),
-                    trigger.sourceCard().getName() + "'s delayed ability",
-                    new ArrayList<>(List.of(trigger.effect()))));
-            gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                    trigger.sourceCard(), trigger.controllerId(), new ArrayList<>(List.of(trigger.effect())),
-                    null, List.of(), 0, 0));
+            // A delayed ability records nothing of an event; its targets, the groups its runtime card declares, are
+            // chosen as it goes on the stack (CR 603.3d).
+            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
+                    trigger.sourceCard(), trigger.controllerId(), trigger.sourceCard().getName() + "'s delayed ability",
+                    List.of(trigger.effect())));
             gameLogService.append(gameData,
                     GameLog.cardThen(trigger.sourceCard(), "'s delayed beginning of combat trigger triggers."));
         }
@@ -4885,8 +4820,7 @@ public class StepTriggerService {
             UUID triggerControllerId = present.getFirst().controllerId() != null
                     ? present.getFirst().controllerId()
                     : gameQueryService.findPermanentController(gameData, first.getId());
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(
                     present.getFirst().sourceCard(),
                     triggerControllerId,
                     present.getFirst().sourceCard().getName() + "'s delayed ability",
@@ -4897,7 +4831,7 @@ public class StepTriggerService {
                     first.getId());
             entry.setSourcePermanentSnapshot(new Permanent(first));
             entry.setNonTargeting(true);
-            gameData.stack.add(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData, GameLog.cardThen(present.getFirst().sourceCard(),
                     "'s delayed exile ability triggers."));
         }
@@ -4916,8 +4850,7 @@ public class StepTriggerService {
                     ? action.controllerId()
                     : gameQueryService.findPermanentController(gameData, permanent.getId());
             Card triggerCard = action.sourceCard() != null ? action.sourceCard() : permanent.getCard();
-            StackEntry entry = new StackEntry(
-                    StackEntryType.TRIGGERED_ABILITY,
+            StackEntry entry = TriggeredAbilityStackService.madeAbility(
                     triggerCard,
                     controllerId,
                     triggerCard.getName() + "'s delayed ability",
@@ -4925,7 +4858,7 @@ public class StepTriggerService {
                     permanent.getId(),
                     action.triggerSourcePermanentId() != null ? action.triggerSourcePermanentId() : permanent.getId());
             entry.setNonTargeting(true);
-            gameData.stack.add(entry);
+            triggeredAbilityStackService.putDelayed(gameData, entry);
             gameLogService.append(gameData,
                     GameLog.cardThen(permanent.getCard(), "'s delayed exile ability triggers."));
         }

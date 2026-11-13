@@ -1,19 +1,17 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaCastTargetInstantOrSorceryFromGraveyardEffect;
@@ -23,13 +21,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -40,9 +36,9 @@ public class PayXManaCastTargetInstantOrSorceryFromGraveyardEffectHandler
         implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
-    private final PredicateEvaluationService predicateEvaluationService;
 
     /** "Instant or sorcery card with mana value X": X is the X paid, which the reflexive ability's entry has. */
     private static final CardPredicate INSTANT_OR_SORCERY_WITH_MANA_VALUE_X = new CardAllOfPredicate(List.of(
@@ -87,83 +83,17 @@ public class PayXManaCastTargetInstantOrSorceryFromGraveyardEffectHandler
         new ManaCost("{X}").pay(pool, chosenX);
         gameLogService.append(gameData, GameLog.text(
                 playerName + " pays {" + chosenX + "} for " + cardName + "."));
-        beginReflexiveTrigger(gameData, entry, controllerId, chosenX);
+        beginReflexiveTrigger(gameData, entry, chosenX);
     }
 
-    private void beginReflexiveTrigger(GameData gameData, StackEntry entry,
-                                       UUID controllerId, int chosenX) {
+    private void beginReflexiveTrigger(GameData gameData, StackEntry entry, int chosenX) {
         Card sourceCard = entry.getCard();
-        CardPredicate filter = INSTANT_OR_SORCERY_WITH_MANA_VALUE_X;
-        CastTargetInstantOrSorceryFromGraveyardEffect castEffect = CAST_WITH_MANA_VALUE_X;
-
-        List<Card> cardPool = new ArrayList<>();
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Card> graveyard = gameData.playerGraveyards.get(playerId);
-            if (graveyard != null) {
-                cardPool.addAll(graveyard);
-            }
-        }
-
-        List<Integer> matchingIndices = new ArrayList<>();
-        for (int i = 0; i < cardPool.size(); i++) {
-            if (predicateEvaluationService.matchesCardPredicate(cardPool.get(i), filter, sourceCard.getId(),
-                    gameData, controllerId, entry.getSourcePermanentId(), null, chosenX)) {
-                matchingIndices.add(i);
-            }
-        }
-
-        if (matchingIndices.isEmpty()) {
-            gameLogService.append(gameData, GameLog.cardThen(sourceCard,
-                    "'s ability has no instant or sorcery card with mana value " + chosenX
-                            + " to target."));
-            return;
-        }
-
-        // The ability records what the resolving entry was about, with the X paid as its X, whether its one legal
-        // card is targeted or a card is chosen.
-        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(castEffect),
+        // "When you do, you may cast target instant or sorcery card with mana value X from a graveyard" (CR
+        // 603.12): its graveyard target is chosen as it goes on the stack, against the X paid, the ability's X.
+        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry, List.of(CAST_WITH_MANA_VALUE_X),
                 sourceCard.getName() + "'s ability");
         record.setXValue(chosenX);
-        ReflexiveAbilitySupport.route(gameData, record, () -> {
-            if (matchingIndices.size() == 1) {
-                Card targetCard = cardPool.get(matchingIndices.getFirst());
-                addReflexiveTrigger(gameData, entry, castEffect, targetCard, chosenX);
-                return;
-            }
-            interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
-                    .builder(controllerId, matchingIndices, GraveyardChoiceDestination.MAY_ABILITY_TARGET,
-                            "Choose an instant or sorcery card with mana value " + chosenX
-                                    + " from a graveyard to cast.")
-                    .cardPool(cardPool)
-                    .mayAbilityContext(sourceCard, controllerId, List.of(castEffect), entry.getSourcePermanentId())
-                    .build());
-        });
-    }
-
-    private void addReflexiveTrigger(GameData gameData, StackEntry entry,
-                                     CastTargetInstantOrSorceryFromGraveyardEffect castEffect,
-                                     Card targetCard, int chosenX) {
-        Card sourceCard = entry.getCard();
-        UUID controllerId = entry.getControllerId();
-        gameData.stack.add(new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                sourceCard,
-                controllerId,
-                sourceCard.getName() + "'s ability",
-                new ArrayList<>(List.of(castEffect)),
-                chosenX,
-                targetCard.getId(),
-                entry.getSourcePermanentId(),
-                null,
-                Zone.GRAVEYARD,
-                null,
-                null));
-        gameLogService.append(gameData, GameLog.builder()
-                .card(sourceCard)
-                .text("'s ability targets ")
-                .card(targetCard)
-                .text(" in a graveyard.")
-                .build());
+        triggeredAbilityStackService.putMade(gameData, record);
     }
 
     private void beginXPrompt(GameData gameData, UUID controllerId, String cardName) {

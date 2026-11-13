@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -52,6 +53,27 @@ class Vault101BirthdayPartyTest extends BaseCardTest {
         Permanent enteredEquipment = findPermanent(player1, "Pip-Boy 3000");
         assertThat(enteredEquipment).isNotNull();
         assertThat(enteredEquipment.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Attaching the Equipment is part of the chapter ability's resolution, not an ability of its own")
+    void equipmentAttachmentIsPartOfTheChapterAbility() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        PipBoy3000 equipment = new PipBoy3000();
+        harness.setHand(player1, List.of(equipment));
+        addSagaWithLore(1);
+
+        triggerChapter();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(equipment.getId()));
+
+        // "If an Equipment is put onto the battlefield this way, you may attach it" is asked as the chapter ability
+        // goes on resolving: nothing is put on the stack for it.
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.stack).isEmpty();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanent(player1, "Pip-Boy 3000").getAttachedTo()).isEqualTo(creature.getId());
     }
 
     @Test

@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.effect.ReturnedPermanentFightsTargetCreatureEffect;
 import java.util.List;
 import java.util.UUID;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ReturnedPermanentFightsTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
-    private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,18 +42,12 @@ public class ReturnedPermanentFightsTargetCreatureEffectHandler implements Norma
             return;
         }
 
-        StackEntry reflexiveContext = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
-                entry.getCard(),
-                entry.getControllerId(),
-                entry.getCard().getName() + "'s reflexive ability",
-                List.of(),
-                0,
-                returnedPermanent.getId());
-        reflexiveContext.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
-        queueReflexiveAbilityEffectHandler.resolve(gameData, reflexiveContext,
-                new QueueReflexiveAbilityEffect(
-                        new EnteringCreatureFightsTargetCreatureEffect(fightEffect.targetPredicate()), true));
+        // The returned creature is the reflexive ability's source permanent: "it fights up to one target creature".
+        StackEntry record = ReflexiveAbilitySupport.record(gameData, entry,
+                List.of(new EnteringCreatureFightsTargetCreatureEffect(fightEffect.targetPredicate(), true)),
+                entry.getCard().getName() + "'s reflexive ability", returnedPermanent.getId());
+        record.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
+        triggeredAbilityStackService.putMade(gameData, record);
     }
 
     private Permanent findPermanentByCardId(GameData gameData, UUID cardId) {

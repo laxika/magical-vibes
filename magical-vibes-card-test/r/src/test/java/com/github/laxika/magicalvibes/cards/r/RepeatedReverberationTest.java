@@ -38,7 +38,7 @@ class RepeatedReverberationTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         GameData gd = harness.getGameData();
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).doesNotContainKey(player1.getId());
+        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
 
         resolveAllTriggers();
 
@@ -222,7 +222,7 @@ class RepeatedReverberationTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0);
 
         GameData gd = harness.getGameData();
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount.get(player1.getId())).isEqualTo(2);
+        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(2);
     }
 
     private Permanent addReadyChandra(Player player, int loyalty) {

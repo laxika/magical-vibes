@@ -41,6 +41,7 @@ class WishingWellTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(shock, counsel));
 
         activateAndResolveAbility();
+        chooseOnlyGraveyardTarget();
         resolveReflexiveTrigger();
 
         PendingInteraction.MayAbilityChoice choice =
@@ -61,6 +62,7 @@ class WishingWellTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         activateAndResolveAbility();
+        chooseOnlyGraveyardTarget();
         resolveReflexiveTrigger();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, target.getId());
@@ -85,6 +87,7 @@ class WishingWellTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(counsel));
 
         activateAndResolveAbility();
+        chooseOnlyGraveyardTarget();
         resolveReflexiveTrigger();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
@@ -120,8 +123,11 @@ class WishingWellTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(first, second));
 
         activateAndResolveAbility();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNotNull();
-        harness.handleGraveyardCardChosen(player1, 1);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.cards()).containsExactlyInAnyOrder(first, second);
+        harness.handleMultipleCardsChosen(player1, List.of(second.getId()));
         resolveReflexiveTrigger();
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, player2.getId());
@@ -140,6 +146,7 @@ class WishingWellTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(shock));
 
         activateAndResolveAbility();
+        chooseOnlyGraveyardTarget();
         well.setCounterCount(CounterType.COIN, 2);
         resolveReflexiveTrigger();
 
@@ -166,6 +173,7 @@ class WishingWellTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(shock));
 
         activateAndResolveAbility();
+        chooseOnlyGraveyardTarget();
         harness.setGraveyard(player1, List.of());
         harness.setHand(player1, List.of(shock));
         resolveReflexiveTrigger();
@@ -183,6 +191,7 @@ class WishingWellTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(shock));
 
         activateAndResolveAbility();
+        chooseOnlyGraveyardTarget();
         gd.playerBattlefields.get(player1.getId()).remove(well);
         harness.setHand(player1, List.of(well.getCard()));
         resolveReflexiveTrigger();
@@ -201,5 +210,23 @@ class WishingWellTest extends BaseCardTest {
 
     private void resolveReflexiveTrigger() {
         harness.passBothPriorities();
+    }
+
+    /** The reflexive ability's one legal graveyard target, chosen as it goes on the stack (CR 603.3d). */
+    private void chooseOnlyGraveyardTarget() {
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.cards()).hasSize(1);
+        harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
+    }
+
+    /** The reflexive ability's graveyard target named {@code name}, chosen as it goes on the stack (CR 603.3d). */
+    private void chooseGraveyardTargetNamed(String name) {
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of(choice.cards().stream()
+                .filter(card -> card.getName().equals(name)).findFirst().orElseThrow().getId()));
     }
 }

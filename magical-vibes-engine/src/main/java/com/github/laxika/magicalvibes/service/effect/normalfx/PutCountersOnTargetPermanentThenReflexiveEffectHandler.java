@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetPermanentThenReflexiveEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -59,8 +60,8 @@ public class PutCountersOnTargetPermanentThenReflexiveEffectHandler implements N
                     "PutCountersOnTargetPermanentThenReflexiveEffect is not part of the resolving entry");
         }
         entry.insertEffectsToResolve(effectIndex + 1,
-                List.of(new QueueReflexiveAbilityEffect(
-                        counterThen.reflexiveEffect(), counterThen.reflexiveOptionalTarget(),
+                List.of(new QueueReflexiveAbilityEffect(counterThen.reflexiveOptionalTarget()
+                        ? SequenceEffect.upToOneTarget(counterThen.reflexiveEffect()) : counterThen.reflexiveEffect(),
                         counterThen.reflexiveUsesTargetAsTriggeringPermanent(), false)));
     }
 }

@@ -1,16 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import java.util.ArrayList;
-import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.cards.l.LukaminaMoonDruid;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
@@ -19,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeLukaminaEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UnspecializeLukaminaEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -38,6 +34,7 @@ import java.util.Set;
 public class SpecializeLukaminaEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -96,22 +93,16 @@ public class SpecializeLukaminaEffectHandler implements NormalEffectHandlerBean 
 
     private void queueSpecializationTrigger(GameData gameData, StackEntry sourceEntry,
                                              Card sourceCard, List<CardEffect> effects) {
-        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard,
+        // "When this creature specializes" is an ability of the specialized face (CR 603.2), put on the stack by the
+        // stack door, which chooses its targets as it goes there (CR 603.3d).
+        triggeredAbilityStackService.putMade(gameData, TriggeredAbilityStackService.madeAbility(sourceCard,
                 sourceEntry.getControllerId(), sourceCard.getName() + "'s ability", effects, 0,
-                sourceEntry.getSourcePermanentId());
-        trigger.setNonTargeting(effects.stream().allMatch(effect -> effect.targetSpec() == TargetSpec.NONE));
-        gameData.enqueueTrigger(trigger);
+                sourceEntry.getSourcePermanentId()));
     }
 
     private void queueTargetedSpecializationTrigger(GameData gameData, StackEntry sourceEntry,
                                                      Permanent source, Card sourceCard, List<CardEffect> effects) {
-        // The ability's entry when it chooses nothing is its record whichever way it reaches the stack.
-        ReflexiveAbilitySupport.route(gameData,
-                new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, sourceEntry.getControllerId(),
-                        sourceCard.getName() + "'s ability", new ArrayList<>(effects), 0, sourceEntry.getSourcePermanentId()),
-                () -> gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                    sourceCard, sourceEntry.getControllerId(), effects, "specializes",
-                    sourceEntry.getSourcePermanentId(), new Permanent(source))));
+        queueSpecializationTrigger(gameData, sourceEntry, sourceCard, effects);
     }
 
     private static CreateTokenEffect wolfTokenEffect() {

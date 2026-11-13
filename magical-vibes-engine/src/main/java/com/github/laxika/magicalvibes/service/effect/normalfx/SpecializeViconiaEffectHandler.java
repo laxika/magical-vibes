@@ -1,13 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
+import java.util.ArrayList;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.cards.v.ViconiaNightsingersDisciple;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTargetExiledCardIntoHandEffect;
@@ -17,7 +16,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /** Applies Viconia, Nightsinger's Disciple's five digital specialized faces. */
@@ -26,6 +24,7 @@ import java.util.List;
 public class SpecializeViconiaEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -55,24 +54,11 @@ public class SpecializeViconiaEffectHandler implements NormalEffectHandlerBean {
         installSpecializedTargets(specialized, triggers);
         source.exchangeCard(specialized);
 
-        // The ability's entry when it chooses nothing is its record whichever way it reaches the stack.
-        ReflexiveAbilitySupport.route(gameData,
-                new StackEntry(StackEntryType.TRIGGERED_ABILITY, specialized, entry.getControllerId(),
-                        specialized.getName() + "'s ability", new ArrayList<>(triggers), 0, entry.getSourcePermanentId()),
-                () -> gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                    specialized,
-                    entry.getControllerId(),
-                    new ArrayList<>(triggers),
-                    entry.getSourcePermanentId(),
-                    List.of(),
-                    0,
-                    0,
-                    List.of(),
-                    0,
-                    List.of(),
-                    false,
-                    null,
-                    null)));
+        // "When this creature specializes" is an ability of the specialized face (CR 603.2), put on the stack by the
+        // stack door, which chooses its targets as it goes there (CR 603.3d).
+        triggeredAbilityStackService.putMade(gameData, TriggeredAbilityStackService.madeAbility(specialized,
+                entry.getControllerId(), specialized.getName() + "'s ability", new ArrayList<>(triggers), 0,
+                entry.getSourcePermanentId()));
     }
 
     private void installSpecializedTargets(Card specialized,

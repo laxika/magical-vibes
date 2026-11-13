@@ -75,8 +75,8 @@ public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter
 
     /**
      * The exertion of "You may exert this creature as it attacks" (CR 701.43a): the source doesn't untap during
-     * the exerting player's next untap step. Written as the first step of the "you may" of a {@code
-     * Triggers.attacks()} ability, before the "when you do" the card has ({@code QueueReflexiveAbilityEffect}).
+     * the exerting player's next untap step. The attack collector asks it for a creature with {@code
+     * ExertAsItAttacksEffect} as the creature attacks; the "when you do" is {@code Triggers.exertedAsItAttacks()}.
      */
     public static SkipNextUntapEffect exert() {
         return new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true);
@@ -95,7 +95,7 @@ public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter
         }
     }
 
-    @Override
+    /** Whether this is the exertion of "you may exert this creature as it attacks" ({@link #exert()}). */
     public boolean exertsAsItAttacks() {
         return scope == TapUntapScope.SELF && controllerStepOnly && !activationCost;
     }

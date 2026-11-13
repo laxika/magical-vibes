@@ -61,7 +61,7 @@ class MercurialSpelldancerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(dancer.getCounterCount(CounterType.OIL)).isZero();
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(1);
 
         harness.setHand(player1, List.of(new LightningBolt()));
         harness.addMana(player1, ManaColor.RED, 1);
@@ -69,7 +69,7 @@ class MercurialSpelldancerTest extends BaseCardTest {
 
         assertThat(gd.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && entry.getDescription().contains("Copy Lightning Bolt"));
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).doesNotContainKey(player1.getId());
+        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
     }
 
     @Test
@@ -82,7 +82,7 @@ class MercurialSpelldancerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(dancer.getCounterCount(CounterType.OIL)).isEqualTo(2);
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).doesNotContainKey(player1.getId());
+        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
     }
 
     @Test
@@ -95,7 +95,7 @@ class MercurialSpelldancerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(dancer.getCounterCount(CounterType.OIL)).isEqualTo(1);
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).doesNotContainKey(player1.getId());
+        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
     }
 
     @Test
@@ -121,7 +121,7 @@ class MercurialSpelldancerTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(dancer.getCounterCount(CounterType.OIL)).isEqualTo(3);
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount.get(player1.getId())).isEqualTo(1);
+        assertThat(gd.pendingSpellCopyCount(player1.getId())).isEqualTo(1);
     }
 
     @Test
@@ -135,7 +135,7 @@ class MercurialSpelldancerTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).doesNotContainKey(player1.getId());
+        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
     }
 
     @Test
@@ -205,7 +205,7 @@ class MercurialSpelldancerTest extends BaseCardTest {
 
         assertThat(gd.stack).anyMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY
                 && entry.getDescription().contains("Copy Expand the Sphere"));
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).doesNotContainKey(player1.getId());
+        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
     }
 
     @Test
@@ -225,7 +225,7 @@ class MercurialSpelldancerTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertLife(player2, 16);
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).doesNotContainKey(player1.getId());
+        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
         assertThat(gd.stack).isEmpty();
     }
 

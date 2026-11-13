@@ -1,18 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
-import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
@@ -27,10 +22,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ExileSourceCardFromGraveyardThenEffectHandler implements NormalEffectHandlerBean {
 
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final ExileSourceCardFromGraveyardEffectHandler exileHandler;
     private final GameQueryService gameQueryService;
-    private final TriggeredAbilityQueueService triggeredAbilityQueueService;
-    private final QueueReflexiveAbilityEffectHandler queueReflexiveAbilityEffectHandler;
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -57,32 +51,14 @@ public class ExileSourceCardFromGraveyardThenEffectHandler implements NormalEffe
             return;
         }
 
-        TargetSpec thenTargetSpec = exileThen.thenEffect().targetSpec();
-        // The ability records what the resolving entry was about whichever way it reaches the stack.
+        // "When you do" is an ability of its own (CR 603.12): the stack door chooses its target, and it records what
+        // the resolving entry was about.
         StackEntry record = ReflexiveAbilitySupport.record(
                 gameData, entry, List.of(exileThen.thenEffect()), entry.getCard().getName() + "'s ability");
         // "This creature's power" of a card that left the battlefield is its power as it last existed there.
         record.setSourcePowerAtTrigger(entry.getTriggeringPermanentPowerAtTrigger());
-        ReflexiveAbilitySupport.route(gameData, record,
-                () -> putOnStackOrChoose(gameData, entry, exileThen, thenTargetSpec, record));
-    }
-
-    private void putOnStackOrChoose(GameData gameData, StackEntry entry, ExileSourceCardFromGraveyardThenEffect exileThen,
-                                    TargetSpec thenTargetSpec, StackEntry record) {
-        if (thenTargetSpec.equals(TargetSpec.NONE)) {
-            gameData.stack.add(record);
-        } else if (thenTargetSpec.admits(TargetPredicate.Kind.PERMANENT)
-                || thenTargetSpec.admits(TargetPredicate.Kind.PLAYER)
-                || thenTargetSpec.admits(TargetPredicate.Kind.SPELL)) {
-            queueReflexiveAbilityEffectHandler.resolve(
-                    gameData, entry, new QueueReflexiveAbilityEffect(exileThen.thenEffect()));
-        } else {
-            gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    entry.getCard(), entry.getControllerId(), List.of(exileThen.thenEffect()),
-                    null, 0, 0, 0, entry.getTriggeringPermanentPowerAtTrigger())
-                    .withGraveyardTargetMaxManaValue(reflexiveMaxManaValue(gameData, entry, exileThen.thenEffect())));
-            triggeredAbilityQueueService.processNextSpellGraveyardTargetTrigger(gameData);
-        }
+        record.setGraveyardTargetMaxManaValue(reflexiveMaxManaValue(gameData, entry, exileThen.thenEffect()));
+        triggeredAbilityStackService.putMade(gameData, record);
     }
 
     /**

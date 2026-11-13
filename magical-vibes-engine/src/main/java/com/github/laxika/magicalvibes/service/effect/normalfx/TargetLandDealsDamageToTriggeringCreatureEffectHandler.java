@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLandDealsDamageToTriggeringCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.stereotype.Component;
+import java.util.UUID;
 
 @Component
 public class TargetLandDealsDamageToTriggeringCreatureEffectHandler implements NormalEffectHandlerBean {
@@ -28,11 +29,14 @@ public class TargetLandDealsDamageToTriggeringCreatureEffectHandler implements N
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var damageEffect = (TargetLandDealsDamageToTriggeringCreatureEffect) effect;
-        if (entry.targetsForGroup(0).isEmpty() || entry.getTriggeringPermanentId() == null) {
+        // The land is the ability's one target: its group's, or the target chosen for it as it went on the stack.
+        UUID landId = !entry.targetsForGroup(0).isEmpty() ? entry.targetsForGroup(0).getFirst()
+                : entry.isNonTargeting() ? null : entry.getTargetId();
+        if (landId == null || entry.getTriggeringPermanentId() == null) {
             return;
         }
 
-        Permanent land = gameQueryService.findPermanentById(gameData, entry.targetsForGroup(0).getFirst());
+        Permanent land = gameQueryService.findPermanentById(gameData, landId);
         Permanent creature = gameQueryService.findPermanentById(gameData, entry.getTriggeringPermanentId());
         if (land == null || creature == null
                 || !gameQueryService.isLand(gameData, land)

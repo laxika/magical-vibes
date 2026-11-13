@@ -1203,8 +1203,7 @@ public class CombatBlockService {
                         || !gameQueryService.isCreature(gameData, attacker)) {
                     continue;
                 }
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                         delayed.sourceCard(),
                         delayed.controllerId(),
                         delayed.sourceCard().getName() + "'s delayed trigger",
@@ -1213,7 +1212,7 @@ public class CombatBlockService {
                         attacker.getId(),
                         delayed.sourcePermanentId());
                 trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
+                triggeredAbilityStackService.putDelayed(gameData, trigger);
                 gameLogService.append(gameData, GameLog.cardTextCard(
                         delayed.sourceCard(), " — ", attacker.getCard(),
                         " attacks unblocked."));
@@ -1238,8 +1237,7 @@ public class CombatBlockService {
         for (DelayedUnblockedAttackerUntapRemoveFromCombat delayed
                 : gameData.getDelayedActions(DelayedUnblockedAttackerUntapRemoveFromCombat.class)) {
             for (Permanent attacker : unblockedAttackers) {
-                StackEntry trigger = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                         delayed.sourceCard(),
                         delayed.controllerId(),
                         delayed.sourceCard().getName() + "'s delayed trigger",
@@ -1248,7 +1246,7 @@ public class CombatBlockService {
                         attacker.getId(),
                         attacker.getId());
                 trigger.setNonTargeting(true);
-                gameData.stack.add(trigger);
+                triggeredAbilityStackService.putDelayed(gameData, trigger);
                 gameLogService.append(gameData, GameLog.cardTextCard(
                         delayed.sourceCard(), " — ", attacker.getCard(),
                         " is untapped and removed from combat."));
@@ -1280,8 +1278,7 @@ public class CombatBlockService {
                 if (other == null) {
                     continue;
                 }
-                StackEntry se = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry se = TriggeredAbilityStackService.madeAbility(
                         delayed.sourceCard(),
                         delayed.controllerId(),
                         delayed.sourceCard().getName() + "'s delayed trigger",
@@ -1289,7 +1286,7 @@ public class CombatBlockService {
                         other.getId(),
                         delayed.permanentId());
                 se.setNonTargeting(true);
-                gameData.stack.add(se);
+                triggeredAbilityStackService.putDelayed(gameData, se);
                 gameLogService.append(gameData, GameLog.cardThen(delayed.sourceCard(), "'s delayed trigger triggers."));
             }
         }
@@ -1308,8 +1305,7 @@ public class CombatBlockService {
         for (DelayedBlockerBoost boost : gameData.getDelayedActions(DelayedBlockerBoost.class)) {
             for (int blockerIdx : uniqueBlockerIndices) {
                 Permanent blocker = defenderBattlefield.get(blockerIdx);
-                StackEntry se = new StackEntry(
-                        StackEntryType.TRIGGERED_ABILITY,
+                StackEntry se = TriggeredAbilityStackService.madeAbility(
                         boost.sourceCard(),
                         boost.controllerId(),
                         boost.sourceCard().getName() + "'s delayed trigger",
@@ -1317,7 +1313,7 @@ public class CombatBlockService {
                         blocker.getId(),
                         blocker.getId());
                 se.setNonTargeting(true);
-                gameData.stack.add(se);
+                triggeredAbilityStackService.putDelayed(gameData, se);
                 gameLogService.append(gameData, GameLog.cardTextCard(
                         boost.sourceCard(), " — ", blocker.getCard(),
                         " gets +" + boost.power() + "/+" + boost.toughness() + " until end of turn."));
@@ -1868,13 +1864,13 @@ public class CombatBlockService {
                     || !attacker.getId().equals(delayed.watchedPermanentId())) {
                 continue;
             }
-            StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+            StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                     delayed.sourceCard(), delayed.controllerId(),
                     delayed.sourceCard().getName() + "'s delayed becomes-blocked trigger",
                     CombatAbilityReader.effects(List.of(delayed.ability()), CombatWatch.ON_BECOMES_BLOCKED.trigger()),
                     attacker.getId(), (UUID) null);
             trigger.setNonTargeting(true);
-            gameData.stack.add(trigger);
+            triggeredAbilityStackService.putDelayed(gameData, trigger);
         }
     }
 

@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import java.util.ArrayList;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.cards.j.JaheiraHarperEmissary;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeJaheiraEffect;
@@ -17,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Set;
 
 /** Applies Jaheira, Harper Emissary's five digital specialized faces. */
 @Component
@@ -25,6 +21,7 @@ import java.util.Set;
 public class SpecializeJaheiraEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,24 +50,11 @@ public class SpecializeJaheiraEffectHandler implements NormalEffectHandlerBean {
         JaheiraHarperEmissary.installSpecializedTargets(specialized, specializedTrigger, specialize.color());
         source.exchangeCard(specialized);
 
-        // The ability's entry when it chooses nothing is its record whichever way it reaches the stack.
-        ReflexiveAbilitySupport.route(gameData,
-                new StackEntry(StackEntryType.TRIGGERED_ABILITY, specialized, entry.getControllerId(),
-                        specialized.getName() + "'s ability", new ArrayList<>(specializedTrigger), 0, entry.getSourcePermanentId()),
-                () -> gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
-                    specialized,
-                    entry.getControllerId(),
-                    specializedTrigger,
-                    entry.getSourcePermanentId(),
-                    List.of(),
-                    0,
-                    0,
-                    List.of(),
-                    0,
-                    List.of(),
-                    false,
-                    null,
-                    null)));
+        // "When this creature specializes" is an ability of the specialized face (CR 603.2), put on the stack by the
+        // stack door, which chooses its targets as it goes there (CR 603.3d).
+        triggeredAbilityStackService.putMade(gameData, TriggeredAbilityStackService.madeAbility(specialized,
+                entry.getControllerId(), specialized.getName() + "'s ability", specializedTrigger, 0,
+                entry.getSourcePermanentId()));
     }
 
     private void setFaceCharacteristics(Card card, CardColor color) {

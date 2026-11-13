@@ -43,6 +43,7 @@ class SlumberingWalkerTest extends BaseCardTest {
 
         resolveEndStepTrigger();
         harness.handleMayAbilityChosen(player1, true);
+        chooseOnlyGraveyardTarget();
         harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Slumbering Walker")
@@ -89,8 +90,7 @@ class SlumberingWalkerTest extends BaseCardTest {
         resolveEndStepTrigger();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 1);
+        chooseGraveyardTargetNamed("Child of Night");
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Child of Night");
@@ -120,6 +120,7 @@ class SlumberingWalkerTest extends BaseCardTest {
 
         resolveEndStepTrigger();
         harness.handleMayAbilityChosen(player1, true);
+        chooseOnlyGraveyardTarget();
 
         assertThat(walker.getCounterCount(CounterType.STUN)).isZero();
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -201,6 +202,7 @@ class SlumberingWalkerTest extends BaseCardTest {
 
         resolveEndStepTrigger();
         harness.handleMayAbilityChosen(player1, true);
+        chooseOnlyGraveyardTarget();
         walker.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 7);
         harness.runStateBasedActions();
         harness.passBothPriorities();
@@ -218,6 +220,7 @@ class SlumberingWalkerTest extends BaseCardTest {
 
         resolveEndStepTrigger();
         harness.handleMayAbilityChosen(player1, true);
+        chooseOnlyGraveyardTarget();
         harness.setGraveyard(player1, List.of());
         harness.setExile(player1, List.of(target));
         harness.passBothPriorities();
@@ -238,5 +241,23 @@ class SlumberingWalkerTest extends BaseCardTest {
         Permanent walker = harness.addToBattlefieldAndReturn(player1, new SlumberingWalker());
         walker.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
         return walker;
+    }
+
+    /** The reflexive ability's one legal graveyard target, chosen as it goes on the stack (CR 603.3d). */
+    private void chooseOnlyGraveyardTarget() {
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.cards()).hasSize(1);
+        harness.handleMultipleCardsChosen(player1, List.of(choice.cards().getFirst().getId()));
+    }
+
+    /** The reflexive ability's graveyard target named {@code name}, chosen as it goes on the stack (CR 603.3d). */
+    private void chooseGraveyardTargetNamed(String name) {
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of(choice.cards().stream()
+                .filter(card -> card.getName().equals(name)).findFirst().orElseThrow().getId()));
     }
 }

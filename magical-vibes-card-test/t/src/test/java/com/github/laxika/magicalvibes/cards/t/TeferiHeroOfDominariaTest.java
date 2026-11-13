@@ -226,6 +226,8 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
 
         // Draw a card (triggers the emblem)
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        // The draw is a service call, outside any step or resolution: the stack door's choices begin here.
+        harness.beginTriggerChoices();
 
         // Should be awaiting permanent choice for the emblem trigger target
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isTrue();
@@ -255,6 +257,8 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
 
         // Draw a card
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        // The draw is a service call, outside any step or resolution: the stack door's choices begin here.
+        harness.beginTriggerChoices();
 
         // No valid targets — emblem trigger should be skipped
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class) != null).isFalse();
@@ -341,6 +345,8 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Plains());
         harness.addToBattlefield(player2, new Island());
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player2.getId()));
+        // The draw is a service call, outside any step or resolution: the stack door's choices begin here.
+        harness.beginTriggerChoices();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
     }
@@ -350,6 +356,8 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         createEmblem();
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        // The draw is a service call, outside any step or resolution: the stack door's choices begin here.
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, land.getId());
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player2, "Island");
@@ -361,6 +369,8 @@ class TeferiHeroOfDominariaTest extends BaseCardTest {
         createEmblem();
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new PrimordialWurm());
         harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        // The draw is a service call, outside any step or resolution: the stack door's choices begin here.
+        harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, creature.getId());
 
         setOwnerAndController(creature, player2, player1);

@@ -387,7 +387,8 @@ public class TriggeredAbilityStackService {
                     || effect.modesChosenAsItTriggers() != null;
             effects.add(judgedOnce ? effect : new ConditionalEffect(interveningIf, effect));
         }
-        int copies = options.limit() == TriggerLimit.ONCE_EACH_TURN || request.sourcePermanent() == null ? 1
+        int copies = options.limit() == TriggerLimit.ONCE_EACH_TURN ? 1
+                : request.sourcePermanent() == null ? 1 + emblemAdditionalTriggers(gameData, request)
                 : 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(gameData, request.controllerId(),
                         request.sourcePermanent(), request.attackCaused(), request.event())
                 + eventAdditionalTriggers(gameData, request);
@@ -399,6 +400,147 @@ public class TriggeredAbilityStackService {
         }
         markLimit(gameData, options.limit(), limitSourceId, ability.limitKey(), request.limitCreatureId());
         return true;
+    }
+
+    /**
+     * A new stack entry of an ability a resolving spell or ability makes or made: a reflexive ability ("when you do",
+     * CR 603.12) or a delayed one that has triggered (CR 603.7), with {@code sourceCard} and {@code sourcePermanentId}
+     * as its source and {@code controllerId} as its controller (CR 603.7d, 603.7e). Its maker stamps on it what the
+     * ability records (what the resolution that made it was about, "that creature", "that much") and hands it to
+     * {@link #putMade}, which alone puts it toward the stack.
+     */
+    public static StackEntry madeAbility(Card sourceCard, UUID controllerId, String description,
+                                         List<CardEffect> effects, int xValue, UUID sourcePermanentId) {
+        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
+                new ArrayList<>(effects), xValue, sourcePermanentId);
+    }
+
+    /** {@link #madeAbility(Card, UUID, String, List, int, UUID)} with no X and no source permanent. */
+    public static StackEntry madeAbility(Card sourceCard, UUID controllerId, String description,
+                                         List<CardEffect> effects) {
+        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
+                new ArrayList<>(effects));
+    }
+
+    /** {@link #madeAbility(Card, UUID, String, List, int, UUID)} with no source permanent. */
+    public static StackEntry madeAbility(Card sourceCard, UUID controllerId, String description,
+                                         List<CardEffect> effects, int xValue) {
+        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
+                new ArrayList<>(effects), xValue);
+    }
+
+    /**
+     * {@link #madeAbility(Card, UUID, String, List, int, UUID)} about {@code targetId}: the object or player the
+     * resolution that made it named, or {@code null}.
+     */
+    public static StackEntry madeAbility(Card sourceCard, UUID controllerId, String description,
+                                         List<CardEffect> effects, UUID targetId, UUID sourcePermanentId) {
+        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
+                new ArrayList<>(effects), targetId, sourcePermanentId);
+    }
+
+    /** {@link #madeAbility(Card, UUID, String, List, UUID, UUID)} about an object in {@code targetZone}. */
+    public static StackEntry madeAbility(Card sourceCard, UUID controllerId, String description,
+                                         List<CardEffect> effects, UUID targetId, Zone targetZone) {
+        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
+                new ArrayList<>(effects), targetId, targetZone);
+    }
+
+    /** {@link #madeAbility(Card, UUID, String, List, UUID, Zone)} with a source permanent. */
+    public static StackEntry madeAbility(Card sourceCard, UUID controllerId, String description,
+                                         List<CardEffect> effects, UUID targetId, Zone targetZone,
+                                         UUID sourcePermanentId) {
+        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
+                new ArrayList<>(effects), targetId, targetZone, sourcePermanentId);
+    }
+
+    /**
+     * {@link #madeAbility(Card, UUID, String, List, int, UUID)} about the objects {@code targetIds} (the creatures a
+     * delayed ability was made about), with {@code sourcePermanentId} as its source.
+     */
+    public static StackEntry madeAbility(Card sourceCard, UUID controllerId, String description,
+                                         List<CardEffect> effects, UUID sourcePermanentId, List<UUID> targetIds) {
+        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
+                new ArrayList<>(effects), sourcePermanentId, targetIds);
+    }
+
+    /** {@link #madeAbility(Card, UUID, String, List)} about the cards {@code targetCardIds}. */
+    public static StackEntry madeAbility(Card sourceCard, UUID controllerId, String description,
+                                         List<CardEffect> effects, List<UUID> targetCardIds) {
+        return new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, controllerId, description,
+                new ArrayList<>(effects), targetCardIds);
+    }
+
+    /**
+     * Whether {@code made}'s maker gave it its targets: a target it chose (not "that player" or "that creature" the
+     * ability acts on without targeting it, CR 115.10a), several targets, or target cards.
+     */
+    private static boolean givenTargets(StackEntry made) {
+        return made.getTargetId() != null && !made.isNonTargeting() || !made.getTargetIds().isEmpty()
+                || made.getTargetCardIds() != null && !made.getTargetCardIds().isEmpty();
+    }
+
+    /** {@link #putMade(GameData, StackEntry, int)} as one stack object. */
+    public void putMade(GameData gameData, StackEntry made) {
+        putMade(gameData, made, 1);
+    }
+
+    /**
+     * The stack door for a reflexive ability a resolving spell or ability makes ({@link #madeAbility}), which triggers
+     * during the resolution that made it (CR 603.12). Its entry, stamped by its maker with what the resolution was
+     * about, goes on the stack as {@link #put} puts any other: a mode chosen as it triggers is announced
+     * (CR 603.3c) and its targets are chosen (CR 603.3d), and an ability with no legal choice is removed. "That player"
+     * the resolution was about stands in for an effect's target only as {@link #put} judges an event's object. Targets
+     * its maker gave it are its own, and nothing is chosen again. The "triggers an additional time" effects don't count
+     * it: {@code copies} stack objects are put for it (a dungeon room's ability, CR 309.4c, is one per venture).
+     */
+    public void putMade(GameData gameData, StackEntry made, int copies) {
+        putMade(gameData, made, copies, false);
+    }
+
+    /**
+     * The stack door for a delayed triggered ability ({@link #madeAbility}) whose event has happened (CR 603.7): it
+     * keeps the source and controller its maker gave it (CR 603.7d, 603.7e). The object or player its maker made it
+     * about ("that creature", "that card", "that player", targeted or not) is what it acts on, and nothing is chosen
+     * for it, as for an ability its maker marked non-targeting (it acts on the objects it records, CR 603.7c); any
+     * other chooses its mode and targets as {@link #putMade} does.
+     */
+    public void putDelayed(GameData gameData, StackEntry made) {
+        putMade(gameData, made, 1, true);
+    }
+
+    private void putMade(GameData gameData, StackEntry made, int copies, boolean delayed) {
+        if (made.getEntryType() != StackEntryType.TRIGGERED_ABILITY) {
+            throw new IllegalArgumentException("Not a triggered ability: " + made.getDescription());
+        }
+        Permanent sourcePermanent = made.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, made.getSourcePermanentId());
+        if (sourcePermanent != null && made.getSourcePermanentSnapshot() == null) {
+            // The source as it is when the ability triggers, read if it leaves before the ability resolves (CR 608.2h).
+            made.setSourcePermanentSnapshot(new Permanent(sourcePermanent));
+        }
+        if (sourcePermanent == null) {
+            sourcePermanent = made.getSourcePermanentSnapshot();
+        }
+        Permanent source = sourcePermanent;
+        made.setMadeByResolution(true);
+        if (!delayed && made.getActivePlayerId() == null) {
+            // A reflexive ability names the player whose turn it is as the resolution that made it does.
+            made.setActivePlayerId(gameData.activePlayerId);
+        }
+        int previousCopies = gameData.beginTriggeredAbilityCopies(copies);
+        try {
+            gameData.routeTriggeredAbility(() -> {
+                if (givenTargets(made) || delayed && (made.getTargetId() != null || made.isNonTargeting())) {
+                    gameData.handOffTriggerRecord(made);
+                    gameData.enqueueTrigger(made);
+                    return;
+                }
+                routeEntry(gameData, made, made.getEffectsToResolve(), ConditionContext.forStackEntry(made), source);
+            });
+        } finally {
+            gameData.restoreTriggeredAbilityCopies(previousCopies);
+        }
     }
 
     /**
@@ -418,6 +560,17 @@ public class TriggeredAbilityStackService {
                     request.controllerId(), request.sourcePermanent());
         }
         return additional;
+    }
+
+    /**
+     * How many additional times a creature dying makes {@code request}'s ability of an emblem trigger: the effects that
+     * count an emblem's creature-death abilities, judged for its controller. Nothing else makes an ability with no
+     * source permanent trigger an additional time.
+     */
+    private int emblemAdditionalTriggers(GameData gameData, TriggeredAbilityRequest request) {
+        return request.emblemAbility() && request.creatureDying()
+                ? gameQueryService.countAdditionalCreatureDeathTriggeredAbilityTriggersForEmblem(gameData,
+                request.controllerId()) : 0;
     }
 
     /**
@@ -464,10 +617,8 @@ public class TriggeredAbilityStackService {
      * value and X) it reads from the stamped entry.
      */
     private void route(GameData gameData, TriggeredAbilityRequest request, List<CardEffect> effects) {
-        Card card = request.sourceCard();
-        UUID controllerId = request.controllerId();
-        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, card, controllerId,
-                request.description(), effects, null, request.sourcePermanentId());
+        StackEntry entry = new StackEntry(StackEntryType.TRIGGERED_ABILITY, request.sourceCard(),
+                request.controllerId(), request.description(), effects, null, request.sourcePermanentId());
         entry.setOnceEachTurnActionKey(onceEachTurnActionKey(request.ability()));
         entry.setGrantingPermanentId(request.ability().grantingPermanentId());
         entry.setTriggeredBySourceAttacking(request.attack() == TriggeredAbilityRequest.AttackCause.SOURCE_ATTACKED);
@@ -475,6 +626,18 @@ public class TriggeredAbilityStackService {
             entry.setTargetFilter(request.ability().targetFilter());
         }
         request.record().stamp(entry);
+        routeEntry(gameData, entry, effects, request.ifContext(), request.sourcePermanent());
+    }
+
+    /**
+     * Routes {@code entry}, an ability's stamped entry of {@code effects}: parks it for the mode or targets chosen as it
+     * goes on the stack, or queues it. {@code ifContext} judges a "choose both instead" condition; {@code
+     * sourcePermanent} is the ability's source, or {@code null}.
+     */
+    private void routeEntry(GameData gameData, StackEntry entry, List<CardEffect> effects, ConditionContext ifContext,
+                            Permanent sourcePermanent) {
+        Card card = entry.getCard();
+        UUID controllerId = entry.getControllerId();
         aimAtTriggeringSpell(gameData, entry, effects);
         gameData.handOffTriggerRecord(entry);
         ChooseOneEffect modes = null;
@@ -509,7 +672,7 @@ public class TriggeredAbilityStackService {
             // "Choose one. If [condition], you may choose both instead": the condition is judged as the ability
             // triggers, with its source and controller.
             if (modes.choicesMaxCondition() != null && !conditionEvaluationService.isMet(gameData,
-                    modes.choicesMaxCondition(), request.ifContext())) {
+                    modes.choicesMaxCondition(), ifContext)) {
                 modeChoice = modeChoice.withModeCount(modes.choicesRequired(), modes.choicesRequired());
             }
             // "Choose up to X" (Riku of Many Paths): X is read as the ability goes on the stack, from its record; with
@@ -517,7 +680,7 @@ public class TriggeredAbilityStackService {
             DynamicAmount maximum = effects.size() == 1 ? effects.getFirst().maximumModesChosenAsItTriggers() : null;
             if (maximum != null) {
                 int maximumModes = Math.min(modes.choicesMax(), Math.max(0, amountEvaluationService.evaluate(
-                        gameData, maximum, AmountContext.forStackEntry(entry, request.sourcePermanent()))));
+                        gameData, maximum, AmountContext.forStackEntry(entry, sourcePermanent))));
                 if (maximumModes == 0) {
                     gameLogService.append(gameData, GameLog.cardThen(card,
                             "'s triggered ability has no modes to choose."));
@@ -539,22 +702,24 @@ public class TriggeredAbilityStackService {
         } else if (randomGraveyardTarget != null) {
             putWithRandomGraveyardTarget(gameData, entry, randomGraveyardTarget);
         } else if (choosing.stream().anyMatch(CardEffect::targetChosenAtRandom)) {
-            putWithRandomTarget(gameData, request, entry, choosing);
+            putWithRandomTarget(gameData, sourcePermanent, entry, choosing);
         } else if (choosing.stream().anyMatch(TriggeredAbilityStackService::choosesGraveyardCard)
-                && !targetGroupsOf(card, choosing).isEmpty()
-                && (targetGroupsOf(card, choosing).size() > 1 || card.getMultiTargetConstraint() != null)) {
+                && !targetGroupsOf(card, entry, choosing).isEmpty()
+                && (targetGroupsOf(card, entry, choosing).size() > 1 || card.getMultiTargetConstraint() != null)) {
             // A graveyard card and other targets of the card's groups ("up to one other target creature you control …
             // up to one target creature card from your graveyard", Betor, Ancestor's Voice), or graveyard cards under
             // the card's constraint between its targets ("up to one … from each opponent's graveyard", Orzhova):
             // walked group by group.
             entry.setParkedAtStackDoor(true);
-            int firstGroup = targetGroupsOf(card, choosing).getFirst().getIndex();
+            int firstGroup = targetGroupsOf(card, entry, choosing).getFirst().getIndex();
             gameData.queueInteraction(new PermanentChoiceContext.ETBTokenMultiTargetTrigger(
                     card, controllerId, effects, entry.getSourcePermanentId(), List.of(), firstGroup, 0,
                     java.util.Collections.nCopies(firstGroup, 0), entry.getXValue())
                     .withEventValue(entry.getEventValue()).withTriggerRecord(entry));
         } else if (choosing.stream().anyMatch(effect -> choosesGraveyardCard(effect)
-                || choosesDescribedGraveyardCard(effect, departure))
+                // An ability a resolution made chooses the graveyard cards its effect describes as it goes on the
+                // stack ("when you do, return up to that many target … cards from your graveyard", Loamcrafter Faun).
+                || choosesDescribedGraveyardCard(effect, departure || entry.isMadeByResolution()))
                 && choosing.stream().noneMatch(TriggeredAbilityStackService::choosesBattlefieldOrPlayer)) {
             entry.setParkedAtStackDoor(true);
             gameData.queueInteraction(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
@@ -562,12 +727,12 @@ public class TriggeredAbilityStackService {
                     graveyardChoiceMaxTargets(entry, choosing), entry.getTriggeringPermanentPowerAtTrigger(),
                     entry.isAlternateCost(), entry.getTriggeringPermanentId(), entry.getSourcePermanentId(),
                     entry.getOnceEachTurnActionKey(), entry.getAttackingPermanentSnapshots(),
-                    departedGraveyardTargetMaxManaValue(gameData, entry, choosing), null)
+                    graveyardTargetMaxManaValue(gameData, entry, choosing), null)
                     .withTriggeringSpell(entry.getTriggeringSpellSnapshot())
                     .withTriggerRecord(entry));
         } else if (choosesTarget(gameData, card, entry, choosing)) {
             entry.setParkedAtStackDoor(true);
-            List<TargetGroup> groups = targetGroupsOf(card, choosing);
+            List<TargetGroup> groups = targetGroupsOf(card, entry, choosing);
             // One target that may be a permanent or a graveyard card ("up to one target creature or creature card in a
             // graveyard", Taskmaster, Mercenary Mimic) is chosen in one choice, which offers both.
             boolean mixedGraveyardTarget = groups.size() == 1
@@ -742,7 +907,7 @@ public class TriggeredAbilityStackService {
      * Witch Hunt), picked at random among the legal ones as it goes there (CR 603.3d); without a legal one the ability is
      * removed.
      */
-    private void putWithRandomTarget(GameData gameData, TriggeredAbilityRequest request, StackEntry entry,
+    private void putWithRandomTarget(GameData gameData, Permanent sourcePermanent, StackEntry entry,
                                      List<CardEffect> effects) {
         Card card = entry.getCard();
         List<CardEffect> randomlyTargeting = effects.stream().filter(CardEffect::targetChosenAtRandom).toList();
@@ -751,7 +916,7 @@ public class TriggeredAbilityStackService {
                 : triggerCollectionService.targetFilterForTriggeredEffects(card, randomlyTargeting);
         List<UUID> candidates = triggerTargetCollector.collect(gameData, randomlyTargeting, targetFilter,
                 entry.getControllerId(), card, TriggerTargetCollector.Options.END_STEP,
-                request.sourcePermanent()).validTargets();
+                sourcePermanent).validTargets();
         if (candidates.isEmpty()) {
             gameLogService.append(gameData, GameLog.cardThen(card, "'s ability has no valid targets."));
             return;
@@ -803,6 +968,17 @@ public class TriggeredAbilityStackService {
      * fight reads the first group by index); bound to none, the bare groups. An Aura's first group is what it enchants
      * (CR 303.4a), no ability's target.
      */
+    private static List<TargetGroup> targetGroupsOf(Card card, StackEntry entry, List<CardEffect> effects) {
+        List<TargetGroup> groups = targetGroupsOf(card, effects);
+        if (!entry.isMadeByResolution() || groups.stream().anyMatch(group ->
+                card.bindsEffectToTargetGroup(group.getIndex()))) {
+            return groups;
+        }
+        // An ability a resolution made bound to no group has no bare group of its card as its target: its targets are
+        // its effects' own.
+        return List.of();
+    }
+
     private static List<TargetGroup> targetGroupsOf(Card card, List<CardEffect> effects) {
         List<TargetGroup> bare = card.getTargetGroups().stream()
                 .filter(group -> !card.bindsEffectToTargetGroup(group.getIndex()))
@@ -867,10 +1043,18 @@ public class TriggeredAbilityStackService {
     private boolean choosesTarget(GameData gameData, Card card, StackEntry entry, List<CardEffect> effects) {
         // An effect bound to a target group of this ability alone reads its targets by position, whatever kind it
         // declares ("exchange control of the two target creatures", Glen Elendra).
+        // A spell target is chosen unless the ability is aimed at the spell its event was about, its event was about a
+        // spell an effect acting only on a spell acts on ("that spell", CR 115.10a), or the event names its object.
+        boolean aimedAtSpell = entry.getTargetZone() == Zone.STACK || entry.getTriggeringSpellSnapshot() != null
+                || entry.isNonTargeting() && entry.getTargetId() != null;
         List<CardEffect> targeting = effects.stream().filter(effect ->
                 effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         || effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD)
+                        || !aimedAtSpell && effect.targetSpec().admits(TargetPredicate.Kind.SPELL)
+                        // The group an effect of an ability a resolution made is bound to is that ability's target,
+                        // though the effect that made it is bound to it too (Swashbuckler Extraordinaire).
+                        || entry.isMadeByResolution() && declaresTarget(card, effect)
                         || targetsOwnGroup(card, effect, effects)).toList();
         if (targeting.isEmpty()) {
             return false;
@@ -1022,6 +1206,15 @@ public class TriggeredAbilityStackService {
      * the others that left with it (CR 603.10a; Soulshift X counts the Kodama, "with lesser mana value" is the dying
      * object's). {@code null} otherwise, and when the effects have no such limit; the choice then reads the record.
      */
+    /**
+     * The mana value limit of {@code entry}'s graveyard target: a departed source's as it last existed, else the one
+     * the maker of an ability a resolution made fixed on its record ("less than or equal to this creature's power").
+     */
+    private Integer graveyardTargetMaxManaValue(GameData gameData, StackEntry entry, List<CardEffect> effects) {
+        Integer departed = departedGraveyardTargetMaxManaValue(gameData, entry, effects);
+        return departed != null || !entry.isMadeByResolution() ? departed : entry.getGraveyardTargetMaxManaValue();
+    }
+
     private Integer departedGraveyardTargetMaxManaValue(GameData gameData, StackEntry entry, List<CardEffect> effects) {
         Permanent departed = entry.getTriggeringPermanentSnapshot();
         if (departed == null || gameQueryService.findPermanentById(gameData, departed.getId()) != null) {

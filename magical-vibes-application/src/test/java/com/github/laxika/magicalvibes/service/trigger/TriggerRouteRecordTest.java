@@ -1169,6 +1169,15 @@ class TriggerRouteRecordTest extends BaseCardTest {
                             test.helperAbilityResolves(cards, new DrawDiscardAndConniveEffect());
                             test.harness.handleCardChosen(test.player1, 0);
                         }),
+                watch("you exert this creature as it attacks", "exertedAsItAttacks", Triggers::exertedAsItAttacks,
+                        CardType.CREATURE, (test, cards) -> {
+                            test.mainPhaseOf(test.player1);
+                            for (Permanent permanent : test.fixtureCreatures(cards)) {
+                                test.collect(collection -> collection.checkExertedAsItAttacksTriggers(test.gd,
+                                        test.player1.getId(), permanent));
+                                test.answerAll();
+                            }
+                        }),
                 watch("this exploits a creature", "exploits", Triggers::exploits, CardType.CREATURE,
                         (test, cards) -> {
                             test.mainPhaseOf(test.player1);

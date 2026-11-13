@@ -39,14 +39,11 @@ package com.github.laxika.magicalvibes.model;
  * "next damage from a matching source" shields are a {@link Kind#LIST} of {@code (player, predicate)} entries, and
  * Storyweave's pending extra counters for the next enchantment creature entry are {@link Kind#COUNTS} by player
  * (a used shield or entry grant is not restored).
- * The "when you next cast an instant or sorcery spell / activate a loyalty or exhaust ability this turn, copy it"
- * delayed triggers keep their counts as {@link Kind#COUNTS} by player and their sources as a {@link Kind#LIST} of
- * {@code (player, source)} entries (the instant/sorcery count source, a single card per player, is a {@link Kind#SET}
- * of its map entries); a mana-value-limited copy is a {@link Kind#LIST} of {@code (player, max mana value)} entries,
- * a dynamic copy count and its source stay paired as one {@link Kind#LIST} of
- * {@code (player, GameData.PendingDynamicCopy)} entries, and Repeated Reverberation's linked players are a
- * {@link Kind#SET}. The next matching spell or ability consumes all of a player's pending copies at once, so a used
- * trigger is not restored. Sen Triplets' "play from that player's hand this turn" pair is a {@link Kind#VALUE}
+ * The "when you next cast an instant or sorcery spell this turn, copy it" delayed triggers are a {@link Kind#LIST} of
+ * {@code (player, GameData.PendingSpellCopy)} entries, one per ability; the "activate a loyalty or exhaust ability"
+ * ones keep their counts as {@link Kind#COUNTS} by player and their sources as a {@link Kind#LIST} of
+ * {@code (player, source)} entries, a source sharing its ability with a spell copy by its link. A used trigger is not
+ * restored. Sen Triplets' "play from that player's hand this turn" pair is a {@link Kind#VALUE}
  * {@code (controller, controlled player)} entry.
  * The per-card "you may play that card this turn" exile and graveyard permissions (impulse draw, Ark of Hunger) are
  * tracked through the {@link Kind#SET}s of card ids whose permission ends this turn; the cleanup step removes the
@@ -346,14 +343,9 @@ public enum EndOfTurnStateField {
     GAME_PLAYER_SOURCE_DAMAGE_PREVENTION_LIFE_GAIN_IDS(Kind.SET),
     GAME_PLAYER_NEXT_DAMAGE_FROM_MATCHING_SOURCES_PREVENTED(Kind.LIST),
     GAME_NEXT_ENCHANTMENT_CREATURE_ENTRY_ADDITIONAL_COUNTERS(Kind.COUNTS),
-    GAME_NEXT_INSTANT_SORCERY_COPIES(Kind.COUNTS),
-    GAME_NEXT_INSTANT_SORCERY_COPY_SINGLE_TRIGGERS(Kind.COUNTS),
-    GAME_NEXT_INSTANT_SORCERY_COPY_SOURCES(Kind.SET),
-    GAME_NEXT_INSTANT_SORCERY_COPY_MAX_MANA_VALUES(Kind.LIST),
-    GAME_NEXT_INSTANT_SORCERY_DYNAMIC_COPIES(Kind.LIST),
+    GAME_NEXT_INSTANT_SORCERY_COPIES(Kind.LIST),
     GAME_NEXT_LOYALTY_ABILITY_COPIES(Kind.COUNTS),
     GAME_NEXT_LOYALTY_ABILITY_COPY_SOURCES(Kind.LIST),
-    GAME_NEXT_SPELL_OR_LOYALTY_COPY_LINKED(Kind.SET),
     GAME_NEXT_EXHAUST_ABILITY_COPIES(Kind.COUNTS),
     GAME_NEXT_EXHAUST_ABILITY_COPY_SOURCES(Kind.LIST),
     GAME_SEN_TRIPLETS_HAND_PERMISSION(Kind.VALUE),

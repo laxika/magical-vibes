@@ -106,6 +106,14 @@ class EnterTriggerCollectorServiceTest {
                 gameLogService, etbTokenTargetService,
                 new GrantedTriggeredAbilitySupport(gameQueryService),
                 new GraveyardTargetingSupport());
+        // The emblems' abilities go on the stack through the stack door.
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "triggeredAbilityStackService",
+                new com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService(
+                        new ConditionEvaluationService(gameQueryService, predicateEvaluationService), gameQueryService,
+                        new GraveyardTargetingSupport(), gameLogService, service,
+                        new AmountEvaluationService(predicateEvaluationService, gameQueryService),
+                        predicateEvaluationService,
+                        new TriggerTargetCollector(gameQueryService, predicateEvaluationService, targetLegalityService)));
 
         player1Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
@@ -211,8 +219,9 @@ class EnterTriggerCollectorServiceTest {
         service.checkEmblemEntersTriggers(gd, player1Id, artifactCard);
 
         assertThat(gd.stack).isEmpty();
-        PermanentChoiceContext.SpellTargetTriggerAnyTarget choice =
-                gd.peekPendingInteraction(PermanentChoiceContext.SpellTargetTriggerAnyTarget.class);
+        // The stack door parks the ability for its target, chosen as it goes on the stack (CR 603.3d).
+        PermanentChoiceContext.AttackTriggerTarget choice =
+                gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
         assertThat(choice.sourceCard()).isSameAs(source);
         assertThat(choice.controllerId()).isEqualTo(player1Id);
         assertThat(choice.effects()).containsExactly(damage);
@@ -269,13 +278,14 @@ class EnterTriggerCollectorServiceTest {
         service.checkCreatureDeathRegisteredTriggers(gd, player1Id, creature, 2, 2);
 
         assertThat(gd.stack).isEmpty();
-        PermanentChoiceContext.DeathTriggerTarget choice =
-                gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
-        assertThat(choice.dyingCard()).isSameAs(source);
+        // The stack door parks the ability for its target, chosen as it goes on the stack (CR 603.3d).
+        PermanentChoiceContext.AttackTriggerTarget choice =
+                gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
+        assertThat(choice.sourceCard()).isSameAs(source);
         assertThat(choice.controllerId()).isEqualTo(player1Id);
         assertThat(choice.effects()).containsExactly(poison);
-        assertThat(choice.targetFilter()).isSameAs(opponent);
-        assertThat(choice.triggeringPermanent().getId()).isEqualTo(creature.getId());
+        assertThat(choice.triggerRecord().getTargetFilter()).isSameAs(opponent);
+        assertThat(choice.triggerRecord().getTriggeringPermanentSnapshot().getId()).isEqualTo(creature.getId());
     }
 
     /** A planeswalker card whose emblem, controlled by player 1, has {@code ability}. */

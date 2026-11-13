@@ -100,6 +100,8 @@ public enum ActionWatch implements TriggerWatch {
     ON_ALLY_CREATURE_EXPLORES(Triggers.creatureYouControlExplores(), Zone.BATTLEFIELD),
     /** "Whenever a creature you control connives". */
     ON_ALLY_CREATURE_CONNIVES(Triggers.creatureYouControlConnives(), Zone.BATTLEFIELD),
+    /** "You may exert this creature as it attacks. When you do, ..." (CR 701.43d). */
+    ON_EXERTED_AS_IT_ATTACKS(Triggers.exertedAsItAttacks(), Zone.BATTLEFIELD),
     /** "When this creature exploits a creature" (CR 702.110b). */
     ON_EXPLOIT(Triggers.exploits(), Zone.BATTLEFIELD),
     /** "Whenever a creature you control exploits a creature". */

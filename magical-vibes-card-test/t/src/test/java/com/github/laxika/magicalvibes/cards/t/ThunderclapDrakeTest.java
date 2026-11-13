@@ -46,8 +46,7 @@ class ThunderclapDrakeTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
 
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnDynamicCounts)
-                .doesNotContainKey(player1.getId());
+        assertThat(gd.pendingNextInstantSorceryCopies.getOrDefault(player1.getId(), java.util.List.of())).isEmpty();
         assertThat(gd.stack).noneMatch(entry -> entry.isCopy());
     }
 

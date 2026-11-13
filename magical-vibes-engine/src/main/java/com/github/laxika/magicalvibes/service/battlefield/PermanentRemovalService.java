@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.trigger.CounterAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
@@ -128,6 +129,9 @@ public class PermanentRemovalService {
     private final VisualCueService visualCueService;
     @org.springframework.beans.factory.annotation.Autowired @Lazy
     private com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService triggeredAbilityStackService;
     @org.springframework.beans.factory.annotation.Autowired @Lazy
     private BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     @org.springframework.beans.factory.annotation.Autowired @Lazy
@@ -2084,13 +2088,13 @@ public class PermanentRemovalService {
                     }
                 }
             }
-            StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
+            StackEntry trigger = TriggeredAbilityStackService.madeAbility(
                     sourceCard, controllerId,
                     sourceCard.getName() + "'s delayed ability",
                     effects,
                     null, triggerSourcePermanentId);
             trigger.setSourcePermanentSnapshot(new Permanent(triggerSnapshotSource));
-            gameData.stack.add(trigger);
+            triggeredAbilityStackService.putDelayed(gameData, trigger);
         }
     }
 
@@ -3556,9 +3560,10 @@ public class PermanentRemovalService {
         ReturnExiledCardToHandEffect exiledCardReturn =
                 gameData.exiledCardReturnToHandOnPermanentLeave.remove(removedPermanent.getId());
         if (exiledCardReturn != null && gameData.findExiledCard(exiledCardReturn.exiledCardId()) != null) {
-            gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, removedPermanent.getCard(),
-                    exiledCardReturn.handPlayerId(), removedPermanent.getCard().getName() + "'s leaves-the-battlefield ability",
-                    new ArrayList<>(List.of(exiledCardReturn))));
+            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
+                    removedPermanent.getCard(), exiledCardReturn.handPlayerId(),
+                    removedPermanent.getCard().getName() + "'s leaves-the-battlefield ability",
+                    List.of(exiledCardReturn)));
         }
         List<PendingExileReturn> pendingReturns = gameData.exileReturnOnPermanentLeave.remove(removedPermanent.getId());
         if (pendingReturns != null) {
@@ -3573,10 +3578,10 @@ public class PermanentRemovalService {
                     if (!stillHauntingCardIds.contains(haunt.card().getId())) {
                         continue;
                     }
-                    gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, haunt.card(),
-                            haunt.controllerId(), haunt.card().getName() + "'s leaves-the-battlefield ability",
-                            new ArrayList<>(List.of(new ResolvePendingExileReturnEffect(haunt,
-                                    gameData.exileEntryVersions.getOrDefault(haunt.card().getId(), 0L))))));
+                    triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
+                            haunt.card(), haunt.controllerId(), haunt.card().getName() + "'s leaves-the-battlefield ability",
+                            List.of(new ResolvePendingExileReturnEffect(haunt,
+                                    gameData.exileEntryVersions.getOrDefault(haunt.card().getId(), 0L)))));
                 }
                 List<PendingExileReturn> remaining = new ArrayList<>(pendingReturns);
                 remaining.removeAll(hauntReturns);
@@ -3589,10 +3594,11 @@ public class PermanentRemovalService {
             // Portcullis: each exile created its own delayed "return that card when this leaves the
             // battlefield" ability, so every exiled card returns through its own triggered ability.
             for (PendingExileReturn delayed : pendingReturns) {
-                gameData.stack.add(new StackEntry(StackEntryType.TRIGGERED_ABILITY, removedPermanent.getCard(),
-                        controllerId, removedPermanent.getCard().getName() + "'s delayed return ability",
-                        new ArrayList<>(List.of(new ResolvePendingExileReturnEffect(delayed,
-                                gameData.exileEntryVersions.getOrDefault(delayed.card().getId(), 0L))))));
+                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
+                        removedPermanent.getCard(), controllerId,
+                        removedPermanent.getCard().getName() + "'s delayed return ability",
+                        List.of(new ResolvePendingExileReturnEffect(delayed,
+                                gameData.exileEntryVersions.getOrDefault(delayed.card().getId(), 0L)))));
             }
             pendingReturns = null;
         }

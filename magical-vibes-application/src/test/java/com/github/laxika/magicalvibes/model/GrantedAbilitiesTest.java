@@ -218,6 +218,5 @@ class GrantedAbilitiesTest {
         var global = new TemporaryGlobalTriggeredAbility(UUID.randomUUID(), new Card(), ability);
 
         assertThat(global.ability()).isEqualTo(ability);
-        assertThat(global.effect()).isEqualTo(DRAW_ONE);
     }
 }

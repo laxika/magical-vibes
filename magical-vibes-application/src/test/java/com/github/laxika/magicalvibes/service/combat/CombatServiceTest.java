@@ -101,6 +101,9 @@ class CombatServiceTest {
     @Mock
     private TapUntapSupport tapUntapSupport;
 
+    @Mock
+    private com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService triggeredAbilityStackService;
+
     @InjectMocks
     private CombatService combatService;
 
@@ -113,6 +116,14 @@ class CombatServiceTest {
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");
+        // The stack door puts a delayed ability on the stack (its own routes are TriggeredAbilityStackServiceTest's).
+        org.springframework.test.util.ReflectionTestUtils.setField(combatService, "triggeredAbilityStackService",
+                triggeredAbilityStackService);
+        org.mockito.Mockito.lenient().doAnswer(invocation -> {
+            invocation.<GameData>getArgument(0).enqueueTrigger(invocation.getArgument(1));
+            return null;
+        }).when(triggeredAbilityStackService).putDelayed(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any());
         gd.orderedPlayerIds.add(player1Id);
         gd.orderedPlayerIds.add(player2Id);
         gd.playerIds.add(player1Id);

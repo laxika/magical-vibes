@@ -1,37 +1,25 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
-import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaThenMayTapOrUntapTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
-import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
 public class PayManaThenMayTapOrUntapTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
-    private final PlayerInputService playerInputService;
-    private final TargetPredicateEvaluationService targetPredicateEvaluationService;
-    private final ValidTargetService validTargetService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -67,42 +55,9 @@ public class PayManaThenMayTapOrUntapTargetCreatureEffectHandler implements Norm
     }
 
     private void queueReflexiveTrigger(GameData gameData, StackEntry entry) {
-        // The ability records what the resolving entry was about whichever way it reaches the stack.
-        ReflexiveAbilitySupport.route(gameData,
-                ReflexiveAbilitySupport.record(gameData, entry, List.of(MAY_TAP_OR_UNTAP)),
-                () -> chooseReflexiveTriggerTarget(gameData, entry));
-    }
-
-    private void chooseReflexiveTriggerTarget(GameData gameData, StackEntry entry) {
-        MayEffect mayTapOrUntap = MAY_TAP_OR_UNTAP;
-        TargetSpec targetSpec = mayTapOrUntap.targetSpec();
-        TargetPredicate targetPredicate = targetSpec.targetPredicate();
-        List<UUID> validTargets = new ArrayList<>();
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId());
-
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) {
-                continue;
-            }
-            for (Permanent permanent : battlefield) {
-                if (targetPredicateEvaluationService.matchesPermanent(targetPredicate, permanent, filterContext)
-                        && !validTargetService.isBlockedByHexproofOrGrantedEffect(
-                        gameData, permanent, entry.getControllerId())) {
-                    validTargets.add(permanent.getId());
-                }
-            }
-        }
-
-        if (validTargets.isEmpty()) {
-            return;
-        }
-
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.MayAbilityTriggerTarget(
-                entry.getCard(), entry.getControllerId(), List.of(mayTapOrUntap)));
-        playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), validTargets,
-                entry.getCard().getName() + "'s reflexive ability - Choose target.");
+        // "When you do" is an ability of its own (CR 603.12): its target is chosen as it goes on the stack, and it
+        // records what the resolving entry was about.
+        triggeredAbilityStackService.putMade(gameData,
+                ReflexiveAbilitySupport.record(gameData, entry, List.of(MAY_TAP_OR_UNTAP)));
     }
 }

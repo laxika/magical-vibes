@@ -6,9 +6,8 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * Registers a one-shot delayed trigger: "When you next cast an instant or sorcery spell this turn,
  * copy that spell. You may choose new targets for the copy."
  * <p>
- * Unrestricted triggers use {@code GameData.pendingNextInstantSorceryCopyThisTurnCount}; limited
- * triggers use the per-player max-mana-value list. Both are consumed by the next matching spell
- * and cleared at end of turn. Unlike Primal Wellspring's mana-linked copy
+ * Each resolution makes one delayed triggered ability ({@code GameData.pendingNextInstantSorceryCopies}), used up
+ * by the next spell it applies to and cleared at end of turn. Unlike Primal Wellspring's mana-linked copy
  * ({@link AwardAnyColorManaEffect} with {@link ManaSpendRestriction#INSTANT_SORCERY_COPY}), which
  * rides on the produced mana itself, this trigger isn't tied to any mana.
  * <p>

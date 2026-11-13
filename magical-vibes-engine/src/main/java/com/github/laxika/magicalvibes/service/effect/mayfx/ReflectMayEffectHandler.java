@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ReflectMayEffectHandler implements MayEffectHandlerBean {
 
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReflectEffectHandler effectHandler;
     private final InputCompletionService inputCompletionService;
 
@@ -43,7 +45,7 @@ public class ReflectMayEffectHandler implements MayEffectHandlerBean {
                 tokenEntry.setSourcePermanentSnapshot(ability.sourcePermanentSnapshot());
             }
             // "When they do, they create a token copy" is a reflexive triggered ability (CR 603.12).
-            gameData.stack.add(tokenEntry);
+            triggeredAbilityStackService.putMade(gameData, tokenEntry);
         }
 
         effectHandler.completeChoice(gameData, ability, reflect);

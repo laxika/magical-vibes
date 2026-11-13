@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AKH", collectorNumber = "118")
@@ -12,10 +12,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BattlefieldScavenger extends Card {
 
     public BattlefieldScavenger() {
-        addTrigger(Triggers.attacks(), new MayEffect(
-                SkipNextUntapEffect.exert(),
-                "Exert Battlefield Scavenger as it attacks?"
-        ));
+        addStaticEffect(new ExertAsItAttacksEffect());
         addTrigger(Triggers.youExertCreature(),
                 new MayEffect(new DiscardAndDrawCardEffect(), "Discard a card to draw a card?"));
     }

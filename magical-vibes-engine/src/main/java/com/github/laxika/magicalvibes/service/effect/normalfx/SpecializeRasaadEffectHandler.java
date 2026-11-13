@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import java.util.ArrayList;
-import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.cards.r.RasaadMonkOfSelNe;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -11,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
@@ -32,6 +29,7 @@ import java.util.Set;
 public class SpecializeRasaadEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -117,13 +115,11 @@ public class SpecializeRasaadEffectHandler implements NormalEffectHandlerBean {
 
     private void queueSpecializationTrigger(GameData gameData, StackEntry sourceEntry,
                                              Permanent source, Card sourceCard, CardEffect effect) {
-        // The ability's entry when it chooses nothing is its record whichever way it reaches the stack.
-        ReflexiveAbilitySupport.route(gameData,
-                new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard, sourceEntry.getControllerId(),
-                        sourceCard.getName() + "'s ability", new ArrayList<>(List.of(effect)), 0, sourceEntry.getSourcePermanentId()),
-                () -> gameData.queueInteraction(new PermanentChoiceContext.SelfTriggeredAbilityTarget(
-                    sourceCard, sourceEntry.getControllerId(), List.of(effect), "specializes",
-                    sourceEntry.getSourcePermanentId(), new Permanent(source))));
+        // "When this creature specializes" is an ability of the specialized face (CR 603.2), put on the stack by the
+        // stack door, which chooses its targets as it goes there (CR 603.3d).
+        triggeredAbilityStackService.putMade(gameData, TriggeredAbilityStackService.madeAbility(sourceCard,
+                sourceEntry.getControllerId(), sourceCard.getName() + "'s ability", List.of(effect), 0,
+                sourceEntry.getSourcePermanentId()));
     }
 
     private void setBaseFaceCharacteristics(Card card) {

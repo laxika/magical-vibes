@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandThenFightEffect;
@@ -29,6 +29,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class EarthbendTargetLandThenFightEffectHandler implements NormalEffectHandlerBean {
 
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final EarthbendTargetLandEffectHandler earthbendHandler;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
@@ -99,16 +100,21 @@ public class EarthbendTargetLandThenFightEffectHandler implements NormalEffectHa
         List<UUID> fightTargetIds = context.firstTargetId() == null
                 ? List.of(chosenId)
                 : List.of(context.firstTargetId(), chosenId);
-        StackEntry fightEntry = new StackEntry(
-                StackEntryType.TRIGGERED_ABILITY,
+        StackEntry fightEntry = TriggeredAbilityStackService.madeAbility(
                 context.sourceCard(), context.controllerId(),
                 context.sourceCard().getName() + "'s reflexive ability",
-                List.of(FightTargetsEffect.ofReflexiveAbilityTargets()),
-                context.sourcePermanentId(), fightTargetIds);
+                List.of(FightTargetsEffect.ofReflexiveAbilityTargets()), (UUID) null, context.sourcePermanentId());
+        fightEntry.chooseTargetIds(fightTargetIds);
+        // The record the "when you do" was asked with (what the earthbend's resolution was about) is in hand again.
+        StackEntry record = gameData.handOffTriggerRecord(null);
+        if (record != null) {
+            fightEntry.carryTriggerRecord(record);
+        }
         fightEntry.setTargetFilters(context.firstTargetId() == null
                 ? List.of(TargetFilters.creatureAnOpponentControls())
                 : List.of(TargetFilters.creatureYouControl(), TargetFilters.creatureAnOpponentControls()));
-        gameData.stack.add(fightEntry);
+        // Its targets were chosen as it went on the stack (CR 603.3d): the door puts it there with them.
+        triggeredAbilityStackService.putMade(gameData, fightEntry);
         triggerCollectionService.checkBecomesTargetOfAbilityTriggers(gameData);
         finish(gameData);
     }

@@ -47,7 +47,6 @@ class DimensionXPizzasaurTest extends BaseCardTest {
 
         cast(counterTarget);
         assertThat(counterTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
-        harness.handlePermanentChosen(player1, player1.getId());
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(counterTarget);
     }

@@ -23,8 +23,9 @@ public class CopyNextInstantOrSorceryCastThisTurnForXValueEffectHandler implemen
             return;
         }
 
-        gameData.pendingNextInstantSorceryCopyThisTurnCount.merge(
-                entry.getControllerId(), copies, Integer::sum);
+        // "Copy it X times": one delayed triggered ability making X copies (CR 603.7).
+        gameData.addPendingSpellCopy(entry.getControllerId(), new GameData.PendingSpellCopy(entry.getCard(),
+                entry.getSourcePermanentId(), copies, null, java.util.List.of(), gameData.resolutionOrdinal, null));
         log.info("Game {} - {} will copy their next instant or sorcery spell {} times this turn",
                 gameData.id, entry.getControllerId(), copies);
     }

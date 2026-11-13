@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.cards.l.LaezelGithyankiWarrior;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -10,15 +10,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeLaezelEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetSpec;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +28,7 @@ import java.util.Set;
 public class SpecializeLaezelEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GraveyardTargetingService graveyardTargetingService;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -112,21 +108,11 @@ public class SpecializeLaezelEffectHandler implements NormalEffectHandlerBean {
 
     private void enqueueSpecializationTrigger(GameData gameData, StackEntry sourceEntry, Card sourceCard,
                                               CardEffect effect) {
-        StackEntry trigger = new StackEntry(StackEntryType.TRIGGERED_ABILITY, sourceCard,
+        // "When this creature specializes" is an ability of the specialized face (CR 603.2), put on the stack by the
+        // stack door, which chooses its targets as it goes there (CR 603.3d).
+        triggeredAbilityStackService.putMade(gameData, TriggeredAbilityStackService.madeAbility(sourceCard,
                 sourceEntry.getControllerId(), sourceCard.getName() + "'s ability", List.of(effect), 0,
-                sourceEntry.getSourcePermanentId());
-        if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect returnEffect) {
-            // The ability's entry when it chooses nothing is its record whichever way it reaches the stack.
-            ReflexiveAbilitySupport.route(gameData, trigger,
-                    () -> graveyardTargetingService.handleReturnToBattlefieldETBTargeting(gameData,
-                            sourceEntry.getControllerId(), sourceCard, List.of(effect), returnEffect,
-                            returnEffect.maxTargets(),
-                            returnEffect.hasTotalManaValueCap() ? returnEffect.maxTotalManaValue() : null,
-                            0, sourceEntry.getSourcePermanentId()));
-            return;
-        }
-        trigger.setNonTargeting(effect.targetSpec() == TargetSpec.NONE);
-        gameData.enqueueTrigger(trigger);
+                sourceEntry.getSourcePermanentId()));
     }
 
     private void setBaseFaceCharacteristics(Card card) {

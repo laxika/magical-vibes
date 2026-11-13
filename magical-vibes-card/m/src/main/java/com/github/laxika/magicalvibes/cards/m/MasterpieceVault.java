@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachCreatedEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
@@ -31,7 +32,7 @@ public class MasterpieceVault extends Card {
         @Override
         public CardEffect effect() {
             return QueueReflexiveAbilityEffect.aboutPickedPermanent(
-                    new AttachCreatedEquipmentToTargetCreatureEffect(), true);
+                    SequenceEffect.upToOneTarget(new AttachCreatedEquipmentToTargetCreatureEffect()));
         }
 
         @Override

@@ -464,6 +464,8 @@ public class MayAbilityHandlerService {
      */
     public void continueAfterTapCost(GameData gameData, Player player, PendingMayAbility ability) {
         gameData.resolvingMayEffectFromStack = false;
+        // Paying the tap cost is accepting: a "do this only once each turn" ability is used up (CR 603.2h).
+        markOncePerTurnTriggerOnAcceptance(gameData, ability);
         gameLogService.append(gameData, GameLog.textCardText(
                 player.getUsername() + " accepts — resolving ", ability.sourceCard(), "'s ability."));
         gameData.resolvedMayAccepted = true;

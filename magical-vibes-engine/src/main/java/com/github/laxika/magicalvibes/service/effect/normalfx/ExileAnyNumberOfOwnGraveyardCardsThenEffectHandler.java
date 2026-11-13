@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfOwnGraveyardCardsThenEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -25,6 +25,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ExileAnyNumberOfOwnGraveyardCardsThenEffectHandler implements NormalEffectHandlerBean {
 
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final ExileService exileService;
@@ -111,7 +112,7 @@ public class ExileAnyNumberOfOwnGraveyardCardsThenEffectHandler implements Norma
     }
 
     private void queueReflexiveAbility(GameData gameData, StackEntry entry, CardEffect thenEffect) {
-        gameData.stack.add(ReflexiveAbilitySupport.record(gameData, entry, List.of(thenEffect)));
+        triggeredAbilityStackService.putMade(gameData, ReflexiveAbilitySupport.record(gameData, entry, List.of(thenEffect)));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s reflexive ability triggers."));
     }
 }

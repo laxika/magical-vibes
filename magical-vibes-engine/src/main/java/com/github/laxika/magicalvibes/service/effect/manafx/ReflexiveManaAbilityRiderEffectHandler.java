@@ -1,15 +1,14 @@
 package com.github.laxika.magicalvibes.service.effect.manafx;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,6 +21,12 @@ import java.util.UUID;
 @Component
 public class ReflexiveManaAbilityRiderEffectHandler implements ManaAbilityEffectHandler {
 
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
+
+    public ReflexiveManaAbilityRiderEffectHandler(TriggeredAbilityStackService triggeredAbilityStackService) {
+        this.triggeredAbilityStackService = triggeredAbilityStackService;
+    }
+
     @Override
     public Class<? extends CardEffect> handledEffect() {
         return QueueReflexiveAbilityEffect.class;
@@ -31,10 +36,10 @@ public class ReflexiveManaAbilityRiderEffectHandler implements ManaAbilityEffect
     public void resolve(GameData gameData, UUID playerId, Player player, Permanent permanent,
                         CardEffect effect, int manaMultiplier, boolean creatureSource) {
         QueueReflexiveAbilityEffect reflexive = (QueueReflexiveAbilityEffect) effect;
-        StackEntry ability = new StackEntry(StackEntryType.TRIGGERED_ABILITY,
-                permanent.getCard(), playerId, permanent.getCard().getName() + "'s ability",
-                new ArrayList<>(List.of(reflexive.effect())), null, permanent.getId());
+        StackEntry ability = TriggeredAbilityStackService.madeAbility(permanent.getCard(), playerId,
+                permanent.getCard().getName() + "'s ability", List.of(reflexive.effect()), (UUID) null,
+                permanent.getId());
         ability.setSourcePermanentSnapshot(new Permanent(permanent));
-        gameData.enqueueTrigger(ability);
+        triggeredAbilityStackService.putMade(gameData, ability);
     }
 }

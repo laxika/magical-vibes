@@ -13,7 +13,6 @@ import java.util.Objects;
  * ({@code EventValue}, an event-value predicate); X is the resolving ability's own X.</p>
  *
  * @param effect the effect of the reflexive triggered ability
- * @param optionalTarget whether the reflexive ability's controller may be chosen in place of a target
  * @param useEntryTargetAsTriggeringPermanent whether the resolving entry's target is "that creature" of the
  *                                            reflexive ability
  * @param aboutPickedPermanent whether the reflexive ability is about a permanent an earlier step of the resolution
@@ -24,32 +23,30 @@ import java.util.Objects;
  *                             per picked permanent puts one ability on the stack for each, in order. With no pick
  *                             left the ability is not put on the stack
  */
-public record QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTarget,
-                                           boolean useEntryTargetAsTriggeringPermanent,
+public record QueueReflexiveAbilityEffect(CardEffect effect, boolean useEntryTargetAsTriggeringPermanent,
                                            boolean aboutPickedPermanent)
         implements CardEffect {
 
     public QueueReflexiveAbilityEffect(CardEffect effect) {
-        this(effect, false, false, false);
+        this(effect, false, false);
     }
 
-    public QueueReflexiveAbilityEffect(CardEffect effect, boolean optionalTarget) {
-        this(effect, optionalTarget, false, false);
+    /**
+     * The reflexive ability of {@code effect}, whose target is "up to one target" when {@code upToOneTarget} (its
+     * controller may choose none).
+     */
+    public static QueueReflexiveAbilityEffect of(CardEffect effect, boolean upToOneTarget) {
+        return new QueueReflexiveAbilityEffect(upToOneTarget ? SequenceEffect.upToOneTarget(effect) : effect);
     }
 
     /** The reflexive ability whose "that creature" is the resolving entry's target. */
     public static QueueReflexiveAbilityEffect aboutEntryTarget(CardEffect effect) {
-        return new QueueReflexiveAbilityEffect(effect, false, true, false);
+        return new QueueReflexiveAbilityEffect(effect, true, false);
     }
 
     /** The reflexive ability about the next permanent an earlier step of the resolution picked. */
     public static QueueReflexiveAbilityEffect aboutPickedPermanent(CardEffect effect) {
-        return new QueueReflexiveAbilityEffect(effect, false, false, true);
-    }
-
-    /** {@link #aboutPickedPermanent(CardEffect)} whose controller may be chosen in place of a target. */
-    public static QueueReflexiveAbilityEffect aboutPickedPermanent(CardEffect effect, boolean optionalTarget) {
-        return new QueueReflexiveAbilityEffect(effect, optionalTarget, false, true);
+        return new QueueReflexiveAbilityEffect(effect, false, true);
     }
 
     public QueueReflexiveAbilityEffect {

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.mayfx;
 
-import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -70,18 +69,15 @@ public class BecomeCopyOfOneOfCardsUntilEndOfTurnChoiceHandler implements MayEff
         for (int i = 0; i < effect.cards().size(); i++) {
             validIndices.add(i);
         }
-        // The entry the chosen card's copy effect is put on the stack as records what the resolving entry was about.
-        ReflexiveAbilitySupport.route(gameData, ReflexiveAbilitySupport.recordFor(gameData,
-                ReflexiveAbilitySupport.resolvingEntryOf(gameData, ability.sourceCard(), ability.sourcePermanentId()),
-                ability.sourceCard(), ability.controllerId(), List.of(effect),
-                ability.sourceCard().getName() + "'s ability", ability.sourcePermanentId()),
-                () -> interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
-                        .builder(ability.controllerId(), validIndices,
-                                GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD,
-                                "Choose an artifact or creature card that left your graveyard to copy.")
-                        .cardPool(effect.cards())
-                        .mayAbilityContext(ability.sourceCard(), ability.controllerId(),
-                                List.of(effect), ability.sourcePermanentId())
-                        .build()));
+        // The copy is part of the ability that asked (CR 608.2c): the chosen card's copy happens as the answer to
+        // this choice is given, and nothing is put on the stack for it.
+        interactionHandlerRegistry.begin(gameData, PendingInteraction.GraveyardChoice
+                .builder(ability.controllerId(), validIndices,
+                        GraveyardChoiceDestination.COPY_FROM_LEAVING_GRAVEYARD,
+                        "Choose an artifact or creature card that left your graveyard to copy.")
+                .cardPool(effect.cards())
+                .mayAbilityContext(ability.sourceCard(), ability.controllerId(),
+                        List.of(effect), ability.sourcePermanentId())
+                .build());
     }
 }

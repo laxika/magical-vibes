@@ -24,23 +24,13 @@ public class CopyNextInstantOrSorceryCastThisTurnEffectHandler implements Normal
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         CopyNextInstantOrSorceryCastThisTurnEffect copyEffect =
                 (CopyNextInstantOrSorceryCastThisTurnEffect) effect;
-        if (copyEffect.dynamicCopyCount() != null) {
-            gameData.pendingNextInstantSorceryCopyThisTurnDynamicCounts
-                    .computeIfAbsent(entry.getControllerId(), ignored -> new ArrayList<>())
-                    .add(copyEffect.dynamicCopyCount());
-            gameData.pendingNextInstantSorceryCopyThisTurnDynamicSources
-                    .computeIfAbsent(entry.getControllerId(), ignored -> new ArrayList<>())
-                    .add(entry.getCard());
-        } else if (copyEffect.maxManaValue() == null) {
-            gameData.pendingNextInstantSorceryCopyThisTurnCount.merge(entry.getControllerId(), 1, Integer::sum);
-            gameData.pendingNextInstantSorceryCopyThisTurnSingleTriggerCount.merge(
-                    entry.getControllerId(), 1, Integer::sum);
-            gameData.pendingNextInstantSorceryCopyThisTurnCountSource.put(entry.getControllerId(), entry.getCard());
-        } else {
-            gameData.pendingNextInstantSorceryCopyThisTurnMaxManaValues
-                    .computeIfAbsent(entry.getControllerId(), ignored -> new ArrayList<>())
-                    .add(copyEffect.maxManaValue());
-        }
+        // One delayed triggered ability of this resolution (CR 603.7), its source the object whose ability made it
+        // (CR 603.7e).
+        gameData.addPendingSpellCopy(entry.getControllerId(), new GameData.PendingSpellCopy(entry.getCard(),
+                entry.getSourcePermanentId(), copyEffect.dynamicCopyCount() == null ? 1 : 0,
+                copyEffect.dynamicCopyCount(),
+                copyEffect.maxManaValue() == null ? java.util.List.of() : java.util.List.of(copyEffect.maxManaValue()),
+                gameData.resolutionOrdinal, null));
         log.info("Game {} - {} will copy their next instant or sorcery spell this turn",
                 gameData.id, entry.getControllerId());
     }

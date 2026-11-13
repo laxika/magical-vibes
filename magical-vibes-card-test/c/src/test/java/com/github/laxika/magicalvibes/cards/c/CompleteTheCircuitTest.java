@@ -61,7 +61,7 @@ class CompleteTheCircuitTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.castInstant(player1, 0, player2.getId());
 
-        assertThat(gd.pendingNextInstantSorceryCopyThisTurnCount).doesNotContainKey(player1.getId());
+        assertThat(gd.pendingSpellCopyCount(player1.getId())).isZero();
 
         while (!gd.stack.isEmpty()) {
             if (gd.interaction.isAwaitingInput()) {

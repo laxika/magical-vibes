@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -286,6 +287,21 @@ public class TriggerTargetCollector {
                           UUID controllerId, Card sourceCard, Options options,
                           Permanent sourcePermanentSnapshot, UUID defendingPlayerId, Integer xValue,
                           UUID triggeringPermanentId, UUID triggeringPlayerId, UUID triggeringPermanentControllerId) {
+        return collect(gameData, effects, targetFilter, controllerId, sourceCard, options, sourcePermanentSnapshot,
+                defendingPlayerId, xValue, triggeringPermanentId, triggeringPlayerId, triggeringPermanentControllerId,
+                null);
+    }
+
+    /**
+     * Collects targets with {@code eventValue}, the value the trigger event carries ("that much", "that many"), for
+     * a filter that reads it ({@code PermanentManaValueAtMostEventValuePredicate}: "with mana value less than or equal
+     * to the excess damage", Unleash the Inferno).
+     */
+    public Result collect(GameData gameData, List<CardEffect> effects, TargetFilter targetFilter,
+                          UUID controllerId, Card sourceCard, Options options,
+                          Permanent sourcePermanentSnapshot, UUID defendingPlayerId, Integer xValue,
+                          UUID triggeringPermanentId, UUID triggeringPlayerId, UUID triggeringPermanentControllerId,
+                          Integer eventValue) {
 
         List<CardEffect> unwrappedEffects = effects.stream()
                 .map(e -> unwrap(e, options))
@@ -353,6 +369,23 @@ public class TriggerTargetCollector {
             }
         }
 
+        // The player restriction an effect declares for its target ("target opponent" of an effect that names no
+        // player relation of its own, Doom Reigns Supreme's reflexive ability).
+        List<PlayerPredicate> declaredPlayerRestrictions = unwrappedEffects.stream()
+                .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PLAYER)
+                        && e.targetSpec().declaredTarget() != null)
+                .map(e -> e.targetSpec().declaredTarget().leaf(TargetPredicate.Kind.PLAYER))
+                .flatMap(java.util.Optional::stream)
+                .map(leaf -> ((TargetPredicate.Players) leaf).inner())
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        if (!declaredPlayerRestrictions.isEmpty()) {
+            validTargets.removeIf(id -> gameData.playerIds.contains(id) && declaredPlayerRestrictions.stream()
+                    .anyMatch(restriction -> !targetLegalityService.matchesPlayerPredicate(gameData, controllerId,
+                            id, restriction, sourcePermanentSnapshot == null ? null : sourcePermanentSnapshot.getId(),
+                            triggeringPlayerId)));
+        }
+
         if (canTargetPermanents) {
             FilterContext filterCtx = targetFilter != null
                     ? new FilterContext(gameData, sourceCard.getId(), controllerId, xValue, sourcePermanentSnapshot)
@@ -362,6 +395,7 @@ public class TriggerTargetCollector {
                     .withTriggeringPermanentId(triggeringPermanentId)
                     .withTriggeringPermanentControllerId(triggeringPermanentControllerId)
                     .withTriggeringPlayerId(triggeringPlayerId)
+                    .withEventValue(eventValue)
                     : null;
 
             PermanentPredicate effectPredicate = null;
@@ -390,7 +424,8 @@ public class TriggerTargetCollector {
                             .withDefendingPlayerId(defendingPlayerId)
                             .withTriggeringPermanentId(triggeringPermanentId)
                             .withTriggeringPermanentControllerId(triggeringPermanentControllerId)
-                            .withTriggeringPlayerId(triggeringPlayerId);
+                            .withTriggeringPlayerId(triggeringPlayerId)
+                            .withEventValue(eventValue);
                 }
             }
 
@@ -484,7 +519,8 @@ public class TriggerTargetCollector {
                                             false,
                                             sourcePermanentSnapshot == null ? null : sourcePermanentSnapshot.getId(),
                                             null, defendingPlayerId, triggeringPermanentId)
-                                            .withTriggeringPlayerId(triggeringPlayerId)).isPresent()) {
+                                            .withTriggeringPlayerId(triggeringPlayerId)
+                                            .withEventValue(eventValue)).isPresent()) {
                         continue;
                     }
 
@@ -536,6 +572,26 @@ public class TriggerTargetCollector {
                     if (valid) {
                         validGraveyardCardIds.add(card.getId());
                     }
+                }
+            }
+        }
+
+        // A spell on the stack ("return up to one target spell to its owner's hand", Obscura Interceptor).
+        if (targetValidationService != null && unwrappedEffects.stream()
+                .anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.SPELL))) {
+            List<CardEffect> spellEffects = unwrappedEffects.stream()
+                    .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.SPELL))
+                    .toList();
+            for (StackEntry spell : List.copyOf(gameData.stack)) {
+                if (spell.getEntryType() == StackEntryType.TRIGGERED_ABILITY
+                        || spell.getEntryType() == StackEntryType.ACTIVATED_ABILITY) {
+                    continue;
+                }
+                UUID spellId = spell.getTargetableId();
+                if (spellEffects.stream().anyMatch(effect -> targetValidationService.checkEffectTargets(
+                        List.of(effect), new TargetValidationContext(gameData, spellId, Zone.STACK, sourceCard, 0,
+                                controllerId, sourcePermanentSnapshot)).isEmpty())) {
+                    validTargets.add(spellId);
                 }
             }
         }

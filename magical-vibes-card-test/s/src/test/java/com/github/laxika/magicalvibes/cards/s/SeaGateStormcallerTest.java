@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -70,6 +71,23 @@ class SeaGateStormcallerTest extends BaseCardTest {
 
         assertThat(gd.stack).hasSize(3);
         assertThat(gd.stack.stream().filter(StackEntry::isCopy)).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("Two Stormcallers' delayed abilities are two stack objects, each with its Stormcaller as its source")
+    void twoStormcallersMakeTwoDelayedAbilities() {
+        castStormcaller(false);
+        castStormcaller(false);
+        harness.setHand(player1, List.of(new MaddeningCacophony()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castSorcery(player1, 0);
+
+        // Each resolution made a delayed triggered ability of its own (CR 603.7), each copying the spell once.
+        assertThat(gd.stack.stream()
+                .filter(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY))
+                .hasSize(2)
+                .allSatisfy(entry -> assertThat(entry.getCard().getName()).isEqualTo("Sea Gate Stormcaller"));
     }
 
     @Test
