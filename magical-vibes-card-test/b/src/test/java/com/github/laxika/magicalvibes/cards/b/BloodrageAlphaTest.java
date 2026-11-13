@@ -18,19 +18,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({BloodrageAlpha.class, WickedWolf.class, WyluliWolf.class, GrizzlyBears.class, Ornithopter.class})
 class BloodrageAlphaTest extends BaseCardTest {
 
+    private static final String FIGHT_MODE =
+            "Another target Wolf or Werewolf you control fights target creature you don't control";
+    private static final String BOON_MODE =
+            "You get a one-time boon with \"When you cast a Wolf or Werewolf spell, it gains 'When this creature enters, it fights up to one target creature you don't control.'\"";
+
     @Test
     @DisplayName("The fight mode makes another Wolf or Werewolf you control fight an opposing creature")
     void fightMode() {
         Permanent wolf = addCreatureReady(player1, new WickedWolf());
         Permanent opponent = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.setHand(player1, List.of(new BloodrageAlpha()));
-        harness.addMana(player1, ManaColor.RED, 1);
-        harness.addMana(player1, ManaColor.COLORLESS, 3);
-        gs.playCard(gd, player1, 0, -1, null, null);
-        harness.passBothPriorities();
-        harness.handleListChoice(player1,
-                "Another target Wolf or Werewolf you control fights target creature you don't control");
+        castBloodrage();
+        harness.handleListChoice(player1, FIGHT_MODE);
         harness.handlePermanentChosen(player1, wolf.getId());
         harness.handlePermanentChosen(player1, opponent.getId());
         resolveAllTriggers();
@@ -102,14 +102,16 @@ class BloodrageAlphaTest extends BaseCardTest {
     }
 
     private void chooseBoonMode() {
-        castBloodrage(1, List.of());
+        castBloodrage();
+        harness.handleListChoice(player1, BOON_MODE);
         resolveAllTriggers();
     }
 
-    private void castBloodrage(int mode, List<java.util.UUID> targetIds) {
+    private void castBloodrage() {
         harness.setHand(player1, List.of(new BloodrageAlpha()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castModalInstant(player1, 0, mode, targetIds);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
     }
 }

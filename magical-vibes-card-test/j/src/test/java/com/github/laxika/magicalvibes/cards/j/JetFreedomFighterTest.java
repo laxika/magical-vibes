@@ -75,7 +75,7 @@ class JetFreedomFighterTest extends BaseCardTest {
         Permanent jet = findPermanent(player1, "Jet, Freedom Fighter");
         harness.castInstant(player1, 0, jet.getId());
         harness.passBothPriorities();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Jet, Freedom Fighter");
@@ -90,8 +90,7 @@ class JetFreedomFighterTest extends BaseCardTest {
         Permanent secondTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         killJet(jet);
 
-        harness.handlePermanentChosen(player1, firstTarget.getId());
-        harness.handlePermanentChosen(player1, secondTarget.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstTarget.getId(), secondTarget.getId()));
         harness.passBothPriorities();
 
         assertThat(firstTarget.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -104,7 +103,7 @@ class JetFreedomFighterTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         killJet(jet);
 
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -117,8 +116,7 @@ class JetFreedomFighterTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         killJet(jet);
 
-        harness.handlePermanentChosen(player1, target.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
         resolveAllTriggers();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -132,8 +130,7 @@ class JetFreedomFighterTest extends BaseCardTest {
         Permanent firstTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         killJet(jet);
-        harness.handlePermanentChosen(player1, firstTarget.getId());
-        harness.handlePermanentChosen(player1, secondTarget.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstTarget.getId(), secondTarget.getId()));
 
         harness.setHand(player2, List.of(new Shock()));
         harness.addMana(player2, ManaColor.RED, 1);

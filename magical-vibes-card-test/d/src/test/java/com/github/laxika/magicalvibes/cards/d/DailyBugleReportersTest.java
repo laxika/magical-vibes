@@ -21,13 +21,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({DailyBugleReporters.class, GrizzlyBears.class, HillGiant.class, Island.class})
 class DailyBugleReportersTest extends BaseCardTest {
 
+    private static final String PUFF_MODE = "Put a +1/+1 counter on each of up to two target creatures";
+    private static final String JOURNALISM_MODE =
+            "Return target creature card with mana value 2 or less from your graveyard to your hand";
+
     @Test
     void puffPiecePutsCountersOnTwoTargetCreatures() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castWithPuffPiece(List.of(first.getId(), second.getId()));
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -51,9 +54,9 @@ class DailyBugleReportersTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DailyBugleReporters()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0, 1);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.handleListChoice(player1, JOURNALISM_MODE);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
                 .containsExactly(eligibleCreature.getId());
@@ -70,7 +73,6 @@ class DailyBugleReportersTest extends BaseCardTest {
 
         castWithPuffPiece(List.of(target.getId()));
         harness.passBothPriorities();
-        harness.passBothPriorities();
 
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -80,10 +82,6 @@ class DailyBugleReportersTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castWithPuffPiece(List.of());
-        harness.passBothPriorities();
-        if (gd.interaction.isAwaitingInput()) {
-            harness.handlePermanentChosen(player1, player1.getId());
-        }
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Daily Bugle Reporters");
@@ -103,8 +101,9 @@ class DailyBugleReportersTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
 
-        harness.castCreature(player1, 0, 1);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, JOURNALISM_MODE);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
                 .containsExactly(eligibleCreature.getId());
@@ -123,8 +122,7 @@ class DailyBugleReportersTest extends BaseCardTest {
 
         harness.enterBattlefieldAndReturn(player1, new DailyBugleReporters());
         harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
-        harness.handleListChoice(player1,
-                "Return target creature card with mana value 2 or less from your graveyard to your hand");
+        harness.handleListChoice(player1, JOURNALISM_MODE);
         harness.handleMultipleCardsChosen(player1, List.of(eligibleCreature.getId()));
         harness.passBothPriorities();
 
@@ -136,6 +134,14 @@ class DailyBugleReportersTest extends BaseCardTest {
         harness.setHand(player1, List.of(new DailyBugleReporters()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0, targetIds);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, PUFF_MODE);
+        for (java.util.UUID targetId : targetIds) {
+            harness.handlePermanentChosen(player1, targetId);
+        }
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, player1.getId());
+        }
     }
 }

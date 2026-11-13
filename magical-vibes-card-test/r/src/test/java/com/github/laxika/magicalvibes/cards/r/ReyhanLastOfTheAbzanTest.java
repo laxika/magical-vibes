@@ -69,7 +69,7 @@ class ReyhanLastOfTheAbzanTest extends BaseCardTest {
         reyhan.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.getPermanentRemovalService().removePermanentToCommandZone(gd, reyhan);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToCommandZone(gd, reyhan));
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)

@@ -155,7 +155,7 @@ public class LoseLifeEqualToLifeTotalAsEntersEffectHandler implements EntryRepla
         asEntersInteractionService.getObject().handleCreatureEnteredBattlefield(gameData, request.controllerId(),
                 entering.getCard(), spell == null ? null : spell.getTargetId(),
                 entering.getCastFromZone() == Zone.HAND,
-                spell != null && spell.getEtbMode() != null ? spell.getEtbMode() : request.xValue(),
+                request.xValue(),
                 request.xValue(), request.kicked(), spell == null ? List.of() : spell.getTargetIds(),
                 request.repeatedAdditionalCosts(),
                 spell == null ? List.of() : spell.getConvokeCreatureIds());

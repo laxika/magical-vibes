@@ -120,8 +120,9 @@ class StormscaleScionTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 1);
         harness.addMana(player2, ManaColor.GREEN, 1);
         harness.addMana(player2, ManaColor.BLUE, 1);
-        harness.castCreature(player2, 0, 2, original.getId());
+        harness.castCreature(player2, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player2, "Counter target creature spell");
         harness.handlePermanentChosen(player2, original.getId());
         harness.passBothPriorities();
         harness.assertInGraveyard(player1, "Stormscale Scion");

@@ -18,11 +18,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({ShivanSandMage.class, KnightOfSursi.class, BlindPhantasm.class})
 class ShivanSandMageTest extends BaseCardTest {
 
+    private static final String REMOVE_MODE = "Remove two time counters from target permanent or suspended card";
+    private static final String ADD_MODE =
+            "Put two time counters on target permanent with a time counter on it or suspended card";
+
     @Test
     void removesTwoTimeCountersFromTargetPermanent() {
         Permanent target = permanentWithTimeCounters(player2, 3);
 
-        cast(0, target.getId());
+        cast(REMOVE_MODE, target.getId());
 
         assertThat(target.getCounterCount(CounterType.TIME)).isEqualTo(1);
     }
@@ -31,7 +35,7 @@ class ShivanSandMageTest extends BaseCardTest {
     void putsTwoTimeCountersOnTargetPermanentWithTimeCounter() {
         Permanent target = permanentWithTimeCounters(player2, 1);
 
-        cast(1, target.getId());
+        cast(ADD_MODE, target.getId());
 
         assertThat(target.getCounterCount(CounterType.TIME)).isEqualTo(3);
     }
@@ -40,15 +44,16 @@ class ShivanSandMageTest extends BaseCardTest {
     void cannotPutTimeCountersOnTargetPermanentWithoutTimeCounter() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BlindPhantasm());
 
-        assertThatThrownBy(() -> cast(1, target.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> cast(ADD_MODE, target.getId()))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(target.getCounterCount(CounterType.TIME)).isZero();
     }
 
     @Test
     void removesTwoTimeCountersFromTargetSuspendedCard() {
         KnightOfSursi target = suspendedCard(4);
 
-        castAtTriggerTime(0, target.getId());
+        cast(REMOVE_MODE, target.getId());
 
         assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 2);
     }
@@ -57,7 +62,7 @@ class ShivanSandMageTest extends BaseCardTest {
     void putsTwoTimeCountersOnTargetSuspendedCard() {
         KnightOfSursi target = suspendedCard(1);
 
-        castAtTriggerTime(1, target.getId());
+        cast(ADD_MODE, target.getId());
 
         assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 3);
     }
@@ -67,7 +72,7 @@ class ShivanSandMageTest extends BaseCardTest {
         KnightOfSursi target = new KnightOfSursi();
         harness.setExile(player2, List.of(target));
 
-        assertThatThrownBy(() -> cast(0, target.getId()))
+        assertThatThrownBy(() -> cast(REMOVE_MODE, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -88,7 +93,7 @@ class ShivanSandMageTest extends BaseCardTest {
     void removingLastTimeCounterFromTargetSuspendedCardOffersItsSuspendCast() {
         KnightOfSursi target = suspendedCard(1);
 
-        castAtTriggerTime(0, target.getId());
+        cast(REMOVE_MODE, target.getId());
 
         assertThat(gd.exiledCardTimeCounters).doesNotContainKey(target.getId());
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -98,7 +103,7 @@ class ShivanSandMageTest extends BaseCardTest {
     void removalCanTargetPermanentWithoutTimeCounters() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new BlindPhantasm());
 
-        cast(0, target.getId());
+        cast(REMOVE_MODE, target.getId());
 
         assertThat(target.getCounterCount(CounterType.TIME)).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
@@ -108,7 +113,7 @@ class ShivanSandMageTest extends BaseCardTest {
     void removesOnlyAvailableTimeCounterFromPermanent() {
         Permanent target = permanentWithTimeCounters(player2, 1);
 
-        cast(0, target.getId());
+        cast(REMOVE_MODE, target.getId());
 
         assertThat(target.getCounterCount(CounterType.TIME)).isZero();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
@@ -121,7 +126,7 @@ class ShivanSandMageTest extends BaseCardTest {
         gd.exiledCardTimeCounters.put(target.getId(), 3);
         gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
 
-        assertThatThrownBy(() -> castAtTriggerTime(0, target.getId()))
+        assertThatThrownBy(() -> cast(REMOVE_MODE, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 3);
     }
@@ -133,8 +138,8 @@ class ShivanSandMageTest extends BaseCardTest {
         gd.exiledCardTimeCounters.put(target.getId(), 3);
         gd.exiledCardsWithNonSuspendTimeCounters.add(target.getId());
 
-        assertThatThrownBy(() -> castAtTriggerTime(1, target.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> cast(ADD_MODE, target.getId()))
+                .isInstanceOf(IllegalArgumentException.class);
         assertThat(gd.exiledCardTimeCounters).containsEntry(target.getId(), 3);
     }
 
@@ -151,19 +156,17 @@ class ShivanSandMageTest extends BaseCardTest {
         return card;
     }
 
-    private void cast(int mode, java.util.UUID targetId) {
-        harness.setHand(player1, List.of(new ShivanSandMage()));
-        harness.addMana(player1, ManaColor.RED, 4);
-        harness.castCreature(player1, 0, mode, targetId);
+    private void cast(String mode, java.util.UUID targetId) {
+        castShivan(mode);
+        harness.handlePermanentChosen(player1, targetId);
         resolveAllTriggers();
     }
 
-    private void castAtTriggerTime(int mode, java.util.UUID targetId) {
+    private void castShivan(String mode) {
         harness.setHand(player1, List.of(new ShivanSandMage()));
         harness.addMana(player1, ManaColor.RED, 4);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handleMultipleCardsChosen(player1, List.of(targetId));
-        resolveAllTriggers();
+        harness.handleListChoice(player1, mode);
     }
 }

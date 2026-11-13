@@ -22,10 +22,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({LordSkittersButcher.class, Forest.class, GrizzlyBears.class, Island.class})
 class LordSkittersButcherTest extends BaseCardTest {
 
+    private static final String RAT_MODE = "Create a 1/1 black Rat creature token with \"This token can't block.\"";
+    private static final String SACRIFICE_MODE = "You may sacrifice another creature. If you do, scry 2, then draw a card.";
+    private static final String MENACE_MODE = "Creatures you control gain menace until end of turn.";
+
     @Test
     @DisplayName("Creates a Rat token that can't block")
     void createsRatTokenThatCantBlock() {
-        castButcher(0);
+        castButcher(RAT_MODE);
 
         Permanent rat = findPermanent(player1, "Rat");
         assertThat(bls.canBlock(gd, rat)).isFalse();
@@ -37,7 +41,7 @@ class LordSkittersButcherTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Card drawCard = new Island();
         harness.setLibrary(player1, List.of(new Forest(), new GrizzlyBears(), drawCard));
-        castButcher(1);
+        castButcher(SACRIFICE_MODE);
 
         harness.handleMayAbilityChosen(player1, true);
         harness.handlePermanentChosen(player1, bears.getId());
@@ -55,7 +59,7 @@ class LordSkittersButcherTest extends BaseCardTest {
     @Test
     @DisplayName("The sacrifice mode can't sacrifice Lord Skitter's Butcher itself")
     void sacrificeModeRequiresAnotherCreature() {
-        castButcher(1);
+        castButcher(SACRIFICE_MODE);
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -67,7 +71,7 @@ class LordSkittersButcherTest extends BaseCardTest {
     @DisplayName("The menace mode affects all creatures you control until end of turn")
     void menaceModeAffectsAllCreaturesUntilEndOfTurn() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
-        castButcher(2);
+        castButcher(MENACE_MODE);
 
         Permanent butcher = findPermanent(player1, "Lord Skitter's Butcher");
         assertThat(gqs.hasKeyword(gd, butcher, Keyword.MENACE)).isTrue();
@@ -89,7 +93,7 @@ class LordSkittersButcherTest extends BaseCardTest {
         Permanent other = harness.addToBattlefieldAndReturn(player1, new LordSkittersButcher());
         Card topCard = new Island();
         harness.setLibrary(player1, List.of(topCard, new Forest()));
-        castButcher(1);
+        castButcher(SACRIFICE_MODE);
 
         harness.handleMayAbilityChosen(player1, false);
 
@@ -106,7 +110,7 @@ class LordSkittersButcherTest extends BaseCardTest {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
         Card topCard = new Island();
         harness.setLibrary(player1, List.of(topCard));
-        castButcher(1);
+        castButcher(SACRIFICE_MODE);
 
         harness.handleMayAbilityChosen(player1, true);
 
@@ -122,7 +126,7 @@ class LordSkittersButcherTest extends BaseCardTest {
     void menaceExcludesOpponentsLandsAndLaterCreatures() {
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new LordSkittersButcher());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
-        castButcher(2);
+        castButcher(MENACE_MODE);
         Permanent later = harness.addToBattlefieldAndReturn(player1, new LordSkittersButcher());
 
         assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Lord Skitter's Butcher"), Keyword.MENACE)).isTrue();
@@ -131,13 +135,15 @@ class LordSkittersButcherTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, later, Keyword.MENACE)).isFalse();
     }
 
-    private void castButcher(int mode) {
+    private void castButcher(String mode) {
         harness.setHand(player1, List.of(new LordSkittersButcher()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, mode);
         resolveAllTriggers();
     }
 }

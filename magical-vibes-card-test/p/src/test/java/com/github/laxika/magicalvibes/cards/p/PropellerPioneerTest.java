@@ -18,11 +18,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({PropellerPioneer.class, TidyConclusion.class})
 class PropellerPioneerTest extends BaseCardTest {
 
+    private static final String COUNTER_MODE = "Put a +1/+1 counter on Propeller Pioneer";
+    private static final String SERVO_MODE = "Create a 1/1 colorless Servo artifact creature token";
+
     @Test
     @DisplayName("Fabricate mode puts a +1/+1 counter on Propeller Pioneer")
     void fabricateCountersMode() {
-        castPioneer(0);
-        resolveAllTriggers();
+        castPioneer();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, COUNTER_MODE);
 
         Permanent pioneer = findPermanent(player1, "Propeller Pioneer");
         assertThat(pioneer.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -33,8 +37,9 @@ class PropellerPioneerTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate mode creates a 1/1 colorless Servo artifact creature token")
     void fabricateServoMode() {
-        castPioneer(1);
-        resolveAllTriggers();
+        castPioneer();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, SERVO_MODE);
 
         List<Permanent> servos = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getSubtypes().contains(CardSubtype.SERVO))
@@ -51,8 +56,7 @@ class PropellerPioneerTest extends BaseCardTest {
     @Test
     @DisplayName("Fabricate creates a Servo if Pioneer dies before its trigger resolves")
     void fabricateCreatesServoWhenSourceDies() {
-        castPioneer(0);
-        harness.passBothPriorities();
+        castPioneer();
 
         Permanent pioneer = findPermanent(player1, "Propeller Pioneer");
         harness.setHand(player2, List.of(new TidyConclusion()));
@@ -60,14 +64,16 @@ class PropellerPioneerTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, pioneer.getId());
         harness.assertInGraveyard(player1, "Propeller Pioneer");
 
-        resolveAllTriggers();
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, COUNTER_MODE);
         assertThat(countPermanents(player1, "Servo")).isEqualTo(1);
     }
 
-    private void castPioneer(int mode) {
+    private void castPioneer() {
         harness.setHand(player1, List.of(new PropellerPioneer()));
         harness.addMana(player1, ManaColor.WHITE, 4);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
     }
 
 }

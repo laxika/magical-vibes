@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -28,7 +29,7 @@ import java.util.Set;
 public class KoglaAndYidaro extends Card {
 
     public KoglaAndYidaro() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Kogla and Yidaro gains trample and haste until end of turn.",
                         new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.SELF)
@@ -38,7 +39,7 @@ public class KoglaAndYidaro extends Card {
                         new SourceFightsTargetCreatureEffect(),
                         TargetFilters.creatureAnOpponentControls()
                 )
-        )));
+        ))));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,

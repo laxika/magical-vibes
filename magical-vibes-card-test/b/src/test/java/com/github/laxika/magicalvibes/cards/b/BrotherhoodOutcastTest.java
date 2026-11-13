@@ -16,12 +16,18 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BrotherhoodOutcast.class, AccordersShield.class, ArgentumArmor.class, Arrest.class,
         GrizzlyBears.class, GalvanicBlast.class, HolyStrength.class})
 class BrotherhoodOutcastTest extends BaseCardTest {
+
+    private static final String RETURN_MODE =
+            "Return target Aura or Equipment card with mana value 3 or less from your graveyard to the battlefield";
+    private static final String SHIELD_MODE = "Put a shield counter on target creature";
 
     @Test
     void returnsTargetEquipment() {
@@ -61,9 +67,7 @@ class BrotherhoodOutcastTest extends BaseCardTest {
 
         harness.setHand(player1, List.of(new BrotherhoodOutcast()));
         addMana();
-        harness.castCreature(player1, 0, 1, creature.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        castShieldMode(creature.getId());
 
         assertThat(creature.getCounterCount(CounterType.SHIELD)).isEqualTo(1);
     }
@@ -73,9 +77,13 @@ class BrotherhoodOutcastTest extends BaseCardTest {
         Card creature = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(creature));
 
-        castReturnMode();
+        harness.setHand(player1, List.of(new BrotherhoodOutcast()));
+        addMana();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThatThrownBy(() -> harness.handleListChoice(player1, RETURN_MODE))
+                .isInstanceOf(IllegalArgumentException.class);
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
@@ -134,9 +142,7 @@ class BrotherhoodOutcastTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new BrotherhoodOutcast());
         harness.setHand(player1, List.of(new BrotherhoodOutcast()));
         addMana();
-        harness.castCreature(player1, 0, 1, creature.getId());
-        harness.passBothPriorities();
-        harness.passBothPriorities();
+        castShieldMode(creature.getId());
 
         harness.setHand(player1, List.of(new GalvanicBlast(), new GalvanicBlast()));
         harness.addMana(player1, ManaColor.RED, 2);
@@ -154,7 +160,16 @@ class BrotherhoodOutcastTest extends BaseCardTest {
     private void castReturnMode() {
         harness.setHand(player1, List.of(new BrotherhoodOutcast()));
         addMana();
-        harness.castCreature(player1, 0, 0);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, RETURN_MODE);
+    }
+
+    private void castShieldMode(UUID targetId) {
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, SHIELD_MODE);
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
     }
 

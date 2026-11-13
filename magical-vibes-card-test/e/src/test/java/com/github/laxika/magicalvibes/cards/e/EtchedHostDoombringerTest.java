@@ -16,10 +16,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({EtchedHostDoombringer.class, InvasionOfKamigawa.class, RooftopSaboteurs.class})
 class EtchedHostDoombringerTest extends BaseCardTest {
 
+    private static final String LIFE_MODE = "Target opponent loses 2 life and you gain 2 life";
+    private static final String BATTLE_MODE =
+            "Choose target battle. If an opponent protects it, remove three defense counters from it. Otherwise, put three defense counters on it";
+
     @Test
     void lifeModeMakesTargetOpponentLoseLifeAndControllerGainLife() {
-        cast(0, player2.getId());
-        resolveCreatureAndTrigger();
+        cast(LIFE_MODE, player2.getId());
+        harness.passBothPriorities();
 
         harness.assertLife(player1, 22);
         harness.assertLife(player2, 18);
@@ -29,8 +33,8 @@ class EtchedHostDoombringerTest extends BaseCardTest {
     void battleModeRemovesDefenseCountersWhenAnOpponentProtectsTheBattle() {
         Permanent battle = addBattle(player1, player2.getId(), 5);
 
-        cast(1, battle.getId());
-        resolveCreatureAndTrigger();
+        cast(BATTLE_MODE, battle.getId());
+        harness.passBothPriorities();
 
         assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(2);
     }
@@ -39,8 +43,8 @@ class EtchedHostDoombringerTest extends BaseCardTest {
     void battleModePutsDefenseCountersOnABattleProtectedByTheController() {
         Permanent battle = addBattle(player2, player1.getId(), 2);
 
-        cast(1, battle.getId());
-        resolveCreatureAndTrigger();
+        cast(BATTLE_MODE, battle.getId());
+        harness.passBothPriorities();
 
         assertThat(battle.getCounterCount(CounterType.DEFENSE)).isEqualTo(5);
     }
@@ -49,8 +53,8 @@ class EtchedHostDoombringerTest extends BaseCardTest {
     void removingTheLastDefenseCountersDefeatsTheSiege() {
         Permanent battle = addBattle(player1, player2.getId(), 2);
 
-        cast(1, battle.getId());
-        resolveCreatureAndTrigger();
+        cast(BATTLE_MODE, battle.getId());
+        harness.passBothPriorities();
 
         assertThat(battle.getCounterCount(CounterType.DEFENSE)).isZero();
         harness.assertOnBattlefield(player1, "Invasion of Kamigawa");
@@ -69,8 +73,7 @@ class EtchedHostDoombringerTest extends BaseCardTest {
 
         harness.enterBattlefieldAndReturn(player1, new EtchedHostDoombringer());
         harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
-        harness.handleListChoice(player1,
-                "Choose target battle. If an opponent protects it, remove three defense counters from it. Otherwise, put three defense counters on it");
+        harness.handleListChoice(player1, BATTLE_MODE);
         harness.handlePermanentChosen(player1, battle.getId());
         harness.passBothPriorities();
 
@@ -82,8 +85,7 @@ class EtchedHostDoombringerTest extends BaseCardTest {
     @Test
     void battleModeChecksTheProtectorAtResolution() {
         Permanent battle = addBattle(player2, player1.getId(), 5);
-        cast(1, battle.getId());
-        harness.passBothPriorities();
+        cast(BATTLE_MODE, battle.getId());
 
         gd.playerBattlefields.get(player2.getId()).remove(battle);
         gd.playerBattlefields.get(player1.getId()).add(battle);
@@ -96,8 +98,7 @@ class EtchedHostDoombringerTest extends BaseCardTest {
     @Test
     void battleModeDoesNothingWhenTheTargetLeavesBeforeResolution() {
         Permanent battle = addBattle(player1, player2.getId(), 5);
-        cast(1, battle.getId());
-        harness.passBothPriorities();
+        cast(BATTLE_MODE, battle.getId());
 
         gd.playerBattlefields.get(player1.getId()).remove(battle);
         gd.playerGraveyards.get(player1.getId()).add(battle.getCard());
@@ -110,8 +111,7 @@ class EtchedHostDoombringerTest extends BaseCardTest {
 
     @Test
     void lifeModeStillResolvesWhenDoombringerLeavesBeforeItsTrigger() {
-        cast(0, player2.getId());
-        harness.passBothPriorities();
+        cast(LIFE_MODE, player2.getId());
 
         Permanent doombringer = findPermanent(player1, "Etched Host Doombringer");
         gd.playerBattlefields.get(player1.getId()).remove(doombringer);
@@ -130,14 +130,12 @@ class EtchedHostDoombringerTest extends BaseCardTest {
         return battle;
     }
 
-    private void cast(int mode, java.util.UUID targetId) {
+    private void cast(String mode, java.util.UUID targetId) {
         harness.setHand(player1, List.of(new EtchedHostDoombringer()));
         harness.addMana(player1, ManaColor.BLACK, 5);
-        harness.castCreature(player1, 0, mode, targetId);
-    }
-
-    private void resolveCreatureAndTrigger() {
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.handleListChoice(player1, mode);
+        harness.handlePermanentChosen(player1, targetId);
     }
 }

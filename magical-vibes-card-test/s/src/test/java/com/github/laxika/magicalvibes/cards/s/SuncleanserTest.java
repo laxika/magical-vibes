@@ -23,6 +23,11 @@ import static org.assertj.core.api.Assertions.assertThat;
         CaressOfPhyrexia.class, AetherMeltdown.class})
 class SuncleanserTest extends BaseCardTest {
 
+    private static final String CREATURE_MODE =
+            "Remove all counters from target creature. It can't have counters put on it for as long as this creature remains on the battlefield.";
+    private static final String PLAYER_MODE =
+            "Target opponent loses all counters. That player can't get counters for as long as this creature remains on the battlefield.";
+
     @Nested
     @CardUsed({Suncleanser.class, GreenwoodSentinel.class, BurstOfStrength.class, Murder.class})
     @DisplayName("Mode 1: remove all counters from target creature and lock it")
@@ -36,7 +41,6 @@ class SuncleanserTest extends BaseCardTest {
             bears.setCounterCount(CounterType.CHARGE, 1);
 
             castWithCreatureMode(bears.getId());
-            harness.passBothPriorities(); // resolve Suncleanser
             harness.passBothPriorities(); // resolve the ETB trigger
 
             assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -49,7 +53,6 @@ class SuncleanserTest extends BaseCardTest {
             Permanent bears = harness.addToBattlefieldAndReturn(player2, new GreenwoodSentinel());
 
             castWithCreatureMode(bears.getId());
-            harness.passBothPriorities();
             harness.passBothPriorities();
 
             harness.setHand(player1, List.of(new BurstOfStrength()));
@@ -65,7 +68,6 @@ class SuncleanserTest extends BaseCardTest {
             Permanent bears = harness.addToBattlefieldAndReturn(player2, new GreenwoodSentinel());
 
             castWithCreatureMode(bears.getId());
-            harness.passBothPriorities();
             harness.passBothPriorities();
 
             Permanent suncleanser = findPermanent(player1, "Suncleanser");
@@ -85,7 +87,6 @@ class SuncleanserTest extends BaseCardTest {
             Permanent creature = harness.addToBattlefieldAndReturn(player2, new GreenwoodSentinel());
             creature.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
             castWithCreatureMode(creature.getId());
-            harness.passBothPriorities();
 
             Permanent source = findPermanent(player1, "Suncleanser");
             harness.setHand(player2, List.of(new Murder()));
@@ -103,7 +104,10 @@ class SuncleanserTest extends BaseCardTest {
         private void castWithCreatureMode(UUID targetId) {
             harness.setHand(player1, List.of(new Suncleanser()));
             harness.addMana(player1, ManaColor.WHITE, 2);
-            harness.castCreature(player1, 0, 0, targetId);
+            harness.castCreature(player1, 0);
+            harness.passBothPriorities();
+            harness.handleListChoice(player1, CREATURE_MODE);
+            harness.handlePermanentChosen(player1, targetId);
         }
     }
 
@@ -118,7 +122,6 @@ class SuncleanserTest extends BaseCardTest {
             gd.playerPoisonCounters.put(player2.getId(), 3);
 
             castWithPlayerMode();
-            harness.passBothPriorities(); // resolve Suncleanser
             harness.passBothPriorities(); // resolve the ETB trigger
 
             assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
@@ -128,7 +131,6 @@ class SuncleanserTest extends BaseCardTest {
         @DisplayName("The locked opponent can't get poison counters afterwards")
         void lockedPlayerGetsNoNewCounters() {
             castWithPlayerMode();
-            harness.passBothPriorities();
             harness.passBothPriorities();
 
             harness.setHand(player1, List.of(new CaressOfPhyrexia()));
@@ -142,7 +144,6 @@ class SuncleanserTest extends BaseCardTest {
         @DisplayName("The controller is unaffected by the opponent's lock")
         void controllerStillGetsCounters() {
             castWithPlayerMode();
-            harness.passBothPriorities();
             harness.passBothPriorities();
 
             harness.setHand(player1, List.of(new CaressOfPhyrexia()));
@@ -162,7 +163,6 @@ class SuncleanserTest extends BaseCardTest {
 
             castWithPlayerMode();
             harness.passBothPriorities();
-            harness.passBothPriorities();
 
             assertThat(gd.playerPoisonCounters.getOrDefault(player2.getId(), 0)).isZero();
             assertThat(gd.playerEnergyCounters.getOrDefault(player2.getId(), 0)).isZero();
@@ -174,7 +174,6 @@ class SuncleanserTest extends BaseCardTest {
         @Test
         void lockedOpponentCannotGetEnergyCounters() {
             castWithPlayerMode();
-            harness.passBothPriorities();
             harness.passBothPriorities();
 
             Permanent source = findPermanent(player1, "Suncleanser");
@@ -191,7 +190,6 @@ class SuncleanserTest extends BaseCardTest {
         void opponentCanGetPoisonAgainAfterSourceLeaves() {
             castWithPlayerMode();
             harness.passBothPriorities();
-            harness.passBothPriorities();
 
             Permanent source = findPermanent(player1, "Suncleanser");
             harness.setHand(player2, List.of(new Murder()));
@@ -207,7 +205,10 @@ class SuncleanserTest extends BaseCardTest {
         private void castWithPlayerMode() {
             harness.setHand(player1, List.of(new Suncleanser()));
             harness.addMana(player1, ManaColor.WHITE, 2);
-            harness.castCreature(player1, 0, 1, player2.getId());
+            harness.castCreature(player1, 0);
+            harness.passBothPriorities();
+            harness.handleListChoice(player1, PLAYER_MODE);
+            harness.handlePermanentChosen(player1, player2.getId());
         }
     }
 }

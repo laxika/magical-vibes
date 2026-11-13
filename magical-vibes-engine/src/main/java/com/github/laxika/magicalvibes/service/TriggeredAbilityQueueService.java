@@ -1560,8 +1560,11 @@ public class TriggeredAbilityQueueService {
                         || effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         || effect.targetSpec().admits(TargetPredicate.Kind.EXILED_CARD));
         if (needsGraveyardTarget && !needsTarget) {
+            // An X in the chosen mode's target count is the ability's, from its record ("up to X target creature
+            // cards", Orcus, Prince of Undeath).
             gameData.queueInteractionFirst(new PermanentChoiceContext.SpellGraveyardTargetTrigger(
-                    sourceCard, controllerId, effects).withTriggerRecord(triggerRecord));
+                    sourceCard, controllerId, effects, null, 0, triggerRecord == null ? 0 : triggerRecord.getXValue())
+                    .withTriggerRecord(triggerRecord));
             return;
         }
         if (needsTarget) {
@@ -3223,6 +3226,12 @@ public class TriggeredAbilityQueueService {
                     ? List.of(pending.graveyardOwnerId())
                     : scope.graveyardOwners(gameData.orderedPlayerIds, pending.controllerId());
 
+            // "Another target card" is judged against the source's own physical card: for a copy that left the
+            // battlefield (Phantasmal Image copying Gixian Puppeteer) the copy's card, not the copied one.
+            Permanent sourceSnapshot = pending.triggerRecord() == null ? null
+                    : pending.triggerRecord().getSourcePermanentSnapshot();
+            UUID selfCardId = sourceSnapshot != null && sourceSnapshot.getOriginalCard() != null
+                    ? sourceSnapshot.getOriginalCard().getId() : pending.sourceCard().getId();
             List<Card> matchingCards = new ArrayList<>();
             for (UUID playerId : searchPlayerIds) {
                 List<Card> graveyard = gameData.playerGraveyards.get(playerId);
@@ -3275,11 +3284,11 @@ public class TriggeredAbilityQueueService {
                     boolean matches = oneOfEachFilterEffect != null
                             ? oneOfEachFilterEffect.filters().stream().anyMatch(candidateFilter ->
                             predicateEvaluationService.matchesCardPredicate(
-                                    graveyardCard, candidateFilter, pending.sourceCard().getId(), gameData, playerId,
+                                    graveyardCard, candidateFilter, selfCardId, gameData, playerId,
                                     null, pending.sourcePowerAtTrigger()))
                             // An X in the filter is the choice's X; the event's value is the record's.
                             : filter == null || predicateEvaluationService.matchesCardPredicate(
-                            graveyardCard, filter, pending.sourceCard().getId(), gameData, playerId,
+                            graveyardCard, filter, selfCardId, gameData, playerId,
                             null, pending.sourcePowerAtTrigger(), pending.xValue(), null, eventValue);
                     if (matches) {
                         matchingCards.add(graveyardCard);

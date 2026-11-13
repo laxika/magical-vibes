@@ -29,14 +29,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 })
 class InvasionOfFioraTest extends BaseCardTest {
 
+    private static final String LEGENDARY_MODE = "Destroy all legendary creatures";
+    private static final String NONLEGENDARY_MODE = "Destroy all nonlegendary creatures";
+
     @Test
     @DisplayName("Choosing both modes destroys legendary and nonlegendary creatures")
     void choosingBothModesDestroysAllCreatures() {
         Permanent legendary = harness.addToBattlefieldAndReturn(player2, new ZurgoHelmsmasher());
         Permanent nonlegendary = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        castInvasion(ChooseOneEffect.encodeModeSelection(1, 2, new int[]{0, 1}));
+        castInvasion();
 
         harness.passBothPriorities();
+        harness.handleListChoice(player1, LEGENDARY_MODE);
+        harness.handleListChoice(player1, NONLEGENDARY_MODE);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -49,9 +54,11 @@ class InvasionOfFioraTest extends BaseCardTest {
     void choosingLegendaryModeOnly() {
         Permanent legendary = harness.addToBattlefieldAndReturn(player2, new ZurgoHelmsmasher());
         Permanent nonlegendary = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        castInvasion(0);
+        castInvasion();
 
         harness.passBothPriorities();
+        harness.handleListChoice(player1, LEGENDARY_MODE);
+        harness.handleListChoice(player1, ChooseOneEffect.FINISH_MODE_SELECTION);
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId()))
@@ -121,8 +128,10 @@ class InvasionOfFioraTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        castInvasion(1);
+        castInvasion();
         harness.passBothPriorities();
+        harness.handleListChoice(player1, NONLEGENDARY_MODE);
+        harness.handleListChoice(player1, ChooseOneEffect.FINISH_MODE_SELECTION);
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
@@ -212,11 +221,11 @@ class InvasionOfFioraTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);
     }
 
-    private void castInvasion(int modeSelection) {
+    private void castInvasion() {
         Card invasion = new InvasionOfFiora();
         harness.setHand(player1, List.of(invasion));
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        gs.playCard(gd, player1, 0, modeSelection, player2.getId(), null);
+        gs.playCard(gd, player1, 0, 0, player2.getId(), null);
     }
 }

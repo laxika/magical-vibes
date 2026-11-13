@@ -20,7 +20,7 @@ grep its `^#### Run` headings and read that range. The invariants those runs est
 | S3 | Spells, abilities, becomes the target | done but: C16, C26, C27, C28 |
 | S4 | Damage, counters, life, tap | done but: C16, C28, C29, C30, C31, C32 |
 | S5 | Library, draw, discard, actions, sagas, the rest | done but: C16, C19, C33, C34, C35, C36, C37, C38 |
-| S6 | Zone changes: enters, dies, leaves, graveyard | open |
+| S6 | Zone changes: enters, dies, leaves, graveyard | done but: C6, C13, C29, C39, C40, C41, C42 |
 | S7 | Abilities a resolution makes: reflexive, delayed, granted, emblems | open |
 | S8 | Engine-made abilities; the door is the only route | open |
 | M1 | Rules events: combat, steps and phases | open |
@@ -241,7 +241,7 @@ registers, temporary global abilities, granted abilities, emblems, the may and p
 put an accepted follow-up on the stack. Extend `ReflexiveRouteRecordTest` to the routes it lacks
 first (the accepted "you may", exert, earthbend, the forced cost, the after-cast ability, the
 library follow-up, a reflexive group walk). Ask the user decision D2 before starting.
-Carried over: C7, C9, C10, C11, C12, C14, C15, C19, C22, C24, C26, C31, C37.
+Carried over: C7, C9, C10, C11, C12, C13, C14, C15, C19, C22, C24, C26, C31, C37, C39, C42 (C39 and C42 are S6 remainders: fix C42 first, then move C39's watches to the door).
 
 ### S8: engine-made abilities; the door is the only route
 
@@ -250,7 +250,7 @@ Carried over: C7, C9, C10, C11, C12, C14, C15, C19, C22, C24, C26, C31, C37.
 - The ratchet allowlist is empty for lists 1 and 2. Then make the rule structural: only the door
   can build a triggered stack entry (a constructor or factory nothing else can reach), and the
   ratchet's allowlist file is deleted.
-- C23, C25, C27, C28, C30, C32, C33, C34, C35 and C38 (the upkeep target choices the door can't express, the engine-made step, cast, counter, life and damage abilities, triggered mana abilities, the combat damage step's held entries, the static library helpers, Saga chapter targets, spell targets, as-attaches choices).
+- C6, C23, C25, C27, C28, C29, C30, C32, C33, C34, C35, C38, C40 and C41 (a permanent's own enters abilities and their graveyard, spell and mixed-zone routes, face-up and transform putters, the upkeep target choices the door can't express, the engine-made step, cast, counter, life and damage abilities, triggered mana abilities, the combat damage step's held entries, the static library helpers, Saga chapter targets, spell targets, as-attaches choices).
 - Carried over is empty.
 
 **Done when:** no code outside the door builds or queues a triggered stack entry, and the compiler
@@ -320,8 +320,8 @@ named, with the Oracle text of the cards involved read first.
 | ID | Sweep | Site |
 |---|---|---|
 | C2 | S4 (closed) | `TriggerCollectionService.checkEnchantedPermanentTapTriggers`: a `MayPayManaEffect` that is not the lone effect gets no target as the ability goes on the stack |
-| C5 | S6 | `EnterTriggerCollectorService.handleAnyPermanentEnterDefault`: a player target is chosen only for a `MayEffect` |
-| C6 | S6 | `EtbTriggerService.processCreatureETBEffects`: a lone "you may" is routed by the wrapped effect's class |
+| C5 | S6 (closed) | `EnterTriggerCollectorService.handleAnyPermanentEnterDefault`: a player target is chosen only for a `MayEffect` |
+| C6 | S8 | `EtbTriggerService.processCreatureETBEffects`: a lone "you may" is routed by the wrapped effect's class (with C41) |
 | C7 | S7 | `TemporaryGlobalTriggeredAbility.effect()` keeps only the ability's first effect |
 | C9 | S7 | Outfitted Jouster's reflexive ability is built by `DamagePreventionService` without `ReflexiveAbilitySupport` |
 | C10 | S7 | `SpecializeKarlachEffectHandler` builds its own stacked entry |
@@ -339,20 +339,24 @@ named, with the Oracle text of the cards involved read first.
 | C26 | S7 | Delayed, temporary and resolution-made cast and activation abilities build their own entries: `processDelayedControllerSpellCastTriggers`, `collectTemporaryControllerSpellCastTriggers` / `collectTemporaryGlobalSpellCastTriggers`, `collectCreatureSpellBoonTriggers`, the next-creature-spell cascade and delayed abilities, the Mirari Conjecture's copy grant, the mana-linked copies and Path of Ancestry's scry (`queueManaLinkedSpellCopyTriggers`, `checkManaLinkedAbilityCopyTrigger`, the spell-or-ability copy mana), `collectDelayedActivationCopies` (with C15) |
 | C27 | S8 | Engine-made cast abilities build their own entries: prowess, increment, granted cascade, demonstrate and storm (`castTriggerGrants`, `queueGrantedStorm`), replicate and demonstrate (`collectSelfCastAbilities`), conspire, casualty, a cloaked permanent's ward (`enqueueCloakedWardTrigger`) |
 | C28 | S8 | `LandTapTriggerCollectorService` is `TapWatch`'s handler, reached by the tap readers: a triggered mana ability resolves at once (CR 605.4a) and an ability waiting for the tapped permanent's mana choice is parked in `pendingManaAbilityTriggers`; the door has neither route |
-| C29 | S6 | `TrainEffectHandler` builds its own entry: Savior of Ollenbock's "up to one other target creature or creature card from a graveyard" is a mixed-zone choice (`BattlefieldAndGraveyardCardChoosingEffect`, `GraveyardTargetingService.handleBattlefieldAndGraveyardExileTargeting`) the door has no route for; Angel of Serenity's enters needs the same route |
+| C29 | S8 | `TrainEffectHandler` builds its own entry: Savior of Ollenbock's "up to one other target creature or creature card from a graveyard" is a mixed-zone choice (`BattlefieldAndGraveyardCardChoosingEffect`, `GraveyardTargetingService.handleBattlefieldAndGraveyardExileTargeting`) the door has no route for; Angel of Serenity's enters needs the same route |
 | C30 | S8 | Engine-made counter, life and damage abilities build their own entries: speed (`increaseActivePlayerSpeedIfEligible`), vanishing (`PermanentCounterSupport.checkLastTimeCounterRemoved`), evolve (`collectEvolveTrigger`), Judgment of Alexander's prevention (`checkCommanderDamagePreventedTriggers`) |
 | C31 | S7 | Delayed, temporary and emblem damage, life and tap abilities build their own entries: the `DelayedWatchedCreatureDealtDamage`, `…DealsDamage` and `…DealtDamageByAttackingCreature` drains, `collectLifeGainOpponentLifeLossTriggers`, `collectEmblemLifeGainTriggers`, `collectEmblemTapTriggers`, `collectTemporaryGlobalTriggers` for these watches, the temporary watchers in `dispatchSourceDealsCombatDamageTriggers` and `enqueueTemporaryAnyCreatureCombatDamageToPlayerTriggers`, `processDelayedDestroyTargetWhenSourceUntaps` |
 | C32 | S8 | The combat damage step holds its entries off the stack while state-based actions run (`CombatDamageService`: `globalDamageTriggers`, the source-damage reflections), so a creature they name that dies isn't stamped with its last-known information (CR 608.2h) unless the entry is parked for a choice; `TriggerRouteRecordTest` excludes the targeted variants of "deals damage to a creature" and "a creature you control deals damage to a creature" |
 | C33 | S8 | `LibrarySearchTriggerHelper` and `LibraryShuffleHelper` are static helpers (326 call sites) with no service to reach the door: the search and shuffle abilities build their own entries |
 | C34 | S8 | `SagaChapterService`: a chapter that chooses targets (the chapter's own target groups and filters, a random mode's targets) builds its own entry; the door has no chapter-target route |
 | C35 | S8 | The door has no spell-target route: a "when you cycle this card" ability that targets a spell and an exploit ability that targets one (Silumgar Sorcerer) keep their own choices, as does the cycling ability that announces its trigger's targets (Rampaging War Mammoth) |
-| C36 | S6 | The transform, turned-face-up and commander-zone collectors (`TransformTriggerCollectorService`, `FaceUpTriggerCollectorService`, `CommanderZoneTriggerCollectorService`, `TurnFaceUpCopyService`) are reached through the door's own `triggerPermanentChange` and the zone-change dispatch |
+| C36 | S6 (closed; rest in C40) | The transform, turned-face-up and commander-zone collectors (`TransformTriggerCollectorService`, `FaceUpTriggerCollectorService`, `CommanderZoneTriggerCollectorService`, `TurnFaceUpCopyService`) are reached through the door's own `triggerPermanentChange` and the zone-change dispatch |
 | C37 | S7 | Emblem draw abilities (`DrawService.checkEmblemDrawTriggers`), the temporary discard watchers (`collectTemporaryGlobalDiscardTriggers`) and Cosima's voyage (`collectExiledVoyageTriggers`) build their own entries |
+| C39 | S7 | The zone-change watches `TriggerCollectionService.keepsLegacyZoneChangeRoute` lists still go to their old collectors: every `CreatureDeathWatch`, tokens entering (a one-or-more ability split per token by its effects), a creature you control entering, an enchanted permanent dying or leaving, another nontoken artifact to a graveyard or exile, a creature card into an opponent's graveyard (Lazav), a permanent you sacrifice (C13), a card into your graveyard, cards exiled from hand, a spell exiling a permanent; through the door their card tests failed (C42, Lazav's copy and Hero of Bretagard's count, Measure of Wickedness, Necrotic Plague) |
+| C40 | S8 | Turned-face-up and transform abilities keep their old putters (`keepsLegacyPermanentChangeRoute`, `TurnFaceUpCopyService`, `AnimationSupport.putTransformAbilityOnStack`): a spell target (C35), a battlefield-or-graveyard choice (C29), divided damage, Ravager of the Fells' "target opponent or planeswalker and up to two creatures that player controls", Brutal Cathar's exile |
+| C41 | S8 | A permanent's own enters abilities (`EtbTriggerService`) still build their entries: the trigger-time value materialisation (`EtbEffectResolver`: entry facts, evoke, tribute), the 13 graveyard and spell routes of `OwnEntryRoute`, the lone-"you may" routes (C6) and the additional copies; the door has none of those routes |
+| C42 | S7 | Two or more target choices one source's abilities park at the stack door in one event lose one: Psychomancer and a second one dying together put three of four abilities on the stack (`PsychomancerTest.eachPsychomancerSeesBothSimultaneousDeaths`), Blood Artist, Vigilante Justice; why is open (the pending count drops by two on the first answer) |
 | C38 | S8 | "As this Equipment becomes attached" choices (a color, a name and a type, an exiled creature to copy) are written as trigger effects and read by class in `checkEquipmentAttachedTriggers`: they are static abilities |
 
 **Fixes**
 
-- C13 (S6). Riveteers Ascendancy reads `TriggeringPermanentManaValue`, so a sacrificed token or
+- C13 (S7, with C39). Riveteers Ascendancy reads `TriggeringPermanentManaValue`, so a sacrificed token or
   commander has its last-known mana value (CR 603.10a). Needs a card test.
 - C14 (S7). `continueAfterTapCost` marks "do this only once each turn" as the other accepted
   answers do. No card has both today.
@@ -426,6 +430,17 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - C19 moves to S7: exert as it attacks is an optional cost to attack (CR 508.1g, 701.43d), a static-ability authoring change for 25 cards that S7's exert route belongs with.
 - Ledger: every line is a record gained (source snapshot, non-targeting, the ability's target filter, triggering player and permanent controller, the crewed Vehicle), a route fixture announcing its mode or choosing its targets as it triggers (CR 603.3c, 603.3d), the door's target walk, or random (drawn cards, coin flips, conjures, random modes); a fourth Monument to Endurance discard with no mode left is removed (CR 603.3c). The fully unlocked Room's lost triggering permanent was a regression, fixed.
 - Open (F): the choice types and pumps no collector queues any more (listed under F).
+
+**S6.**
+- D1 rules fix: a triggered "choose one" is announced as the ability goes on the stack (CR 603.3c, 700.2b), never as the spell is cast: 30 enters cards, Oracle of Tragedy, Invasion of Fiora and the five Retreats and Felidar Retreat are `ChooseOneAtTriggerTimeEffect`; the cast-time ETB mode is gone (`SpellCastingService`, `ValidTargetService`, `CardViewFactory`, `EtbEffectResolver`, `StackEntry.etbMode`; the old cast X no longer doubles as the mode). Propeller Pioneer's fabricate is `ChooseOneAtResolutionEffect` (CR 702.123a). D1 card tests choose the mode as the ability triggers.
+- Door API: a source's own zone change goes through `put` (`ownZoneChangeRecord`; `triggerOwn` gone); another object's zone change and permanent change through `TriggerCollectionService.zoneChangeRequest` / `permanentChangeRequest` and `put`. The request carries `withCreatureDying()` (Teysa, not for sacrifice triggers) and a `PermanentEnters` event (Panharmonicon); an entry fact isn't rewrapped for entering events.
+- Door routes added: `targetChosenByTriggeringPermanentController` (Necrotic Plague, `MayEffect` of `TRIGGERING_PERMANENT_CONTROLLER`, Confusion in the Ranks), a departed source's described graveyard target (Iname), its graveyard target's mana value limit as it last existed (Soulshift), "another target card" on a copy's physical card (Gixian Puppeteer), a chosen mode's graveyard choice reads the record's X (Orcus).
+- Cards as printed: Ragnarok, Divine Deliverance declares its two targets as two groups; Iceberg Cancrix declares "target player"; Daily Bugle Reporters' mode takes "up to two target creatures".
+- Prompt shape: an own death or leave target is the door's (`AttackTriggerTarget`, one `MultiPermanentChoice` for one group of several, group by group for several groups, removed at the group with no legal target); an enters watch's target is `AttackTriggerTarget`.
+- Deleted: `TransformTriggerCollectorService`, `CommanderZoneTriggerCollectorService`, the converted watches' arms and handlers in `TriggerCollectionService` and the Death, Enter and Misc collectors, and their service tests.
+- Ledger: every line is a record gained (source snapshot, non-targeting, triggering permanent, controller, owner, card snapshot, the batch's objects), an intervening "if" now outside a "you may" (graft, CR 603.4), a mode announced on the stack (CR 603.3c), the D1 cards' X 0 instead of their cast mode, or a test the run changed; `triggeringCards` of a one-card graveyard event is gone (its `triggeringCard` stays).
+- Open: C39 and C42 (watches kept on their old collectors after their card tests failed through the door), C40 (face-up and transform putters), C41 and C6 (a permanent's own enters abilities), C13, C29.
+- Environment: the card-data cache refetched `set-sld.json` on 2026-11-13 and maps SLD #921 to Return of the Wildspeaker, so every test class whose Spring context loads Goblin Matron fails with `initializationError` at HEAD too.
 
 ## Prompt
 

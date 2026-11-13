@@ -264,9 +264,10 @@ class TriggeredAbilityStackServiceTest {
 
         trigger(ctx, effect);
 
-        var pending = gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+        var pending = gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
         assertThat(pending.effects()).containsExactly(effect);
-        assertThat(pending.triggeringPermanent().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
+        assertThat(pending.triggerRecord().getTriggeringPermanentSnapshot()
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 
     @Test
@@ -280,10 +281,10 @@ class TriggeredAbilityStackServiceTest {
 
         trigger(ctx, effect);
 
-        var pending = gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+        var pending = gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
         assertThat(pending.effects()).containsExactly(effect);
-        assertThat(pending.sourcePermanentSnapshot().getLastKnownPower()).isEqualTo(3);
-        assertThat(pending.triggeringPermanent().getId()).isEqualTo(perm.getId());
+        assertThat(pending.triggerRecord().getSourcePermanentSnapshot().getLastKnownPower()).isEqualTo(3);
+        assertThat(pending.triggerRecord().getTriggeringPermanentSnapshot().getId()).isEqualTo(perm.getId());
     }
 
     @Test
@@ -349,7 +350,7 @@ class TriggeredAbilityStackServiceTest {
     }
 
     @Test
-    @DisplayName("Targeting MayEffect queues a DeathTriggerTarget interaction (CR 603.3d)")
+    @DisplayName("Targeting MayEffect waits at the door for its target (CR 603.3d)")
     void targetingGoesToPendingTargets() {
         Card card = createCreature("Targeted May", 2, 2);
         var may = new MayEffect(new LoseLifeEffect(3, LoseLifeRecipient.TARGET_PLAYER), "Drain?");
@@ -358,7 +359,7 @@ class TriggeredAbilityStackServiceTest {
 
         trigger(ctx, may);
 
-        assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
+        assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.AttackTriggerTarget.class::isInstance).hasSize(1);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -423,9 +424,9 @@ class TriggeredAbilityStackServiceTest {
 
         trigger(dies(card, PLAYER1_ID, permanent), effect);
 
-        var pending = gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
+        var pending = gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
         assertThat(pending).isNotNull();
-        assertThat(pending.dyingCard().isEffectBoundToTargetGroup(pending.effects().getFirst(), 0)).isTrue();
+        assertThat(pending.sourceCard().isEffectBoundToTargetGroup(pending.effects().getFirst(), 0)).isTrue();
     }
 
     @Test
@@ -444,8 +445,8 @@ class TriggeredAbilityStackServiceTest {
     }
 
     @Test
-    @DisplayName("Targeting effect queues DeathTriggerTarget")
-    void targetingQueuesDeathTriggerTarget() {
+    @DisplayName("Targeting effect waits at the door for its target")
+    void targetingWaitsForItsTarget() {
         Card card = createCreature("Targeting Dude", 3, 3);
         var effect = new PutCounterOnTargetPermanentEffect(CounterType.CHARGE);
         Permanent perm = new Permanent(card);
@@ -454,12 +455,12 @@ class TriggeredAbilityStackServiceTest {
         trigger(ctx, effect);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
+        assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.AttackTriggerTarget.class::isInstance).hasSize(1);
     }
 
     @Test
-    @DisplayName("Graveyard-targeting effect queues DeathTriggerTarget (Ruin Rat)")
-    void graveyardTargetingQueuesDeathTriggerTarget() {
+    @DisplayName("Graveyard-targeting effect waits at the door for its graveyard target (Ruin Rat)")
+    void graveyardTargetingWaitsForItsTarget() {
         Card card = createCreature("Ruin Rat", 1, 1);
         var effect = new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD);
         Permanent perm = new Permanent(card);
@@ -468,12 +469,12 @@ class TriggeredAbilityStackServiceTest {
         trigger(ctx, effect);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
+        assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellGraveyardTargetTrigger.class::isInstance).hasSize(1);
     }
 
     @Test
-    @DisplayName("Multi-target graveyard return queues DeathTriggerTarget")
-    void multiTargetGraveyardReturnQueuesDeathTriggerTarget() {
+    @DisplayName("Multi-target graveyard return waits at the door for its graveyard targets")
+    void multiTargetGraveyardReturnWaitsForItsTargets() {
         Card card = createCreature("Forked-Branch Garami", 4, 4);
         var effect = new ReturnTargetCardsFromGraveyardToHandEffect(null, 2);
         Permanent perm = new Permanent(card);
@@ -485,7 +486,7 @@ class TriggeredAbilityStackServiceTest {
         trigger(ctx, effect);
 
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance).hasSize(1);
+        assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.SpellGraveyardTargetTrigger.class::isInstance).hasSize(1);
     }
 
     @Test
@@ -558,9 +559,10 @@ class TriggeredAbilityStackServiceTest {
 
         trigger(ctx, effect);
 
-        var pending = gd.peekPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
+        var pending = gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
         assertThat(pending.effects()).containsExactly(effect);
-        assertThat(pending.triggeringPermanent().getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(pending.triggerRecord().getTriggeringPermanentSnapshot()
+                .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test
@@ -621,10 +623,10 @@ class TriggeredAbilityStackServiceTest {
 
         trigger(dies(card, PLAYER1_ID, perm), choice);
 
-        var pending = gd.peekPendingInteraction(PermanentChoiceContext.TriggeredModalTrigger.class);
-        assertThat(pending.effect()).isEqualTo(choice);
-        assertThat(pending.sourcePermanentId()).isEqualTo(perm.getId());
-        assertThat(gd.stack).isEmpty();
+        // Each mode takes no more than one target, so the mode is announced as the ability is on the stack.
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(choice);
+        assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
     }
 
     @Test

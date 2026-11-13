@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -23,7 +24,7 @@ import java.util.Set;
 public class CallousBloodmage extends Card {
 
     public CallousBloodmage() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a 1/1 black and green Pest creature token with \"When this token dies, you gain 1 life.\"",
                         pestToken()),
@@ -33,7 +34,7 @@ public class CallousBloodmage extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile target player's graveyard",
                         new ExileGraveyardCardsEffect(GraveyardExileScope.TARGET_PLAYER_ENTIRE))
-        )));
+        ))));
     }
 
     private static CreateTokenEffect pestToken() {

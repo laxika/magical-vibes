@@ -66,27 +66,6 @@ public class EtbEffectResolver {
                     ? tribute.wrapped() : null;
         });
 
-        // Modal ETB (choose one / choose up to one): unwrap the option picked at cast time (etbMode).
-        // Optional modals with etbMode < 0 chose no mode and drop the trigger.
-        register(ChooseOneEffect.class, (ctx, effect) -> {
-            ChooseOneEffect coe = (ChooseOneEffect) effect;
-            if (coe.optional() && ctx.etbMode() < 0) {
-                return null;
-            }
-            if (ctx.etbMode() < 0) {
-                CardEffect[] selectedEffects = coe.decodeModeIndices(ctx.etbMode()).stream()
-                        .flatMap(modeIndex -> coe.options().get(modeIndex).effects().stream())
-                        .toArray(CardEffect[]::new);
-                return selectedEffects.length == 1
-                        ? selectedEffects[0]
-                        : SequenceEffect.of(selectedEffects);
-            }
-            if (ctx.etbMode() >= 0 && ctx.etbMode() < coe.options().size()) {
-                return selectedModeEffect(coe.options().get(ctx.etbMode()));
-            }
-            return selectedModeEffect(coe.options().getFirst());
-        });
-
         // Evoke sacrifice (CR 702.74a) — intervening-if (CR 603.4): resolve to a plain sacrifice
         // when the evoke cost was paid, otherwise drop the trigger entirely.
         register(SacrificeSelfIfEvokedEffect.class, (ctx, effect) ->
@@ -189,11 +168,5 @@ public class EtbEffectResolver {
     public CardEffect resolve(EtbEffectContext ctx, CardEffect effect) {
         EtbEffectHandler handler = handlers.get(effect.getClass());
         return handler != null ? handler.resolve(ctx, effect) : effect;
-    }
-
-    private static CardEffect selectedModeEffect(ChooseOneEffect.ChooseOneOption option) {
-        return option.effects().size() == 1
-                ? option.effects().getFirst()
-                : SequenceEffect.of(option.effects().toArray(CardEffect[]::new));
     }
 }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
@@ -21,7 +22,7 @@ public class RavagerWurm extends Card {
 
     public RavagerWurm() {
         addStaticEffect(new RiotEffect());
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "This creature fights target creature you don't control",
                         new EnteringCreatureFightsTargetCreatureEffect(),
@@ -34,6 +35,6 @@ public class RavagerWurm extends Card {
                                         new PermanentIsLandPredicate(),
                                         new PermanentHasNonManaActivatedAbilityPredicate())),
                                 "Target must be a land with an activated ability that isn't a mana ability"))
-        ), true));
+        ), true)));
     }
 }

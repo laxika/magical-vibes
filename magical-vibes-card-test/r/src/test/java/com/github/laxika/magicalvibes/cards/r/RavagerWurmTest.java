@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -20,11 +21,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({RavagerWurm.class, FieldOfRuin.class, Forest.class, SauroformHybrid.class})
 class RavagerWurmTest extends BaseCardTest {
 
+    private static final String FIGHT_MODE = "This creature fights target creature you don't control";
+    private static final String LAND_MODE = "Destroy target land with an activated ability that isn't a mana ability";
+
     @Test
     void fightModeFightsTargetCreatureAndRiotCanAddCounter() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new SauroformHybrid());
 
-        castRavager(0, bears.getId());
+        castRavager(FIGHT_MODE, bears.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Sauroform Hybrid");
@@ -36,7 +40,7 @@ class RavagerWurmTest extends BaseCardTest {
     void landModeDestroysLandWithNonManaActivatedAbility() {
         Permanent field = harness.addToBattlefieldAndReturn(player2, new FieldOfRuin());
 
-        castRavager(1, field.getId());
+        castRavager(LAND_MODE, field.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player2, "Field of Ruin");
@@ -47,7 +51,7 @@ class RavagerWurmTest extends BaseCardTest {
         harness.addToBattlefield(player2, new SauroformHybrid());
         harness.addToBattlefield(player2, new FieldOfRuin());
 
-        castRavager(-1, null);
+        castRavager(ChooseOneEffect.NO_MODE_LABEL, null);
 
         harness.assertOnBattlefield(player2, "Sauroform Hybrid");
         harness.assertOnBattlefield(player2, "Field of Ruin");
@@ -59,7 +63,7 @@ class RavagerWurmTest extends BaseCardTest {
         Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
         Permanent field = harness.addToBattlefieldAndReturn(player2, new FieldOfRuin());
 
-        castWithMode(1);
+        castWithMode(LAND_MODE);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, forest.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -74,7 +78,7 @@ class RavagerWurmTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new SauroformHybrid());
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new SauroformHybrid());
 
-        castWithMode(0);
+        castWithMode(FIGHT_MODE);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -99,7 +103,7 @@ class RavagerWurmTest extends BaseCardTest {
     void landModeCanDestroyLandYouControl() {
         Permanent field = harness.addToBattlefieldAndReturn(player1, new FieldOfRuin());
 
-        castRavager(1, field.getId());
+        castRavager(LAND_MODE, field.getId());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Field of Ruin");
@@ -118,6 +122,7 @@ class RavagerWurmTest extends BaseCardTest {
         harness.castFromHand(player1, new RavagerWurm(), "{3}{R}{G}{G}");
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new SauroformHybrid());
         resolveCreatureAndChooseRiotCounter();
+        harness.handleListChoice(player1, FIGHT_MODE);
         harness.handlePermanentChosen(player1, creature.getId());
         harness.passBothPriorities();
 
@@ -125,16 +130,17 @@ class RavagerWurmTest extends BaseCardTest {
         assertThat(findPermanent(player1, "Ravager Wurm").getMarkedDamage()).isEqualTo(2);
     }
 
-    private void castWithMode(int mode) {
+    private void castWithMode(String mode) {
         harness.setHand(player1, java.util.List.of(new RavagerWurm()));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
         resolveCreatureAndChooseRiotCounter();
+        harness.handleListChoice(player1, mode);
     }
 
-    private void castRavager(int mode, UUID targetId) {
+    private void castRavager(String mode, UUID targetId) {
         castWithMode(mode);
         if (targetId != null) {
             harness.handlePermanentChosen(player1, targetId);

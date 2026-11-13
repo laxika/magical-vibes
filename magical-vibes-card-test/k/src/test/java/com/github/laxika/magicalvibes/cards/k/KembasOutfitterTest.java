@@ -18,6 +18,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({KembasOutfitter.class, ColossusHammer.class, GrizzlyBears.class, Disperse.class})
 class KembasOutfitterTest extends BaseCardTest {
 
+    private static final String HAND_MODE = "Choose an Equipment card in your hand. It perpetually gains equip {1}.";
+    private static final String TARGET_MODE = "Target Equipment you control perpetually gains equip {1}.";
+
     @Test
     void firstModePerpetuallyGrantsEquipToEquipmentCardInHand() {
         ColossusHammer hammer = new ColossusHammer();
@@ -25,8 +28,9 @@ class KembasOutfitterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KembasOutfitter(), hammer));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castCreature(player1, 0, 0);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, HAND_MODE);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
@@ -53,8 +57,10 @@ class KembasOutfitterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KembasOutfitter()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castCreature(player1, 0, 1, hammer.getId());
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, TARGET_MODE);
+        harness.handlePermanentChosen(player1, hammer.getId());
         harness.passBothPriorities();
 
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -70,8 +76,12 @@ class KembasOutfitterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KembasOutfitter()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, 1, opponentHammer.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, TARGET_MODE))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentHammer);
     }
 
     @Test
@@ -79,8 +89,9 @@ class KembasOutfitterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KembasOutfitter(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castCreature(player1, 0, 0);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, HAND_MODE);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Kemba's Outfitter");
@@ -94,8 +105,9 @@ class KembasOutfitterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KembasOutfitter(), new GrizzlyBears(), new ColossusHammer()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castCreature(player1, 0, 0);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, HAND_MODE);
         harness.passBothPriorities();
 
         assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
@@ -110,8 +122,12 @@ class KembasOutfitterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KembasOutfitter()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, 1, creature.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThatThrownBy(() -> harness.handleListChoice(player1, TARGET_MODE))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
     }
 
     @Test
@@ -120,8 +136,10 @@ class KembasOutfitterTest extends BaseCardTest {
         harness.setHand(player1, List.of(new KembasOutfitter(), new Disperse()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
-        harness.castCreature(player1, 0, 1, hammer.getId());
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, TARGET_MODE);
+        harness.handlePermanentChosen(player1, hammer.getId());
         harness.passBothPriorities();
         Permanent outfitter = findPermanent(player1, "Kemba's Outfitter");
 

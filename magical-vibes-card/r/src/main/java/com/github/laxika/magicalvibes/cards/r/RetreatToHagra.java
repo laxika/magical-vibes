@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -21,7 +22,7 @@ import java.util.List;
 public class RetreatToHagra extends Card {
 
     public RetreatToHagra() {
-        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets +1/+0 and gains deathtouch until end of turn.",
                         List.of(
@@ -35,6 +36,6 @@ public class RetreatToHagra extends Card {
                                 new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT),
                                 new GainLifeEffect(1)
                         ))
-        )));
+        ))));
     }
 }

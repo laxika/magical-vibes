@@ -14,12 +14,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({InquisitorExarch.class})
 class InquisitorExarchTest extends BaseCardTest {
 
+    private static final String GAIN_MODE = "You gain 2 life";
+    private static final String LOSE_MODE = "Target opponent loses 2 life";
+
     @Test
     @DisplayName("Non-cast entry lets the controller choose life loss and its opponent target")
     void nonCastEntryCanChooseLifeLoss() {
         harness.enterBattlefieldAndReturn(player1, new InquisitorExarch());
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Target opponent loses 2 life");
+        harness.handleListChoice(player1, LOSE_MODE);
         harness.handlePermanentChosen(player1, player2.getId());
 
         harness.assertLife(player1, 20);
@@ -35,7 +38,7 @@ class InquisitorExarchTest extends BaseCardTest {
     void nonCastEntryGainsLifeForOtherController() {
         harness.enterBattlefieldAndReturn(player2, new InquisitorExarch());
         harness.passBothPriorities();
-        harness.handleListChoice(player2, "You gain 2 life");
+        harness.handleListChoice(player2, GAIN_MODE);
 
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
@@ -54,7 +57,6 @@ class InquisitorExarchTest extends BaseCardTest {
         @DisplayName("Controller gains 2 life")
         void controllerGains2Life() {
             castWithGainLifeMode();
-            resolveCreature();
             harness.passBothPriorities(); // resolve ETB trigger
 
             harness.assertLife(player1, 22);
@@ -67,7 +69,6 @@ class InquisitorExarchTest extends BaseCardTest {
             harness.setLife(player1, 5);
 
             castWithGainLifeMode();
-            resolveCreature();
             harness.passBothPriorities(); // resolve ETB trigger
 
             harness.assertLife(player1, 7);
@@ -77,7 +78,6 @@ class InquisitorExarchTest extends BaseCardTest {
         @DisplayName("Inquisitor Exarch enters the battlefield when choosing gain life mode")
         void exarchEntersBattlefield() {
             castWithGainLifeMode();
-            resolveCreature();
 
             harness.assertOnBattlefield(player1, "Inquisitor Exarch");
         }
@@ -86,7 +86,6 @@ class InquisitorExarchTest extends BaseCardTest {
         @DisplayName("Stack is empty after full resolution")
         void stackIsEmptyAfterResolution() {
             castWithGainLifeMode();
-            resolveCreature();
             harness.passBothPriorities(); // resolve ETB trigger
 
             assertThat(gd.stack).isEmpty();
@@ -95,7 +94,9 @@ class InquisitorExarchTest extends BaseCardTest {
         private void castWithGainLifeMode() {
             harness.setHand(player1, List.of(new InquisitorExarch()));
             harness.addMana(player1, ManaColor.WHITE, 2);
-            harness.castCreature(player1, 0, 0);
+            harness.castCreature(player1, 0);
+            harness.passBothPriorities();
+            harness.handleListChoice(player1, GAIN_MODE);
         }
 
         private void resolveCreature() {
@@ -109,10 +110,9 @@ class InquisitorExarchTest extends BaseCardTest {
     class LoseLifeMode {
 
         @Test
-        @DisplayName("Target opponent loses 2 life")
+        @DisplayName(LOSE_MODE)
         void targetOpponentLoses2Life() {
             castWithLoseLifeMode();
-            resolveCreature();
             harness.passBothPriorities(); // resolve ETB trigger
 
             harness.assertLife(player2, 18);
@@ -125,7 +125,6 @@ class InquisitorExarchTest extends BaseCardTest {
             harness.setLife(player2, 5);
 
             castWithLoseLifeMode();
-            resolveCreature();
             harness.passBothPriorities(); // resolve ETB trigger
 
             harness.assertLife(player2, 3);
@@ -135,7 +134,6 @@ class InquisitorExarchTest extends BaseCardTest {
         @DisplayName("Inquisitor Exarch enters the battlefield when choosing lose life mode")
         void exarchEntersBattlefield() {
             castWithLoseLifeMode();
-            resolveCreature();
 
             harness.assertOnBattlefield(player1, "Inquisitor Exarch");
         }
@@ -144,7 +142,6 @@ class InquisitorExarchTest extends BaseCardTest {
         @DisplayName("Stack is empty after full resolution")
         void stackIsEmptyAfterResolution() {
             castWithLoseLifeMode();
-            resolveCreature();
             harness.passBothPriorities(); // resolve ETB trigger
 
             assertThat(gd.stack).isEmpty();
@@ -153,12 +150,11 @@ class InquisitorExarchTest extends BaseCardTest {
         private void castWithLoseLifeMode() {
             harness.setHand(player1, List.of(new InquisitorExarch()));
             harness.addMana(player1, ManaColor.WHITE, 2);
-            harness.castCreature(player1, 0, 1);
-        }
-
-        private void resolveCreature() {
+            harness.castCreature(player1, 0);
             harness.passBothPriorities();
+            harness.handleListChoice(player1, LOSE_MODE);
             harness.handlePermanentChosen(player1, player2.getId());
         }
+
     }
 }

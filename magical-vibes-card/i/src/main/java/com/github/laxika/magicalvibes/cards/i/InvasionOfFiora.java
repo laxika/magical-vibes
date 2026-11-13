@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.m.MarchesaResoluteMonarch;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,13 +29,13 @@ public class InvasionOfFiora extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), ChooseOneEffect.oneOrMore(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy all legendary creatures",
                         new DestroyAllPermanentsEffect(legendaryCreatures)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy all nonlegendary creatures",
-                        new DestroyAllPermanentsEffect(nonlegendaryCreatures)))));
+                        new DestroyAllPermanentsEffect(nonlegendaryCreatures))))));
     }
 
     @Override

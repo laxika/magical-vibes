@@ -22,11 +22,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         Forest.class, RustGoliath.class})
 class TheMightstoneAndWeakstoneTest extends BaseCardTest {
 
+    private static final String DRAW_MODE = "Draw two cards.";
+    private static final String DEBUFF_MODE = "Target creature gets -5/-5 until end of turn.";
+
     @Test
     @DisplayName("The Mightstone and Weakstone's draw mode draws two cards")
     void drawModeDrawsTwoCards() {
         harness.setLibrary(player1, List.of(new ArgothianSprite(), new ArgothianSprite()));
-        cast(0, null);
+        cast(DRAW_MODE);
 
         resolveAllTriggers();
 
@@ -47,10 +50,10 @@ class TheMightstoneAndWeakstoneTest extends BaseCardTest {
     @DisplayName("The debuff mode rejects a noncreature target")
     void debuffModeRejectsNoncreatureTarget() {
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
-        harness.setHand(player1, List.of(new TheMightstoneAndWeakstone()));
-        harness.addMana(player1, ManaColor.COLORLESS, 5);
+        harness.addToBattlefield(player2, new ArgothianSprite());
+        cast(DEBUFF_MODE);
 
-        assertThatThrownBy(() -> gs.playCard(gd, player1, 0, 1, land.getId(), null))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, land.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -142,15 +145,16 @@ class TheMightstoneAndWeakstoneTest extends BaseCardTest {
      * trigger goes on the stack (CR 603.3d), not while the permanent spell is cast (CR 601.2c).
      */
     private void castDebuff(java.util.UUID targetId) {
-        cast(1, null);
-        resolveAllTriggers();
+        cast(DEBUFF_MODE);
         harness.handlePermanentChosen(player1, targetId);
         resolveAllTriggers();
     }
 
-    private void cast(int mode, java.util.UUID targetId) {
+    private void cast(String mode) {
         harness.setHand(player1, List.of(new TheMightstoneAndWeakstone()));
         harness.addMana(player1, ManaColor.COLORLESS, 5);
-        gs.playCard(gd, player1, 0, mode, targetId, null);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, mode);
     }
 }

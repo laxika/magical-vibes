@@ -22,13 +22,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         GrizzlyBears.class, Island.class})
 class WhiteWidowFreeAgentTest extends BaseCardTest {
 
+    private static final String COUNTER_MODE = "Put a +1/+1 counter on each of up to two target creatures";
+    private static final String RETURN_MODE =
+            "Return target artifact or enchantment card from your graveyard to your hand";
+
     @Test
     void counterModePutsCountersOnTwoTargetCreatures() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
         castCounterMode(List.of(first.getId(), second.getId()));
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -40,9 +43,9 @@ class WhiteWidowFreeAgentTest extends BaseCardTest {
         Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
 
         harness.enterBattlefieldAndReturn(player1, new WhiteWidowFreeAgent());
-        harness.handleListChoice(player1, "Put a +1/+1 counter on each of up to two target creatures");
+        harness.handleListChoice(player1, COUNTER_MODE);
 
-        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(island.getId())))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, island.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -51,7 +54,6 @@ class WhiteWidowFreeAgentTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castCounterMode(List.of(creature.getId()));
-        harness.passBothPriorities();
         harness.passBothPriorities();
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -63,7 +65,6 @@ class WhiteWidowFreeAgentTest extends BaseCardTest {
         Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         castCounterMode(List.of(first.getId(), second.getId()));
-        harness.passBothPriorities();
         gd.playerBattlefields.get(player1.getId()).remove(first);
         harness.passBothPriorities();
 
@@ -77,8 +78,7 @@ class WhiteWidowFreeAgentTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(artifact));
 
         harness.enterBattlefieldAndReturn(player1, new WhiteWidowFreeAgent());
-        harness.handleListChoice(player1,
-                "Return target artifact or enchantment card from your graveyard to your hand");
+        harness.handleListChoice(player1, RETURN_MODE);
         harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
         harness.passBothPriorities();
 
@@ -89,7 +89,7 @@ class WhiteWidowFreeAgentTest extends BaseCardTest {
     @Test
     void counterModeCanTargetWhiteWidowItself() {
         Permanent widow = harness.enterBattlefieldAndReturn(player1, new WhiteWidowFreeAgent());
-        harness.handleListChoice(player1, "Put a +1/+1 counter on each of up to two target creatures");
+        harness.handleListChoice(player1, COUNTER_MODE);
         harness.handlePermanentChosen(player1, widow.getId());
         harness.passBothPriorities();
 
@@ -99,7 +99,7 @@ class WhiteWidowFreeAgentTest extends BaseCardTest {
     @Test
     void counterModeCanChooseNoTargets() {
         Permanent widow = harness.enterBattlefieldAndReturn(player1, new WhiteWidowFreeAgent());
-        harness.handleListChoice(player1, "Put a +1/+1 counter on each of up to two target creatures");
+        harness.handleListChoice(player1, COUNTER_MODE);
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();
 
@@ -114,8 +114,6 @@ class WhiteWidowFreeAgentTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(creature, artifact));
 
         castReturnMode();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
                 .containsExactly(artifact.getId());
@@ -133,8 +131,6 @@ class WhiteWidowFreeAgentTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(creature, enchantment));
 
         castReturnMode();
-        harness.passBothPriorities();
-        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
                 .containsExactly(enchantment.getId());
@@ -148,13 +144,23 @@ class WhiteWidowFreeAgentTest extends BaseCardTest {
     private void castCounterMode(List<java.util.UUID> targetIds) {
         harness.setHand(player1, List.of(new WhiteWidowFreeAgent()));
         addMana();
-        harness.castCreature(player1, 0, targetIds);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, COUNTER_MODE);
+        for (java.util.UUID targetId : targetIds) {
+            harness.handlePermanentChosen(player1, targetId);
+        }
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handlePermanentChosen(player1, player1.getId());
+        }
     }
 
     private void castReturnMode() {
         harness.setHand(player1, List.of(new WhiteWidowFreeAgent()));
         addMana();
-        harness.castCreature(player1, 0, 1);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, RETURN_MODE);
     }
 
     private void addMana() {

@@ -151,6 +151,7 @@ class TetzinGnomeChampionTest extends BaseCardTest {
 
         harness.castArtifact(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, "Draw two cards.");
         harness.passBothPriorities();
         harness.passBothPriorities();
 

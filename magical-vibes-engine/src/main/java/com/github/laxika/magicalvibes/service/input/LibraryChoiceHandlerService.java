@@ -2945,8 +2945,7 @@ public class LibraryChoiceHandlerService {
     private void finishResumedEntry(GameData gameData,
             com.github.laxika.magicalvibes.model.BattlefieldEntryRequest request) {
         StackEntry sourceEntry = request.sourceStackEntry();
-        int etbMode = sourceEntry != null && sourceEntry.getEtbMode() != null
-                ? sourceEntry.getEtbMode() : request.xValue();
+        int etbMode = request.xValue();
         asEntersInteractionService.handleCreatureEnteredBattlefield(gameData, request.controllerId(),
                 request.permanent().getCard(), sourceEntry == null ? null : sourceEntry.getTargetId(),
                 request.permanent().getCastFromZone() == Zone.HAND,

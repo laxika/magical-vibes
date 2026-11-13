@@ -688,12 +688,9 @@ public class ValidTargetService {
         return effectiveXValue;
     }
 
-    /** Finds the card's modal effect in its spell ability or "when this enters" abilities, if any. */
+    /** Finds the card's modal effect in its spell ability, if any. */
     private ChooseOneEffect findModalEffect(Card card) {
         for (CardEffect e : card.getCastingCostsAndSpellEffects()) {
-            if (e instanceof ChooseOneEffect coe) return coe;
-        }
-        for (CardEffect e : card.getOwnEntryEffects()) {
             if (e instanceof ChooseOneEffect coe) return coe;
         }
         return null;

@@ -24,6 +24,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({OracleOfTragedy.class, Forest.class, GrizzlyBears.class, HillGiant.class, WrathOfGod.class, CosisTrickster.class})
 class OracleOfTragedyTest extends BaseCardTest {
 
+    private static final String DRAW_MODE = "Draw a card, then discard a card";
+    private static final String SHUFFLE_MODE =
+            "Shuffle up to four target cards with mana value 3 or greater from your graveyard into your library";
+
     @Test
     @DisplayName("The ETB draw mode draws then discards a card")
     void etbDrawsThenDiscards() {
@@ -32,8 +36,9 @@ class OracleOfTragedyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castCreature(player1, 0, 0);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, DRAW_MODE);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -56,8 +61,9 @@ class OracleOfTragedyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castCreature(player1, 0, 1);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, SHUFFLE_MODE);
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -82,8 +88,7 @@ class OracleOfTragedyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handleListChoice(player1,
-                "Shuffle up to four target cards with mana value 3 or greater from your graveyard into your library");
+        harness.handleListChoice(player1, SHUFFLE_MODE);
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(qualifyingCard.getId()));
@@ -107,7 +112,7 @@ class OracleOfTragedyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.WHITE, 4);
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handleListChoice(player1, "Draw a card, then discard a card");
+        harness.handleListChoice(player1, DRAW_MODE);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.DiscardChoice.class);
@@ -130,8 +135,9 @@ class OracleOfTragedyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
 
-        harness.castCreature(player1, 0, 1);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, SHUFFLE_MODE);
         if (hasQualifyingCard) {
             harness.handleMultipleCardsChosen(player1, List.of());
         }

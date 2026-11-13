@@ -15,11 +15,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({InspiringBard.class, Island.class})
 class InspiringBardTest extends BaseCardTest {
 
+    private static final String INSPIRATION_MODE = "Bardic Inspiration — Target creature gets +2/+2 until end of turn";
+    private static final String REST_MODE = "Song of Rest — You gain 3 life";
+
     @Test
     void bardicInspirationBoostsTargetCreatureUntilEndOfTurn() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new InspiringBard());
 
-        cast(0, null);
+        cast(INSPIRATION_MODE);
         harness.handlePermanentChosen(player1, bear.getId());
         resolveAllTriggers();
 
@@ -39,7 +42,7 @@ class InspiringBardTest extends BaseCardTest {
         harness.setLife(player1, 10);
         harness.setLife(player2, 7);
 
-        cast(1, null);
+        cast(REST_MODE);
         resolveAllTriggers();
 
         harness.assertLife(player1, 13);
@@ -50,13 +53,15 @@ class InspiringBardTest extends BaseCardTest {
     void bardicInspirationCannotTargetNoncreature() {
         Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
 
-        assertThatThrownBy(() -> cast(0, island))
+        cast(INSPIRATION_MODE);
+
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, island.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
     void bardicInspirationCanTargetTheBardThatJustEntered() {
-        cast(0, null);
+        cast(INSPIRATION_MODE);
         Permanent bard = gd.playerBattlefields.get(player1.getId()).getFirst();
         harness.handlePermanentChosen(player1, bard.getId());
         resolveAllTriggers();
@@ -66,15 +71,12 @@ class InspiringBardTest extends BaseCardTest {
         harness.assertLife(player1, 20);
     }
 
-    private void cast(int mode, Permanent target) {
+    private void cast(String mode) {
         harness.setHand(player1, List.of(new InspiringBard()));
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
-        if (target != null) {
-            harness.castCreature(player1, 0, mode, target.getId());
-        } else {
-            harness.castCreature(player1, 0, mode);
-        }
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, mode);
     }
 }

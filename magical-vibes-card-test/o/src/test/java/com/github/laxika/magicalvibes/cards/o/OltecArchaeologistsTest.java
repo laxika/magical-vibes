@@ -19,6 +19,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({OltecArchaeologists.class, CogworkWrestler.class, Forest.class, MineshaftSpider.class})
 class OltecArchaeologistsTest extends BaseCardTest {
 
+    private static final String RETURN_MODE = "Return target artifact card from your graveyard to your hand";
+    private static final String SCRY_MODE = "Scry 3";
+
     @Test
     @DisplayName("Returns a targeted artifact card from the graveyard to hand")
     void returnsArtifactFromGraveyardToHand() {
@@ -28,7 +31,7 @@ class OltecArchaeologistsTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(artifact, nonArtifact));
         harness.setGraveyard(player2, List.of(opponentArtifact));
 
-        castOltecArchaeologists(0);
+        castOltecArchaeologists(RETURN_MODE);
 
         PendingInteraction.MultiGraveyardChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -51,7 +54,7 @@ class OltecArchaeologistsTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(top));
 
         harness.enterBattlefieldAndReturn(player1, new OltecArchaeologists());
-        harness.handleListChoice(player1, "Scry 3");
+        harness.handleListChoice(player1, SCRY_MODE);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
@@ -69,7 +72,8 @@ class OltecArchaeologistsTest extends BaseCardTest {
         Card bottom = new CogworkWrestler();
         harness.setLibrary(player1, List.of(top, middle, bottom));
 
-        castOltecArchaeologists(1);
+        castOltecArchaeologists(SCRY_MODE);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
                 .containsExactly(top, middle, bottom);
@@ -90,9 +94,9 @@ class OltecArchaeologistsTest extends BaseCardTest {
         harness.setHand(player1, List.of(new OltecArchaeologists()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0, -1);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.handleListChoice(player1, "Scry 3");
+        harness.handleListChoice(player1, SCRY_MODE);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
@@ -111,7 +115,8 @@ class OltecArchaeologistsTest extends BaseCardTest {
         Card untouched = new Forest();
         harness.setLibrary(player1, List.of(first, second, third, untouched));
 
-        castOltecArchaeologists(1);
+        castOltecArchaeologists(SCRY_MODE);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class).cards())
                 .containsExactly(first, second, third);
@@ -125,7 +130,8 @@ class OltecArchaeologistsTest extends BaseCardTest {
     void scriesEmptyLibrary() {
         harness.setLibrary(player1, List.of());
 
-        castOltecArchaeologists(1);
+        castOltecArchaeologists(SCRY_MODE);
+        harness.passBothPriorities();
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.stack).isEmpty();
@@ -138,7 +144,7 @@ class OltecArchaeologistsTest extends BaseCardTest {
         Card artifact = new CogworkWrestler();
         harness.setGraveyard(player1, List.of(artifact));
 
-        castOltecArchaeologists(0);
+        castOltecArchaeologists(RETURN_MODE);
         harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
         harness.setGraveyard(player1, List.of());
         harness.passBothPriorities();
@@ -147,12 +153,12 @@ class OltecArchaeologistsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
-    private void castOltecArchaeologists(int mode) {
+    private void castOltecArchaeologists(String mode) {
         harness.setHand(player1, List.of(new OltecArchaeologists()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.handleListChoice(player1, mode);
     }
 }

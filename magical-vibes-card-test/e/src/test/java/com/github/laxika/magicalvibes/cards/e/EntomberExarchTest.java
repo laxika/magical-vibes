@@ -20,6 +20,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({EntomberExarch.class, PhyrexianHulk.class, GitaxianProbe.class, Forest.class})
 class EntomberExarchTest extends BaseCardTest {
 
+    private static final String RETURN_MODE = "Return target creature card from your graveyard to your hand";
+    private static final String DISCARD_MODE =
+            "Target opponent reveals their hand. You choose a noncreature card from it. That player discards that card.";
+
     @Nested
     @CardUsed({EntomberExarch.class, PhyrexianHulk.class, GitaxianProbe.class})
     @DisplayName("Mode 1: Return target creature card from your graveyard to your hand")
@@ -32,7 +36,6 @@ class EntomberExarchTest extends BaseCardTest {
             harness.setGraveyard(player1, List.of(creature));
 
             castWithGraveyardMode();
-            harness.passBothPriorities();
 
             PendingInteraction.MultiGraveyardChoice choice =
                     gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -56,7 +59,6 @@ class EntomberExarchTest extends BaseCardTest {
             harness.setGraveyard(player2, List.of(opposingCreature));
 
             castWithGraveyardMode();
-            harness.passBothPriorities();
 
             PendingInteraction.MultiGraveyardChoice choice =
                     gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
@@ -72,7 +74,6 @@ class EntomberExarchTest extends BaseCardTest {
             harness.setGraveyard(player1, List.of(target, other));
 
             castWithGraveyardMode();
-            harness.passBothPriorities();
             assertThat(gd.interaction.activeInteraction())
                     .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
             harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
@@ -90,14 +91,15 @@ class EntomberExarchTest extends BaseCardTest {
         void exarchEntersBattlefield() {
             harness.setGraveyard(player1, List.of(new PhyrexianHulk()));
             castWithGraveyardMode();
-            harness.passBothPriorities();
             harness.assertOnBattlefield(player1, "Entomber Exarch");
         }
 
         private void castWithGraveyardMode() {
             harness.setHand(player1, List.of(new EntomberExarch()));
             harness.addMana(player1, ManaColor.BLACK, 4);
-            harness.castCreature(player1, 0, 0);
+            harness.castCreature(player1, 0);
+            harness.passBothPriorities();
+            harness.handleListChoice(player1, RETURN_MODE);
         }
     }
 
@@ -127,7 +129,6 @@ class EntomberExarchTest extends BaseCardTest {
             harness.setHand(player2, List.of(sorcery, creature));
 
             castWithDiscardMode();
-            harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
@@ -150,7 +151,6 @@ class EntomberExarchTest extends BaseCardTest {
             harness.setHand(player2, List.of(creature, sorcery));
 
             castWithDiscardMode();
-            harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
             // Only sorcery (index 1) should be valid
@@ -165,7 +165,6 @@ class EntomberExarchTest extends BaseCardTest {
             harness.setHand(player2, List.of(land, creature));
 
             castWithDiscardMode();
-            harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
             // Only land (index 0) should be valid
@@ -178,7 +177,6 @@ class EntomberExarchTest extends BaseCardTest {
             harness.setHand(player2, List.of());
 
             castWithDiscardMode();
-            harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
             assertThat(gd.interaction.activeInteraction()).isNull();
@@ -192,7 +190,6 @@ class EntomberExarchTest extends BaseCardTest {
             harness.setHand(player2, List.of(creature1, creature2));
 
             castWithDiscardMode();
-            harness.passBothPriorities(); // resolve creature
             harness.passBothPriorities(); // resolve ETB trigger
 
             assertThat(gd.interaction.activeInteraction()).isNull();
@@ -206,7 +203,6 @@ class EntomberExarchTest extends BaseCardTest {
             harness.setHand(player2, List.of(sorcery));
 
             castWithDiscardMode();
-            harness.passBothPriorities(); // resolve creature
 
             harness.assertOnBattlefield(player1, "Entomber Exarch");
         }
@@ -220,7 +216,6 @@ class EntomberExarchTest extends BaseCardTest {
 
             castWithDiscardMode();
             harness.passBothPriorities();
-            harness.passBothPriorities();
             harness.handleCardChosen(player1, 0);
 
             assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(land);
@@ -231,7 +226,10 @@ class EntomberExarchTest extends BaseCardTest {
         private void castWithDiscardMode() {
             harness.setHand(player1, List.of(new EntomberExarch()));
             harness.addMana(player1, ManaColor.BLACK, 4);
-            harness.castCreature(player1, 0, 1, player2.getId());
+            harness.castCreature(player1, 0);
+            harness.passBothPriorities();
+            harness.handleListChoice(player1, DISCARD_MODE);
+            harness.handlePermanentChosen(player1, player2.getId());
         }
     }
 }

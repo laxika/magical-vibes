@@ -14,12 +14,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({Trufflesnout.class})
 class TrufflesnoutTest extends BaseCardTest {
 
+    private static final String COUNTER_MODE = "Put a +1/+1 counter on this creature";
+    private static final String LIFE_MODE = "You gain 4 life";
+
     @Test
     void entersWithPlusOnePlusOneCounterWhenThatModeIsChosen() {
         harness.setHand(player1, List.of(new Trufflesnout()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castCreature(player1, 0, 0);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, COUNTER_MODE);
         harness.passBothPriorities();
 
         Permanent trufflesnout = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -31,8 +35,9 @@ class TrufflesnoutTest extends BaseCardTest {
         harness.setLife(player1, 10);
         harness.setHand(player1, List.of(new Trufflesnout()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castCreature(player1, 0, 1);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, LIFE_MODE);
         harness.passBothPriorities();
 
         harness.assertLife(player1, 14);
@@ -44,7 +49,7 @@ class TrufflesnoutTest extends BaseCardTest {
         harness.setLife(player2, 12);
 
         Permanent trufflesnout = harness.enterBattlefieldAndReturn(player1, new Trufflesnout());
-        harness.handleListChoice(player1, "You gain 4 life");
+        harness.handleListChoice(player1, LIFE_MODE);
         harness.assertLife(player1, 10);
         harness.passBothPriorities();
 
@@ -57,8 +62,9 @@ class TrufflesnoutTest extends BaseCardTest {
     void counterIsAddedOnlyWhenTheTriggeredAbilityResolves() {
         harness.setHand(player1, List.of(new Trufflesnout()));
         harness.addMana(player1, ManaColor.GREEN, 3);
-        harness.castCreature(player1, 0, 0);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, COUNTER_MODE);
 
         Permanent trufflesnout = gd.playerBattlefields.get(player1.getId()).getFirst();
         assertThat(trufflesnout.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();

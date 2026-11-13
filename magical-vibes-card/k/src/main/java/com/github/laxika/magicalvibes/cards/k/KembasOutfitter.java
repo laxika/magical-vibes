@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandToPerpetuallyGrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantActivatedAbilityToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -29,7 +30,7 @@ public class KembasOutfitter extends Card {
         PermanentPredicateTargetFilter equipmentTarget = new PermanentPredicateTargetFilter(
                 equipmentYouControl, "Target must be an Equipment you control");
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Choose an Equipment card in your hand. It perpetually gains equip {1}.",
                         new ChooseCardFromHandToPerpetuallyGrantActivatedAbilityEffect(
@@ -39,6 +40,6 @@ public class KembasOutfitter extends Card {
                         new PerpetuallyGrantActivatedAbilityToTargetPermanentEffect(
                                 equipAbility, equipmentYouControl),
                         equipmentTarget)
-        )));
+        ))));
     }
 }

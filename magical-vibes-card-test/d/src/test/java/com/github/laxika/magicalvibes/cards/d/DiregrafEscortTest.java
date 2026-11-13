@@ -154,7 +154,7 @@ class DiregrafEscortTest extends BaseCardTest {
         Permanent zombie = harness.addToBattlefieldAndReturn(player2, new UndeadExecutioner());
         zombie.setMarkedDamage(2);
         harness.runStateBasedActions();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextDeathTriggerTarget(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
 
         harness.assertInGraveyard(player2, "Undead Executioner");
         PendingInteraction.PermanentChoice choice =

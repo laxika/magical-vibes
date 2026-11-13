@@ -21,6 +21,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({FangkeepersFamiliar.class, FaerieInvaders.class, GrizzlyBears.class, SealOfStrength.class})
 class FangkeepersFamiliarTest extends BaseCardTest {
 
+    private static final String LIFE_MODE = "You gain 3 life and surveil 3";
+    private static final String DESTROY_MODE = "Destroy target enchantment";
+    private static final String COUNTER_MODE = "Counter target creature spell";
+
     @Test
     @DisplayName("ETB mode gains 3 life and surveils 3")
     void lifeAndSurveilMode() {
@@ -30,7 +34,7 @@ class FangkeepersFamiliarTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(topCard, middleCard, bottomCard));
         harness.setLife(player1, 10);
 
-        castFangkeepersFamiliar(0);
+        castFangkeepersFamiliar(LIFE_MODE);
         resolveAllTriggers();
 
         harness.assertLife(player1, 13);
@@ -49,7 +53,7 @@ class FangkeepersFamiliarTest extends BaseCardTest {
     void destroyEnchantmentMode() {
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new SealOfStrength());
 
-        enterAndChooseMode("Destroy target enchantment");
+        enterAndChooseMode(DESTROY_MODE);
         harness.handlePermanentChosen(player1, enchantment.getId());
         resolveAllTriggers();
 
@@ -62,7 +66,7 @@ class FangkeepersFamiliarTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new SealOfStrength());
 
-        enterAndChooseMode("Destroy target enchantment");
+        enterAndChooseMode(DESTROY_MODE);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, creature.getId()))
                 .isInstanceOf(RuntimeException.class);
@@ -84,8 +88,9 @@ class FangkeepersFamiliarTest extends BaseCardTest {
         FaerieInvaders creatureSpell = new FaerieInvaders();
         harness.castFromHand(player2, creatureSpell, "{4}{U}");
 
-        harness.castCreature(player1, 0, 2, creatureSpell.getId());
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, COUNTER_MODE);
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         harness.handlePermanentChosen(player1, creatureSpell.getId());
         harness.passBothPriorities();
@@ -97,7 +102,7 @@ class FangkeepersFamiliarTest extends BaseCardTest {
     void canChooseDestroyModeWhenEnteringWithoutBeingCast() {
         Permanent enchantment = harness.addToBattlefieldAndReturn(player2, new SealOfStrength());
 
-        enterAndChooseMode("Destroy target enchantment");
+        enterAndChooseMode(DESTROY_MODE);
         harness.handlePermanentChosen(player1, enchantment.getId());
         resolveAllTriggers();
 
@@ -112,7 +117,7 @@ class FangkeepersFamiliarTest extends BaseCardTest {
         harness.setLibrary(player1, List.of());
         harness.setLife(player1, 10);
 
-        castFangkeepersFamiliar(0);
+        castFangkeepersFamiliar(LIFE_MODE);
         resolveAllTriggers();
 
         harness.assertLife(player1, 13);
@@ -127,7 +132,7 @@ class FangkeepersFamiliarTest extends BaseCardTest {
         Card second = new FangkeepersFamiliar();
         harness.setLibrary(player1, List.of(first, second));
 
-        castFangkeepersFamiliar(0);
+        castFangkeepersFamiliar(LIFE_MODE);
         resolveAllTriggers();
         gs.handleInteractionAnswer(gd, player1,
                 new InteractionAnswer.ScryOrder(List.of(1, 0), List.of()));
@@ -143,21 +148,15 @@ class FangkeepersFamiliarTest extends BaseCardTest {
         harness.handleListChoice(player1, mode);
     }
 
-    private void castFangkeepersFamiliar(int mode) {
-        castFangkeepersFamiliar(mode, null);
-    }
-
-    private void castFangkeepersFamiliar(int mode, java.util.UUID targetId) {
+    private void castFangkeepersFamiliar(String mode) {
         harness.setHand(player1, List.of(new FangkeepersFamiliar()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        if (targetId == null) {
-            harness.castCreature(player1, 0, mode);
-        } else {
-            harness.castCreature(player1, 0, mode, targetId);
-        }
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, mode);
     }
 
     @Test
@@ -169,7 +168,7 @@ class FangkeepersFamiliarTest extends BaseCardTest {
         FaerieInvaders creatureSpell = new FaerieInvaders();
         harness.castFromHand(player2, creatureSpell, "{4}{U}");
 
-        enterAndChooseMode("Counter target creature spell");
+        enterAndChooseMode(COUNTER_MODE);
         PendingInteraction.PermanentChoice targetChoice =
                 gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(targetChoice).isNotNull();
@@ -190,7 +189,7 @@ class FangkeepersFamiliarTest extends BaseCardTest {
         PendingInteraction.ColorChoice modeChoice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(modeChoice).isNotNull();
-        assertThat(modeChoice.options()).contains("You gain 3 life and surveil 3")
-                .doesNotContain("Counter target creature spell");
+        assertThat(modeChoice.options()).contains(LIFE_MODE)
+                .doesNotContain(COUNTER_MODE);
     }
 }

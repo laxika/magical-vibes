@@ -19,12 +19,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({IrreverentRevelers.class, BronzeSword.class, NyxbornCourser.class})
 class IrreverentRevelersTest extends BaseCardTest {
 
+    private static final String DESTROY_MODE = "Destroy target artifact";
+    private static final String HASTE_MODE = "Irreverent Revelers gains haste until end of turn";
+
     @Test
     @DisplayName("ETB mode destroys target artifact")
     void destroysArtifactMode() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BronzeSword());
 
-        castRevelers(0, artifact.getId());
+        castRevelers(DESTROY_MODE, artifact.getId());
         resolveCreatureAndEtb();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(artifact);
@@ -36,7 +39,7 @@ class IrreverentRevelersTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new NyxbornCourser());
         harness.addToBattlefield(player2, new BronzeSword());
         harness.enterBattlefieldAndReturn(player1, new IrreverentRevelers());
-        harness.handleListChoice(player1, "Destroy target artifact");
+        harness.handleListChoice(player1, DESTROY_MODE);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, creature.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -45,7 +48,7 @@ class IrreverentRevelersTest extends BaseCardTest {
     @Test
     @DisplayName("ETB mode gives Irreverent Revelers haste until end of turn")
     void hasteMode() {
-        castRevelers(1, null);
+        castRevelers(HASTE_MODE, null);
         resolveCreatureAndEtb();
 
         Permanent revelers = findPermanent(player1, "Irreverent Revelers");
@@ -62,7 +65,7 @@ class IrreverentRevelersTest extends BaseCardTest {
     void destroysOwnArtifact() {
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new BronzeSword());
 
-        castRevelers(0, artifact.getId());
+        castRevelers(DESTROY_MODE, artifact.getId());
         resolveCreatureAndEtb();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(artifact);
@@ -76,7 +79,7 @@ class IrreverentRevelersTest extends BaseCardTest {
         Permanent artifact = harness.addToBattlefieldAndReturn(player2, new BronzeSword());
         Permanent otherCreature = harness.addToBattlefieldAndReturn(player1, new NyxbornCourser());
 
-        castRevelers(1, null);
+        castRevelers(HASTE_MODE, null);
         resolveCreatureAndEtb();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(artifact);
@@ -91,7 +94,7 @@ class IrreverentRevelersTest extends BaseCardTest {
         Permanent revelers = harness.enterBattlefieldAndReturn(player1, new IrreverentRevelers());
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleListChoice(player1, "Irreverent Revelers gains haste until end of turn");
+        harness.handleListChoice(player1, HASTE_MODE);
         harness.passBothPriorities();
 
         assertThat(gqs.hasKeyword(gd, revelers, Keyword.HASTE)).isTrue();
@@ -103,20 +106,24 @@ class IrreverentRevelersTest extends BaseCardTest {
         harness.addToBattlefield(player2, new BronzeSword());
         prepareRevelers();
 
-        harness.castCreature(player1, 0, 1);
+        harness.castCreature(player1, 0);
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
-        resolveCreatureAndEtb();
+        harness.passBothPriorities();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleListChoice(player1, HASTE_MODE);
+        harness.passBothPriorities();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Irreverent Revelers"), Keyword.HASTE)).isTrue();
     }
 
-    private void castRevelers(int mode, java.util.UUID targetId) {
+    private void castRevelers(String mode, java.util.UUID targetId) {
         prepareRevelers();
-        if (targetId == null) {
-            harness.castCreature(player1, 0, mode);
-        } else {
-            harness.castCreature(player1, 0, mode, targetId);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, mode);
+        if (targetId != null) {
+            harness.handlePermanentChosen(player1, targetId);
         }
     }
 
@@ -127,7 +134,6 @@ class IrreverentRevelersTest extends BaseCardTest {
     }
 
     private void resolveCreatureAndEtb() {
-        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }

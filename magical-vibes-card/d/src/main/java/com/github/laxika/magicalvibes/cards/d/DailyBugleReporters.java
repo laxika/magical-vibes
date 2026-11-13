@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -27,10 +28,11 @@ public class DailyBugleReporters extends Card {
         PermanentPredicateTargetFilter creatureTarget = new PermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Target must be a creature");
         target(creatureTarget, 0, 2);
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on each of up to two target creatures",
-                        new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE), creatureTarget),
+                        List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                        creatureTarget, null, 0, 2, false, null),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target creature card with mana value 2 or less from your graveyard to your hand",
                         ReturnCardFromGraveyardEffect.builder()
@@ -40,6 +42,6 @@ public class DailyBugleReporters extends Card {
                                         new CardMaxManaValuePredicate(2))))
                                 .targetGraveyard(true)
                                 .build())
-        )));
+        ))));
     }
 }

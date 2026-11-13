@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
@@ -55,7 +56,7 @@ public class BloodrageAlpha extends Card {
                         new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
                         new EnteringCreatureFightsTargetCreatureEffect(CREATURE_YOU_DONT_CONTROL, true)))));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Another target Wolf or Werewolf you control fights target creature you don't control",
                         List.of(new FightTargetsEffect()),
@@ -63,6 +64,6 @@ public class BloodrageAlpha extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "You get a one-time boon with \"When you cast a Wolf or Werewolf spell, it gains 'When this creature enters, it fights up to one target creature you don't control.'\"",
                         oneTimeBoon)
-        )));
+        ))));
     }
 }

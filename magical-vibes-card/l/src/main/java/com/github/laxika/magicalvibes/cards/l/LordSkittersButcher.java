@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -30,7 +31,7 @@ import java.util.Set;
 public class LordSkittersButcher extends Card {
 
     public LordSkittersButcher() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a 1/1 black Rat creature token with \"This token can't block.\"",
                         new CreateTokenEffect(
@@ -50,6 +51,6 @@ public class LordSkittersButcher extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control gain menace until end of turn.",
                         new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES))
-        )));
+        ))));
     }
 }

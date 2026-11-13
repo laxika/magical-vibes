@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -32,7 +33,7 @@ public class ErtaiResurrected extends Card {
                 creatureOrPlaneswalker,
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())));
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Counter target spell, activated ability, or triggered ability. Its controller draws a card",
                         List.of(new TargetSpellControllerDrawsCardEffect(), new CounterSpellEffect()),
@@ -46,6 +47,6 @@ public class ErtaiResurrected extends Card {
                         new PermanentPredicateTargetFilter(
                                 anotherCreatureOrPlaneswalker,
                                 "Target must be another creature or planeswalker."))
-        ), true, 0, 1));
+        ), true, 0, 1)));
     }
 }

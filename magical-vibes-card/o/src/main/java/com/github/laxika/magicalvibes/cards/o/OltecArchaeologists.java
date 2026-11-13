@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -17,7 +18,7 @@ import java.util.List;
 public class OltecArchaeologists extends Card {
 
     public OltecArchaeologists() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target artifact card from your graveyard to your hand",
                         ReturnCardFromGraveyardEffect.builder()
@@ -27,6 +28,6 @@ public class OltecArchaeologists extends Card {
                                 .build()
                 ),
                 new ChooseOneEffect.ChooseOneOption("Scry 3", new ScryEffect(3))
-        )));
+        ))));
     }
 }

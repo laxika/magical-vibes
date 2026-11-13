@@ -43,7 +43,7 @@ class ConfusionInTheRanksTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player2, target.getId());
         harness.passBothPriorities();
 
@@ -88,7 +88,7 @@ class ConfusionInTheRanksTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player2, target.getId());
         harness.passBothPriorities();
 
@@ -131,7 +131,7 @@ class ConfusionInTheRanksTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player2, target.getId());
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
@@ -264,7 +264,7 @@ class ConfusionInTheRanksTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 

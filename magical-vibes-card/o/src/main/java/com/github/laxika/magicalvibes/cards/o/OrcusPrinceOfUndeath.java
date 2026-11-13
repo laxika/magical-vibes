@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeRecipient;
@@ -22,7 +23,7 @@ import java.util.List;
 public class OrcusPrinceOfUndeath extends Card {
 
     public OrcusPrinceOfUndeath() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Each other creature gets -X/-X until end of turn. You lose X life",
                         List.of(
@@ -35,6 +36,6 @@ public class OrcusPrinceOfUndeath extends Card {
                         "Return up to X target creature cards with total mana value X or less from your graveyard to the battlefield. They gain haste until end of turn",
                         ReturnTargetCardsFromGraveyardToBattlefieldEffect.withinTotalManaValue(
                                 new CardTypePredicate(CardType.CREATURE), new XValue(), true)
-        ))));
+        )))));
     }
 }

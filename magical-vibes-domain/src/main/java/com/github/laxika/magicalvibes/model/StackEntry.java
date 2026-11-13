@@ -122,8 +122,6 @@ public class StackEntry {
     /** Number of modes chosen for the modal spell represented by this entry, when applicable. */
     @Setter private Integer modalModeCount;
     @Setter private int phyrexianManaPaidWithLife;
-    /** The ETB mode selected while casting a modal permanent, when it differs from the paid X. */
-    @Setter private Integer etbMode;
     @Setter private UUID targetId;
     /** The opponent chosen before that opponent selected the spell's creature target. */
     @Setter private UUID opponentChosenTargetPlayerId;
@@ -1252,7 +1250,6 @@ public class StackEntry {
         this.xValueSetByCastTrigger = source.xValueSetByCastTrigger;
         this.modalModeCount = source.modalModeCount;
         this.phyrexianManaPaidWithLife = source.phyrexianManaPaidWithLife;
-        this.etbMode = source.etbMode;
         this.targetId = source.targetId;
         this.opponentChosenTargetPlayerId = source.opponentChosenTargetPlayerId;
         this.sourcePermanentId = source.sourcePermanentId;
@@ -1847,7 +1844,6 @@ public class StackEntry {
         // Cast-time choices and replacement effects belong to the old spell, not the exchanged card.
         this.modalModeCount = null;
         this.phyrexianManaPaidWithLife = 0;
-        this.etbMode = null;
         this.opponentChosenTargetPlayerId = null;
         this.requiredTargetControllerId = null;
         this.targetControllersAtCast.clear();

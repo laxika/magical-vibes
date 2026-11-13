@@ -62,7 +62,7 @@ public class UnleashHandler implements MayEffectHandlerBean {
             asEntersInteractionService.handleCreatureEnteredBattlefield(gameData, request.controllerId(),
                     request.permanent().getCard(), spell == null ? null : spell.getTargetId(),
                     request.permanent().getCastFromZone() == com.github.laxika.magicalvibes.model.Zone.HAND,
-                    spell != null && spell.getEtbMode() != null ? spell.getEtbMode() : request.xValue(),
+                    request.xValue(),
                     request.xValue(), request.kicked(), spell == null ? java.util.List.of() : spell.getTargetIds(),
                     request.repeatedAdditionalCosts(),
                     spell == null ? java.util.List.of() : spell.getConvokeCreatureIds());

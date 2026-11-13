@@ -153,30 +153,6 @@ class DeathTriggerCollectorServiceTest {
         return new TriggerMatchContext(gd, perm, controllerId, rawEffect);
     }
 
-    @Test
-    @DisplayName("Puts an opponent-permanent ability's effect on the stack once the pipeline matched it")
-    void putsOpponentPermanentAbilityOnStack() {
-        Card watcherCard = createCreature("Watcher", 1, 3);
-        Permanent watcher = new Permanent(watcherCard);
-        Card dyingCard = createArtifact("Bountied Artifact");
-        Permanent dyingPermanent = new Permanent(dyingCard);
-        var effect = SequenceEffect.of(new GainLifeEffect(3), new DrawCardEffect());
-        var context = new TriggerContext.AnyPermanentGraveyard(
-                dyingCard, PLAYER2_ID, PLAYER2_ID, dyingPermanent, 0, 0);
-
-        assertThat(svc.handleOpponentPermanentGraveyardDefault(
-                match(watcher, PLAYER1_ID, effect), context)).isTrue();
-
-        assertThat(gd.stack).hasSize(1);
-        StackEntry entry = gd.stack.getFirst();
-        assertThat(entry.getEffectsToResolve()).containsExactly(effect);
-        assertThat(entry.getTriggeringCardId()).isEqualTo(dyingCard.getId());
-        assertThat(entry.getTriggeringPermanentId()).isEqualTo(dyingPermanent.getId());
-        assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(PLAYER2_ID);
-        assertThat(entry.getTargetId()).isEqualTo(PLAYER2_ID);
-        assertThat(entry.isNonTargeting()).isTrue();
-        assertThat(entry.getSourcePermanentSnapshot()).isNotNull();
-    }
 
     @Test
     @DisplayName("A departure ability of a card in exile has no source permanent and records the permanent that left")
@@ -202,28 +178,6 @@ class DeathTriggerCollectorServiceTest {
         });
     }
 
-    @Test
-    @DisplayName("A land put into a graveyard: the land as it last existed and \"that land's controller\"")
-    void landDefaultRecordsTheLandAndItsController() {
-        Permanent watcher = new Permanent(createArtifact("Dingus Egg"));
-        var effect = new DealDamageToPlayersEffect(2, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER);
-        Card land = new Card();
-        land.setName("Forest");
-        land.setType(CardType.LAND);
-        Permanent departed = new Permanent(land);
-        gd.graveyardEntryVersions.put(land.getId(), 4L);
-
-        assertThat(svc.handleLandGraveyardDefault(match(watcher, PLAYER1_ID, effect),
-                new TriggerContext.AnyPermanentGraveyard(land, PLAYER2_ID, PLAYER2_ID, departed, 0, 0))).isTrue();
-
-        assertThat(gd.stack).singleElement().satisfies(entry -> {
-            assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(PLAYER2_ID);
-            assertThat(entry.getTriggeringPermanentId()).isEqualTo(departed.getId());
-            assertThat(entry.getTriggeringCardId()).isEqualTo(land.getId());
-            assertThat(entry.isTriggeringCardIncarnation(4L)).isTrue();
-            assertThat(entry.getSourcePermanentSnapshot()).isNotNull();
-        });
-    }
 
     @Nested
     @DisplayName("handleEquippedCreatureDeathDefault")
@@ -537,194 +491,9 @@ class DeathTriggerCollectorServiceTest {
         }
     }
 
-    @Nested
-    @DisplayName("Any permanent graveyard handlers")
-    class AnyPermanentGraveyardHandlers {
 
-        @Test
-        @DisplayName("Default effect queues a trigger for any permanent, including tokens")
-        void defaultQueuesTrigger() {
-            Card watcher = createEnchantment("Last Laugh");
-            Permanent perm = new Permanent(watcher);
-            var effect = new MassDamageEffect(1, true);
-            var dying = createArtifact("Treasure");
-            dying.setToken(true);
-            var ctx = new TriggerContext.AnyPermanentGraveyard(dying, PLAYER2_ID, PLAYER2_ID);
 
-            assertThat(svc.handleAnyPermanentGraveyardDefault(
-                    match(perm, PLAYER1_ID, effect), ctx)).isTrue();
 
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(effect);
-            assertThat(gd.stack.get(0).getTargetId()).isEqualTo(PLAYER2_ID);
-            assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
-        }
-    }
-
-    @Nested
-    @DisplayName("Artifact graveyard handlers")
-    class ArtifactGraveyardHandlers {
-
-        @Test
-        @DisplayName("A \"you may\" goes on the stack as written, asked as it resolves")
-        void mayEffectGoesOnTheStackAsWritten() {
-            Card watcher = createArtifact("Optional Watcher");
-            var may = new MayEffect(new DrawCardEffect(1), "Draw?");
-            Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID);
-
-            svc.handleArtifactGraveyardDefault(match(perm, PLAYER1_ID, may), ctx);
-
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(may);
-            assertThat(gd.pendingMayAbilities).isEmpty();
-        }
-
-        @Test
-        @DisplayName("\"That artifact's controller\" is the triggering permanent's controller")
-        void recordsTheArtifactsController() {
-            Card watcher = createArtifact("Damage Watcher");
-            var effect = new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PERMANENT_CONTROLLER);
-            Permanent perm = new Permanent(watcher);
-            Card artifact = createArtifact("Ornithopter");
-            Permanent departed = new Permanent(artifact);
-            var ctx = new TriggerContext.ArtifactGraveyard(PLAYER2_ID, PLAYER2_ID, artifact, 0, departed, false);
-
-            svc.handleArtifactGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx);
-
-            StackEntry entry = gd.stack.get(0);
-            assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(PLAYER2_ID);
-            assertThat(entry.getTriggeringPermanentId()).isEqualTo(departed.getId());
-            assertThat(entry.getTriggeringCardId()).isEqualTo(artifact.getId());
-        }
-
-        @Test
-        @DisplayName("Default effect has null targetId and sets sourcePermanentId")
-        void defaultSetsSourcePermanentId() {
-            Card watcher = createArtifact("Plain Watcher");
-            var effect = new DrawCardEffect(1);
-            Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID);
-
-            svc.handleArtifactGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx);
-
-            assertThat(gd.stack.get(0).getTargetId()).isNull();
-            assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
-        }
-
-        @Test
-        @DisplayName("Default effect queues a player-targeted trigger with source snapshot")
-        void artifactDefaultQueuesTargetedTrigger() {
-            Card watcher = createCreature("Marionette Master", 1, 3);
-            Permanent perm = new Permanent(watcher);
-            var effect = new LoseLifeEffect(new SourcePower(), LoseLifeRecipient.TARGET_PLAYER);
-            var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID);
-
-            assertThat(svc.handleArtifactGraveyardDefault(
-                    match(perm, PLAYER1_ID, effect), ctx)).isTrue();
-
-            var pending = (PermanentChoiceContext.DeathTriggerTarget)
-                    gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
-            assertThat(pending.creaturesOnly()).isFalse();
-            assertThat(pending.sourcePermanentSnapshot().getId()).isEqualTo(perm.getId());
-            assertThat(pending.effects()).containsExactly(effect);
-        }
-
-        @Test
-        @DisplayName("Default effect queues a non-targeted trigger without target choice")
-        void artifactDefaultQueuesNonTargetedTrigger() {
-            Card watcher = createCreature("Syr Ginger, the Meal Ender", 3, 1);
-            Permanent perm = new Permanent(watcher);
-            var effect = SequenceEffect.of(
-                    new PutCountersOnSourceEffect(1, 1, 1), new ScryEffect(1));
-            var ctx = new TriggerContext.ArtifactGraveyard(PLAYER1_ID, PLAYER1_ID);
-
-            assertThat(svc.handleArtifactGraveyardDefault(
-                    match(perm, PLAYER1_ID, effect), ctx)).isTrue();
-
-            assertThat(gd.pendingInteractions).isEmpty();
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getFirst().getTargetId()).isNull();
-            assertThat(gd.stack.getFirst().getSourcePermanentId()).isEqualTo(perm.getId());
-            assertThat(gd.stack.getFirst().getEffectsToResolve()).containsExactly(effect);
-        }
-
-        @Test
-        @DisplayName("Default effect carries the artifact as it last existed as the triggering permanent")
-        void artifactDefaultCarriesTheArtifactAsTriggeringPermanent() {
-            Card watcher = createCreature("Donatello, Mutant Mechanic", 3, 5);
-            Permanent perm = new Permanent(watcher);
-            var effect = new PutCountersOnTargetForEachLeavingSourceCountersEffect(
-                            new PermanentIsCreaturePredicate());
-            Permanent artifact = new Permanent(createCreature("Ornithopter", 0, 2));
-            artifact.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 2);
-            artifact.setCounterCount(CounterType.CHARGE, 3);
-            var ctx = new TriggerContext.ArtifactGraveyard(
-                    PLAYER1_ID, PLAYER1_ID, artifact.getCard(), 0, artifact, false);
-
-            assertThat(svc.handleArtifactGraveyardDefault(
-                    match(perm, PLAYER1_ID, effect), ctx)).isTrue();
-
-            var pending = (PermanentChoiceContext.DeathTriggerTarget)
-                    gd.peekPendingInteraction(PermanentChoiceContext.DeathTriggerTarget.class);
-            assertThat(pending.effects()).containsExactly(effect);
-            assertThat(pending.triggeringPermanent().getCounters()).containsExactlyInAnyOrderEntriesOf(
-                    Map.of(CounterType.PLUS_ONE_PLUS_ONE, 2, CounterType.CHARGE, 3));
-        }
-    }
-
-    @Nested
-    @DisplayName("Enchantment graveyard handlers")
-    class EnchantmentGraveyardHandlers {
-
-        @Test
-        @DisplayName("Default effect has null targetId and sets sourcePermanentId")
-        void defaultSetsSourcePermanentId() {
-            Card watcher = createCreature("Femeref Enchantress", 1, 2);
-            var effect = new DrawCardEffect(1);
-            Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.EnchantmentGraveyard(PLAYER1_ID, PLAYER1_ID);
-
-            svc.handleEnchantmentGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx);
-
-            assertThat(gd.stack.get(0).getTargetId()).isNull();
-            assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
-        }
-    }
-
-    @Nested
-    @DisplayName("Opponent artifact graveyard handlers")
-    class OpponentArtifactGraveyardHandlers {
-
-        @Test
-        @DisplayName("A \"you may\" goes on the stack as written, the artifact's controller as \"that player\"")
-        void mayEffectGoesOnTheStackAsWritten() {
-            Card watcher = createArtifact("Opponent May Watcher");
-            var may = new MayEffect(new DrawCardEffect(1), "Draw?");
-            Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.ArtifactGraveyard(PLAYER2_ID, PLAYER2_ID);
-
-            svc.handleOpponentArtifactGraveyardDefault(match(perm, PLAYER1_ID, may), ctx);
-
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(may);
-            assertThat(gd.stack.get(0).getTargetId()).isEqualTo(PLAYER2_ID);
-            assertThat(gd.stack.get(0).isNonTargeting()).isTrue();
-        }
-
-        @Test
-        @DisplayName("Default sets sourcePermanentId")
-        void defaultSetsSourcePermanentId() {
-            Card watcher = createArtifact("Opponent Tracker");
-            var effect = new DrawCardEffect(1);
-            Permanent perm = new Permanent(watcher);
-            var ctx = new TriggerContext.ArtifactGraveyard(PLAYER2_ID, PLAYER2_ID);
-
-            svc.handleOpponentArtifactGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx);
-
-            assertThat(gd.stack.get(0).getSourcePermanentId()).isEqualTo(perm.getId());
-        }
-    }
 
     @Nested
     @DisplayName("Any creature death handlers")
@@ -1139,90 +908,7 @@ class DeathTriggerCollectorServiceTest {
         }
     }
 
-    @Nested
-    @DisplayName("handleAllyAuraOrEquipmentGraveyardDefault: a delayed return")
-    class RegisterDelayedReturn {
 
-        @Test
-        @DisplayName("Puts the optional delayed return on the stack as written, the dying card its triggering card")
-        void queuesTheOptionalReturnAsWritten() {
-            Card dyingAura = createEnchantment("Dying Aura");
-            Card tiana = createCreature("Tiana", 3, 3);
-            var effect = new RegisterDelayedReturnCardFromGraveyardToHandEffect(true);
-            Permanent perm = new Permanent(tiana);
-            var ctx = new TriggerContext.AllyAuraOrEquipmentGraveyard(dyingAura, PLAYER1_ID);
-
-            svc.handleAllyAuraOrEquipmentGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx);
-
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.get(0).getEffectsToResolve()).containsExactly(effect);
-            assertThat(gd.stack.get(0).getTriggeringCardId()).isEqualTo(dyingAura.getId());
-        }
-
-        @Test
-        @DisplayName("Logs trigger message")
-        void logsMessage() {
-            Card dyingAura = createEnchantment("Fallen Aura");
-            Card tiana = createCreature("Tiana Ship's Caretaker", 3, 3);
-            var effect = new RegisterDelayedReturnCardFromGraveyardToHandEffect(true);
-            Permanent perm = new Permanent(tiana);
-            var ctx = new TriggerContext.AllyAuraOrEquipmentGraveyard(dyingAura, PLAYER1_ID);
-
-            svc.handleAllyAuraOrEquipmentGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx);
-
-            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) -> logEntry.plainText().contains("Tiana Ship's Caretaker") && logEntry.plainText().contains("Fallen Aura")));
-        }
-    }
-
-    @Nested
-    @DisplayName("Graveyard returns of the card the event was about")
-    class GraveyardReturnOfTheTriggeringCard {
-
-        @Test
-        @DisplayName("A land's entry has the land as its triggering card, with its graveyard incarnation, and the effect unchanged")
-        void landReturnCarriesTheLandAsTriggeringCard() {
-            Card land = new Card();
-            land.setName("Forest");
-            land.setType(CardType.LAND);
-            gd.playerGraveyards.get(PLAYER1_ID).add(land);
-            gd.graveyardEntryVersions.put(land.getId(), 7L);
-            Permanent perm = new Permanent(createEnchantment("Sacred Ground"));
-            var effect = new ReturnTriggeringLandFromGraveyardToBattlefieldEffect();
-            var ctx = new TriggerContext.AnyPermanentGraveyard(land, PLAYER1_ID, PLAYER1_ID, new Permanent(land), 0, 0);
-
-            assertThat(svc.handleLandPutIntoGraveyardByOpponentDefault(match(perm, PLAYER1_ID, effect), ctx))
-                    .isTrue();
-
-            assertThat(gd.stack).hasSize(1);
-            StackEntry entry = gd.stack.getFirst();
-            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
-            assertThat(entry.getTriggeringCardId()).isEqualTo(land.getId());
-            assertThat(entry.isTriggeringCardIncarnation(7L)).isTrue();
-            assertThat(entry.isTriggeringCardIncarnation(8L)).isFalse();
-        }
-
-        @Test
-        @DisplayName("An artifact's target choice carries the artifact as its triggering card and the effect unchanged")
-        void artifactReturnCarriesTheArtifactAsTriggeringCard() {
-            Card artifact = createArtifact("Ornithopter");
-            Permanent perm = new Permanent(createEnchantment("Pia's Revolution"));
-            var effect = new ReturnTriggeringArtifactToOwnerHandUnlessTargetTakesDamageEffect(3);
-            var ctx = new TriggerContext.AnyPermanentGraveyard(artifact, PLAYER1_ID, PLAYER1_ID,
-                    new Permanent(artifact), 0, 0);
-
-            assertThat(svc.handleAllyPermanentGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx))
-                    .isTrue();
-
-            assertThat(gd.pendingInteractions)
-                    .filteredOn(PermanentChoiceContext.DeathTriggerTarget.class::isInstance)
-                    .singleElement()
-                    .satisfies(choice -> {
-                        var targetChoice = (PermanentChoiceContext.DeathTriggerTarget) choice;
-                        assertThat(targetChoice.triggeringCardId()).isEqualTo(artifact.getId());
-                        assertThat(targetChoice.effects()).containsExactly(effect);
-                    });
-        }
-    }
 
     @Nested
     @DisplayName("Graveyard defaults give the entry \"that card\"")
@@ -1244,60 +930,9 @@ class DeathTriggerCollectorServiceTest {
             assertThat(entry.isTriggeringCardIncarnation(version + 1)).isFalse();
         }
 
-        @Test
-        @DisplayName("Any permanent: Yomiji's return goes on the stack unchanged, the dying card its triggering card")
-        void anyPermanentDefaultCarriesTheDyingCard() {
-            Card dying = dyingInGraveyard(PLAYER2_ID, 4L);
-            Permanent perm = new Permanent(createCreature("Yomiji, Who Bars the Way", 4, 4));
-            var effect = new ReturnTriggeringCardToOwnerHandEffect();
-            var ctx = new TriggerContext.AnyPermanentGraveyard(dying, PLAYER2_ID, PLAYER2_ID);
 
-            assertThat(svc.handleAnyPermanentGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx)).isTrue();
 
-            assertCarriesTheCardUnchanged(effect, dying, 4L);
-        }
 
-        @Test
-        @DisplayName("A creature put into your graveyard: Enduring Renewal's and Mortuary's effects go through the default")
-        void ownedCreatureDefaultCarriesTheDyingCard() {
-            Card dying = dyingInGraveyard(PLAYER1_ID, 2L);
-            Permanent perm = new Permanent(createEnchantment("Enduring Renewal"));
-            var effect = new ReturnTriggeringCardToOwnerHandEffect();
-            var ctx = new TriggerContext.AnyPermanentGraveyard(dying, PLAYER2_ID, PLAYER1_ID);
-
-            assertThat(svc.handleCreaturePutIntoOwnerGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx))
-                    .isTrue();
-
-            assertCarriesTheCardUnchanged(effect, dying, 2L);
-        }
-
-        @Test
-        @DisplayName("A nontoken permanent you control: the default gives the dying card")
-        void allyNontokenDefaultCarriesTheDyingCard() {
-            Card dying = dyingInGraveyard(PLAYER1_ID, 3L);
-            Permanent perm = new Permanent(createEnchantment("Watcher"));
-            var effect = new ReturnTriggeringCardToOwnerHandEffect();
-            var ctx = new TriggerContext.AnyPermanentGraveyard(dying, PLAYER1_ID, PLAYER1_ID);
-
-            assertThat(svc.handleAllyNontokenPermanentGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx))
-                    .isTrue();
-
-            assertCarriesTheCardUnchanged(effect, dying, 3L);
-        }
-
-        @Test
-        @DisplayName("Any nontoken permanent: the default gives the dying card")
-        void anyNontokenDefaultCarriesTheDyingCard() {
-            Card dying = dyingInGraveyard(PLAYER2_ID, 5L);
-            Permanent perm = new Permanent(createEnchantment("Watcher"));
-            var effect = new ReturnTriggeringCardToOwnerHandEffect();
-            var ctx = new TriggerContext.AnyPermanentGraveyard(dying, PLAYER2_ID, PLAYER2_ID);
-
-            assertThat(svc.handleAnyNontokenPermanentGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx))
-                    .isTrue();
-
-            assertCarriesTheCardUnchanged(effect, dying, 5L);
-        }
 
         @Test
         @DisplayName("An equipped creature: Sword of the Realms' return goes through the default unchanged")
@@ -1312,24 +947,5 @@ class DeathTriggerCollectorServiceTest {
             assertCarriesTheCardUnchanged(effect, dying, 6L);
         }
 
-        @Test
-        @DisplayName("An Aura or Equipment you control: the default triggers for an Equipment too, the card its triggering card")
-        void auraOrEquipmentDefaultCarriesTheCard() {
-            Card equipment = createEquipment("Bonesplitter");
-            gd.playerGraveyards.get(PLAYER1_ID).add(equipment);
-            gd.graveyardEntryVersions.put(equipment.getId(), 1L);
-            Permanent perm = new Permanent(createCreature("Watcher", 1, 1));
-            var effect = new DrawCardEffect(1);
-            var ctx = new TriggerContext.AllyAuraOrEquipmentGraveyard(equipment, PLAYER1_ID);
-
-            assertThat(svc.handleAllyAuraOrEquipmentGraveyardDefault(match(perm, PLAYER1_ID, effect), ctx))
-                    .isTrue();
-
-            assertThat(gd.stack).singleElement().satisfies(entry -> {
-                assertThat(entry.getEffectsToResolve()).containsExactly(effect);
-                assertThat(entry.getTriggeringCardId()).isEqualTo(equipment.getId());
-                assertThat(entry.isTriggeringCardIncarnation(1L)).isTrue();
-            });
-        }
     }
 }

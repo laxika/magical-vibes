@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostUntilNextTurnEffect;
@@ -17,7 +18,7 @@ import java.util.List;
 public class TaxCollector extends Card {
 
     public TaxCollector() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Tax — Until your next turn, spells your opponents cast cost {1} more to cast",
                         new IncreaseSpellCostUntilNextTurnEffect(new CardTruePredicate(), 1)),
@@ -26,6 +27,6 @@ public class TaxCollector extends Card {
                         new LockTargetPermanentEffect(true, true, true,
                                 EffectDuration.UNTIL_YOUR_NEXT_TURN),
                         TargetFilters.creatureAnOpponentControls())
-        )));
+        ))));
     }
 }

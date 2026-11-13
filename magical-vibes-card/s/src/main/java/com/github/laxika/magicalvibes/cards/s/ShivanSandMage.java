@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AdjustTimeCountersOnTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,14 +18,14 @@ import java.util.List;
 public class ShivanSandMage extends Card {
 
     public ShivanSandMage() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove two time counters from target permanent or suspended card",
                         new AdjustTimeCountersOnTargetEffect(false)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Put two time counters on target permanent with a time counter on it or suspended card",
                         new AdjustTimeCountersOnTargetEffect(true))
-        )));
+        ))));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{R}",

@@ -21,14 +21,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({OrcusPrinceOfUndeath.class, GrizzlyBears.class, HillGiant.class})
 class OrcusPrinceOfUndeathTest extends BaseCardTest {
 
+    private static final String SHRINK_MODE = "Each other creature gets -X/-X until end of turn. You lose X life";
+    private static final String RETURN_MODE =
+            "Return up to X target creature cards with total mana value X or less from your graveyard to the battlefield. They gain haste until end of turn";
+
     @Test
     @DisplayName("The first mode shrinks other creatures and makes its controller lose X life")
     void shrinksOtherCreaturesAndLosesLife() {
         Permanent hillGiant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         harness.addToBattlefield(player2, new GrizzlyBears());
 
-        castOrcus(0, 2);
-        harness.passBothPriorities();
+        castOrcus(SHRINK_MODE, 2);
         harness.passBothPriorities();
 
         Permanent orcus = findPermanent(player1, "Orcus, Prince of Undeath");
@@ -47,7 +50,7 @@ class OrcusPrinceOfUndeathTest extends BaseCardTest {
         Card secondBear = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(firstBear, secondBear));
 
-        castOrcus(1, 3);
+        castOrcus(RETURN_MODE, 3);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
@@ -81,8 +84,7 @@ class OrcusPrinceOfUndeathTest extends BaseCardTest {
     void firstModeWithZeroXDoesNothing() {
         Permanent bear = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        castOrcus(0, 0);
-        harness.passBothPriorities();
+        castOrcus(SHRINK_MODE, 0);
         harness.passBothPriorities();
 
         assertThat(gqs.getEffectivePower(gd, bear)).isEqualTo(2);
@@ -96,8 +98,7 @@ class OrcusPrinceOfUndeathTest extends BaseCardTest {
     void secondModeWithZeroXReturnsNothing() {
         harness.setGraveyard(player1, List.of(new GrizzlyBears()));
 
-        castOrcus(1, 0);
-        harness.passBothPriorities();
+        castOrcus(RETURN_MODE, 0);
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
@@ -112,7 +113,7 @@ class OrcusPrinceOfUndeathTest extends BaseCardTest {
         Card secondBear = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(firstBear, secondBear));
 
-        castOrcus(1, 4);
+        castOrcus(RETURN_MODE, 4);
         harness.passBothPriorities();
         harness.handleMultipleCardsChosen(player1, List.of(firstBear.getId(), secondBear.getId()));
         harness.passBothPriorities();
@@ -139,8 +140,7 @@ class OrcusPrinceOfUndeathTest extends BaseCardTest {
     void shrinkExpiresAndDoesNotAffectLaterCreatures() {
         Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
 
-        castOrcus(0, 1);
-        harness.passBothPriorities();
+        castOrcus(SHRINK_MODE, 1);
         harness.passBothPriorities();
         Permanent bear = harness.enterBattlefieldAndReturn(player2, new GrizzlyBears());
 
@@ -156,11 +156,13 @@ class OrcusPrinceOfUndeathTest extends BaseCardTest {
         harness.assertLife(player1, 19);
     }
 
-    private void castOrcus(int mode, int xValue) {
+    private void castOrcus(String mode, int xValue) {
         harness.setHand(player1, List.of(new OrcusPrinceOfUndeath()));
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, xValue + 2);
-        harness.castModalInstantForX(player1, 0, mode, xValue, null);
+        harness.castCreatureForX(player1, 0, xValue, null);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, mode);
     }
 }

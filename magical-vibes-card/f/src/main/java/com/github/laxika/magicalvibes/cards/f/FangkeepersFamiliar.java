@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -22,7 +23,7 @@ import java.util.Set;
 public class FangkeepersFamiliar extends Card {
 
     public FangkeepersFamiliar() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "You gain 3 life and surveil 3",
                         List.of(new GainLifeEffect(3), new SurveilEffect(3))
@@ -43,6 +44,6 @@ public class FangkeepersFamiliar extends Card {
                                 "Target must be a creature spell."
                         )
                 )
-        )));
+        ))));
     }
 }

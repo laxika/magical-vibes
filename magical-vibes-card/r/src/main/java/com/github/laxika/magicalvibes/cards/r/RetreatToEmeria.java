@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -19,7 +20,7 @@ public class RetreatToEmeria extends Card {
 
     public RetreatToEmeria() {
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                new ChooseOneEffect(List.of(
+                new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption(
                                 "Create a 1/1 white Kor Ally creature token.",
                                 new CreateTokenEffect("Kor Ally", 1, 1, CardColor.WHITE,
@@ -27,6 +28,6 @@ public class RetreatToEmeria extends Card {
                         new ChooseOneEffect.ChooseOneOption(
                                 "Creatures you control get +1/+1 until end of turn.",
                                 new BoostAllOwnCreaturesEffect(1, 1))
-                )));
+                ))));
     }
 }

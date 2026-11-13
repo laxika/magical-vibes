@@ -435,21 +435,6 @@ public class EtbTriggerService {
             }
         }
         if (!printedAbilities.isEmpty() || !grantedAbilities.isEmpty()) {
-            // A modal ETB on a permanent that was not cast has no cast-time mode; its mode is chosen
-            // when the trigger is put on the stack (CR 603.3c), so it takes the trigger-time path.
-            // A mandatory exact choose-one ETB on a cast creature whose spell declared no mode
-            // (negative mode; multi-mode selections are negative bitmasks) takes the same path.
-            boolean modeNotDeclaredAtCast = wasCastFromHand && etbMode < 0;
-            if ((!wasCastFromHand && enteringPermanent != null && !enteringPermanent.isCast())
-                    || modeNotDeclaredAtCast) {
-                java.util.function.UnaryOperator<CardEffect> toTriggerTime = e ->
-                        e instanceof ChooseOneEffect coe && coe.choicesRequired() <= 1
-                                && (!modeNotDeclaredAtCast || (!coe.optional() && coe.choicesMax() <= 1))
-                                ? new ChooseOneAtTriggerTimeEffect(coe) : e;
-                printedAbilities.replaceAll(ability -> ability.map(toTriggerTime));
-                grantedAbilities.replaceAll(ability -> ability.map(toTriggerTime));
-            }
-
             // Evoke sacrifice gate (CR 603.4): read the just-entered permanent's evoked flag, which
             // was stamped from the spell's cast context at resolution time.
             boolean evoked = enteringPermanent != null && enteringPermanent.isEvoked();
@@ -460,26 +445,13 @@ public class EtbTriggerService {
             boolean alternateCost = enteringPermanent != null && enteringPermanent.isAlternateCost();
             // The context the abilities trigger in. Each one's event condition (CR 603.2) and intervening "if"
             // (CR 603.4) are judged first: an ability that doesn't trigger is left out. Then each mandatory effect is
-            // resolved into its trigger-time form (modal unwrap, value materialisation, the facts fixed as the
+            // resolved into its trigger-time form (value materialisation, the facts fixed as the
             // permanent entered) — a null result drops the effect, and an ability with no effect left doesn't trigger.
             EtbEffectContext etbCtx = new EtbEffectContext(gameData, card, controllerId, wasCastFromHand, etbMode,
                     kicked, evoked, prowl, madness, alternateCost, enteringPermanent, repeatedAdditionalCosts,
                     targetId, xValue);
             printedAbilities.removeIf(ability -> !ownEntryOptionsMet(etbCtx, ability));
             grantedAbilities.removeIf(ability -> !ownEntryOptionsMet(etbCtx, ability));
-
-            // The per-mode targetFilter of a cast-time ChooseOneEffect, for the ability that has it.
-            TargetFilter modeTargetFilter = null;
-            OwnEntryAbility modalAbility = null;
-            for (OwnEntryAbility ability : concat(printedAbilities, grantedAbilities)) {
-                for (CardEffect e : ability.effects()) {
-                    if (modalAbility == null && e instanceof ChooseOneEffect coe) {
-                        int idx = (etbMode >= 0 && etbMode < coe.options().size()) ? etbMode : 0;
-                        modeTargetFilter = coe.options().get(idx).targetFilter();
-                        modalAbility = ability;
-                    }
-                }
-            }
 
             // An ability that is one "you may" goes through the may paths, which ask before it targets nothing
             // (CR 603.3d); a "you may" among an ability's other effects is asked as that ability resolves (CR 603.5).
@@ -505,7 +477,7 @@ public class EtbTriggerService {
                 }
                 if (!abilityEffects.isEmpty()) {
                     queueSeparateOwnEntryAbility(gameData, controllerId, card, targetId, targetIds, abilityEffects,
-                            ability == modalAbility ? modeTargetFilter : null, extraTriggerCopies, etbMode, xValue,
+                            null, extraTriggerCopies, etbMode, xValue,
                             kicked, enteringPermanent, repeatedAdditionalCosts, convokeCreatureIds);
                 }
             }
@@ -548,10 +520,11 @@ public class EtbTriggerService {
                     modalChoice = modalChoice.withModeCount(minimumChoices, maximumChoices);
                 }
                 for (int i = 0; i < 1 + extraTriggerCopies; i++) {
-                    StackEntry recordInHand = gameData.handOffTriggerRecord(ownEntryRecord(gameData, controllerId,
-                            card, List.of(triggerTimeChoice), xValue, null, repeatedAdditionalCosts,
-                            convokeCreatureIds));
-                    gameData.queueInteraction(modalChoice);
+                    StackEntry record = ownEntryRecord(gameData, controllerId, card, List.of(triggerTimeChoice), xValue,
+                            null, repeatedAdditionalCosts, convokeCreatureIds);
+                    StackEntry recordInHand = gameData.handOffTriggerRecord(record);
+                    // The record rides on the choice too, so the chosen mode's targets read its X (Orcus).
+                    gameData.queueInteraction(modalChoice.withTriggerRecord(record));
                     gameData.restoreTriggerRecordInHand(recordInHand);
                 }
             }
@@ -660,8 +633,7 @@ public class EtbTriggerService {
                     triggered.add(ability);
                 }
                 if (!abilityEffects.isEmpty()) {
-                    printedMandatory.add(new OwnEntryAbility(ability.ability(), abilityEffects,
-                            ability == modalAbility));
+                    printedMandatory.add(new OwnEntryAbility(ability.ability(), abilityEffects));
                 }
             }
             if (printedMandatory.size() == 1) {
@@ -675,14 +647,14 @@ public class EtbTriggerService {
                         declaresNoTarget ? null : targetId,
                         declaresNoTarget ? List.of() : targetIds,
                         abilityEffects,
-                        declaresNoTarget || !printedMandatory.getFirst().modal() ? null : modeTargetFilter,
+                        null,
                         extraTriggerCopies, etbMode, xValue, repeatedAdditionalCosts, convokeCreatureIds);
             } else {
                 // In the order the card prints them, as the trigger pipeline puts a source's abilities on the stack;
                 // their controller orders them (CR 603.3b).
                 for (OwnEntryAbility ability : printedMandatory) {
                     queueSeparateOwnEntryAbility(gameData, controllerId, card, targetId, targetIds,
-                            ability.effects(), ability.modal() ? modeTargetFilter : null, extraTriggerCopies,
+                            ability.effects(), null, extraTriggerCopies,
                             etbMode, xValue, kicked, enteringPermanent, repeatedAdditionalCosts, convokeCreatureIds);
                 }
             }
@@ -701,18 +673,9 @@ public class EtbTriggerService {
 
     /**
      * One "when this enters" ability as the collector reads it: the ability ({@code null} for a perpetual grant,
-     * which is only its effect), its effects, and whether it is the ability whose cast-time mode chose the target
-     * filter.
+     * which is only its effect) and its effects.
      */
-    private record OwnEntryAbility(TriggeredAbility ability, List<CardEffect> effects, boolean modal) {
-
-        OwnEntryAbility(TriggeredAbility ability, List<CardEffect> effects) {
-            this(ability, effects, false);
-        }
-
-        OwnEntryAbility map(java.util.function.UnaryOperator<CardEffect> operator) {
-            return new OwnEntryAbility(ability, effects.stream().map(operator).toList(), modal);
-        }
+    private record OwnEntryAbility(TriggeredAbility ability, List<CardEffect> effects) {
 
         /** Whether the ability is one "you may", which the may paths put on the stack. */
         boolean isLoneMay() {
@@ -773,7 +736,7 @@ public class EtbTriggerService {
 
     /**
      * The effects of one "when this enters" ability that go on the stack as that ability, all of them (CR 603.3), in
-     * their trigger-time form (modal unwrap, value materialisation, intervening-if gating, CR 603.4). Empty for an
+     * their trigger-time form (value materialisation, intervening-if gating, CR 603.4). Empty for an
      * ability that goes there whole by a path of its own, which is one "you may" (the may paths), one mode choice
      * made as it triggers (CR 603.3c) or evoke's sacrifice, and for an ability none of whose effects is left; that
      * one doesn't trigger.
@@ -783,8 +746,7 @@ public class EtbTriggerService {
             return List.of();
         }
         return ability.effects().stream()
-                .map(e -> e instanceof ChooseOneEffect chooseOne && chooseOne.choicesRequired() > 1
-                        ? e : etbEffectResolver.resolve(etbCtx, e))
+                .map(e -> etbEffectResolver.resolve(etbCtx, e))
                 .filter(Objects::nonNull)
                 .toList();
     }

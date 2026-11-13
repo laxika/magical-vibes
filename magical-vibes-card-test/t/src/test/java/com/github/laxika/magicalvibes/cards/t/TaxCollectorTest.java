@@ -20,6 +20,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({TaxCollector.class, GrizzlyBears.class, LlanowarElves.class})
 class TaxCollectorTest extends BaseCardTest {
 
+    private static final String TAX_MODE = "Tax — Until your next turn, spells your opponents cast cost {1} more to cast";
+    private static final String ARREST_MODE = "Arrest — Detain target creature an opponent controls";
+
     @Test
     @DisplayName("Tax makes opponents' spells cost one more until your next turn")
     void taxesOpponentsSpellsUntilNextTurn() {
@@ -83,7 +86,7 @@ class TaxCollectorTest extends BaseCardTest {
 
         harness.enterBattlefieldAndReturn(player1, new TaxCollector());
 
-        harness.handleListChoice(player1, "Arrest — Detain target creature an opponent controls");
+        harness.handleListChoice(player1, ARREST_MODE);
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, bears.getId()))
                 .isInstanceOf(IllegalStateException.class);
@@ -96,7 +99,7 @@ class TaxCollectorTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new TaxCollector());
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player1, "Arrest — Detain target creature an opponent controls");
+        harness.handleListChoice(player1, ARREST_MODE);
         harness.handlePermanentChosen(player1, bears.getId());
         harness.passBothPriorities();
 
@@ -181,8 +184,9 @@ class TaxCollectorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TaxCollector()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0, 0);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, TAX_MODE);
         harness.passBothPriorities();
     }
 
@@ -190,8 +194,10 @@ class TaxCollectorTest extends BaseCardTest {
         harness.setHand(player1, List.of(new TaxCollector()));
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
-        harness.castCreature(player1, 0, 1, target.getId());
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, ARREST_MODE);
+        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
     }
 }

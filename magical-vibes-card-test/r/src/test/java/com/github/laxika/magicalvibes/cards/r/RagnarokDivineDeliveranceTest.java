@@ -21,10 +21,13 @@ class RagnarokDivineDeliveranceTest extends BaseCardTest {
     void cannotPutDeathAbilityOnStackWithoutNonlegendaryGraveyardTarget() {
         harness.setGraveyard(player1, List.of(new FangFearlessLCie(), new VanilleCheerfulLCie()));
         Permanent ragnarok = harness.addToBattlefieldAndReturn(player1, new RagnarokDivineDeliverance());
-        harness.addToBattlefield(player2, new Forest());
+        Permanent forest = harness.addToBattlefieldAndReturn(player2, new Forest());
 
         kill(ragnarok);
         harness.passBothPriorities();
+        // The targets are chosen group by group; with no legal card for the second target the ability is removed
+        // (CR 603.3d).
+        harness.handlePermanentChosen(player1, forest.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
@@ -44,11 +47,11 @@ class RagnarokDivineDeliveranceTest extends BaseCardTest {
         kill(ragnarok);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, destroyed.getId());
-        PendingInteraction.MultiGraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validCardIds()).containsExactly(returned.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(returned.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(returned.getId()));
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Forest");
@@ -66,7 +69,7 @@ class RagnarokDivineDeliveranceTest extends BaseCardTest {
         kill(ragnarok);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, destroyed.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(returned.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(returned.getId()));
         assertThat(gd.stack).hasSize(1);
         harness.inMutationScope(() ->
                 harness.getPermanentRemovalService().removePermanentToHand(gd, destroyed));
@@ -86,7 +89,7 @@ class RagnarokDivineDeliveranceTest extends BaseCardTest {
         kill(ragnarok);
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, destroyed.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(returned.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(returned.getId()));
         assertThat(gd.stack).hasSize(1);
         harness.setGraveyard(player1, List.of(ragnarok.getCard()));
         harness.setExile(player1, List.of(returned));

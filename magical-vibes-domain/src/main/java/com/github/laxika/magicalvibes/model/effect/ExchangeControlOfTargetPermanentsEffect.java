@@ -159,6 +159,15 @@ public record ExchangeControlOfTargetPermanentsEffect(
         return sacrificeSourceIfNoExchange;
     }
 
+    /**
+     * "Its controller chooses target permanent another player controls" (Confusion in the Ranks): the triggering
+     * permanent's controller chooses the target of the exchange it is the first half of.
+     */
+    @Override
+    public boolean targetChosenByTriggeringPermanentController() {
+        return triggeringPermanentIsFirstTarget && !sacrificeSourceIfNoExchange;
+    }
+
     @Override
     public TargetSpec targetSpec() {
         if (targetPairInSingleGroup() || sourceIsFirstTarget || triggeringPermanentIsFirstTarget) {

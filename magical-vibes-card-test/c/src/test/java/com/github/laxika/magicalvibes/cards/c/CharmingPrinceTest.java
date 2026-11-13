@@ -21,6 +21,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({CharmingPrince.class, TuinvaleTreefolk.class})
 class CharmingPrinceTest extends BaseCardTest {
 
+    private static final String SCRY_MODE = "Scry 2.";
+    private static final String LIFE_MODE = "You gain 3 life.";
+    private static final String FLICKER_MODE =
+            "Exile another target creature you own. Return it to the battlefield under your control at the beginning of the next end step.";
+
     @Test
     @DisplayName("Scry mode opens a two-card scry choice")
     void scryMode() {
@@ -28,7 +33,7 @@ class CharmingPrinceTest extends BaseCardTest {
         deck.add(0, new TuinvaleTreefolk());
         deck.add(1, new TuinvaleTreefolk());
 
-        castPrince(0, null);
+        castPrince(SCRY_MODE, null);
 
         PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(scry).isNotNull();
@@ -42,7 +47,7 @@ class CharmingPrinceTest extends BaseCardTest {
     void gainLifeMode() {
         int lifeBefore = gd.playerLifeTotals.get(player1.getId());
 
-        castPrince(1, null);
+        castPrince(LIFE_MODE, null);
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 3);
     }
@@ -53,7 +58,7 @@ class CharmingPrinceTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new TuinvaleTreefolk());
         gd.stolenCreatures.put(target.getId(), player1.getId());
 
-        castPrince(2, target.getId());
+        castPrince(FLICKER_MODE, target.getId());
 
         harness.assertNotOnBattlefield(player2, "Tuinvale Treefolk");
         advanceToEndStep();
@@ -70,7 +75,7 @@ class CharmingPrinceTest extends BaseCardTest {
         Card third = new TuinvaleTreefolk();
         harness.setLibrary(player1, List.of(first, second, third));
 
-        castPrince(0, null);
+        castPrince(SCRY_MODE, null);
         gs.handleInteractionAnswer(gd, player1, new InteractionAnswer.ScryOrder(List.of(1), List.of(0)));
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(second, third, first);
@@ -82,7 +87,7 @@ class CharmingPrinceTest extends BaseCardTest {
         Card card = new TuinvaleTreefolk();
         harness.setLibrary(player1, List.of(card));
 
-        castPrince(0, null);
+        castPrince(SCRY_MODE, null);
 
         PendingInteraction.Scry scry = gd.interaction.activeInteraction(PendingInteraction.Scry.class);
         assertThat(scry).isNotNull();
@@ -96,7 +101,7 @@ class CharmingPrinceTest extends BaseCardTest {
     void scryWithEmptyLibrary() {
         harness.setLibrary(player1, List.of());
 
-        castPrince(0, null);
+        castPrince(SCRY_MODE, null);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertOnBattlefield(player1, "Charming Prince");
@@ -109,7 +114,7 @@ class CharmingPrinceTest extends BaseCardTest {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new TuinvaleTreefolk());
         target.tap();
 
-        castPrince(2, target.getId());
+        castPrince(FLICKER_MODE, target.getId());
 
         harness.assertNotOnBattlefield(player1, "Tuinvale Treefolk");
         advanceToEndStep();
@@ -128,22 +133,32 @@ class CharmingPrinceTest extends BaseCardTest {
     @Test
     @DisplayName("Flicker mode rejects a creature the controller does not own")
     void flickerUnownedCreatureRejected() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new TuinvaleTreefolk());
+        harness.addToBattlefieldAndReturn(player2, new TuinvaleTreefolk());
 
         harness.setHand(player1, List.of(new CharmingPrince()));
         harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, 2, target.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("own");
+        assertThatThrownBy(() -> harness.handleListChoice(player1, FLICKER_MODE))
+                .isInstanceOf(IllegalArgumentException.class);
+        harness.assertOnBattlefield(player2, "Tuinvale Treefolk");
     }
 
-    private void castPrince(int mode, UUID targetId) {
+    private void castPrince(String mode, UUID targetId) {
+        castPrinceChoosingMode(mode);
+        if (targetId != null) {
+            harness.handlePermanentChosen(player1, targetId);
+        }
+        harness.passBothPriorities();
+    }
+
+    private void castPrinceChoosingMode(String mode) {
         harness.setHand(player1, List.of(new CharmingPrince()));
         harness.addMana(player1, ManaColor.WHITE, 2);
-        harness.castCreature(player1, 0, mode, targetId);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
-        harness.passBothPriorities();
+        harness.handleListChoice(player1, mode);
     }
 
     private void advanceToEndStep() {

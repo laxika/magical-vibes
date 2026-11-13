@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -22,7 +23,7 @@ import java.util.List;
 public class EntomberExarch extends Card {
 
     public EntomberExarch() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target creature card from your graveyard to your hand",
                         ReturnCardFromGraveyardEffect.builder()
@@ -39,6 +40,6 @@ public class EntomberExarch extends Card {
                                 "Target must be an opponent"
                         )
                 )
-        )));
+        ))));
     }
 }

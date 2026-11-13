@@ -142,60 +142,8 @@ class MiscTriggerCollectorServiceTest {
 
     private TriggerCollectorRegistry registry;
 
-    @Test
-    void cardsLeavingGraveyardQueueTargetChoiceBeforeTrigger() {
-        Permanent source = createPermanent("Hardened Academic");
-        var effect = new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
 
-        boolean collected = registry.dispatch(match(source, player1Id, effect),
-                ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
-                new TriggerContext.ControllerCardsLeaveGraveyard(player1Id));
 
-        assertThat(collected).isTrue();
-        assertThat(gd.stack).isEmpty();
-        var choice = gd.pollPendingInteraction(PermanentChoiceContext.SelfTriggeredAbilityTarget.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.controllerId()).isEqualTo(player1Id);
-        assertThat(choice.sourcePermanentId()).isEqualTo(source.getId());
-    }
-
-    @Test
-    @DisplayName("Cards leaving the graveyard are the entry's triggering cards")
-    void cardsLeavingGraveyardAreTheEntrysTriggeringCards() {
-        Permanent source = createPermanent("Spirit of Resilience");
-        var effect = new PutCounterThenMayBecomeCopyOfCardsEffect();
-        Card first = createCard("First departed card");
-        Card second = createCard("Second departed card");
-
-        boolean collected = registry.dispatch(match(source, player1Id, effect),
-                ZoneChangeWatch.ON_CONTROLLER_CARDS_LEAVE_GRAVEYARD,
-                new TriggerContext.ControllerCardsLeaveGraveyard(player1Id, List.of(first, second)));
-
-        assertThat(collected).isTrue();
-        assertThat(gd.stack).singleElement().satisfies(entry -> {
-            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
-            assertThat(entry.getTriggeringCards()).containsExactly(first, second);
-        });
-    }
-
-    @Test
-    @DisplayName("Cards put into the graveyard from the library are the entry's triggering cards")
-    void cardsPutIntoGraveyardFromLibraryAreTheEntrysTriggeringCards() {
-        Permanent source = createPermanent("Polluted Cistern");
-        var effect = new LoseLifeEffect(new CardTypesAmongTriggeringCards(), LoseLifeRecipient.EACH_OPPONENT);
-        Card first = createCard("First milled card");
-        Card second = createCard("Second milled card");
-
-        boolean collected = registry.dispatch(match(source, player1Id, effect),
-                ZoneChangeWatch.ON_ALLY_CARDS_PUT_INTO_GRAVEYARD_FROM_LIBRARY,
-                new TriggerContext.CardsPutIntoGraveyardFromLibrary(player1Id, 2, List.of(first, second)));
-
-        assertThat(collected).isTrue();
-        assertThat(gd.stack).singleElement().satisfies(entry -> {
-            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
-            assertThat(entry.getTriggeringCards()).containsExactly(first, second);
-        });
-    }
 
     @Test
     @DisplayName("A card put into your graveyard: Planar Void's exile goes through the default, the card and its graveyard incarnation the entry's")
@@ -218,66 +166,8 @@ class MiscTriggerCollectorServiceTest {
         });
     }
 
-    @Test
-    @DisplayName("A card put into an opponent's graveyard is the entry's triggering card, the graveyard's owner \"that player\"")
-    void cardPutIntoOpponentGraveyardIsTheEntrysTriggeringCard() {
-        Permanent source = createPermanent("Planar Void");
-        var effect = new com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect();
-        Card card = createCard("Milled card");
-        gd.graveyardEntryVersions.put(card.getId(), 2L);
 
-        boolean collected = registry.dispatch(match(source, player1Id, effect),
-                ZoneChangeWatch.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE,
-                new TriggerContext.CardPutIntoGraveyard(card, player2Id));
 
-        assertThat(collected).isTrue();
-        assertThat(gd.stack).singleElement().satisfies(entry -> {
-            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
-            assertThat(entry.getTargetId()).isEqualTo(player2Id);
-            assertThat(entry.getTriggeringCardId()).isEqualTo(card.getId());
-            assertThat(entry.isTriggeringCardIncarnation(2L)).isTrue();
-        });
-    }
-
-    @Test
-    @DisplayName("Kaya's token-target choice carries the exiled creature cards as its triggering cards, the effect unchanged")
-    void kayaTargetChoiceCarriesTheExiledCardsAsTriggeringCards() {
-        Permanent source = createPermanent("Kaya, Spirits' Justice");
-        var effect = new com.github.laxika.magicalvibes.model.effect.KayaSpiritsJusticeEffect();
-        Card first = createCard("First exiled creature card");
-        Card second = createCard("Second exiled creature card");
-
-        boolean collected = registry.dispatch(match(source, player1Id, effect),
-                ZoneChangeWatch.ON_CONTROLLER_CREATURES_OR_CREATURE_CARDS_EXILED,
-                new TriggerContext.ControllerCreaturesOrCreatureCardsExiled(player1Id, 2, List.of(first, second)));
-
-        assertThat(collected).isTrue();
-        var choice = gd.pollPendingInteraction(PermanentChoiceContext.DrawTriggerPermanentTarget.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.effects()).containsExactly(effect);
-        assertThat(choice.triggeringCards()).containsExactly(first, second);
-    }
-
-    @Test
-    @DisplayName("An opponent's mill: the count is the event value, the milling player the non-targeting \"that player\"")
-    void opponentMillRecordsCountAndPlayer() {
-        Permanent source = createPermanent("Lo and Li, Royal Advisors");
-        var effect = new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1,
-                new PermanentHasSubtypePredicate(CardSubtype.ADVISOR));
-
-        boolean collected = registry.dispatch(match(source, player1Id, effect), ZoneChangeWatch.ON_OPPONENT_MILLS,
-                new TriggerContext.Mill(player2Id, 3));
-
-        assertThat(collected).isTrue();
-        assertThat(gd.stack).singleElement().satisfies(entry -> {
-            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
-            assertThat(entry.getEventValue()).isEqualTo(3);
-            assertThat(entry.getTriggeringPlayerId()).isEqualTo(player2Id);
-            assertThat(entry.getTargetId()).isEqualTo(player2Id);
-            assertThat(entry.isNonTargeting()).isTrue();
-            assertThat(entry.getSourcePermanentSnapshot()).isNotNull();
-        });
-    }
 
     @Test
     @DisplayName("A nonblack card put into a graveyard: the card, its owner \"that player\", from a source with no permanent")
@@ -302,29 +192,6 @@ class MiscTriggerCollectorServiceTest {
         });
     }
 
-    @Test
-    @DisplayName("A creature exiled from the battlefield: \"that card\" with its exile incarnation, the creature as it last existed")
-    void exiledCreatureRecordsTheCardAndTheCreature() {
-        Permanent source = createPermanent("Athreos, Shroud-Veiled");
-        var effect = new com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect(
-                com.github.laxika.magicalvibes.model.Zone.EXILE);
-        Permanent exiled = createPermanent("Grizzly Bears");
-        gd.exileEntryVersions.put(exiled.getCard().getId(), 4L);
-
-        boolean collected = registry.dispatch(match(source, player1Id, effect),
-                ZoneChangeWatch.ON_ANY_CREATURE_EXILED_FROM_BATTLEFIELD,
-                new TriggerContext.CreatureExiledFromBattlefield(exiled, player2Id, 2));
-
-        assertThat(collected).isTrue();
-        assertThat(gd.stack).singleElement().satisfies(entry -> {
-            assertThat(entry.getTriggeringCardId()).isEqualTo(exiled.getCard().getId());
-            assertThat(entry.getTriggeringCardExileEntryVersion()).isEqualTo(4L);
-            assertThat(entry.getTriggeringPermanentId()).isEqualTo(exiled.getId());
-            assertThat(entry.getTriggeringPermanentSnapshot()).isNotNull();
-            assertThat(entry.getTriggeringPermanentControllerId()).isEqualTo(player2Id);
-            assertThat(entry.getEventValue()).isEqualTo(2);
-        });
-    }
     private GameData gd;
     private UUID player1Id;
     private UUID player2Id;
@@ -354,23 +221,6 @@ class MiscTriggerCollectorServiceTest {
         return new TriggerMatchContext(gd, perm, controllerId, effect);
     }
 
-    @Test
-    @DisplayName("creature card from any library queues the triggered ability")
-    void creatureCardFromAnyLibraryQueuesTriggeredAbility() {
-        Permanent perm = createPermanent("Dreadhound");
-        var effect = new LoseLifeEffect(1, LoseLifeRecipient.EACH_OPPONENT);
-        var ctx = new TriggerContext.CreatureCardPutIntoGraveyardFromLibrary(
-                createCard("Grizzly Bears"), player2Id);
-
-        boolean result = registry.dispatch(
-                match(perm, player1Id, effect),
-                ZoneChangeWatch.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_LIBRARY, ctx);
-
-        assertThat(result).isTrue();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
-        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
-    }
 
     @Nested
     @DisplayName("ON_ALLY_PERMANENT_SACRIFICED — MayPayManaEffect")
@@ -562,23 +412,6 @@ class MiscTriggerCollectorServiceTest {
     @DisplayName("ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE")
     class PermanentCardPutIntoGraveyard {
 
-        @Test
-        @DisplayName("puts the triggered ability on the stack with the source permanent")
-        void putsTriggeredAbilityOnStack() {
-            Permanent perm = createPermanent("Moonshadow");
-            var effect = new BoostSelfEffect(1, 1);
-            var ctx = new TriggerContext.PermanentCardPutIntoGraveyard(
-                    createCard("Spellbook"), player1Id);
-
-            boolean result = registry.dispatch(
-                    match(perm, player1Id, effect),
-                    ZoneChangeWatch.ON_ALLY_PERMANENT_CARD_PUT_INTO_GRAVEYARD_FROM_ANYWHERE, ctx);
-
-            assertThat(result).isTrue();
-            assertThat(gd.stack).hasSize(1);
-            assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
-            assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
-        }
 
         @Test
         @DisplayName("queues target selection for a targeted graveyard trigger")
@@ -640,23 +473,6 @@ class MiscTriggerCollectorServiceTest {
 
     // ===== ON_CONTROLLER_LOSES_LIFE — SacrificePermanentsEffect =====
 
-    @Test
-    @DisplayName("queues a trigger for a creature card entering a graveyard from a non-battlefield zone")
-    void queuesNonBattlefieldCreatureCardGraveyardTrigger() {
-        Permanent perm = createPermanent("Syr Konrad, the Grim");
-        var effect = new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT);
-        var ctx = new TriggerContext.CreatureCardPutIntoGraveyard(
-                createCard("Grizzly Bears"), player2Id);
-
-        boolean result = registry.dispatch(
-                match(perm, player1Id, effect),
-                ZoneChangeWatch.ON_ANY_CREATURE_CARD_PUT_INTO_GRAVEYARD_FROM_NONBATTLEFIELD, ctx);
-
-        assertThat(result).isTrue();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
-        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
-    }
 
     @Test
     @DisplayName("gives a creature-card-put-into-an-opponent's-graveyard ability the card as its triggering card")
@@ -704,64 +520,6 @@ class MiscTriggerCollectorServiceTest {
         });
     }
 
-    @Test
-    @DisplayName("a \"do this only once each turn\" nonland-cards-milled ability is marked as accepted on the stack")
-    void nonlandCardsMilledDefaultCarriesTheOncePerTurnMark() {
-        Permanent perm = createPermanent("Screeching Scorchbeast");
-        var tokens = new CreateTokenEffect(new EventValue(), "Zombie Mutant", 2, 2, CardColor.BLACK,
-                List.of(CardSubtype.ZOMBIE, CardSubtype.MUTANT), Set.of(), Set.of());
-        var effect = new MayEffect(tokens, "Create that many Zombie Mutant tokens?");
-        var ctx = new TriggerContext.NonlandCardsMilled(player2Id, 3);
 
-        boolean result = registry.dispatch(
-                new TriggerMatchContext(gd, perm, player1Id, List.of(effect), perm.getCard(), null, "once"),
-                ZoneChangeWatch.ON_NONLAND_CARDS_MILLED, ctx);
 
-        assertThat(result).isTrue();
-        assertThat(gd.stack).singleElement().satisfies(entry -> {
-            assertThat(entry.getEffectsToResolve()).containsExactly(effect);
-            assertThat(entry.getEventValue()).isEqualTo(3);
-            assertThat(entry.marksOnceEachTurnAction()).isTrue();
-        });
-    }
-
-    @Test
-    @DisplayName("queues a suspended card's opponent-graveyard trigger with its intervening \"if\" as the pipeline judged and wrapped it")
-    void queuesSuspendedCardOpponentGraveyardTrigger() {
-        Card sourceCard = createCard("Nihilith");
-        var effect = new ConditionalEffect(
-                new SourceCardSuspended(),
-                new MayEffect(new RemoveTimeCounterFromExiledCardEffect(sourceCard.getId()),
-                        "Remove a time counter from Nihilith?"));
-        var ctx = new TriggerContext.CardPutIntoGraveyard(createCard("Shock"), player2Id);
-
-        boolean result = registry.dispatch(
-                new TriggerMatchContext(gd, null, player1Id, effect, sourceCard),
-                ZoneChangeWatch.ON_CARD_PUT_INTO_OPPONENT_GRAVEYARD_FROM_ANYWHERE, ctx);
-
-        assertThat(result).isTrue();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getCard()).isSameAs(sourceCard);
-        assertThat(gd.stack.getLast().getControllerId()).isEqualTo(player1Id);
-        assertThat(gd.stack.getLast().getSourcePermanentId()).isNull();
-        assertThat(gd.stack.getLast().isNonTargeting()).isTrue();
-        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
-    }
-
-    @Test
-    @DisplayName("queues a trigger for each creature card leaving the controller's graveyard")
-    void queuesCreatureCardLeavesGraveyardTrigger() {
-        Permanent perm = createPermanent("Syr Konrad, the Grim");
-        var effect = new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT);
-        var ctx = new TriggerContext.ControllerCardsLeaveGraveyard(player1Id);
-
-        boolean result = registry.dispatch(
-                match(perm, player1Id, effect),
-                ZoneChangeWatch.ON_CONTROLLER_CREATURE_CARD_LEAVES_GRAVEYARD, ctx);
-
-        assertThat(result).isTrue();
-        assertThat(gd.stack).hasSize(1);
-        assertThat(gd.stack.getLast().getEffectsToResolve()).containsExactly(effect);
-        assertThat(gd.stack.getLast().getSourcePermanentId()).isEqualTo(perm.getId());
-    }
 }

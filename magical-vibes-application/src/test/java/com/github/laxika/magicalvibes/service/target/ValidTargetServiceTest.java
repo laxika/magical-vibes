@@ -51,8 +51,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
-import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationService;
@@ -812,25 +810,6 @@ class ValidTargetServiceTest {
                     gameData, spell, player1Id, List.of(), 1);
 
             assertThat(response.validPermanentIds()).containsExactly(enchantment.getId());
-        }
-
-        @Test
-        @DisplayName("resolves modal ETB triggers whose mode is picked at cast time")
-        void resolvesModalEtbMode() {
-            Card creatureSpell = createCreatureCard();
-            creatureSpell.setColor(CardColor.BLUE);
-            creatureSpell.addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
-                    new ChooseOneEffect.ChooseOneOption("Deal 2 damage to target creature",
-                            new DealDamageToTargetCreatureEffect(2), mode0Filter),
-                    new ChooseOneEffect.ChooseOneOption("Deal 2 damage to target enchantment",
-                            new DealDamageToTargetCreatureEffect(2), mode1Filter)
-            )));
-            Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
-
-            ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
-                    gameData, creatureSpell, player1Id, List.of(), 0);
-
-            assertThat(response.validPermanentIds()).containsExactly(creature.getId());
         }
 
         @Test

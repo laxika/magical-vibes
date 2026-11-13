@@ -18,9 +18,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({ExhibitionMagician.class})
 class ExhibitionMagicianTest extends BaseCardTest {
 
+    private static final String CITIZEN_MODE = "Create a 1/1 green and white Citizen creature token";
+    private static final String TREASURE_MODE = "Create a Treasure token";
+
     @Test
     void createsCitizenToken() {
-        castExhibitionMagician(0);
+        castExhibitionMagician(CITIZEN_MODE);
 
         assertThat(findPermanents(player1, "Citizen")).hasSize(1);
         assertThat(findPermanents(player1, "Treasure")).isEmpty();
@@ -36,7 +39,7 @@ class ExhibitionMagicianTest extends BaseCardTest {
 
     @Test
     void createsTreasureToken() {
-        castExhibitionMagician(1);
+        castExhibitionMagician(TREASURE_MODE);
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
         assertThat(findPermanents(player1, "Citizen")).isEmpty();
@@ -50,7 +53,7 @@ class ExhibitionMagicianTest extends BaseCardTest {
     @ParameterizedTest
     @EnumSource(value = ManaColor.class, names = {"WHITE", "BLUE", "BLACK", "RED", "GREEN"})
     void treasureCanImmediatelyBeSacrificedForAnyColor(ManaColor color) {
-        castExhibitionMagician(1);
+        castExhibitionMagician(TREASURE_MODE);
         Permanent treasure = findPermanent(player1, "Treasure");
         int manaBefore = gd.playerManaPools.get(player1.getId()).get(color);
         int treasureIndex = gd.playerBattlefields.get(player1.getId()).indexOf(treasure);
@@ -69,17 +72,19 @@ class ExhibitionMagicianTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleListChoice(player1, "Create a Treasure token");
+        harness.handleListChoice(player1, TREASURE_MODE);
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(1);
         assertThat(findPermanents(player1, "Citizen")).isEmpty();
     }
 
-    private void castExhibitionMagician(int mode) {
+    private void castExhibitionMagician(String mode) {
         harness.setHand(player1, List.of(new ExhibitionMagician()));
         harness.addMana(player1, ManaColor.RED, 3);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, mode);
         resolveAllTriggers();
     }
 }

@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.cards.l.LilianaOfTheDarkRealms;
 import com.github.laxika.magicalvibes.cards.m.MerfolkTrickster;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SheoldredTheApocalypse;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,12 +21,15 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ErtaiResurrected.class, Forest.class, GrizzlyBears.class, IcyManipulator.class,
         Island.class, LilianaOfTheDarkRealms.class, MerfolkTrickster.class,
         EvolvedSleeper.class, SheoldredTheApocalypse.class})
 class ErtaiResurrectedTest extends BaseCardTest {
+
+    private static final String COUNTER_MODE =
+            "Counter target spell, activated ability, or triggered ability. Its controller draws a card";
+    private static final String DESTROY_MODE = "Destroy another target creature or planeswalker. Its controller draws a card";
 
     @Test
     @DisplayName("Counters a spell and its controller draws a card")
@@ -35,8 +40,8 @@ class ErtaiResurrectedTest extends BaseCardTest {
         harness.castFromHand(player1, bears, "{1}{G}");
         harness.passPriority(player1);
 
-        castErtai(player2, 0, bears.getId());
-        resolveCounterErtai(player2, bears.getId());
+        castErtai(player2);
+        resolveErtai(player2, COUNTER_MODE, bears.getId());
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Forest");
@@ -55,8 +60,8 @@ class ErtaiResurrectedTest extends BaseCardTest {
         java.util.UUID abilityId = gd.stack.getFirst().getTargetableId();
 
         harness.setLibrary(player1, List.of(new Forest()));
-        castErtai(player2, 0, abilityId);
-        resolveCounterErtai(player2, abilityId);
+        castErtai(player2);
+        resolveErtai(player2, COUNTER_MODE, abilityId);
 
         assertThat(bears.isTapped()).isFalse();
         harness.assertInHand(player1, "Forest");
@@ -76,8 +81,8 @@ class ErtaiResurrectedTest extends BaseCardTest {
         java.util.UUID abilityId = gd.stack.getFirst().getTargetableId();
 
         harness.setLibrary(player1, List.of(new Forest()));
-        castErtai(player2, 0, abilityId);
-        resolveCounterErtai(player2, abilityId);
+        castErtai(player2);
+        resolveErtai(player2, COUNTER_MODE, abilityId);
 
         assertThat(bears.isTapped()).isFalse();
         harness.assertInHand(player1, "Forest");
@@ -90,8 +95,8 @@ class ErtaiResurrectedTest extends BaseCardTest {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setLibrary(player2, List.of(new Forest()));
 
-        castErtai(player1, 1, bears.getId());
-        resolveErtaiAndTrigger();
+        castErtai(player1);
+        resolveErtai(player1, DESTROY_MODE, bears.getId());
 
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -103,9 +108,10 @@ class ErtaiResurrectedTest extends BaseCardTest {
     void destroysPlaneswalker() {
         prepareMainPhase(player1);
         Permanent liliana = harness.addToBattlefieldAndReturn(player2, new LilianaOfTheDarkRealms());
+        liliana.setCounterCount(CounterType.LOYALTY, 3);
 
-        castErtai(player1, 1, liliana.getId());
-        resolveErtaiAndTrigger();
+        castErtai(player1);
+        resolveErtai(player1, DESTROY_MODE, liliana.getId());
 
         harness.assertNotOnBattlefield(player2, "Liliana of the Dark Realms");
     }
@@ -115,24 +121,26 @@ class ErtaiResurrectedTest extends BaseCardTest {
     void rejectsLandForDestructionMode() {
         prepareMainPhase(player1);
         Permanent island = harness.addToBattlefieldAndReturn(player2, new Island());
-        harness.setHand(player1, List.of(new ErtaiResurrected()));
-        addErtaiMana(player1);
+        castErtai(player1);
+        harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.castCreature(player1, 0, 1, island.getId()))
-                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player1, "Ertai Resurrected");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(island);
     }
 
     @Test
     @DisplayName("Can choose no ETB mode")
     void canChooseNoMode() {
         prepareMainPhase(player1);
-        harness.setHand(player1, List.of(new ErtaiResurrected()));
-        addErtaiMana(player1);
-
-        harness.castCreature(player1, 0, -1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castErtai(player1);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, ChooseOneEffect.NO_MODE_LABEL);
 
         harness.assertOnBattlefield(player1, "Ertai Resurrected");
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(bears);
         assertThat(gd.stack).isEmpty();
     }
 
@@ -144,8 +152,8 @@ class ErtaiResurrectedTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest()));
         harness.setLife(player1, 20);
 
-        castErtai(player1, 1, sheoldred.getId());
-        resolveErtaiAndTrigger();
+        castErtai(player1);
+        resolveErtai(player1, DESTROY_MODE, sheoldred.getId());
         resolveAllTriggers();
 
         harness.assertInGraveyard(player1, "Sheoldred, the Apocalypse");
@@ -165,8 +173,8 @@ class ErtaiResurrectedTest extends BaseCardTest {
         harness.passPriority(player1);
         java.util.UUID abilityId = gd.stack.getFirst().getTargetableId();
 
-        castErtai(player2, 0, abilityId);
-        resolveCounterErtai(player2, abilityId);
+        castErtai(player2);
+        resolveErtai(player2, COUNTER_MODE, abilityId);
 
         assertThat(gqs.getEffectivePower(gd, permanent)).isEqualTo(1);
         harness.assertOnBattlefield(player1, "Evolved Sleeper");
@@ -179,10 +187,10 @@ class ErtaiResurrectedTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
     }
 
-    private void castErtai(Player player, int mode, java.util.UUID targetId) {
+    private void castErtai(Player player) {
         harness.setHand(player, List.of(new ErtaiResurrected()));
         addErtaiMana(player);
-        harness.castCreature(player, 0, mode, targetId);
+        harness.castCreature(player, 0);
     }
 
     private void addErtaiMana(Player player) {
@@ -191,13 +199,9 @@ class ErtaiResurrectedTest extends BaseCardTest {
         harness.addMana(player, ManaColor.BLACK, 1);
     }
 
-    private void resolveErtaiAndTrigger() {
+    private void resolveErtai(Player controller, String mode, java.util.UUID targetId) {
         harness.passBothPriorities();
-        harness.passBothPriorities();
-    }
-
-    private void resolveCounterErtai(Player controller, java.util.UUID targetId) {
-        harness.passBothPriorities();
+        harness.handleListChoice(controller, mode);
         harness.handlePermanentChosen(controller, targetId);
         harness.passBothPriorities();
     }

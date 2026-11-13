@@ -876,7 +876,7 @@ public class StackResolutionService {
                 instanceof PendingInteraction.MayAbilityChoice;
         if (!perm.isFaceDown()
                 && (!gameData.interaction.isAwaitingInput() || awaitingEntryMayChoice)) {
-            int etbMode = entry.getEtbMode() != null ? entry.getEtbMode() : entry.getXValue();
+            int etbMode = entry.getXValue();
             handleResolvedPermanentEtb(gameData, controllerId, enteredCard, entry.getTargetId(), etbMode, entry);
         } else if (perm.isFaceDown()) {
             battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, enteredCard);
@@ -1381,7 +1381,7 @@ public class StackResolutionService {
 
         // Process ETB effects for all artifacts (creature and non-creature)
         if (!gameData.interaction.isAwaitingInput()) {
-            int etbMode = entry.getEtbMode() != null ? entry.getEtbMode() : entry.getXValue();
+            int etbMode = entry.getXValue();
             handleResolvedPermanentEtb(gameData, controllerId, enteredCard, entry.getTargetId(), etbMode, entry);
         }
 

@@ -29,11 +29,14 @@ import java.util.UUID;
  *                         damage event's source and the damage it dealt to players), or {@code null}
  * @param limitCreatureId  the creature the event names, which "triggers only once each turn for each creature" judges
  *                         and marks the ability's limit by, or {@code null}
+ * @param creatureDying    whether a creature dying caused the ability to trigger, which "if a creature dying causes a
+ *                         triggered ability to trigger, it triggers an additional time" effects count (Teysa Karlov):
+ *                         not for an ability that triggers on the sacrifice that made the creature die
  */
 public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard, Permanent sourcePermanent,
                                       UUID controllerId, String description, ConditionContext ifContext,
                                       TriggerRecord record, AttackCause attack, TriggerContext event,
-                                      UUID limitCreatureId) {
+                                      UUID limitCreatureId, boolean creatureDying) {
 
     public TriggeredAbilityRequest {
         Objects.requireNonNull(ability, "ability");
@@ -49,13 +52,13 @@ public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard,
                                    UUID controllerId, String description, ConditionContext ifContext,
                                    TriggerRecord record) {
         this(ability, sourceCard, sourcePermanent, controllerId, description, ifContext, record, AttackCause.NONE,
-                null, null);
+                null, null, false);
     }
 
     /** This request for an ability creatures attacking caused to trigger, its source not among them. */
     public TriggeredAbilityRequest causedByAttack() {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, AttackCause.ATTACK, event, limitCreatureId);
+                record, AttackCause.ATTACK, event, limitCreatureId, creatureDying);
     }
 
     /**
@@ -65,13 +68,13 @@ public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard,
      */
     public TriggeredAbilityRequest causedBySourceAttacking() {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, AttackCause.SOURCE_ATTACKED, event, limitCreatureId);
+                record, AttackCause.SOURCE_ATTACKED, event, limitCreatureId, creatureDying);
     }
 
     /** This request with {@code event} as the event the "triggers an additional time" effects judge. */
     public TriggeredAbilityRequest withEvent(TriggerContext event) {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, attack, event, limitCreatureId);
+                record, attack, event, limitCreatureId, creatureDying);
     }
 
     /**
@@ -80,7 +83,13 @@ public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard,
      */
     public TriggeredAbilityRequest withLimitCreature(UUID creatureId) {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, attack, event, creatureId);
+                record, attack, event, creatureId, creatureDying);
+    }
+
+    /** This request for an ability a creature dying caused to trigger (other than by being sacrificed). */
+    public TriggeredAbilityRequest withCreatureDying() {
+        return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
+                record, attack, event, limitCreatureId, true);
     }
 
     /** Whether creatures attacking caused the ability to trigger (CR 508.3a). */

@@ -19,10 +19,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @CardUsed({KoglaAndYidaro.class, GrizzlyBears.class, Ornithopter.class, SealOfStrength.class})
 class KoglaAndYidaroTest extends BaseCardTest {
 
+    private static final String HASTE_MODE = "Kogla and Yidaro gains trample and haste until end of turn.";
+    private static final String FIGHT_MODE = "Kogla and Yidaro fights target creature you don't control.";
+
     @Test
     @DisplayName("ETB mode gives Kogla and Yidaro trample and haste until end of turn")
     void gainsTrampleAndHasteUntilEndOfTurn() {
-        castKogla(0, null);
+        castKogla(HASTE_MODE, null);
         resolveCreatureAndEtb();
 
         Permanent kogla = findPermanent(player1, "Kogla and Yidaro");
@@ -41,7 +44,7 @@ class KoglaAndYidaroTest extends BaseCardTest {
     void fightsTargetCreatureYouDoNotControl() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
-        castKogla(1, bears.getId());
+        castKogla(FIGHT_MODE, bears.getId());
         resolveCreatureAndEtb();
 
         harness.assertInGraveyard(player2, "Grizzly Bears");
@@ -54,9 +57,8 @@ class KoglaAndYidaroTest extends BaseCardTest {
     void fightModeRejectsOwnCreature() {
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
-        assertThatThrownBy(() -> castKogla(1, bears.getId()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("opponent controls");
+        assertThatThrownBy(() -> castKogla(FIGHT_MODE, bears.getId()))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
@@ -158,8 +160,7 @@ class KoglaAndYidaroTest extends BaseCardTest {
     @DisplayName("Fight does not deal damage if Kogla and Yidaro leaves before the trigger resolves")
     void fightDoesNothingWithoutSourceOnBattlefield() {
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        castKogla(1, bears.getId());
-        harness.passBothPriorities();
+        castKogla(FIGHT_MODE, bears.getId());
         Permanent kogla = findPermanent(player1, "Kogla and Yidaro");
         gd.playerBattlefields.get(player1.getId()).remove(kogla);
         harness.setExile(player1, List.of(kogla.getCard()));
@@ -171,15 +172,16 @@ class KoglaAndYidaroTest extends BaseCardTest {
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
     }
 
-    private void castKogla(int mode, java.util.UUID targetId) {
+    private void castKogla(String mode, java.util.UUID targetId) {
         harness.setHand(player1, List.of(new KoglaAndYidaro()));
         harness.addMana(player1, ManaColor.COLORLESS, 2);
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.GREEN, 2);
-        if (targetId == null) {
-            harness.castCreature(player1, 0, mode);
-        } else {
-            harness.castCreature(player1, 0, mode, targetId);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, mode);
+        if (targetId != null) {
+            harness.handlePermanentChosen(player1, targetId);
         }
     }
 
@@ -190,7 +192,6 @@ class KoglaAndYidaroTest extends BaseCardTest {
     }
 
     private void resolveCreatureAndEtb() {
-        harness.passBothPriorities();
         harness.passBothPriorities();
     }
 }

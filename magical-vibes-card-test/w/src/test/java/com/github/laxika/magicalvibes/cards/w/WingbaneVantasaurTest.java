@@ -16,9 +16,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({WingbaneVantasaur.class, SavageStomp.class, Naturalize.class})
 class WingbaneVantasaurTest extends BaseCardTest {
 
+    private static final String STOMP_MODE = "Conjure a card named Savage Stomp into your hand";
+    private static final String NATURALIZE_MODE = "Conjure a card named Naturalize into your hand";
+
     @Test
     void conjuresSavageStomp() {
-        cast(0);
+        cast(STOMP_MODE);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getName)
@@ -28,7 +31,7 @@ class WingbaneVantasaurTest extends BaseCardTest {
 
     @Test
     void conjuresNaturalize() {
-        cast(1);
+        cast(NATURALIZE_MODE);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .extracting(Card::getName)
@@ -42,7 +45,7 @@ class WingbaneVantasaurTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new WingbaneVantasaur());
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleListChoice(player1, "Conjure a card named Naturalize into your hand");
+        harness.handleListChoice(player1, NATURALIZE_MODE);
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId()))
@@ -55,8 +58,9 @@ class WingbaneVantasaurTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WingbaneVantasaur()));
         harness.setHand(player2, List.of());
         harness.addMana(player1, ManaColor.GREEN, 4);
-        harness.castCreature(player1, 0, 1);
+        harness.castCreature(player1, 0);
         harness.passBothPriorities();
+        harness.handleListChoice(player1, NATURALIZE_MODE);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         Permanent source = findPermanent(player1, "Wingbane Vantasaur");
@@ -72,11 +76,13 @@ class WingbaneVantasaurTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
     }
 
-    private void cast(int modeIndex) {
+    private void cast(String mode) {
         harness.setHand(player1, List.of(new WingbaneVantasaur()));
         harness.addMana(player1, ManaColor.GREEN, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
-        harness.castCreature(player1, 0, modeIndex);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, mode);
         resolveAllTriggers();
     }
 }

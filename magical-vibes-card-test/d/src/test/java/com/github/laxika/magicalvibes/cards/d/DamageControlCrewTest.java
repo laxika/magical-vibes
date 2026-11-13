@@ -24,6 +24,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
         JayemdaeTome.class})
 class DamageControlCrewTest extends BaseCardTest {
 
+    private static final String REPAIR_MODE =
+            "Repair — Return target card with mana value 4 or greater from your graveyard to your hand";
+    private static final String IMPOUND_MODE = "Impound — Exile target artifact or enchantment";
+
     @Test
     @DisplayName("Repair returns a card with mana value 4 or greater from the graveyard to hand")
     void repairReturnsExpensiveCardToHand() {
@@ -47,10 +51,15 @@ class DamageControlCrewTest extends BaseCardTest {
     void repairCannotTargetCheapCard() {
         Card target = new GrizzlyBears();
         harness.setGraveyard(player1, List.of(target));
+        harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
 
-        castWithRepair();
+        harness.setHand(player1, List.of(new DamageControlCrew()));
+        addMana();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThatThrownBy(() -> harness.handleListChoice(player1, REPAIR_MODE))
+                .isInstanceOf(IllegalArgumentException.class);
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }
 
@@ -147,20 +156,24 @@ class DamageControlCrewTest extends BaseCardTest {
     private void enterAndChooseImpound() {
         harness.enterBattlefieldAndReturn(player1, new DamageControlCrew());
         harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd));
-        harness.handleListChoice(player1, "Impound — Exile target artifact or enchantment");
+        harness.handleListChoice(player1, IMPOUND_MODE);
     }
 
     private void castWithRepair() {
         harness.setHand(player1, List.of(new DamageControlCrew()));
         addMana();
-        harness.castCreature(player1, 0, 0);
-        resolveAllTriggers();
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, REPAIR_MODE);
     }
 
     private void castWithImpound(UUID targetId) {
         harness.setHand(player1, List.of(new DamageControlCrew()));
         addMana();
-        harness.castCreature(player1, 0, 1, targetId);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, IMPOUND_MODE);
+        harness.handlePermanentChosen(player1, targetId);
         resolveAllTriggers();
     }
 

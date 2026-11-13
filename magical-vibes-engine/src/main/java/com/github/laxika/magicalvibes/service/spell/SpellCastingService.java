@@ -935,7 +935,7 @@ public class SpellCastingService {
     /**
      * True when casting this card writes mode-dependent state onto it: modal spells
      * (ChooseOneEffect) rebuild the card's spell targets and cast-time target filter at cast
-     * time ({@link #unwrapChooseOneEffect}, {@link #applyModalEtbTargetFilter}). Live cards are
+     * time ({@link #unwrapChooseOneEffect}). Live cards are
      * frozen and shared with AI simulation copies, so every modal cast must first swap in an
      * unfrozen {@link Card#createRuntimeCopy()} that replaces the original in the casting zone.
      */
@@ -975,8 +975,7 @@ public class SpellCastingService {
     }
 
     private static boolean isModalSpell(Card card) {
-        return card.getSpellEffects().stream().anyMatch(ChooseOneEffect.class::isInstance)
-                || card.getOwnEntryEffects().stream().anyMatch(ChooseOneEffect.class::isInstance);
+        return card.getSpellEffects().stream().anyMatch(ChooseOneEffect.class::isInstance);
     }
 
     private ReturnTargetCardsFromGraveyardToHandEffect restrictBargainedReturnCandidates(
@@ -1664,28 +1663,6 @@ public class SpellCastingService {
                 effect.targetSpec().admits(TargetPredicate.Kind.PERMANENT)
                         || effect.targetSpec().admits(TargetPredicate.Kind.PLAYER)
                         || EffectResolution.targetsSpellOnStack(effect));
-    }
-
-    private void applyModalEtbTargetFilter(Card card, int effectiveXValue) {
-        for (CardEffect effect : card.getOwnEntryEffects()) {
-            if (effect instanceof ChooseOneEffect coe) {
-                if (effectiveXValue >= 0 && effectiveXValue < coe.options().size()) {
-                    TargetFilter filter = coe.options().get(effectiveXValue).targetFilter();
-                    if (filter != null) {
-                        card.setCastTimeTargetFilter(filter);
-                    }
-                }
-                return;
-            }
-        }
-    }
-
-    private boolean isOptionalModalEtbSkip(Card card, int effectiveXValue) {
-        if (effectiveXValue >= 0) {
-            return false;
-        }
-        return card.getOwnEntryEffects().stream()
-                .anyMatch(e -> e instanceof ChooseOneEffect coe && coe.optional());
     }
 
     private ManaRestrictionFlags computeManaRestrictionFlags(GameData gameData, UUID playerId, Card card) {
@@ -4348,9 +4325,6 @@ public class SpellCastingService {
         int perTargetCost = card.getAdditionalCostPerExtraTarget() * extraTargetCount;
         boolean hasXCost = card.getManaCost() != null && new ManaCost(card.getManaCost()).hasX();
         String perTargetManaCost = repeatAdditionalTargetManaCost(card, extraTargetCount);
-        boolean hasModalEtb = card.getOwnEntryEffects().stream()
-                .anyMatch(ChooseOneEffect.class::isInstance);
-        applyModalEtbTargetFilter(card, effectiveXValue);
         List<CardEffect> filteredSpellEffects = new ArrayList<>(card.getCastingCostsAndSpellEffects());
         if (!fromGraveyard) {
             filteredSpellEffects.removeIf(effect -> effect instanceof ExileNCardsFromGraveyardCost cost
@@ -4549,7 +4523,7 @@ public class SpellCastingService {
         // The mode selection is carried by xValue (consumed above). For a modal spell that also has an
         // {X} cost (e.g. Alabaster Potion), the real X paid is threaded separately via modalXValue so it
         // drives mana payment / XValue resolution — while non-{X} modal spells keep X = 0 as before.
-        if ((wasModal || hasModalEtb) && modalXValue != null) {
+        if (wasModal && modalXValue != null) {
             effectiveXValue = modalXValue;
         }
         effectiveXValue = additionalSpellCostService.resolveXValue(
@@ -5318,8 +5292,7 @@ public class SpellCastingService {
                 && !EffectResolution.needsDamageDistribution(targetingSpellEffects)
                 && !(kicked && findKickedDividedDamageEffect(filteredSpellEffects) != null)
                 && !needsExileTargeting && !needsGraveyardOrExileTargeting
-                && !needsSingleGraveyardTargeting && !needsGraveyardEffectTargeting
-                && !isOptionalModalEtbSkip(card, effectiveXValue)) {
+                && !needsSingleGraveyardTargeting && !needsGraveyardEffectTargeting) {
             throw new IllegalStateException("Spell requires a target");
         }
 
@@ -5584,25 +5557,6 @@ public class SpellCastingService {
         if (!castingPermissionService.isFlashCastTargetPermissionSatisfied(
                 gameData, playerId, card, targetId, targetIds)) {
             throw new IllegalStateException("Card is not playable");
-        }
-
-        if (hasModalEtb && targetId != null) {
-            for (CardEffect etbEffect : card.getOwnEntryEffects()) {
-                if (etbEffect instanceof ChooseOneEffect choice
-                        && effectiveXValue >= 0 && effectiveXValue < choice.options().size()) {
-                    Zone etbTargetZone = gameData.findExiledCard(targetId) != null ? Zone.EXILE
-                            : gameQueryService.findGraveyardOwnerById(gameData, targetId) != null ? Zone.GRAVEYARD
-                            : Zone.BATTLEFIELD;
-                    targetLegalityService.validateEffectTargetInZone(gameData, card,
-                            choice.options().get(effectiveXValue).effects(), targetId, etbTargetZone,
-                            effectiveXValue, playerId);
-                    TargetFilter optionFilter = choice.options().get(effectiveXValue).targetFilter();
-                    Permanent optionTarget = gameQueryService.findPermanentById(gameData, targetId);
-                    if (optionFilter != null && optionTarget != null) {
-                        predicateEvaluationService.validateTargetFilter(gameData, optionFilter, optionTarget);
-                    }
-                }
-            }
         }
 
         // Validate and apply convoke or improvise
@@ -6293,9 +6247,6 @@ public class SpellCastingService {
             entry.setTeamworkCostPaid(isTeamworkCostPaid(additionalCosts, paymentCostSelection));
             if (!repeatedAdditionalCosts.isEmpty()) {
                 entry.setRepeatedAdditionalCosts(List.copyOf(repeatedAdditionalCosts));
-            }
-            if (hasModalEtb) {
-                entry.setEtbMode(xValue != null ? xValue : 0);
             }
             if (wasModal) {
                 entry.setModalModeCount(modalModeCount);

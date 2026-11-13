@@ -67,6 +67,13 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
         return choicePlayer == MayChoicePlayer.ACTIVE_PLAYER || wrapped.targetChosenByActivePlayer();
     }
 
+    /** The triggering permanent's controller who makes the choice also chooses its target (Pandemonium). */
+    @Override
+    public boolean targetChosenByTriggeringPermanentController() {
+        return choicePlayer == MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER
+                || wrapped.targetChosenByTriggeringPermanentController();
+    }
+
     @Override
     public boolean targetsChosenByReflexiveAbility() {
         return wrapped.targetsChosenByReflexiveAbility();

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
@@ -144,9 +145,9 @@ class EntersAndZoneChangeAbilityStackObjectTest extends BaseCardTest {
     @DisplayName("A \"when this enters\" ability whose mode is chosen as it triggers, beside another effect, is rejected")
     void triggerTimeModeChoiceBesideAnotherEffectFails() {
         Card card = watcher("Modal Scholar");
-        card.addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
+        card.addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Draw a card", new DrawCardEffect(1)),
-                new ChooseOneEffect.ChooseOneOption("You gain 3 life", new GainLifeEffect(3)))),
+                new ChooseOneEffect.ChooseOneOption("You gain 3 life", new GainLifeEffect(3))))),
                 new GainLifeEffect(1));
 
         assertThatThrownBy(() -> harness.enterBattlefieldAndReturn(player1, card))

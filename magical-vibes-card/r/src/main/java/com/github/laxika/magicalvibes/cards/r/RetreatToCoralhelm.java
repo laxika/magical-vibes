@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
@@ -19,7 +20,7 @@ import java.util.List;
 public class RetreatToCoralhelm extends Card {
 
     public RetreatToCoralhelm() {
-        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "You may tap or untap target creature.",
                         new MayEffect(
@@ -27,6 +28,6 @@ public class RetreatToCoralhelm extends Card {
                                 "Tap or untap target creature?"),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption("Scry 1.", new ScryEffect(1))
-        )));
+        ))));
     }
 }

@@ -87,7 +87,7 @@ class VanilleCheerfulLCieTest extends BaseCardTest {
         harness.runStateBasedActions();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, destroyed.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(returned.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(returned.getId()));
 
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
@@ -155,11 +155,11 @@ class VanilleCheerfulLCieTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.handlePermanentChosen(player1, destroyed.getId());
-        PendingInteraction.MultiGraveyardChoice graveyardChoice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        PendingInteraction.MultiPermanentChoice graveyardChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(graveyardChoice).isNotNull();
         assertThat(graveyardChoice.validCardIds()).containsExactly(returned.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(returned.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(returned.getId()));
         harness.passBothPriorities();
         harness.passBothPriorities();
 
@@ -352,7 +352,7 @@ class VanilleCheerfulLCieTest extends BaseCardTest {
         harness.runStateBasedActions();
         harness.passBothPriorities();
         harness.handlePermanentChosen(player1, destroyed.getId());
-        harness.handleMultipleCardsChosen(player1, List.of(returned.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(returned.getId()));
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
 

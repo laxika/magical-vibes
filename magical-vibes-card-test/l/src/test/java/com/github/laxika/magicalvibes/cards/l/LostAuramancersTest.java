@@ -127,7 +127,10 @@ class LostAuramancersTest extends BaseCardTest {
         harness.setHand(player1, List.of(new ShivanSandMage()));
         harness.addMana(player1, ManaColor.RED, 4);
 
-        harness.castCreature(player1, 0, 0, auramancers.getId());
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Remove two time counters from target permanent or suspended card");
+        harness.handlePermanentChosen(player1, auramancers.getId());
         resolveAllTriggers();
 
         assertThat(auramancers.getCounterCount(CounterType.TIME)).isZero();

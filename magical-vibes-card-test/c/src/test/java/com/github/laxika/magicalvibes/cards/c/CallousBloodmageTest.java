@@ -16,10 +16,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({CallousBloodmage.class, Forest.class, Shock.class})
 class CallousBloodmageTest extends BaseCardTest {
 
+    private static final String PEST_MODE =
+            "Create a 1/1 black and green Pest creature token with \"When this token dies, you gain 1 life.\"";
+    private static final String DRAW_MODE = "You draw a card and you lose 1 life";
+    private static final String EXILE_MODE = "Exile target player's graveyard";
+
     @Test
     @DisplayName("Creates a Pest token whose death gains 1 life")
     void createsPestWithDeathTrigger() {
-        castBloodmage(0);
+        castBloodmage(PEST_MODE);
         resolveAllTriggers();
 
         Permanent pest = gd.playerBattlefields.get(player1.getId()).stream()
@@ -44,8 +49,7 @@ class CallousBloodmageTest extends BaseCardTest {
         harness.setHand(player1, List.of(new CallousBloodmage()));
         int handSizeBefore = gd.playerHands.get(player1.getId()).size();
 
-        harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castCreature(player1, 0, 1);
+        castBloodmage(DRAW_MODE);
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
@@ -57,8 +61,7 @@ class CallousBloodmageTest extends BaseCardTest {
     void exilesTargetPlayersGraveyard() {
         harness.setGraveyard(player2, List.of(new Forest(), new Shock()));
 
-        castBloodmage(2);
-        resolveAllTriggers();
+        castBloodmage(EXILE_MODE);
         harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
 
@@ -74,8 +77,7 @@ class CallousBloodmageTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(ownCard));
         harness.setGraveyard(player2, List.of(opponentCard));
 
-        castBloodmage(2);
-        resolveAllTriggers();
+        castBloodmage(EXILE_MODE);
         harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
@@ -93,8 +95,7 @@ class CallousBloodmageTest extends BaseCardTest {
         harness.setGraveyard(player2, List.of());
         harness.setLibrary(player1, List.of(new CallousBloodmage()));
 
-        castBloodmage(2);
-        resolveAllTriggers();
+        castBloodmage(EXILE_MODE);
         harness.handlePermanentChosen(player1, player2.getId());
         resolveAllTriggers();
 
@@ -106,10 +107,12 @@ class CallousBloodmageTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Pest");
     }
 
-    private void castBloodmage(int mode) {
+    private void castBloodmage(String mode) {
         harness.setHand(player1, List.of(new CallousBloodmage()));
         harness.addMana(player1, ManaColor.BLACK, 3);
-        harness.castCreature(player1, 0, mode);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, mode);
     }
 
 }

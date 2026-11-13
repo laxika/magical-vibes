@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -24,7 +25,7 @@ public class PropellerPioneer extends Card {
             List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT));
 
     public PropellerPioneer() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtResolutionEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Put a +1/+1 counter on Propeller Pioneer",
                         List.of(
@@ -38,6 +39,6 @@ public class PropellerPioneer extends Card {
                         "Create a 1/1 colorless Servo artifact creature token",
                         SERVO
                 )
-        )));
+        ))));
     }
 }

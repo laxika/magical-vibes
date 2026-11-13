@@ -396,14 +396,11 @@ public class CardViewFactory {
     }
 
     /**
-     * Finds the card's modal ("choose one/two") effect, whether it is a modal spell (SPELL slot)
-     * or a modal ETB trigger whose mode is picked at cast time ("when this enters" ability).
+     * Finds the card's modal ("choose one/two") spell effect. A "when this enters" ability's mode is chosen as the
+     * ability is put on the stack, never as the permanent is cast (CR 603.3c).
      */
     private ChooseOneEffect findModalEffect(Card card) {
         for (CardEffect e : card.getCastingCostsAndSpellEffects()) {
-            if (e instanceof ChooseOneEffect coe) return coe;
-        }
-        for (CardEffect e : card.getOwnEntryEffects()) {
             if (e instanceof ChooseOneEffect coe) return coe;
         }
         return null;

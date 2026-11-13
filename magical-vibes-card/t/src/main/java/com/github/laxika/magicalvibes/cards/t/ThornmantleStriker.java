@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveChosenCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -24,7 +25,7 @@ public class ThornmantleStriker extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.ELF), CountScope.CONTROLLER);
         var opponentCreature = TargetFilters.creatureAnOpponentControls();
 
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneEffect(List.of(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove X counters from target permanent, where X is the number of Elves you control",
                         new RemoveChosenCountersFromTargetPermanentEffect(elfCount, true),
@@ -34,6 +35,6 @@ public class ThornmantleStriker extends Card {
                         new BoostTargetCreatureEffect(new Scaled(elfCount, -1), new Scaled(elfCount, -1),
                                 opponentCreature.predicate()),
                         opponentCreature)
-        )));
+        ))));
     }
 }
