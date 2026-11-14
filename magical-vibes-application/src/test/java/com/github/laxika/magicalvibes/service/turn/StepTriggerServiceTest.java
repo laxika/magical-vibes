@@ -305,7 +305,12 @@ class StepTriggerServiceTest {
                 new TriggerIndex(gameQueryService, grantedTriggeredAbilitySupport, predicateEvaluationService),
                 stackService, predicateEvaluationService, permanentRemovalService, triggerCollectionService,
                 gameQueryService, new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
-                gameLogService, null, null);
+                gameLogService, null, null, null, null);
+        // The counter, tap and life events a step causes (a Saga's lore counter) trigger nothing these tests watch.
+        for (String matcher : new String[] {"counterTriggers", "tapTriggers", "lifeTriggers"}) {
+            org.springframework.test.util.ReflectionTestUtils.setField(pipeline, matcher,
+                    org.mockito.Mockito.mock(fieldType(matcher)));
+        }
         org.springframework.test.util.ReflectionTestUtils.setField(sut, "stackedModalTriggerService",
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService.class));
         org.springframework.test.util.ReflectionTestUtils.setField(sut, "stackedDividedDamageTriggerService",
@@ -3025,5 +3030,13 @@ class StepTriggerServiceTest {
     private com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService stackedModalTriggerService() {
         return (com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService)
                 org.springframework.test.util.ReflectionTestUtils.getField(sut, "stackedModalTriggerService");
+    }
+
+    private static Class<?> fieldType(String name) {
+        try {
+            return RulesEventPipeline.class.getDeclaredField(name).getType();
+        } catch (NoSuchFieldException e) {
+            throw new IllegalStateException(e);
+        }
     }
 }

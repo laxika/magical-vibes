@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.a.AirbendingLesson;
 import com.github.laxika.magicalvibes.cards.y.YuyanArchers;
 import com.github.laxika.magicalvibes.model.Card;
@@ -171,7 +172,7 @@ class MasterPakkuTest extends BaseCardTest {
     private void tap(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent);
+            gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
             harness.getTriggerCollectionService().beginStackDoorChoices(gd);
         });
     }

@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service.trigger;
+package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -45,7 +45,8 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -68,7 +69,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.List;
 import java.util.Set;
@@ -77,18 +77,17 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * The tap-for-mana watches' one default ({@link LandTapTriggerCollectorService}): every ability's entry records the
+ * The tap-for-mana abilities' one default ({@link TapTriggers}): every ability's entry records the
  * tap whatever its effects are; a triggered mana ability resolves at once through its effects' handlers (CR 605.4a), a
  * targeted one has its target chosen with the same record (CR 603.3d), any other goes on the stack. The trigger, its
  * relation and its filters are judged by the caller ({@code TriggerCollectionService}), not here.
  */
 @ExtendWith(MockitoExtension.class)
-class LandTapTriggerCollectorServiceTest {
+class TapTriggersTest {
 
     @Mock
     private GameQueryService gameQueryService;
@@ -106,13 +105,7 @@ class LandTapTriggerCollectorServiceTest {
     private DealDamageToPlayersEffectHandler dealDamageHandler;
 
     @Mock
-    private ObjectProvider<TriggerCollectionService> triggerCollectionServiceProvider;
-
-    @Mock
     private TriggerCollectionService triggerCollectionService;
-
-    @Mock
-    private ObjectProvider<TriggeredAbilityStackService> stackServiceProvider;
 
     @Mock
     private ConditionEvaluationService conditionEvaluationService;
@@ -129,8 +122,7 @@ class LandTapTriggerCollectorServiceTest {
     @Spy
     private EffectHandlerRegistry effectHandlerRegistry = new EffectHandlerRegistry();
 
-    private LandTapTriggerCollectorService sut;
-    private TriggerCollectorRegistry registry;
+    private TapTriggers sut;
     private AddOneOfEachManaTypeProducedByLandEffectHandler addOneOfEachHandler;
     private GameData gd;
     private UUID player1Id;
@@ -144,15 +136,11 @@ class LandTapTriggerCollectorServiceTest {
         gd.playerManaPools.put(player1Id, new ManaPool());
         gd.playerManaPools.put(player2Id, new ManaPool());
         gd.playerIds.addAll(List.of(player1Id, player2Id));
-        sut = new LandTapTriggerCollectorService(gameQueryService, gameLogService, effectHandlerRegistry,
-                triggerCollectionServiceProvider, stackServiceProvider);
         TriggeredAbilityStackService door = new TriggeredAbilityStackService(conditionEvaluationService,
                 gameQueryService, graveyardTargetingSupport, gameLogService, triggerCollectionService,
                 amountEvaluationService, predicateEvaluationService, triggerTargetCollector);
-        lenient().when(stackServiceProvider.getObject()).thenReturn(door);
-        lenient().when(triggerCollectionServiceProvider.getObject()).thenReturn(triggerCollectionService);
-        registry = new TriggerCollectorRegistry();
-        TriggerCollectorRegistry.scanBean(sut, registry);
+        sut = new TapTriggers(null, gameQueryService, predicateEvaluationService, conditionEvaluationService,
+                gameLogService, null, effectHandlerRegistry, door, triggerCollectionService);
         addOneOfEachHandler = new AddOneOfEachManaTypeProducedByLandEffectHandler(
                 gameQueryService, gameLogService, interactionHandlerRegistry);
         effectHandlerRegistry.register(AddOneOfEachManaTypeProducedByLandEffect.class, addOneOfEachHandler);
@@ -199,9 +187,13 @@ class LandTapTriggerCollectorServiceTest {
 
     private boolean tapLand(Permanent source, UUID controllerId, CardEffect effect, UUID tappingPlayerId,
                             UUID landId, ManaColor... produced) {
-        return registry.dispatch(new TriggerMatchContext(gd, source, controllerId, effect),
-                TapWatch.ON_ANY_PLAYER_TAPS_LAND,
-                new TriggerContext.LandTap(tappingPlayerId, landId, Set.of(produced)));
+        return sut.collect(gd, source(source, controllerId, effect), tappingPlayerId, landId, Set.of(produced),
+                tappingPlayerId, false);
+    }
+
+    private static TapTriggers.Source source(Permanent source, UUID controllerId, CardEffect effect) {
+        return new TapTriggers.Source(source, controllerId, List.of(effect), source == null ? null : source.getCard(),
+                null);
     }
 
     @Nested
@@ -282,10 +274,10 @@ class LandTapTriggerCollectorServiceTest {
             var ability = new TriggeredAbility(Triggers.playerTapsLandForMana(),
                     TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()), damage);
 
-            CardEffect effect = TapAbilityReader.read(ability, TapWatch.ON_ANY_PLAYER_TAPS_LAND.trigger())
+            CardEffect effect = TapTriggers.read(ability, Triggers.playerTapsLandForMana())
                     .getFirst().effectAsJudged();
 
-            assertThat(TapAbilityReader.isTriggeredManaAbility(ability)).isFalse();
+            assertThat(TapTriggers.isTriggeredManaAbility(ability)).isFalse();
             assertThat(effect).isEqualTo(new ConditionalEffect(new SourceIsTapped(), damage));
         }
     }
@@ -550,7 +542,7 @@ class LandTapTriggerCollectorServiceTest {
                     new DealDamageToPlayersEffect(1, DamageRecipient.TRIGGERING_PLAYER).dealtByTriggeringPermanent());
             var ability = new TriggeredAbility(Triggers.playerTapsLandForMana(),
                     TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()), sequence);
-            CardEffect effect = TapAbilityReader.read(ability, TapWatch.ON_ANY_PLAYER_TAPS_LAND.trigger())
+            CardEffect effect = TapTriggers.read(ability, Triggers.playerTapsLandForMana())
                     .getFirst().effectAsJudged();
             assertThat(effect).isEqualTo(sequence);
 
@@ -583,10 +575,8 @@ class LandTapTriggerCollectorServiceTest {
             Permanent artifact = new Permanent(createCard("Mind Stone", CardType.ARTIFACT));
             var effect = GainControlOfTargetEffect.ofTriggeringPermanent(ControlDuration.UNTIL_END_OF_YOUR_NEXT_TURN);
 
-            assertThat(registry.dispatch(new TriggerMatchContext(gd, nabber, player1Id, effect),
-                    TapWatch.ON_ANY_PLAYER_TAPS_PERMANENT_FOR_MANA,
-                    new TriggerContext.PermanentTapForMana(player2Id, artifact.getId(), Set.of(ManaColor.COLORLESS))))
-                    .isTrue();
+            assertThat(sut.collect(gd, source(nabber, player1Id, effect), player2Id, artifact.getId(),
+                    Set.of(ManaColor.COLORLESS), artifact.getId(), true)).isTrue();
 
             StackEntry entry = gd.stack.getFirst();
             assertThat(entry.getTargetId()).isEqualTo(artifact.getId());
@@ -602,9 +592,8 @@ class LandTapTriggerCollectorServiceTest {
             UUID manaRockId = UUID.randomUUID();
             var effect = new AddManaOfTypeProducedByTappedPermanentEffect();
 
-            assertThat(registry.dispatch(new TriggerMatchContext(gd, kinnan, player1Id, effect),
-                    TapWatch.ON_CONTROLLER_TAPS_NONLAND_PERMANENT_FOR_MANA,
-                    new TriggerContext.NonlandPermanentTapForMana(player1Id, manaRockId, null))).isTrue();
+            assertThat(sut.collect(gd, source(kinnan, player1Id, effect), player1Id, manaRockId, null, manaRockId,
+                    true)).isTrue();
 
             StackEntry parked = gd.pendingManaAbilityTriggers.getFirst();
             assertThat(parked.isAwaitingProducedManaColor()).isTrue();
@@ -622,9 +611,9 @@ class LandTapTriggerCollectorServiceTest {
             Permanent cub = createPermanent("Badgermole Cub");
             var effect = new AddManaWhenTappedForManaEffect(ManaColor.GREEN);
 
-            assertThat(registry.dispatch(new TriggerMatchContext(gd, cub, player1Id, effect),
-                    TapWatch.ON_CONTROLLER_TAPS_CREATURE_FOR_MANA,
-                    new TriggerContext.CreatureTapForMana(player1Id, UUID.randomUUID()))).isTrue();
+            UUID creatureId = UUID.randomUUID();
+            assertThat(sut.collect(gd, source(cub, player1Id, effect), player1Id, creatureId, Set.of(), creatureId,
+                    true)).isTrue();
 
             assertThat(gd.playerManaPools.get(player1Id).get(ManaColor.GREEN)).isEqualTo(1);
             assertThat(gd.stack).isEmpty();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -2226,7 +2227,7 @@ public class MayCastHandlerService {
         try {
             for (Permanent convoker : convokers) {
                 convoker.tap();
-                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, convoker);
+                gameData.rulesEvents.occur(new TapEvent.BecameTapped(convoker, null, true));
             }
         } finally {
             triggerCollectionService.endPermanentTapTriggerBatch(gameData);

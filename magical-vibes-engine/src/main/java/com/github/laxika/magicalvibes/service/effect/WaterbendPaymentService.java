@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.BendingType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -80,7 +81,7 @@ public class WaterbendPaymentService {
 
         for (Permanent permanent : toTap) {
             permanent.tap();
-            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+            gameData.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
             gameLogService.append(gameData, GameLog.builder()
                     .text(gameData.playerIdToName.get(playerId) + " taps ")
                     .card(permanent.getCard())

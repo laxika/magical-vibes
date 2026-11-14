@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability.cost;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -129,7 +130,7 @@ public class CrewCostHandler implements PermanentChoiceCostHandler {
         } else if (cost instanceof SaddleCost && sourcePermanentId != null) {
             gameData.recordCreatureSaddlingPermanent(sourcePermanentId, chosen.getId());
         }
-        triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
+        gameData.rulesEvents.occur(new TapEvent.BecameTapped(chosen, null, true));
         triggerCollectionService.checkCrewsVehicleTriggers(gameData, chosen, sourcePermanent);
         triggerCollectionService.checkAllyCreatureCrewsVehicleTriggers(gameData, chosen, sourcePermanent);
         triggerCollectionService.checkSelfSaddlesOrCrewsDuringMainPhaseTriggers(

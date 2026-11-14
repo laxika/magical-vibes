@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -13,11 +14,9 @@ import com.github.laxika.magicalvibes.model.PendingGemstoneCavernsChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
@@ -64,7 +63,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -191,7 +189,7 @@ public class MayMiscHandlerService {
             boolean wasTapped = sourcePermanent.isTapped();
             sourcePermanent.untap();
             if (wasTapped) {
-                triggerCollectionService.checkBecomesUntappedTriggers(gameData, sourcePermanent);
+                gameData.rulesEvents.occur(new TapEvent.BecameUntapped(sourcePermanent));
             }
             if (wasTapped && gameData.currentStep == TurnStep.UNTAP
                     && controllerId.equals(gameData.untapStepPlayerId)) {

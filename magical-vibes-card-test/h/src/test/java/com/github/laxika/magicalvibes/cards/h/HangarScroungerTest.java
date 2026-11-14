@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.a.AlabasterHostIntercessor;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
@@ -75,7 +76,7 @@ class HangarScroungerTest extends BaseCardTest {
 
         recipient.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, recipient));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(recipient, null, true)));
 
         assertThat(gd.stack).isEmpty();
     }
@@ -167,7 +168,7 @@ class HangarScroungerTest extends BaseCardTest {
 
         unrelated.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, unrelated));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(unrelated, null, true)));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -212,7 +213,7 @@ class HangarScroungerTest extends BaseCardTest {
     private void tapAndResolve(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true)));
         harness.passBothPriorities();
     }
 }

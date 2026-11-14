@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -987,7 +988,7 @@ public class CombatAttackService {
             if (!gameQueryService.hasKeyword(gameData, attacker, Keyword.VIGILANCE)
                     && !gameQueryService.attackingDoesNotCauseTapping(gameData, attacker)) {
                 attacker.tap();
-                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, attacker);
+                gameData.rulesEvents.occur(new TapEvent.BecameTapped(attacker, null, true));
             }
         }
         triggerCollectionService.endPermanentTapTriggerBatch(gameData);
@@ -1371,8 +1372,7 @@ public class CombatAttackService {
                     gameData.playerBattlefields.get(context.playerId()), usedSupporterIds);
             if (supporter != null && eligibleIds.contains(supporter.getId())) {
                 supporter.tap();
-                triggerCollectionService.checkEnchantedPermanentTapTriggers(
-                        gameData, supporter, context.playerId());
+                gameData.rulesEvents.occur(new TapEvent.BecameTapped(supporter, context.playerId(), false));
                 usedSupporterIds.add(supporter.getId());
                 gameData.creaturesThatEnlistedThisCombat.add(attacker.getId());
                 boostPowers.put(attacker.getId(), gameQueryService.getEffectivePower(gameData, supporter));

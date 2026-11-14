@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.n;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -193,7 +194,7 @@ class NanoformSentinelTest extends BaseCardTest {
     private void tapAndQueueTrigger(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent);
+            gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
             harness.getTriggerCollectionService().beginStackDoorChoices(gd);
         });
     }

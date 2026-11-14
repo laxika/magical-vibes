@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Emblem;
@@ -467,8 +468,8 @@ public class UntapStepService {
                             && floating.affectedPermanentId() != null
                             && activePlayerId.equals(gameQueryService.findPermanentController(
                             gameData, floating.affectedPermanentId())));
-            triggerCollectionService.checkControllerUntapsDuringUntapStepTriggers(
-                    gameData, activePlayerId, gameData.untapStepUntappedPermanentCount);
+            gameData.rulesEvents.occur(new TapEvent.UntappedDuringUntapStep(activePlayerId,
+                    gameData.untapStepUntappedPermanentCount));
         }
         gameData.untapStepPlayerId = null;
         gameData.untapStepUntappedPermanentCount = 0;

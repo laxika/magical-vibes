@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.rules.RulesEvent;
+import com.github.laxika.magicalvibes.model.rules.SpellEvent;
+import com.github.laxika.magicalvibes.model.rules.LifeEvent;
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -560,14 +565,17 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
                                 new DealDamageToPlayersEffect(1, DamageRecipient.CONTROLLER))),
-                watch("a player is dealt damage", "playerDealtDamage", Triggers::playerDealtDamage, CardType.ENCHANTMENT,
-                        (test, cards) -> test.helperAbilityResolves(cards,
-                                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))),
-                watch("an opponent is dealt noncombat damage", "opponentDealtNoncombatDamage", Triggers::opponentDealtNoncombatDamage,
+                watch("a player is dealt damage", "playerDealtDamage", Triggers::playerDealtDamage,
                         CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
                                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))),
-                watch("a source you control deals noncombat damage to an opponent", "sourceYouControlDealsNoncombatDamageToOpponent",
+                watch("an opponent is dealt noncombat damage", "opponentDealtNoncombatDamage",
+                        Triggers::opponentDealtNoncombatDamage,
+                        CardType.ENCHANTMENT,
+                        (test, cards) -> test.helperAbilityResolves(cards,
+                                new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))),
+                watch("a source you control deals noncombat damage to an opponent",
+                        "sourceYouControlDealsNoncombatDamageToOpponent",
                         Triggers::sourceYouControlDealsNoncombatDamageToOpponent, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards,
                                 new DealDamageToPlayersEffect(1, DamageRecipient.EACH_OPPONENT))),
@@ -974,7 +982,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                             for (Permanent permanent : test.fixtureCreatures(cards)) {
                                 permanent.tap();
                                 test.collect(collection ->
-                                        collection.checkSelfTappedToPayTeamworkCostTriggers(test.gd, permanent));
+                                        test.gd.rulesEvents.occur(new TapEvent.TappedForTeamwork(permanent)));
                                 test.answerAll();
                             }
                         }));
@@ -1079,24 +1087,22 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         () -> Triggers.opponentCopiesSpell().anySpell(), CardType.ENCHANTMENT,
                         (test, cards) -> test.spellIsCopied(cards, test.player2)),
                 collected("you counter a spell", "youCounterSpell", Triggers::youCounterSpell,
-                        (test, collection) -> collection.checkControllerCountersSpellTriggers(test.gd,
-                                test.player1.getId())),
+                        (test, collection) -> emit(test.gd, new SpellEvent.Countered(test.player1.getId()))),
                 collected("your spell is countered", "yourSpellCountered", Triggers::yourSpellCountered,
-                        (test, collection) -> collection.checkControllerSpellCounteredTriggers(test.gd,
-                                test.player1.getId())),
+                        (test, collection) -> emit(test.gd, new SpellEvent.SpellCountered(test.player1.getId()))),
                 collected("your spell causes you to gain card advantage", "yourSpellCausesYouToGainCardAdvantage",
                         Triggers::yourSpellCausesYouToGainCardAdvantage,
-                        (test, collection) -> collection.checkSpellCardAdvantageTriggers(test.gd, new StackEntry(
+                        (test, collection) -> emit(test.gd, new SpellEvent.CardAdvantage(new StackEntry(
                                 StackEntryType.SORCERY_SPELL, card("Advantage", CardType.SORCERY),
-                                test.player1.getId(), "Advantage", List.of(new DrawCardEffect(2))))),
+                                test.player1.getId(), "Advantage", List.of(new DrawCardEffect(2)))))),
                 watch("this spell is countered or fizzles", "thisSpellCounteredOrFizzles",
                         Triggers::thisSpellCounteredOrFizzles, CardType.INSTANT,
                         (test, cards) -> {
                             test.mainPhaseOf(test.player1);
                             for (Card card : cards) {
-                                test.collect(collection -> collection.checkSelfSpellCounteredOrFizzledTriggers(
-                                        test.gd, new StackEntry(StackEntryType.INSTANT_SPELL, card,
-                                                test.player1.getId(), card.getName(), List.of())));
+                                test.collect(collection -> emit(test.gd, new SpellEvent.CounteredOrFizzled(
+                                        new StackEntry(StackEntryType.INSTANT_SPELL, card,
+                                                test.player1.getId(), card.getName(), List.of()))));
                                 test.answerAll();
                             }
                         }),
@@ -1303,13 +1309,15 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         TriggerRouteRecordTest::timeCounterIsRemovedFromExiledFixtures),
                 watch("this becomes renowned", "becomesRenowned", Triggers::becomesRenowned, CardType.CREATURE,
                         (test, cards) -> test.fixturesAreCollected(cards, (collection, permanent) ->
-                                collection.checkBecomesRenownedTriggers(test.gd, permanent, test.player1.getId()))),
+                                test.gd.rulesEvents.occur(CounterChangeEvent.of(CounterChangeEvent.Kind.RENOWNED,
+                                        permanent, test.player1.getId(), null, 0)))),
                 watch("a creature you control becomes renowned", "creatureYouControlBecomesRenowned",
                         Triggers::creatureYouControlBecomesRenowned, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards, new RenownEffect(1))),
                 watch("this becomes monstrous", "becomesMonstrous", Triggers::becomesMonstrous, CardType.CREATURE,
                         (test, cards) -> test.fixturesAreCollected(cards, (collection, permanent) ->
-                                collection.checkBecomesMonstrousTriggers(test.gd, permanent, test.player1.getId()))),
+                                test.gd.rulesEvents.occur(CounterChangeEvent.of(CounterChangeEvent.Kind.MONSTROUS,
+                                        permanent, test.player1.getId(), null, 0)))),
                 watch("you get energy", "youGetEnergy", Triggers::youGetEnergy, CardType.ENCHANTMENT,
                         (test, cards) -> test.helperAbilityResolves(cards, new EnergyCountersEffect(1))),
                 watch("you put counters on a creature you don't control", "youPutCountersOnCreatureYouDontControl",
@@ -1371,10 +1379,11 @@ class TriggerRouteRecordTest extends BaseCardTest {
                         (test, cards) -> test.countersArePutOnOpponentCreature(cards, test.player2)),
                 collected("you put a lore counter on a Saga you control", "youPutLoreCounterOnSagaYouControl",
                         Triggers::youPutLoreCounterOnSagaYouControl,
-                        (test, collection) -> collection.checkYouPutLoreCounterOnSagaTriggers(test.gd,
+                        (test, collection) -> test.gd.rulesEvents.occur(CounterChangeEvent.of(
+                                CounterChangeEvent.Kind.YOU_PUT_LORE_COUNTER,
                                 test.harness.addToBattlefieldAndReturn(test.player1,
                                         card("Saga", CardType.ENCHANTMENT, CardSubtype.SAGA)),
-                                test.player1.getId())),
+                                test.player1.getId(), CounterType.LORE, 1))),
                 watch("this evolves", "evolves", Triggers::evolves, CardType.CREATURE,
                         (test, cards) -> test.fixturesResolve(cards, new EvolveEffect(), EvolveEffectHandler.class,
                                 EvolveEffectHandler::resolve)),
@@ -1705,7 +1714,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
                             test.harness.passBothPriorities();
                         }),
                 collected("you pay life", "youPayLife", Triggers::youPayLife,
-                        (test, collection) -> collection.checkLifePaymentTriggers(test.gd, test.player1.getId(), 2)),
+                        (test, collection) -> test.gd.rulesEvents.occur(new LifeEvent.Paid(test.player1.getId(), 2))),
                 watch("a Saga's chapter I", "chapter", () -> Triggers.chapter(1), CardType.ENCHANTMENT,
                         (test, cards) -> {
                             cards.forEach(card -> card.addTrigger(Triggers.chapter(2), new GainLifeEffect(1)));
@@ -2125,6 +2134,11 @@ class TriggerRouteRecordTest extends BaseCardTest {
         harness.inMutationScope(() -> removal.tryDestroyPermanent(gd, permanent));
     }
 
+    /** Emits {@code event} as an occurrence of its own, as the service that makes the event happen does. */
+    private static void emit(GameData gameData, RulesEvent event) {
+        gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(event));
+    }
+
     /** Has the engine's trigger collection report an event, as the service that makes the event happen does. */
     private void collect(Consumer<TriggerCollectionService> collector) {
         TriggerCollectionService collection = bean(TriggerCollectionService.class);
@@ -2316,7 +2330,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
         StackEntry copied = new StackEntry(StackEntryType.INSTANT_SPELL, card("Copied", CardType.INSTANT),
                 copier.getId(), "Copied", List.of(new GainLifeEffect(1)));
         gd.stack.add(copied);
-        collect(collection -> collection.checkSpellCopyTriggers(gd, copied));
+        collect(collection -> emit(gd, new SpellEvent.Copied(copied, copied.getControllerId())));
     }
 
     /** A helper creature of {@code player} has its "{T}: You gain 1 life" activated. */
@@ -2427,7 +2441,8 @@ class TriggerRouteRecordTest extends BaseCardTest {
             permanent.setCounterCount(kind, 1);
         }
         mainPhaseOf(player1);
-        collect(collection -> collection.checkLoyaltyCounterRemovalTriggers(gd));
+        collect(collection -> gd.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.REMOVED, null,
+                0)));
     }
 
     /** {@code placer} puts a +1/+1 counter on a creature of player2. */

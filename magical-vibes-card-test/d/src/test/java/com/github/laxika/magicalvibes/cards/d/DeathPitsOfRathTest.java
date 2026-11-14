@@ -49,6 +49,23 @@ class DeathPitsOfRathTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A face-down Death Pits of Rath has no abilities, so damage to a creature triggers nothing")
+    void faceDownDeathPitsDoesNotTrigger() {
+        Permanent pits = harness.addToBattlefieldAndReturn(player1, new DeathPitsOfRath());
+        // A manifested Death Pits is a 2/2 face-down creature with no abilities (CR 708.2).
+        pits.setFaceDown(2, 2, java.util.Set.of(com.github.laxika.magicalvibes.model.CardType.CREATURE));
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        UUID giantId = harness.getPermanentId(player2, "Hill Giant");
+        harness.castAndResolveInstant(player1, 0, giantId);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
+
+    @Test
     @DisplayName("Each creature dealt damage by the same spell gets its own trigger")
     void eachCreatureDealtDamageInOneEventTriggersIndependently() {
         harness.addToBattlefield(player1, new DeathPitsOfRath());

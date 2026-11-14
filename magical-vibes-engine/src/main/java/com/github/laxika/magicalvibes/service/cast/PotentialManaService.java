@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -33,7 +34,6 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.effect.manafx.ManaAbilityEffectHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.TapWatch;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.github.laxika.magicalvibes.service.effect.ManaProductionSupport;
@@ -364,7 +364,7 @@ public class PotentialManaService {
                 return;
             }
             found[0] = WatchedAbilities.rawEffects(WatchedAbilities.printed(attachment.getCard(),
-                    TapWatch.ON_ANY_PLAYER_TAPS_LAND)).stream()
+                    Triggers.playerTapsLandForMana(), Zone.BATTLEFIELD)).stream()
                     .filter(AddManaOnEnchantedLandTapEffect.class::isInstance)
                     .map(AddManaOnEnchantedLandTapEffect.class::cast)
                     .map(AddManaOnEnchantedLandTapEffect::mana)

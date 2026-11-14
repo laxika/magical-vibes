@@ -25,7 +25,7 @@ import java.util.Objects;
  *                 or more goaded creatures" are filters their own collectors read
  *                 ({@link Triggers#creatureWithSameNameDealsCombatDamageToPlayer()},
  *                 {@link Triggers#goadedCreaturesDealCombatDamageToOpponent()}); any other filter the collectors read
- *                 from the ability ({@code CombatAbilityReader}), so {@link #watchKey()} drops it
+ *                 from the ability, so {@link #watchKey()} drops it
  */
 public record CombatTrigger(CombatEvent event, ObjectRelation relation, PermanentPredicate filter) implements Trigger {
 
@@ -52,8 +52,8 @@ public record CombatTrigger(CombatEvent event, ObjectRelation relation, Permanen
     }
 
     /**
-     * The trigger without the filter the combat collectors read from the ability, so the {@code CombatWatch} of the
-     * unfiltered trigger finds the ability. The same-name and goaded filters name collectors of their own and stay.
+     * The trigger without the filter the combat collectors read from the ability, so a lookup by the unfiltered
+     * trigger finds the ability. The same-name and goaded filters name collectors of their own and stay.
      */
     @Override
     public Trigger watchKey() {

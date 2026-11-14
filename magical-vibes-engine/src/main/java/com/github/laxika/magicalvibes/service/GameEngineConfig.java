@@ -17,14 +17,6 @@ import com.github.laxika.magicalvibes.service.trigger.CollectsTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsWatchTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsWatchTriggers;
-import com.github.laxika.magicalvibes.service.trigger.CollectsCounterTrigger;
-import com.github.laxika.magicalvibes.service.trigger.CollectsCounterTriggers;
-import com.github.laxika.magicalvibes.service.trigger.CollectsDamageTrigger;
-import com.github.laxika.magicalvibes.service.trigger.CollectsDamageTriggers;
-import com.github.laxika.magicalvibes.service.trigger.CollectsLifeTrigger;
-import com.github.laxika.magicalvibes.service.trigger.CollectsLifeTriggers;
-import com.github.laxika.magicalvibes.service.trigger.CollectsTapTrigger;
-import com.github.laxika.magicalvibes.service.trigger.CollectsTapTriggers;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.SmartInitializingSingleton;
@@ -197,62 +189,6 @@ public class GameEngineConfig implements SmartInitializingSingleton {
                     }
                 }
 
-                CollectsDamageTrigger damageSingle = method.getAnnotation(CollectsDamageTrigger.class);
-                if (damageSingle != null) {
-                    registerTriggerHandler(bean, method, damageSingle.watch(), damageSingle.value());
-                    count++;
-                }
-
-                CollectsDamageTriggers damageContainer = method.getAnnotation(CollectsDamageTriggers.class);
-                if (damageContainer != null) {
-                    for (CollectsDamageTrigger cdt : damageContainer.value()) {
-                        registerTriggerHandler(bean, method, cdt.watch(), cdt.value());
-                        count++;
-                    }
-                }
-
-                CollectsCounterTrigger counterSingle = method.getAnnotation(CollectsCounterTrigger.class);
-                if (counterSingle != null) {
-                    registerTriggerHandler(bean, method, counterSingle.watch(), counterSingle.value());
-                    count++;
-                }
-
-                CollectsCounterTriggers counterContainer = method.getAnnotation(CollectsCounterTriggers.class);
-                if (counterContainer != null) {
-                    for (CollectsCounterTrigger cct : counterContainer.value()) {
-                        registerTriggerHandler(bean, method, cct.watch(), cct.value());
-                        count++;
-                    }
-                }
-
-                CollectsTapTrigger tapSingle = method.getAnnotation(CollectsTapTrigger.class);
-                if (tapSingle != null) {
-                    registerTriggerHandler(bean, method, tapSingle.watch(), tapSingle.value());
-                    count++;
-                }
-
-                CollectsTapTriggers tapContainer = method.getAnnotation(CollectsTapTriggers.class);
-                if (tapContainer != null) {
-                    for (CollectsTapTrigger clt : tapContainer.value()) {
-                        registerTriggerHandler(bean, method, clt.watch(), clt.value());
-                        count++;
-                    }
-                }
-
-                CollectsLifeTrigger lifeSingle = method.getAnnotation(CollectsLifeTrigger.class);
-                if (lifeSingle != null) {
-                    registerTriggerHandler(bean, method, lifeSingle.watch(), lifeSingle.value());
-                    count++;
-                }
-
-                CollectsLifeTriggers lifeContainer = method.getAnnotation(CollectsLifeTriggers.class);
-                if (lifeContainer != null) {
-                    for (CollectsLifeTrigger clt : lifeContainer.value()) {
-                        registerTriggerHandler(bean, method, clt.watch(), clt.value());
-                        count++;
-                    }
-                }
-
             }
         }
 
@@ -265,9 +201,7 @@ public class GameEngineConfig implements SmartInitializingSingleton {
 
     /**
      * Registers a handler for {@code key}, an {@code EffectSlot}, a {@code ZoneChangeWatch}, a
-     * {@code SpellAbilityWatch}, a {@code CombatWatch}, a {@code DamageWatch}, a {@code CounterWatch}, a
-     * {@code LibraryWatch}, a {@code TapWatch}, a {@code LifeWatch}, a {@code SagaWatch} or an
-     * {@code ActionWatch}.
+     * {@code LibraryWatch}, a {@code SagaWatch} or an {@code ActionWatch}.
      */
     private void registerTriggerHandler(Object bean, Method method, Object key, Class<? extends CardEffect> effectClass) {
         triggerCollectorRegistry.register(key, effectClass, TriggerCollectorRegistry.handlerOf(bean, method,

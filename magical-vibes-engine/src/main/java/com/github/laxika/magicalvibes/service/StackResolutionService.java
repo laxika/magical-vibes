@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SpellweaverVoluteSupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -1434,7 +1436,7 @@ public class StackResolutionService {
                     gameData.id, entry.getDescription(), entry.getTargetId());
 
             gameData.removeResolvingSpellFromStack(entry);
-            triggerCollectionService.checkSelfSpellCounteredOrFizzledTriggers(gameData, entry);
+            CounterSupport.emitCounteredOrFizzled(gameData, entry);
 
             // Fizzled spells still go to graveyard (copies cease to exist per rule 707.10a)
             // Flashback spells are exiled instead (CR 702.33a)
@@ -1533,7 +1535,7 @@ public class StackResolutionService {
      */
     private void collectCardAdvantageTriggers(GameData gameData, StackEntry entry) {
         if (CardAdvantagePostResolutionService.causedCardAdvantage(gameData, entry)) {
-            triggerCollectionService.checkSpellCardAdvantageTriggers(gameData, entry);
+            gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(new SpellEvent.CardAdvantage(new StackEntry(entry))));
         }
     }
 

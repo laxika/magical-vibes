@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.l.LandCap;
 import com.github.laxika.magicalvibes.cards.g.GiantOyster;
@@ -204,7 +205,7 @@ class FreyalisesWindsTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new BalduvianBears());
         bears.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, bears));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(bears, null, true)));
         resolveAllTriggers();
 
         assertThat(bears.getCounterCount(CounterType.WIND)).isEqualTo(2);
@@ -238,7 +239,7 @@ class FreyalisesWindsTest extends BaseCardTest {
     private void tapAndResolve(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true)));
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
     }
 

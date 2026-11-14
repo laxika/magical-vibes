@@ -21,13 +21,13 @@ import java.util.Objects;
  *                 they control". An event about you alone (energy, proliferate, counters on a permanent or player) is
  *                 {@link ObjectRelation#ANY}
  * @param filter    what that permanent must be, or {@code null} for any permanent: a creature, a Human, a non-Hydra
- *                  creature, a Hero, a planeswalker, a Saga. The engine's counter collectors check it
+ *                  creature, a Hero, a planeswalker, a Saga. The engine's counter matchers check it
  * @param qualifier what that permanent must also be, or {@code null}: "another colorless creature" is
  *                  {@code Triggers.youPutPlusOneCountersOnAnotherCreature().withFilter(new
- *                  PermanentIsColorlessPredicate())}. The counter collectors read it from the ability, through
- *                  {@code CounterAbilityReader}, so {@link #watchKey()} drops it
+ *                  PermanentIsColorlessPredicate())}. The counter matchers read it from the ability, through
+ *                  {@code CounterTriggers}, so {@link #watchKey()} drops it
  * @param counterKind the one kind of counter the event is about where the event doesn't say it, or {@code null}: "the
- *                    last intervention counter" of {@link CounterEvent#YOU_REMOVE_LAST_COUNTER}. The collector reads
+ *                    last intervention counter" of {@link CounterEvent#YOU_REMOVE_LAST_COUNTER}. The matcher reads
  *                    it from the ability as it does the qualifier, so {@link #watchKey()} drops it
  */
 public record CounterTrigger(CounterEvent event, ObjectRelation relation, PermanentPredicate filter,
@@ -79,14 +79,14 @@ public record CounterTrigger(CounterEvent event, ObjectRelation relation, Perman
     }
 
     /**
-     * The trigger the {@code CounterWatch} collectors read this one's abilities by: without its {@link #qualifier},
-     * and, for the events no collector of their own reads, with the event whose collector reads them. "You put
-     * counters on a creature you control" and "you put +1/+1 counters on this" are read by the collectors of the
+     * The trigger the matchers ({@code CounterTriggers}) read this one's abilities by: without its {@link #qualifier},
+     * and, for the events no matcher of their own reads, with the event whose matcher reads them. "You put
+     * counters on a creature you control" and "you put +1/+1 counters on this" are read by the matchers of the
      * event about any player ({@link CounterEvent#COUNTERS_PUT}, {@link CounterEvent#PLUS_ONE_COUNTERS_PUT}), "you
      * remove a time counter from this card while it's exiled" by the one of
      * {@link CounterEvent#TIME_COUNTER_REMOVED_IN_EXILE}, and "a +1/+1 counter is put on this", once for each counter,
-     * by the one of {@link CounterEvent#PLUS_ONE_COUNTERS_PUT}. Those collectors judge who put or removed the counters,
-     * or trigger once for each counter, from the ability's own event ({@code CounterAbilityReader}).
+     * by the one of {@link CounterEvent#PLUS_ONE_COUNTERS_PUT}. Those matchers judge who put or removed the counters,
+     * or trigger once for each counter, from the ability's own event ({@code CounterTriggers}).
      */
     @Override
     public Trigger watchKey() {
@@ -97,7 +97,7 @@ public record CounterTrigger(CounterEvent event, ObjectRelation relation, Perman
         return new CounterTrigger(watched, relation, filter);
     }
 
-    /** The event of {@link #watchKey()}: {@link #event}, or the event whose collector reads this one's abilities. */
+    /** The event of {@link #watchKey()}: {@link #event}, or the event whose matcher reads this one's abilities. */
     public CounterEvent watchedEvent() {
         return switch (event) {
             case YOU_PUT_COUNTERS -> relation == ObjectRelation.YOU_CONTROL ? CounterEvent.COUNTERS_PUT : event;

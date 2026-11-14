@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.c.ChromaticSphere;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.MinimusContainment;
@@ -98,7 +99,7 @@ class TemporalDistortionTest extends BaseCardTest {
 
         opponentCreature.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, opponentCreature));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(opponentCreature, null, true)));
 
         assertThat(gd.stack).isEmpty();
         assertThat(opponentCreature.getCounterCount(CounterType.HOURGLASS)).isZero();
@@ -107,7 +108,7 @@ class TemporalDistortionTest extends BaseCardTest {
     private void tapAndResolve(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true)));
         resolveAllTriggers();
     }
 
@@ -159,7 +160,7 @@ class TemporalDistortionTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new RagingKavu());
         creature.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, creature));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(creature, null, true)));
         assertThat(gd.stack).hasSize(1);
 
         gd.playerBattlefields.get(player1.getId()).remove(distortion);

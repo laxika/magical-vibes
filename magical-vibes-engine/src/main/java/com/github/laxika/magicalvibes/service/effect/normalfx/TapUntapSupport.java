@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -66,7 +67,7 @@ public class TapUntapSupport {
             return false;
         }
         if (!wasTapped) {
-            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent, tappingPlayerId);
+            gameData.rulesEvents.occur(new TapEvent.BecameTapped(permanent, tappingPlayerId, false));
             return true;
         }
         return false;
@@ -88,7 +89,7 @@ public class TapUntapSupport {
             creatureControlService.onSourceUntapped(gameData, permanent);
             // Giant Oyster: the -1/-1 counters its untap lock accrued go away with the lock.
             untapLockReleaseService.releaseUntapLocks(gameData, permanent);
-            triggerCollectionService.checkBecomesUntappedTriggers(gameData, permanent);
+            gameData.rulesEvents.occur(new TapEvent.BecameUntapped(permanent));
             return true;
         }
         return false;

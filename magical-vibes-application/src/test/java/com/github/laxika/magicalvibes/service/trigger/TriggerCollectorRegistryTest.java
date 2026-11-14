@@ -36,9 +36,9 @@ class TriggerCollectorRegistryTest {
         @DisplayName("Returns false when no handler is registered")
         void returnsFalseWhenNoHandler() {
             var match = new TriggerMatchContext(gameData, null, UUID.randomUUID(), new DrawCardEffect(1));
-            var ctx = new TriggerContext.LandTap(UUID.randomUUID(), UUID.randomUUID());
+            var ctx = new TriggerContext.Draw(UUID.randomUUID());
 
-            boolean result = registry.dispatch(match, TapWatch.ON_ANY_PLAYER_TAPS_LAND, ctx);
+            boolean result = registry.dispatch(match, LibraryWatch.ON_CONTROLLER_DRAWS, ctx);
 
             assertThat(result).isFalse();
         }
@@ -47,13 +47,13 @@ class TriggerCollectorRegistryTest {
         @DisplayName("Dispatches an ability with an effect of a registered class to that class's handler")
         void dispatchesToExactMatch() {
             boolean[] called = {false};
-            registry.register(TapWatch.ON_ANY_PLAYER_TAPS_LAND, DrawCardEffect.class,
+            registry.register(LibraryWatch.ON_CONTROLLER_DRAWS, DrawCardEffect.class,
                     (match, context) -> { called[0] = true; return true; });
 
             var match = new TriggerMatchContext(gameData, null, UUID.randomUUID(), new DrawCardEffect(1));
-            var ctx = new TriggerContext.LandTap(UUID.randomUUID(), UUID.randomUUID());
+            var ctx = new TriggerContext.Draw(UUID.randomUUID());
 
-            boolean result = registry.dispatch(match, TapWatch.ON_ANY_PLAYER_TAPS_LAND, ctx);
+            boolean result = registry.dispatch(match, LibraryWatch.ON_CONTROLLER_DRAWS, ctx);
 
             assertThat(result).isTrue();
             assertThat(called[0]).isTrue();
@@ -63,14 +63,14 @@ class TriggerCollectorRegistryTest {
         @DisplayName("Hands a handler the whole ability: every effect, in order, in one dispatch (CR 603.3)")
         void dispatchesTheWholeAbility() {
             List<List<CardEffect>> handled = new ArrayList<>();
-            registry.register(LifeWatch.ON_CONTROLLER_GAINS_LIFE, CardEffect.class,
+            registry.register(LibraryWatch.ON_OPPONENT_DRAWS, CardEffect.class,
                     (match, context) -> { handled.add(match.effects()); return true; });
             var draw = new DrawCardEffect(1);
             var gainLife = new GainLifeEffect(1);
 
             boolean result = registry.dispatch(new TriggerMatchContext(gameData, null, UUID.randomUUID(),
-                    List.of(draw, gainLife)), LifeWatch.ON_CONTROLLER_GAINS_LIFE,
-                    new TriggerContext.LifeGain(UUID.randomUUID(), 1));
+                    List.of(draw, gainLife)), LibraryWatch.ON_OPPONENT_DRAWS,
+                    new TriggerContext.Draw(UUID.randomUUID()));
 
             assertThat(result).isTrue();
             assertThat(handled).containsExactly(List.of(draw, gainLife));
@@ -81,15 +81,15 @@ class TriggerCollectorRegistryTest {
         void classKeyedHandlerRoutesTheAbilityContainingItsClass() {
             CardEffect[] keyed = {null};
             List<List<CardEffect>> defaulted = new ArrayList<>();
-            registry.register(LifeWatch.ON_CONTROLLER_GAINS_LIFE, DrawCardEffect.class,
+            registry.register(LibraryWatch.ON_OPPONENT_DRAWS, DrawCardEffect.class,
                     (match, context) -> { keyed[0] = match.effectOf(DrawCardEffect.class); return true; });
-            registry.register(LifeWatch.ON_CONTROLLER_GAINS_LIFE, CardEffect.class,
+            registry.register(LibraryWatch.ON_OPPONENT_DRAWS, CardEffect.class,
                     (match, context) -> { defaulted.add(match.effects()); return true; });
             var draw = new DrawCardEffect(1);
 
             registry.dispatch(new TriggerMatchContext(gameData, null, UUID.randomUUID(),
-                    List.of(new GainLifeEffect(1), draw)), LifeWatch.ON_CONTROLLER_GAINS_LIFE,
-                    new TriggerContext.LifeGain(UUID.randomUUID(), 1));
+                    List.of(new GainLifeEffect(1), draw)), LibraryWatch.ON_OPPONENT_DRAWS,
+                    new TriggerContext.Draw(UUID.randomUUID()));
 
             assertThat(keyed[0]).isSameAs(draw);
             assertThat(defaulted).isEmpty();
@@ -100,16 +100,16 @@ class TriggerCollectorRegistryTest {
         void doesNotUnwrapMayEffect() {
             boolean[] innerCalled = {false};
             List<List<CardEffect>> defaultHandled = new ArrayList<>();
-            registry.register(SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, DrawCardEffect.class,
+            registry.register(ZoneChangeWatch.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD, DrawCardEffect.class,
                     (match, context) -> { innerCalled[0] = true; return true; });
-            registry.register(SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, CardEffect.class,
+            registry.register(ZoneChangeWatch.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD, CardEffect.class,
                     (match, context) -> { defaultHandled.add(match.effects()); return true; });
 
             var mayEffect = new MayEffect(new DrawCardEffect(1), "Do you want to?");
             var match = new TriggerMatchContext(gameData, null, UUID.randomUUID(), mayEffect);
             var ctx = new TriggerContext.SpellCast(null, UUID.randomUUID(), true);
 
-            boolean result = registry.dispatch(match, SpellAbilityWatch.ON_ANY_PLAYER_CASTS_SPELL, ctx);
+            boolean result = registry.dispatch(match, ZoneChangeWatch.ON_ALLY_TOKEN_ENTERS_BATTLEFIELD, ctx);
 
             assertThat(result).isTrue();
             assertThat(innerCalled[0]).isFalse();
@@ -141,13 +141,13 @@ class TriggerCollectorRegistryTest {
         @DisplayName("Falls back to CardEffect.class default handler")
         void fallsBackToDefaultHandler() {
             boolean[] defaultCalled = {false};
-            registry.register(DamageWatch.ON_DEALT_DAMAGE, CardEffect.class,
+            registry.register(LibraryWatch.ON_OPPONENT_DISCARDS, CardEffect.class,
                     (match, context) -> { defaultCalled[0] = true; return true; });
 
             var match = new TriggerMatchContext(gameData, null, UUID.randomUUID(), new DrawCardEffect(1));
             var ctx = new TriggerContext.DamageToCreature(null, 2, UUID.randomUUID());
 
-            boolean result = registry.dispatch(match, DamageWatch.ON_DEALT_DAMAGE, ctx);
+            boolean result = registry.dispatch(match, LibraryWatch.ON_OPPONENT_DISCARDS, ctx);
 
             assertThat(result).isTrue();
             assertThat(defaultCalled[0]).isTrue();
@@ -157,11 +157,11 @@ class TriggerCollectorRegistryTest {
         @DisplayName("Does not dispatch to handler in wrong slot")
         void doesNotDispatchToWrongSlot() {
             boolean[] called = {false};
-            registry.register(TapWatch.ON_ANY_PLAYER_TAPS_LAND, DrawCardEffect.class,
+            registry.register(LibraryWatch.ON_CONTROLLER_DRAWS, DrawCardEffect.class,
                     (match, context) -> { called[0] = true; return true; });
 
             var match = new TriggerMatchContext(gameData, null, UUID.randomUUID(), new DrawCardEffect(1));
-            var ctx = new TriggerContext.LandTap(UUID.randomUUID(), UUID.randomUUID());
+            var ctx = new TriggerContext.Draw(UUID.randomUUID());
 
             // Wrong slot
             boolean result = registry.dispatch(match, LibraryWatch.ON_OPPONENT_DISCARDS, ctx);
@@ -178,10 +178,10 @@ class TriggerCollectorRegistryTest {
         @Test
         @DisplayName("Throws on a second handler for the same watch and effect class")
         void rejectsDuplicateKey() {
-            registry.register(LifeWatch.ON_CONTROLLER_GAINS_LIFE, DrawCardEffect.class,
+            registry.register(LibraryWatch.ON_OPPONENT_DRAWS, DrawCardEffect.class,
                     (match, context) -> true);
 
-            assertThatThrownBy(() -> registry.register(LifeWatch.ON_CONTROLLER_GAINS_LIFE, DrawCardEffect.class,
+            assertThatThrownBy(() -> registry.register(LibraryWatch.ON_OPPONENT_DRAWS, DrawCardEffect.class,
                     (match, context) -> false))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("DrawCardEffect");
@@ -190,9 +190,9 @@ class TriggerCollectorRegistryTest {
         @Test
         @DisplayName("Accepts the same effect class on another watch")
         void acceptsSameClassOnAnotherWatch() {
-            registry.register(LifeWatch.ON_CONTROLLER_GAINS_LIFE, DrawCardEffect.class,
+            registry.register(LibraryWatch.ON_OPPONENT_DRAWS, DrawCardEffect.class,
                     (match, context) -> true);
-            registry.register(LifeWatch.ON_CONTROLLER_LOSES_LIFE, DrawCardEffect.class,
+            registry.register(LibraryWatch.ON_CONTROLLER_DRAWS, DrawCardEffect.class,
                     (match, context) -> true);
 
             assertThat(registry.size()).isEqualTo(2);
@@ -213,7 +213,6 @@ class TriggerCollectorRegistryTest {
 
             // Create a minimal service-like object with an annotated method
             // We can't easily test this without a real collector, so just verify size
-            // After scanning SpellCastTriggerCollectorService, we expect 11 handlers
         }
     }
 }

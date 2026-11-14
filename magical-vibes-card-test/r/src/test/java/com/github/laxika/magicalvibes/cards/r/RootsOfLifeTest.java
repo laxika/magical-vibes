@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -201,6 +202,6 @@ class RootsOfLifeTest extends BaseCardTest {
     private void tap(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true)));
     }
 }

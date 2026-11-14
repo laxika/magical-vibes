@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.spell;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
+import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -1536,8 +1538,9 @@ class SpellCastingServiceTest {
             // Verify spell went on stack
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getLast().getEntryType()).isEqualTo(StackEntryType.CREATURE_SPELL);
-            verify(triggerCollectionService).checkEnchantedPermanentTapTriggers(eq(gd), any(Permanent.class));
-            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(convokeCard), eq(player1Id), eq(Zone.HAND), isNull(), anyBoolean());
+            assertThat(rulesEvents(gd)).anyMatch(TapEvent.BecameTapped.class::isInstance);
+            verify(triggerCollectionService).checkSpellCastTriggers(eq(gd), eq(convokeCard), eq(player1Id),
+                    eq(Zone.HAND), isNull(), anyBoolean());
             verify(turnProgressionService).resolveAutoPass(gd);
         }
     }
@@ -1876,4 +1879,9 @@ class SpellCastingServiceTest {
     }
 
     // =========================================================================
+
+    /** The rules events the game emitted so far, in order. */
+    private static List<RulesEvent> rulesEvents(GameData gameData) {
+        return gameData.rulesEvents.pending().stream().flatMap(batch -> batch.events().stream()).toList();
+    }
 }

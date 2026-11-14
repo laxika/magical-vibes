@@ -1,22 +1,13 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TrainEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.effect.ConditionContext;
-import com.github.laxika.magicalvibes.service.trigger.CounterAbilityReader;
-import com.github.laxika.magicalvibes.service.trigger.CounterWatch;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -31,8 +22,6 @@ public class TrainEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
-    private final GameLogService gameLogService;
-    private final TriggeredAbilityStackService triggeredAbilityStackService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -53,15 +42,7 @@ public class TrainEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        Card card = source.getCard();
-        UUID controllerId = entry.getControllerId();
-        for (TriggeredAbility ability : CounterAbilityReader.printed(card, CounterWatch.ON_SELF_TRAINS)) {
-            if (triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability, card, source,
-                    controllerId, card.getName() + "'s training ability",
-                    ConditionContext.forPermanent(source, controllerId),
-                    TriggeredAbilityRequest.TriggerRecord.NONE))) {
-                gameLogService.append(gameData, GameLog.abilityTriggers(card));
-            }
-        }
+        gameData.rulesEvents.occur(CounterChangeEvent.of(CounterChangeEvent.Kind.TRAINED, source,
+                entry.getControllerId(), null, 1));
     }
 }

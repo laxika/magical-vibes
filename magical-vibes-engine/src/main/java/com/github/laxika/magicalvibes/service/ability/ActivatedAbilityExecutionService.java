@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.model.rules.SpellEvent;
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -687,7 +690,7 @@ public class ActivatedAbilityExecutionService {
         if (ability.isRequiresTap()) {
             permanent.tap();
             int stackBefore = gameData.stack.size();
-            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+            gameData.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
             deferredTapTriggers = new ArrayList<>(gameData.stack.subList(stackBefore, gameData.stack.size()));
             gameData.stack.subList(stackBefore, gameData.stack.size()).clear();
             if (permanent.isUntapAfterTapCost()) {
@@ -917,7 +920,7 @@ public class ActivatedAbilityExecutionService {
                 throw new IllegalStateException("The granting Equipment is already tapped");
             }
             equipment.tap();
-            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, equipment);
+            gameData.rulesEvents.occur(new TapEvent.BecameTapped(equipment, null, true));
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " taps ", equipment.getCard(), " as a cost."));
         }
@@ -956,7 +959,7 @@ public class ActivatedAbilityExecutionService {
                 : 0;
         permanentCounterSupport.fireLoyaltyCountersPutOnControlledPlaneswalkersTriggers(
                 gameData, playerId, loyaltyCountersAdded);
-        triggerCollectionService.checkLoyaltyCounterRemovalTriggers(gameData);
+        gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.REMOVED, null, 0));
         List<StackEntry> deferredCostTriggers = new ArrayList<>();
         if (!gameData.pendingActivatedAbilityCostTriggers.isEmpty()) {
             deferredCostTriggers.addAll(gameData.pendingActivatedAbilityCostTriggers);
@@ -1040,9 +1043,8 @@ public class ActivatedAbilityExecutionService {
                 tagLegendarySourceMana(gameData, permanent, pool, manaTypesBefore);
                 tagCopyGrantingMana(snapshotEffects, pool, regularManaBefore);
                 int stackBeforeManaResolutionTriggers = gameData.stack.size();
-                triggerCollectionService.checkManaAbilityResolutionTriggers(
-                        gameData, permanent, playerId,
-                        pool.getTotalAllMana() - totalManaBefore);
+                int manaProduced = pool.getTotalAllMana() - totalManaBefore;
+                gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(new SpellEvent.ManaAbilityResolved(permanent, playerId, manaProduced)));
                 if (gameData.stack.size() > stackBeforeManaResolutionTriggers) {
                     List<StackEntry> manaResolutionTriggers = new ArrayList<>(
                             gameData.stack.subList(stackBeforeManaResolutionTriggers, gameData.stack.size()));
@@ -1051,19 +1053,19 @@ public class ActivatedAbilityExecutionService {
                 }
             }
             if (ability.isRequiresTap()) {
-                triggerCollectionService.checkAnyPlayerTapsPermanentForManaTriggers(
-                        gameData, playerId, permanent.getId(), manaTypesBefore, manaTypeChoicePending);
+                gameData.rulesEvents.occur(new TapEvent.PermanentTappedForMana(playerId, permanent, manaTypesBefore,
+                        manaTypeChoicePending, true));
             }
             if (ability.isRequiresTap()) {
-                triggerCollectionService.checkNonlandPermanentTapForManaTriggers(
-                        gameData, playerId, permanent, manaTypesBefore, manaTypeChoicePending);
+                gameData.rulesEvents.occur(new TapEvent.PermanentTappedForMana(playerId, permanent, manaTypesBefore,
+                        manaTypeChoicePending, false));
             }
             if (ability.isRequiresTap() && gameQueryService.isCreature(gameData, permanent)) {
-                triggerCollectionService.checkCreatureTapForManaTriggers(gameData, playerId, permanent.getId());
+                gameData.rulesEvents.occur(new TapEvent.CreatureTappedForMana(playerId, permanent.getId()));
             }
             if (ability.isRequiresTap()) {
                 int stackBeforeSelfTapTriggers = gameData.stack.size();
-                triggerCollectionService.checkSelfTappedForManaTriggers(gameData, permanent, playerId);
+                gameData.rulesEvents.occur(new TapEvent.SelfTappedForMana(permanent, playerId));
                 if (gameData.stack.size() > stackBeforeSelfTapTriggers) {
                     List<StackEntry> deferredSelfTapTriggers = new ArrayList<>(
                             gameData.stack.subList(stackBeforeSelfTapTriggers, gameData.stack.size()));
@@ -1084,8 +1086,7 @@ public class ActivatedAbilityExecutionService {
                 int stackBeforeLandTapTriggers = gameData.stack.size();
                 Set<ManaColor> producedColors = newlyProducedManaTypes(
                         manaTypesBefore, pool.getAllManaTotals());
-                triggerCollectionService.checkLandTapTriggers(
-                        gameData, playerId, permanent.getId(), producedColors);
+                gameData.rulesEvents.occur(new TapEvent.LandTappedForMana(playerId, permanent.getId(), producedColors));
                 if (gameData.stack.size() > stackBeforeLandTapTriggers) {
                     List<StackEntry> deferredLandTapTriggers = new ArrayList<>(
                             gameData.stack.subList(stackBeforeLandTapTriggers, gameData.stack.size()));

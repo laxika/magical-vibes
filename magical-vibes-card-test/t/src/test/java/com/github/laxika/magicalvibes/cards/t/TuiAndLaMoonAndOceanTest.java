@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.b.BaboonSpirit;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -25,7 +26,7 @@ class TuiAndLaMoonAndOceanTest extends BaseCardTest {
 
         source.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, source));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(source, null, true)));
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
@@ -54,7 +55,7 @@ class TuiAndLaMoonAndOceanTest extends BaseCardTest {
 
         other.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, other));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(other, null, true)));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);

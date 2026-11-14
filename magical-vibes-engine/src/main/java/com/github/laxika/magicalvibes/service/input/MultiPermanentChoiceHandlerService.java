@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardPileDisposition;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -17,13 +19,10 @@ import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.PendingRagingRiver;
 import com.github.laxika.magicalvibes.model.PendingWhimsOfTheFates;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadChosenCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.EffectDuration;
@@ -3186,7 +3185,8 @@ public class MultiPermanentChoiceHandlerService {
                 } else if (gameData.playerIds.contains(permId)) {
                     if (gameData.playerExperienceCounters.getOrDefault(permId, 0) > 0) {
                         gameData.playerExperienceCounters.merge(permId, 1, Integer::sum);
-                        triggerCollectionService.checkYouPutCountersTriggers(gameData, playerId, 1);
+                        gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(
+                                CounterChangeEvent.Kind.YOU_PUT_COUNTERS, playerId, 1));
                         proliferatedPlayers.add(gameData.playerIdToName.get(permId));
                     }
                     if (gameData.playerEnergyCounters.getOrDefault(permId, 0) > 0) {
@@ -3194,8 +3194,10 @@ public class MultiPermanentChoiceHandlerService {
                         if (added > 0) {
                             gameData.setPlayerEnergyCounters(permId,
                                     gameData.playerEnergyCounters.get(permId) + added);
-                            triggerCollectionService.checkEnergyGainTriggers(gameData, permId, added);
-                            triggerCollectionService.checkYouPutCountersTriggers(gameData, playerId, added);
+                            gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.ENERGY,
+                                    permId, added));
+                            gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(
+                                    CounterChangeEvent.Kind.YOU_PUT_COUNTERS, playerId, added));
                             proliferatedPlayers.add(gameData.playerIdToName.get(permId));
                         }
                     }
@@ -3209,7 +3211,8 @@ public class MultiPermanentChoiceHandlerService {
                     if (placed > 0) {
                         int currentPoison = gameData.playerPoisonCounters.getOrDefault(permId, 0);
                         gameData.playerPoisonCounters.put(permId, currentPoison + placed);
-                        triggerCollectionService.checkYouPutCountersTriggers(gameData, playerId, placed);
+                        gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(
+                                CounterChangeEvent.Kind.YOU_PUT_COUNTERS, playerId, placed));
                         proliferatedPlayers.add(gameData.playerIdToName.get(permId));
                     }
                 }
@@ -3324,7 +3327,8 @@ public class MultiPermanentChoiceHandlerService {
             if (entry != null && !entry.getCounteredPermanentIdsThisResolution().contains(permanent.getId())) {
                 entry.getCounteredPermanentIdsThisResolution().add(permanent.getId());
             }
-            triggerCollectionService.checkYouPutCountersTriggers(gameData, playerId, totalPlaced);
+            gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.YOU_PUT_COUNTERS,
+                    playerId, totalPlaced));
         }
     }
 
@@ -3344,7 +3348,7 @@ public class MultiPermanentChoiceHandlerService {
                 Permanent perm = gameQueryService.findPermanentById(gameData, permId);
                 if (perm != null) {
                     perm.tap();
-                    triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm, playerId);
+                    gameData.rulesEvents.occur(new TapEvent.BecameTapped(perm, playerId, false));
                     tappedCards.add(perm.getCard());
                 }
             }
@@ -3390,7 +3394,7 @@ public class MultiPermanentChoiceHandlerService {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             if (permanent != null && !permanent.isTapped()) {
                 permanent.tap();
-                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent, playerId);
+                gameData.rulesEvents.occur(new TapEvent.BecameTapped(permanent, playerId, false));
                 tappedCards.add(permanent.getCard());
             }
         }
@@ -3426,7 +3430,7 @@ public class MultiPermanentChoiceHandlerService {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null && !perm.isTapped() && !perm.isTapRestrictedUnlessAttacking()) {
                 perm.tap();
-                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm, playerId);
+                gameData.rulesEvents.occur(new TapEvent.BecameTapped(perm, playerId, false));
                 tappedCards.add(perm.getCard());
             }
         }
@@ -3498,7 +3502,7 @@ public class MultiPermanentChoiceHandlerService {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null && !perm.isTapped()) {
                 perm.tap();
-                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm, playerId);
+                gameData.rulesEvents.occur(new TapEvent.BecameTapped(perm, playerId, false));
                 tappedCards.add(perm.getCard());
             }
         }
@@ -3587,7 +3591,7 @@ public class MultiPermanentChoiceHandlerService {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             if (permanent != null && !permanent.isTapped()) {
                 permanent.tap();
-                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent, playerId);
+                gameData.rulesEvents.occur(new TapEvent.BecameTapped(permanent, playerId, false));
                 tappedPermanents.add(permanent);
             }
         }

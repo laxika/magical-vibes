@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
+import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -422,8 +424,8 @@ class ActivatedAbilityExecutionServiceTest {
 
             service.completeActivationAfterCosts(gameData, player1, permanent, ability, effects, 0, null, null, false);
 
-            verify(triggerCollectionService).checkLandTapTriggers(
-                    eq(gameData), eq(player1Id), eq(permanent.getId()), any());
+            assertThat(rulesEvents(gameData)).anyMatch(event -> event instanceof TapEvent.LandTappedForMana land
+                    && land.tappingPlayerId().equals(player1Id) && land.landId().equals(permanent.getId()));
         }
 
         @Test
@@ -439,7 +441,7 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(perm.isTapped()).isTrue();
-            verify(triggerCollectionService).checkEnchantedPermanentTapTriggers(gameData, perm);
+            assertThat(rulesEvents(gameData)).contains(new TapEvent.BecameTapped(perm, null, true));
         }
 
         @Test
@@ -814,7 +816,7 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(perm.isTapped()).isTrue();
-            verify(triggerCollectionService).checkEnchantedPermanentTapTriggers(gameData, perm);
+            assertThat(rulesEvents(gameData)).contains(new TapEvent.BecameTapped(perm, null, true));
         }
 
         @Test
@@ -828,7 +830,7 @@ class ActivatedAbilityExecutionServiceTest {
             service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
 
             assertThat(perm.isTapped()).isFalse();
-            verify(triggerCollectionService, never()).checkEnchantedPermanentTapTriggers(any(), any());
+            assertThat(rulesEvents(gameData)).noneMatch(TapEvent.BecameTapped.class::isInstance);
         }
 
         @Test
@@ -1656,5 +1658,10 @@ class ActivatedAbilityExecutionServiceTest {
     private void verifyPainDamageDealtToController(Permanent perm, int damage) {
         verify(damageSupport).dealDamageToPlayer(eq(gameData), argThat(entry ->
                 perm.getId().equals(entry.getSourcePermanentId())), eq(player1Id), eq(damage));
+    }
+
+    /** The rules events the game emitted so far, in order. */
+    private static List<RulesEvent> rulesEvents(GameData gameData) {
+        return gameData.rulesEvents.pending().stream().flatMap(batch -> batch.events().stream()).toList();
     }
 }

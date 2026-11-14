@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.m.MishrasWorkshop;
 import com.github.laxika.magicalvibes.cards.s.SkySkiff;
 import com.github.laxika.magicalvibes.cards.s.SwiftReconfiguration;
@@ -144,7 +145,7 @@ class DepalaPilotExemplarTest extends BaseCardTest {
 
         dwarf.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, dwarf));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(dwarf, null, true)));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -204,7 +205,7 @@ class DepalaPilotExemplarTest extends BaseCardTest {
     private void tapAndResolve(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true)));
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
     }
 

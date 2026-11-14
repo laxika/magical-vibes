@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -72,8 +71,7 @@ class DealDamageToTargetCreatureEffectHandlerTest extends AbstractDamageHandlerT
 
                 // Lethal marked damage — the SBA check after resolution performs the destruction.
                 assertThat(bears.getMarkedDamage()).isEqualTo(3);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
-                        gd, bears, 3, player1Id, burnCard, null);
+                assertDamageToPermanent(bears, 3, player1Id, burnCard, null);
             }
 
             @Test

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FloodTheEngine;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -32,8 +34,8 @@ class VnwxtVerboseHostTest extends BaseCardTest {
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
 
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player2.getId(), 1);
-            harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player2.getId(), 1);
+            GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player2.getId(), 1);
+            GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player2.getId(), 1);
         });
 
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
@@ -173,7 +175,7 @@ class VnwxtVerboseHostTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         harness.inMutationScope(() ->
-                harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player2.getId(), 1));
+                GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player2.getId(), 1));
 
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
         assertThat(gd.stack).isEmpty();

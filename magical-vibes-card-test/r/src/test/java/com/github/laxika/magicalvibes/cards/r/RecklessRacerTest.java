@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
@@ -63,7 +64,7 @@ class RecklessRacerTest extends BaseCardTest {
 
         other.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, other));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(other, null, true)));
 
         assertThat(gd.stack).isEmpty();
     }
@@ -132,7 +133,7 @@ class RecklessRacerTest extends BaseCardTest {
     private void tapAndResolve(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true)));
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
     }
 }

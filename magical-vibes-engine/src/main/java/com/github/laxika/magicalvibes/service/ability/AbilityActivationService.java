@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.model.rules.SpellEvent;
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -505,22 +508,22 @@ public class AbilityActivationService {
             }
         }
         if (isLandSource && !manaTypeChoicePending) {
-            triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId(),
-                    newlyProducedManaTypes(manaTypesBefore, manaPool.getAllManaTotals()));
+            gameData.rulesEvents.occur(new TapEvent.LandTappedForMana(playerId, permanent.getId(),
+                    newlyProducedManaTypes(manaTypesBefore, manaPool.getAllManaTotals())));
         }
         if (isCreatureSource) {
-            triggerCollectionService.checkCreatureTapForManaTriggers(gameData, playerId, permanent.getId());
+            gameData.rulesEvents.occur(new TapEvent.CreatureTappedForMana(playerId, permanent.getId()));
         }
-        triggerCollectionService.checkSelfTappedForManaTriggers(gameData, permanent, playerId);
+        gameData.rulesEvents.occur(new TapEvent.SelfTappedForMana(permanent, playerId));
         if (!manaTypeChoicePending) {
-            triggerCollectionService.checkManaAbilityResolutionTriggers(
-                    gameData, permanent, playerId, manaPool.getTotalAllMana() - totalManaBefore);
+            int manaProduced = manaPool.getTotalAllMana() - totalManaBefore;
+            gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(new SpellEvent.ManaAbilityResolved(permanent, playerId, manaProduced)));
         }
-        triggerCollectionService.checkAnyPlayerTapsPermanentForManaTriggers(
-                gameData, playerId, permanent.getId(), manaTypesBefore, manaTypeChoicePending);
-        triggerCollectionService.checkNonlandPermanentTapForManaTriggers(
-                gameData, playerId, permanent, manaTypesBefore, manaTypeChoicePending);
-        triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+        gameData.rulesEvents.occur(new TapEvent.PermanentTappedForMana(playerId, permanent, manaTypesBefore,
+                manaTypeChoicePending, true));
+        gameData.rulesEvents.occur(new TapEvent.PermanentTappedForMana(playerId, permanent, manaTypesBefore,
+                manaTypeChoicePending, false));
+        gameData.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
         List<StackEntry> deferred = List.of();
         if (gameData.stack.size() > stackBeforeTriggers) {
             deferred = new ArrayList<>(
@@ -908,8 +911,8 @@ public class AbilityActivationService {
         log.info("Game {} - {} taps foreign land {} for mana", gameData.id, player.getUsername(), permanent.getCard().getName());
 
         int stackBeforeTriggers = gameData.stack.size();
-        triggerCollectionService.checkLandTapTriggers(gameData, playerId, permanent.getId(),
-                newlyProducedManaTypes(manaTypesBefore, manaPool.getAllManaTotals()));
+        gameData.rulesEvents.occur(new TapEvent.LandTappedForMana(playerId, permanent.getId(),
+                newlyProducedManaTypes(manaTypesBefore, manaPool.getAllManaTotals())));
         if (gameData.stack.size() > stackBeforeTriggers) {
             List<StackEntry> deferred = new ArrayList<>(
                     gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()));
@@ -5421,7 +5424,8 @@ public class AbilityActivationService {
                 }
             }
             if (placed) {
-                triggerCollectionService.checkYouPutCountersTriggers(gameData, playerId, placedCount);
+                gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.YOU_PUT_COUNTERS,
+                        playerId, placedCount));
                 if (gameQueryService.isCreature(gameData, permanent)) {
                     gameData.playersWhoPutCountersOnCreaturesThisTurn.add(playerId);
                 }
@@ -5443,7 +5447,8 @@ public class AbilityActivationService {
             int placedCount = gameQueryService.replaceCounters(gameData, permanent, c.counterType(), c.count());
             permanent.setCounterCount(c.counterType(), permanent.getCounterCount(c.counterType()) + placedCount);
             if (placedCount > 0) {
-                triggerCollectionService.checkYouPutCountersTriggers(gameData, playerId, placedCount);
+                gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.YOU_PUT_COUNTERS,
+                        playerId, placedCount));
             }
             if (gameQueryService.isCreature(gameData, permanent) && placedCount > 0) {
                 gameData.playersWhoPutCountersOnCreaturesThisTurn.add(playerId);
@@ -5464,7 +5469,7 @@ public class AbilityActivationService {
         if (abilityEffects.stream().anyMatch(e -> e instanceof TapEnchantedPermanentCost)) {
             Permanent enchanted = enchantedPermanentForTapCost(gameData, permanent);
             enchanted.tap();
-            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, enchanted);
+            gameData.rulesEvents.occur(new TapEvent.BecameTapped(enchanted, null, true));
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " taps ", enchanted.getCard(), " as a cost."));
         }
@@ -9181,7 +9186,7 @@ public class AbilityActivationService {
         for (int i = 0; i < tapCount; i++) {
             Permanent chosen = eligible.get(i);
             chosen.tap();
-            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
+            gameData.rulesEvents.occur(new TapEvent.BecameTapped(chosen, null, true));
             gameLogService.append(gameData, GameLog.textCardText(
                     gameData.playerIdToName.get(playerId) + " taps ", chosen.getCard(), " as a waterbend cost."));
         }
@@ -9270,7 +9275,7 @@ public class AbilityActivationService {
             if (!creature.tap()) {
                 throw new IllegalStateException("Selected creature can't become tapped unless it is attacking");
             }
-            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, creature);
+            gameData.rulesEvents.occur(new TapEvent.BecameTapped(creature, null, true));
             gameLogService.append(gameData,
                     GameLog.textCardText(player.getUsername() + " taps ", creature.getCard(), " as a cost."));
         }

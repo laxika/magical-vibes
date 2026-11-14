@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.k.KeenBuccaneer;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -26,8 +28,8 @@ class AmonkhetRacewayTest extends BaseCardTest {
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
 
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player2.getId(), 1);
-            harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player2.getId(), 1);
+            GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player2.getId(), 1);
+            GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player2.getId(), 1);
         });
 
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
@@ -35,7 +37,7 @@ class AmonkhetRacewayTest extends BaseCardTest {
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(2);
 
         harness.inMutationScope(() ->
-                harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player2.getId(), 1));
+                GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player2.getId(), 1));
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(2);
     }
@@ -94,7 +96,7 @@ class AmonkhetRacewayTest extends BaseCardTest {
         forceSorcerySpeed(player1);
 
         harness.inMutationScope(() ->
-                harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player2.getId(), 1));
+                GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player2.getId(), 1));
 
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, 1, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class)
@@ -114,8 +116,8 @@ class AmonkhetRacewayTest extends BaseCardTest {
         forceSorcerySpeed(player2);
 
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player2.getId(), 1);
-            harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player1.getId(), 1);
+            GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player2.getId(), 1);
+            GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player1.getId(), 1);
         });
 
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
@@ -143,7 +145,7 @@ class AmonkhetRacewayTest extends BaseCardTest {
 
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
         harness.inMutationScope(() ->
-                harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player2.getId(), 1));
+                GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player2.getId(), 1));
         harness.passBothPriorities();
 
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(2);
@@ -156,13 +158,13 @@ class AmonkhetRacewayTest extends BaseCardTest {
         harness.runStateBasedActions();
 
         harness.inMutationScope(() ->
-                harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player1.getId(), 1));
+                GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player1.getId(), 1));
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
         assertThat(gd.stack).isEmpty();
 
         gd.playerSpeeds.put(player1.getId(), 4);
         harness.inMutationScope(() ->
-                harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player2.getId(), 1));
+                GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player2.getId(), 1));
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(4);
         assertThat(gd.stack).isEmpty();
     }

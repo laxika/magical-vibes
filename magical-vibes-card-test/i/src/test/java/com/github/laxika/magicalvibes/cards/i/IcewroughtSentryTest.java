@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.f.FrostbridgeGuard;
 import com.github.laxika.magicalvibes.cards.s.SuccumbToTheCold;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -65,8 +66,8 @@ class IcewroughtSentryTest extends BaseCardTest {
         Permanent opponentCreature = addCreatureReady(player2, new FrostbridgeGuard());
 
         opponentCreature.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, opponentCreature, player2.getId()));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(opponentCreature,
+                player2.getId(), false)));
 
         assertThat(gqs.getEffectivePower(gd, sentry)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, sentry)).isEqualTo(3);

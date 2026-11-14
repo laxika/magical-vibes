@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.ai.simulation;
 
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.ai.interaction.ReplacementOrderChoice;
 import com.github.laxika.magicalvibes.ai.AiManaManager;
 import com.github.laxika.magicalvibes.ai.AiUtils;
@@ -75,7 +77,6 @@ import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.GameRegistry;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
-import com.github.laxika.magicalvibes.service.trigger.TapWatch;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import lombok.extern.slf4j.Slf4j;
 
@@ -1757,7 +1758,7 @@ public class GameSimulator {
      */
     private static boolean isControllerBeneficialLandAura(Card card) {
         return card.isAura() && WatchedAbilities.rawEffects(
-                WatchedAbilities.printed(card, TapWatch.ON_ANY_PLAYER_TAPS_LAND)).stream()
+                WatchedAbilities.printed(card, Triggers.playerTapsLandForMana(), Zone.BATTLEFIELD)).stream()
                 .anyMatch(AddManaOnEnchantedLandTapEffect.class::isInstance);
     }
 

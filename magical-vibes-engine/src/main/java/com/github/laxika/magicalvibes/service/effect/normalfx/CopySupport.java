@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DeferredSpellCopy;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -142,7 +143,7 @@ public class CopySupport {
         } else {
             gameData.stack.add(copyEntry);
             if (triggerCollectionService != null) {
-                triggerCollectionService.checkSpellCopyTriggers(gameData, copyEntry);
+                gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(new SpellEvent.Copied(copyEntry, copyEntry.getControllerId())));
             }
         }
 
@@ -255,7 +256,7 @@ public class CopySupport {
             gameData.stagedSpellCopies.removeFirst();
             gameData.stack.add(next);
             if (triggerCollectionService != null) {
-                triggerCollectionService.checkSpellCopyTriggers(gameData, next);
+                gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(new SpellEvent.Copied(next, next.getControllerId())));
                 if (next.getTargetId() != null || !next.getTargetIds().isEmpty()) {
                     triggerCollectionService.checkBecomesTargetOfSpellTriggers(gameData, next);
                 }
@@ -443,7 +444,7 @@ public class CopySupport {
                 && copyEntry.getEntryType() != StackEntryType.SORCERY_SPELL) {
             return;
         }
-        triggerCollectionService.checkSpellCopyTriggers(gameData, copyEntry);
+        gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(new SpellEvent.Copied(copyEntry, copyEntry.getControllerId())));
     }
 
     /**

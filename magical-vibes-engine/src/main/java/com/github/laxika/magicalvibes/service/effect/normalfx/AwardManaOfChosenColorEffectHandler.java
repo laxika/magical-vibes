@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -58,8 +59,8 @@ public class AwardManaOfChosenColorEffectHandler implements NormalEffectHandlerB
         }
         if (source != null && entry.getSourcePermanentId() != null
                 && gameQueryService.isLand(gameData, source)) {
-            triggerCollectionService.checkLandTapTriggers(gameData, entry.getControllerId(),
-                    entry.getSourcePermanentId(), java.util.Set.of(manaColor));
+            gameData.rulesEvents.occur(new TapEvent.LandTappedForMana(entry.getControllerId(),
+                    entry.getSourcePermanentId(), java.util.Set.of(manaColor)));
         }
 
         UUID controllerId = entry.getControllerId();

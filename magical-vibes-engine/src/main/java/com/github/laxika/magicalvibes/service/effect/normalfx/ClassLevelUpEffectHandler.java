@@ -7,7 +7,14 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.CounterWatch;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +23,8 @@ import org.springframework.stereotype.Component;
 public class ClassLevelUpEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final PermanentCounterSupport permanentCounterSupport;
+    private final TriggeredAbilityStackService triggeredAbilityStackService;
+    private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,13 +44,20 @@ public class ClassLevelUpEffectHandler implements NormalEffectHandlerBean {
         source.setClassLevel(levelUp.level());
         // The level's "when this Class becomes level N" abilities, each whole (CR 603.3); a level whose card writes the
         // ability's effects into its level-up is that ability.
-        CounterWatch watch = levelUp.level() == 2
-                ? CounterWatch.ON_SELF_REACHES_LEVEL_TWO : CounterWatch.ON_SELF_REACHES_LEVEL_THREE;
         if (levelUp.gainedEffects().isEmpty()) {
-            permanentCounterSupport.putOwnCounterAbilities(gameData, source, entry.getControllerId(), watch);
-        } else {
-            permanentCounterSupport.putOwnCounterAbility(gameData, new TriggeredAbility(watch.trigger(),
-                    levelUp.gainedEffects().toArray(CardEffect[]::new)), source, entry.getControllerId());
+            gameData.rulesEvents.occur(CounterChangeEvent.of(CounterChangeEvent.Kind.LEVEL_REACHED, source,
+                    entry.getControllerId(), null, levelUp.level()));
+            return;
+        }
+        Card card = source.getCard();
+        TriggeredAbility ability = new TriggeredAbility(levelUp.level() == 2
+                ? Triggers.reachesLevelTwo() : Triggers.reachesLevelThree(),
+                levelUp.gainedEffects().toArray(CardEffect[]::new));
+        if (triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability, card, source,
+                entry.getControllerId(), card.getName() + "'s triggered ability",
+                ConditionContext.forPermanent(source, entry.getControllerId()), stamped -> {
+                }))) {
+            gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));
         }
     }
 

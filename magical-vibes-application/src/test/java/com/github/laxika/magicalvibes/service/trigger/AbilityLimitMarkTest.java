@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SigiledSentinel;
@@ -205,9 +206,9 @@ class AbilityLimitMarkTest extends BaseCardTest {
         harness.inMutationScope(() -> {
             collection.beginPermanentTapTriggerBatch(gd);
             first.tap();
-            collection.checkEnchantedPermanentTapTriggers(gd, first, player1.getId());
+            gd.rulesEvents.occur(new TapEvent.BecameTapped(first, player1.getId(), false));
             second.tap();
-            collection.checkEnchantedPermanentTapTriggers(gd, second, player1.getId());
+            gd.rulesEvents.occur(new TapEvent.BecameTapped(second, player1.getId(), false));
             collection.endPermanentTapTriggerBatch(gd);
         });
 

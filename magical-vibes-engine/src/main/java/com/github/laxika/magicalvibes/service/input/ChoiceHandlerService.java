@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.rules.SpellEvent;
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -106,7 +109,7 @@ import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
 import com.github.laxika.magicalvibes.service.effect.replacement.mana.LandManaReplacementService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
-import com.github.laxika.magicalvibes.service.trigger.LandTapTriggerCollectorService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TapTriggers;
 import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
@@ -182,7 +185,7 @@ public class ChoiceHandlerService {
     private final EffectResolutionService effectResolutionService;
     private final com.github.laxika.magicalvibes.service.graveyard.GraveyardService graveyardService;
     private final com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService triggerCollectionService;
-    private final LandTapTriggerCollectorService landTapTriggerCollectorService;
+    private final TapTriggers tapTriggers;
     private final VotingFinishedSupport votingFinishedSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.VotingSupport votingSupport;
     private final org.springframework.beans.factory.ObjectProvider<MultiPermanentChoiceHandlerService>
@@ -2195,8 +2198,8 @@ public class ChoiceHandlerService {
                     .findFirst().orElse(null);
             if (departed != null && departed.getCard().hasType(CardType.LAND)) {
                 int stackBeforeTriggers = gameData.stack.size();
-                triggerCollectionService.checkLandTapTriggers(gameData, playerId, departed.getId(),
-                        newlyProducedColors(gameData, parkedActivation, playerId));
+                gameData.rulesEvents.occur(new TapEvent.LandTappedForMana(playerId, departed.getId(),
+                        newlyProducedColors(gameData, parkedActivation, playerId)));
                 if (gameData.stack.size() > stackBeforeTriggers) {
                     List<StackEntry> triggers = new ArrayList<>(
                             gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()));
@@ -2209,11 +2212,10 @@ public class ChoiceHandlerService {
         if (source != null) {
             int stackBeforeTriggers = gameData.stack.size();
             if (gameQueryService.isLand(gameData, source)) {
-                triggerCollectionService.checkLandTapTriggers(gameData, playerId, source.getId(),
-                        newlyProducedColors(gameData, parkedActivation, playerId));
+                gameData.rulesEvents.occur(new TapEvent.LandTappedForMana(playerId, source.getId(),
+                        newlyProducedColors(gameData, parkedActivation, playerId)));
             }
-            triggerCollectionService.checkManaAbilityResolutionTriggers(
-                    gameData, source, playerId, manaProduced);
+            gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(new SpellEvent.ManaAbilityResolved(source, playerId, manaProduced)));
             if (gameData.stack.size() > stackBeforeTriggers) {
                 List<StackEntry> triggers = new ArrayList<>(
                         gameData.stack.subList(stackBeforeTriggers, gameData.stack.size()));
@@ -3154,7 +3156,7 @@ public class ChoiceHandlerService {
                 .toList();
         gameData.pendingManaAbilityTriggers.removeAll(triggers);
         for (StackEntry trigger : triggers) {
-            if (landTapTriggerCollectorService.putResolvedProducedManaTrigger(
+            if (tapTriggers.putResolvedProducedManaTrigger(
                     gameData, trigger, manaColor)) {
                 continue;
             }
@@ -4080,7 +4082,8 @@ public class ChoiceHandlerService {
             if (amount > 0) {
                 gameData.setPlayerEnergyCounters(targetId,
                         gameData.playerEnergyCounters.getOrDefault(targetId, 0) + amount);
-                triggerCollectionService.checkEnergyGainTriggers(gameData, targetId, amount);
+                gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.ENERGY, targetId,
+                        amount));
             }
         } else {
             CounterType counterType = ctx.counterTypes().stream()

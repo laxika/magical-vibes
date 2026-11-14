@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability.cost;
-import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
+import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -29,9 +30,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -255,8 +254,7 @@ class TapCreatureCostHandlerTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Must tap a creature");
 
-        verify(triggerCollectionService, never())
-                .checkEnchantedPermanentTapTriggers(any(), any());
+        assertThat(rulesEvents(gameData)).noneMatch(TapEvent.BecameTapped.class::isInstance);
     }
 
     @Test
@@ -270,8 +268,7 @@ class TapCreatureCostHandlerTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Creature is already tapped");
 
-        verify(triggerCollectionService, never())
-                .checkEnchantedPermanentTapTriggers(any(), any());
+        assertThat(rulesEvents(gameData)).noneMatch(TapEvent.BecameTapped.class::isInstance);
     }
 
     @Test
@@ -286,8 +283,7 @@ class TapCreatureCostHandlerTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("Creature does not match the required predicate");
 
-        verify(triggerCollectionService, never())
-                .checkEnchantedPermanentTapTriggers(any(), any());
+        assertThat(rulesEvents(gameData)).noneMatch(TapEvent.BecameTapped.class::isInstance);
     }
 
     @Test
@@ -301,8 +297,9 @@ class TapCreatureCostHandlerTest {
         handler.validateAndPay(gameData, player, blueCreature);
 
         assertThat(blueCreature.isTapped()).isTrue();
-        verify(triggerCollectionService).checkEnchantedPermanentTapTriggers(gameData, blueCreature);
-        verify(gameLogService).append(eq(gameData), argThat((GameLogEntry e) -> e.plainText().equals("TestPlayer taps Blue Wizard as a cost.")));
+        assertThat(rulesEvents(gameData)).contains(new TapEvent.BecameTapped(blueCreature, null, true));
+        verify(gameLogService).append(eq(gameData),
+                argThat((GameLogEntry e) -> e.plainText().equals("TestPlayer taps Blue Wizard as a cost.")));
     }
 
     // =========================================================================
@@ -314,5 +311,10 @@ class TapCreatureCostHandlerTest {
         card.setName(name);
         card.setManaCost("{0}");
         return new Permanent(card);
+    }
+
+    /** The rules events the game emitted so far, in order. */
+    private static List<RulesEvent> rulesEvents(GameData gameData) {
+        return gameData.rulesEvents.pending().stream().flatMap(batch -> batch.events().stream()).toList();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.graveyard;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -1467,7 +1468,7 @@ public class GraveyardService {
         boolean wasTapped = perm.isTapped();
         perm.tap();
         if (!wasTapped) {
-            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, perm);
+            gameData.rulesEvents.occur(new TapEvent.BecameTapped(perm, null, true));
         }
         perm.setAttacking(false);
         perm.setBlocking(false);

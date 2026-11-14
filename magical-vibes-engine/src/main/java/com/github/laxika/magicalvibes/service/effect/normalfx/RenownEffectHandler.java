@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -70,7 +71,8 @@ public class RenownEffectHandler implements NormalEffectHandlerBean {
 
         UUID controllerId = gameQueryService.findPermanentController(gameData, source.getId());
         if (controllerId != null) {
-            triggerCollectionService.checkBecomesRenownedTriggers(gameData, source, controllerId);
+            gameData.rulesEvents.occur(CounterChangeEvent.of(CounterChangeEvent.Kind.RENOWNED, source, controllerId,
+                    null, 0));
         }
     }
 }

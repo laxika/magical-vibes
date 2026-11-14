@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.r.RiverBoa;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -74,7 +75,7 @@ class BetrayalTest extends BaseCardTest {
 
         creature.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, creature));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(creature, null, true)));
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(auraControllerHandBefore + 1);
@@ -90,7 +91,7 @@ class BetrayalTest extends BaseCardTest {
 
         creature.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, creature));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(creature, null, true)));
         harness.passBothPriorities();
 
         assertThat(gd.stack).isEmpty();
@@ -139,7 +140,7 @@ class BetrayalTest extends BaseCardTest {
 
         creature.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, creature));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(creature, null, true)));
         gd.playerBattlefields.get(player1.getId()).remove(aura);
         gd.playerGraveyards.get(player1.getId()).add(aura.getCard());
         resolveAllTriggers();

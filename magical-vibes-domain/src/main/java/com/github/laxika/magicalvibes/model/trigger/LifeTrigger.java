@@ -19,8 +19,8 @@ import java.util.Objects;
  *                      white instant or sorcery spell causes you to gain life" is {@code
  *                      Triggers.youGainLife().causedBySpell(...)}. The life gain's source is a spell when the spell
  *                      itself gains the life as it resolves, its lifelink damage included; a triggered or activated
- *                      ability of the card isn't one. Only {@link LifeEvent#GAINS} takes one. The collectors judge
- *                      it and {@link #firstEachTurn} from the ability ({@code LifeAbilityReader}), so
+ *                      ability of the card isn't one. Only {@link LifeEvent#GAINS} takes one. The matchers judge
+ *                      it and {@link #firstEachTurn} from the ability ({@code LifeTriggers}), so
  *                      {@link #watchKey()} drops them
  */
 public record LifeTrigger(LifeEvent event, PlayerRelation player, boolean firstEachTurn, CardPredicate spellFilter)
@@ -71,10 +71,10 @@ public record LifeTrigger(LifeEvent event, PlayerRelation player, boolean firstE
     }
 
     /**
-     * The trigger the {@code LifeWatch} collectors read this one's abilities by: without {@link #firstEachTurn} and
+     * The trigger the matchers ({@code LifeTriggers}) read this one's abilities by: without {@link #firstEachTurn} and
      * {@link #spellFilter}, and,
      * for {@link LifeEvent#LOSES_FOR_FIRST_TIME_DURING_THEIR_TURN}, the loss of life of the same player, whose
-     * collector judges the rest from the ability ({@code LifeAbilityReader}).
+     * matcher judges the rest from the ability ({@code LifeTriggers}).
      */
     @Override
     public Trigger watchKey() {

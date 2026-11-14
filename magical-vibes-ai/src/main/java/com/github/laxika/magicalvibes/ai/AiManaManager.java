@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -27,7 +28,6 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 
-import com.github.laxika.magicalvibes.service.trigger.TapWatch;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -984,7 +984,8 @@ public class AiManaManager {
         gameData.forEachPermanent((controllerId, attachment) -> {
             if (attachment.isAttached()
                     && permanent.getId().equals(attachment.getAttachedTo())
-                    && !WatchedAbilities.printed(attachment.getCard(), TapWatch.ON_ENCHANTED_PERMANENT_TAPPED).isEmpty()) {
+                    && !WatchedAbilities.printed(attachment.getCard(), Triggers.enchantedPermanentBecomesTapped(),
+                            Zone.BATTLEFIELD).isEmpty()) {
                 cost[0] = ATTACHED_TAP_TRIGGER_COST;
             }
         });

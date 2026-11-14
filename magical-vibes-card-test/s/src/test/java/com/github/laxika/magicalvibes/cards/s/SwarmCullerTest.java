@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -92,7 +93,7 @@ class SwarmCullerTest extends BaseCardTest {
 
         other.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, other));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(other, null, true)));
 
         assertThat(gd.stack).isEmpty();
     }
@@ -180,7 +181,7 @@ class SwarmCullerTest extends BaseCardTest {
     private void tapAndResolve(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true)));
         harness.passBothPriorities();
     }
 }

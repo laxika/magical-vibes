@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.i.IcyManipulator;
@@ -48,8 +49,8 @@ class SolitarySanctuaryTest extends BaseCardTest {
         Permanent opponentCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         opponentCreature.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, opponentCreature, player2.getId()));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(opponentCreature,
+                player2.getId(), false)));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction()).isNull();

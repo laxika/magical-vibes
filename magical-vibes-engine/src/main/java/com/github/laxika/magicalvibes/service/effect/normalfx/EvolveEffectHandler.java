@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -7,7 +8,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EvolveEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.trigger.CounterWatch;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -46,6 +46,7 @@ public class EvolveEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         // Each ability, whole (CR 603.3).
-        permanentCounterSupport.putOwnCounterAbilities(gameData, source, controllerId, CounterWatch.ON_SELF_EVOLVES);
+        gameData.rulesEvents.occur(CounterChangeEvent.of(CounterChangeEvent.Kind.EVOLVED, source, controllerId, null,
+                1));
     }
 }

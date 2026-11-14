@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -9,12 +10,9 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ControlDuration;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
@@ -307,7 +305,8 @@ public class ExileAndReturnTransformedService {
         int loreCounters = gameQueryService.replaceCounters(
                 gameData, saga, CounterType.LORE, 1, controllerId);
         saga.setCounterCount(CounterType.LORE, loreCounters);
-        triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(gameData, saga, controllerId);
+        gameData.rulesEvents.occur(CounterChangeEvent.of(CounterChangeEvent.Kind.YOU_PUT_LORE_COUNTER, saga,
+                controllerId, CounterType.LORE, 1));
         // Each chapter its lore counters reach triggers, as for a Saga entering normally.
         for (int loreCount = 1; loreCount <= loreCounters; loreCount++) {
             sagaChapterService.triggerSagaChapter(gameData, saga, card, controllerId, loreCount);

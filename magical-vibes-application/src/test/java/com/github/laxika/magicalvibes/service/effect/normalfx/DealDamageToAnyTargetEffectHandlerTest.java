@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -98,8 +97,7 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 // Lethal marked damage — the SBA check after resolution performs the destruction.
                 assertThat(bears.getMarkedDamage()).isEqualTo(2);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
-                        gd, bears, 2, player1Id, shockCard, null);
+                assertDamageToPermanent(bears, 2, player1Id, shockCard, null);
             }
 
             @Test
@@ -121,8 +119,7 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 assertThat(angel.getMarkedDamage()).isEqualTo(2);
                 verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
-                        gd, angel, 2, player1Id, shockCard, null);
+                assertDamageToPermanent(angel, 2, player1Id, shockCard, null);
             }
 
             @Test
@@ -141,10 +138,8 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
                 dealDamageToAnyTargetHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(18);
-                verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 2);
-                verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
-                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
-                        eq(gd), eq(player2Id), any(), eq(2));
+                verify(lifeSupport).lifeLost(gd, player2Id, 2);
+                assertDamageToPlayer(player2Id, 2);
             }
 
             @Test
@@ -178,8 +173,7 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 // Lethal marked damage — the SBA check after resolution performs the destruction.
                 assertThat(bears.getMarkedDamage()).isEqualTo(3);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
-                        gd, bears, 3, player1Id, blazeCard, null);
+                assertDamageToPermanent(bears, 3, player1Id, blazeCard, null);
             }
 
             @Test
@@ -198,10 +192,8 @@ class DealDamageToAnyTargetEffectHandlerTest extends AbstractDamageHandlerTest {
                 dealDamageToAnyTargetHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
-                verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 5);
-                verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
-                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
-                        eq(gd), eq(player2Id), any(), eq(5));
+                verify(lifeSupport).lifeLost(gd, player2Id, 5);
+                assertDamageToPlayer(player2Id, 5);
             }
 
             @Test

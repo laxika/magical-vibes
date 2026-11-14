@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -65,7 +66,6 @@ import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.TargetPredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 
-import com.github.laxika.magicalvibes.service.trigger.TapWatch;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -309,7 +309,7 @@ class AiTargetSelector {
      */
     private static boolean isControllerBeneficialLandAura(Card card) {
         return card.isAura() && WatchedAbilities.rawEffects(
-                WatchedAbilities.printed(card, TapWatch.ON_ANY_PLAYER_TAPS_LAND)).stream()
+                WatchedAbilities.printed(card, Triggers.playerTapsLandForMana(), Zone.BATTLEFIELD)).stream()
                 .anyMatch(AddManaOnEnchantedLandTapEffect.class::isInstance);
     }
 

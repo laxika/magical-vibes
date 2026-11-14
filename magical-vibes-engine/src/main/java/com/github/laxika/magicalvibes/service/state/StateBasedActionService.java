@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.state;
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -17,7 +18,6 @@ import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.EffectSlot;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -152,7 +152,7 @@ public class StateBasedActionService {
             graveyardService.processPendingRegenerationChoice(gameData);
             return;
         }
-        triggerCollectionService.checkLoyaltyCounterRemovalTriggers(gameData);
+        gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.REMOVED, null, 0));
         initializeSpeedForPlayers(gameData);
         // CR 702.195a: storied is a static ability that checks continuously, not only on entry.
         for (UUID playerId : gameData.orderedPlayerIds) {

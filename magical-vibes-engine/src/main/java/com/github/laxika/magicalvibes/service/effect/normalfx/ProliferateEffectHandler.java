@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -59,7 +60,8 @@ public class ProliferateEffectHandler implements NormalEffectHandlerBean {
         if (totalProliferates <= 0) {
             return;
         }
-        triggerCollectionService.checkProliferateTriggers(gameData, controllerId, totalProliferates);
+        gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.PROLIFERATED, controllerId,
+                totalProliferates));
 
         // Collect all permanents with counters (any player's battlefield).
         List<UUID> eligiblePermanentIds = new ArrayList<>();

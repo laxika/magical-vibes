@@ -22,11 +22,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.trigger.DamageAbilityReader;
-import com.github.laxika.magicalvibes.service.trigger.DamageWatch;
-import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
@@ -57,6 +53,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectChosenColorSpellDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectAllCreatureDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.PendingSourceDamage;
+import com.github.laxika.magicalvibes.model.rules.DamageDealtEvent;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -100,6 +97,9 @@ public class DamageSupport {
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @org.springframework.context.annotation.Lazy
+    private com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers damageTriggers;
     private final LifeSupport lifeSupport;
     private final PermanentControlSupport permanentControlSupport;
     private final PermanentCounterSupport permanentCounterSupport;
@@ -230,7 +230,8 @@ public class DamageSupport {
             graveyardService.recordCreatureDamagedByController(gameData, entry.getControllerId(), target);
         }
 
-        // Fire ON_DEALT_DAMAGE triggers (e.g. Nested Ghoul, Phyrexian Obliterator)
+        UUID damagedCreatureControllerId = null;
+        Permanent reflectionSource = null;
         if (damage > 0) {
             recordRedSourceNoncombatDamage(gameData,
                     damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard(),
@@ -241,7 +242,6 @@ public class DamageSupport {
             if (damageSource == null) {
                 recordSorcerySpellDamage(gameData, entry, damage);
             }
-            triggerCollectionService.checkAnyPermanentDealtDamageTriggers(gameData, target, damage);
             if (entry.getEntryType() == StackEntryType.INSTANT_SPELL
                     || entry.getEntryType() == StackEntryType.SORCERY_SPELL) {
                 gameData.recordQualifyingDamageControllerToPermanent(target.getId(), sourceControllerId);
@@ -258,65 +258,15 @@ public class DamageSupport {
                     sourceControllerId,
                     damageSource != null ? damageSource.getId() : entry.getSourcePermanentId(), damage,
                     null, targetControllerId, target.getId(), entry);
-            triggerCollectionService.checkDelayedWatchedCreatureDealtDamageByAttackingCreatureTriggers(
-                    gameData, effectiveDamageSource, target, damage);
-            triggerCollectionService.checkDealtDamageToCreatureTriggers(
-                    gameData, target, damage, sourceControllerId,
-                    damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard(),
-                    damageSource != null ? damageSource.getId() : entry.getSourcePermanentId());
-            triggerCollectionService.checkNoncombatDamageToSelfTriggers(
-                    gameData, target, damage, sourceControllerId,
-                    damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard(),
-                    damageSource != null ? damageSource.getId() : entry.getSourcePermanentId());
-            triggerCollectionService.checkAllySourceDealtNoncombatDamageToCreatureTriggers(
-                    gameData, sourceControllerId, target, damage);
-
-            UUID damagedCreatureControllerId = gameQueryService.findPermanentController(gameData, target.getId());
-            Permanent reflectionSource = damageSource != null
+            damagedCreatureControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+            reflectionSource = damageSource != null
                     ? damageSource
                     : (sourcePermId != null ? gameQueryService.findPermanentById(gameData, sourcePermId) : null);
             // A source that left the battlefield before this damage still dealt it (CR 608.2h last-known
-            // information), so reflection watchers see the activation-time snapshot.
+            // information), so the abilities that see it see the activation-time snapshot.
             if (reflectionSource == null) {
                 reflectionSource = entry.getSourcePermanentSnapshot();
             }
-
-            if (gameQueryService.isPlaneswalker(gameData, target)) {
-                triggerCollectionService.checkAllyDealtDamageToPlaneswalkerTriggers(
-                        gameData, reflectionSource, sourceControllerId, target.getId(), damage, false);
-            }
-
-            // All three slots below trigger on damage dealt *to a creature* — "whenever a creature …
-            // is dealt damage" (Kazarov, Sengir Pureblood; Death Pits of Rath) and "whenever … deals
-            // damage to a creature" (Greatbow Doyen, Bellowing Fiend, Cruel Deceiver's granted
-            // ability) — so a planeswalker or battle that is not also a creature must not fire them:
-            // CR 603.2, an ability triggers only when the event matches its trigger event. The gate is
-            // layer-aware (CR 613.1d), unlike the printed type lines the CR 120.3c / CR 120.3h
-            // branches below key off, because "creature" is the trigger condition here rather than a
-            // choice of damage destination.
-            if (gameQueryService.isCreature(gameData, target)) {
-                // Fire ON_OPPONENT_CREATURE_DEALT_DAMAGE triggers (e.g. Kazarov)
-                if (damagedCreatureControllerId != null) {
-                    triggerCollectionService.checkOpponentCreatureDealtDamageTriggers(gameData, damagedCreatureControllerId);
-                    triggerCollectionService.checkTemporaryGlobalOpponentCreatureDealtDamageTriggers(
-                            gameData, target, damagedCreatureControllerId, damage);
-                }
-
-                // Fire ON_ANY_CREATURE_DEALT_DAMAGE triggers (e.g. Death Pits of Rath)
-                triggerCollectionService.checkAnyCreatureDealtDamageTriggers(gameData, target, damage);
-
-                // Fire ON_ALLY_CREATURE_DEALS_DAMAGE_TO_CREATURE reflection triggers (e.g. Greatbow Doyen)
-                triggerCollectionService.queueEnchantedCreatureDealsDamageToCreatureTriggers(
-                        gameData, reflectionSource, target.getId(), damage);
-                triggerCollectionService.checkAllyDealtDamageToCreatureTriggers(gameData, reflectionSource,
-                        sourceControllerId, damagedCreatureControllerId, target.getId(), target, damage, false);
-            }
-
-            // Mangara's Equity: "…or a white creature you control" — deliberately outside the gate.
-            // It also covers damage to the player, and the effect's own damagedPermanentFilter does
-            // the narrowing in DamageTriggerCollectorService.
-            triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(
-                    gameData, damagedCreatureControllerId, target, reflectionSource, damage);
         }
 
         Card sourceCard = damageSource != null ? damageSource.getCard() : entry.getCard();
@@ -332,11 +282,14 @@ public class DamageSupport {
                 : target.getCounterCount(CounterType.LOYALTY)))
                 : computeExcessDamageToCreature(gameData, target, damage,
                         target.getMarkedDamage(), sourceHasDeathtouch);
-        if (excessDamage > 0) {
-            triggerCollectionService.checkOpponentPermanentDealtExcessDamageTriggers(
-                    gameData, target, targetControllerId, excessDamage, !event.combat());
-            triggerCollectionService.checkOpponentCreatureDealtExcessNoncombatDamageTriggers(
-                    gameData, entry, target, targetControllerId, excessDamage);
+        if (damage > 0) {
+            DamageDealtEvent.ToPermanent dealt = new DamageDealtEvent.ToPermanent(target, damage, entry,
+                    sourceControllerId,
+                    damageSource != null ? damageSource.getCard() : entry.getEffectiveDamageSourceCard(),
+                    damageSource != null ? damageSource.getId() : entry.getSourcePermanentId(),
+                    effectiveDamageSource, reflectionSource, damagedCreatureControllerId, targetControllerId,
+                    excessDamage, !event.combat());
+            gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(dealt));
         }
 
         // CR 120.3c — damage dealt to a planeswalker removes that many loyalty counters
@@ -522,7 +475,9 @@ public class DamageSupport {
         if (sourceCreature == null && entry != null && entry.getSourcePermanentId() != null) {
             sourceCreature = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         }
-        triggerCollectionService.queueEnchantedCreatureDealsDamageTriggers(gameData, sourceCreature, damageDealt);
+        if (sourceCreature == null) return;
+        DamageDealtEvent.DealtByCreature dealt = new DamageDealtEvent.DealtByCreature(sourceCreature, damageDealt);
+        gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(dealt));
     }
 
     /**
@@ -1645,7 +1600,7 @@ public class DamageSupport {
                 gameLogService.append(gameData, GameLog.textCardText(
                         playerName + " takes " + effectiveDamage + " damage from ", source, "."));
                 if (lifeLost > 0) {
-                    triggerCollectionService.checkLifeLossTriggers(gameData, playerId, lifeLost);
+                    lifeSupport.lifeLost(gameData, playerId, lifeLost);
                 }
             }
         }
@@ -1662,8 +1617,6 @@ public class DamageSupport {
             if (damageComesFromOtherObject(entry, sourceCreature)) {
                 sourceCreature = null;
             }
-            triggerCollectionService.queueEnchantedCreatureDealsDamageTriggers(
-                    gameData, sourceCreature, effectiveDamage);
             int artifactDamage = gameQueryService.isDamageSourceArtifact(gameData, entry, sourcePermanent)
                     ? effectiveDamage : 0;
             gameData.recordDamageToPlayer(playerId, effectiveDamage, artifactDamage);
@@ -1695,54 +1648,27 @@ public class DamageSupport {
                 gameData.recordCreatureDamageSourceToPlayer(entry.getSourcePermanentId(), playerId);
             }
             recordRedSpellDamage(gameData, entry, source, playerId);
-            triggerCollectionService.checkEnchantedPlayerDealtDamageTriggers(
-                    gameData, playerId, effectiveDamage);
-            triggerCollectionService.checkDamageDealtToControllerTriggers(gameData, playerId, entry.getSourcePermanentId(), false);
-            triggerCollectionService.checkEnchantedCreatureDealtDamageToControllerReflectTriggers(gameData, playerId, entry.getSourcePermanentId(), effectiveDamage);
-            // The stack entry's controller is the damage source's controller (caster/activator);
-            // used to gate the opponent-only ON_CONTROLLER_DEALT_DAMAGE_BY_OPPONENT slot.
-            triggerCollectionService.checkControllerDealtDamageTriggers(gameData, playerId, entry.getControllerId(), effectiveDamage);
-            // Night Dealings: "whenever a source you control deals damage to another player".
-            triggerCollectionService.checkAllySourceDealtDamageToOpponentTriggers(
-                    gameData, playerId, entry.getControllerId(), entry.getSourcePermanentId(), effectiveDamage);
             Permanent triggeringDamageSource = sourcePermanent != null
                     ? sourcePermanent : entry.getSourcePermanentSnapshot();
-            if (triggeringDamageSource != null && gameQueryService.isCreature(gameData, triggeringDamageSource)) {
-                triggerCollectionService.checkAllyCreaturesDealDamageToPlayerTriggers(
-                        gameData, sourceControllerId, playerId, List.of(triggeringDamageSource));
-            }
+            Permanent creatureSource = triggeringDamageSource != null
+                    && gameQueryService.isCreature(gameData, triggeringDamageSource) ? triggeringDamageSource : null;
             Permanent opponentDamageDealer = triggeringDamageSource != null
                     ? triggeringDamageSource : spellDamageDealerSnapshot(gameData, entry, source);
-            if (opponentDamageDealer != null) {
-                triggerCollectionService.checkAllyCreaturesDealDamageToOpponentTriggers(
-                        gameData, sourceControllerId, playerId, List.of(opponentDamageDealer));
+            Permanent stillOnBattlefield = entry.getSourcePermanentId() != null
+                    ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) : null;
+            // The source's own "whenever this deals damage to a player": its controller at damage time, which can
+            // differ from the ability's controller if the source changed control while the ping was pending.
+            Permanent dealingPermanent = stillOnBattlefield != null
+                    && !damageComesFromOtherObject(entry, stillOnBattlefield) ? stillOnBattlefield : null;
+            UUID dealingControllerId = null;
+            if (dealingPermanent != null) {
+                UUID controllerAtDamage = gameQueryService.findPermanentController(gameData, dealingPermanent.getId());
+                dealingControllerId = controllerAtDamage != null ? controllerAtDamage : entry.getControllerId();
             }
-            triggerCollectionService.checkAllySourceDealtNoncombatDamageToOpponentTriggers(
-                    gameData, playerId, sourceControllerId, effectiveDamage);
-            triggerCollectionService.checkOpponentDealtDamageTriggers(
-                    gameData, playerId, entry.getSourcePermanentId(), effectiveDamage);
-            // Mangara's Equity: "whenever a creature of the chosen color deals damage to you"
-            triggerCollectionService.checkCreatureDamageToYouOrYourPermanentTriggers(gameData, playerId, null,
-                    entry.getSourcePermanentId() != null
-                            ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
-                            : null,
-                    effectiveDamage);
-            // Source's own ON_DAMAGE_TO_PLAYER (e.g. Niv-Mizzet, Dracogenius ping → may draw).
-            if (entry.getSourcePermanentId() != null) {
-                Permanent triggerSourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-                if (triggerSourcePermanent != null && !damageComesFromOtherObject(entry, triggerSourcePermanent)) {
-                    // "you may draw" belongs to the source's controller at damage time, which can differ
-                    // from the ability's controller if the source changed control while the ping was pending.
-                    UUID sourceControllerAtDamage = gameQueryService.findPermanentController(
-                            gameData, triggerSourcePermanent.getId());
-                    triggerCollectionService.checkSourceDealsDamageToPlayerTriggers(gameData, triggerSourcePermanent,
-                            sourceControllerAtDamage != null ? sourceControllerAtDamage : entry.getControllerId(),
-                            playerId, effectiveDamage);
-                }
-            }
-            triggerCollectionService.checkNoncombatDamageToOpponentTriggers(
-                    gameData, playerId, sourceControllerId, effectiveDamage);
-            triggerCollectionService.checkRedSpellOrPlaneswalkerDamageToOpponentTriggers(gameData, playerId, entry);
+            DamageDealtEvent.ToPlayer dealt = new DamageDealtEvent.ToPlayer(playerId, effectiveDamage, entry, source,
+                    sourceControllerId, sourceCreature, creatureSource, opponentDamageDealer, stillOnBattlefield,
+                    dealingPermanent, dealingControllerId);
+            gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(dealt));
             checkSpellLifelink(gameData, entry, effectiveDamage);
             checkProliferatelink(gameData, entry, null, effectiveDamage);
         }
@@ -2089,49 +2015,10 @@ public class DamageSupport {
         if (gameData.pendingSourceDamageForReflection.isEmpty()) return;
         Map<UUID, PendingSourceDamage> batches = new LinkedHashMap<>(gameData.pendingSourceDamageForReflection);
         gameData.pendingSourceDamageForReflection.clear();
-        for (Map.Entry<UUID, PendingSourceDamage> event : batches.entrySet()) {
-            PendingSourceDamage batch = event.getValue();
-            if (!event.getKey().equals(batch.getSourceCard().getId())) {
-                triggerCollectionService.checkAllyInstantOrSorcerySpellDealsDamageTriggers(gameData, batch);
-            }
-            triggerCollectionService.queueSourceDealsDamageReflections(gameData,
-                    batch.getSourceCard(), batch.getControllerId(), batch.getSourcePermanentId(), batch.getAmount(),
-                    batch.getDamageToPlayers(), batch.getSelfDealsDamageAbilities(),
-                    batch.getSingleCreatureSpellTargetId(), batch.getDamageToPermanents(), false,
-                    batch.getDamagedPermanentSnapshots());
-            List<TriggerCollectionService.SourceDamageRecipient> damageRecipients = batch.getDamageRecipients()
-                    .stream()
-                    .map(recipient -> new TriggerCollectionService.SourceDamageRecipient(
-                            recipient.playerId(), recipient.permanentId()))
-                    .toList();
-            triggerCollectionService.checkOpponentSourceDamageToYouOrYourPermanentTriggers(
-                    gameData, batch.getSourceCard(), batch.getControllerId(), batch.getSourcePermanentId(),
-                    damageRecipients);
-            for (int i = 0; i < batch.getInstantOrSorceryDamageRecipientCount(); i++) {
-                triggerCollectionService.checkInstantOrSorceryDamageToOpponentOrBattleTriggers(
-                        gameData, batch.getSourceCard(), batch.getControllerId(), true);
-            }
-        }
-        damageToPlayersByEvent(batches.values()).forEach(damageToPlayers -> damageToPlayers.forEach(
-                (playerId, damage) -> triggerCollectionService.checkPlayerDealtDamageTriggers(
-                        gameData, playerId, damage)));
+        DamageDealtEvent.SourcesDealtDamage dealt = new DamageDealtEvent.SourcesDealtDamage(batches);
+        gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(dealt));
     }
 
-    /**
-     * The damage each player was dealt in each damage event of {@code batches}, every source's summed: the batches
-     * with the same resolution damage event are one event (CR 603.2c: "whenever damage is dealt to a player" triggers
-     * once for it), and a batch dealt outside one is an event of its own.
-     */
-    private static List<Map<UUID, Integer>> damageToPlayersByEvent(Collection<PendingSourceDamage> batches) {
-        Map<Object, Map<UUID, Integer>> byEvent = new LinkedHashMap<>();
-        for (PendingSourceDamage batch : batches) {
-            Object event = batch.getDamageEvent() != null ? batch.getDamageEvent() : batch;
-            Map<UUID, Integer> damageToPlayers = byEvent.computeIfAbsent(event, ignored -> new LinkedHashMap<>());
-            batch.getDamageToPlayers().forEach((playerId, damage) ->
-                    damageToPlayers.merge(playerId, damage, Integer::sum));
-        }
-        return new ArrayList<>(byEvent.values());
-    }
 
     private List<TriggeredAbility> snapshotSelfDealsDamageAbilities(GameData gameData, Card sourceCard,
                                                                     UUID sourcePermanentId) {
@@ -2141,15 +2028,7 @@ public class DamageSupport {
         // creature deals damage" abilities to trigger, so the empty snapshot suppresses the card fallback.
         if (sourcePermanent == null) return List.of();
 
-        Trigger selfDealsDamage = DamageWatch.ON_SELF_DEALS_DAMAGE.trigger();
-        List<TriggeredAbility> abilities = new ArrayList<>();
-        if (!sourcePermanent.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, sourcePermanent)) {
-            abilities.addAll(DamageAbilityReader.printed(sourceCard, DamageWatch.ON_SELF_DEALS_DAMAGE));
-        }
-        abilities.addAll(WatchedAbilities.temporary(sourcePermanent, selfDealsDamage));
-        abilities.addAll(WatchedAbilities.persistent(sourcePermanent, selfDealsDamage));
-        abilities.addAll(triggerCollectionService.grantedWatchedAbilities(gameData, sourcePermanent, selfDealsDamage));
-        return abilities;
+        return damageTriggers.selfDealsDamageAbilities(gameData, sourceCard, sourcePermanent);
     }
 
 

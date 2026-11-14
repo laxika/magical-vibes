@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.rules.LifeEvent;
 import com.github.laxika.magicalvibes.cards.m.MishrasBauble;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.s.SoulWarden;
@@ -200,8 +201,8 @@ class RatchetFieldMedicTest extends BaseCardTest {
         harness.inMutationScope(() -> {
             harness.setLife(player1, 22);
             gd.lifeGainedThisTurn.put(player1.getId(), 2);
-            harness.getTriggerCollectionService().checkLifeGainTriggers(gd, player1.getId(), 1);
-            harness.getTriggerCollectionService().checkLifeGainTriggers(gd, player1.getId(), 1);
+            gd.rulesEvents.occur(new LifeEvent.Gained(player1.getId(), 1, null, null));
+            gd.rulesEvents.occur(new LifeEvent.Gained(player1.getId(), 1, null, null));
         });
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);

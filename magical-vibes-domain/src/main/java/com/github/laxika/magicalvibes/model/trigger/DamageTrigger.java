@@ -25,7 +25,7 @@ import java.util.Objects;
  *                 ({@link DamageEvent#DEALS_DAMAGE} with {@link ObjectRelation#THIS}: "deals damage to one or more
  *                 creatures") it is the damaged permanent; for the other "deals damage" events it is the permanent
  *                 that deals the damage (each of the creatures for "one or more creatures you control deal damage").
- *                 The damage collectors read it from the ability, through {@code DamageAbilityReader}, so
+ *                 The damage collectors read it from the ability, so
  *                 {@link #watchKey()} drops it. On a {@link DamageEvent#DEALS_DAMAGE} or
  *                 {@link DamageEvent#DEALS_DAMAGE_TO_PERMANENT_OR_PLAYER} trigger about another source
  *                 ({@link ObjectRelation#ANY}, {@link ObjectRelation#YOU_CONTROL},
@@ -164,8 +164,8 @@ public record DamageTrigger(DamageEvent event, ObjectRelation relation, Permanen
     }
 
     /**
-     * The trigger without its filters and combat-only narrowing, so the {@code DamageWatch} of the unfiltered trigger
-     * finds the ability.
+     * The trigger without its filters and combat-only narrowing, so a lookup by the unfiltered trigger finds the
+     * ability.
      */
     @Override
     public Trigger watchKey() {

@@ -80,7 +80,7 @@ class ZoneChangeRulesEventTest extends BaseCardTest {
 
         List<RulesEventBatch> deathBatches = recorder.batches().stream()
                 .filter(batch -> batch.events().stream()
-                        .anyMatch(event -> ((ZoneChangeEvent) event).leftBattlefield()))
+                        .anyMatch(event -> event instanceof ZoneChangeEvent zoneChange && zoneChange.leftBattlefield()))
                 .toList();
         assertThat(deathBatches).hasSize(1);
         assertThat(deathBatches.getFirst().events()).hasSize(3)
@@ -243,7 +243,8 @@ class ZoneChangeRulesEventTest extends BaseCardTest {
 
         List<RulesEventBatch> millBatches = recorder.batches().stream()
                 .filter(batch -> batch.events().stream()
-                        .anyMatch(event -> ((ZoneChangeEvent) event).cause() == ZoneChangeCause.MILL))
+                        .anyMatch(event -> event instanceof ZoneChangeEvent zoneChange
+                                && zoneChange.cause() == ZoneChangeCause.MILL))
                 .toList();
         assertThat(millBatches).hasSize(1);
         assertThat(millBatches.getFirst().events()).hasSize(5).allSatisfy(event -> {

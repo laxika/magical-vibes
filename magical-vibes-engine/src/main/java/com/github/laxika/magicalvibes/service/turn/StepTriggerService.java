@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.action.DelayedDrawStepTriggerWhileSourceTapped;
 import com.github.laxika.magicalvibes.model.action.AddManaAtNextMainPhase;
 import com.github.laxika.magicalvibes.model.action.DrawCardsAtNextMainPhase;
@@ -1503,7 +1504,8 @@ public class StepTriggerService {
             gameLogService.append(gameData,
                     GameLog.cardThen(card, " gets a lore counter (" + newLoreCount + ")."));
             log.info("Game {} - {} gets lore counter {}", gameData.id, card.getName(), newLoreCount);
-            triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(gameData, saga, activePlayerId);
+            gameData.rulesEvents.occur(CounterChangeEvent.of(CounterChangeEvent.Kind.YOU_PUT_LORE_COUNTER, saga,
+                    activePlayerId, CounterType.LORE, 1));
 
             // Each chapter a placed counter reached triggers (CR 715.2b); the stack door chooses its targets.
             sagaChapterService.putChapterAbility(gameData, saga, card, activePlayerId, newLoreCount, false);

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JaceBeleren;
 import com.github.laxika.magicalvibes.cards.o.Ornithopter;
@@ -130,7 +131,7 @@ class RelicBindTest extends BaseCardTest {
 
         artifact.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(artifact, null, true)));
         harness.passPriority(player1);
         harness.handleListChoice(player1, "This Aura deals 1 damage to target player or planeswalker");
 
@@ -170,7 +171,7 @@ class RelicBindTest extends BaseCardTest {
 
         artifact.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(artifact, null, true)));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -186,7 +187,7 @@ class RelicBindTest extends BaseCardTest {
 
         artifact.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(artifact, null, true)));
 
         harness.passPriority(player1);
 
@@ -202,7 +203,7 @@ class RelicBindTest extends BaseCardTest {
 
         artifact.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(artifact, null, true)));
         harness.passPriority(player1);
         harness.handleListChoice(player1, "Target player gains 1 life");
 
@@ -224,7 +225,7 @@ class RelicBindTest extends BaseCardTest {
 
         artifact.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(artifact, null, true)));
         harness.passPriority(player1);
         harness.handleListChoice(player1, "This Aura deals 1 damage to target player or planeswalker");
 
@@ -242,7 +243,7 @@ class RelicBindTest extends BaseCardTest {
 
         artifact.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(artifact, null, true)));
         harness.passPriority(player1);
         harness.handleListChoice(player1, "This Aura deals 1 damage to target player or planeswalker");
         harness.handlePermanentChosen(player1, player2.getId());
@@ -264,7 +265,7 @@ class RelicBindTest extends BaseCardTest {
     private void tapAndResolveModal(Permanent artifact, String mode, UUID targetId) {
         artifact.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(artifact, null, true)));
         harness.passPriority(player1);
         harness.handleListChoice(player1, mode);          // choose mode -> target prompt
         harness.handlePermanentChosen(player1, targetId); // choose target -> chosen mode's effect onto stack

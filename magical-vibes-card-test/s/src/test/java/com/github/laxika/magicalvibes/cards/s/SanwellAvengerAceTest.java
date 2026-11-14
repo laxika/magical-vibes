@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JhoirasFamiliar;
 import com.github.laxika.magicalvibes.cards.p.PeacewalkerColossus;
@@ -71,8 +72,7 @@ class SanwellAvengerAceTest extends BaseCardTest {
 
     private PendingInteraction.ImprovisationCapstoneCastChoice triggerSanwell(Permanent sanwell) {
         sanwell.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, sanwell));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(sanwell, null, true)));
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
         return gd.interaction.activeInteraction(PendingInteraction.ImprovisationCapstoneCastChoice.class);
     }

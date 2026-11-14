@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -66,8 +68,8 @@ public class RemoveSuspendCounterFromExiledSpellEffectHandler implements NormalE
         gameData.suspendedSpellExiles.remove(index);
         // "When the last time counter is removed from this card while it's exiled" fires whether or not
         // the owner goes on to cast the card.
-        triggerCollectionService.checkTimeCounterRemovedFromExiledCardTriggers(
-                gameData, exiled.card(), exiled.ownerId(), 0, removerId);
+        gameData.rulesEvents.occur(new CounterChangeEvent(CounterChangeEvent.Kind.TIME_COUNTER_REMOVED_IN_EXILE,
+                null, null, exiled.card(), exiled.ownerId(), removerId, CounterType.TIME, 0, 0, false, null));
         removeTimeCounterHandler.queueCastTrigger(gameData, exiled, true);
         gameLogService.append(gameData, GameLog.cardThen(exiled.card(),
                 " loses its last time counter. Its owner may cast it without paying its mana cost."));

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.a.AgentsOfSHIELD;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -65,8 +66,7 @@ class CaptainAmericaLivingLegendTest extends BaseCardTest {
 
     private void tapAndCollect(Permanent permanent) {
         permanent.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, permanent));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true)));
     }
 
     @Test

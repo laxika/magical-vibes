@@ -62,12 +62,6 @@ public sealed interface TriggerContext {
     }
 
     /**
-     * Context for "whenever a spell you control causes you to gain card advantage": {@code spell} is the spell that just
-     * finished resolving, as it was on the stack then.
-     */
-    record SpellCardAdvantage(StackEntry spell) implements TriggerContext {}
-
-    /**
      * A permanent, or a player when {@code targetPermanent} is {@code null}, became the target of a spell or ability:
      * "if a creature you control becoming the target of a spell or ability causes a triggered ability of a permanent
      * you control to trigger" (Valiant Emberkin) reads the permanent and its controller.
@@ -79,9 +73,6 @@ public sealed interface TriggerContext {
 
     record GiftGiven(UUID giverId) implements TriggerContext {}
 
-    /** Context for "whenever a spell or ability you control counters a spell" triggers. */
-    record SpellCountered(UUID counteringPlayerId) implements TriggerContext {}
-
     record Foretell(UUID foretellingPlayerId, Card foretoldCard) implements TriggerContext {}
 
     /** Context for one or more cards exiled from a player's hand. */
@@ -91,36 +82,6 @@ public sealed interface TriggerContext {
     record ControllerSpellOrAbilityExilesPermanent(Permanent exiledPermanent,
                                                     UUID exiledPermanentControllerId,
                                                     UUID exilingControllerId) implements TriggerContext {}
-
-    /** Context for "whenever a spell you've cast is countered" triggers. */
-    record SpellCastCountered(UUID spellControllerId) implements TriggerContext {}
-
-    /** Context for a spell's own "when this spell is countered or fizzles" ability. */
-    record SpellCounteredOrFizzled(StackEntry spellEntry) implements TriggerContext {}
-
-    /**
-     * Context for land-play triggers (ON_CONTROLLER_PLAYS_LAND). Fired only when a land is actually
-     * <em>played</em>, unlike the landfall path which also sees lands put onto the battlefield.
-     */
-    record LandPlayed(UUID playingPlayerId, Card landCard, Zone playZone,
-                      UUID exiledSourcePermanentId) implements TriggerContext {
-
-        public LandPlayed(UUID playingPlayerId, Card landCard, Zone playZone) {
-            this(playingPlayerId, landCard, playZone, null);
-        }
-
-        public LandPlayed(UUID playingPlayerId, Card landCard) {
-            this(playingPlayerId, landCard, Zone.HAND);
-        }
-
-        public LandPlayed(UUID playingPlayerId, Card landCard, boolean fromExile) {
-            this(playingPlayerId, landCard, fromExile ? Zone.EXILE : Zone.HAND);
-        }
-
-        public boolean fromExile() {
-            return playZone == Zone.EXILE;
-        }
-    }
 
     /**
      * Context for discard triggers (ON_OPPONENT_DISCARDS).
@@ -217,52 +178,8 @@ public sealed interface TriggerContext {
     /** Context for controller-conjure triggers. */
     record Conjure(UUID conjuringPlayerId, int cardCount) implements TriggerContext {}
 
-    /**
-     * Context for land-tap triggers (ON_ANY_PLAYER_TAPS_LAND).
-     */
-    record LandTap(UUID tappingPlayerId, UUID tappedLandId, Set<ManaColor> producedColors)
-            implements TriggerContext {
-        public LandTap(UUID tappingPlayerId, UUID tappedLandId) {
-            this(tappingPlayerId, tappedLandId, Set.of());
-        }
-
-        public LandTap {
-            producedColors = Set.copyOf(producedColors);
-        }
-    }
-
-    /**
-     * Context for controller-scoped creature-mana triggers
-     * (ON_CONTROLLER_TAPS_CREATURE_FOR_MANA).
-     */
-    record CreatureTapForMana(UUID tappingPlayerId, UUID tappedCreatureId) implements TriggerContext {}
-
-    /** Context for controller-scoped nonland-permanent mana triggers. A null set means that the
-     * source's any-color choice is still pending and the trigger must wait for that choice. */
-    record NonlandPermanentTapForMana(UUID tappingPlayerId, UUID tappedPermanentId,
-                                      Set<ManaColor> producedManaTypes) implements TriggerContext {
-        public NonlandPermanentTapForMana {
-            if (producedManaTypes != null) {
-                producedManaTypes = Set.copyOf(producedManaTypes);
-            }
-        }
-    }
-
     /** Context for triggers caused by choosing a Ring-bearer. */
     record RingTempted(UUID temptingPlayerId, UUID ringBearerId) implements TriggerContext {}
-
-    /** Context for global triggers that watch any permanent being tapped for mana. */
-    record PermanentTapForMana(UUID tappingPlayerId, UUID tappedPermanentId,
-                               Set<ManaColor> producedManaTypes) implements TriggerContext {
-        public PermanentTapForMana {
-            if (producedManaTypes != null) {
-                producedManaTypes = Set.copyOf(producedManaTypes);
-            }
-        }
-    }
-
-    /** Context for a creature's mana ability resolving, including the mana it produced. */
-    record ManaAbilityResolved(UUID activatingPlayerId, int manaProduced) implements TriggerContext {}
 
     /**
      * Context for damage-dealt-to-controller triggers (ON_ANY_PERMANENT_DEALS_DAMAGE_TO_YOU).
@@ -378,70 +295,8 @@ public sealed interface TriggerContext {
     record AnyPermanentDealtDamage(Permanent damagedPermanent, UUID damagedPermanentControllerId,
                                    int damageDealt) implements TriggerContext {}
 
-    /**
-     * Context for enchanted-permanent-tap triggers (ON_ENCHANTED_PERMANENT_TAPPED).
-     */
-    record EnchantedPermanentTap(Permanent tappedPermanent, UUID tappedPermanentControllerId) implements TriggerContext {}
-
-    /**
-     * Context for life-loss triggers (ON_OPPONENT_LOSES_LIFE).
-     */
-    record LifeLoss(UUID losingPlayerId, int lifeLostAmount) implements TriggerContext {}
-
-    /** Context for life-payment triggers (ON_CONTROLLER_PAYS_LIFE). */
-    record LifePayment(UUID payingPlayerId, int lifePaidAmount) implements TriggerContext {}
-
     /** Context for mana-tax payment triggers (ON_OPPONENT_PAYS_TAX). */
     record TaxPayment(UUID payingPlayerId, UUID taxingPlayerId, int manaPaid) implements TriggerContext {}
-
-    /**
-     * Context for life-gain triggers (ON_CONTROLLER_GAINS_LIFE).
-     * {@code sourceCard} and {@code sourceEntryType} identify what caused the life gain
-     * (e.g. a spell with lifelink). Both may be null for non-spell sources.
-     */
-    record LifeGain(UUID gainingPlayerId, int lifeGainedAmount, Card sourceCard, StackEntryType sourceEntryType) implements TriggerContext {
-
-        /** Backward-compatible constructor for life gain with no source info. */
-        public LifeGain(UUID gainingPlayerId, int lifeGainedAmount) {
-            this(gainingPlayerId, lifeGainedAmount, null, null);
-        }
-    }
-
-    /** Context for controller-energy-gain triggers. */
-    record EnergyGain(UUID gainingPlayerId, int energyGainedAmount) implements TriggerContext {}
-
-    /** Context for a controller proliferating. */
-    record Proliferate(UUID proliferatingPlayerId) implements TriggerContext {}
-
-    /** Context for one counter-placement event caused by a player. */
-    record CountersPlaced(UUID placingPlayerId, int amount) implements TriggerContext {}
-
-    /** Context for time counters placed on a permanent controlled by the placing player. */
-    record TimeCountersPlaced(Permanent target, UUID placingPlayerId, int amount) implements TriggerContext {}
-
-    /** Context for a lore counter placed on a Saga the placing player controls. */
-    record LoreCounterPlaced(Permanent saga, UUID placingPlayerId) implements TriggerContext {}
-
-    /** Context for a controller untapping one or more permanents during their untap step. */
-    record UntapStep(int untappedPermanentCount) implements TriggerContext {}
-    /** Context for loyalty-counter-removal triggers. */
-    record LoyaltyCountersRemoved(Permanent permanent, int amount) implements TriggerContext {}
-
-    /** Context for time-counter-removal triggers. */
-    record TimeCountersRemoved(Permanent permanent, int amount) implements TriggerContext {}
-
-    record PlusOnePlusOneCountersRemoved(Permanent permanent, int amount) implements TriggerContext {}
-
-    /** Context for counters being removed from a permanent controlled by the watcher. */
-    record CountersRemovedFromPermanent(Permanent permanent, int amount) implements TriggerContext {}
-
-    /**
-     * Context for a time counter removed from a card while it's exiled.
-     *
-     * @param remainingCounters the time counters left on the card
-     * @param removerId         the player who removed the counter, or {@code null} for the card's owner
-     */
-    record TimeCounterRemovedFromExile(int remainingCounters, UUID removerId) implements TriggerContext {}
 
     /** Context for triggers that fire when a player wins a coin flip. */
     record CoinFlipWon(UUID winningPlayerId) implements TriggerContext {}
@@ -838,17 +693,6 @@ public sealed interface TriggerContext {
      * @param graveyardOwnerId  the owner of the graveyard the card was put into
      */
     record PermanentCardPutIntoGraveyard(Card permanentCard, UUID graveyardOwnerId) implements TriggerContext {}
-
-    /**
-     * Context for a permanent becoming monstrous.
-     *
-     * @param controllerId the permanent's controller
-     * @param xValue       the monstrosity X
-     */
-    record SelfBecomesMonstrous(UUID controllerId, int xValue) implements TriggerContext {}
-
-    /** Context for a permanent becoming untapped. */
-    record SelfBecomesUntapped(UUID controllerId) implements TriggerContext {}
 
     /**
      * Context for ON_ALLY_AURA_OR_EQUIPMENT_PUT_INTO_GRAVEYARD_FROM_BATTLEFIELD triggers.

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.f.FearlessPup;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -139,7 +140,7 @@ class ImmersturmPredatorTest extends BaseCardTest {
     private void tap(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent);
+            gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
             harness.getTriggerCollectionService().processNextSpellGraveyardTargetTrigger(gd);
         });
     }

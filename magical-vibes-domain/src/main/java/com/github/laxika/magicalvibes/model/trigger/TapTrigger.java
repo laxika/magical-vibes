@@ -18,12 +18,12 @@ import java.util.Objects;
  *                  {@link ObjectRelation#ANY} for "a permanent", {@link ObjectRelation#ENCHANTED} for the permanent
  *                  the source is attached to (enchanted, equipped or fortified)
  * @param filter    what the permanent must be, or {@code null} for any permanent: a land, a creature, a nonland
- *                  permanent, an artifact token. The engine's tap collectors check it in code
+ *                  permanent, an artifact token. The engine's tap matchers check it in code
  * @param qualifier what the permanent must also be, or {@code null}: "whenever a Merfolk you control becomes tapped"
  *                  is {@code Triggers.permanentYouControlBecomesTapped().withFilter(merfolk)}, "whenever this
  *                  creature becomes tapped while it has a -1/-1 counter on it" {@code
- *                  Triggers.becomesTapped().withFilter(hasMinusOneCounter)}. The collectors judge it from the ability
- *                  ({@code TapAbilityReader}), so {@link #watchKey()} drops it
+ *                  Triggers.becomesTapped().withFilter(hasMinusOneCounter)}. The matchers judge it from the ability
+ *                  ({@code TapTriggers}), so {@link #watchKey()} drops it
  */
 public record TapTrigger(TapEvent event, ObjectRelation relation, PermanentPredicate filter,
                          PermanentPredicate qualifier) implements Trigger {
@@ -56,8 +56,8 @@ public record TapTrigger(TapEvent event, ObjectRelation relation, PermanentPredi
     }
 
     /**
-     * Whether the {@code TapWatch} collectors read this trigger's abilities by another trigger, the one of
-     * "a permanent you control becomes tapped", whose collector judges the rest from the ability: "this permanent
+     * Whether the tap matchers ({@code TapTriggers}) read this trigger's abilities by another trigger, the one of
+     * "a permanent you control becomes tapped", whose matcher judges the rest from the ability: "this permanent
      * becomes tapped" ({@link ObjectRelation#THIS} with {@link TapEvent#BECOMES_TAPPED}) and every
      * {@link TapEvent#BECOMES_TAPPED_FOR_FIRST_TIME_DURING_YOUR_TURN}.
      */
@@ -67,7 +67,7 @@ public record TapTrigger(TapEvent event, ObjectRelation relation, PermanentPredi
     }
 
     /**
-     * Whether this is a tap-for-mana trigger read by the collector of "whenever a player taps a land for mana" or
+     * Whether this is a tap-for-mana trigger read by the matcher of "whenever a player taps a land for mana" or
      * "whenever a player taps a permanent for mana" ({@link #watchKey()}), which judges {@link #relation} from the
      * event: "whenever you tap a land for mana" and "whenever an opponent taps a land / a permanent for mana" (the
      * player who tapped it), "whenever enchanted / fortified land is tapped for mana" (the land the source is attached
@@ -85,11 +85,11 @@ public record TapTrigger(TapEvent event, ObjectRelation relation, PermanentPredi
     }
 
     /**
-     * The trigger the {@code TapWatch} collectors read this one's abilities by: without its {@link #qualifier}, and,
+     * The trigger the matchers ({@code TapTriggers}) read this one's abilities by: without its {@link #qualifier}, and,
      * for a {@link #narrowed()} trigger, "a permanent you control becomes tapped" (its {@link #filter} dropped too),
      * and for a {@link #judgedTapRelation()} one "a player taps a land / a permanent for mana".
-     * That collector judges "this permanent", the type, the relation and "for the first time during your turn" from the
-     * ability ({@code TapAbilityReader}).
+     * That matcher judges "this permanent", the type, the relation and "for the first time during your turn" from the
+     * ability ({@code TapTriggers}).
      */
     @Override
     public Trigger watchKey() {

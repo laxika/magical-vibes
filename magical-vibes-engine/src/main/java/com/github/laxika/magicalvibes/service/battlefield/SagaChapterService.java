@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -84,7 +85,8 @@ public class SagaChapterService {
         gameLogService.append(gameData, GameLog.cardThen(card, " enters with " + chapter + " lore counter(s)."));
         log.info("Game {} - {} enters with lore counter(s) {}", gameData.id, card.getName(), chapter);
         for (int i = 0; i < loreCounters; i++) {
-            triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(gameData, sagaPermanent, controllerId);
+            gameData.rulesEvents.occur(CounterChangeEvent.of(CounterChangeEvent.Kind.YOU_PUT_LORE_COUNTER,
+                    sagaPermanent, controllerId, CounterType.LORE, 1));
         }
         if (chapter == 1) {
             // A Saga entering normally has each lore counter placed in turn, so every chapter reached
@@ -115,7 +117,8 @@ public class SagaChapterService {
         gameLogService.append(gameData,
                 GameLog.cardThen(card, " gets a lore counter (" + loreCounters + ")."));
         log.info("Game {} - {} gets lore counter {}", gameData.id, card.getName(), loreCounters);
-        triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(gameData, sagaPermanent, controllerId);
+        gameData.rulesEvents.occur(CounterChangeEvent.of(CounterChangeEvent.Kind.YOU_PUT_LORE_COUNTER, sagaPermanent,
+                controllerId, CounterType.LORE, 1));
         triggerSagaChapter(gameData, sagaPermanent, card, controllerId, loreCounters);
     }
 

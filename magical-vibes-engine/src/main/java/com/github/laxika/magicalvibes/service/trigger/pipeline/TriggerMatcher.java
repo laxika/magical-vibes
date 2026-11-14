@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.model.trigger.Trigger;
+
+import com.github.laxika.magicalvibes.model.trigger.DamageTrigger;
+
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectSlot;
@@ -637,6 +641,21 @@ final class TriggerMatcher {
             if (condition.trigger() instanceof CombatTrigger combat && combat.watchKey().equals(watched)
                     && (zone == null || condition.zones().functionsIn(zone))) {
                 return combat;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * The damage trigger condition of {@code ability} watched as {@code watched} (its {@link DamageTrigger#watchKey()}:
+     * the event and how the objects relate to the source, its filters aside) that functions in {@code zone}, with its
+     * filters, or {@code null}. A {@code null} zone matches a condition in any zone.
+     */
+    static DamageTrigger damageCondition(TriggeredAbility ability, Trigger watched, Zone zone) {
+        for (TriggerCondition condition : ability.conditions()) {
+            if (condition.trigger() instanceof DamageTrigger damage && damage.watchKey().equals(watched)
+                    && (zone == null || condition.zones().functionsIn(zone))) {
+                return damage;
             }
         }
         return null;

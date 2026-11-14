@@ -17,8 +17,7 @@ public enum TriggerLimit {
      * Once each turn for each creature the event names: Stensia's "whenever a creature deals damage to one or more
      * players for the first time each turn", keyed by the source and the creature, and Stalwart Successor's "if it's
      * the first time counters have been put on that creature this turn". The damage and counter collectors judge it
-     * from the ability ({@code DamageAbilityReader}, {@code CounterAbilityReader}). The trigger pipeline doesn't know
-     * it.
+     * from the ability ({@code DamageTriggers}, {@code CounterTriggers}), with the creature the event names.
      */
     ONCE_EACH_TURN_FOR_EACH_CREATURE,
     /**

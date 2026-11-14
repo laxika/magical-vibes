@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
  * for mana, that player adds an additional {R}"). Symmetric — it applies to every player.
  *
  * <p>Recorded in {@code GameData.extraManaOnLandSubtypeTapThisTurn} and applied by
- * {@code TriggerCollectionService.checkLandTapTriggers}; cleared by {@code TurnCleanupService}.
+ * {@code TapTriggers} (a land tapped for mana); cleared by {@code TurnCleanupService}.
  * For the permanent, static version use {@link AddManaWhenTappedForManaEffect} on a trigger narrowed to the subtype.
  */
 public record LandsOfSubtypeAddExtraManaUntilEndOfTurnEffect(CardSubtype subtype, ManaColor color)

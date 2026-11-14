@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.f.FearlessPup;
 import com.github.laxika.magicalvibes.cards.g.GoldveinPick;
 import com.github.laxika.magicalvibes.cards.g.GoldspanDragon;
@@ -136,8 +137,8 @@ class MagdaBrazenOutlawTest extends BaseCardTest {
         nonDwarf.tap();
         opponentDwarf.tap();
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, nonDwarf);
-            harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, opponentDwarf);
+            gd.rulesEvents.occur(new TapEvent.BecameTapped(nonDwarf, null, true));
+            gd.rulesEvents.occur(new TapEvent.BecameTapped(opponentDwarf, null, true));
         });
 
         assertThat(gd.stack).isEmpty();
@@ -234,7 +235,7 @@ class MagdaBrazenOutlawTest extends BaseCardTest {
     private void tapAndResolve(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true)));
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
     }
 

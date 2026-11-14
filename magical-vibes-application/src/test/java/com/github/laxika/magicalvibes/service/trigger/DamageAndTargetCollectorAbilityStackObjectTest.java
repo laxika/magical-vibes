@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers;
+
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
@@ -48,6 +50,10 @@ class DamageAndTargetCollectorAbilityStackObjectTest extends BaseCardTest {
         return harness.getTriggerCollectionService();
     }
 
+    private DamageTriggers damageCollectors() {
+        return harness.getDamageTriggers();
+    }
+
     /** An opponent's Shock on the stack with {@code targetIds} as its targets. */
     private StackEntry opponentSpellTargeting(UUID... targetIds) {
         StackEntry spell = new StackEntry(StackEntryType.INSTANT_SPELL, new Shock(), player2.getId(), "Shock",
@@ -63,7 +69,7 @@ class DamageAndTargetCollectorAbilityStackObjectTest extends BaseCardTest {
         card.addTrigger(Triggers.dealsDamageToPlayer(), new DrawCardEffect(1), new GainLifeEffect(1));
         Permanent dealer = addCreatureReady(player1, card);
 
-        harness.inMutationScope(() -> collectors().checkSourceDealsDamageToPlayerTriggers(gd, dealer,
+        harness.inMutationScope(() -> damageCollectors().checkSourceDealsDamageToPlayerTriggers(gd, dealer,
                 player1.getId(), player2.getId(), 2));
 
         assertThat(entriesOf("Damage Dealer")).singleElement()
@@ -79,7 +85,7 @@ class DamageAndTargetCollectorAbilityStackObjectTest extends BaseCardTest {
         addCreatureReady(player1, card);
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.inMutationScope(() -> collectors().checkDamageDealtToControllerTriggers(gd, player1.getId(),
+        harness.inMutationScope(() -> damageCollectors().checkDamageDealtToControllerTriggers(gd, player1.getId(),
                 bears.getId(), true));
 
         assertThat(entriesOf("Damage Watcher")).hasSize(2)
@@ -100,9 +106,9 @@ class DamageAndTargetCollectorAbilityStackObjectTest extends BaseCardTest {
         HashSet<String> firedThisStep = new HashSet<>();
 
         harness.inMutationScope(() -> {
-            collectors().checkDamageDealtToControllerTriggers(gd, player1.getId(), first.getId(), true,
+            damageCollectors().checkDamageDealtToControllerTriggers(gd, player1.getId(), first.getId(), true,
                     firedThisStep);
-            collectors().checkDamageDealtToControllerTriggers(gd, player1.getId(), second.getId(), true,
+            damageCollectors().checkDamageDealtToControllerTriggers(gd, player1.getId(), second.getId(), true,
                     firedThisStep);
         });
 
@@ -118,7 +124,7 @@ class DamageAndTargetCollectorAbilityStackObjectTest extends BaseCardTest {
         card.addTrigger(Triggers.youAreDealtCombatDamage(), new DrawCardEffect(1), new GainLifeEffect(1));
         addCreatureReady(player1, card);
 
-        harness.inMutationScope(() -> collectors().checkControllerDealtCombatDamageTriggers(gd, player1.getId(), 3));
+        harness.inMutationScope(() -> damageCollectors().checkControllerDealtCombatDamageTriggers(gd, player1.getId(), 3));
 
         assertThat(entriesOf("Combat Damage Watcher")).singleElement()
                 .satisfies(entry -> assertThat(entry.getEffectsToResolve()).hasSize(2));
@@ -131,7 +137,7 @@ class DamageAndTargetCollectorAbilityStackObjectTest extends BaseCardTest {
         card.addTrigger(Triggers.creatureOpponentControlsDealtDamage(), new DrawCardEffect(1), new GainLifeEffect(1));
         addCreatureReady(player1, card);
 
-        harness.inMutationScope(() -> collectors().checkOpponentCreatureDealtDamageTriggers(gd, player2.getId()));
+        harness.inMutationScope(() -> damageCollectors().checkOpponentCreatureDealtDamageTriggers(gd, player2.getId()));
 
         assertThat(entriesOf("Pain Watcher")).singleElement()
                 .satisfies(entry -> assertThat(entry.getEffectsToResolve()).hasSize(2));
@@ -146,7 +152,7 @@ class DamageAndTargetCollectorAbilityStackObjectTest extends BaseCardTest {
         addCreatureReady(player1, card);
         Permanent bears = addCreatureReady(player2, new GrizzlyBears());
 
-        harness.inMutationScope(() -> collectors().checkOpponentPermanentDealtExcessDamageTriggers(gd, bears,
+        harness.inMutationScope(() -> damageCollectors().checkOpponentPermanentDealtExcessDamageTriggers(gd, bears,
                 player2.getId(), 2, true));
 
         assertThat(entriesOf("Excess Watcher")).singleElement().satisfies(entry -> {

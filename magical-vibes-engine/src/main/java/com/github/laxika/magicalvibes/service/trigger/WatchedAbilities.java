@@ -14,9 +14,8 @@ import java.util.List;
  * Finds the triggered abilities a {@link TriggerWatch}'s collectors read, by the watched trigger (a condition whose
  * {@link Trigger#watchKey()} is it): a card's printed abilities, the abilities granted to a permanent for a duration
  * and those of any list (a graveyard card's own and perpetual ones, the abilities a static ability grants). The
- * family readers ({@link CombatAbilityReader}, {@link DamageAbilityReader}, {@link CounterAbilityReader},
- * {@link TargetAbilityReader}, {@link LibraryAbilityReader}, {@link TapAbilityReader},
- * {@link LifeAbilityReader}, {@link SagaAbilityReader}, {@link ActionAbilityReader}, {@link MiscAbilityReader}) read
+ * family readers ({@link LibraryAbilityReader}, {@link SagaAbilityReader}, {@link ActionAbilityReader},
+ * {@link MiscAbilityReader}) read
  * the options and filters of what these find.
  */
 public final class WatchedAbilities {

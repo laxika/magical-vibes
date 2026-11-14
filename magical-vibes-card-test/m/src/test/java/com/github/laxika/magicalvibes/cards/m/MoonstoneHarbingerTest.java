@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.model.rules.LifeEvent;
 import com.github.laxika.magicalvibes.cards.b.BonebindOrator;
 import com.github.laxika.magicalvibes.cards.g.GlidediveDuo;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -24,7 +27,7 @@ class MoonstoneHarbingerTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.inMutationScope(() ->
-                harness.getTriggerCollectionService().checkLifeGainTriggers(gd, player1.getId(), 1));
+                gd.rulesEvents.occur(new LifeEvent.Gained(player1.getId(), 1, null, null)));
         harness.passBothPriorities();
 
         assertThat(harbinger.getEffectivePower()).isEqualTo(2);
@@ -44,7 +47,7 @@ class MoonstoneHarbingerTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.inMutationScope(() ->
-                harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player1.getId(), 1));
+                GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player1.getId(), 1));
         harness.passBothPriorities();
 
         assertThat(bat.getEffectivePower()).isEqualTo(batPower + 1);
@@ -59,10 +62,10 @@ class MoonstoneHarbingerTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.inMutationScope(() ->
-                harness.getTriggerCollectionService().checkLifeGainTriggers(gd, player1.getId(), 1));
+                gd.rulesEvents.occur(new LifeEvent.Gained(player1.getId(), 1, null, null)));
         harness.passBothPriorities();
         harness.inMutationScope(() ->
-                harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player1.getId(), 1));
+                GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player1.getId(), 1));
 
         assertThat(gd.stack).isEmpty();
         assertThat(bat.getEffectivePower()).isEqualTo(batPower + 1);
@@ -76,8 +79,8 @@ class MoonstoneHarbingerTest extends BaseCardTest {
 
         harness.forceActivePlayer(player2);
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkLifeGainTriggers(gd, player1.getId(), 1);
-            harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player1.getId(), 1);
+            gd.rulesEvents.occur(new LifeEvent.Gained(player1.getId(), 1, null, null));
+            GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player1.getId(), 1);
         });
 
         assertThat(gd.stack).isEmpty();
@@ -93,7 +96,7 @@ class MoonstoneHarbingerTest extends BaseCardTest {
 
         harness.forceActivePlayer(player1);
         harness.inMutationScope(() ->
-                harness.getTriggerCollectionService().checkLifeGainTriggers(gd, player1.getId(), 1));
+                gd.rulesEvents.occur(new LifeEvent.Gained(player1.getId(), 1, null, null)));
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -94,7 +95,7 @@ class HauntedOneTest extends BaseCardTest {
     private void tapAndResolve(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true)));
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
     }
 
@@ -117,7 +118,7 @@ class HauntedOneTest extends BaseCardTest {
 
         commander.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, commander));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(commander, null, true)));
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, opponentZombie)).isEqualTo(opponentPower + 2);
@@ -138,7 +139,7 @@ class HauntedOneTest extends BaseCardTest {
 
         commander.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, commander));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(commander, null, true)));
         harness.inMutationScope(
                 () -> harness.getPermanentRemovalService().removePermanentToCommandZone(gd, commander));
         resolveAllTriggers();
@@ -160,7 +161,7 @@ class HauntedOneTest extends BaseCardTest {
 
         commander.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, commander));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(commander, null, true)));
 
         assertThat(gd.stack).isEmpty();
     }
@@ -174,7 +175,7 @@ class HauntedOneTest extends BaseCardTest {
 
         zombie.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, zombie));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(zombie, null, true)));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gqs.getEffectivePower(gd, zombie)).isEqualTo(powerBefore);

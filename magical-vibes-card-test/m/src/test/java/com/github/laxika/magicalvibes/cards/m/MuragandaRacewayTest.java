@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -22,8 +24,8 @@ class MuragandaRacewayTest extends BaseCardTest {
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
 
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player2.getId(), 1);
-            harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player2.getId(), 1);
+            GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player2.getId(), 1);
+            GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player2.getId(), 1);
         });
 
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
@@ -82,7 +84,7 @@ class MuragandaRacewayTest extends BaseCardTest {
         forceSorcerySpeed(player2);
 
         harness.inMutationScope(() ->
-                harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player2.getId(), 1));
+                GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player2.getId(), 1));
         resolveAllTriggers();
 
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
@@ -95,7 +97,7 @@ class MuragandaRacewayTest extends BaseCardTest {
         forceSorcerySpeed(player1);
 
         harness.inMutationScope(() ->
-                harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player1.getId(), 1));
+                GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player1.getId(), 1));
         resolveAllTriggers();
 
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);

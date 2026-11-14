@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -153,7 +154,7 @@ class RadhaCoalitionWarlordDmuTest extends BaseCardTest {
     private void tapAndQueueTrigger(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent);
+            gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
             harness.getTriggerCollectionService().beginStackDoorChoices(gd);
         });
     }

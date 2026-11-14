@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
@@ -30,7 +31,6 @@ import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -569,10 +569,11 @@ public class BattlefieldPlacementService {
             int loreCountersPlacedOnEntry = permanent.getCounterCount(CounterType.LORE)
                     - countersBeforeEntry.getOrDefault(CounterType.LORE, 0);
             for (int i = 0; i < loreCountersPlacedOnEntry; i++) {
-                triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(
-                        gameData, permanent, controllerId);
+                gameData.rulesEvents.occur(CounterChangeEvent.of(CounterChangeEvent.Kind.YOU_PUT_LORE_COUNTER,
+                        permanent, controllerId, CounterType.LORE, 1));
             }
-            triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, countersPlacedOnEntry);
+            gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.YOU_PUT_COUNTERS,
+                    controllerId, countersPlacedOnEntry));
             for (Map.Entry<CounterType, Integer> counter : permanent.getCounters().entrySet()) {
                 int added = counter.getValue() - countersBeforeEntry.getOrDefault(counter.getKey(), 0);
                 if (added > 0) {
@@ -598,8 +599,8 @@ public class BattlefieldPlacementService {
             }
             int added = counter.getValue() - countersBeforeEntry.getOrDefault(counter.getKey(), 0);
             if (counter.getKey() == CounterType.TIME && added > 0) {
-                triggerCollectionService.checkYouPutTimeCountersTriggers(
-                        gameData, permanent, controllerId, added);
+                gameData.rulesEvents.occur(CounterChangeEvent.of(CounterChangeEvent.Kind.YOU_PUT_TIME_COUNTERS,
+                        permanent, controllerId, CounterType.TIME, added));
             }
             permanentCounterSupport.fireCounterPutOnControlledCreatureTriggers(
                         gameData, permanent, added, controllerId);
@@ -2296,10 +2297,11 @@ public class BattlefieldPlacementService {
         if (countersPlaced > 0) {
             int loreCountersPlaced = permanent.getCounterCount(CounterType.LORE) - loreCountersBefore;
             for (int i = 0; i < loreCountersPlaced; i++) {
-                triggerCollectionService.checkYouPutLoreCounterOnSagaTriggers(
-                        gameData, permanent, controllerId);
+                gameData.rulesEvents.occur(CounterChangeEvent.of(CounterChangeEvent.Kind.YOU_PUT_LORE_COUNTER,
+                        permanent, controllerId, CounterType.LORE, 1));
             }
-            triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, countersPlaced);
+            gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.YOU_PUT_COUNTERS,
+                    controllerId, countersPlaced));
             for (Map.Entry<CounterType, Integer> counter : permanent.getCounters().entrySet()) {
                 int added = counter.getValue() - countersBefore.getOrDefault(counter.getKey(), 0);
                 if (added > 0) {

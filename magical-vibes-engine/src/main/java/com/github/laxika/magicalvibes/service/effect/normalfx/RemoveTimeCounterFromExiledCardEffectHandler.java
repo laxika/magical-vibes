@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -73,8 +75,9 @@ public class RemoveTimeCounterFromExiledCardEffectHandler implements NormalEffec
             gameData.exiledCardTimeCounters.put(cardId, remaining);
             gameLogService.append(gameData,
                     GameLog.cardThen(exiledEntry.card(), " has a time counter removed (" + remaining + " remaining)."));
-            triggerCollectionService.checkTimeCounterRemovedFromExiledCardTriggers(
-                    gameData, exiledEntry.card(), exiledEntry.ownerId(), remaining, removerId);
+            gameData.rulesEvents.occur(new CounterChangeEvent(CounterChangeEvent.Kind.TIME_COUNTER_REMOVED_IN_EXILE,
+                    null, null, exiledEntry.card(), exiledEntry.ownerId(), removerId, CounterType.TIME, remaining, 0,
+                            false, null));
             return;
         }
 
@@ -83,8 +86,8 @@ public class RemoveTimeCounterFromExiledCardEffectHandler implements NormalEffec
                 || exiledEntry.card().getActivatedAbilities(Zone.HAND).stream()
                 .anyMatch(com.github.laxika.magicalvibes.model.ActivatedAbility::isSuspendsSourceFromHand);
         gameData.exiledCardTimeCounters.remove(cardId);
-        triggerCollectionService.checkTimeCounterRemovedFromExiledCardTriggers(
-                gameData, exiledEntry.card(), exiledEntry.ownerId(), 0, removerId);
+        gameData.rulesEvents.occur(new CounterChangeEvent(CounterChangeEvent.Kind.TIME_COUNTER_REMOVED_IN_EXILE,
+                null, null, exiledEntry.card(), exiledEntry.ownerId(), removerId, CounterType.TIME, 0, 0, false, null));
         if (!hasAlaundoCastAbility && !hasSuspend) {
             return;
         }

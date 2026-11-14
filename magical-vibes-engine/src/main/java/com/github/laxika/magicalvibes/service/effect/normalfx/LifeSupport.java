@@ -1,5 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
+import com.github.laxika.magicalvibes.model.rules.LifeEvent;
+import com.github.laxika.magicalvibes.model.effect.IncreaseControllerSpeedEffect;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
@@ -67,6 +72,9 @@ public class LifeSupport {
     @Autowired
     @Lazy
     private DepartureService departureService;
+    @Autowired
+    @Lazy
+    private TriggeredAbilityStackService triggeredAbilityStackService;
 
     public LifeSupport(GameQueryService gameQueryService,
                        GameLogService gameLogService,
@@ -78,6 +86,50 @@ public class LifeSupport {
         this.triggerCollectionService = triggerCollectionService;
         this.permanentRemovalService = permanentRemovalService;
         this.drawService = drawService;
+    }
+
+    /**
+     * Records that {@code playerId} lost {@code amount} life, damage included ("damage causes loss of life", read by
+     * Wound Reflection at end of turn), lets speed's inherent ability trigger (CR 702.179d), and emits the loss for
+     * the abilities that trigger on it.
+     */
+    public void lifeLost(GameData gameData, UUID playerId, int amount) {
+        if (amount <= 0) {
+            return;
+        }
+        gameData.lifeLostThisTurn.merge(playerId, amount, Integer::sum);
+        increaseActivePlayerSpeedIfEligible(gameData, playerId);
+        gameData.rulesEvents.occur(new LifeEvent.Lost(playerId, amount));
+    }
+
+    /**
+     * Records the life {@code playerId} paid ({@code GameData.activationLifePaid} while an activation tracks it) and
+     * emits the payment, an event of its own beside the loss of life it is (CR 119.4).
+     */
+    public void lifePaid(GameData gameData, UUID playerId, int amount) {
+        if (amount <= 0) {
+            return;
+        }
+        if (gameData.trackingActivationLifePaid) {
+            gameData.activationLifePaid += amount;
+        }
+        gameData.rulesEvents.occur(new LifeEvent.Paid(playerId, amount));
+    }
+
+    private void increaseActivePlayerSpeedIfEligible(GameData gameData, UUID losingPlayerId) {
+        UUID activePlayerId = gameData.activePlayerId;
+        if (activePlayerId == null || activePlayerId.equals(losingPlayerId)) {
+            return;
+        }
+        int speed = gameData.playerSpeeds.getOrDefault(activePlayerId, 0);
+        if (speed < 1 || speed >= 4 || !gameData.playersWhoseSpeedIncreasedThisTurn.add(activePlayerId)) {
+            return;
+        }
+        // Speed's inherent ability, which has no source (CR 702.179d): "whenever one or more opponents lose life during
+        // your turn, if your speed is less than 4, your speed increases by 1. This ability triggers only once each
+        // turn." Its "if" is judged again as it resolves.
+        triggeredAbilityStackService.putInherent(gameData, activePlayerId, "Increase speed",
+                List.of(new IncreaseControllerSpeedEffect()), TriggeredAbilityRequest.TriggerRecord.NONE);
     }
 
     public void applyGainLife(GameData gameData, UUID controllerId, int amount) {
@@ -175,7 +227,7 @@ public class LifeSupport {
 
         log.info("Game {} - {} gains {} life", gameData.id, playerName, amount);
 
-        triggerCollectionService.checkLifeGainTriggers(gameData, controllerId, amount, sourceCard, sourceEntryType);
+        gameData.rulesEvents.occur(new LifeEvent.Gained(controllerId, amount, sourceCard, sourceEntryType));
     }
 
     /**
@@ -225,7 +277,7 @@ public class LifeSupport {
             closeDeathReplacementRerunWindow(gameData);
             gameData.lifeGainedThisTurn.merge(playerId, gained, Integer::sum);
             emitLifeCue(gameData, VisualCueType.LIFE_GAINED, playerId, gained, null);
-            triggerCollectionService.checkLifeGainTriggers(gameData, playerId, gained);
+            gameData.rulesEvents.occur(new LifeEvent.Gained(playerId, gained, null, null));
         } else {
             if (!gameQueryService.canPlayerLoseLife(gameData, playerId)) {
                 String playerName = gameData.playerIdToName.get(playerId);
@@ -243,7 +295,7 @@ public class LifeSupport {
             gameData.playerLifeTotals.put(playerId, SaturatingMath.subtract(currentLife, lifeLoss));
             closeDeathReplacementRerunWindow(gameData);
             emitLifeCue(gameData, VisualCueType.LIFE_LOST, playerId, lifeLoss, null);
-            triggerCollectionService.checkLifeLossTriggers(gameData, playerId, lifeLoss);
+            lifeLost(gameData, playerId, lifeLoss);
         }
         return true;
     }
@@ -272,7 +324,7 @@ public class LifeSupport {
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} loses {} life from {}", gameData.id, playerName, amount, sourceName);
 
-        triggerCollectionService.checkLifeLossTriggers(gameData, playerId, amount);
+        lifeLost(gameData, playerId, amount);
     }
 
     /**
@@ -517,7 +569,7 @@ public class LifeSupport {
         int currentLife = gameData.getLife(playerId);
         int lifeLoss = SaturatingMath.multiply(amount, gameQueryService.opponentLifeLossMultiplier(gameData, playerId));
         if (replaceLethalLifeReduction(gameData, playerId, lifeLoss)) {
-            triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, amount);
+            lifePaid(gameData, playerId, amount);
             return;
         }
         gameData.playerLifeTotals.put(playerId, SaturatingMath.subtract(currentLife, lifeLoss));
@@ -529,8 +581,8 @@ public class LifeSupport {
                 playerName + " loses " + lifeLoss + " life (" + sourceName + ")."));
         log.info("Game {} - {} loses {} life from paying for {}", gameData.id, playerName, lifeLoss, sourceName);
 
-        triggerCollectionService.checkLifeLossTriggers(gameData, playerId, lifeLoss);
-        triggerCollectionService.checkLifePaymentTriggers(gameData, playerId, amount);
+        lifeLost(gameData, playerId, lifeLoss);
+        lifePaid(gameData, playerId, amount);
     }
 
     /**
@@ -599,7 +651,8 @@ public class LifeSupport {
         gameLogService.append(gameData, GameLog.text(logEntry));
 
         log.info("Game {} - {} gets {} poison counter(s) from {}", gameData.id, playerName, amount, sourceName);
-        triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
+        gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.YOU_PUT_COUNTERS,
+                placingPlayerId, amount));
     }
 
     public void applyRadCounters(GameData gameData, UUID playerId, int amount, String sourceName,
@@ -614,7 +667,8 @@ public class LifeSupport {
                 + " (" + sourceName + ").";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} gets {} rad counter(s) from {}", gameData.id, playerName, amount, sourceName);
-        triggerCollectionService.checkYouPutCountersTriggers(gameData, placingPlayerId, amount);
+        gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.YOU_PUT_COUNTERS,
+                placingPlayerId, amount));
     }
 
     private boolean hasNefariousLichLifeGainReplacement(GameData gameData, UUID playerId) {

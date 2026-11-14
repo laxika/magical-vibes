@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.z.ZagothCrystal;
 import com.github.laxika.magicalvibes.cards.d.DromarsAttendant;
 import com.github.laxika.magicalvibes.cards.c.ClayStatue;
@@ -29,7 +30,7 @@ class PowerleechTest extends BaseCardTest {
 
         artifact.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, artifact));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(artifact, null, true)));
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore + 1);
@@ -44,7 +45,7 @@ class PowerleechTest extends BaseCardTest {
 
         creature.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, creature));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(creature, null, true)));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(lifeBefore);

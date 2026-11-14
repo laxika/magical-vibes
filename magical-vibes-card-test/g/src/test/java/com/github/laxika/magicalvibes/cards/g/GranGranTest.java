@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.a.AccumulateWisdom;
 import com.github.laxika.magicalvibes.cards.a.AirbendingLesson;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -174,6 +175,6 @@ class GranGranTest extends BaseCardTest {
     private void tap(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true)));
     }
 }

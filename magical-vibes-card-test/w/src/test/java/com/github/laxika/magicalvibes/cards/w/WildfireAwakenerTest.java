@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -44,7 +45,7 @@ class WildfireAwakenerTest extends BaseCardTest {
         Permanent elemental = findPermanents(player1, "Elemental").getFirst();
         elemental.tap();
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, elemental);
+            gd.rulesEvents.occur(new TapEvent.BecameTapped(elemental, null, true));
             harness.getTriggerCollectionService().beginStackDoorChoices(gd);
         });
 
@@ -86,7 +87,7 @@ class WildfireAwakenerTest extends BaseCardTest {
         Permanent elemental = findPermanents(player1, "Elemental").getFirst();
         elemental.tap();
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, elemental);
+            gd.rulesEvents.occur(new TapEvent.BecameTapped(elemental, null, true));
             harness.getTriggerCollectionService().beginStackDoorChoices(gd);
         });
         harness.handlePermanentChosen(player1, player1.getId());

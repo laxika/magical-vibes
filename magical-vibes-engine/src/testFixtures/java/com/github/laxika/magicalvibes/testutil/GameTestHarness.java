@@ -95,6 +95,7 @@ public class GameTestHarness {
     private static BattlefieldEntryService staticBattlefieldEntryService;
     private static SagaChapterService staticSagaChapterService;
     private static TriggerCollectionService staticTriggerCollectionService;
+    private static com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers staticDamageTriggers;
     private static SpellCastingService staticSpellCastingService;
     private static CombatAttackService staticCombatAttackService;
     private static CombatService staticCombatService;
@@ -135,6 +136,8 @@ public class GameTestHarness {
         staticBattlefieldEntryService = context.getBean(BattlefieldEntryService.class);
         staticSagaChapterService = context.getBean(SagaChapterService.class);
         staticTriggerCollectionService = context.getBean(TriggerCollectionService.class);
+        staticDamageTriggers = context.getBean(
+                com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers.class);
         staticSpellCastingService = context.getBean(SpellCastingService.class);
         staticCombatAttackService = context.getBean(CombatAttackService.class);
         staticCombatService = context.getBean(CombatService.class);
@@ -2678,6 +2681,11 @@ public class GameTestHarness {
 
     public BattlefieldEntryService getBattlefieldEntryService() {
         return battlefieldEntryService;
+    }
+
+    /** The trigger pipeline's damage collectors. */
+    public com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers getDamageTriggers() {
+        return staticDamageTriggers;
     }
 
     public TriggerCollectionService getTriggerCollectionService() {

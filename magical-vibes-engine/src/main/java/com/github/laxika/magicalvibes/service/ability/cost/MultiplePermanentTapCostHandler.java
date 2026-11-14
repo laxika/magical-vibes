@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability.cost;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -85,8 +86,9 @@ public class MultiplePermanentTapCostHandler implements PermanentChoiceCostHandl
             throw new IllegalStateException("Permanent does not match the required predicate");
         }
         chosen.tap();
-        triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, chosen);
-        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " taps " , chosen.getCard(), " as a cost."));
+        gameData.rulesEvents.occur(new TapEvent.BecameTapped(chosen, null, true));
+        gameLogService.append(gameData, GameLog.textCardText(player.getUsername() + " taps " , chosen.getCard(),
+                " as a cost."));
     }
 
     @Override

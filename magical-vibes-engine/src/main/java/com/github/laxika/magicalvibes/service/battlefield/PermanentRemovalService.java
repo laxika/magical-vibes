@@ -5,9 +5,7 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.service.trigger.CounterAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
-import com.github.laxika.magicalvibes.service.trigger.CounterWatch;
 import org.springframework.beans.factory.ObjectProvider;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
@@ -3668,8 +3666,8 @@ public class PermanentRemovalService {
 
         boolean returnsThroughLeavesTrigger = java.util.stream.Stream.of(
                         removedPermanent.getCard().getOwnEntryEffects(),
-                        WatchedAbilities.rawEffects(CounterAbilityReader.printed(removedPermanent.getCard(),
-                                CounterWatch.ON_SELF_TRAINS)),
+                        WatchedAbilities.rawEffects(WatchedAbilities.printed(removedPermanent.getCard(),
+                                Triggers.trains(), Zone.BATTLEFIELD)),
                         removedPermanent.getCard().getTriggerEffects(Triggers.turnedFaceUp(null, ObjectRelation.THIS)))
                 .flatMap(List::stream).anyMatch(effect -> effect instanceof ExileTargetCreaturesUntilSourceLeavesEffect
                         || (effect instanceof MayEffect may ? may.wrapped() : effect)

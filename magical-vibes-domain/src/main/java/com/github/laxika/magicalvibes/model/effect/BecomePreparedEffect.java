@@ -10,7 +10,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * prepared again, so this is a no-op in that case (CR-style: never more than one prepare copy at once).
  * <p>
  * This is normally a self-targeting effect so the trigger framework stamps the source permanent id
- * onto the resolving stack entry (see {@code SpellCastTriggerCollectorService}).
+ * onto the resolving stack entry (see {@code SpellTriggers}).
  *
  * @param asTriggeredAbility        "when this creature enters, it becomes prepared": a triggered ability that goes on
  *                                  the stack, not applied as the permanent enters

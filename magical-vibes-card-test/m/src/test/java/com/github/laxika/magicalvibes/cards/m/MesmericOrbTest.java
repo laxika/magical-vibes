@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.d.Domineer;
 import com.github.laxika.magicalvibes.cards.r.Regress;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -88,7 +89,7 @@ class MesmericOrbTest extends BaseCardTest {
 
         harness.inMutationScope(() -> {
             player2Permanent.untap();
-            harness.getTriggerCollectionService().checkBecomesUntappedTriggers(gd, player2Permanent);
+            gd.rulesEvents.occur(new TapEvent.BecameUntapped(player2Permanent));
         });
         gd.playerBattlefields.get(player2.getId()).remove(player2Permanent);
         harness.withAutoStop(gd.currentStep, this::resolveAllTriggers);

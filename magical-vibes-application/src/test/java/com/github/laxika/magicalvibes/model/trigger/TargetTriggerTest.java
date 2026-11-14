@@ -8,10 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
-import com.github.laxika.magicalvibes.model.condition.SourceIsFaceDown;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantKeywordToMatchingCardsEffect;
@@ -20,17 +17,13 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.service.trigger.TargetAbilityReader;
-import com.github.laxika.magicalvibes.service.trigger.TargetWatch;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.tuple;
 
 /** The becomes-the-target triggers: {@link TargetTrigger}. */
 class TargetTriggerTest {
@@ -110,148 +103,6 @@ class TargetTriggerTest {
         permanent.addTemporaryAbility(ability);
 
         assertThatThrownBy(ability::ownEntryEffects).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY.effectsOf(card))
-                .isInstanceOf(UnsupportedOperationException.class);
-        assertThatThrownBy(() -> TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY.registrationsOf(card))
-                .isInstanceOf(UnsupportedOperationException.class);
-    }
-
-    @Test
-    void theReaderGivesYourSpellOrAbilityTheFilterAndTheLimitAndWrapsTheInterveningIfAroundTheEffect() {
-        Card valiant = new Card();
-        valiant.addTrigger(Triggers.becomesTargetOfYourSpellOrAbility(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
-        TriggeredAbility ability = valiant.getTriggeredAbilities().getFirst();
-        Card dragon = new Card();
-        dragon.addTrigger(Triggers.creatureYouControlBecomesTargetOfOpponentSpellOrAbility().withFilter(DRAGON),
-                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()), WARD);
-
-        assertThat(TargetAbilityReader.readPrinted(valiant, TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY))
-                .singleElement().satisfies(read -> {
-                    assertThat(read.effect()).isEqualTo(DRAW);
-                    assertThat(read.ability()).isSameAs(ability);
-                    assertThat(read.filter()).isNull();
-                    assertThat(read.byController()).isTrue();
-                    assertThat(read.limit()).isEqualTo(TriggerLimit.ONCE_EACH_TURN);
-                });
-        assertThat(TargetAbilityReader.readPrinted(dragon,
-                TargetWatch.ON_ALLY_CREATURE_BECOMES_TARGET_OF_OPPONENT_SPELL_OR_ABILITY))
-                .singleElement().satisfies(read -> {
-                    assertThat(read.effect()).isEqualTo(new ConditionalEffect(new ControllerTurn(), WARD));
-                    assertThat(read.filter()).isEqualTo(DRAGON);
-                    assertThat(read.byController()).isFalse();
-                    assertThat(read.limit()).isEqualTo(TriggerLimit.NONE);
-                });
-    }
-
-    @Test
-    void theOtherNarrowedEventsAreReadByTheWatchOfTheEventAboutAnyone() {
-        Card yourSpell = new Card();
-        yourSpell.addTrigger(Triggers.becomesTargetOfYourSpell(), DRAW);
-        Card yourAbility = new Card();
-        yourAbility.addTrigger(Triggers.playerOrPermanentBecomesTargetOfYourAbility(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
-        Card anyone = new Card();
-        anyone.addTrigger(Triggers.playerChoosesTargets(), SACRIFICE);
-
-        assertThat(TargetAbilityReader.readPrinted(yourSpell, TargetWatch.ON_BECOMES_TARGET_OF_SPELL))
-                .extracting(TargetAbilityReader.TargetEffect::effect, TargetAbilityReader.TargetEffect::byController)
-                .containsExactly(tuple(DRAW, true));
-        assertThat(TargetAbilityReader.readPrinted(yourAbility, TargetWatch.ON_ANY_PLAYER_CHOOSES_TARGETS))
-                .extracting(TargetAbilityReader.TargetEffect::effect, TargetAbilityReader.TargetEffect::byController,
-                        TargetAbilityReader.TargetEffect::limit)
-                .containsExactly(tuple(DRAW, true, TriggerLimit.ONCE_EACH_TURN));
-        assertThat(TargetAbilityReader.readPrinted(anyone, TargetWatch.ON_ANY_PLAYER_CHOOSES_TARGETS))
-                .extracting(TargetAbilityReader.TargetEffect::effect, TargetAbilityReader.TargetEffect::byController)
-                .containsExactly(tuple(SACRIFICE, false));
-    }
-
-    @Test
-    void theReaderWrapsOnlyTheInterveningIfAndLeavesTheEventConditionToTheCollector() {
-        Card card = new Card();
-        card.addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), TriggerOptions.DEFAULT
-                .withInterveningIf(new ControllerTurn()).withEventCondition(new SourceIsFaceDown()), WARD);
-
-        assertThat(TargetAbilityReader.printedEffects(card, TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL))
-                .containsExactly(new ConditionalEffect(new ControllerTurn(),
-                        WARD));
-    }
-
-    @Test
-    void triggersOnlyOnceEachTurnIsMarkedByTheAbilityOnItsSource() {
-        Card card = new Card();
-        card.addTrigger(Triggers.becomesTargetOfYourSpellOrAbility(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
-        card.addTrigger(Triggers.becomesTargetOfSpellOrAbility(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), SACRIFICE);
-        List<TargetAbilityReader.TargetEffect> reads =
-                TargetAbilityReader.readPrinted(card, TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY);
-        GameData gameData = new GameData(UUID.randomUUID(), "test", UUID.randomUUID(), "owner");
-        UUID sourceId = UUID.randomUUID();
-
-        reads.getFirst().markLimit(gameData, sourceId);
-
-        assertThat(reads.getFirst().limitReached(gameData, sourceId)).isTrue();
-        assertThat(reads.getFirst().limitReached(gameData, UUID.randomUUID())).isFalse();
-        assertThat(reads.get(1).limitReached(gameData, sourceId)).isFalse();
-    }
-
-    @Test
-    void theStrictReaderRejectsAFilterANarrowerEventOrALimit() {
-        Card filtered = new Card();
-        filtered.addTrigger(Triggers.creatureYouControlBecomesTargetOfSpell().withFilter(DRAGON), DRAW);
-        Card narrower = new Card();
-        narrower.addTrigger(Triggers.becomesTargetOfYourSpell(), DRAW);
-        Card limited = new Card();
-        limited.addTrigger(Triggers.becomesTargetOfAuraSpell(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
-        Card plain = new Card();
-        plain.addTrigger(Triggers.becomesTargetOfAuraSpell(),
-                TriggerOptions.DEFAULT.withInterveningIf(new ControllerTurn()), DRAW);
-
-        assertThatThrownBy(() -> TargetAbilityReader.printedEffects(filtered,
-                TargetWatch.ON_ALLY_CREATURE_BECOMES_TARGET_OF_SPELL)).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> TargetAbilityReader.printedEffects(narrower, TargetWatch.ON_BECOMES_TARGET_OF_SPELL))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> TargetAbilityReader.printedEffects(limited,
-                TargetWatch.ON_BECOMES_TARGET_OF_AURA_SPELL)).isInstanceOf(IllegalStateException.class);
-        assertThat(TargetAbilityReader.printedEffects(plain, TargetWatch.ON_BECOMES_TARGET_OF_AURA_SPELL))
-                .containsExactly(new ConditionalEffect(new ControllerTurn(), DRAW));
-    }
-
-    @Test
-    void aMultiplicityALimitOrTwoReadingsTheTargetCollectorsCantReadAreRejected() {
-        Card doOnce = new Card();
-        doOnce.addTrigger(Triggers.becomesTargetOfSpellOrAbility(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.DO_ONLY_ONCE_EACH_TURN), DRAW);
-        Card twoReadings = new Card();
-        twoReadings.addTrigger(List.of(Triggers.becomesTargetOfYourSpell(), Triggers.becomesTargetOfSpell()), DRAW);
-
-        assertThatThrownBy(() -> new Card().addTrigger(Triggers.becomesTargetOfSpell(), TriggerOptions.ONE_OR_MORE,
-                DRAW)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> TargetAbilityReader.readPrinted(doOnce,
-                TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY)).isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> TargetAbilityReader.readPrinted(twoReadings, TargetWatch.ON_BECOMES_TARGET_OF_SPELL))
-                .isInstanceOf(IllegalStateException.class);
-    }
-
-    @Test
-    void grantedAbilitiesAreFoundByTheWatchedTriggerAndReadWithTheirLimit() {
-        TriggeredAbility granted = new TriggeredAbility(Triggers.becomesTargetOfSpellOrAbility(),
-                TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN), DRAW);
-        Permanent permanent = new Permanent(new Card());
-        permanent.addTemporaryAbility(new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(), WARD));
-
-        assertThat(granted.hasWatchedTrigger(TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY.trigger())).isTrue();
-        assertThat(TargetAbilityReader.read(granted, TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY.trigger()))
-                .singleElement().satisfies(read -> {
-                    assertThat(read.effect()).isEqualTo(DRAW);
-                    assertThat(read.limit()).isEqualTo(TriggerLimit.ONCE_EACH_TURN);
-                });
-        assertThat(TargetAbilityReader.grantedToPermanentEffects(permanent,
-                TargetWatch.ON_BECOMES_TARGET_OF_OPPONENT_SPELL)).containsExactly(WARD);
-        assertThat(TargetAbilityReader.grantedToPermanentEffects(permanent,
-                TargetWatch.ON_BECOMES_TARGET_OF_SPELL_OR_ABILITY)).isEmpty();
     }
 
     @Test

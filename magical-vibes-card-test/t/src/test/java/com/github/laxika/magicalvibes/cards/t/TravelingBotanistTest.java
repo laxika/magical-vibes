@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -93,8 +94,7 @@ class TravelingBotanistTest extends BaseCardTest {
     private void tapBotanist() {
         Permanent botanist = harness.addToBattlefieldAndReturn(player1, new TravelingBotanist());
         botanist.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, botanist));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(botanist, null, true)));
         harness.passBothPriorities();
     }
 
@@ -145,8 +145,7 @@ class TravelingBotanistTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(land));
         Permanent botanist = harness.addToBattlefieldAndReturn(player1, new TravelingBotanist());
         botanist.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, botanist));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(botanist, null, true)));
         gd.playerBattlefields.get(player1.getId()).remove(botanist);
         gd.playerGraveyards.get(player1.getId()).add(botanist.getCard());
 
@@ -182,8 +181,7 @@ class TravelingBotanistTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(originalTop));
         Permanent botanist = harness.addToBattlefieldAndReturn(player1, new TravelingBotanist());
         botanist.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, botanist));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(botanist, null, true)));
         harness.setLibrary(player1, List.of(land, originalTop));
 
         harness.passBothPriorities();

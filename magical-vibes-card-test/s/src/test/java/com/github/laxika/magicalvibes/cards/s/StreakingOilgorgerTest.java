@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -32,8 +34,8 @@ class StreakingOilgorgerTest extends BaseCardTest {
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
 
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player2.getId(), 1);
-            harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player2.getId(), 1);
+            GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player2.getId(), 1);
+            GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player2.getId(), 1);
         });
 
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
@@ -92,7 +94,7 @@ class StreakingOilgorgerTest extends BaseCardTest {
         harness.forceActivePlayer(player2);
 
         harness.inMutationScope(() ->
-                harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player2.getId(), 1));
+                GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player2.getId(), 1));
         resolveAllTriggers();
 
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);
@@ -105,7 +107,7 @@ class StreakingOilgorgerTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
 
         harness.inMutationScope(() ->
-                harness.getTriggerCollectionService().checkLifeLossTriggers(gd, player1.getId(), 1));
+                GameTestEngineContext.get().getBean(LifeSupport.class).lifeLost(gd, player1.getId(), 1));
         resolveAllTriggers();
 
         assertThat(gd.playerSpeeds.get(player1.getId())).isEqualTo(1);

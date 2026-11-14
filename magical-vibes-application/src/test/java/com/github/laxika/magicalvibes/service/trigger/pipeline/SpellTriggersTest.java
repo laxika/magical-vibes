@@ -1,5 +1,11 @@
-package com.github.laxika.magicalvibes.service.trigger;
+package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.model.rules.SpellEvent;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
+import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
+import com.github.laxika.magicalvibes.service.trigger.TriggerMatchContext;
+import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
@@ -8,7 +14,6 @@ import com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardE
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Card;
@@ -107,11 +112,9 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
@@ -120,7 +123,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsEventValuePredicate;
 
 @ExtendWith(MockitoExtension.class)
-class SpellCastTriggerCollectorServiceTest {
+class SpellTriggersTest {
 
     @Mock
     private GameQueryService gameQueryService;
@@ -146,7 +149,7 @@ class SpellCastTriggerCollectorServiceTest {
     private TriggerTargetCollector triggerTargetCollector;
 
     @InjectMocks
-    private SpellCastTriggerCollectorService sut;
+    private SpellTriggers sut;
 
     private TriggerCollectorRegistry registry;
     private GameData gd;
@@ -254,10 +257,10 @@ class SpellCastTriggerCollectorServiceTest {
 
             gd.recordSpellCast(player1Id, player1Spell);
             boolean player1Result = sut.collectCastAbility(match(perm, player1Id, ability), ability,
-                    new TriggerContext.SpellCast(player1Spell, player1Id, true), false);
+                    new SpellEvent.Cast(player1Spell, player1Id, Zone.HAND, null), false);
             gd.recordSpellCast(player2Id, player2Spell);
             boolean player2Result = sut.collectCastAbility(match(perm, player1Id, ability), ability,
-                    new TriggerContext.SpellCast(player2Spell, player2Id, true), false);
+                    new SpellEvent.Cast(player2Spell, player2Id, Zone.HAND, null), false);
 
             assertThat(player1Result).isTrue();
             assertThat(player2Result).isTrue();
@@ -282,11 +285,11 @@ class SpellCastTriggerCollectorServiceTest {
 
             gd.recordSpellCast(player1Id, firstSpell);
             sut.collectCastAbility(match(perm, player1Id, ability), ability,
-                    new TriggerContext.SpellCast(firstSpell, player1Id, true), false);
+                    new SpellEvent.Cast(firstSpell, player1Id, Zone.HAND, null), false);
             gd.recordSpellCast(player1Id, secondSpell);
 
             boolean result = sut.collectCastAbility(match(perm, player1Id, ability), ability,
-                    new TriggerContext.SpellCast(secondSpell, player1Id, true), false);
+                    new SpellEvent.Cast(secondSpell, player1Id, Zone.HAND, null), false);
 
             assertThat(result).isFalse();
             assertThat(gd.pendingInteractions).filteredOn(PermanentChoiceContext.AttackTriggerTarget.class::isInstance)
@@ -301,7 +304,7 @@ class SpellCastTriggerCollectorServiceTest {
         var effect = authored(SpellFilter.ANY, List.of(new BoostSelfEffect(2, 2),
                 new MayEffect(new com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForTargetSpellEffect(),
                         "Choose new targets?")));
-        var context = new TriggerContext.SpellCast(spell, player1Id, true);
+        var context = new SpellEvent.Cast(spell, player1Id, Zone.HAND, null);
         when(predicateEvaluationService.matchesCardPredicate(eq(spell), eq(null),
                 eq(source.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
 
@@ -325,7 +328,7 @@ class SpellCastTriggerCollectorServiceTest {
                 source.getOriginalCard().getId(), gd, player1Id, null, null, 3)).thenReturn(true);
 
         sut.collectCastAbility(match(source, player1Id, effect), effect,
-                new TriggerContext.SpellCast(spell, player1Id, true), true);
+                new SpellEvent.Cast(spell, player1Id, Zone.HAND, null), true);
 
         assertThat(gd.stack).hasSize(2);
         assertThat(gd.stack.getLast().getXValue()).isEqualTo(3);
@@ -341,7 +344,7 @@ class SpellCastTriggerCollectorServiceTest {
         var effect = castAbility(Triggers.youCastSpell().nthThisTurn(2), new DealDamageToAnyTargetEffect(2));
 
         boolean result = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
-                effect, new TriggerContext.SpellCast(spell, player1Id, true), true);
+                effect, new SpellEvent.Cast(spell, player1Id, Zone.HAND, null), true);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).isEmpty();
@@ -371,7 +374,7 @@ class SpellCastTriggerCollectorServiceTest {
             CastAbility ability = whileAttacking();
 
             boolean result = sut.collectCastAbility(match(perm, player1Id, ability.effects().getFirst()), ability,
-                    new TriggerContext.SpellCast(spellCard, player1Id, true), true);
+                    new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null), true);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(2);
@@ -392,7 +395,7 @@ class SpellCastTriggerCollectorServiceTest {
             CastAbility ability = whileAttacking();
 
             boolean result = sut.collectCastAbility(match(perm, player1Id, ability.effects().getFirst()), ability,
-                    new TriggerContext.SpellCast(spellCard, player1Id, true), true);
+                    new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null), true);
 
             assertThat(result).isFalse();
             assertThat(gd.stack).hasSize(1);
@@ -410,7 +413,7 @@ class SpellCastTriggerCollectorServiceTest {
             var innerEffect = new PutCountersOnSourceEffect(0, 0, 1);
             var effect = authored(SpellFilter.ANY, List.of(innerEffect));
             Card spellCard = createCard("Lightning Bolt", CardColor.RED);
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
@@ -439,13 +442,13 @@ class SpellCastTriggerCollectorServiceTest {
 
             gd.activePlayerId = player1Id;
             boolean activeCasterResult = sut.collectCastAbility(match(perm, player1Id, effect), effect,
-                    new TriggerContext.SpellCast(spellCard, player1Id, true), false);
+                    new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null), false);
 
             assertThat(activeCasterResult).isFalse();
             assertThat(gd.stack).isEmpty();
 
             boolean nonActiveCasterResult = sut.collectCastAbility(match(perm, player1Id, effect), effect,
-                    new TriggerContext.SpellCast(spellCard, player2Id, true), false);
+                    new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null), false);
 
             assertThat(nonActiveCasterResult).isTrue();
             assertThat(gd.stack).hasSize(1);
@@ -459,7 +462,7 @@ class SpellCastTriggerCollectorServiceTest {
             var innerEffect = new PutCountersOnSourceEffect(0, 0, 1);
             var effect = authored(SpellFilter.ANY.withSpell(filter), List.of(innerEffect));
             Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(false);
@@ -479,7 +482,7 @@ class SpellCastTriggerCollectorServiceTest {
             Card spellCard = createCard("Angelic Chorus");
             StackEntry spellOnStack = new StackEntry(spellCard, player2Id);
             gd.stack.add(spellOnStack);
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any()))
@@ -502,7 +505,7 @@ class SpellCastTriggerCollectorServiceTest {
             var innerEffect = new BoostSelfEffect(1, 1);
             var effect = authored(SpellFilter.ANY, List.of(innerEffect));
             Card spellCard = createCard("Lightning Bolt", CardColor.RED);
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
@@ -524,7 +527,7 @@ class SpellCastTriggerCollectorServiceTest {
             var innerEffect = new PutCountersOnEnchantedCreatureEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
             var effect = authored(SpellFilter.ANY, List.of(innerEffect));
             Card spellCard = createCard("Grizzly Bears");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(aura.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
@@ -545,7 +548,7 @@ class SpellCastTriggerCollectorServiceTest {
             var innerEffect = new BoostSelfEffect(new ManaSpentToCast(), new Fixed(0));
             var effect = authored(SpellFilter.ANY, List.of(innerEffect));
             Card spellCard = createCard("Lightning Bolt", CardColor.RED);
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
             StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
             spellOnStack.setManaSpentToCast(3);
             gd.stack.add(spellOnStack);
@@ -569,7 +572,7 @@ class SpellCastTriggerCollectorServiceTest {
             var effect = authored(SpellFilter.ANY, List.of(innerEffect));
             Card spellCard = createInstant("Divination");
             spellCard.setManaCost("{2}{U}");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
@@ -586,7 +589,7 @@ class SpellCastTriggerCollectorServiceTest {
             var innerEffect = new PutCountersOnSourceEffect(0, 0, 1);
             var mayEffect = new MayEffect(innerEffect, "Gain 1 life?");
             Card spellCard = createCard("Lightning Bolt", CardColor.RED);
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
             everySpellMatches();
             CastAbility ability = castAbility(Triggers.playerCastsSpell().anySpell(), mayEffect);
 
@@ -605,7 +608,7 @@ class SpellCastTriggerCollectorServiceTest {
             var draw = new DrawCardEffect(new ManaSpentToCast());
             var mayEffect = new MayEffect(draw, "Draw cards?");
             Card spellCard = createInstant("Dark Ritual");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
             StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
             spellOnStack.setManaSpentToCast(3);
             gd.stack.add(spellOnStack);
@@ -634,7 +637,7 @@ class SpellCastTriggerCollectorServiceTest {
             TriggeredAbility ability = source.getTriggeredAbilities().get(1);
             CastAbility effect = CastAbility.of(ability, SpellFilter.ANY);
             Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
@@ -657,7 +660,7 @@ class SpellCastTriggerCollectorServiceTest {
             var pay = new MayPayManaEffect("{3}", innerEffect, "Pay {3}?");
             var ability = new CastAbility(SpellFilter.ANY, List.of(pay), null, TargetFilters.permanent());
             Card spellCard = createCard("Grizzly Bears", CardColor.GREEN);
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
@@ -687,7 +690,7 @@ class SpellCastTriggerCollectorServiceTest {
         everySpellMatches();
 
         boolean result = sut.collectCastAbility(match(perm, player1Id, gainLife), ability,
-                new TriggerContext.SpellCast(spellCard, player2Id, true), false);
+                new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null), false);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(2);
@@ -713,7 +716,7 @@ class SpellCastTriggerCollectorServiceTest {
         everySpellMatches();
 
         boolean result = sut.collectCastAbility(match(perm, player1Id, returnCards), ability,
-                new TriggerContext.SpellCast(spellCard, player2Id, true), false);
+                new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null), false);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(2);
@@ -742,7 +745,7 @@ class SpellCastTriggerCollectorServiceTest {
         everySpellMatches();
 
         boolean result = sut.collectCastAbility(match(perm, player1Id, poison), ability,
-                new TriggerContext.SpellCast(spellCard, player1Id, true), false);
+                new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null), false);
 
         assertThat(result).isTrue();
         PermanentChoiceContext.AttackTriggerTarget queued =
@@ -763,7 +766,7 @@ class SpellCastTriggerCollectorServiceTest {
         everySpellMatches();
 
         boolean result = sut.collectCastAbility(match(perm, player1Id, counter), ability,
-                new TriggerContext.SpellCast(spellCard, player2Id, true), false);
+                new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null), false);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(2);
@@ -785,7 +788,7 @@ class SpellCastTriggerCollectorServiceTest {
             var innerEffect = new PutCountersOnSourceEffect(1, 1, 1);
             var effect = authored(SpellFilter.ANY, List.of(innerEffect));
             Card spellCard = createInstant("Lightning Bolt");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
@@ -812,7 +815,7 @@ class SpellCastTriggerCollectorServiceTest {
             gd.recordSpellCast(player1Id, noncreatureSpell);
             gd.recordSpellCast(player1Id, firstCreatureSpell);
             gd.recordSpellCast(player1Id, secondCreatureSpell);
-            var ctx = new TriggerContext.SpellCast(secondCreatureSpell, player1Id, true);
+            var ctx = new SpellEvent.Cast(secondCreatureSpell, player1Id, Zone.HAND, null);
 
             when(predicateEvaluationService.matchesCardPredicate(
                     any(Card.class), eq(filter), any(), eq(gd), eq(player1Id), isNull(), isNull(), any()))
@@ -848,15 +851,15 @@ class SpellCastTriggerCollectorServiceTest {
 
             gd.recordSpellCast(player1Id, firstSpell);
             assertThat(sut.collectCastAbility(match(perm, player1Id, effect), effect,
-                    new TriggerContext.SpellCast(firstSpell, player1Id, true), true)).isFalse();
+                    new SpellEvent.Cast(firstSpell, player1Id, Zone.HAND, null), true)).isFalse();
 
             gd.recordSpellCast(player1Id, secondSpell);
             assertThat(sut.collectCastAbility(match(perm, player1Id, effect), effect,
-                    new TriggerContext.SpellCast(secondSpell, player1Id, true), true)).isTrue();
+                    new SpellEvent.Cast(secondSpell, player1Id, Zone.HAND, null), true)).isTrue();
 
             gd.recordSpellCast(player1Id, thirdSpell);
             assertThat(sut.collectCastAbility(match(perm, player1Id, effect), effect,
-                    new TriggerContext.SpellCast(thirdSpell, player1Id, true), true)).isTrue();
+                    new SpellEvent.Cast(thirdSpell, player1Id, Zone.HAND, null), true)).isTrue();
             assertThat(gd.stack).hasSize(2);
         }
 
@@ -873,7 +876,7 @@ class SpellCastTriggerCollectorServiceTest {
             gd.recordSpellCast(player1Id, secondSpell);
 
             assertThat(sut.collectCastAbility(match(perm, player1Id, effect), effect,
-                    new TriggerContext.SpellCast(secondSpell, player1Id, true), true)).isFalse();
+                    new SpellEvent.Cast(secondSpell, player1Id, Zone.HAND, null), true)).isFalse();
             assertThat(gd.stack).isEmpty();
         }
 
@@ -884,7 +887,7 @@ class SpellCastTriggerCollectorServiceTest {
             var innerEffect = new DealDamageToAnyTargetEffect(2);
             var effect = authored(SpellFilter.ANY, List.of(innerEffect));
             Card spellCard = createInstant("Lightning Bolt");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(true);
@@ -908,7 +911,7 @@ class SpellCastTriggerCollectorServiceTest {
             ));
             var effect = authored(SpellFilter.ANY, List.of(modal));
             Card spellCard = createInstant("Opt");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any()))
@@ -937,7 +940,7 @@ class SpellCastTriggerCollectorServiceTest {
                             CardColor.WHITE, List.of(CardSubtype.SPIRIT), Set.of(), Set.of()))));
             var effect = authored(SpellFilter.ANY, List.of(modal));
             Card spellCard = createInstant("Opt");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(null),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any()))
@@ -974,7 +977,7 @@ class SpellCastTriggerCollectorServiceTest {
             StackEntry spellOnStack = new StackEntry(spellCard, player1Id);
             spellOnStack.setModalModeCount(2);
             gd.stack.add(spellOnStack);
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
             everySpellMatches();
             when(amountEvaluationService.evaluate(eq(gd), eq(new TriggeringSpellModeCount()),
                     argThat(amount -> amount.stackEntry() != null
@@ -1010,7 +1013,7 @@ class SpellCastTriggerCollectorServiceTest {
             var effect = authored(SpellFilter.ANY,
                     List.of(new ChooseOneAtTriggerTimeEffect(modal, new TriggeringSpellModeCount())));
             Card spellCard = createInstant("Opt");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
             everySpellMatches();
             when(amountEvaluationService.evaluate(eq(gd), eq(new TriggeringSpellModeCount()), any())).thenReturn(0);
 
@@ -1030,7 +1033,7 @@ class SpellCastTriggerCollectorServiceTest {
             var innerEffect = new DealDamageToAnyTargetEffect(2);
             var effect = authored(SpellFilter.ANY.withSpell(filter), List.of(innerEffect));
             Card spellCard = createCard("Grizzly Bears");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
 
             when(predicateEvaluationService.matchesCardPredicate(eq(spellCard), eq(filter),
                     eq(perm.getOriginalCard().getId()), any(), any(), isNull(), isNull(), any())).thenReturn(false);
@@ -1050,7 +1053,7 @@ class SpellCastTriggerCollectorServiceTest {
                                     CardEffect... effects) {
             return sut.collectCopyAbility(match(perm, player1Id, effects[0]),
                     new TriggeredAbility(Triggers.youCopySpell(), effects), filter,
-                    new TriggerContext.SpellCopy(copiedSpell, copyingPlayerId));
+                    new SpellEvent.Copied(copiedSpell, copyingPlayerId));
         }
 
         private StackEntry copyOf(Card spellCard, UUID controllerId) {
@@ -1175,7 +1178,7 @@ class SpellCastTriggerCollectorServiceTest {
             Permanent perm = createPermanent("Leering Emblem");
             var effect = new BoostEquippedCreatureUntilEndOfTurnEffect(new Fixed(2), new Fixed(2));
             Card spellCard = createInstant("Lightning Bolt");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
 
             everySpellMatches();
             boolean result = sut.collectCastAbility(match(perm, player1Id, effect),
@@ -1205,7 +1208,7 @@ class SpellCastTriggerCollectorServiceTest {
             StackEntry spell = new StackEntry(StackEntryType.INSTANT_SPELL, spellCard, player2Id,
                     spellCard.getName(), List.of(), 0, player1Id, java.util.Map.of());
             gd.stack.add(spell);
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null);
             everySpellMatches();
 
             boolean result = sut.collectCastAbility(match(perm, player1Id, copy), effect, ctx, true);
@@ -1233,7 +1236,7 @@ class SpellCastTriggerCollectorServiceTest {
             var effect = castAbility(Triggers.youCastSpell().anySpell(), returnEffect);
             Card spellCard = createInstant("Divination");
             spellCard.setManaCost("{2}{U}");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
             everySpellMatches();
 
             boolean result = sut.collectCastAbility(match(perm, player1Id, returnEffect), effect, ctx, true);
@@ -1262,7 +1265,7 @@ class SpellCastTriggerCollectorServiceTest {
                     may);
             Card spellCard = createCard("Spellbook");
             spellCard.setType(CardType.ARTIFACT);
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
             everySpellMatches();
 
             boolean result = sut.collectCastAbility(match(perm, player1Id, may), ability, ctx, true);
@@ -1287,7 +1290,7 @@ class SpellCastTriggerCollectorServiceTest {
             var innerEffect = new BoostSelfEffect(1, 1);
             var effect = castAbility(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
             Card spellCard = createInstant("Lightning Bolt");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null);
 
             boolean result = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
                     effect, ctx, true);
@@ -1302,7 +1305,7 @@ class SpellCastTriggerCollectorServiceTest {
             var innerEffect = new BoostSelfEffect(1, 1);
             var effect = castAbility(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
             Card spellCard = createInstant("Lightning Bolt");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, false);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.GRAVEYARD, null);
             everySpellMatches();
 
             boolean result = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
@@ -1322,7 +1325,7 @@ class SpellCastTriggerCollectorServiceTest {
             var innerEffect = new DealDamageToAnyTargetEffect(3);
             var effect = castAbility(Triggers.youCastSpell().castFrom(Zone.GRAVEYARD), innerEffect);
             Card spellCard = createInstant("Lightning Bolt");
-            var ctx = new TriggerContext.SpellCast(spellCard, player1Id, false);
+            var ctx = new SpellEvent.Cast(spellCard, player1Id, Zone.GRAVEYARD, null);
             everySpellMatches();
 
             boolean result = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
@@ -1351,7 +1354,7 @@ class SpellCastTriggerCollectorServiceTest {
 
             boolean result = sut.collectCastAbility(match(perm, player1Id, damage),
                     castAbility(Triggers.opponentCastsSpell().anySpell(), damage),
-                    new TriggerContext.SpellCast(spellCard, player2Id, true), true);
+                    new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null), true);
 
             assertThat(result).isTrue();
             var queued = gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
@@ -1382,7 +1385,7 @@ class SpellCastTriggerCollectorServiceTest {
                     targetFilter);
 
             boolean result = sut.collectCastAbility(match(perm, player1Id, gainControl), ability,
-                    new TriggerContext.SpellCast(spellCard, player1Id, true), true);
+                    new SpellEvent.Cast(spellCard, player1Id, Zone.HAND, null), true);
 
             assertThat(result).isTrue();
             var queued = gd.peekPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
@@ -1402,7 +1405,7 @@ class SpellCastTriggerCollectorServiceTest {
             Permanent perm = createPermanent("Chalice of the Void");
             var effect = new CounterUnlessPaysEffect(2);
             Card spellCard = createCard("Grizzly Bears");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null);
             gd.stack.add(new StackEntry(StackEntryType.CREATURE_SPELL, spellCard, player2Id, "Grizzly Bears",
                     new ArrayList<>()));
 
@@ -1426,7 +1429,7 @@ class SpellCastTriggerCollectorServiceTest {
             Permanent perm = createPermanent("Chalice of the Void");
             var effect = new CounterUnlessPaysEffect(2);
             Card spellCard = createCard("Grizzly Bears");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null);
 
             everySpellMatches();
             sut.collectCastAbility(match(perm, player1Id, effect),
@@ -1446,7 +1449,7 @@ class SpellCastTriggerCollectorServiceTest {
             Permanent perm = createPermanent("Lurking Predators");
             var effect = new RevealTopCardCreatureToBattlefieldOrMayBottomEffect();
             Card spellCard = createCard("Grizzly Bears");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null);
 
             everySpellMatches();
             boolean result = sut.collectCastAbility(match(perm, player1Id, effect),
@@ -1466,7 +1469,7 @@ class SpellCastTriggerCollectorServiceTest {
             Permanent perm = createPermanent("Lurking Predators");
             var effect = new RevealTopCardCreatureToBattlefieldOrMayBottomEffect();
             Card spellCard = createCard("Grizzly Bears");
-            var ctx = new TriggerContext.SpellCast(spellCard, player2Id, true);
+            var ctx = new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null);
 
             everySpellMatches();
             sut.collectCastAbility(match(perm, player1Id, effect),
@@ -1488,7 +1491,7 @@ class SpellCastTriggerCollectorServiceTest {
         everySpellMatches();
 
         boolean result = sut.collectCastAbility(match(perm, player1Id, loseLife), ability,
-                new TriggerContext.SpellCast(spellCard, player2Id, true), false);
+                new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null), false);
 
         assertThat(result).isTrue();
         assertThat(gd.stack).hasSize(2);
@@ -1512,7 +1515,7 @@ class SpellCastTriggerCollectorServiceTest {
                 new ArrayList<>()));
 
         boolean result = sut.collectCastAbility(match(perm, player1Id, loseLife), ability,
-                new TriggerContext.SpellCast(spellCard, player2Id, true), false);
+                new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null), false);
 
         assertThat(result).isFalse();
         assertThat(gd.stack).hasSize(1);
@@ -1537,7 +1540,7 @@ class SpellCastTriggerCollectorServiceTest {
             everySpellMatches();
 
             boolean result = sut.collectCastAbility(match(perm, player1Id, ability), ability,
-                    new TriggerContext.SpellCast(currentSpell, player1Id, true), false);
+                    new SpellEvent.Cast(currentSpell, player1Id, Zone.HAND, null), false);
 
             assertThat(result).isTrue();
             assertThat(gd.stack).hasSize(2);
@@ -1564,11 +1567,11 @@ class SpellCastTriggerCollectorServiceTest {
 
             gd.recordSpellCast(player1Id, player1Spell);
             boolean player1Result = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
-                    effect, new TriggerContext.SpellCast(player1Spell, player1Id, true), true);
+                    effect, new SpellEvent.Cast(player1Spell, player1Id, Zone.HAND, null), true);
 
             gd.recordSpellCast(player2Id, player2Spell);
             boolean player2Result = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
-                    effect, new TriggerContext.SpellCast(player2Spell, player2Id, true), true);
+                    effect, new SpellEvent.Cast(player2Spell, player2Id, Zone.HAND, null), true);
 
             assertThat(player1Result).isTrue();
             assertThat(player2Result).isTrue();
@@ -1589,11 +1592,11 @@ class SpellCastTriggerCollectorServiceTest {
 
             gd.recordSpellCast(player1Id, firstSpell);
             sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
-                    effect, new TriggerContext.SpellCast(firstSpell, player1Id, true), true);
+                    effect, new SpellEvent.Cast(firstSpell, player1Id, Zone.HAND, null), true);
             gd.recordSpellCast(player1Id, secondSpell);
 
             boolean result = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
-                    effect, new TriggerContext.SpellCast(secondSpell, player1Id, true), true);
+                    effect, new SpellEvent.Cast(secondSpell, player1Id, Zone.HAND, null), true);
 
             assertThat(result).isFalse();
             assertThat(gd.stack).hasSize(1);
@@ -1615,7 +1618,7 @@ class SpellCastTriggerCollectorServiceTest {
                     new ArrayList<>());
 
             boolean result = sut.collectCardAdvantageAbility(match(perm, player1Id, loseLife), ability,
-                    new TriggerContext.SpellCardAdvantage(spell));
+                    new SpellEvent.CardAdvantage(spell));
 
             assertThat(result).isTrue();
             StackEntry entry = gd.stack.getLast();
@@ -1640,7 +1643,7 @@ class SpellCastTriggerCollectorServiceTest {
             when(conditionEvaluationService.isMet(eq(gd), eq(new ControllerTurn()), any())).thenReturn(false);
 
             assertThat(sut.collectCardAdvantageAbility(match(perm, player1Id, loseLife), ability,
-                    new TriggerContext.SpellCardAdvantage(spell))).isFalse();
+                    new SpellEvent.CardAdvantage(spell))).isFalse();
             assertThat(gd.stack).isEmpty();
         }
 
@@ -1666,9 +1669,9 @@ class SpellCastTriggerCollectorServiceTest {
                     .thenAnswer(call -> call.<ConditionContext>getArgument(2).triggeringSpell().getCard() == matching);
 
             boolean matched = sut.collectCastAbility(match(perm, player1Id, copy), ability,
-                    new TriggerContext.SpellCast(matching, player2Id, true), false);
+                    new SpellEvent.Cast(matching, player2Id, Zone.HAND, null), false);
             boolean unmatched = sut.collectCastAbility(match(perm, player1Id, copy), ability,
-                    new TriggerContext.SpellCast(other, player2Id, true), false);
+                    new SpellEvent.Cast(other, player2Id, Zone.HAND, null), false);
 
             assertThat(matched).isTrue();
             assertThat(unmatched).isFalse();
@@ -1706,15 +1709,15 @@ class SpellCastTriggerCollectorServiceTest {
 
             gd.recordSpellCast(player1Id, creatureSpell);
             boolean creatureResult = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
-                    effect, new TriggerContext.SpellCast(creatureSpell, player1Id, true), true);
+                    effect, new SpellEvent.Cast(creatureSpell, player1Id, Zone.HAND, null), true);
 
             gd.recordSpellCast(player2Id, firstNoncreatureSpell);
             boolean firstResult = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
-                    effect, new TriggerContext.SpellCast(firstNoncreatureSpell, player2Id, true), true);
+                    effect, new SpellEvent.Cast(firstNoncreatureSpell, player2Id, Zone.HAND, null), true);
 
             gd.recordSpellCast(player1Id, laterNoncreatureSpell);
             boolean laterResult = sut.collectCastAbility(match(perm, player1Id, effect.effects().getFirst()),
-                    effect, new TriggerContext.SpellCast(laterNoncreatureSpell, player1Id, true), true);
+                    effect, new SpellEvent.Cast(laterNoncreatureSpell, player1Id, Zone.HAND, null), true);
 
             assertThat(creatureResult).isFalse();
             assertThat(firstResult).isTrue();

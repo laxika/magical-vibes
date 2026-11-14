@@ -43,10 +43,8 @@ class DealDamageToTargetControllerIfTargetHasKeywordEffectHandlerTest extends Ab
                 dealDamageToTargetControllerIfTargetHasKeywordHandler.resolve(gd, entry, effect);
 
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(17);
-                verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 3);
-                verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
-                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
-                        eq(gd), eq(player2Id), any(), eq(3));
+                verify(lifeSupport).lifeLost(gd, player2Id, 3);
+                assertDamageToPlayer(player2Id, 3);
             }
 
             @Test

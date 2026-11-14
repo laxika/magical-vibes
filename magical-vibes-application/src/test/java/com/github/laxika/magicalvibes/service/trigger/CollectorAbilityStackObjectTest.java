@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LivingDeath;
 import com.github.laxika.magicalvibes.model.Card;
@@ -165,8 +166,7 @@ class CollectorAbilityStackObjectTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         bears.tap();
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd,
-                bears, player1.getId()));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(bears, player1.getId(), false)));
 
         assertThat(entriesOf("Tap Watcher")).singleElement()
                 .satisfies(entry -> assertThat(entry.getEffectsToResolve()).hasSize(2));
@@ -180,7 +180,7 @@ class CollectorAbilityStackObjectTest extends BaseCardTest {
         addCreatureReady(player1, card);
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkBecomesUntappedTriggers(gd, bears));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameUntapped(bears)));
 
         assertThat(entriesOf("Untap Watcher")).singleElement()
                 .satisfies(entry -> assertThat(entry.getEffectsToResolve()).hasSize(2));

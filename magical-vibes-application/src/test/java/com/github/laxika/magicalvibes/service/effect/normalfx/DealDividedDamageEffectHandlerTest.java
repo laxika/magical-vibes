@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -15,8 +14,6 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -71,10 +68,8 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
             // Lethal marked damage — the SBA check after resolution performs the destruction.
             assertThat(bears.getMarkedDamage()).isEqualTo(2);
             assertThat(elves.getMarkedDamage()).isEqualTo(1);
-            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
-                    gd, bears, 2, player1Id, arcCard, null);
-            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
-                    gd, elves, 1, player1Id, arcCard, null);
+            assertDamageToPermanent(bears, 2, player1Id, arcCard, null);
+            assertDamageToPermanent(elves, 1, player1Id, arcCard, null);
         }
 
         @Test
@@ -97,12 +92,9 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
 
             assertThat(bears.getMarkedDamage()).isEqualTo(2);
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(19);
-            verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
-                    gd, bears, 2, player1Id, arcCard, null);
-            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 1);
-            verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
-            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
-                    eq(gd), eq(player2Id), any(), eq(1));
+            assertDamageToPermanent(bears, 2, player1Id, arcCard, null);
+            verify(lifeSupport).lifeLost(gd, player2Id, 1);
+            assertDamageToPlayer(player2Id, 1);
         }
 
         @Test
@@ -124,7 +116,7 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
             handler.resolve(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(19);
-            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 1);
+            verify(lifeSupport).lifeLost(gd, player2Id, 1);
         }
     }
 
@@ -176,7 +168,7 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
             handler.resolve(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(13);
-            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 7);
+            verify(lifeSupport).lifeLost(gd, player2Id, 7);
         }
     }
 
@@ -238,7 +230,7 @@ class DealDividedDamageEffectHandlerTest extends AbstractDamageHandlerTest {
             handler.resolve(gd, entry, effect);
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(19);
-            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 1);
+            verify(lifeSupport).lifeLost(gd, player2Id, 1);
         }
     }
 }

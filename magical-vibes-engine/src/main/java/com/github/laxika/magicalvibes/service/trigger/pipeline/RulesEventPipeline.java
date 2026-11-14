@@ -16,12 +16,19 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.rules.AttackEvent;
 import com.github.laxika.magicalvibes.model.rules.BlockEvent;
+import com.github.laxika.magicalvibes.model.rules.CombatDamageStepEvent;
+import com.github.laxika.magicalvibes.model.rules.DamageDealtEvent;
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
+import com.github.laxika.magicalvibes.model.rules.LifeEvent;
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
 import com.github.laxika.magicalvibes.model.rules.RulesObserver;
+import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.rules.StepEvent;
+import com.github.laxika.magicalvibes.model.rules.TargetEvent;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -42,6 +49,7 @@ import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalServic
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.ZoneChangeWatch;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -99,6 +107,23 @@ public class RulesEventPipeline {
     private final GameLogService gameLogService;
     private final AttackTriggers attackTriggers;
     private final BlockTriggers blockTriggers;
+    private final SpellTriggers spellTriggers;
+    private final TargetTriggers targetTriggers;
+    @Autowired
+    @Lazy
+    private DamageTriggers damageTriggers;
+    @Autowired
+    @Lazy
+    private CombatDamageTriggers combatDamageTriggers;
+    @Autowired
+    @Lazy
+    private CounterTriggers counterTriggers;
+    @Autowired
+    @Lazy
+    private TapTriggers tapTriggers;
+    @Autowired
+    @Lazy
+    private LifeTriggers lifeTriggers;
 
     public RulesEventPipeline(TriggerIndex triggerIndex, TriggeredAbilityStackService stackService,
                               @Lazy PredicateEvaluationService predicateEvaluationService,
@@ -108,7 +133,9 @@ public class RulesEventPipeline {
                               @Lazy ConditionEvaluationService conditionEvaluationService,
                               @Lazy GameLogService gameLogService,
                               @Lazy AttackTriggers attackTriggers,
-                              @Lazy BlockTriggers blockTriggers) {
+                              @Lazy BlockTriggers blockTriggers,
+                              @Lazy SpellTriggers spellTriggers,
+                              @Lazy TargetTriggers targetTriggers) {
         this.triggerIndex = triggerIndex;
         this.stackService = stackService;
         this.predicateEvaluationService = predicateEvaluationService;
@@ -119,6 +146,8 @@ public class RulesEventPipeline {
         this.gameLogService = gameLogService;
         this.attackTriggers = attackTriggers;
         this.blockTriggers = blockTriggers;
+        this.spellTriggers = spellTriggers;
+        this.targetTriggers = targetTriggers;
     }
 
     /**
@@ -348,6 +377,20 @@ public class RulesEventPipeline {
                 attackTriggers.trigger(gameData, attack);
             } else if (event instanceof BlockEvent block) {
                 blockTriggers.trigger(gameData, block);
+            } else if (event instanceof SpellEvent spell) {
+                spellTriggers.trigger(gameData, spell);
+            } else if (event instanceof TargetEvent target) {
+                targetTriggers.trigger(gameData, target);
+            } else if (event instanceof DamageDealtEvent damage) {
+                damageTriggers.trigger(gameData, damage);
+            } else if (event instanceof CombatDamageStepEvent combatDamage) {
+                combatDamageTriggers.trigger(gameData, combatDamage);
+            } else if (event instanceof CounterChangeEvent counters) {
+                counterTriggers.trigger(gameData, counters);
+            } else if (event instanceof TapEvent tap) {
+                tapTriggers.trigger(gameData, tap);
+            } else if (event instanceof LifeEvent life) {
+                lifeTriggers.trigger(gameData, life);
             }
         }
         if (!permanentChanges.isEmpty()) {

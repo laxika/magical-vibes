@@ -96,6 +96,22 @@ public class CombatDamageState {
     public final List<DelayedCombatDamageLookAtHandAndDrawQualification>
             delayedCombatDamageLookAtHandAndDrawQualifications = new ArrayList<>();
 
+    /**
+     * The abilities the step's damage triggered that wait on the stack while the state-based actions run, put back
+     * above the abilities those actions trigger: "whenever a creature is dealt damage" and its kin, the "whenever a
+     * source deals damage" reflections with "whenever damage is dealt to a player", and the "whenever this creature
+     * deals damage to a creature" abilities of the dealers and of the watchers. Filled and read within one step.
+     */
+    public final List<StackEntry> heldGlobalDamageTriggers = new ArrayList<>();
+    public final List<StackEntry> heldSourceDamageReflectionTriggers = new ArrayList<>();
+    public final List<StackEntry> heldSelfAllyDamageReflectionTriggers = new ArrayList<>();
+    public final List<StackEntry> heldWatcherAllyDamageReflectionTriggers = new ArrayList<>();
+    /**
+     * What the trigger pipeline read of the step's abilities as the damage was dealt, for the abilities it triggers
+     * after the state-based actions; set and cleared within one step, so it is never copied.
+     */
+    public Object combatTriggerSnapshot;
+
     /** Redirected combat damage each source dealt to each player in this damage step, keyed by recipient. */
     public final Map<UUID, Map<Permanent, Integer>> redirectedCombatDamageToPlayers = new LinkedHashMap<>();
 

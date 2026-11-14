@@ -121,10 +121,8 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             handler.resolve(gd, entry, new DealDamageToPlayersEffect(5, DamageRecipient.TARGET_PLAYER));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
-            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 5);
-            verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
-            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
-                    eq(gd), eq(player2Id), any(), eq(5));
+            verify(lifeSupport).lifeLost(gd, player2Id, 5);
+            assertDamageToPlayer(player2Id, 5);
         }
 
         @Test
@@ -159,7 +157,7 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
                     new DealDamageToPlayersEffect(new CardsInHand(CountScope.TARGET_PLAYER), DamageRecipient.TARGET_PLAYER));
 
             assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(15);
-            verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 5);
+            verify(lifeSupport).lifeLost(gd, player2Id, 5);
         }
 
         @Test
@@ -201,10 +199,8 @@ class DealDamageToPlayersEffectHandlerTest extends AbstractDamageHandlerTest {
             handler.resolve(gd, entry, new DealDamageToPlayersEffect(3, DamageRecipient.CONTROLLER));
 
             assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(17);
-            verify(triggerCollectionService).checkLifeLossTriggers(gd, player1Id, 3);
-            verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player1Id, null, false);
-            verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
-                    eq(gd), eq(player1Id), any(), eq(3));
+            verify(lifeSupport).lifeLost(gd, player1Id, 3);
+            assertDamageToPlayer(player1Id, 3);
         }
     }
 

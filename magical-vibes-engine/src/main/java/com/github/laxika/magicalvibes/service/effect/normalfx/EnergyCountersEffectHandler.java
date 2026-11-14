@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -57,7 +58,8 @@ public class EnergyCountersEffectHandler implements NormalEffectHandlerBean {
         gameLogService.append(gameData, GameLog.text(playerName + " " + action + " energy counter(s)."));
 
         if (changed > 0) {
-            triggerCollectionService.checkEnergyGainTriggers(gameData, entry.getControllerId(), changed);
+            gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.ENERGY,
+                    entry.getControllerId(), changed));
         }
     }
 }

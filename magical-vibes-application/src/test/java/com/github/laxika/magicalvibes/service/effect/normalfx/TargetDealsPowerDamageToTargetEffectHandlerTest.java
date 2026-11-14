@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
@@ -50,8 +49,7 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
 
         assertThat(angel.getMarkedDamage()).isEqualTo(2);
         verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
-        verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
-                gd, angel, 2, player1Id, bears.getCard(), bears.getId());
+        assertDamageToPermanent(angel, 2, player1Id, bears.getCard(), bears.getId());
     }
 
     @Test
@@ -80,8 +78,7 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
 
         // Lethal marked damage — the SBA check after resolution performs the destruction.
         assertThat(theirAngel.getMarkedDamage()).isEqualTo(4);
-        verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
-                gd, theirAngel, 4, player1Id, myAngel.getCard(), myAngel.getId());
+        assertDamageToPermanent(theirAngel, 4, player1Id, myAngel.getCard(), myAngel.getId());
     }
 
     @Test
@@ -108,8 +105,7 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
         targetDealsPowerDamageToTargetHandler.resolve(gd, entry, new TargetDealsPowerDamageToTargetEffect(2));
 
         assertThat(angel.getMarkedDamage()).isEqualTo(4);
-        verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
-                gd, angel, 4, player1Id, bears.getCard(), bears.getId());
+        assertDamageToPermanent(angel, 4, player1Id, bears.getCard(), bears.getId());
     }
 
     @Test

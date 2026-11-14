@@ -18,9 +18,7 @@ class SagaWatchTest {
 
     @Test
     void everyWatchReadsItsOwnTriggerAndZone() {
-        assertThat(Stream.of(SagaWatch.values(), LifeWatch.values(), TapWatch.values(), LibraryWatch.values(),
-                        TargetWatch.values(), CounterWatch.values(), DamageWatch.values(), CombatWatch.values(),
-                        SpellAbilityWatch.values())
+        assertThat(Stream.of(SagaWatch.values(), LibraryWatch.values())
                 .flatMap(Arrays::stream)
                 .map(watch -> Map.entry(watch.trigger(), watch.zone())))
                 .doesNotHaveDuplicates();

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -50,8 +51,7 @@ class ZarOjanenScionOfEfravaTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Forest());
 
         zar.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, zar));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(zar, null, true)));
         harness.addToBattlefield(player1, new Island());
         harness.addToBattlefield(player1, new Mountain());
         harness.addToBattlefield(player1, new Plains());
@@ -155,8 +155,7 @@ class ZarOjanenScionOfEfravaTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Mountain());
 
         zar.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, zar));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(zar, null, true)));
         gd.playerBattlefields.get(player1.getId()).remove(zar);
         gd.playerGraveyards.get(player1.getId()).add(zar.getCard());
         resolveAllTriggers();
@@ -166,8 +165,7 @@ class ZarOjanenScionOfEfravaTest extends BaseCardTest {
 
     private void tapAndResolve(Permanent permanent) {
         permanent.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, permanent));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true)));
         resolveAllTriggers();
     }
 }

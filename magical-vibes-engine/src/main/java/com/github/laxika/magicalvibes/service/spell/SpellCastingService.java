@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.spell;
 
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
@@ -531,7 +533,8 @@ public class SpellCastingService {
             return;
         }
         creature.setCounterCount(type, creature.getCounterCount(type) + count);
-        triggerCollectionService.checkYouPutCountersTriggers(gameData, player.getId(), count);
+        gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.YOU_PUT_COUNTERS,
+                player.getId(), count));
         gameData.playersWhoPutCountersOnCreaturesThisTurn.add(player.getId());
         if (type == CounterType.PLUS_ONE_PLUS_ONE) {
             gameData.playersWhoPutPlusOnePlusOneCountersOnCreaturesThisTurn.add(player.getId());
@@ -5606,7 +5609,7 @@ public class SpellCastingService {
             try {
                 for (Permanent source : validatedSources) {
                     source.tap();
-                    triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, source);
+                    gameData.rulesEvents.occur(new TapEvent.BecameTapped(source, null, true));
                 }
             } finally {
                 triggerCollectionService.endPermanentTapTriggerBatch(gameData);
@@ -5675,7 +5678,7 @@ public class SpellCastingService {
             try {
                 for (Permanent creature : conspireCreatures) {
                     creature.tap();
-                    triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, creature);
+                    gameData.rulesEvents.occur(new TapEvent.BecameTapped(creature, null, true));
                 }
             } finally {
                 triggerCollectionService.endPermanentTapTriggerBatch(gameData);
@@ -8750,7 +8753,7 @@ public class SpellCastingService {
         try {
             for (Permanent permanent : toTap) {
                 permanent.tap();
-                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+                gameData.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
                 gameLogService.append(gameData, GameLog.builder()
                         .text(player.getUsername() + " taps ")
                         .card(permanent.getCard())
@@ -8812,7 +8815,7 @@ public class SpellCastingService {
         try {
             for (Permanent permanent : toTap) {
                 permanent.tap();
-                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+                gameData.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
                 gameLogService.append(gameData, GameLog.builder()
                         .text(player.getUsername() + " taps ")
                         .card(permanent.getCard())
@@ -8835,7 +8838,7 @@ public class SpellCastingService {
         try {
             for (Permanent permanent : toTap) {
                 permanent.tap();
-                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+                gameData.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
                 gameLogService.append(gameData, GameLog.builder()
                         .text(player.getUsername() + " taps ")
                         .card(permanent.getCard())
@@ -8859,7 +8862,7 @@ public class SpellCastingService {
         try {
             for (Permanent permanent : toTap) {
                 permanent.tap();
-                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+                gameData.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
                 gameLogService.append(gameData, GameLog.builder()
                         .text(player.getUsername() + " taps ")
                         .card(permanent.getCard())
@@ -8924,8 +8927,8 @@ public class SpellCastingService {
         try {
             for (Permanent permanent : toTap) {
                 permanent.tap();
-                triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
-                triggerCollectionService.checkSelfTappedToPayTeamworkCostTriggers(gameData, permanent);
+                gameData.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
+                gameData.rulesEvents.occur(new TapEvent.TappedForTeamwork(permanent));
                 gameLogService.append(gameData, GameLog.builder()
                         .text(player.getUsername() + " taps ")
                         .card(permanent.getCard())
@@ -8950,7 +8953,7 @@ public class SpellCastingService {
                 gameData, player, card, cost, waterbendPermanentIds, announcedXValue);
         for (Permanent permanent : toTap) {
             permanent.tap();
-            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+            gameData.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
             gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " taps ")
                     .card(permanent.getCard())
@@ -14957,7 +14960,7 @@ public class SpellCastingService {
         int stackBeforeTriggers = gameData.stack.size();
         for (Permanent source : validatedSources) {
             source.tap();
-            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, source);
+            gameData.rulesEvents.occur(new TapEvent.BecameTapped(source, null, true));
         }
         if (gameData.stack.size() > stackBeforeTriggers) {
             List<StackEntry> deferred = new ArrayList<>(
@@ -16265,7 +16268,7 @@ public class SpellCastingService {
                             Permanent permanent = additionalSpellCostService.validateSingleTapCost(
                                     gameData, player, hostSpell, tapCost.filter(), permanentIds.get(permanentIndex++));
                             permanent.tap();
-                            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, permanent);
+                            gameData.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
                             gameLogService.append(gameData, GameLog.builder()
                                     .text(player.getUsername() + " taps ")
                                     .card(permanent.getCard())
@@ -16542,7 +16545,7 @@ public class SpellCastingService {
             Permanent tapped = additionalSpellCostService.validateSingleTapCost(
                     gameData, player, card, kickerEffect.tapPredicate(), sacrificePermanentId);
             tapped.tap();
-            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, tapped);
+            gameData.rulesEvents.occur(new TapEvent.BecameTapped(tapped, null, true));
             gameLogService.append(gameData, GameLog.builder()
                     .text(player.getUsername() + " taps ")
                     .card(tapped.getCard())

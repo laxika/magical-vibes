@@ -171,6 +171,11 @@ public final class RulesEventLog {
         }
     }
 
+    /** Emits {@code event} as an occurrence of its own ({@link #separately}), even inside an open scope. */
+    public void occur(RulesEvent event) {
+        separately(() -> emit(event));
+    }
+
     /** Whether a batch scope is open. */
     public boolean isBatchOpen() {
         return openDepth > 0;

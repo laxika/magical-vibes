@@ -468,7 +468,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.CreatureCountSupport;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
-import com.github.laxika.magicalvibes.service.trigger.TapWatch;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -5664,7 +5663,8 @@ public class PredicateEvaluationService {
      * sequence (Overabundance, Winter's Night).
      */
     private static boolean hasTriggeredManaAbility(Card card) {
-        return WatchedAbilities.rawEffects(WatchedAbilities.printed(card, TapWatch.ON_ANY_PLAYER_TAPS_LAND)).stream()
+        return WatchedAbilities.rawEffects(WatchedAbilities.printed(card, Triggers.playerTapsLandForMana(),
+                Zone.BATTLEFIELD)).stream()
                 .map(effect -> effect instanceof SequenceEffect sequence ? sequence.steps().getFirst() : effect)
                 .anyMatch(effect -> effect instanceof AddExtraManaOfChosenColorOnLandTapEffect
                         || effect instanceof AddOneOfEachManaTypeProducedByLandEffect

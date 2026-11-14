@@ -29,7 +29,6 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -47,6 +46,7 @@ abstract class AbstractDamageHandlerTest {
     @Mock protected GameLogService gameLogService;
     @Mock protected PermanentRemovalService permanentRemovalService;
     @Mock protected TriggerCollectionService triggerCollectionService;
+    @Mock protected com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers damageTriggers;
     @Mock protected LifeSupport lifeSupport;
     @Mock protected com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService conditionEvaluationService;
     @Mock protected BattleDefeatSupport battleDefeatSupport;
@@ -255,5 +255,39 @@ abstract class AbstractDamageHandlerTest {
         when(damagePreventionService.applyPlayerPreventionShield(eq(gd), eq(playerId), anyInt())).thenAnswer(inv -> inv.getArgument(2));
         when(gameQueryService.canPlayerLoseLife(gd, playerId)).thenReturn(true);
         when(gameQueryService.shouldDamageBeDealtAsInfect(gd, playerId)).thenReturn(false);
+    }
+
+    /** The damage rules events the handler emitted, in order. */
+    protected java.util.List<com.github.laxika.magicalvibes.model.rules.DamageDealtEvent> damageEvents() {
+        return gd.rulesEvents.pending().stream().flatMap(batch -> batch.events().stream())
+                .filter(com.github.laxika.magicalvibes.model.rules.DamageDealtEvent.class::isInstance)
+                .map(com.github.laxika.magicalvibes.model.rules.DamageDealtEvent.class::cast).toList();
+    }
+
+    /** Asserts the handler emitted the damage event of {@code damage} dealt to {@code target} by the source named. */
+    protected void assertDamageToPermanent(Permanent target, int damage, UUID sourceControllerId, Card sourceCard,
+                                           UUID sourceId) {
+        org.assertj.core.api.Assertions.assertThat(damageEvents()).anySatisfy(event ->
+                org.assertj.core.api.Assertions.assertThat(event)
+                        .isInstanceOfSatisfying(com.github.laxika.magicalvibes.model.rules.DamageDealtEvent.ToPermanent.class,
+                                dealt -> {
+                                    org.assertj.core.api.Assertions.assertThat(dealt.target()).isSameAs(target);
+                                    org.assertj.core.api.Assertions.assertThat(dealt.damage()).isEqualTo(damage);
+                                    org.assertj.core.api.Assertions.assertThat(dealt.sourceControllerId())
+                                            .isEqualTo(sourceControllerId);
+                                    org.assertj.core.api.Assertions.assertThat(dealt.sourceCard()).isSameAs(sourceCard);
+                                    org.assertj.core.api.Assertions.assertThat(dealt.sourceId()).isEqualTo(sourceId);
+                                }));
+    }
+
+    /** Asserts the handler emitted the damage event of {@code damage} dealt to the player {@code playerId}. */
+    protected void assertDamageToPlayer(UUID playerId, int damage) {
+        org.assertj.core.api.Assertions.assertThat(damageEvents()).anySatisfy(event ->
+                org.assertj.core.api.Assertions.assertThat(event)
+                        .isInstanceOfSatisfying(com.github.laxika.magicalvibes.model.rules.DamageDealtEvent.ToPlayer.class,
+                                dealt -> {
+                                    org.assertj.core.api.Assertions.assertThat(dealt.playerId()).isEqualTo(playerId);
+                                    org.assertj.core.api.Assertions.assertThat(dealt.damage()).isEqualTo(damage);
+                                }));
     }
 }

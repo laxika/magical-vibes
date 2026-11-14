@@ -23,14 +23,14 @@ import java.util.Objects;
  * @param qualifier what that permanent must also be, or {@code null}: "whenever a Dragon you control becomes the
  *                  target of a spell or ability an opponent controls" is {@code
  *                  Triggers.creatureYouControlBecomesTargetOfOpponentSpellOrAbility().withFilter(dragon)}. The
- *                  collectors read it from the ability, through {@code TargetAbilityReader}, so {@link #watchKey()}
- *                  drops it
+ *                  trigger pipeline reads it from the ability ({@code TargetTriggers}), so {@link #watchKey()} drops
+ *                  it
  * @param source    what the permanent whose ability does the targeting must be, or {@code null} for any spell or
  *                  ability: "whenever another creature becomes the target of an ability of a land you control named
  *                  Labyrinth of Skophos" is {@code Triggers.creatureBecomesTargetOfSpellOrAbility().withSource(…)}. A
  *                  spell has no such permanent, so a source makes the trigger an ability's. The collector of
  *                  {@link TargetEvent#BECOMES_TARGET_OF_SPELL_OR_ABILITY} about any creature reads it from the ability
- *                  ({@code TargetAbilityReader}), so {@link #watchKey()} drops it
+ *                  ({@code TargetTriggers}), so {@link #watchKey()} drops it
  */
 public record TargetTrigger(TargetEvent event, ObjectRelation relation, PermanentPredicate filter,
                             PermanentPredicate qualifier, PermanentPredicate source) implements Trigger {
@@ -78,14 +78,14 @@ public record TargetTrigger(TargetEvent event, ObjectRelation relation, Permanen
     }
 
     /**
-     * The trigger the {@code TargetWatch} collectors read this one's abilities by: without its {@link #qualifier} and
+     * The trigger the trigger pipeline ({@code TargetTriggers}) reads this one's abilities by: without its {@link #qualifier} and
      * {@link #source},
      * and, for the events no collector of their own reads, with the event whose collector reads them. "This permanent
      * becomes the target of a spell you control" and "of a spell or ability you control" are read by the collectors of
      * the event about any controller ({@link TargetEvent#BECOMES_TARGET_OF_SPELL},
      * {@link TargetEvent#BECOMES_TARGET_OF_SPELL_OR_ABILITY}), and "a player or permanent becomes the target of an
      * ability you control" by the one of {@link TargetEvent#PLAYER_CHOOSES_TARGETS}. Those collectors judge whose
-     * spell or ability it is from the ability's own event ({@code TargetAbilityReader}).
+     * spell or ability it is from the ability's own event.
      */
     @Override
     public Trigger watchKey() {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.g.GlorySeeker;
 import com.github.laxika.magicalvibes.cards.k.KnightOfCliffhaven;
 import com.github.laxika.magicalvibes.cards.p.PropheticPrism;
@@ -57,7 +58,7 @@ class LustForWarTest extends BaseCardTest {
 
         creature.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, creature));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(creature, null, true)));
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(17);
@@ -72,7 +73,7 @@ class LustForWarTest extends BaseCardTest {
 
         creature.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, creature));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(creature, null, true)));
         harness.inMutationScope(() -> harness.getStackResolutionService().resolveTopOfStack(gd));
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -168,7 +169,7 @@ class LustForWarTest extends BaseCardTest {
         Permanent creature = attachAura(player2);
         creature.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, creature));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(creature, null, true)));
         assertThat(gd.stack).hasSize(1);
 
         gd.playerBattlefields.get(player2.getId()).remove(creature);

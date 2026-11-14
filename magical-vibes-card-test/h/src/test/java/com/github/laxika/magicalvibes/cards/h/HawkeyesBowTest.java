@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LoxodonWarhammer;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -51,8 +52,7 @@ class HawkeyesBowTest extends BaseCardTest {
         bow.setAttachedTo(creature.getId());
 
         creature.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, creature));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(creature, null, true)));
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -69,8 +69,7 @@ class HawkeyesBowTest extends BaseCardTest {
         bow.setAttachedTo(creature.getId());
 
         creature.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, creature));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(creature, null, true)));
         resolveAllTriggers();
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -84,8 +83,7 @@ class HawkeyesBowTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
 
         creature.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, creature));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(creature, null, true)));
 
         assertThat(gd.stack).isEmpty();
     }
@@ -102,8 +100,7 @@ class HawkeyesBowTest extends BaseCardTest {
         hammer.setAttachedTo(creature.getId());
 
         creature.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, creature));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(creature, null, true)));
         resolveAllTriggers();
 
         harness.assertLife(player1, 21);
@@ -122,8 +119,7 @@ class HawkeyesBowTest extends BaseCardTest {
         hammer.setAttachedTo(creature.getId());
 
         creature.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, creature));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(creature, null, true)));
         resolveAllTriggers();
 
         harness.assertLife(player1, 20);
@@ -143,8 +139,7 @@ class HawkeyesBowTest extends BaseCardTest {
         hammer.setAttachedTo(creature.getId());
 
         creature.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, creature));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(creature, null, true)));
         bow.setAttachedTo(otherCreature.getId());
         resolveAllTriggers();
 

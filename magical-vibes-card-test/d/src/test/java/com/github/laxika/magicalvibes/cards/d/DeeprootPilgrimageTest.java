@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.a.AdaptiveGemguard;
 import com.github.laxika.magicalvibes.cards.r.RiverHeraldScout;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -132,6 +133,6 @@ class DeeprootPilgrimageTest extends BaseCardTest {
     private void tapAndCheckTriggers(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(
-                () -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
+                () -> gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true)));
     }
 }

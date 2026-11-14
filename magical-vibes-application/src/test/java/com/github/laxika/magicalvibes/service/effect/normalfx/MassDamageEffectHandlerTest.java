@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
@@ -55,10 +54,8 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                 // Lethal marked damage — the SBA check after resolution performs the destruction.
                 assertThat(bears.getMarkedDamage()).isEqualTo(2);
                 assertThat(elves.getMarkedDamage()).isEqualTo(2);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
-                        gd, bears, 2, player1Id, pyroCard, null);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
-                        gd, elves, 2, player1Id, pyroCard, null);
+                assertDamageToPermanent(bears, 2, player1Id, pyroCard, null);
+                assertDamageToPermanent(elves, 2, player1Id, pyroCard, null);
             }
 
             @Test
@@ -84,8 +81,7 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
 
                 assertThat(angel.getMarkedDamage()).isEqualTo(2);
                 verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
-                        gd, angel, 2, player1Id, pyroCard, null);
+                assertDamageToPermanent(angel, 2, player1Id, pyroCard, null);
             }
 
             @Test
@@ -120,18 +116,12 @@ class MassDamageEffectHandlerTest extends AbstractDamageHandlerTest {
                 assertThat(gd.playerLifeTotals.get(player1Id)).isEqualTo(16);
                 assertThat(gd.playerLifeTotals.get(player2Id)).isEqualTo(16);
                 verify(gameOutcomeService).checkWinCondition(gd);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
-                        gd, angel, 4, player1Id, hurricaneCard, null);
-                verify(triggerCollectionService).checkDealtDamageToCreatureTriggers(
-                        gd, bears, 4, player1Id, hurricaneCard, null);
-                verify(triggerCollectionService).checkLifeLossTriggers(gd, player1Id, 4);
-                verify(triggerCollectionService).checkLifeLossTriggers(gd, player2Id, 4);
-                verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player1Id, null, false);
-                verify(triggerCollectionService).checkDamageDealtToControllerTriggers(gd, player2Id, null, false);
-                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
-                        eq(gd), eq(player1Id), any(), eq(4));
-                verify(triggerCollectionService).checkNoncombatDamageToOpponentTriggers(
-                        eq(gd), eq(player2Id), any(), eq(4));
+                assertDamageToPermanent(angel, 4, player1Id, hurricaneCard, null);
+                assertDamageToPermanent(bears, 4, player1Id, hurricaneCard, null);
+                verify(lifeSupport).lifeLost(gd, player1Id, 4);
+                verify(lifeSupport).lifeLost(gd, player2Id, 4);
+                assertDamageToPlayer(player1Id, 4);
+                assertDamageToPlayer(player2Id, 4);
             }
 
             @Test

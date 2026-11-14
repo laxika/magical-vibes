@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.i.IrontreadCrusher;
 import com.github.laxika.magicalvibes.cards.w.WelderAutomaton;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -166,7 +167,7 @@ class RenegadeWheelsmithTest extends BaseCardTest {
 
     private void tapAndQueueTrigger(Permanent permanent) {
         permanent.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true)));
         harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
     }
 }

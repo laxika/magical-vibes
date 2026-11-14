@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawAndRandomDiscardWithSharedTypeCountersEffect;
-import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -79,8 +78,10 @@ public class DrawAndRandomDiscardWithSharedTypeCountersEffectHandler implements 
                 if (source != null && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, source)) {
                     int placed = gameQueryService.doublePlusOnePlusOneCounters(gameData, source, e.counterAmount());
                     if (placed > 0) {
-                        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
-                        triggerCollectionService.checkYouPutCountersTriggers(gameData, controllerId, placed);
+                        source.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE,
+                                source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE) + placed);
+                        gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(
+                                CounterChangeEvent.Kind.YOU_PUT_COUNTERS, controllerId, placed));
                         permanentCounterSupport.recordPlusOnePlusOneCountersPutOnControlledCreaturesThisTurn(
                                 gameData, source, placed, controllerId);
                         permanentCounterSupport.recordPlusOnePlusOneCounterPlacedOnCreature(

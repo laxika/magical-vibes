@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -146,7 +147,7 @@ class ScaretillerTest extends BaseCardTest {
     private void tap(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(() -> {
-            harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent);
+            gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true));
             harness.getTriggerCollectionService().processNextTriggeredModalTrigger(gd);
         });
     }

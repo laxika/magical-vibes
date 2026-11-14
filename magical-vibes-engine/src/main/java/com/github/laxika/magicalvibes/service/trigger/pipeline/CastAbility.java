@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service.trigger;
+package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -14,7 +14,7 @@ import java.util.Objects;
 
 /**
  * A "whenever [a player] casts a [quality] spell" ability as the generic spell-cast collector judges it
- * ({@link SpellCastTriggerCollectorService#collectCastAbility}): the cast trigger's {@link SpellFilter}, which the
+ * ({@code SpellTriggers}): the cast trigger's {@link SpellFilter}, which the
  * collector judges, and the ability itself, which it hands whole to the stack door.
  *
  * @param filter         what the cast spell must be, and how and when it must have been cast

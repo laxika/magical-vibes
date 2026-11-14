@@ -1,4 +1,4 @@
-package com.github.laxika.magicalvibes.service.trigger;
+package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;

@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardFromGrav
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
-import com.github.laxika.magicalvibes.service.trigger.CastAbility;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.CastAbility;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;

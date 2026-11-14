@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -503,7 +503,7 @@ public class CounterSupport {
         triggerCollectionService.completeDungeonRoomIfReady(gameData, target);
         if (isAbility(target)) return;
         emitCounteredCue(gameData, target);
-        triggerCollectionService.checkSelfSpellCounteredOrFizzledTriggers(gameData, target);
+        emitCounteredOrFizzled(gameData, target);
         if (!target.isCopy()
                 && target.getCard() != null
                 && target.getCard().hasType(CardType.CREATURE)
@@ -511,9 +511,11 @@ public class CounterSupport {
                 && !counteringPlayerId.equals(target.getControllerId())) {
             gameData.recordCreatureSpellCounteredByOpponentThisTurn(target.getControllerId());
         }
-        triggerCollectionService.checkControllerCountersSpellTriggers(gameData, counteringPlayerId);
+        if (counteringPlayerId != null) {
+            gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(new SpellEvent.Countered(counteringPlayerId)));
+        }
         if (!target.isCopy()) {
-            triggerCollectionService.checkControllerSpellCounteredTriggers(gameData, target.getCasterId());
+            gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(new SpellEvent.SpellCountered(target.getCasterId())));
         }
     }
 
@@ -542,5 +544,20 @@ public class CounterSupport {
             if (types.contains(additionalType)) return true;
         }
         return false;
+    }
+
+    /**
+     * Emits the event of {@code spellEntry}, an instant or sorcery spell, being countered or leaving the stack without
+     * resolving (CR 608.2b), which its own "when this spell is countered or doesn't resolve" abilities trigger on: the
+     * spell as it last existed on the stack.
+     */
+    public static void emitCounteredOrFizzled(GameData gameData, StackEntry spellEntry) {
+        if (spellEntry == null || spellEntry.getCard() == null || spellEntry.getControllerId() == null
+                || (spellEntry.getEntryType() != StackEntryType.INSTANT_SPELL
+                && spellEntry.getEntryType() != StackEntryType.SORCERY_SPELL)) {
+            return;
+        }
+        SpellEvent.CounteredOrFizzled event = new SpellEvent.CounteredOrFizzled(new StackEntry(spellEntry));
+        gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(event));
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CombatTapCostEffect;
@@ -105,7 +106,7 @@ public class CombatTapCostService {
                 throw new IllegalStateException("Not enough untapped creatures to " + action);
             }
             source.tap();
-            triggerCollectionService.checkEnchantedPermanentTapTriggers(gameData, source);
+            gameData.rulesEvents.occur(new TapEvent.BecameTapped(source, null, true));
             usedIds.add(source.getId());
         }
     }

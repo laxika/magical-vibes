@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
+import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.Ability;
@@ -234,8 +236,9 @@ class AbilityActivationServiceTest {
 
             assertThat(pool.get(ManaColor.BLUE)).isEqualTo(blueBefore + 1);
             assertThat(perm.isTapped()).isTrue();
-            verify(triggerCollectionService).checkLandTapTriggers(gameData, player1Id, perm.getId(), Set.of(ManaColor.BLUE));
-            verify(triggerCollectionService).checkEnchantedPermanentTapTriggers(gameData, perm);
+            assertThat(rulesEvents(gameData)).contains(new TapEvent.LandTappedForMana(player1Id, perm.getId(),
+                    Set.of(ManaColor.BLUE)));
+            assertThat(rulesEvents(gameData)).contains(new TapEvent.BecameTapped(perm, null, true));
             verify(mutationCoordinator).invalidateAllPlayerViews(gameData);
         }
 
@@ -2345,5 +2348,10 @@ class AbilityActivationServiceTest {
                 "Once-only ability"
         ).withMaxActivationsPerGame(1));
         return card;
+    }
+
+    /** The rules events the game emitted so far, in order. */
+    private static List<RulesEvent> rulesEvents(GameData gameData) {
+        return gameData.rulesEvents.pending().stream().flatMap(batch -> batch.events().stream()).toList();
     }
 }

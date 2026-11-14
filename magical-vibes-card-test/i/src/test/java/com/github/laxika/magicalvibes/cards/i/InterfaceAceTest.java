@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.cards.b.BrightfieldGlider;
 import com.github.laxika.magicalvibes.cards.l.LumberingWorldwagon;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -59,8 +60,7 @@ class InterfaceAceTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
 
         ace.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, ace));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(ace, null, true)));
 
         assertThat(gd.stack).isEmpty();
         assertThat(ace.isTapped()).isTrue();
@@ -73,8 +73,7 @@ class InterfaceAceTest extends BaseCardTest {
 
         tapAndResolve(ace);
         ace.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, ace));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(ace, null, true)));
 
         assertThat(gd.stack).isEmpty();
         assertThat(ace.isTapped()).isTrue();
@@ -115,8 +114,7 @@ class InterfaceAceTest extends BaseCardTest {
         Permanent other = addCreatureReady(player1, new BrightfieldGlider());
 
         other.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, other));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(other, null, true)));
         assertThat(gd.stack).isEmpty();
 
         tapAndResolve(ace);
@@ -139,8 +137,7 @@ class InterfaceAceTest extends BaseCardTest {
 
     private void tapAndResolve(Permanent permanent) {
         permanent.tap();
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkEnchantedPermanentTapTriggers(gd, permanent));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new TapEvent.BecameTapped(permanent, null, true)));
         resolveAllTriggers();
     }
 

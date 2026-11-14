@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -918,7 +919,7 @@ public class DamagePreventionService {
             return false;
         }
         permanent.setCounterCount(CounterType.SHIELD, shields - 1);
-        triggerCollectionService.checkLoyaltyCounterRemovalTriggers(gameData);
+        gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.REMOVED, null, 0));
         gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " loses a shield counter."));
         log.info("Game {} - {} loses a shield counter", gameData.id, permanent.getCard().getName());
         return true;
@@ -1522,7 +1523,9 @@ public class DamagePreventionService {
 
     public void notifyControllerDamagePrevented(GameData gameData, UUID playerId, int amount) {
         if (amount > 0) {
-            triggerCollectionService.checkControllerDamagePreventedTriggers(gameData, playerId, amount);
+            com.github.laxika.magicalvibes.model.rules.DamageDealtEvent.PreventedToPlayer prevented =
+                    new com.github.laxika.magicalvibes.model.rules.DamageDealtEvent.PreventedToPlayer(playerId, amount);
+            gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(prevented));
         }
     }
 

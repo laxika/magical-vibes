@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -68,7 +69,7 @@ public class DoubleCountersOnControllerEffectHandler implements NormalEffectHand
         gameLogService.append(gameData,
                 GameLog.text(playerName + " gets " + amount + " energy counter"
                         + (amount > 1 ? "s" : "") + " (" + sourceName + ")."));
-        triggerCollectionService.checkEnergyGainTriggers(gameData, playerId, amount);
+        gameData.rulesEvents.occur(CounterChangeEvent.ofPlayer(CounterChangeEvent.Kind.ENERGY, playerId, amount));
     }
 
     private void doubleRadCounters(GameData gameData, StackEntry entry, UUID playerId,

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.rules.LifeEvent;
 import com.github.laxika.magicalvibes.cards.a.Abrade;
 import com.github.laxika.magicalvibes.cards.a.Acridian;
 import com.github.laxika.magicalvibes.cards.a.AshmouthHound;
@@ -246,8 +247,7 @@ class RoamingThroneTest extends BaseCardTest {
         addThrone(CardSubtype.ROBOT);
         harness.addToBattlefieldAndReturn(player1, new RatchetFieldMedic());
 
-        harness.inMutationScope(() -> harness.getTriggerCollectionService()
-                .checkLifeGainTriggers(gd, player1.getId(), 1));
+        harness.inMutationScope(() -> gd.rulesEvents.occur(new LifeEvent.Gained(player1.getId(), 1, null, null)));
 
         assertThat(gd.stack).filteredOn(entry -> entry.getCard().getName().equals("Ratchet, Field Medic"))
                 .hasSize(2);

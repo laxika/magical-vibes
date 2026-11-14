@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
@@ -23,9 +22,7 @@ class LibraryWatchTest {
 
     @Test
     void everyWatchReadsItsOwnTriggerAndZone() {
-        assertThat(Stream.of(LibraryWatch.values(), TargetWatch.values(), CounterWatch.values(),
-                        DamageWatch.values(), CombatWatch.values(), SpellAbilityWatch.values())
-                .flatMap(Arrays::stream)
+        assertThat(Arrays.stream(LibraryWatch.values())
                 .map(watch -> Map.entry(watch.trigger(), watch.zone())))
                 .doesNotHaveDuplicates();
     }
