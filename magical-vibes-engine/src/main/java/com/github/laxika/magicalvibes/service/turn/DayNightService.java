@@ -101,6 +101,11 @@ public class DayNightService {
         if (previous != DayNight.NEITHER && previous != next) {
             triggerCollectionService.checkDayNightChangeTriggers(gameData, previous, next);
         }
+        // "As this transforms into [an Aura that enchants a player], attach it to a player" is chosen as it transforms
+        // (Curse of Leeches), not by a later choice pump.
+        if (!gameData.interaction.isAwaitingInput()) {
+            triggerCollectionService.beginDayNightTransformAttachment(gameData);
+        }
     }
 
     private void transformDayNightPermanents(GameData gameData, DayNight designation) {

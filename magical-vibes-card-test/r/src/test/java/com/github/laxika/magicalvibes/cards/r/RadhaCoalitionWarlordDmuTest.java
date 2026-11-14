@@ -154,7 +154,7 @@ class RadhaCoalitionWarlordDmuTest extends BaseCardTest {
         permanent.tap();
         harness.inMutationScope(() -> {
             harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent);
-            harness.getTriggerCollectionService().processNextEntersTriggerTarget(gd);
+            harness.getTriggerCollectionService().beginStackDoorChoices(gd);
         });
     }
 }

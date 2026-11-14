@@ -1429,6 +1429,26 @@ class TriggeredAbilityStackServiceTest {
     }
 
     @Test
+    @DisplayName("A permanent entering doesn't trigger a permanent's ability while an opponent's Elesh Norn says so")
+    void enteringPermanentTriggersNothingUnderOpposingSuppression() {
+        Card card = createCreature("Watcher", 2, 2);
+        Card entering = createCreature("Newcomer", 1, 1);
+        Permanent watcher = new Permanent(card);
+        Permanent newcomer = new Permanent(entering);
+        when(gameQueryService.areOpponentPermanentETBTriggersSuppressed(gd, PLAYER1_ID)).thenReturn(true);
+
+        boolean triggered = stackService.put(gd, new TriggeredAbilityRequest(new TriggeredAbility(
+                Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), new GainLifeEffect(1)), card,
+                watcher, PLAYER1_ID, "watch", ConditionContext.forPermanent(watcher, PLAYER1_ID),
+                TriggeredAbilityRequest.TriggerRecord.NONE)
+                .withEvent(new com.github.laxika.magicalvibes.service.trigger.TriggerContext.PermanentEnters(
+                        entering, PLAYER1_ID, null, 1, newcomer.getId())));
+
+        assertThat(triggered).isFalse();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
     @DisplayName("\"If [condition], choose all of them instead\" makes every mode chosen when the condition is met")
     void allModesWhenTheConditionIsMet() {
         Card card = createCreature("Commander", 2, 2);

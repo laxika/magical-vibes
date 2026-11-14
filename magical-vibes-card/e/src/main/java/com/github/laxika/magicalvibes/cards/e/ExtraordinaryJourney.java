@@ -23,7 +23,7 @@ public class ExtraordinaryJourney extends Card {
     public ExtraordinaryJourney() {
         targetUpTo(new XValue(), TargetFilters.creature(), 100)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new ExileTargetPermanentMayPlayWithOpponentTaxEffect(0));
+                        new ExileTargetPermanentMayPlayWithOpponentTaxEffect(0, Triggers.CREATURE));
         // "Whenever one or more nontoken creatures enter, if one or more of them entered from exile or was cast from
         // exile": a filter judged on each creature as it entered, this one included when it is a creature
         // (Opalescence). "This ability triggers only once each turn."

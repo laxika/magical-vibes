@@ -319,7 +319,8 @@ public class RulesEventPipeline {
         if (effect instanceof MayEffect may) {
             CardEffect wrapped = withoutInterveningIf(may.wrapped(), interveningIf);
             return wrapped == may.wrapped() ? may
-                    : new MayEffect(wrapped, may.prompt(), may.elseEffect(), may.choicePlayer(), may.choicePlayerId());
+                    : new MayEffect(wrapped, may.prompt(), may.elseEffect(), may.choicePlayer(), may.choicePlayerId(),
+                            may.targetOfTheirChoice());
         }
         return effect;
     }

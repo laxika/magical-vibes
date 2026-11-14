@@ -419,7 +419,8 @@ public final class TextChangeTransformer {
             case MayEffect may -> {
                 CardEffect wrapped = apply(may.wrapped(), substitution);
                 yield wrapped == may.wrapped() ? may
-                        : new MayEffect(wrapped, may.prompt(), may.elseEffect(), may.choicePlayer(), may.choicePlayerId());
+                        : new MayEffect(wrapped, may.prompt(), may.elseEffect(), may.choicePlayer(), may.choicePlayerId(),
+                            may.targetOfTheirChoice());
             }
             case EnchantedPermanentConditionalEffect conditional -> {
                 PermanentPredicate filter = apply(conditional.filter(), substitution);

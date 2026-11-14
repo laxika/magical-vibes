@@ -501,8 +501,16 @@ public class TokenCopySupport {
             attackTargets = new ArrayList<>(Collections.nCopies(tokens.size(), null));
         }
         boolean explicitAttackTargets = batch.attackTargets() != null || chooseAttackTargets;
-        return enterPreparedTokenCopies(gameData, entry, tokens, batch.sourcePermanent(), tokenControllerId,
-                effect, attackTargets, explicitAttackTargets, chooseAttackTargets, batch.afterEntry());
+        // The tokens enter in one event (CR 603.2c), also when the creating player's replacement order resumes the
+        // creation outside the resolution's own batch: the abilities they trigger wait for the batch to close, so
+        // their choices begin after the resolving ability finishes (Lucy MacLean's draw comes first).
+        gameData.rulesEvents.beginBatch();
+        try {
+            return enterPreparedTokenCopies(gameData, entry, tokens, batch.sourcePermanent(), tokenControllerId,
+                    effect, attackTargets, explicitAttackTargets, chooseAttackTargets, batch.afterEntry());
+        } finally {
+            gameData.rulesEvents.endBatch();
+        }
     }
 
     /**

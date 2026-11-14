@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.model.trigger;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.StateTriggerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -40,6 +42,9 @@ public final class Triggers {
     /** An artifact or a creature. */
     public static final PermanentPredicate ARTIFACT_OR_CREATURE = new PermanentAnyOfPredicate(List.of(
             new PermanentIsArtifactPredicate(), new PermanentIsCreaturePredicate()));
+    /** An instant or a sorcery card. */
+    public static final PermanentPredicate INSTANT_OR_SORCERY = new PermanentAnyOfPredicate(List.of(
+            new PermanentHasCardTypePredicate(CardType.INSTANT), new PermanentHasCardTypePredicate(CardType.SORCERY)));
     /** A creature or a planeswalker. */
     public static final PermanentPredicate CREATURE_OR_PLANESWALKER = new PermanentAnyOfPredicate(List.of(
             new PermanentIsCreaturePredicate(), new PermanentIsPlaneswalkerPredicate()));

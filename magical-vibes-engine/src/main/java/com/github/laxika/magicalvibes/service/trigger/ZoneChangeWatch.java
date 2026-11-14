@@ -311,9 +311,9 @@ public enum ZoneChangeWatch {
     /** "Whenever a card is put into your hand from your graveyard". */
     ON_CONTROLLER_CARD_RETURNED_FROM_GRAVEYARD_TO_HAND(
             battlefield(Triggers.putIntoHandFrom(Zone.GRAVEYARD, null, ObjectRelation.YOU_OWN))),
-    /** "Whenever an instant or sorcery card leaves your graveyard"; the collector checks the card's types. */
+    /** "Whenever an instant or sorcery card leaves your graveyard". */
     ON_CONTROLLER_INSTANT_OR_SORCERY_CARD_LEAVES_GRAVEYARD(
-            battlefield(Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN))),
+            battlefield(Triggers.leavesGraveyard(Triggers.INSTANT_OR_SORCERY, ObjectRelation.YOU_OWN))),
     /** "Whenever one or more cards are put into exile from your graveyard". */
     ON_CONTROLLER_CARDS_EXILED_FROM_GRAVEYARD(battlefield(
             Triggers.exiledFrom(Set.of(Zone.GRAVEYARD), null, ObjectRelation.YOU_OWN), TriggerMultiplicity.ONE_OR_MORE)),

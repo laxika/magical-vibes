@@ -304,12 +304,6 @@ public class TapPermanentsEffectHandler implements NormalEffectHandlerBean {
         if (entry.getDefendingPlayerId() != null) {
             return entry.getDefendingPlayerId();
         }
-        UUID attackedTargetId = entry.getAttackedTargetId();
-        if (attackedTargetId == null) {
-            return null;
-        }
-        return gameData.playerIds.contains(attackedTargetId)
-                ? attackedTargetId
-                : gameQueryService.findPermanentController(gameData, attackedTargetId);
+        return gameQueryService.defendingPlayerOfAttackTarget(gameData, entry.getAttackedTargetId());
     }
 }

@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
@@ -383,6 +384,7 @@ final class TriggerMatcher {
                 || predicate instanceof PermanentIsEnchantmentPredicate
                 || predicate instanceof PermanentIsPlaneswalkerPredicate
                 || predicate instanceof PermanentIsBattlePredicate
+                || predicate instanceof PermanentHasCardTypePredicate
                 || predicate instanceof PermanentIsTokenPredicate
                 || predicate instanceof PermanentIsFaceDownPredicate
                 || predicate instanceof PermanentIsHistoricPredicate

@@ -28,9 +28,6 @@ class RazorDemonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0, player2.getId());
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         PendingInteraction.SpellbookCardChoice choice =
@@ -86,7 +83,6 @@ class RazorDemonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0, player2.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         PendingInteraction.SpellbookCardChoice choice =
@@ -109,7 +105,6 @@ class RazorDemonTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, 0, player2.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
         PendingInteraction.SpellbookCardChoice choice =

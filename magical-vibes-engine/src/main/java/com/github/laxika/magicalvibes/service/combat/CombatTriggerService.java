@@ -200,9 +200,7 @@ public class CombatTriggerService {
         entry.setTriggeringPermanentControllerId(creatureControllerId);
         UUID attackTarget = creature.getAttackTarget();
         entry.setAttackedTargetId(attackTarget);
-        entry.setDefendingPlayerId(attackTarget == null ? null
-                : gameData.playerIds.contains(attackTarget) ? attackTarget
-                : gameQueryService.findPermanentController(gameData, attackTarget));
+        entry.setDefendingPlayerId(gameQueryService.defendingPlayerOfAttackTarget(gameData, attackTarget));
         entry.setTriggeringPermanentId(creature.getId());
         entry.setSourcePermanentSnapshot(new Permanent(source));
         entry.setAttachedPermanentSnapshot(new Permanent(creature));

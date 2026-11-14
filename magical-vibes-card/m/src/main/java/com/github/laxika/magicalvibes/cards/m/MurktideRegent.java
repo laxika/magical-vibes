@@ -27,7 +27,7 @@ public class MurktideRegent extends Card {
         addCastingCost(new DelveCost());
         addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new CardsExiledWithSource(instantOrSorcery)));
-        addTrigger(Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN),
+        addTrigger(Triggers.leavesGraveyard(Triggers.INSTANT_OR_SORCERY, ObjectRelation.YOU_OWN),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

@@ -444,6 +444,12 @@ public class TriggeredAbilityStackService extends StackDoor {
         if (limitReached(gameData, options.limit(), limitSourceId, ability.limitKey(), request.limitCreatureId())) {
             return false;
         }
+        if (request.event() instanceof TriggerContext.PermanentEnters && request.sourcePermanent() != null
+                && gameQueryService.areOpponentPermanentETBTriggersSuppressed(gameData, request.controllerId())) {
+            // "Permanents entering the battlefield don't cause abilities of permanents your opponents control to
+            // trigger" (Elesh Norn, Mother of Machines).
+            return false;
+        }
         List<CardEffect> written = new ArrayList<>(ability.effects().size());
         ChooseOneEffect.ChooseOneOption randomMode = null;
         for (EffectRegistration registration : ability.effects()) {

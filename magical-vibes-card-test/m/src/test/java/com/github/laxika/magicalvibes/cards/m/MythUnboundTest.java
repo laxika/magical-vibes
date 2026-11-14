@@ -30,7 +30,8 @@ class MythUnboundTest extends BaseCardTest {
         Permanent commanderPermanent = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(commander.getId()))
                 .findFirst().orElseThrow();
-        harness.getPermanentRemovalService().removePermanentToCommandZone(gd, commanderPermanent);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToCommandZone(gd, commanderPermanent));
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);

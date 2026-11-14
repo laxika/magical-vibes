@@ -5413,14 +5413,10 @@ public class TargetLegalityService {
                 .withDefendingPlayerId(defendingPlayerId);
     }
 
+    /** The defending player the entry recorded as it triggered, else the one its attacked target names. */
     private UUID defendingPlayerId(GameData gameData, StackEntry entry) {
-        UUID attackedTargetId = entry.getAttackedTargetId();
-        if (attackedTargetId == null) {
-            return null;
-        }
-        return gameData.playerIds.contains(attackedTargetId)
-                ? attackedTargetId
-                : gameQueryService.findPermanentController(gameData, attackedTargetId);
+        return entry.getDefendingPlayerId() != null ? entry.getDefendingPlayerId()
+                : gameQueryService.defendingPlayerOfAttackTarget(gameData, entry.getAttackedTargetId());
     }
 
     /**

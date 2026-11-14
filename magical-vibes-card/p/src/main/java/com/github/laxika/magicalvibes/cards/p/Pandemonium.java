@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -16,8 +15,8 @@ public class Pandemonium extends Card {
 
     public Pandemonium() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANY),
-                new MayEffect(DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower()),
-                        "Have it deal damage to any target?", null,
-                        MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER));
+                MayEffect.byTriggeringPermanentControllerOfTheirChoice(
+                        DealDamageToAnyTargetEffect.dealtByTriggeringPermanent(new SourcePower()),
+                        "Have it deal damage to any target?"));
     }
 }

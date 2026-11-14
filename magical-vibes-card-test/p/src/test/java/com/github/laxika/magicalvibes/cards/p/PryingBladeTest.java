@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({PryingBlade.class, GrizzlyBears.class, SerraAngel.class, EnsoulArtifact.class})
 class PryingBladeTest extends BaseCardTest {
+
+    /**
+     * The random opening hand may hold a Condemn, which the Treasure's mana could cast during combat: the game would
+     * then stop in the combat damage step instead of moving on, and the Treasure's mana would empty with the step.
+     */
+    @BeforeEach
+    void emptyHands() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+    }
 
     @Test
     @DisplayName("Prying Blade has equip {2} ability")

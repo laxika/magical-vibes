@@ -267,6 +267,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToLand
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToPermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsChosenPermanentPredicate;
@@ -1910,6 +1911,9 @@ public class PredicateEvaluationService {
                 }
                 yield gameQueryService.isBattle(gameData, permanent);
             }
+            case PermanentHasCardTypePredicate p -> gameData == null
+                    ? permanent.getCard().hasType(p.cardType())
+                    : gameQueryService.hasEffectiveCardType(gameData, permanent, p.cardType());
             case PermanentProtectedByOpponentOfSourceControllerPredicate ignored ->
                     gameData != null && sourceControllerId != null
                             && gameQueryService.isBattle(gameData, permanent)
@@ -3895,6 +3899,7 @@ public class PredicateEvaluationService {
             case PermanentIsCreaturePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsDamagedPredicate ignored -> permanent.getMarkedDamage() > 0;
             case PermanentIsEnchantmentPredicate ignored -> matchesStaticLeaf(permanent, predicate);
+            case PermanentHasCardTypePredicate ignored -> matchesStaticLeaf(permanent, predicate);
             case PermanentIsEquippedPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
                 yield gameData != null && gameQueryService.isEquipped(gameData, permanent);
@@ -5086,6 +5091,8 @@ public class PredicateEvaluationService {
                     state.hasCardType(CardType.PLANESWALKER);
             case PermanentIsBattlePredicate ignored ->
                     state.hasCardType(CardType.BATTLE);
+            case PermanentHasCardTypePredicate p ->
+                    state.hasCardType(p.cardType());
             case PermanentIsKindredPredicate ignored ->
                     state.hasCardType(CardType.KINDRED);
             case PermanentHasKeywordPredicate p ->

@@ -160,7 +160,7 @@ class FoulEmissaryTest extends BaseCardTest {
         harness.activateAbilityToPayFor(player1, 0, ManaPaymentIntent.forCast(0, 0));
         harness.assertInGraveyard(player1, "Foul Emissary");
         harness.castCreature(player1, 0);
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
 
         assertThat(gd.stack).anySatisfy(entry -> assertThat(entry.getCard().getName()).isEqualTo("Foul Emissary"));
         for (int i = 0; i < 3 && !gd.stack.isEmpty(); i++) {

@@ -41,9 +41,8 @@ class DeadlyDesignsTest extends BaseCardTest {
         designs.setCounterCount(CounterType.PLOT, 5);
         harness.runStateBasedActions();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        harness.handlePermanentChosen(player1, firstCreature.getId());
-        harness.handlePermanentChosen(player1, secondCreature.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstCreature.getId(), secondCreature.getId()));
         harness.passBothPriorities();
 
         harness.assertNotOnBattlefield(player1, "Deadly Designs");
@@ -91,7 +90,7 @@ class DeadlyDesignsTest extends BaseCardTest {
         designs.setCounterCount(CounterType.PLOT, 5);
 
         harness.runStateBasedActions();
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Deadly Designs");
@@ -106,8 +105,7 @@ class DeadlyDesignsTest extends BaseCardTest {
         designs.setCounterCount(CounterType.PLOT, 6);
 
         harness.runStateBasedActions();
-        harness.handlePermanentChosen(player1, chosen.getId());
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Deadly Designs");
@@ -121,7 +119,7 @@ class DeadlyDesignsTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new SavannahLions());
         designs.setCounterCount(CounterType.PLOT, 5);
         harness.runStateBasedActions();
-        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
 
         designs.setCounterCount(CounterType.PLOT, 0);
         harness.passBothPriorities();
@@ -136,7 +134,7 @@ class DeadlyDesignsTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new SavannahLions());
         designs.setCounterCount(CounterType.PLOT, 5);
         harness.runStateBasedActions();
-        harness.handlePermanentChosen(player1, creature.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
 
         harness.setHand(player2, List.of(new Disenchant()));
         harness.addMana(player2, ManaColor.WHITE, 1);

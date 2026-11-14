@@ -15,12 +15,29 @@ import java.util.UUID;
  *                   declining simply does nothing
  * @param choicePlayer identifies the player who makes the choice; {@code DEFENDING_PLAYER} uses
  *                            the player attacked by an attack trigger
+ * @param targetOfTheirChoice whether the triggering permanent's controller who makes the choice also chooses the
+ *                            wrapped effect's target ("any target of their choice", Pandemonium); otherwise the
+ *                            ability's controller chooses it as the ability goes on the stack (Farrel's Mantle)
  */
-public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer, UUID choicePlayerId)
+public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer,
+                        UUID choicePlayerId, boolean targetOfTheirChoice)
         implements CardEffect {
+
+    public MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer,
+                     UUID choicePlayerId) {
+        this(wrapped, prompt, elseEffect, choicePlayer, choicePlayerId, false);
+    }
 
     public MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect, MayChoicePlayer choicePlayer) {
         this(wrapped, prompt, elseEffect, choicePlayer, null);
+    }
+
+    /**
+     * "That creature's controller may have [wrapped] … target … of their choice": the triggering permanent's
+     * controller makes the choice and chooses the target (Pandemonium, Death Match).
+     */
+    public static MayEffect byTriggeringPermanentControllerOfTheirChoice(CardEffect wrapped, String prompt) {
+        return new MayEffect(wrapped, prompt, null, MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER, null, true);
     }
 
     /** A resolution-time decision by an explicitly identified player. */
@@ -77,10 +94,10 @@ public record MayEffect(CardEffect wrapped, String prompt, CardEffect elseEffect
         return choicePlayer == MayChoicePlayer.ACTIVE_PLAYER || wrapped.targetChosenByActivePlayer();
     }
 
-    /** The triggering permanent's controller who makes the choice also chooses its target (Pandemonium). */
+    /** The triggering permanent's controller who makes the choice also chooses a target "of their choice" (Pandemonium). */
     @Override
     public boolean targetChosenByTriggeringPermanentController() {
-        return choicePlayer == MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER
+        return targetOfTheirChoice && choicePlayer == MayChoicePlayer.TRIGGERING_PERMANENT_CONTROLLER
                 || wrapped.targetChosenByTriggeringPermanentController();
     }
 

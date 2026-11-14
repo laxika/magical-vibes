@@ -724,14 +724,14 @@ class GravebaneZombieTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Put it into its owner's library", "Kalitas, Traitor of Ghet");
         harness.assertOnBattlefield(player1, "Gravebane Zombie");
-        assertThat(gameLogContains("choose a target for the reflexive trigger")).isFalse();
+        assertThat(gd.stack).noneMatch(entry -> entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY);
 
         harness.handleListChoice(player1, "Put it into its owner's library");
 
         harness.assertNotOnBattlefield(player1, "Gravebane Zombie");
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(zombie.getCard(), filler);
-        assertThat(gd.gameLog).filteredOn(entry -> entry.plainText().contains("choose a target for the reflexive trigger"))
-                .hasSize(1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPlayerIds())
+                .contains(player2.getId());
 
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();

@@ -8,6 +8,7 @@ package com.github.laxika.magicalvibes.model.filter;
  */
 public sealed interface PermanentPredicate permits
         PermanentAllOfPredicate,
+        PermanentHasCardTypePredicate,
         PermanentAnyOfPredicate,
         PermanentActivatedThisTurnPredicate,
         PermanentAdjacentToSourcePredicate,

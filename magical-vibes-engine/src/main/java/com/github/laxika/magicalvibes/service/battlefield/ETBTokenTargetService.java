@@ -238,8 +238,11 @@ public class ETBTokenTargetService {
 
             List<UUID> validPermanentTargets = new ArrayList<>();
             // The restriction the group's effects declare on their own target ("other target creature you control",
-            // Irma, Part-Time Mutant), judged with the ability's source.
-            PermanentPredicate effectRestriction = com.github.laxika.magicalvibes.model.EffectResolution
+            // Irma, Part-Time Mutant), judged with the ability's source. A bare positional group borrows every effect
+            // only to be targeted, so their declared target is another group's (Thorin, Mountain-king's Equipment
+            // group is not restricted to its creature target's "creature").
+            PermanentPredicate effectRestriction = !card.bindsEffectToTargetGroup(group.getIndex()) ? null
+                    : com.github.laxika.magicalvibes.model.EffectResolution
                     .declaredPermanentRestriction(groupEffects.stream()
                             .filter(e -> e.targetSpec().admits(TargetPredicate.Kind.PERMANENT)).toList())
                     .orElse(null);

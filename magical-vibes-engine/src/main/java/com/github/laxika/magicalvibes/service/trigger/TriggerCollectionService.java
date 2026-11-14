@@ -10569,6 +10569,14 @@ public class TriggerCollectionService {
     }
 
     /**
+     * Asks for the player an Aura transformed by day or night attaches to ("as this transforms into Curse of Leeches,
+     * attach it to a player"), as it transforms; the triggered abilities' choices wait for the next pump.
+     */
+    public void beginDayNightTransformAttachment(GameData gameData) {
+        triggeredAbilityQueueService.processNextDayNightTriggerTarget(gameData);
+    }
+
+    /**
      * What a creature entering under {@code controllerId}'s control triggers besides the card abilities the trigger
      * pipeline matches and the emblems' abilities ({@link #checkEmblemEntersTriggers}): evolve (CR 702.100d), the
      * watchers and boons a resolved spell left, and the "whenever a creature you control enters" abilities a spell
@@ -10857,9 +10865,7 @@ public class TriggerCollectionService {
         if (entering.isAttacking()) {
             UUID attackedTargetId = entering.getAttackTarget();
             entry.setAttackedTargetId(attackedTargetId);
-            entry.setDefendingPlayerId(attackedTargetId == null ? null
-                    : gameData.playerIds.contains(attackedTargetId) ? attackedTargetId
-                    : gameQueryService.findPermanentController(gameData, attackedTargetId));
+            entry.setDefendingPlayerId(gameQueryService.defendingPlayerOfAttackTarget(gameData, attackedTargetId));
         }
     }
 

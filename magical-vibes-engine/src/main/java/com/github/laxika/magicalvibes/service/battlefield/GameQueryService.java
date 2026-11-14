@@ -3440,8 +3440,28 @@ public class GameQueryService {
                 : permanent.getBaseToughness();
     }
 
+    /**
+     * The defending player of a creature attacking {@code attackedTargetId}: the attacked player, the controller of an
+     * attacked planeswalker, or an attacked battle's protector (CR 310.9d); {@code null} for no attack target.
+     */
+    public UUID defendingPlayerOfAttackTarget(GameData gameData, UUID attackedTargetId) {
+        if (attackedTargetId == null || gameData.playerIds.contains(attackedTargetId)) {
+            return attackedTargetId;
+        }
+        Permanent attacked = findPermanentById(gameData, attackedTargetId);
+        if (attacked != null && attacked.getProtectorPlayerId() != null && isBattle(gameData, attacked)) {
+            return attacked.getProtectorPlayerId();
+        }
+        return findPermanentController(gameData, attackedTargetId);
+    }
+
     public boolean isBattle(GameData gameData, Permanent permanent) {
         return hasEffectiveCardType(permanent, computeStaticBonus(gameData, permanent), CardType.BATTLE);
+    }
+
+    /** Whether the permanent has {@code type} after the CR 613 layered computation. */
+    public boolean hasEffectiveCardType(GameData gameData, Permanent permanent, CardType type) {
+        return hasEffectiveCardType(permanent, computeStaticBonus(gameData, permanent), type);
     }
 
     public boolean isKindred(GameData gameData, Permanent permanent) {

@@ -86,6 +86,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPe
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerDealtCombatDamageBySubtypeThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerPoisonCountersAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
@@ -1274,6 +1275,30 @@ class PredicateEvaluationServiceTest {
             Permanent perm = addPermanent(player1Id, createCreatureWithSubtypes("Grizzly Bears", 2, 2, CardColor.GREEN, List.of(CardSubtype.BEAR)));
 
             assertThat(evaluator.matchesPermanentPredicate(gd, perm, new PermanentIsLandPredicate())).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentHasCardTypePredicate matches a card of its card type judged as a permanent")
+        void hasCardTypePredicateMatchesItsType() {
+            Card instant = new Card();
+            instant.setName("Shock");
+            instant.setType(CardType.INSTANT);
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, new Permanent(instant),
+                    new PermanentHasCardTypePredicate(CardType.INSTANT))).isTrue();
+            assertThat(evaluator.matchesPermanentPredicate(gd, new Permanent(instant),
+                    new PermanentHasCardTypePredicate(CardType.SORCERY))).isFalse();
+        }
+
+        @Test
+        @DisplayName("PermanentHasCardTypePredicate rejects a permanent without its card type")
+        void hasCardTypePredicateRejectsOtherTypes() {
+            Permanent land = addPermanent(player1Id, createLand("Forest"));
+
+            assertThat(evaluator.matchesPermanentPredicate(gd, land,
+                    new PermanentHasCardTypePredicate(CardType.INSTANT))).isFalse();
+            assertThat(evaluator.matchesPermanentPredicate(gd, land,
+                    new PermanentHasCardTypePredicate(CardType.LAND))).isTrue();
         }
 
         @Test

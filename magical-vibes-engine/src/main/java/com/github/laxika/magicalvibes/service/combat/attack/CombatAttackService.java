@@ -2053,8 +2053,7 @@ public class CombatAttackService {
                 perm.getCard(), perm, playerId, perm.getCard().getName() + "'s attack trigger", ifContext, entry -> {
                     entry.setSourcePermanentSnapshot(new Permanent(perm));
                     entry.setAttackedTargetId(attackedTargetId);
-                    entry.setDefendingPlayerId(gameData.playerIds.contains(attackedTargetId)
-                            ? attackedTargetId : gameQueryService.findPermanentController(gameData, attackedTargetId));
+                    entry.setDefendingPlayerId(gameQueryService.defendingPlayerOfAttackTarget(gameData, attackedTargetId));
                     entry.setTargetId(attacker.getId());
                     entry.setNonTargeting(true);
                     entry.setTriggeringPermanentId(attacker.getId());
@@ -3264,14 +3263,7 @@ public class CombatAttackService {
      * it attacks (CR 508.5), or {@code null} when it attacks nothing.
      */
     private UUID defendingPlayerOf(GameData gameData, Permanent attacker) {
-        UUID attackedTargetId = attacker.getAttackTarget();
-        if (attackedTargetId == null || gameData.playerIds.contains(attackedTargetId)) {
-            return attackedTargetId;
-        }
-        Permanent attackedPermanent = gameQueryService.findPermanentById(gameData, attackedTargetId);
-        return attackedPermanent != null && gameQueryService.isBattle(gameData, attackedPermanent)
-                ? attackedPermanent.getProtectorPlayerId()
-                : gameQueryService.findPermanentController(gameData, attackedTargetId);
+        return gameQueryService.defendingPlayerOfAttackTarget(gameData, attacker.getAttackTarget());
     }
 
     /**

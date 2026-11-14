@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.t.TymaretTheMurderKing;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,6 +15,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({GimliOfTheGlitteringCaves.class, TymaretTheMurderKing.class, GrizzlyBears.class})
 class GimliOfTheGlitteringCavesTest extends BaseCardTest {
+
+    /**
+     * The random opening hand decides where auto-pass stops after combat (an instant it can cast keeps it in combat),
+     * so the hands are emptied for every test to stop in the same place.
+     */
+    @BeforeEach
+    void emptyHands() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+    }
 
     @Test
     void putsCounterOnGimliForAnotherLegendaryCreatureYouControl() {
@@ -44,10 +54,10 @@ class GimliOfTheGlitteringCavesTest extends BaseCardTest {
         gimli.setAttacking(true);
 
         resolveCombat();
-        harness.passUntil(TurnStep.END_OF_COMBAT);
         resolveAllTriggers();
 
         assertThat(findPermanents(player1, "Treasure")).hasSize(2);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
     }
 
     @Test

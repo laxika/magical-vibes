@@ -2115,6 +2115,7 @@ class TargetLegalityServiceTest {
             StackEntry entry = TestStackDoor.triggered(source, player1Id,
                     "Reflexive ability", List.of(effect), target.getId(), UUID.randomUUID());
             entry.setAttackedTargetId(player2Id);
+            when(gameQueryService.defendingPlayerOfAttackTarget(gd, player2Id)).thenReturn(player2Id);
 
             assertThat(sut.isTargetIllegalOnResolution(gd, entry)).isFalse();
 

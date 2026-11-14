@@ -197,7 +197,7 @@ class TaintedAetherTest extends BaseCardTest {
 
         harness.passBothPriorities();
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ETBTokenMultiTargetTrigger.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         harness.handlePermanentChosen(player1, gorilla.getId());
         harness.passBothPriorities(); // Gilded Drake exchanges control before Tainted Aether resolves.
 

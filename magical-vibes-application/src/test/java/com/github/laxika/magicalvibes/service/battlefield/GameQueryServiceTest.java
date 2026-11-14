@@ -671,6 +671,46 @@ class GameQueryServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("defendingPlayerOfAttackTarget")
+    class DefendingPlayerOfAttackTarget {
+
+        @Test
+        @DisplayName("is the attacked player")
+        void attackedPlayer() {
+            assertThat(gqs.defendingPlayerOfAttackTarget(gd, player2Id)).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("is an attacked battle's protector rather than its controller")
+        void attackedBattleProtector() {
+            Card siege = new Card();
+            siege.setName("Invasion of Zendikar");
+            siege.setType(CardType.BATTLE);
+            Permanent battle = addPermanent(player1Id, siege);
+            battle.setProtectorPlayerId(player2Id);
+
+            assertThat(gqs.defendingPlayerOfAttackTarget(gd, battle.getId())).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("is an attacked planeswalker's controller")
+        void attackedPlaneswalkerController() {
+            Card walker = new Card();
+            walker.setName("Ajani Goldmane");
+            walker.setType(CardType.PLANESWALKER);
+            Permanent planeswalker = addPermanent(player2Id, walker);
+
+            assertThat(gqs.defendingPlayerOfAttackTarget(gd, planeswalker.getId())).isEqualTo(player2Id);
+        }
+
+        @Test
+        @DisplayName("is null without an attack target")
+        void noAttackTarget() {
+            assertThat(gqs.defendingPlayerOfAttackTarget(gd, null)).isNull();
+        }
+    }
+
     // ===== findCardInGraveyardById =====
 
     @Nested

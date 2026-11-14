@@ -45,7 +45,7 @@ class RenegadeWheelsmithTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(wheelsmith.getId(), creature.getId())
                 .doesNotContain(vehicle.getId());
@@ -167,6 +167,6 @@ class RenegadeWheelsmithTest extends BaseCardTest {
     private void tapAndQueueTrigger(Permanent permanent) {
         permanent.tap();
         harness.inMutationScope(() -> harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent));
-        harness.inMutationScope(() -> harness.getTriggerCollectionService().processNextEntersTriggerTarget(gd));
+        harness.inMutationScope(() -> harness.getTriggerCollectionService().beginStackDoorChoices(gd));
     }
 }

@@ -221,9 +221,10 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
             }
             return;
         }
-        if (echoPayment) {
-            // "When this creature's echo is paid, ..." (Shah of Naar Isle) is a triggered ability of its own, which the
-            // payment triggers (CR 603.2): it goes on the stack through the stack door.
+        if (echoPayment || cumulativeUpkeep) {
+            // "When this creature's echo is paid, ..." (Shah of Naar Isle) and "whenever this creature's cumulative
+            // upkeep is paid, ..." (Balduvian Fallen, Hibernation's End) are triggered abilities of their own, which the
+            // payment triggers (CR 603.2): they go on the stack through the stack door.
             triggeredAbilityStackService.putMade(gameData, entry);
             return;
         }
