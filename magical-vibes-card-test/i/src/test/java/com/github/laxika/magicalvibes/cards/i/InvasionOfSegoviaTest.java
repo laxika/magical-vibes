@@ -95,9 +95,8 @@ class InvasionOfSegoviaTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        for (int i = 0; i < 4; i++) {
-            harness.handlePermanentChosen(player1, targets.get(i).getId());
-        }
+        harness.handleMultiplePermanentsChosen(player1,
+                targets.subList(0, 4).stream().map(Permanent::getId).toList());
         harness.passBothPriorities();
 
         assertThat(targets.subList(0, 4)).allMatch(permanent -> !permanent.isTapped());
@@ -144,7 +143,7 @@ class InvasionOfSegoviaTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of());
         harness.passBothPriorities();
 
         assertThat(caetus.isTapped()).isTrue();
@@ -162,8 +161,7 @@ class InvasionOfSegoviaTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
 
-        harness.handlePermanentChosen(player1, caetus.getId());
-        harness.handlePermanentChosen(player1, rona.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(caetus.getId(), rona.getId()));
         harness.passBothPriorities();
 
         assertThat(caetus.isTapped()).isFalse();

@@ -37,7 +37,7 @@ public class Fury extends Card {
                 "Target must be a creature or planeswalker"), 0, 4)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDividedDamageEffect(
                         new Fixed(4), null, DivisionMode.CHOSEN, creatureOrPlaneswalker,
-                        4, false, false, true));
+                        4, false, false, true, false, false, true));
 
         addCastingOption(new AlternateHandCast(List.of(
                 new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.RED), "red"))));

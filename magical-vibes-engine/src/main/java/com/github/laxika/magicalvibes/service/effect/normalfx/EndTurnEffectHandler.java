@@ -16,10 +16,26 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class EndTurnEffectHandler implements NormalEffectHandlerBean {
+
+    /** The choices the stack door queues for a triggered ability it holds until they are made. */
+    private static final List<Class<? extends PermanentChoiceContext>> STACK_DOOR_CHOICES = List.of(
+            PermanentChoiceContext.TriggeredModalTrigger.class,
+            PermanentChoiceContext.AttackTriggerTarget.class,
+            PermanentChoiceContext.AttackCounterMoveFirstTarget.class,
+            PermanentChoiceContext.PucasMischiefOwnTarget.class,
+            PermanentChoiceContext.SpellGraveyardTargetTrigger.class,
+            PermanentChoiceContext.ETBTokenMultiTargetTrigger.class,
+            PermanentChoiceContext.ETBSpellTargetTrigger.class,
+            PermanentChoiceContext.EntersTriggerTarget.class,
+            PermanentChoiceContext.SagaChapterTarget.class,
+            PermanentChoiceContext.SagaChapterPlayerTarget.class,
+            PermanentChoiceContext.SagaChapterGraveyardTarget.class);
 
     private final TurnSupport turnSupport;
     private final GameLogService gameLogService;
@@ -32,14 +48,16 @@ public class EndTurnEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        // Rule 724.1a: Triggered abilities that haven't been put on the stack yet cease to exist
+        // Rule 725.1a: Triggered abilities that haven't been put on the stack yet cease to exist, including those the
+        // stack door holds while their controller would choose a mode or targets (Festering Goblin dying to Ultima).
         gameData.pendingMayAbilities.clear();
+        STACK_DOOR_CHOICES.forEach(gameData::clearPendingInteractions);
 
         // The resolving spell stays on the stack while it resolves (an instant or sorcery is removed
         // only at the end of its resolution), so take it off the stack here to keep the stack exile from
         // exiling it a second time.
         gameData.removeResolvingSpellFromStack(entry);
-        // Rule 724.1b: Exile every object on the stack, including the object that's resolving. This happens
+        // Rule 725.1b: Exile every object on the stack, including the object that's resolving. This happens
         // before the skip to cleanup, so the cleanup discard prompt sees the spell already in exile.
         turnSupport.exileStackEntries(gameData);
         boolean exileResolvingSpell = !entry.isCopy()
@@ -52,7 +70,7 @@ public class EndTurnEffectHandler implements NormalEffectHandlerBean {
         // or it would be put into a graveyard after the exile.
         entry.setSpellDispositionHandled(true);
 
-        // Rule 724.1d: Remove creatures from combat. An "exile at end of combat" delayed action has no
+        // Rule 725.1d: Remove creatures from combat. An "exile at end of combat" delayed action has no
         // stated duration, so it survives the skipped combat and waits for the next end of combat (CR 603.7b).
         // The same holds for an untriggered "sacrifice at end of combat" delayed action.
         var endOfCombatExiles = gameData.drainDelayedActions(DelayedPermanentAction.class,
@@ -62,10 +80,10 @@ public class EndTurnEffectHandler implements NormalEffectHandlerBean {
         endOfCombatExiles.forEach(gameData::queueDelayedAction);
         endOfCombatSacrifices.forEach(gameData::queueDelayedAction);
 
-        // Rule 724.1d: Skip to cleanup step
+        // Rule 725.1d: Skip to cleanup step
         turnSupport.skipToCleanupStep(gameData);
 
-        // Flag so resolveTopOfStack exiles the resolving card instead of graveyard (rule 724.1b). A non-copy
+        // Flag so resolveTopOfStack exiles the resolving card instead of graveyard (rule 725.1b). A non-copy
         // spell was already exiled above, so the flag is only needed for copies, which cease to exist.
         gameData.endTurnRequested = !exileResolvingSpell;
 

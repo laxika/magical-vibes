@@ -185,7 +185,7 @@ class AkulTheUnrepentantTest extends BaseCardTest {
             harness.handlePermanentChosen(player1, choice.validPermanentIds().getFirst());
         }
         while (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice choice
-                && choice.validPermanentIds().contains(player2.getId())) {
+                && choice.validIds().contains(player2.getId())) {
             harness.handlePermanentChosen(player1, player2.getId());
         }
 

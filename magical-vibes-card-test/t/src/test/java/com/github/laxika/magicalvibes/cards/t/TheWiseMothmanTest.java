@@ -53,7 +53,8 @@ class TheWiseMothmanTest extends BaseCardTest {
         harness.activateAbility(player1, 3, null, player1.getId());
         resolveAllTriggers();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
         resolveAllTriggers();
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -85,7 +86,7 @@ class TheWiseMothmanTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, player2.getId());
         resolveAllTriggers();
-        harness.handleMultiplePermanentsChosen(player1, List.of(opponent.getId()));
+        harness.handlePermanentChosen(player1, opponent.getId());
         resolveAllTriggers();
 
         assertThat(opponent.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -101,7 +102,7 @@ class TheWiseMothmanTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, player1.getId());
         resolveAllTriggers();
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
         assertThat(mothman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -123,7 +124,7 @@ class TheWiseMothmanTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.exiledCards).hasSize(2);
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handleMultiplePermanentsChosen(player1, List.of(mothman.getId()));
+        harness.handlePermanentChosen(player1, mothman.getId());
         resolveAllTriggers();
         assertThat(mothman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -137,7 +138,8 @@ class TheWiseMothmanTest extends BaseCardTest {
 
         harness.activateAbility(player1, 1, null, null);
         resolveAllTriggers();
-        harness.handleMultiplePermanentsChosen(player1, List.of(mothman.getId(), raul.getId()));
+        harness.handlePermanentChosen(player1, mothman.getId());
+        harness.handlePermanentChosen(player1, raul.getId());
         resolveAllTriggers();
 
         assertThat(mothman.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);

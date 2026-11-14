@@ -29,7 +29,7 @@ class NanoformSentinelTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(target.getId())
                 .doesNotContain(sentinel.getId());
@@ -194,7 +194,7 @@ class NanoformSentinelTest extends BaseCardTest {
         permanent.tap();
         harness.inMutationScope(() -> {
             harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent);
-            harness.getTriggerCollectionService().processNextEntersTriggerTarget(gd);
+            harness.getTriggerCollectionService().beginStackDoorChoices(gd);
         });
     }
 }

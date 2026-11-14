@@ -45,7 +45,7 @@ class WildfireAwakenerTest extends BaseCardTest {
         elemental.tap();
         harness.inMutationScope(() -> {
             harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, elemental);
-            harness.getTriggerCollectionService().processNextEntersTriggerTarget(gd);
+            harness.getTriggerCollectionService().beginStackDoorChoices(gd);
         });
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
@@ -87,7 +87,7 @@ class WildfireAwakenerTest extends BaseCardTest {
         elemental.tap();
         harness.inMutationScope(() -> {
             harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, elemental);
-            harness.getTriggerCollectionService().processNextEntersTriggerTarget(gd);
+            harness.getTriggerCollectionService().beginStackDoorChoices(gd);
         });
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();

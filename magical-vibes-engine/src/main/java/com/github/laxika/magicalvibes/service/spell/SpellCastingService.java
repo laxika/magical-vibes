@@ -2431,6 +2431,9 @@ public class SpellCastingService {
         gameData.exilePlayPermissions.put(card.getId(), playerId);
         gameData.exilePlayWithoutPayingManaCost.add(card.getId());
         triggerCollectionService.checkPlotTriggers(gameData, playerId, card);
+        // Plotting is a special action, not a resolution: the plotted card's "when this card becomes plotted"
+        // target choice begins here (Longhorn Sharpshooter).
+        triggerCollectionService.beginStackDoorChoices(gameData);
     }
 
     /**

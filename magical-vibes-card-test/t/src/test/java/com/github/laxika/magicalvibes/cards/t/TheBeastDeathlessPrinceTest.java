@@ -41,7 +41,6 @@ class TheBeastDeathlessPrinceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0, target.getId());
-        harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
 
         assertThat(target.isTapped()).isFalse();
@@ -183,7 +182,6 @@ class TheBeastDeathlessPrinceTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castCreature(player1, 0, target.getId());
-        harness.handlePermanentChosen(player1, target.getId());
         resolveAllTriggers();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(gqs.hasKeyword(gd, target, Keyword.MENACE)).isTrue();

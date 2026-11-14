@@ -180,6 +180,5 @@ class OblivionSowerTest extends BaseCardTest {
         harness.setHand(player1, List.of(new OblivionSower()));
         harness.addMana(player1, ManaColor.COLORLESS, 6);
         harness.castCreature(player1, 0, player2.getId());
-        harness.handlePermanentChosen(player1, player2.getId());
     }
 }

@@ -388,8 +388,8 @@ class CacklingCounterpartTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Token copy of creature with an 'up to 2 creatures' ETB group prompts twice and stops on self-select")
-    void tokenCopyUpToTwoCreaturesPromptsSlotBySlot() {
+    @DisplayName("Token copy of creature with an 'up to 2 creatures' ETB group announces fewer targets in one choice")
+    void tokenCopyUpToTwoCreaturesMayChooseOneTarget() {
         // Synthetic test creature: single group with max=2 creature targets
         // (exercises the max>1 slot-by-slot selection path on token copies).
         Card upToTwoCreature = new Card();
@@ -413,18 +413,12 @@ class CacklingCounterpartTest extends BaseCardTest {
 
         UUID sourceId = harness.getPermanentId(player1, "Test Multi Target");
         harness.castInstant(player1, 0, sourceId);
-        harness.passBothPriorities(); // CC resolves → token created → group slot 1 prompt
+        harness.passBothPriorities();
 
-        // First slot in the max=2 group.
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         UUID bear1 = findPermanent(player2, "Grizzly Bears").getId();
-        harness.handlePermanentChosen(player1, bear1);
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear1));
 
-        // Second slot. min=0 is satisfied, so self-select becomes a valid "stop" option.
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handlePermanentChosen(player1, player1.getId()); // stop the group
-
-        // All groups done → ETB pushed onto stack with one chosen target.
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.TRIGGERED_ABILITY);
         assertThat(gd.stack.getFirst().getTargetIds()).containsExactly(bear1);
@@ -461,13 +455,9 @@ class CacklingCounterpartTest extends BaseCardTest {
                 .map(Permanent::getId)
                 .toList();
 
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handlePermanentChosen(player1, bears.get(0));
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        harness.handleMultiplePermanentsChosen(player1, bears);
 
-        assertThat(gd.interaction.isAwaitingInput()).isTrue();
-        harness.handlePermanentChosen(player1, bears.get(1));
-
-        // max=2 reached → no more prompts, ETB pushed with both targets.
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getTargetIds()).containsExactlyInAnyOrder(bears.get(0), bears.get(1));
     }

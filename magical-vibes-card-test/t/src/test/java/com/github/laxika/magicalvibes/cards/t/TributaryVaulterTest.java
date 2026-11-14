@@ -46,7 +46,7 @@ class TributaryVaulterTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.EntersTriggerTarget.class);
+                .isInstanceOf(PermanentChoiceContext.AttackTriggerTarget.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
                 .contains(targetMerfolk.getId())
                 .contains(otherMerfolk.getId())
@@ -156,7 +156,7 @@ class TributaryVaulterTest extends BaseCardTest {
         permanent.tap();
         harness.inMutationScope(() -> {
             harness.getTriggerCollectionService().checkEnchantedPermanentTapTriggers(gd, permanent);
-            harness.getTriggerCollectionService().processNextEntersTriggerTarget(gd);
+            harness.getTriggerCollectionService().beginStackDoorChoices(gd);
         });
     }
 }

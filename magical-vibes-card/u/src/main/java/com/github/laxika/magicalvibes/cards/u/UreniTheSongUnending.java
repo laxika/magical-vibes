@@ -48,6 +48,9 @@ public class UreniTheSongUnending extends Card {
                 0,
                 false,
                 false,
+                true,
+                false,
+                false,
                 true
         ));
     }
