@@ -129,6 +129,9 @@ class StateTriggerServiceTest {
         @DisplayName("Fires a state-triggered ability a static ability grants the permanent")
         void firesGrantedStateTriggeredAbility() {
             GameQueryService gameQueryService = mock(GameQueryService.class);
+            lenient().when(gameQueryService.withQueryScope(org.mockito.ArgumentMatchers.any(),
+                            org.mockito.ArgumentMatchers.any()))
+                    .thenAnswer(invocation -> invocation.<java.util.function.Supplier<?>>getArgument(1).get());
             StateTriggerService service = new StateTriggerService(gameLogService, predicateEvaluationService,
                     gameQueryService, triggeredAbilityStackService, null);
             Card card = new Card();

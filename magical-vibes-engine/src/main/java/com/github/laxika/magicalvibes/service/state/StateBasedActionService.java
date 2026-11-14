@@ -253,9 +253,9 @@ public class StateBasedActionService {
             if (gameData.playerSpeeds.containsKey(playerId)) {
                 return;
             }
-            boolean hasStartYourEngines = battlefield.stream()
+            boolean hasStartYourEngines = gameQueryService.withQueryScope(gameData, () -> battlefield.stream()
                     .anyMatch(permanent -> gameQueryService.hasKeyword(
-                            gameData, permanent, Keyword.START_YOUR_ENGINES));
+                            gameData, permanent, Keyword.START_YOUR_ENGINES)));
             if (hasStartYourEngines) {
                 gameData.playerSpeeds.put(playerId, 1);
                 String playerName = gameData.playerIdToName.get(playerId);

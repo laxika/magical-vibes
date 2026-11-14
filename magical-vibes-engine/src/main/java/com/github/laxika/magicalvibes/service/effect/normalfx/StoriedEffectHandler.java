@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.StoriedEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -64,10 +65,9 @@ public class StoriedEffectHandler implements NormalEffectHandlerBean {
     private boolean controlsStoriedPermanent(GameData gameData, List<Permanent> battlefield) {
         return battlefield.stream()
                 .filter(permanent -> !permanent.isFaceDown())
-                .filter(permanent -> !gameQueryService.hasLostPrintedAbilities(gameData, permanent))
-                .map(Permanent::getCard)
-                .anyMatch(card -> card.getStaticEffects().stream()
-                        .anyMatch(StoriedEffect.class::isInstance));
+                .filter(permanent -> LayerSystemService.currentCard(gameData, permanent).getStaticEffects().stream()
+                        .anyMatch(StoriedEffect.class::isInstance))
+                .anyMatch(permanent -> !gameQueryService.hasLostPrintedAbilities(gameData, permanent));
     }
 
     private boolean isQualifyingPermanent(GameData gameData, Permanent permanent) {

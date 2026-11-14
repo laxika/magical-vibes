@@ -74,6 +74,11 @@ public class LegendRuleService {
     }
 
     private Map.Entry<String, List<UUID>> findLegendRuleViolation(GameData gameData, UUID controllerId) {
+        return gameQueryService.withQueryScope(gameData, () -> findLegendRuleViolationInScope(gameData, controllerId));
+    }
+
+    /** {@link #findLegendRuleViolation}, in one query scope: it changes nothing. */
+    private Map.Entry<String, List<UUID>> findLegendRuleViolationInScope(GameData gameData, UUID controllerId) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield == null) return null;
 

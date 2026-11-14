@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOptionPreview;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,10 @@ import java.util.Set;
  * {@linkplain ReplacementOption#pure() pure} and every possible order — including effects that
  * only become applicable along the way (CR 616.2) — ends in the same event. Those effects are then
  * applied in collection order, because no choice could change anything.
+ *
+ * <p>Collecting the applicable effects and previewing pure ones change nothing, so each runs inside one
+ * {@linkplain GameQueryService#withQueryScope query scope}: every candidate source scans the battlefield
+ * with layered queries, and a scope confirms the board once instead of once per query.
  */
 @Service
 public class ReplacementOrderService {
@@ -37,11 +42,14 @@ public class ReplacementOrderService {
 
     private final List<ReplacementCandidateSource<?>> sources;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final GameQueryService gameQueryService;
 
     public ReplacementOrderService(@Lazy List<ReplacementCandidateSource<?>> sources,
-                                   @Lazy InteractionHandlerRegistry interactionHandlerRegistry) {
+                                   @Lazy InteractionHandlerRegistry interactionHandlerRegistry,
+                                   @Lazy GameQueryService gameQueryService) {
         this.sources = sources;
         this.interactionHandlerRegistry = interactionHandlerRegistry;
+        this.gameQueryService = gameQueryService;
     }
 
     /** What became of an event handed to {@link #run} or {@link #answer}. */
@@ -107,9 +115,11 @@ public class ReplacementOrderService {
      * modifying the event. The returned events carry no applied keys.
      */
     public <E extends ReplacementEvent> Set<E> possibleOutcomes(GameData gameData, E event) {
-        Set<E> outcomes = new LinkedHashSet<>();
-        collectOutcomes(gameData, event, outcomes, new int[]{0});
-        return outcomes;
+        return gameQueryService.withQueryScope(gameData, () -> {
+            Set<E> outcomes = new LinkedHashSet<>();
+            collectOutcomes(gameData, event, outcomes, new int[]{0});
+            return outcomes;
+        });
     }
 
     private <E extends ReplacementEvent> void collectOutcomes(GameData gameData, E event, Set<E> outcomes,
@@ -130,8 +140,8 @@ public class ReplacementOrderService {
 
     private <E extends ReplacementEvent> boolean orderIsIrrelevant(GameData gameData, E event,
                                                                    List<Candidate<E>> candidates) {
-        return allPure(gameData, event, candidates, new int[]{0})
-                && possibleOutcomes(gameData, event).size() == 1;
+        return gameQueryService.withQueryScope(gameData, () -> allPure(gameData, event, candidates, new int[]{0})
+                && possibleOutcomes(gameData, event).size() == 1);
     }
 
     private <E extends ReplacementEvent> boolean allPure(GameData gameData, E event,
@@ -149,6 +159,10 @@ public class ReplacementOrderService {
     }
 
     private <E extends ReplacementEvent> List<Candidate<E>> applicable(GameData gameData, E event) {
+        return gameQueryService.withQueryScope(gameData, () -> collectApplicable(gameData, event));
+    }
+
+    private <E extends ReplacementEvent> List<Candidate<E>> collectApplicable(GameData gameData, E event) {
         List<Candidate<E>> candidates = new ArrayList<>();
         for (ReplacementCandidateSource<?> source : sources) {
             if (!source.eventType().isInstance(event)) {
@@ -202,7 +216,8 @@ public class ReplacementOrderService {
     @SuppressWarnings("unchecked")
     private <E extends ReplacementEvent> E preview(GameData gameData, E event, Candidate<E> candidate) {
         E modified = candidate.option().pure()
-                ? candidate.source().transform(gameData, event, candidate.option())
+                ? gameQueryService.withQueryScope(gameData,
+                        () -> candidate.source().transform(gameData, event, candidate.option()))
                 : event;
         return (E) modified.withApplied(candidate.option().key());
     }

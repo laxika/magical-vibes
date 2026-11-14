@@ -22,7 +22,7 @@ Owner: `ReplacementOrderService` (`run`).
 Why: the affected player picks the order when it matters.
 
 ### A new replacement is a rule in a candidate bean
-Add it to a `ReplacementCandidateSource` bean under `service/effect/replacement/`, never as a step in a damage or creation path; `applicable` must not touch the game, and a rider, consumed shield or prompt makes an option non-`pure`. Dealing the damage (`DamageSupport.finishPlayerDamage` / `finishPermanentDamage`) is not a replacement.
+Add it to a `ReplacementCandidateSource` bean under `service/effect/replacement/`, never as a step in a damage or creation path; `applicable` and a pure option's `transform` must not touch the game (they run in one query scope), and a rider, consumed shield or prompt makes an option non-`pure`. Dealing the damage (`DamageSupport.finishPlayerDamage` / `finishPermanentDamage`) is not a replacement.
 Owner: `ReplacementCandidateSource`; `DamageCandidateSource` for damage.
 Why: an effect applied outside the pool is applied in a fixed order, or twice.
 

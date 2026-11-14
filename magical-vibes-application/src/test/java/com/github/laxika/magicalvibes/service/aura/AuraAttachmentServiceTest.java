@@ -66,6 +66,8 @@ class AuraAttachmentServiceTest {
 
     @BeforeEach
     void setUp() {
+        org.mockito.Mockito.lenient().when(gameQueryService.withQueryScope(any(), any()))
+                .thenAnswer(invocation -> invocation.<java.util.function.Supplier<?>>getArgument(1).get());
         org.mockito.Mockito.lenient().when(gameQueryService.hasEffectiveSubtype(any(), any(), any()))
                 .thenAnswer(invocation -> ((Permanent) invocation.getArgument(1)).getCard()
                         .getSubtypes().contains(invocation.getArgument(2)));
@@ -120,6 +122,25 @@ class AuraAttachmentServiceTest {
                     new AuraAttachmentService.OrphanedAuraRemoval(aura.getCard(), player1Id, aura));
             verify(graveyardService).addCardToGraveyard(
                     gd, player1Id, aura.getOriginalCard(), Zone.BATTLEFIELD, player1Id, aura);
+        }
+
+        @Test
+        @DisplayName("Every orphaned Aura goes to the graveyard, those after the first and around a kept one too")
+        void sweepKeepsGoingAfterItsFirstRemoval() {
+            Permanent first = createAura("Errantry");
+            Permanent kept = createAura("Holy Strength");
+            kept.setAttachedTo(player2Id);
+            Permanent second = createAura("Holy Strength");
+            second.setAttachedTo(UUID.randomUUID());
+            gd.playerBattlefields.get(player1Id).addAll(List.of(first, kept, second));
+
+            service.removeOrphanedAuras(gd);
+
+            assertThat(gd.playerBattlefields.get(player1Id)).containsExactly(kept);
+            verify(graveyardService).addCardToGraveyard(
+                    gd, player1Id, first.getOriginalCard(), Zone.BATTLEFIELD, player1Id, first);
+            verify(graveyardService).addCardToGraveyard(
+                    gd, player1Id, second.getOriginalCard(), Zone.BATTLEFIELD, player1Id, second);
         }
 
         @Test

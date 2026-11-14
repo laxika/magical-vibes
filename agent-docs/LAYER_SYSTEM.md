@@ -815,6 +815,15 @@ hash — a 100-target Fireball over 100 creatures spent ~20 s re-confirming an u
 Detection writes inside the scope, but only state neither the board nor the assembly reads
 (triggered abilities on the stack, log lines, queued choices/may abilities, once-per-turn
 markers); the pending-target prompts it queues are started after the scope closes.
+`ReplacementOrderService` collects each event's applicable replacement and prevention effects, previews the
+pure ones and decides whether their order matters inside one scope (a candidate source's `applicable` and
+`transform` change nothing): each `DamageCandidateSource` rule scans the battlefield, so unscoped every damage
+event paid rules × permanents fingerprints.
+State-based sweeps that act as they go (`AuraAttachmentService.removeOrphanedAuras`/`enforceAttachmentLegality`,
+`StateTriggerService.checkStateTriggers`) judge permanents in one scope until they find one to act on, close it,
+act, and open a new one for the rest: a clean board costs one fingerprint per sweep, and each later permanent is
+still judged against the state the earlier action left. The read-only ones (the departure batch's Aura prediction,
+the legend-rule search, the speed check) run in one scope each.
 `DepartureService.gather`/`choose` find a departure batch's destruction and death replacement
 questions inside one scope (both change nothing; the questions are asked once it closes) — each
 permanent's lookups scan the whole board, so a 100-creature V.A.T.S. paid a fingerprint and an

@@ -56,6 +56,8 @@ class LegendRuleServiceTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(gameQueryService.withQueryScope(any(), any()))
+                .thenAnswer(invocation -> invocation.<java.util.function.Supplier<?>>getArgument(1).get());
         player1Id = UUID.randomUUID();
         player2Id = UUID.randomUUID();
         gd = new GameData(UUID.randomUUID(), "test", player1Id, "Player1");

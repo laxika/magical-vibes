@@ -131,54 +131,100 @@ public class StateTriggerService {
 
             // Snapshot to avoid ConcurrentModificationException if a trigger modifies the list
             List<Permanent> snapshot = List.copyOf(battlefield);
-            for (Permanent perm : snapshot) {
-                if (perm.isFaceDown()) continue;
-                if (gameQueryService != null && gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
-                List<TriggeredAbility> abilities = stateTriggeredAbilities(gameData, perm);
-                for (int i = 0; i < abilities.size(); i++) {
-                    TriggeredAbility ability = abilities.get(i);
-                    StateTriggerEffect trigger = MiscAbilityReader.stateTrigger(ability);
-
-                    // Rule 603.8: don't retrigger while already on the stack
-                    StateTriggerKey key = new StateTriggerKey(perm.getId(), i);
-                    if (gameData.stateTriggerOnStack.contains(key)) continue;
-                    if (!conditionMet(gameData, trigger, perm, playerId)) continue;
-                    Permanent referencedPermanent = findReferencedPermanent(
-                            gameData, trigger.referencedPermanentPredicate(), perm, playerId);
-                    if (trigger.referencedPermanentPredicate() != null && referencedPermanent == null) {
-                        continue;
-                    }
-                    int effectIndex = i;
-                    StackEntry[] stamped = new StackEntry[1];
-                    boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
-                            perm.getCard(), perm, playerId, description(perm), ConditionContext.forPermanent(perm, playerId),
-                            entry -> {
-                                if (referencedPermanent != null) {
-                                    entry.setTriggeringPermanentId(referencedPermanent.getId());
-                                    entry.setTriggeringPermanentControllerId(playerIdOf(
-                                            gameData, referencedPermanent.getId()));
-                                    entry.setTriggeringCardId(referencedPermanent.getCard().getId());
-                                    entry.setDamageSourceCard(referencedPermanent.getCard());
-                                }
-                                entry.setStateTriggerEffectIndex(effectIndex);
-                                entry.setSourcePermanentSnapshot(new Permanent(perm));
-                                stamped[0] = entry;
-                            }));
-                    if (!triggered) {
-                        continue;
-                    }
-                    gameData.stateTriggerOnStack.add(key);
-                    parked |= stamped[0] != null && stamped[0].isParkedAtStackDoor();
-                    gameLogService.append(gameData, GameLog.text(description(perm) + " triggers."));
-                    log.info("Game {} - State trigger fires for {} (permanent {})",
-                            gameData.id, perm.getCard().getName(), perm.getId());
+            StateTriggerCursor cursor = new StateTriggerCursor();
+            StateTriggerFinding finding;
+            while ((finding = inQueryScope(gameData,
+                    () -> nextStateTrigger(gameData, snapshot, playerId, cursor))) != null) {
+                Permanent perm = finding.permanent();
+                TriggeredAbility ability = finding.ability();
+                StateTriggerKey key = new StateTriggerKey(perm.getId(), finding.index());
+                Permanent referencedPermanent = finding.referencedPermanent();
+                int effectIndex = finding.index();
+                StackEntry[] stamped = new StackEntry[1];
+                boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
+                        perm.getCard(), perm, playerId, description(perm), ConditionContext.forPermanent(perm, playerId),
+                        entry -> {
+                            if (referencedPermanent != null) {
+                                entry.setTriggeringPermanentId(referencedPermanent.getId());
+                                entry.setTriggeringPermanentControllerId(playerIdOf(
+                                        gameData, referencedPermanent.getId()));
+                                entry.setTriggeringCardId(referencedPermanent.getCard().getId());
+                                entry.setDamageSourceCard(referencedPermanent.getCard());
+                            }
+                            entry.setStateTriggerEffectIndex(effectIndex);
+                            entry.setSourcePermanentSnapshot(new Permanent(perm));
+                            stamped[0] = entry;
+                        }));
+                if (!triggered) {
+                    continue;
                 }
+                gameData.stateTriggerOnStack.add(key);
+                parked |= stamped[0] != null && stamped[0].isParkedAtStackDoor();
+                gameLogService.append(gameData, GameLog.text(description(perm) + " triggers."));
+                log.info("Game {} - State trigger fires for {} (permanent {})",
+                        gameData.id, perm.getCard().getName(), perm.getId());
             }
         }
         // A target chosen as the ability goes on the stack (CR 603.3d) is chosen now, as the game state triggered it.
         if (parked && triggerCollectionService != null) {
             triggerCollectionService.beginStackDoorChoices(gameData);
         }
+    }
+
+    /**
+     * Where {@link #checkStateTriggers}' walk over one battlefield snapshot stands: the permanent it is at, that
+     * permanent's state-triggered abilities as read when the walk reached it ({@code null} until then), and the next
+     * ability to check.
+     */
+    private static final class StateTriggerCursor {
+        private int permanentIndex;
+        private List<TriggeredAbility> abilities;
+        private int abilityIndex;
+    }
+
+    /** A state-triggered ability whose state holds: the permanent, the ability, its index and the permanent it names. */
+    private record StateTriggerFinding(Permanent permanent, TriggeredAbility ability, int index,
+                                       Permanent referencedPermanent) {}
+
+    /**
+     * Advances {@code cursor} to the next state-triggered ability of {@code snapshot} that triggers, or returns
+     * {@code null} at its end. Changes nothing, so the walk judges abilities in one query scope until one triggers,
+     * and closes it before putting that ability on the stack: each later ability is judged against the state the
+     * stack door left, as when every ability was judged on its own.
+     */
+    private StateTriggerFinding nextStateTrigger(GameData gameData, List<Permanent> snapshot, UUID playerId,
+                                                 StateTriggerCursor cursor) {
+        while (cursor.permanentIndex < snapshot.size()) {
+            Permanent perm = snapshot.get(cursor.permanentIndex);
+            if (cursor.abilities == null) {
+                cursor.abilities = perm.isFaceDown()
+                        || gameQueryService != null && gameQueryService.hasLostPrintedAbilities(gameData, perm)
+                        ? List.of() : stateTriggeredAbilities(gameData, perm);
+                cursor.abilityIndex = 0;
+            }
+            while (cursor.abilityIndex < cursor.abilities.size()) {
+                int i = cursor.abilityIndex++;
+                TriggeredAbility ability = cursor.abilities.get(i);
+                StateTriggerEffect trigger = MiscAbilityReader.stateTrigger(ability);
+
+                // Rule 603.8: don't retrigger while already on the stack
+                if (gameData.stateTriggerOnStack.contains(new StateTriggerKey(perm.getId(), i))) continue;
+                if (!conditionMet(gameData, trigger, perm, playerId)) continue;
+                Permanent referencedPermanent = findReferencedPermanent(
+                        gameData, trigger.referencedPermanentPredicate(), perm, playerId);
+                if (trigger.referencedPermanentPredicate() != null && referencedPermanent == null) {
+                    continue;
+                }
+                return new StateTriggerFinding(perm, ability, i, referencedPermanent);
+            }
+            cursor.permanentIndex++;
+            cursor.abilities = null;
+        }
+        return null;
+    }
+
+    private <T> T inQueryScope(GameData gameData, java.util.function.Supplier<T> queries) {
+        return gameQueryService == null ? queries.get() : gameQueryService.withQueryScope(gameData, queries);
     }
 
     /** The stack and log description of a permanent's state-triggered ability. */

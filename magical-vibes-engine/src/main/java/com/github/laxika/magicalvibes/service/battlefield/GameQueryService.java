@@ -9086,8 +9086,8 @@ public class GameQueryService {
             return false;
         }
         return battlefield.stream()
-                .filter(p -> !p.isFaceDown() && !hasLostAllAbilities(gameData, p))
-                .anyMatch(p -> p.getCard().getStaticEffects().stream().anyMatch(effectType::isInstance));
+                .anyMatch(p -> !p.isFaceDown() && printsStaticEffect(gameData, p, effectType)
+                        && !hasLostAllAbilities(gameData, p));
     }
 
     /** Returns the number of STATIC-slot effects of the given type controlled by a player. */
@@ -11933,7 +11933,10 @@ public class GameQueryService {
             }
         }
         gameData.forEachPermanent((controllerId, p) -> {
-            if (hasLostAllAbilities(gameData, p)) return;
+            if (!printsStaticEffect(gameData, p, DoubleDamageToControllerAndSelfEffect.class,
+                    OpponentRecipientDamageMultiplyingEffect.class, ControllerRecipientDamageMultiplyingEffect.class,
+                    ChosenPlayersDamageMultiplyingEffect.class, ChosenPlayerRecipientDamageMultiplyingEffect.class)
+                    || hasLostAllAbilities(gameData, p)) return;
             for (CardEffect effect : p.getCard().getStaticEffects()) {
                 if (effect instanceof DoubleDamageToControllerAndSelfEffect
                         && ((recipientPermanentId == null && recipientPlayerId.equals(controllerId))
@@ -12005,6 +12008,7 @@ public class GameQueryService {
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (!sourceControllerId.equals(controllerId)) return;
             if (permanent.isLosesAllAbilitiesUntilEndOfTurn()
+                    || !printsStaticEffect(gameData, permanent, SourceOpponentDamageBonusEffect.class)
                     || computeStaticBonus(gameData, permanent).losesAllAbilities()) return;
             forEachStaticEffect(permanent, (effect, instance) -> {
                 if (effect instanceof SourceOpponentDamageBonusEffect additional
@@ -12065,7 +12069,10 @@ public class GameQueryService {
 
         List<DamageBonus> bonuses = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
-            if (!sourceControllerId.equals(controllerId) || hasLostPrintedAbilities(gameData, permanent)) return;
+            if (!sourceControllerId.equals(controllerId)
+                    || !printsStaticEffect(gameData, permanent, ControllerOpponentDamageBonusEffect.class,
+                    ConditionalEffect.class)
+                    || hasLostPrintedAbilities(gameData, permanent)) return;
             forEachStaticEffect(permanent, (effect, instance) -> {
                 int amount = getControllerDamageToOpponentBonus(
                         gameData, effect, permanent, controllerId, combatDamage,
@@ -12097,7 +12104,8 @@ public class GameQueryService {
         List<DamageBonus> bonuses = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
             if (recipientControllerId.equals(controllerId)) return;
-            if (hasLostAllAbilities(gameData, permanent)) return;
+            if (!printsStaticEffect(gameData, permanent, OpponentDamageBonusEffect.class)
+                    || hasLostAllAbilities(gameData, permanent)) return;
             forEachStaticEffect(permanent, (effect, instance) -> {
                 if (effect instanceof OpponentDamageBonusEffect damageBonus) {
                     bonuses.add(new DamageBonus(instance, permanent.getCard().getName(), damageBonus.amount()));
@@ -12148,7 +12156,8 @@ public class GameQueryService {
 
         List<DamageBonus> bonuses = new ArrayList<>();
         gameData.forEachPermanent((controllerId, p) -> {
-            if (hasLostPrintedAbilities(gameData, p)) return;
+            if (!printsStaticEffect(gameData, p, AdditionalDamageToPlayersFromColorSourcesEffect.class)
+                    || hasLostPrintedAbilities(gameData, p)) return;
             forEachStaticEffect(p, (effect, instance) -> {
                 if (effect instanceof AdditionalDamageToPlayersFromColorSourcesEffect e
                         && !Collections.disjoint(e.colors(), sourceColors)) {
@@ -12664,7 +12673,8 @@ public class GameQueryService {
                 ? null : findPermanentById(gameData, entry.getSourcePermanentId());
         gameData.forEachPermanent((playerId, p) -> {
             if (!playerId.equals(controllerId)) return;
-            if (hasLostAllAbilities(gameData, p)) return;
+            if (!printsStaticEffect(gameData, p, AdditionalControllerDamageEffect.class)
+                    || hasLostAllAbilities(gameData, p)) return;
             forEachStaticEffect(p, (effect, instance) -> {
                 if (effect instanceof AdditionalControllerDamageEffect acde
                         && !(acde.anotherSourceOnly() && p.getId().equals(sourcePermanentId))
@@ -12769,7 +12779,10 @@ public class GameQueryService {
         int[] multiplier = {1};
         gameData.forEachPermanent((playerId, p) -> {
             if (!playerId.equals(controllerId)) return;
-            if (p.isFaceDown() || hasLostPrintedAbilities(gameData, p)) return;
+            if (p.isFaceDown()
+                    || !printsStaticEffect(gameData, p, ControllerDamageMultiplyingEffect.class,
+                    ConditionalEffect.class, SourceDamageMultiplyingEffect.class)
+                    || hasLostPrintedAbilities(gameData, p)) return;
             for (CardEffect effect : p.getCard().getStaticEffects()) {
                 if (effect instanceof ControllerDamageMultiplyingEffect multiplyingEffect) {
                     if (isCombat) {
@@ -13001,7 +13014,9 @@ public class GameQueryService {
         }
         List<DamageBonus> bonuses = new ArrayList<>();
         gameData.forEachPermanent((playerId, permanent) -> {
-            if (!playerId.equals(controllerId) || permanent.isFaceDown() || hasLostAllAbilities(gameData, permanent)) {
+            if (!playerId.equals(controllerId) || permanent.isFaceDown()
+                    || !printsStaticEffect(gameData, permanent, SubtypeSourceDamageBonusEffect.class)
+                    || hasLostAllAbilities(gameData, permanent)) {
                 return;
             }
             forEachStaticEffect(permanent, (effect, instance) -> {
@@ -13073,7 +13088,9 @@ public class GameQueryService {
         List<DamageBonus> bonuses = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
             if (!playerId.equals(controllerId)) return;
-            if (p.getId().equals(sourcePermanentId) || hasLostAllAbilities(gameData, p)) return;
+            if (p.getId().equals(sourcePermanentId)
+                    || !printsStaticEffect(gameData, p, AdditionalColorSourceDamageEffect.class)
+                    || hasLostAllAbilities(gameData, p)) return;
             forEachStaticEffect(p, (effect, instance) -> {
                 if (effect instanceof AdditionalColorSourceDamageEffect acsde
                         && sourceColors.contains(acsde.color())) {
@@ -13112,6 +13129,24 @@ public class GameQueryService {
             }
         }
         return bonuses;
+    }
+
+    /**
+     * Whether {@code permanent}'s card, as a layered pass reads it, prints a static effect that is an
+     * instance of one of {@code types}. A scan over the printed static effects tests this before its
+     * layered ability-loss query: the loss only matters to a permanent that has the effect, and outside a
+     * query scope every such query fingerprints the whole board, so an unscoped scan would otherwise cost
+     * the board's size squared.
+     */
+    private static boolean printsStaticEffect(GameData gameData, Permanent permanent, Class<?>... types) {
+        for (CardEffect effect : LayerSystemService.currentCard(gameData, permanent).getStaticEffects()) {
+            for (Class<?> type : types) {
+                if (type.isInstance(effect)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** Visits each static effect of {@code permanent} with an instance key unique to that effect. */

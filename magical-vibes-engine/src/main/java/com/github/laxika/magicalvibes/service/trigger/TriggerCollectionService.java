@@ -3915,7 +3915,6 @@ public class TriggerCollectionService {
                     : List.of(DamageWatch.ON_ANY_SOURCE_DEALS_DAMAGE);
             int damageToWatcherController = ctx.damageToPlayers().getOrDefault(watcherPlayerId, 0);
             for (Permanent perm : List.copyOf(battlefield)) {
-                if (gameQueryService.hasLostPrintedAbilities(gameData, perm)) continue;
                 collectSourceDealsDamageAbilities(gameData, perm, watcherPlayerId, watches, ctx, totalDamage);
                 if (damageToWatcherController > 0) {
                     collectSourceDealsDamageAbilities(gameData, perm, watcherPlayerId,
@@ -6992,7 +6991,23 @@ public class TriggerCollectionService {
      */
     private void collectDealsDamageToCreatureAbilities(GameData gameData, Permanent watcher, UUID controllerId,
             List<DamageWatch> watches, boolean readGrants, DealsDamageToCreatureEvent event) {
-        if (watcher.isLosesAllAbilitiesUntilEndOfTurn() || gameQueryService.hasLostPrintedAbilities(gameData, watcher)) {
+        if (watcher.isLosesAllAbilitiesUntilEndOfTurn()) {
+            return;
+        }
+        Card card = LayerSystemService.currentCard(gameData, watcher);
+        List<List<TriggeredAbility>> abilitiesByWatch = new ArrayList<>(watches.size());
+        boolean watchesAny = readGrants;
+        for (DamageWatch watch : watches) {
+            Trigger watched = watch.trigger();
+            List<TriggeredAbility> abilities = watcher.isFaceDown()
+                    ? new ArrayList<>()
+                    : new ArrayList<>(DamageAbilityReader.printed(card, watch));
+            abilities.addAll(WatchedAbilities.temporary(watcher, watched));
+            abilities.addAll(WatchedAbilities.persistent(watcher, watched));
+            watchesAny |= !abilities.isEmpty();
+            abilitiesByWatch.add(abilities);
+        }
+        if (!watchesAny || gameQueryService.hasLostPrintedAbilities(gameData, watcher)) {
             return;
         }
         ConditionContext context = ConditionContext.forPermanent(watcher, controllerId)
@@ -7001,13 +7016,10 @@ public class TriggerCollectionService {
                 event.damageSource(), event.damagedCreatureId(), event.damage(), event.combatDamage(),
                 event.damagedCreature(), event.damagedCreatureControllerId());
         Permanent snapshot = new Permanent(watcher);
-        for (DamageWatch watch : watches) {
+        for (int i = 0; i < watches.size(); i++) {
+            DamageWatch watch = watches.get(i);
             Trigger watched = watch.trigger();
-            List<TriggeredAbility> abilities = watcher.isFaceDown()
-                    ? new ArrayList<>()
-                    : new ArrayList<>(DamageAbilityReader.printed(watcher.getCard(), watch));
-            abilities.addAll(WatchedAbilities.temporary(watcher, watched));
-            abilities.addAll(WatchedAbilities.persistent(watcher, watched));
+            List<TriggeredAbility> abilities = abilitiesByWatch.get(i);
             if (readGrants) {
                 abilities.addAll(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
                         gameData, watcher, controllerId, watched));
@@ -7086,9 +7098,10 @@ public class TriggerCollectionService {
         DamageWatch creatureDealtDamage = DamageWatch.ON_ANY_CREATURE_DEALT_DAMAGE;
         Trigger watched = creatureDealtDamage.trigger();
         gameData.forEachPermanent((playerId, perm) -> {
-            if (gameQueryService.hasLostAllAbilities(gameData, perm)) return;
-            for (TriggeredAbility ability : WatchedAbilities.printed(LayerSystemService.currentCard(gameData, perm),
-                    creatureDealtDamage)) {
+            List<TriggeredAbility> printed = WatchedAbilities.printed(LayerSystemService.currentCard(gameData, perm),
+                    creatureDealtDamage);
+            if (printed.isEmpty() || gameQueryService.hasLostAllAbilities(gameData, perm)) return;
+            for (TriggeredAbility ability : printed) {
                 requireEachEvent(ability, creatureDealtDamage);
                 // "Whenever a [filtered] creature is dealt damage": the filter is on the damaged creature.
                 PermanentPredicate filter = DamageAbilityReader.filter(ability, watched);
@@ -13018,7 +13031,7 @@ public class TriggerCollectionService {
      * Glamerdye on Riverfall Mimic); none once it has lost them.
      */
     private List<TriggeredAbility> printedWatchedAbilities(GameData gameData, Permanent perm, TriggerWatch watch) {
-        List<TriggeredAbility> printed = WatchedAbilities.printed(perm.getCard(), watch);
+        List<TriggeredAbility> printed = WatchedAbilities.printed(LayerSystemService.currentCard(gameData, perm), watch);
         if (printed.isEmpty() || gameQueryService.hasLostPrintedAbilities(gameData, perm)) {
             return List.of();
         }

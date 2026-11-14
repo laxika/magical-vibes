@@ -1899,9 +1899,10 @@ public class PermanentRemovalService {
      * in its batch, which asks before they leave. Changes nothing.
      */
     public List<Permanent> aurasLeftForStateBasedDepartures(GameData gameData) {
-        return auraAttachmentService.aurasPutIntoGraveyardByAttachmentSweeps(gameData).stream()
-                .filter(aura -> hasDeathReplacementQuestion(gameData, aura))
-                .toList();
+        return gameQueryService.withQueryScope(gameData, () ->
+                auraAttachmentService.aurasPutIntoGraveyardByAttachmentSweeps(gameData).stream()
+                        .filter(aura -> hasDeathReplacementQuestion(gameData, aura))
+                        .toList());
     }
 
     /**
