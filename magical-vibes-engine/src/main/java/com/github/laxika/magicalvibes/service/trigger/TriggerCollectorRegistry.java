@@ -120,17 +120,6 @@ public class TriggerCollectorRegistry {
                 }
             }
 
-            CollectsCombatTrigger singleCombat = method.getAnnotation(CollectsCombatTrigger.class);
-            if (singleCombat != null) {
-                registerMethod(bean, method, singleCombat.watch(), singleCombat.value(), registry);
-            }
-            CollectsCombatTriggers combatContainer = method.getAnnotation(CollectsCombatTriggers.class);
-            if (combatContainer != null) {
-                for (CollectsCombatTrigger cct : combatContainer.value()) {
-                    registerMethod(bean, method, cct.watch(), cct.value(), registry);
-                }
-            }
-
             CollectsDamageTrigger singleDamage = method.getAnnotation(CollectsDamageTrigger.class);
             if (singleDamage != null) {
                 registerMethod(bean, method, singleDamage.watch(), singleDamage.value(), registry);

@@ -10,85 +10,17 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 /**
- * Which of the old combat slot collectors reads a triggered ability, now that the ability has a real trigger
- * (effect-slot-refactor.md step 13, family 3). Each constant is named after the slot whose collector it stands for and
- * names the trigger its cards were converted to and the zone the collector reads them in. The collectors in the
- * combat services and {@code TriggerCollectionService} still decide when the ability triggers and how its effects
- * group into stack objects, and its {@link CollectsCombatTrigger} handlers bind the event data, as the slot's did,
- * until step 15 of the refactor replaces them with effects that read the event.
+ * Which of the combat damage collectors reads a triggered ability ("whenever this creature deals combat damage to a
+ * player" and the like, CR 510.2). Each constant names the trigger its cards are written with and the zone the
+ * collector reads them in; the collectors in {@code CombatDamageService} and {@code TriggerCollectionService} decide
+ * when the ability triggers. The attack and block abilities are the trigger pipeline's ({@code AttackEvent},
+ * {@code BlockEvent}).
  * <p>
  * Every collector of these watches reads the abilities themselves, through
  * {@link CombatAbilityReader}: the trigger's filter on the creature, the limit and the multiplicity come from the
  * ability, and the legacy view gives none of them, so {@link #effectsOf} and {@link #registrationsOf} throw.
  */
 public enum CombatWatch implements TriggerWatch {
-    /** "Whenever this creature attacks". */
-    ON_ATTACK(Triggers.attacks(), Zone.BATTLEFIELD),
-    /** "Whenever a creature you control attacks", this one included. */
-    ON_ALLY_CREATURE_ATTACKS(Triggers.creatureYouControlAttacks(), Zone.BATTLEFIELD),
-    /** "Whenever a creature attacks". */
-    ON_ANY_CREATURE_ATTACKS(Triggers.creatureAttacks(), Zone.BATTLEFIELD),
-    /** "Whenever a creature attacks", from the graveyard: "whenever your commander attacks" (Vivi's Persistence). */
-    GRAVEYARD_ON_ANY_CREATURE_ATTACKS(Triggers.creatureAttacks(), Zone.GRAVEYARD),
-    /** "Whenever a creature attacks you or a planeswalker you control". */
-    ON_CREATURE_ATTACKS_YOU(Triggers.creatureAttacksYouOrYourPlaneswalker(), Zone.BATTLEFIELD),
-    /** "Whenever a creature attacks you". */
-    ON_CREATURE_ATTACKS_YOU_DIRECTLY(Triggers.creatureAttacksYou(), Zone.BATTLEFIELD),
-    /** "Whenever a creature an opponent controls attacks, if you're the defending player". */
-    ON_CREATURE_ATTACKS_DEFENDING_PLAYER(Triggers.creatureAttacksWhileYouDefend(), Zone.BATTLEFIELD),
-    /** "Whenever you attack": one or more creatures you control attack. */
-    ON_ALLY_CREATURES_ATTACK(Triggers.youAttack(), Zone.BATTLEFIELD),
-    /** "Whenever you attack": one or more creatures you control attack, from the command zone. */
-    COMMAND_ZONE_ON_ALLY_CREATURES_ATTACK(Triggers.youAttack(), Zone.COMMAND),
-    /** "Whenever you attack": one or more creatures you control attack, from the graveyard. */
-    GRAVEYARD_ON_ALLY_CREATURES_ATTACK(Triggers.youAttack(), Zone.GRAVEYARD),
-    /** "Whenever you attack": one or more creatures you control attack, from exile. */
-    EXILE_ON_ALLY_CREATURES_ATTACK(Triggers.youAttack(), Zone.EXILE),
-    /** "Whenever you attack a player", once for each player attacked. */
-    ON_ALLY_CREATURES_ATTACK_PLAYER(Triggers.youAttackPlayer(), Zone.BATTLEFIELD),
-    /** "Whenever you attack a player or planeswalker", once for each one attacked. */
-    ON_ALLY_CREATURES_ATTACK_PLAYER_OR_PLANESWALKER(Triggers.youAttackPlayerOrPlaneswalker(), Zone.BATTLEFIELD),
-    /** "Whenever a player attacks": one or more creatures attack. */
-    ON_ANY_PLAYER_ATTACKS(Triggers.playerAttacks(), Zone.BATTLEFIELD),
-    /** "Whenever a player attacks one of your opponents", once for each opponent attacked. */
-    ON_ANY_PLAYER_ATTACKS_YOUR_OPPONENT(Triggers.playerAttacksOneOfYourOpponents(), Zone.BATTLEFIELD),
-    /** "Whenever an opponent attacks another one of your opponents", once for each other opponent attacked. */
-    ON_OPPONENT_ATTACKS_ANOTHER_OPPONENT(Triggers.opponentAttacksAnotherOpponent(), Zone.BATTLEFIELD),
-    /** "Whenever one or more creatures attack you". */
-    ON_CREATURES_ATTACK_YOU(Triggers.creaturesAttackYou(), Zone.BATTLEFIELD),
-    /** "Whenever an opponent attacks a planeswalker you control with one or more creatures". */
-    ON_OPPONENT_ATTACKS_PLANESWALKER_YOU_CONTROL(Triggers.opponentAttacksYourPlaneswalker(), Zone.BATTLEFIELD),
-    /** An attacking creature you control causes a triggered ability of its own to trigger. */
-    ON_ALLY_ATTACKING_CREATURE_ABILITY_TRIGGERS(Triggers.attackingCreatureYouControlAbilityTriggers(),
-            Zone.BATTLEFIELD),
-    /** "Whenever this creature enlists a creature" (CR 702.154c). */
-    ON_ENLISTS(Triggers.enlists(), Zone.BATTLEFIELD),
-    /** "Whenever this creature attacks and isn't blocked". */
-    ON_ATTACKS_UNBLOCKED(Triggers.attacksUnblocked(), Zone.BATTLEFIELD),
-    /** "Whenever enchanted creature attacks and isn't blocked". */
-    ON_ENCHANTED_CREATURE_ATTACKS_UNBLOCKED(Triggers.enchantedCreatureAttacksUnblocked(), Zone.BATTLEFIELD),
-    /** "Whenever a creature you control attacks and isn't blocked". */
-    ON_ALLY_CREATURE_ATTACKS_UNBLOCKED(Triggers.creatureYouControlAttacksUnblocked(), Zone.BATTLEFIELD),
-    /** "Whenever a creature you control attacks and isn't blocked", from exile. */
-    EXILE_ON_ALLY_CREATURE_ATTACKS_UNBLOCKED(Triggers.creatureYouControlAttacksUnblocked(), Zone.EXILE),
-    /** "Whenever one or more creatures an opponent controls attack you and aren't blocked". */
-    ON_OPPONENT_CREATURES_ATTACK_YOU_UNBLOCKED(Triggers.creaturesAttackYouUnblocked(), Zone.BATTLEFIELD),
-    /** "Whenever this creature blocks". */
-    ON_BLOCK(Triggers.blocks(), Zone.BATTLEFIELD),
-    /** "Whenever this creature blocks two or more creatures". */
-    ON_BLOCKS_MULTIPLE_CREATURES(Triggers.blocksTwoOrMore(), Zone.BATTLEFIELD),
-    /** "Whenever a creature blocks". */
-    ON_ANY_CREATURE_BLOCKS(Triggers.creatureBlocks(), Zone.BATTLEFIELD),
-    /** "Whenever one or more creatures block". */
-    ON_ANY_CREATURES_BLOCK(Triggers.creaturesBlock(), Zone.BATTLEFIELD),
-    /** "Whenever this creature becomes blocked". */
-    ON_BECOMES_BLOCKED(Triggers.becomesBlocked(), Zone.BATTLEFIELD),
-    /** "Whenever a creature you control becomes blocked", this one included. */
-    ON_ALLY_CREATURE_BECOMES_BLOCKED(Triggers.creatureYouControlBecomesBlocked(), Zone.BATTLEFIELD),
-    /** "Whenever one or more creatures you control become blocked". */
-    ON_ALLY_CREATURES_BECOME_BLOCKED(Triggers.creaturesYouControlBecomeBlocked(), Zone.BATTLEFIELD),
-    /** "Whenever a creature becomes blocked". */
-    ON_ANY_CREATURE_BECOMES_BLOCKED(Triggers.creatureBecomesBlocked(), Zone.BATTLEFIELD),
     /** "Whenever this creature deals combat damage to a player". */
     ON_COMBAT_DAMAGE_TO_PLAYER(Triggers.dealsCombatDamageToPlayer(), Zone.BATTLEFIELD),
     /** "Whenever equipped creature deals combat damage to a player", once each combat damage step. */

@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectSlot;
+import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -12,11 +14,23 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.rules.AttackEvent;
+import com.github.laxika.magicalvibes.model.rules.BlockEvent;
 import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEventBatch;
 import com.github.laxika.magicalvibes.model.rules.RulesObserver;
+import com.github.laxika.magicalvibes.model.rules.StepEvent;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
+import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.ConditionContext;
+import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.StepMatch.StepGroup;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -32,6 +46,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -79,16 +94,241 @@ public class RulesEventPipeline {
     private final PredicateEvaluationService predicateEvaluationService;
     private final PermanentRemovalService permanentRemovalService;
     private final TriggerCollectionService triggerCollectionService;
+    private final GameQueryService gameQueryService;
+    private final ConditionEvaluationService conditionEvaluationService;
+    private final GameLogService gameLogService;
+    private final AttackTriggers attackTriggers;
+    private final BlockTriggers blockTriggers;
 
     public RulesEventPipeline(TriggerIndex triggerIndex, TriggeredAbilityStackService stackService,
                               @Lazy PredicateEvaluationService predicateEvaluationService,
                               @Lazy PermanentRemovalService permanentRemovalService,
-                              @Lazy TriggerCollectionService triggerCollectionService) {
+                              @Lazy TriggerCollectionService triggerCollectionService,
+                              @Lazy GameQueryService gameQueryService,
+                              @Lazy ConditionEvaluationService conditionEvaluationService,
+                              @Lazy GameLogService gameLogService,
+                              @Lazy AttackTriggers attackTriggers,
+                              @Lazy BlockTriggers blockTriggers) {
         this.triggerIndex = triggerIndex;
         this.stackService = stackService;
         this.predicateEvaluationService = predicateEvaluationService;
         this.permanentRemovalService = permanentRemovalService;
         this.triggerCollectionService = triggerCollectionService;
+        this.gameQueryService = gameQueryService;
+        this.conditionEvaluationService = conditionEvaluationService;
+        this.gameLogService = gameLogService;
+        this.attackTriggers = attackTriggers;
+        this.blockTriggers = blockTriggers;
+    }
+
+    /**
+     * The order a step's abilities go on the stack in, by how their sources relate to the step; the groups a step
+     * doesn't name follow, in {@link StepGroup} order. Within a group the abilities keep {@link TriggerIndex}'s order
+     * (APNAP, then each player's objects). The stack door puts each where it is, so a later one resolves first.
+     */
+    private static final Map<StepTrigger.Moment, List<List<StepGroup>>> STEP_ORDER = Map.of(
+            StepTrigger.Moment.DRAW_STEP, List.of(List.of(StepGroup.EMBLEM), List.of(StepGroup.PLANE),
+                    List.of(StepGroup.YOU_BATTLEFIELD), List.of(StepGroup.ENCHANTED_CONTROLLER),
+                    List.of(StepGroup.ENCHANTED_PLAYER),
+                    List.of(StepGroup.EACH_BATTLEFIELD, StepGroup.OPPONENT_BATTLEFIELD)),
+            StepTrigger.Moment.POSTCOMBAT_MAIN_PHASE, List.of(List.of(StepGroup.YOU_BATTLEFIELD),
+                    List.of(StepGroup.PLANE)),
+            StepTrigger.Moment.END_OF_COMBAT, List.of(List.of(StepGroup.EMBLEM), List.of(StepGroup.PLANE)),
+            StepTrigger.Moment.END_STEP, List.of(List.of(StepGroup.PLANE), List.of(StepGroup.EMBLEM),
+                    List.of(StepGroup.YOU_COMMAND), List.of(StepGroup.EACH_BATTLEFIELD),
+                    List.of(StepGroup.EACH_COMMAND), List.of(StepGroup.EACH_GRAVEYARD, StepGroup.YOU_GRAVEYARD),
+                    List.of(StepGroup.YOU_BATTLEFIELD), List.of(StepGroup.OPPONENT_BATTLEFIELD),
+                    List.of(StepGroup.ENCHANTED_CONTROLLER), List.of(StepGroup.ENCHANTED_PLAYER)));
+
+    /**
+     * The abilities a step or phase beginning triggers (CR 603.2b), each handed whole to the stack door with the
+     * step's record, in the step's order ({@link #STEP_ORDER}). An ability's event condition (CR 603.2) is judged in
+     * the context of its source and, for an ability that names "that player", that player; the door judges the rest
+     * (CR 603.4, 603.2h). A step begins once, so a step ability triggers once (CR 603.2c) and is never written with a
+     * "one or more" multiplicity or a limit but "only once"; this throws on one.
+     */
+    private void triggerStep(GameData gameData, StepEvent event) {
+        List<StepMatch> matches = new ArrayList<>();
+        for (StepCandidate candidate : triggerIndex.stepCandidates(gameData, event)) {
+            StepMatch match = TriggerMatcher.matchedStep(gameData, gameQueryService, candidate, event);
+            if (match != null) {
+                matches.add(match);
+            }
+        }
+        List<List<StepGroup>> order = STEP_ORDER.getOrDefault(event.moment(), List.of());
+        matches.sort(Comparator.comparingInt(match -> stepRank(order, match.group())));
+        if (event.moment() == StepTrigger.Moment.PRECOMBAT_MAIN_PHASE) {
+            reverseEachSourcesOwnAbilities(matches);
+        }
+        for (StepMatch match : matches) {
+            putStepAbility(gameData, event, match);
+        }
+    }
+
+    private static int stepRank(List<List<StepGroup>> order, StepGroup group) {
+        for (int rank = 0; rank < order.size(); rank++) {
+            if (order.get(rank).contains(group)) {
+                return rank;
+            }
+        }
+        return order.size() + group.ordinal();
+    }
+
+    /**
+     * "At the beginning of your precombat main phase": a permanent's abilities are put on the stack with its first one
+     * on top, its controller's order (CR 603.3b).
+     */
+    private static void reverseEachSourcesOwnAbilities(List<StepMatch> matches) {
+        int start = 0;
+        while (start < matches.size()) {
+            StepMatch first = matches.get(start);
+            int end = start + 1;
+            if (first.group() == StepGroup.YOU_BATTLEFIELD) {
+                while (end < matches.size() && matches.get(end).group() == StepGroup.YOU_BATTLEFIELD
+                        && matches.get(end).candidate().candidate().sourcePermanent()
+                        == first.candidate().candidate().sourcePermanent()) {
+                    end++;
+                }
+                Collections.reverse(matches.subList(start, end));
+            }
+            start = end;
+        }
+    }
+
+    private void putStepAbility(GameData gameData, StepEvent event, StepMatch match) {
+        TriggerCandidate candidate = match.candidate().candidate();
+        TriggerOptions options = candidate.ability().options();
+        if (options.multiplicity() != TriggerMultiplicity.EACH) {
+            throw new IllegalStateException("A step or phase begins once; no step ability triggers "
+                    + options.multiplicity() + ": " + candidate.ability());
+        }
+        if (options.limit() != TriggerLimit.NONE && options.limit() != TriggerLimit.ONCE) {
+            throw new IllegalStateException("No step ability is written with the limit " + options.limit() + ": "
+                    + candidate.ability());
+        }
+        Card card = candidate.sourceCard();
+        Permanent source = candidate.sourcePermanent();
+        // A face-up scheme isn't on the battlefield: its conditions are judged on its card.
+        boolean permanentSource = source != null && gameData.findFaceUpSchemeBySourceId(source.getId()) == null;
+        ConditionContext context = permanentSource ? ConditionContext.forPermanent(source, candidate.controllerId())
+                : ConditionContext.forCard(card, candidate.controllerId());
+        if (namesThatPlayer(match.group(), event)) {
+            context = context.withTargetId(match.thatPlayerId());
+        }
+        if (!conditionEvaluationService.eventConditionMet(gameData, options, context)) {
+            return;
+        }
+        StepCandidate.ExileCounterAbility counterAbility = match.candidate().counterAbility();
+        String kind = counterAbility != null ? counterAbility.kind() : stepAbilityKind(event.moment(), match.group());
+        TriggerRecord record = counterAbility != null ? TriggerRecord.NONE : stepRecord(gameData, event, match);
+        TriggeredAbilityRequest request = new TriggeredAbilityRequest(candidate.ability(), card, source,
+                candidate.controllerId(), card.getName() + "'s " + kind, context, record);
+        if (stackService.put(gameData, request) && match.group() != StepGroup.PLANE) {
+            gameLogService.append(gameData, match.group() == StepGroup.EMBLEM
+                    ? GameLog.text(card.getName() + "'s emblem triggers.")
+                    : GameLog.cardThen(card, counterAbility != null ? counterAbility.logText()
+                    : "'s " + kind + " triggers."));
+        }
+    }
+
+    /**
+     * Whether an ability of {@code group} names "that player", the player its record and event condition read: the
+     * player whose step it is for "each" (but "at end of combat", which names none) and "each opponent's" steps, the
+     * enchanted player for a Curse's.
+     */
+    private static boolean namesThatPlayer(StepGroup group, StepEvent event) {
+        return switch (group) {
+            case EACH_BATTLEFIELD -> event.moment() != StepTrigger.Moment.END_OF_COMBAT;
+            case OPPONENT_BATTLEFIELD, ENCHANTED_PLAYER, EACH_EXILE, EMBLEM -> true;
+            default -> false;
+        };
+    }
+
+    /** What a step ability is called on the stack and in the log: "Howling Mine's draw step ability". */
+    private static String stepAbilityKind(StepTrigger.Moment moment, StepGroup group) {
+        if (group == StepGroup.PLANE) {
+            return "ability";
+        }
+        if (group == StepGroup.EMBLEM) {
+            return "emblem";
+        }
+        return switch (moment) {
+            case UPKEEP -> switch (group) {
+                case YOU_COMMAND -> "command zone upkeep ability";
+                case YOU_EXILE -> "exile upkeep ability";
+                case EACH_EXILE -> "suspended ability";
+                default -> "upkeep ability";
+            };
+            case DRAW_STEP -> "draw step ability";
+            case PRECOMBAT_MAIN_PHASE -> group == StepGroup.YOU_GRAVEYARD ? "precombat main ability" : "ability";
+            case BEGINNING_OF_COMBAT -> "combat ability";
+            case END_STEP -> "end step ability";
+            default -> "ability";
+        };
+    }
+
+    /**
+     * What a step ability's stack entry records of the step, whatever its effects are: the player whose step it is
+     * as the active player; a permanent source as it was and what it is attached to (read as the ability resolves,
+     * and as last known once it has left, CR 608.2h); a graveyard source's graveyard stay (CR 400.7). An ability that
+     * names "that player" records that player as its triggering player and non-targeting target (CR 115.10a). An
+     * Aura's ability that acts on the enchanted permanent's controller names that permanent and its controller, the
+     * player at the upkeep and draw step and the permanent at the end step ("destroy enchanted creature", "its
+     * controller sacrifices it"); "at end of combat" names no object. A planar object's ability names the planar
+     * object it is (CR 901.6).
+     */
+    private TriggerRecord stepRecord(GameData gameData, StepEvent event, StepMatch match) {
+        TriggerCandidate candidate = match.candidate().candidate();
+        Permanent source = candidate.sourcePermanent();
+        UUID activeId = event.activePlayerId();
+        Card card = candidate.sourceCard();
+        Permanent attached = source != null && source.isAttached()
+                ? gameQueryService.findPermanentById(gameData, source.getAttachedTo()) : null;
+        Permanent enchanted = match.enchantedId() == null ? null
+                : gameQueryService.findPermanentById(gameData, match.enchantedId());
+        int enchantedPower = enchanted == null ? 0 : gameQueryService.getEffectivePower(gameData, enchanted);
+        long graveyardVersion = candidate.zone() == Zone.GRAVEYARD ? gameData.graveyardEntryVersion(card.getId()) : -1;
+        return entry -> {
+            switch (match.group()) {
+                case PLANE -> {
+                    entry.setSourcePlanarObject(match.candidate().plane().copy());
+                    return;
+                }
+                case ENCHANTED_CONTROLLER -> {
+                    // "Destroy enchanted creature" at the end step names the permanent; "that player" at upkeep
+                    // and draw step is its controller as the ability triggered.
+                    boolean endStep = event.moment() == StepTrigger.Moment.END_STEP;
+                    entry.setTargetId(endStep ? match.enchantedId() : match.thatPlayerId());
+                    entry.setNonTargeting(true);
+                    if (endStep) {
+                        entry.setTriggeringPermanentId(match.enchantedId());
+                    }
+                    entry.setTriggeringPermanentControllerId(match.thatPlayerId());
+                    entry.setTriggeringPermanentPowerAtTrigger(enchantedPower);
+                }
+                default -> {
+                    if (namesThatPlayer(match.group(), event)) {
+                        entry.setTriggeringPlayerId(match.thatPlayerId());
+                        entry.setTargetId(match.thatPlayerId());
+                        entry.setNonTargeting(true);
+                    } else if (match.group() == StepGroup.EACH_BATTLEFIELD) {
+                        entry.setNonTargeting(true);
+                    }
+                }
+            }
+            entry.setActivePlayerId(activeId);
+            if (source != null && match.group() != StepGroup.EMBLEM) {
+                entry.setSourcePermanentSnapshot(new Permanent(source));
+            }
+            if (attached != null) {
+                entry.setAttachedPermanentSnapshot(new Permanent(attached));
+            }
+            if (graveyardVersion >= 0) {
+                entry.setSourceGraveyardEntryVersion(graveyardVersion);
+                entry.setTriggeringCardId(card.getId());
+                entry.setTriggeringCardGraveyardEntryVersion(graveyardVersion);
+            }
+        };
     }
 
     /** Matches the events of {@code batch}, one occurrence that just ended, and triggers what they trigger. */
@@ -102,6 +342,12 @@ public class RulesEventPipeline {
                 permanentChanges.add(permanentChange);
             } else if (event instanceof LibraryEvent library) {
                 triggerLibraryEvent(gameData, library);
+            } else if (event instanceof StepEvent step) {
+                triggerStep(gameData, step);
+            } else if (event instanceof AttackEvent attack) {
+                attackTriggers.trigger(gameData, attack);
+            } else if (event instanceof BlockEvent block) {
+                blockTriggers.trigger(gameData, block);
             }
         }
         if (!permanentChanges.isEmpty()) {

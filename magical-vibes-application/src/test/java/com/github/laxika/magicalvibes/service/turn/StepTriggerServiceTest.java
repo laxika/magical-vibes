@@ -135,7 +135,9 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
-import com.github.laxika.magicalvibes.service.effect.GrantedUpkeepEffectSupport;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.RulesEventPipeline;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerIndex;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.epic.EpicService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -224,9 +226,6 @@ class StepTriggerServiceTest {
     private GrantedTriggeredAbilitySupport grantedTriggeredAbilitySupport;
 
     @Mock
-    private GrantedUpkeepEffectSupport grantedUpkeepEffectSupport;
-
-    @Mock
     private ETBTokenTargetService etbTokenTargetService;
 
     @Mock
@@ -256,6 +255,7 @@ class StepTriggerServiceTest {
     }
 
     private StepTriggerService sut;
+    private RulesEventPipeline pipeline;
 
     private GameData gd;
     private UUID player1Id;
@@ -289,19 +289,23 @@ class StepTriggerServiceTest {
                 epicService,
                 validTargetService,
                 creatureControlService,
-                grantedTriggeredAbilitySupport,
-                grantedUpkeepEffectSupport,
                 etbTokenTargetService,
                 amountEvaluationService,
                 sagaChapterService,
                 effectResolutionService);
-        org.springframework.test.util.ReflectionTestUtils.setField(sut, "triggeredAbilityStackService",
-                new com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService(
-                        new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
-                        gameQueryService,
-                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport.class),
-                        gameLogService, triggerCollectionService, amountEvaluationService,
-                        predicateEvaluationService, triggerTargetCollector));
+        TriggeredAbilityStackService stackService = new TriggeredAbilityStackService(
+                new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
+                gameQueryService,
+                org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport.class),
+                gameLogService, triggerCollectionService, amountEvaluationService,
+                predicateEvaluationService, triggerTargetCollector);
+        org.springframework.test.util.ReflectionTestUtils.setField(sut, "triggeredAbilityStackService", stackService);
+        // The step abilities are the trigger pipeline's: a step's beginning is a rules event it matches.
+        pipeline = new RulesEventPipeline(
+                new TriggerIndex(gameQueryService, grantedTriggeredAbilitySupport, predicateEvaluationService),
+                stackService, predicateEvaluationService, permanentRemovalService, triggerCollectionService,
+                gameQueryService, new ConditionEvaluationService(gameQueryService, predicateEvaluationService),
+                gameLogService, null, null);
         org.springframework.test.util.ReflectionTestUtils.setField(sut, "stackedModalTriggerService",
                 org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService.class));
         org.springframework.test.util.ReflectionTestUtils.setField(sut, "stackedDividedDamageTriggerService",
@@ -318,6 +322,7 @@ class StepTriggerServiceTest {
         gd.playerIdToName.put(player1Id, "Player1");
         gd.playerIdToName.put(player2Id, "Player2");
         gd.status = GameStatus.RUNNING;
+        gd.setRulesEventListener(pipeline::process);
         gd.activePlayerId = player1Id;
         gd.playerBattlefields.put(player1Id, new ArrayList<>());
         gd.playerBattlefields.put(player2Id, new ArrayList<>());
@@ -497,7 +502,7 @@ class StepTriggerServiceTest {
             Permanent permanent = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(permanent);
             GainLifeEffect effect = new GainLifeEffect(1);
-            when(grantedUpkeepEffectSupport.grantedUpkeepAbilities(gd, permanent)).thenReturn(List.of(
+            when(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(eq(gd), eq(permanent), any(), any())).thenReturn(List.of(
                     new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                             TriggerOptions.DEFAULT.withInterveningIf(new SourceIsTapped()), effect)));
 
@@ -619,7 +624,7 @@ class StepTriggerServiceTest {
             card.addTrigger(Triggers.upkeep(ActivePlayer.YOU), new GainLifeEffect(1));
             Permanent permanent = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(permanent);
-            when(gameQueryService.hasLostAllAbilities(gd, permanent)).thenReturn(true);
+            when(gameQueryService.hasLostPrintedAbilities(gd, permanent)).thenReturn(true);
 
             sut.handleUpkeepTriggers(gd);
 
@@ -782,7 +787,7 @@ class StepTriggerServiceTest {
             gd.playerBattlefields.get(player1Id).add(creature);
             UUID auraId = UUID.randomUUID();
             SacrificeSelfEffect effect = new SacrificeSelfEffect();
-            when(grantedUpkeepEffectSupport.grantedUpkeepAbilities(gd, creature)).thenReturn(List.of(
+            when(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(eq(gd), eq(creature), any(), any())).thenReturn(List.of(
                     new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), effect).withGrantingPermanentId(auraId)));
 
             sut.handleUpkeepTriggers(gd);
@@ -857,7 +862,7 @@ class StepTriggerServiceTest {
             gd.turnNumber = 2;
             Permanent host = new Permanent(createCardWithName("Host Creature"));
             gd.playerBattlefields.get(player1Id).add(host);
-            when(grantedUpkeepEffectSupport.grantedUpkeepAbilities(gd, host)).thenReturn(List.of(
+            when(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(eq(gd), eq(host), any(), any())).thenReturn(List.of(
                     new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), new ForcedCostOrElseEffect(
                             new SacrificePermanentCost(new PermanentIsLandPredicate(), "Sacrifice a land"),
                             List.of(new TargetPlayerGainsControlOfSourceCreatureEffect()), true))
@@ -1634,7 +1639,7 @@ class StepTriggerServiceTest {
             Permanent permanent = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(permanent);
             TriggeredAbility granted = new TriggeredAbility(Triggers.beginningOfCombat(ActivePlayer.YOU), new GainLifeEffect(1));
-            when(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(eq(gd), eq(permanent), isNull(), any()))
+            when(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(eq(gd), eq(permanent), any(), any()))
                     .thenAnswer(invocation -> invocation.<java.util.function.Predicate<TriggeredAbility>>getArgument(3)
                             .test(granted) ? List.of(granted) : List.of());
 
@@ -1952,7 +1957,7 @@ class StepTriggerServiceTest {
             Permanent permanent = new Permanent(card);
             gd.playerBattlefields.get(player1Id).add(permanent);
             TriggeredAbility granted = new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU), new GainLifeEffect(1));
-            when(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(eq(gd), eq(permanent), isNull(), any()))
+            when(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(eq(gd), eq(permanent), any(), any()))
                     .thenAnswer(invocation -> invocation.<java.util.function.Predicate<TriggeredAbility>>getArgument(3)
                             .test(granted) ? List.of(granted) : List.of());
 

@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
@@ -22,6 +24,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -40,7 +43,8 @@ public class ArahboRoarOfTheWorld extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
                 )),
                 "Target must be another Cat you control"
-        )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
+        )).addTrigger(new TriggerCondition(Triggers.beginningOfCombat(ActivePlayer.YOU),
+                        AbilityZones.of(Zone.BATTLEFIELD, Zone.COMMAND)),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new AnyOf(List.of(new SourceCardInCommandZone(), new SourceCardOnBattlefield()))),
                 new BoostTargetCreatureEffect(3, 3));

@@ -23,8 +23,8 @@ grep its `^#### Run` headings and read that range. The invariants those runs est
 | S6 | Zone changes: enters, dies, leaves, graveyard | done but: C6, C13, C29, C39, C40, C41, C42 |
 | S7 | Abilities a resolution makes: reflexive, delayed, granted, emblems | done but: C16, C43, C44 |
 | S8 | Engine-made abilities; the door is the only route | done |
-| M1 | Rules events: combat, steps and phases | open |
-| M2 | Rules events: spells, targets, damage, counters, life, tap | open |
+| M1 | Rules events: attacks, blocks, steps and phases | done |
+| M2 | Rules events: spells, targets, damage (combat damage too), counters, life, tap | open |
 | M3 | Rules events: library, actions, sagas, the rest | open |
 | F | Delete the legacy types; docs | open |
 
@@ -271,8 +271,8 @@ Depends on S8. For each family in the sweep:
 
 | Sweep | Families |
 |---|---|
-| M1 | combat; steps and phases |
-| M2 | spells and abilities; becomes the target; damage; counters; life; tap |
+| M1 | attacks and blocks; steps and phases |
+| M2 | spells and abilities; becomes the target; damage, combat damage (what is left of `CombatWatch`, decided 2026-11-14: it runs interleaved with the damage family's collectors around state-based actions); counters; life; tap |
 | M3 | library, draw and discard; actions; sagas; the rest; what is left of `ZoneChangeWatch` |
 
 **Done when:** the sweep's watches, readers and collectors are gone and the ledger diff is
@@ -478,6 +478,13 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Prompt shape: an own enters ability's group of several targets or "up to N" is one `MultiPermanentChoice`; a single target is `AttackTriggerTarget`. Regression fixed on the new prompt: Mysterious Stranger's "for each graveyard … target card" must pick in every eligible graveyard (`ONE_PER_CONTROLLER_IF_ABLE` enforced by the group walk); Orzhova and The Moonbase print "up to one" (`AT_MOST_ONE_PER_CONTROLLER`).
 - Regressions fixed: two abilities of a card whose filters differ only by a one-component wrapper shared a "once each turn" key (Oasis of Renewal; `TriggeredAbility.limitKey`); Puca's Mischief's first target again requires a mana-value partner; Stockpiling Celebrant's target is one, not "up to one" (CR 603.3d). Open: other `MayEffect` cards written with a `0, 1` target where Oracle prints one (Deftblade Elite).
 - Kept: exile-return "leaves" abilities and planar / graveyard-card abilities aren't counted by doublers; Ravenous Slime's "when a card is exiled this way" resolves inside the replacement; a state trigger removed for want of a target stays marked (no card has one).
+
+**M1.**
+- Rules events: a step or phase beginning is a `StepEvent`, a declaration of attackers an `AttackEvent`, a block (declared, none possible, made by an effect, entered blocking, blocked without blockers) a `BlockEvent`, each emitted as an occurrence of its own where its collectors ran and matched by `TriggerIndex` (`stepCandidates`, `permanentAbilities`) and `TriggerMatcher` (`matchedStep`, `combatCondition`) in `RulesEventPipeline.triggerStep`, `AttackTriggers` and `BlockTriggers`. Deleted: `StepAbilityReader`, `GrantedUpkeepEffectSupport`, every step, emblem-step and planar-step reader, the attack and block collectors of `CombatAttackService`, `CombatBlockService`, `CombatTriggerService` and `TriggerCollectionService`, the attack and block `CombatWatch` constants, `@CollectsCombatTrigger`.
+- Scope (user, 2026-11-14): the combat-damage watches move to M2; they run interleaved with the damage family around state-based actions.
+- Rules fixes: a face-down or ability-less permanent's card abilities never trigger and its static grants follow layer order (CR 708.2, 613.7; a manifested Ugin's Mastery no longer triggers on the attack, `UginsMasteryTest` fails before; Aura Flux after Humility, Town-Razer Tyrant); "whenever you attack" needs an attacker (CR 508.3d); a step ability triggers once however many of its conditions the step meets (CR 603.2c); a command-zone card's battlefield abilities don't trigger at beginning of combat (CR 113.6), Arahbo declares its eminence's command zone.
+- Moment kept; within it the exile egg, refine and suspend counter abilities are step candidates in their old place, and the delayed and keyword abilities go on the stack just before (end-step boons, the keyword attack abilities) or after (flanking, delayed block abilities) the event's. Hero of Bladehold's default order is now tokens then battle cry (either is legal, its 2011-06-01 ruling).
+- Records gained: the active player on every step ability, "that player" as triggering player on each, each-opponent's, beginning-of-combat and emblem abilities, the attached permanent and source snapshot on step abilities, both graveyard-stay fields on a graveyard step ability; lost: the your-draw-step `targetId` binding (no "that player" is printed). Ledger: every other line is random (modes, dice, coin flips, spellbook cards).
 
 ## Prompt
 

@@ -167,8 +167,10 @@ class WhirlwingStormbroodTest extends BaseCardTest {
         harness.ensurePriority(player1);
 
         harness.castWithAlternateCost(player1, 0, target.getId());
-        harness.passBothPriorities();
+        // Stay in the end step: the next turn's draw could draw the shuffled-in card.
+        harness.withAutoStop(TurnStep.END_STEP, harness::passBothPriorities);
 
+        assertThat(gd.currentStep).isEqualTo(TurnStep.END_STEP);
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
         assertThat(gd.playerDecks.get(player1.getId())).contains(card);
     }

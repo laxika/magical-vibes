@@ -120,6 +120,8 @@ class TriggeredAbilityStackServiceTest {
     private GraveyardTargetingSupport graveyardTargetingSupport;
     @Mock
     private TriggerCollectionService triggerCollectionService;
+    @Mock
+    private AttackTriggers attackTriggers;
 
     private TriggeredAbilityStackService stackService;
 
@@ -138,6 +140,7 @@ class TriggeredAbilityStackServiceTest {
         stackService = new TriggeredAbilityStackService(conditionEvaluationService, gameQueryService,
                 graveyardTargetingSupport, gameLogService, triggerCollectionService, amountEvaluationService,
                 predicateEvaluationService, triggerTargetCollector);
+        org.springframework.test.util.ReflectionTestUtils.setField(stackService, "attackTriggers", attackTriggers);
         gd = new GameData(UUID.randomUUID(), "test-game", PLAYER1_ID, "Player1");
         gd.orderedPlayerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
         gd.playerIds.addAll(List.of(PLAYER1_ID, PLAYER2_ID));
@@ -1068,8 +1071,7 @@ class TriggeredAbilityStackServiceTest {
                 .causedBySourceAttacking());
 
         assertThat(gd.stack.getFirst().isTriggeredBySourceAttacking()).isTrue();
-        verify(triggerCollectionService).checkAttackingCreatureTriggeredAbilityTriggers(gd, attacker,
-                gd.stack.getFirst());
+        verify(attackTriggers).triggerAttackingSourceAbility(gd, attacker, gd.stack.getFirst());
     }
 
     @Test

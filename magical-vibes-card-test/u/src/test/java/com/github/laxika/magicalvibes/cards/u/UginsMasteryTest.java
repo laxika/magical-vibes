@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -178,6 +179,28 @@ class UginsMasteryTest extends BaseCardTest {
 
         assertThat(faceDown.isFaceDown()).isFalse();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(faceDown);
+    }
+
+    @Test
+    @DisplayName("A manifested Ugin's Mastery is face down, so it has no ability that triggers on the attack")
+    void faceDownManifestedCopyDoesNotTrigger() {
+        harness.addToBattlefield(player1, new UginsMastery());
+        harness.setHand(player1, List.of(new Ornithopter()));
+        harness.setLibrary(player1, List.of(new UginsMastery()));
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        if (!gd.stack.isEmpty()) {
+            harness.passBothPriorities();
+        }
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+
+        List<Permanent> battlefield = gd.playerBattlefields.get(player1.getId());
+        declareAttackers(List.of(battlefield.size() - 3, battlefield.size() - 2, battlefield.size() - 1));
+
+        // Only the face-up Ugin's Mastery has "whenever you attack" (CR 708.2).
+        assertThat(gd.stack).hasSize(1);
     }
 
     @Test

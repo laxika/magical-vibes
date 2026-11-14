@@ -17,8 +17,6 @@ import com.github.laxika.magicalvibes.service.trigger.CollectsTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsWatchTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsWatchTriggers;
-import com.github.laxika.magicalvibes.service.trigger.CollectsCombatTrigger;
-import com.github.laxika.magicalvibes.service.trigger.CollectsCombatTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsCounterTrigger;
 import com.github.laxika.magicalvibes.service.trigger.CollectsCounterTriggers;
 import com.github.laxika.magicalvibes.service.trigger.CollectsDamageTrigger;
@@ -195,20 +193,6 @@ public class GameEngineConfig implements SmartInitializingSingleton {
                 if (watchContainer != null) {
                     for (CollectsWatchTrigger cwt : watchContainer.value()) {
                         registerTriggerHandler(bean, method, cwt.watch(), cwt.value());
-                        count++;
-                    }
-                }
-
-                CollectsCombatTrigger combatSingle = method.getAnnotation(CollectsCombatTrigger.class);
-                if (combatSingle != null) {
-                    registerTriggerHandler(bean, method, combatSingle.watch(), combatSingle.value());
-                    count++;
-                }
-
-                CollectsCombatTriggers combatContainer = method.getAnnotation(CollectsCombatTriggers.class);
-                if (combatContainer != null) {
-                    for (CollectsCombatTrigger cct : combatContainer.value()) {
-                        registerTriggerHandler(bean, method, cct.watch(), cct.value());
                         count++;
                     }
                 }

@@ -1,7 +1,14 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
 import com.github.laxika.magicalvibes.model.Ability;
+import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.RemoveTimeCounterFromExiledCardEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveRefineCounterFromExiledCardEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveEggCounterFromExileAndReturnEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
+import com.github.laxika.magicalvibes.model.AbilityZones;
+import com.github.laxika.magicalvibes.model.Emblem;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -11,16 +18,21 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.rules.PermanentChange;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
+import com.github.laxika.magicalvibes.model.rules.StepEvent;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
@@ -61,6 +73,10 @@ import java.util.UUID;
  * that entered is listed for its enters abilities (CR 603.6a); cards in command zones are listed too. Abilities their
  * owner perpetually lost are left out everywhere. {@link #permanentChangeCandidates} lists the abilities that see a
  * permanent phase, transform or be turned face up.
+ *
+ * <p>{@link #stepCandidates} lists the abilities a step or phase beginning may trigger (CR 603.2b), as they are as it
+ * begins: the face-up planar objects', the emblems', and, for each player in APNAP order, their permanents' and
+ * face-up schemes', then the cards' in their command zone, graveyard and exile.
  */
 @Service
 public class TriggerIndex {
@@ -456,6 +472,207 @@ public class TriggerIndex {
         for (TriggeredAbility ability : gained) {
             into.add(new TriggerCandidate(event.card(), lastKnown, event.controllerId(), Zone.BATTLEFIELD, ability));
         }
+    }
+
+    /**
+     * The abilities with a step trigger condition that {@code event}, a step or phase beginning, may trigger, in this
+     * order: the face-up planar objects' (controlled by the active player, CR 901.6), the emblems' (CR 114.4), and for
+     * each player in APNAP order, beginning with the active player, those of their permanents and face-up schemes
+     * (CR 314.4), then of the cards face up in their command zone, in their graveyard and in exile that
+     * function there (CR 113.6). A permanent has the abilities the layers leave it: its card's, unless it is face down
+     * (CR 708.2) or lost them; those granted it until it leaves, and the ones other permanents' static abilities and
+     * cumulative-upkeep grants give it, unless it lost all its abilities; and those granted until end of turn either
+     * way, as {@link #observerCandidates} reads them. A card in exile with "at the beginning of each upkeep" is listed
+     * for that ability only while it is suspended.
+     */
+    public List<StepCandidate> stepCandidates(GameData gameData, StepEvent event) {
+        List<StepCandidate> candidates = new ArrayList<>();
+        if (gameData.planechase != null) {
+            for (PlanarObject plane : List.copyOf(gameData.planechase.faceUp)) {
+                Card card = plane.getCard();
+                for (TriggeredAbility ability : card.getTriggeredAbilities()) {
+                    if (hasStepTrigger(ability, event, null)) {
+                        candidates.add(new StepCandidate(new TriggerCandidate(card, null, event.activePlayerId(),
+                                Zone.COMMAND, ability), plane, null));
+                    }
+                }
+            }
+        }
+        for (Emblem emblem : List.copyOf(gameData.emblems)) {
+            for (TriggeredAbility ability : emblem.triggeredAbilities()) {
+                if (hasStepTrigger(ability, event, null)) {
+                    candidates.add(new StepCandidate(new TriggerCandidate(emblem.sourceCard(), null,
+                            emblem.controllerId(), Zone.COMMAND, ability), null, emblem));
+                }
+            }
+        }
+        if (event.moment() == StepTrigger.Moment.UPKEEP) {
+            exileCounterCandidates(gameData, event.activePlayerId(), candidates);
+        }
+        for (UUID playerId : apnapOrder(gameData, event.activePlayerId())) {
+            for (Permanent permanent : List.copyOf(gameData.permanentsAndFaceUpSchemes(playerId))) {
+                addStepCandidates(event, permanent.getCard(), permanent, playerId, Zone.BATTLEFIELD,
+                        permanentAbilities(gameData, permanent), candidates);
+            }
+            for (Card card : List.copyOf(gameData.playerCommandZones.getOrDefault(playerId, List.of()))) {
+                if (!gameData.faceDownCommandZoneCards.contains(card.getId())) {
+                    addStepCandidates(event, card, null, playerId, Zone.COMMAND,
+                            withoutLost(gameData, card.getId(), card.getTriggeredAbilities()), candidates);
+                }
+            }
+            for (Card card : List.copyOf(gameData.playerGraveyards.getOrDefault(playerId, List.of()))) {
+                addStepCandidates(event, card, null, playerId, Zone.GRAVEYARD, graveyardAbilities(gameData, card),
+                        candidates);
+            }
+            for (ExiledCardEntry exiled : List.copyOf(gameData.exiledCards)) {
+                Card card = exiled.card();
+                // A card exiled face down keeps the abilities an effect gave it there (Darigaaz, Shivan Champion's
+                // conjured card).
+                if (!playerId.equals(exiled.ownerId())) {
+                    continue;
+                }
+                List<TriggeredAbility> abilities = cardAbilities(gameData, card);
+                boolean suspended = suspended(gameData, card);
+                abilities.removeIf(ability -> !suspended && ability.conditions().stream().noneMatch(condition ->
+                        condition.trigger() instanceof StepTrigger step && step.moment() == event.moment()
+                                && step.player() != ActivePlayer.ANY && condition.zones().functionsIn(Zone.EXILE)));
+                addStepCandidates(event, card, null, playerId, Zone.EXILE, abilities, candidates);
+            }
+        }
+        return candidates;
+    }
+
+    /**
+     * The upkeep abilities the cards in {@code activePlayerId}'s exile have for the counters on them, egg counters'
+     * first, then refine counters', then suspend's time counters' (CR 702.62a): "at the beginning of your upkeep, if
+     * this card is exiled with an egg counter on it" (Darigaaz Reincarnated; a card that prints it has it already), the
+     * refine counter ability a card gained as it was exiled (Uvilda, Dean of Perfection), and suspend's "remove a time
+     * counter" of a suspended card.
+     */
+    private static void exileCounterCandidates(GameData gameData, UUID activePlayerId, List<StepCandidate> into) {
+        List<Card> exiled = List.copyOf(gameData.getPlayerExiledCards(activePlayerId));
+        StepTrigger yourUpkeep = Triggers.upkeep(ActivePlayer.YOU);
+        for (Card card : exiled) {
+            Integer eggs = gameData.exiledCardEggCounters.get(card.getId());
+            if (eggs != null && eggs > 0 && card.getTriggerEffects(yourUpkeep, Zone.EXILE).stream()
+                    .noneMatch(RemoveEggCounterFromExileAndReturnEffect.class::isInstance)) {
+                into.add(exileCounterCandidate(card, activePlayerId, StepCandidate.ExileCounterAbility.EGG,
+                        new RemoveEggCounterFromExileAndReturnEffect(card.getId())));
+            }
+        }
+        for (Card card : exiled) {
+            Integer refines = gameData.exiledCardRefineCounters.get(card.getId());
+            if (refines != null && refines > 0) {
+                into.add(exileCounterCandidate(card, activePlayerId, StepCandidate.ExileCounterAbility.REFINE,
+                        new RemoveRefineCounterFromExiledCardEffect(card.getId())));
+            }
+        }
+        for (Card card : exiled) {
+            if (suspended(gameData, card)) {
+                into.add(exileCounterCandidate(card, activePlayerId, StepCandidate.ExileCounterAbility.SUSPEND,
+                        new RemoveTimeCounterFromExiledCardEffect(card.getId())));
+            }
+        }
+    }
+
+    private static StepCandidate exileCounterCandidate(Card card, UUID ownerId,
+                                                       StepCandidate.ExileCounterAbility kind, CardEffect effect) {
+        TriggeredAbility ability = new TriggeredAbility(new TriggerCondition(Triggers.upkeep(ActivePlayer.YOU),
+                AbilityZones.EXILE), effect);
+        return new StepCandidate(new TriggerCandidate(card, null, ownerId, Zone.EXILE, ability), null, null, kind);
+    }
+
+    /**
+     * Whether {@code card}, a card in exile, is suspended as the "each upkeep" readers count it: it has a time counter
+     * and isn't a card exiled with time counters by another effect that has no suspend of its own (CR 702.62b).
+     */
+    private static boolean suspended(GameData gameData, Card card) {
+        if (gameData.exiledCardsWithNonSuspendTimeCounters.contains(card.getId())
+                && card.getActivatedAbilities(Zone.HAND).stream()
+                .noneMatch(ActivatedAbility::isSuspendsSourceFromHand)) {
+            return false;
+        }
+        Integer timeCounters = gameData.exiledCardTimeCounters.get(card.getId());
+        return timeCounters != null && timeCounters > 0;
+    }
+
+    /**
+     * The triggered abilities {@code permanent}, a permanent or a face-up scheme's view, has as the layers leave it, in
+     * this order: its card's, unless it is face down (CR 708.2) or lost them; those granted it until end of turn,
+     * end of combat or its controller's next upkeep and until it leaves, unless it lost all its abilities; and those
+     * other permanents' static abilities give it, a granted cumulative upkeep among them (CR 702.24a), as the layers
+     * order them against a "loses all abilities" effect (CR 613.1f, 613.7: Aura Flux after Humility still grants).
+     */
+    public List<TriggeredAbility> permanentAbilities(GameData gameData, Permanent permanent) {
+        GameQueryService.StaticBonus staticBonus = gameQueryService.computeStaticBonus(gameData, permanent);
+        boolean lostAll = permanent.isLosesAllAbilitiesUntilEndOfTurn() || staticBonus.losesAllAbilities()
+                || staticBonus.losesAllNonManaAbilities();
+        List<TriggeredAbility> abilities = new ArrayList<>();
+        if (!lostAll && !permanent.isFaceDown() && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
+            abilities.addAll(withoutLost(gameData, permanent.getCard().getId(),
+                    permanent.getCard().getTriggeredAbilities()));
+        }
+        if (!lostAll && !gameQueryService.hasLostAllAbilities(gameData, permanent)) {
+            abilities.addAll(permanent.getTemporaryTriggeredAbilities());
+            abilities.addAll(permanent.getPersistentTriggeredAbilities());
+        }
+        for (CardEffect granted : staticBonus.grantedEffects()) {
+            if (granted instanceof CumulativeUpkeepEffect) {
+                abilities.add(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU), granted));
+            }
+        }
+        abilities.addAll(grantedTriggeredAbilitySupport.grantedTriggeredAbilities(gameData, permanent,
+                staticBonus, ability -> true));
+        return abilities;
+    }
+
+    /**
+     * The triggered abilities of {@code card} in a graveyard (CR 113.6): its own and those it perpetually gained, but
+     * the ones it perpetually lost, or none while an effect says cards in graveyards have no abilities.
+     */
+    public List<TriggeredAbility> graveyardAbilities(GameData gameData, Card card) {
+        return withoutLost(gameData, card.getId(), gameQueryService.getEffectiveGraveyardTriggeredAbilities(gameData,
+                card));
+    }
+
+    /** The triggered abilities of {@code card} in exile or a command zone: its own and its perpetual grants. */
+    public List<TriggeredAbility> cardAbilities(GameData gameData, Card card) {
+        List<TriggeredAbility> abilities = new ArrayList<>(withoutLost(gameData, card.getId(),
+                card.getTriggeredAbilities()));
+        triggered(gameData.perpetualAbilities(card.getId()), abilities);
+        return abilities;
+    }
+
+    private static void addStepCandidates(StepEvent event, Card sourceCard, Permanent sourcePermanent,
+                                          UUID controllerId, Zone zone, List<TriggeredAbility> abilities,
+                                          List<StepCandidate> into) {
+        for (TriggeredAbility ability : abilities) {
+            if (hasStepTrigger(ability, event, zone)) {
+                into.add(new StepCandidate(new TriggerCandidate(sourceCard, sourcePermanent, controllerId, zone,
+                        ability), null, null));
+            }
+        }
+    }
+
+    /**
+     * Whether {@code ability} has a trigger condition on {@code event}'s step or phase that functions in {@code zone};
+     * a planar object's or emblem's ({@code zone} {@code null}) functions where its object is.
+     */
+    private static boolean hasStepTrigger(TriggeredAbility ability, StepEvent event, Zone zone) {
+        return ability.conditions().stream().anyMatch(condition -> condition.trigger() instanceof StepTrigger step
+                && step.moment() == event.moment() && (zone == null || condition.zones().functionsIn(zone)));
+    }
+
+    /** The players in APNAP order (CR 101.4): {@code activePlayerId}, then the others in turn order. */
+    static List<UUID> apnapOrder(GameData gameData, UUID activePlayerId) {
+        List<UUID> order = new ArrayList<>();
+        order.add(activePlayerId);
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            if (!playerId.equals(activePlayerId)) {
+                order.add(playerId);
+            }
+        }
+        return order;
     }
 
     private static void triggered(List<? extends Ability> abilities, List<TriggeredAbility> into) {

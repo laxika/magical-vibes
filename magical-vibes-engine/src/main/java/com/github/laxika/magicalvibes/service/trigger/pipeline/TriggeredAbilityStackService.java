@@ -39,7 +39,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EntryFacts;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.AttackCounterMoveEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -114,6 +113,10 @@ public class TriggeredAbilityStackService extends StackDoor {
     @org.springframework.beans.factory.annotation.Autowired
     @Lazy
     private com.github.laxika.magicalvibes.service.battlefield.GraveyardTargetingService graveyardTargetingService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private AttackTriggers attackTriggers;
 
     public TriggeredAbilityStackService(@Lazy ConditionEvaluationService conditionEvaluationService,
                                         @Lazy GameQueryService gameQueryService,
@@ -1097,7 +1100,7 @@ public class TriggeredAbilityStackService extends StackDoor {
         }
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source != null && source.isAttacking()) {
-            triggerCollectionService.checkAttackingCreatureTriggeredAbilityTriggers(gameData, source, entry);
+            attackTriggers.triggerAttackingSourceAbility(gameData, source, entry);
         }
     }
 

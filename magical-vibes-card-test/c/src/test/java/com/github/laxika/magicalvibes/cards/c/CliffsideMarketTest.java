@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -8,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
-import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
@@ -50,7 +50,9 @@ class CliffsideMarketTest extends BaseCardTest {
 
         harness.setLife(player1, 7);
         harness.setLife(player2, 19);
-        resolveLifeExchange(Triggers.upkeep(ActivePlayer.YOU));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleUpkeepTriggers(gd));
+        resolveTriggeredLifeExchange();
         harness.assertLife(player1, 19);
         harness.assertLife(player2, 7);
     }
@@ -105,7 +107,7 @@ class CliffsideMarketTest extends BaseCardTest {
         harness.setLife(player1, 11);
         harness.setLife(player2, 23);
         PlanarObject plane = gd.planechase.faceUp.getFirst();
-        harness.inMutationScope(() -> planar.trigger(gd, plane, Triggers.upkeep(ActivePlayer.YOU), player1.getId()));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class).handleUpkeepTriggers(gd));
         harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
@@ -121,7 +123,7 @@ class CliffsideMarketTest extends BaseCardTest {
         harness.setLife(player1, 11);
         harness.setLife(player2, 23);
         PlanarObject plane = gd.planechase.faceUp.getFirst();
-        harness.inMutationScope(() -> planar.trigger(gd, plane, Triggers.upkeep(ActivePlayer.YOU), player1.getId()));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class).handleUpkeepTriggers(gd));
         harness.beginTriggerChoices();
         harness.handlePermanentChosen(player1, player1.getId());
         harness.passBothPriorities();

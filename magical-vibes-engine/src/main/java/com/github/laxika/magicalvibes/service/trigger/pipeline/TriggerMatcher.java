@@ -36,12 +36,20 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 import com.github.laxika.magicalvibes.model.rules.PermanentChange;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
+import com.github.laxika.magicalvibes.model.rules.StepEvent;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeEvent;
 import com.github.laxika.magicalvibes.model.trigger.LegacySlotTrigger;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PermanentChangeTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.CombatTrigger;
+import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
+import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.StepMatch.StepGroup;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -488,5 +496,149 @@ final class TriggerMatcher {
     private static boolean matches(ZoneChangeTrigger trigger, boolean functions, ZoneChangeEvent event) {
         return functions && trigger.relation() == ObjectRelation.THIS
                 && trigger.matchesMove(event.from(), event.to(), event.cause());
+    }
+    /**
+     * How {@code event}, a step or phase beginning, meets one of the candidate's step trigger conditions, or
+     * {@code null} when it meets none: the player whose step it is relates to the ability's controller (or to what
+     * the source enchants) as the condition says, and the source is where the condition functions (CR 113.6). An
+     * ability triggers once for the step however many of its conditions it meets (CR 603.2c).
+     *
+     * <p>A Curse's "each" step ability acts on the enchanted player, and an Aura's "your upkeep" ability whose effect
+     * names a player for the permanent it enchants ("enchanted permanent's controller sacrifices …", Strangling
+     * Grasp) acts on that permanent's controller. An emblem's step ability names "your", "each opponent's" or "each"
+     * step; another relation fails loudly.
+     */
+    static StepMatch matchedStep(GameData gameData, GameQueryService query, StepCandidate step, StepEvent event) {
+        TriggerCandidate candidate = step.candidate();
+        UUID activeId = event.activePlayerId();
+        UUID controllerId = candidate.controllerId();
+        for (TriggerCondition condition : candidate.ability().conditions()) {
+            if (!(condition.trigger() instanceof StepTrigger trigger) || trigger.moment() != event.moment()) {
+                continue;
+            }
+            StepMatch match;
+            if (step.counterAbility() != null) {
+                match = new StepMatch(step, StepGroup.EXILE_COUNTER, activeId, null);
+            } else if (step.plane() != null) {
+                match = trigger.player() == ActivePlayer.YOU
+                        || trigger.player() == ActivePlayer.ANY
+                        ? new StepMatch(step, StepGroup.PLANE, activeId, null) : null;
+            } else if (step.emblem() != null) {
+                match = switch (trigger.player()) {
+                    case YOU -> controllerId.equals(activeId) ? new StepMatch(step, StepGroup.EMBLEM, activeId, null)
+                            : null;
+                    case OPPONENT -> !controllerId.equals(activeId)
+                            ? new StepMatch(step, StepGroup.EMBLEM, activeId, null) : null;
+                    case ANY -> new StepMatch(step, StepGroup.EMBLEM, activeId, null);
+                    default -> throw new IllegalStateException(candidate.sourceCard().getName()
+                            + "'s emblem has a step ability no step reads: " + candidate.ability());
+                };
+            } else if (!condition.zones().functionsIn(candidate.zone())) {
+                match = null;
+            } else if (candidate.zone() == Zone.BATTLEFIELD) {
+                match = battlefieldStepMatch(gameData, query, step, trigger, activeId);
+            } else {
+                match = cardStepMatch(gameData, step, trigger, activeId);
+            }
+            if (match != null) {
+                return match;
+            }
+        }
+        return null;
+    }
+
+    private static StepMatch battlefieldStepMatch(GameData gameData, GameQueryService query, StepCandidate step,
+                                                  StepTrigger trigger, UUID activeId) {
+        TriggerCandidate candidate = step.candidate();
+        UUID controllerId = candidate.controllerId();
+        Permanent source = candidate.sourcePermanent();
+        UUID attachedTo = source.isAttached() ? source.getAttachedTo() : null;
+        boolean enchantsPlayer = attachedTo != null && gameData.playerIds.contains(attachedTo);
+        UUID enchantedControllerId = attachedTo != null && !enchantsPlayer
+                ? query.findPermanentController(gameData, attachedTo) : null;
+        return switch (trigger.player()) {
+            case YOU -> {
+                if (!controllerId.equals(activeId)) {
+                    yield null;
+                }
+                if (enchantedControllerId != null && actsOnEnchantedPermanentController(candidate)) {
+                    yield new StepMatch(step, StepGroup.ENCHANTED_CONTROLLER, enchantedControllerId, attachedTo);
+                }
+                yield new StepMatch(step, StepGroup.YOU_BATTLEFIELD, activeId, null);
+            }
+            case ANY -> enchantsPlayer ? new StepMatch(step, StepGroup.ENCHANTED_PLAYER, attachedTo, null)
+                    : new StepMatch(step, StepGroup.EACH_BATTLEFIELD, activeId, null);
+            case OPPONENT -> controllerId.equals(activeId) ? null
+                    : new StepMatch(step, StepGroup.OPPONENT_BATTLEFIELD, activeId, null);
+            case CHOSEN_PLAYER -> {
+                UUID chosen = source.getChosenPlayerIds().isEmpty() ? source.getRememberedTargetPlayerId()
+                        : source.getChosenPlayerIds().getFirst();
+                yield activeId.equals(chosen) ? new StepMatch(step, StepGroup.OPPONENT_BATTLEFIELD, activeId, null)
+                        : null;
+            }
+            case ENCHANTED_PLAYER -> enchantsPlayer && attachedTo.equals(activeId)
+                    ? new StepMatch(step, StepGroup.ENCHANTED_PLAYER, activeId, null) : null;
+            case ENCHANTED_PERMANENT_CONTROLLER -> activeId.equals(enchantedControllerId)
+                    ? new StepMatch(step, StepGroup.ENCHANTED_CONTROLLER, activeId, attachedTo) : null;
+        };
+    }
+
+    private static StepMatch cardStepMatch(GameData gameData, StepCandidate step, StepTrigger trigger,
+                                           UUID activeId) {
+        TriggerCandidate candidate = step.candidate();
+        boolean yours = candidate.controllerId().equals(activeId);
+        StepGroup you;
+        StepGroup each;
+        switch (candidate.zone()) {
+            case COMMAND -> {
+                you = StepGroup.YOU_COMMAND;
+                each = StepGroup.EACH_COMMAND;
+            }
+            case GRAVEYARD -> {
+                you = StepGroup.YOU_GRAVEYARD;
+                each = StepGroup.EACH_GRAVEYARD;
+            }
+            case EXILE -> {
+                you = StepGroup.YOU_EXILE;
+                each = StepGroup.EACH_EXILE;
+            }
+            default -> {
+                return null;
+            }
+        }
+        return switch (trigger.player()) {
+            case YOU -> yours ? new StepMatch(step, you, activeId, null) : null;
+            case ANY -> new StepMatch(step, each, activeId, null);
+            case OPPONENT -> yours ? null : new StepMatch(step, each, activeId, null);
+            default -> null;
+        };
+    }
+
+    /**
+     * Whether the candidate, an ability of an Aura enchanting a permanent, acts on the controller of that permanent:
+     * an effect bound to the Aura's enchant target that names a player ("At the beginning of your upkeep, enchanted
+     * permanent's controller sacrifices …", Strangling Grasp). The player it names is that permanent's controller,
+     * not a target.
+     */
+    private static boolean actsOnEnchantedPermanentController(TriggerCandidate candidate) {
+        return candidate.sourceCard().isAura() && candidate.ability().effects().stream()
+                .map(EffectRegistration::effect)
+                .anyMatch(effect -> candidate.sourceCard().isEffectBoundToTargetGroup(effect, 0)
+                        && effect.targetSpec().admits(TargetPredicate.Kind.PLAYER));
+    }
+    /**
+     * The trigger condition of {@code ability} on the combat event {@code watched} names ({@link
+     * CombatTrigger#watchKey()}: the event and how the creature relates to the source, its filter aside) that functions
+     * in {@code zone}, with its filter, or {@code null} when it has none. A {@code null} zone is the zone of an object
+     * whose abilities function wherever it is: a planar object, an emblem, a delayed ability.
+     */
+    static CombatTrigger combatCondition(TriggeredAbility ability, CombatTrigger watched, Zone zone) {
+        for (TriggerCondition condition : ability.conditions()) {
+            if (condition.trigger() instanceof CombatTrigger combat && combat.watchKey().equals(watched)
+                    && (zone == null || condition.zones().functionsIn(zone))) {
+                return combat;
+            }
+        }
+        return null;
     }
 }

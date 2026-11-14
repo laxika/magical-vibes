@@ -5,9 +5,6 @@ import com.github.laxika.magicalvibes.cards.CardSet;
 import com.github.laxika.magicalvibes.model.*;
 import com.github.laxika.magicalvibes.model.effect.*;
 import com.github.laxika.magicalvibes.model.planar.*;
-import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
-import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
-import com.github.laxika.magicalvibes.service.turn.StepAbilityReader;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -20,7 +17,6 @@ import com.github.laxika.magicalvibes.service.trigger.MiscAbilityReader;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
-import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -365,8 +361,8 @@ public class PlanechaseService {
      * Hands the planar object's abilities with {@code trigger} to the stack door under {@code controller}, each one whole,
      * in the order they were written: the door judges its intervening "if" (CR 603.4) and puts it on the stack as one
      * object of its effects (CR 603.3), choosing its targets as it goes there (CR 603.3d), with the planar object it is
-     * of. A step or phase ability's event condition is judged as it triggers ({@link StepAbilityReader}), and so is a
-     * planar ability's ({@link MiscAbilityReader}, CR 603.2).
+     * of. A planar ability's event condition is judged as it triggers ({@link MiscAbilityReader}, CR 603.2); the step
+     * and phase abilities are the trigger pipeline's.
      */
     public void trigger(GameData game, PlanarObject object, Trigger trigger, UUID controller) {
         Card card = object.getCard();
@@ -381,10 +377,6 @@ public class PlanechaseService {
     /** The abilities of {@code card} with {@code trigger} whose trigger event this is, in order. */
     private List<TriggeredAbility> triggeredAbilities(GameData game, Card card, Trigger trigger,
                                                       ConditionContext context) {
-        if (trigger instanceof StepTrigger) {
-            return new StepAbilityReader(conditionEvaluationService)
-                    .triggering(game, card.getTriggeredAbilities(trigger), context);
-        }
         List<TriggeredAbility> abilities = new ArrayList<>();
         for (TriggeredAbility ability : card.getTriggeredAbilities(trigger)) {
             if (!MiscAbilityReader.effects(List.of(ability), trigger).isEmpty()
@@ -393,19 +385,6 @@ public class PlanechaseService {
             }
         }
         return abilities;
-    }
-
-    /** Puts each face-up planar object's abilities with {@code triggers}, in that order, on the stack. */
-    public void step(GameData game, StepTrigger... triggers) {
-        if (game.planechase == null) return;
-        game.planechase.controllerId = game.activePlayerId;
-        for (PlanarObject object : List.copyOf(game.planechase.faceUp)) {
-            for (StepTrigger trigger : triggers) trigger(game, object, trigger, game.activePlayerId);
-        }
-    }
-
-    public void drawStep(GameData game) {
-        step(game, Triggers.drawStep(ActivePlayer.YOU), Triggers.drawStep(ActivePlayer.ANY));
     }
 
     public boolean checkPhenomena(GameData game) {

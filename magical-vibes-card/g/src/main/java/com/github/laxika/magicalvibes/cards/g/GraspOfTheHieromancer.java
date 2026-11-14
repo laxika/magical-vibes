@@ -24,9 +24,9 @@ public class GraspOfTheHieromancer extends Card {
                 // Enchanted creature gets +1/+1
                 .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
                 // ... and has "Whenever this creature attacks, tap target creature defending player
-                // controls." The aura's Triggers.attacks() slot is scanned for the attacking creature by
-                // CombatTriggerService.checkAuraTriggersForCreature; the effect's own target
-                // predicate narrows the choice to the defending player's creatures.
+                // controls." The aura's Triggers.attacks() ability triggers on the enchanted creature's attack
+                // (AttackTriggers); the effect's own target predicate narrows the choice to the defending
+                // player's creatures.
                 .addTrigger(Triggers.attacks(), new TapPermanentsEffect(
                         TapUntapScope.TARGET,
                         new PermanentAllOfPredicate(List.of(

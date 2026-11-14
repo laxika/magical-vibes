@@ -29,14 +29,15 @@ class CombatWatchTest {
         Card card = new Card();
         DrawCardEffect fromBattlefield = new DrawCardEffect(1);
         DrawCardEffect fromGraveyard = new DrawCardEffect(2);
-        card.addTrigger(Triggers.youAttack(), fromBattlefield);
-        card.addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
-                fromGraveyard);
+        card.addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(), fromBattlefield);
+        card.addTrigger(new TriggerCondition(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
+                AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT, fromGraveyard);
 
-        assertThat(effects(card, CombatWatch.ON_ALLY_CREATURES_ATTACK)).containsExactly(fromBattlefield);
-        assertThat(effects(card, CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK)).containsExactly(fromGraveyard);
-        assertThat(effects(card, CombatWatch.EXILE_ON_ALLY_CREATURES_ATTACK)).isEmpty();
-        assertThat(CombatWatch.GRAVEYARD_ON_ALLY_CREATURES_ATTACK.zone()).isEqualTo(Zone.GRAVEYARD);
+        assertThat(effects(card, CombatWatch.ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER))
+                .containsExactly(fromBattlefield);
+        assertThat(effects(card, CombatWatch.GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER))
+                .containsExactly(fromGraveyard);
+        assertThat(CombatWatch.GRAVEYARD_ON_ALLY_CREATURE_COMBAT_DAMAGE_TO_PLAYER.zone()).isEqualTo(Zone.GRAVEYARD);
     }
 
     private static List<CardEffect> effects(Card card, CombatWatch watch) {

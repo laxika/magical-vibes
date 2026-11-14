@@ -14,9 +14,9 @@ public class GhostlyTouch extends Card {
         // Enchant creature
         target(TargetFilters.creature());
         // Enchanted creature has "Whenever this creature attacks, you may tap or untap
-        // target permanent." The aura's Triggers.attacks() slot is scanned for the attacking
-        // creature by CombatTriggerService.checkAuraTriggersForCreature. Added outside the
-        // enchant target slot so the granted trigger is not bound to the creature target filter.
+        // target permanent." The aura's Triggers.attacks() ability triggers on the enchanted creature's
+        // attack (AttackTriggers). Added outside the enchant target slot so the granted trigger is not
+        // bound to the creature target filter.
         addTrigger(Triggers.attacks(),
                 new MayEffect(new TapOrUntapTargetPermanentEffect(),
                         "tap or untap the target permanent?"));

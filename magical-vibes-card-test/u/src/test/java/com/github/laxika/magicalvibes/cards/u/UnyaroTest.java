@@ -8,9 +8,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
-import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
+import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
@@ -64,7 +63,8 @@ class UnyaroTest extends BaseCardTest {
         gd.planechase.planeswalkedToTurn = gd.turnNumber;
         gd.planechase.planeswalkedToNamesThisTurn.add("Unyaro");
 
-        harness.inMutationScope(() -> planar.step(gd, Triggers.endStep(ActivePlayer.YOU)));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleEndStepTriggers(gd));
         harness.passBothPriorities();
 
         assertThat(ownCreature.isTapped()).isFalse();
@@ -82,7 +82,8 @@ class UnyaroTest extends BaseCardTest {
         gd.planechase.planeswalkedToTurn = gd.turnNumber;
         gd.planechase.planeswalkedToNamesThisTurn.add("Unyaro");
 
-        harness.inMutationScope(() -> planar.step(gd, Triggers.endStep(ActivePlayer.YOU)));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleEndStepTriggers(gd));
         harness.passBothPriorities();
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
 
@@ -99,7 +100,8 @@ class UnyaroTest extends BaseCardTest {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         creature.tap();
 
-        harness.inMutationScope(() -> planar.step(gd, Triggers.endStep(ActivePlayer.YOU)));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleEndStepTriggers(gd));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
@@ -112,7 +114,8 @@ class UnyaroTest extends BaseCardTest {
         gd.planechase.planeswalkedToTurn = gd.turnNumber;
         gd.planechase.planeswalkedToNamesThisTurn.add("Unyaro");
 
-        harness.inMutationScope(() -> planar.step(gd, Triggers.endStep(ActivePlayer.YOU)));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleEndStepTriggers(gd));
         harness.passBothPriorities();
         harness.performUntapStep(player2);
         harness.performUntapStep(player1);
@@ -130,7 +133,8 @@ class UnyaroTest extends BaseCardTest {
     void creaturesEnteringAfterTriggerAlsoPhaseOutOnResolution() {
         gd.planechase.planeswalkedToTurn = gd.turnNumber;
         gd.planechase.planeswalkedToNamesThisTurn.add("Unyaro");
-        harness.inMutationScope(() -> planar.step(gd, Triggers.endStep(ActivePlayer.YOU)));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleEndStepTriggers(gd));
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         creature.tap();
 
@@ -148,7 +152,8 @@ class UnyaroTest extends BaseCardTest {
         gd.planechase.planeswalkedToTurn = gd.turnNumber - 1;
         gd.planechase.planeswalkedToNamesThisTurn.add("Unyaro");
 
-        harness.inMutationScope(() -> planar.step(gd, Triggers.endStep(ActivePlayer.YOU)));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleEndStepTriggers(gd));
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
@@ -163,7 +168,8 @@ class UnyaroTest extends BaseCardTest {
         gd.planechase.planeswalkedToTurn = gd.turnNumber;
         gd.planechase.planeswalkedToNamesThisTurn.add("Unyaro");
 
-        harness.inMutationScope(() -> planar.step(gd, Triggers.endStep(ActivePlayer.YOU)));
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleEndStepTriggers(gd));
         harness.passBothPriorities();
         harness.runStateBasedActions();
 

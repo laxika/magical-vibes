@@ -8,7 +8,8 @@ package com.github.laxika.magicalvibes.model.rules;
  * <p>The engine emits rules events into {@link RulesEventLog}, which groups the events of one occurrence
  * into one {@link RulesEventBatch} (CR 603.2c).
  */
-public sealed interface RulesEvent permits LibraryEvent, PermanentChangeEvent, ZoneChangeEvent {
+public sealed interface RulesEvent
+        permits AttackEvent, BlockEvent, LibraryEvent, PermanentChangeEvent, StepEvent, ZoneChangeEvent {
 
     /** A copy that shares nothing mutable with this event, for simulation copies of the game. */
     RulesEvent deepCopy();

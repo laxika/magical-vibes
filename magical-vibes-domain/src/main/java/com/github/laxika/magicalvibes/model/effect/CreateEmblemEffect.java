@@ -25,7 +25,7 @@ import java.util.List;
  * draw, life-gain, creature-death and combat damage readers theirs ("whenever a creature dies", Liliana, Defiant
  * Necromancer; "whenever you draw a card, exile target permanent an opponent controls", Teferi, Hero of Dominaria;
  * "whenever a creature you control deals combat damage to a player", Kaito Shizuki),
- * {@code TriggerCollectionService.checkEmblemAttackTriggers} "whenever a creature attacks you"
+ * {@code AttackTriggers} "whenever a creature attacks you"
  * ({@code Triggers.creatureAttacksYou()}, Garruk, Apex Predator), the emblem graveyard readers "whenever a card is put
  * into your graveyard from anywhere" (Tamiyo, the Moon Sage) and "whenever an artifact is put into your graveyard from
  * the battlefield" (Daretti, Scrap Savant), and the emblem step reader the "at the beginning of [step]" abilities

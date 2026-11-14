@@ -115,7 +115,8 @@ class HeroOfBladeholdTest extends BaseCardTest {
 
         declareAttackers(List.of(0, 1));
 
-        // Resolve battle cry trigger (on top of stack)
+        // The token ability resolves first, then battle cry (its controller may order them either way).
+        harness.passBothPriorities();
         harness.passBothPriorities();
 
         // Skyhunter should get +1/+0 from battle cry
@@ -264,8 +265,8 @@ class HeroOfBladeholdTest extends BaseCardTest {
         declareAttackers(List.of(0, 1));
         gd.playerBattlefields.get(player1.getId()).remove(hero);
         harness.passBothPriorities();
-        assertThat(otherAttacker.getPowerModifier()).isEqualTo(1);
         harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, harness::passBothPriorities);
+        assertThat(otherAttacker.getPowerModifier()).isEqualTo(1);
 
         List<Permanent> tokens = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken()).toList();
@@ -274,7 +275,8 @@ class HeroOfBladeholdTest extends BaseCardTest {
             assertThat(token.isAttacking()).isTrue();
             assertThat(token.getAttackTarget()).isEqualTo(player2.getId());
             assertThat(token.isAttackedThisTurn()).isFalse();
-            assertThat(token.getPowerModifier()).isZero();
+            // The token ability resolved first, so battle cry gave the tokens +1/+0 too (Hero of Bladehold's ruling).
+            assertThat(token.getPowerModifier()).isEqualTo(1);
         });
     }
 
