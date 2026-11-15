@@ -295,15 +295,11 @@ public class DrawService {
     }
 
     /**
-     * Between the draws of a multi-card instruction no game state is broadcast, so a library top card
-     * that a static ability reveals to everyone is announced in the game log as it becomes the top card.
+     * Whether a static ability reveals the top card of {@code drawingPlayerId}'s library to everyone (its controller's
+     * own "play with the top card of your library revealed" or one revealing every player's). Read-only, so the caller
+     * runs it in one query scope rather than fingerprinting the board for every permanent it judges.
      */
-    private void logIntermediateRevealedTopCard(GameData gameData, UUID drawingPlayerId) {
-        List<Card> deck = gameData.playerDecks.get(drawingPlayerId);
-        if (deck == null || deck.isEmpty() || gameData.status == GameStatus.FINISHED) {
-            return;
-        }
-        boolean revealed = false;
+    private boolean topCardRevealedByStaticAbility(GameData gameData, UUID drawingPlayerId) {
         for (UUID ownerId : gameData.orderedPlayerIds) {
             List<Permanent> battlefield = gameData.playerBattlefields.get(ownerId);
             if (battlefield == null) {
@@ -313,15 +309,27 @@ public class DrawService {
                 if (permanent.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                     continue;
                 }
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, permanent, ownerId)) {
                     if (effect instanceof PlayWithTopCardRevealedEffect topCardRevealed
                             && (topCardRevealed.allPlayers() || ownerId.equals(drawingPlayerId))) {
-                        revealed = true;
+                        return true;
                     }
                 }
             }
         }
-        if (!revealed) {
+        return false;
+    }
+
+    /**
+     * Between the draws of a multi-card instruction no game state is broadcast, so a library top card
+     * that a static ability reveals to everyone is announced in the game log as it becomes the top card.
+     */
+    private void logIntermediateRevealedTopCard(GameData gameData, UUID drawingPlayerId) {
+        List<Card> deck = gameData.playerDecks.get(drawingPlayerId);
+        if (deck == null || deck.isEmpty() || gameData.status == GameStatus.FINISHED) {
+            return;
+        }
+        if (!gameQueryService.withQueryScope(gameData, () -> topCardRevealedByStaticAbility(gameData, drawingPlayerId))) {
             return;
         }
         String playerName = gameData.playerIdToName.get(drawingPlayerId);
@@ -1449,9 +1457,9 @@ public class DrawService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-                if (drawReplacementDeclined(gameData, drawingPlayerId, permanent.getCard())) continue;
-                if (isZursWeirding(permanent)) {
+                if (isZursWeirding(permanent)
+                        && !drawReplacementDeclined(gameData, drawingPlayerId, permanent.getCard())
+                        && !gameQueryService.hasLostAllAbilities(gameData, permanent)) {
                     return permanent;
                 }
             }
@@ -1630,10 +1638,9 @@ public class DrawService {
         }
 
         for (Permanent permanent : battlefield) {
-            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
             boolean hasEffect = permanent.getCard().getStaticEffects().stream()
                     .anyMatch(effect -> effect instanceof OpponentExtraDrawsRedirectedEffect);
-            if (hasEffect) {
+            if (hasEffect && !gameQueryService.hasLostAllAbilities(gameData, permanent)) {
                 return permanent.getCard();
             }
         }
@@ -1652,10 +1659,9 @@ public class DrawService {
         }
 
         for (Permanent permanent : battlefield) {
-            if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
             boolean hasEffect = permanent.getCard().getStaticEffects().stream()
                     .anyMatch(effect -> effect instanceof OpponentExtraDrawsCreateTreasureEffect);
-            if (hasEffect) {
+            if (hasEffect && !gameQueryService.hasLostAllAbilities(gameData, permanent)) {
                 return permanent.getCard();
             }
         }

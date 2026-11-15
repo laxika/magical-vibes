@@ -815,6 +815,9 @@ hash — a 100-target Fireball over 100 creatures spent ~20 s re-confirming an u
 Detection writes inside the scope, but only state neither the board nor the assembly reads
 (triggered abilities on the stack, log lines, queued choices/may abilities, once-per-turn
 markers); the pending-target prompts it queues are started after the scope closes.
+`LibraryTriggers` (a draw), `TapTriggers` (a permanent becoming tapped) and `RulesEventPipeline` (a zone-change
+batch's observer and moving-object candidates) detect in one scope each on the same terms. The tapped-for-mana events
+stay unscoped: a triggered mana ability resolves as it triggers (CR 605.4a), and a later scan must see what it changed.
 `ReplacementOrderService` collects each event's applicable replacement and prevention effects, previews the
 pure ones and decides whether their order matters inside one scope (a candidate source's `applicable` and
 `transform` change nothing): each `DamageCandidateSource` rule scans the battlefield, so unscoped every damage

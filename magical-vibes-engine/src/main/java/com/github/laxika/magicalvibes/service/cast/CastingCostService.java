@@ -1186,7 +1186,7 @@ public class CastingCostService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm, pid)) {
                     ActivatedAbilityCostIncreasingEffect taxEffect = null;
                     if (effect instanceof ActivatedAbilityCostIncreasingEffect directTax) {
                         taxEffect = directTax;
@@ -1294,7 +1294,7 @@ public class CastingCostService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, perm, pid)) {
                     if (effect instanceof ActivatedAbilityAdditionalCostEffect additionalCost
                             && predicateEvaluationService.matchesPermanentPredicate(
                                     sourcePermanent, additionalCost.affectedPermanents(),

@@ -55,6 +55,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -108,6 +109,9 @@ class LibraryTriggersTest {
 
     @BeforeEach
     void setUp() {
+        // A query scope runs its queries; these tests have no layered pass to share.
+        lenient().when(gameQueryService.withQueryScope(any(GameData.class), any()))
+                .thenAnswer(invocation -> ((java.util.function.Supplier<?>) invocation.getArgument(1)).get());
         // The index, as far as these abilities need it: a permanent's card abilities and those granted it, a graveyard
         // card's own.
         lenient().when(triggerIndex.permanentAbilities(any(), any())).thenAnswer(invocation -> {
@@ -174,6 +178,14 @@ class LibraryTriggersTest {
     @Nested
     @DisplayName("draws")
     class Draws {
+
+        @Test
+        @DisplayName("A draw's abilities are found in one query scope")
+        void drawAbilitiesFoundInOneQueryScope() {
+            draw(player1Id, createCard("Grizzly Bears", CardType.CREATURE));
+
+            verify(gameQueryService).withQueryScope(same(gd), any());
+        }
 
         @Test
         @DisplayName("an ability of two effects is one stack entry recording the draw")

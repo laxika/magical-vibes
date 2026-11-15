@@ -1800,12 +1800,17 @@ public class GraveyardService {
             List<Permanent> bf = gameData.playerBattlefields.get(playerId);
             if (bf == null) continue;
             for (Permanent p : bf) {
-                if (p.isFaceDown() || gameQueryService.hasLostPrintedAbilities(gameData, p)) {
+                if (p.isFaceDown()) {
                     continue;
                 }
                 for (CardEffect effect : p.getCard().getStaticEffects()) {
                     if (effect instanceof ExileOpponentCardsInsteadOfGraveyardEffect replacement
                             && exileReplacementApplies(replacement, playerId, cardControllerId)) {
+                        // The printed effect is looked for first: whether the permanent lost its abilities is a layered
+                        // query, and every permanent without the effect would pay one.
+                        if (gameQueryService.hasLostPrintedAbilities(gameData, p)) {
+                            break;
+                        }
                         return new OpponentExileReplacement(replacement, p.getId());
                     }
                 }

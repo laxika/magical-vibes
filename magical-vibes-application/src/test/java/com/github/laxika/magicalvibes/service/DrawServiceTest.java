@@ -227,6 +227,9 @@ class DrawServiceTest {
 
     @BeforeEach
     void setUp() throws ReflectiveOperationException {
+        // A query scope runs its queries; these tests have no layered pass to share.
+        lenient().when(gameQueryService.withQueryScope(any(GameData.class), any()))
+                .thenAnswer(invocation -> ((java.util.function.Supplier<?>) invocation.getArgument(1)).get());
         // The draw collectors judge each ability's event condition through the service.
         lenient().when(conditionEvaluationService.triggerConditionsMet(any(), any(), any())).thenAnswer(invocation -> {
             TriggerOptions options = invocation.getArgument(1);

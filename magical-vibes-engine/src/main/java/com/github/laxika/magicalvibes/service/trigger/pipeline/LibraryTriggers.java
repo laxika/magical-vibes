@@ -120,10 +120,18 @@ public class LibraryTriggers {
         this.stateTriggerService = stateTriggerService;
     }
 
-    /** Triggers the abilities {@code event} triggers. */
+    /**
+     * Triggers the abilities {@code event} triggers. A draw's are found under one
+     * {@linkplain GameQueryService#withQueryScope query scope}: each watcher scan reads every permanent's abilities as the
+     * layers leave them, and judging them changes nothing the layers read (it only puts abilities through the stack door
+     * and logs), so the board is fingerprinted once per draw instead of once per permanent scanned.
+     */
     public void trigger(GameData gameData, LibraryEvent event) {
         switch (event) {
-            case LibraryEvent.Drew drew -> drew(gameData, drew);
+            case LibraryEvent.Drew drew -> gameQueryService.withQueryScope(gameData, () -> {
+                drew(gameData, drew);
+                return null;
+            });
             case LibraryEvent.RevealedDrawnCard revealed -> revealedDrawnCard(gameData, revealed);
             case LibraryEvent.Discarded discarded -> discarded(gameData, discarded);
             case LibraryEvent.DiscardedCards discarded -> discardedCards(gameData, discarded);

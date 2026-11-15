@@ -5445,6 +5445,15 @@ public class GameQueryService {
                 findPermanentController(gameData, permanent.getId()));
     }
 
+    /**
+     * As {@link #getActiveStaticEffects(GameData, Permanent)}, for a caller that already knows the permanent's
+     * controller ({@code controllerId}, the player whose battlefield holds it): a scan over every battlefield
+     * passes the battlefield's player instead of having each permanent's controller searched for again.
+     */
+    public List<CardEffect> getActiveStaticEffects(GameData gameData, Permanent permanent, UUID controllerId) {
+        return staticEffectsIncludingTemporary(gameData, permanent, controllerId);
+    }
+
     private void collectActiveStaticEffects(GameData gameData, Permanent source, UUID controllerId,
                                             CardEffect effect, List<CardEffect> activeEffects) {
         if (effect instanceof ConditionalEffect conditional) {
@@ -13927,13 +13936,12 @@ public class GameQueryService {
 
         for (UUID pid : gameData.playerIds) {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
-                for (CardEffect effect : getActiveStaticEffects(gameData, p)) {
+                for (CardEffect effect : getActiveStaticEffects(gameData, p, pid)) {
                     if (effect instanceof ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect lock
                             && lock.blocksManaAbilities()) {
-                        UUID sourceControllerId = findPermanentController(gameData, p.getId());
                         FilterContext filterContext = FilterContext.of(gameData)
                                 .withSourceCardId(p.getCard().getId())
-                                .withSourceControllerId(sourceControllerId)
+                                .withSourceControllerId(pid)
                                 .withSourcePermanentId(p.getId());
                         if (predicateEvaluationService.matchesPermanentPredicate(
                                 permanent, lock.predicate(), filterContext)) {

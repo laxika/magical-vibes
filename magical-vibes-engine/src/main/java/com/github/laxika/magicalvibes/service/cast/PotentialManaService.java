@@ -45,6 +45,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -123,7 +124,17 @@ public class PotentialManaService {
      * is tapped by the activation itself, so its mana can never help pay that cost.
      */
     public VirtualManaPool buildVirtualManaPool(GameData gameData, UUID playerId, UUID excludedPermanentId) {
-        return buildVirtualManaPool(gameData, playerId, excludedPermanentId, false);
+        return buildVirtualManaPool(gameData, playerId, excludedPermanentId, false, null);
+    }
+
+    /**
+     * As {@link #buildVirtualManaPool(GameData, UUID, UUID)}, answering the per-source checks from
+     * {@code checks}: a caller building several pools over one unchanged game state (one leaving out
+     * each {T} ability's source) asks each source's checks once instead of once per pool.
+     */
+    public VirtualManaPool buildVirtualManaPool(GameData gameData, UUID playerId, UUID excludedPermanentId,
+                                                SourceChecks checks) {
+        return buildVirtualManaPool(gameData, playerId, excludedPermanentId, false, checks);
     }
 
     /**
@@ -131,11 +142,11 @@ public class PotentialManaService {
      * which may pay for a special action.
      */
     public VirtualManaPool buildVirtualManaPoolForSpecialAction(GameData gameData, UUID playerId) {
-        return buildVirtualManaPool(gameData, playerId, null, true);
+        return buildVirtualManaPool(gameData, playerId, null, true, null);
     }
 
     private VirtualManaPool buildVirtualManaPool(GameData gameData, UUID playerId, UUID excludedPermanentId,
-                                                 boolean specialAction) {
+                                                 boolean specialAction, SourceChecks checks) {
         VirtualManaPool virtual = new VirtualManaPool();
 
         ManaPool current = gameData.playerManaPools.get(playerId);
@@ -167,7 +178,7 @@ public class PotentialManaService {
                 if (gameQueryService.isSummoningSickForTapCost(gameData, perm, playerId)) {
                     continue;
                 }
-                if (!gameQueryService.canActivateManaAbility(gameData, perm)) {
+                if (!canActivateManaAbility(gameData, perm, checks)) {
                     continue;
                 }
                 // Check for land type overrides (e.g. Evil Presence / Lush Growth)
@@ -188,7 +199,8 @@ public class PotentialManaService {
                     addIntrinsicBasicLandManaToVirtualPool(virtual, gameData, perm, isCreature);
                 } else {
                     // Check activated mana abilities (dual lands, pain lands, utility lands)
-                    addActivatedManaAbilitiesToVirtualPool(perm.getCard(), virtual, isCreature, perm, gameData, playerId, specialAction);
+                    addActivatedManaAbilitiesToVirtualPool(perm.getCard(), virtual, isCreature, perm, gameData, playerId,
+                            specialAction, checks);
                 }
             }
         }
@@ -451,11 +463,12 @@ public class PotentialManaService {
      */
     public void addActivatedManaAbilitiesToVirtualPool(Card card, ManaPool virtual, boolean isCreature, Permanent permanent,
                                                        GameData gameData, UUID playerId) {
-        addActivatedManaAbilitiesToVirtualPool(card, virtual, isCreature, permanent, gameData, playerId, false);
+        addActivatedManaAbilitiesToVirtualPool(card, virtual, isCreature, permanent, gameData, playerId, false, null);
     }
 
     private void addActivatedManaAbilitiesToVirtualPool(Card card, ManaPool virtual, boolean isCreature, Permanent permanent,
-                                                        GameData gameData, UUID playerId, boolean specialAction) {
+                                                        GameData gameData, UUID playerId, boolean specialAction,
+                                                        SourceChecks checks) {
         EnumMap<ManaColor, Integer> totalByColor = new EnumMap<>(ManaColor.class);
         EnumMap<ManaColor, Integer> maxPerAbilityByColor = new EnumMap<>(ManaColor.class);
         int totalAdded = 0;
@@ -467,7 +480,7 @@ public class PotentialManaService {
         List<ActivatedAbility> abilities = activatedAbilitiesFor(gameData, permanent, card);
         for (int abilityIndex = 0; abilityIndex < abilities.size(); abilityIndex++) {
             ActivatedAbility ability = abilities.get(abilityIndex);
-            if (!canTapForManaNow(ability, abilityIndex, permanent, gameData, playerId)) {
+            if (!canTapForManaNow(ability, abilityIndex, permanent, gameData, playerId, checks)) {
                 continue;
             }
 
@@ -745,6 +758,44 @@ public class PotentialManaService {
         }
         return abilityActivationService.canActivateAbility(
                 gameData, playerId, permanent, abilityIndex, NO_MANA_AVAILABLE);
+    }
+
+    private boolean canTapForManaNow(ActivatedAbility ability, int abilityIndex, Permanent permanent,
+                                     GameData gameData, UUID playerId, SourceChecks checks) {
+        if (checks == null || permanent == null || !isFreeTapManaAbility(ability)) {
+            return canTapForManaNow(ability, abilityIndex, permanent, gameData, playerId);
+        }
+        return checks.canTapForManaNow.computeIfAbsent(
+                new SourceChecks.SourceAbility(playerId, permanent.getId(), abilityIndex),
+                ignored -> canTapForManaNow(ability, abilityIndex, permanent, gameData, playerId));
+    }
+
+    private boolean canActivateManaAbility(GameData gameData, Permanent permanent, SourceChecks checks) {
+        if (checks == null) {
+            return gameQueryService.canActivateManaAbility(gameData, permanent);
+        }
+        return checks.canActivateManaAbility.computeIfAbsent(permanent.getId(),
+                ignored -> gameQueryService.canActivateManaAbility(gameData, permanent));
+    }
+
+    /**
+     * The answers to the per-source checks of pool builds over one unchanged game state: whether a
+     * permanent's mana abilities can be activated at all ({@link GameQueryService#canActivateManaAbility})
+     * and whether each free tap mana ability can be activated now ({@link #canTapForManaNow}). Neither
+     * depends on which permanent a build leaves out, so the pools {@code GameActionAvailabilityService}
+     * builds for one player — the full one and one without each {T} ability's source — share them,
+     * and n sources are judged n times rather than once per pool.
+     *
+     * <p>Make one for a batch of builds that changes nothing in between and drop it with the batch: it
+     * is never invalidated, so it must not outlive the state it was filled from.
+     */
+    public static final class SourceChecks {
+
+        private final Map<UUID, Boolean> canActivateManaAbility = new HashMap<>();
+        private final Map<SourceAbility, Boolean> canTapForManaNow = new HashMap<>();
+
+        private record SourceAbility(UUID playerId, UUID permanentId, int abilityIndex) {
+        }
     }
 
     /**

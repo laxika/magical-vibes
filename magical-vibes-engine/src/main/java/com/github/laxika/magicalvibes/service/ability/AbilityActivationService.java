@@ -10935,13 +10935,12 @@ public class AbilityActivationService {
         }
         for (UUID pid : gameData.playerIds) {
             for (Permanent p : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
-                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, p)) {
+                for (CardEffect effect : gameQueryService.getActiveStaticEffects(gameData, p, pid)) {
                     if (effect instanceof ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect lock
                             && (lock.blocksManaAbilities() || !manaAbility)) {
-                        UUID sourceControllerId = gameQueryService.findPermanentController(gameData, p.getId());
                         FilterContext filterContext = FilterContext.of(gameData)
                                 .withSourceCardId(p.getCard().getId())
-                                .withSourceControllerId(sourceControllerId)
+                                .withSourceControllerId(pid)
                                 .withSourcePermanentId(p.getId());
                         if (predicateEvaluationService.matchesPermanentPredicate(
                                 permanent, lock.predicate(), filterContext)) {

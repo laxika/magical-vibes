@@ -479,9 +479,14 @@ public class RulesEventPipeline {
             }
         }
         try {
+            // One query scope for the batch: every candidate scan reads abilities as the layers leave them, and matching
+            // them only puts abilities through the stack door, so the board is fingerprinted once per batch.
             Set<OneOrMoreKey> triggeredForBatch = new HashSet<>();
-            triggerObservers(gameData, events, triggeredForBatch);
-            triggerMovingObjects(gameData, events, triggeredForBatch);
+            gameQueryService.withQueryScope(gameData, () -> {
+                triggerObservers(gameData, events, triggeredForBatch);
+                triggerMovingObjects(gameData, events, triggeredForBatch);
+                return null;
+            });
         } finally {
             gameData.graveyardLookBackExcludedCardIds.removeAll(lookBack);
         }

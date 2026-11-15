@@ -122,10 +122,19 @@ public class TapTriggers {
         this.triggeredAbilityQueueService = triggeredAbilityQueueService;
     }
 
-    /** Triggers the abilities {@code event} triggers. */
+    /**
+     * Triggers the abilities {@code event} triggers. A permanent becoming tapped has its abilities found under one
+     * {@linkplain GameQueryService#withQueryScope query scope}: judging them changes nothing the layers read (it counts
+     * the creature's taps, puts abilities through the stack door and marks the "one or more" ones of the tap batch), so
+     * the board is fingerprinted once per tap. The tapped-for-mana events stay unscoped: a triggered mana ability
+     * resolves as it triggers (CR 605.4a), and what its effects change a later scan must see.
+     */
     public void trigger(GameData gameData, TapEvent event) {
         switch (event) {
-            case TapEvent.BecameTapped tapped -> becameTapped(gameData, tapped);
+            case TapEvent.BecameTapped tapped -> gameQueryService.withQueryScope(gameData, () -> {
+                becameTapped(gameData, tapped);
+                return null;
+            });
             case TapEvent.BecameUntapped untapped -> becameUntapped(gameData, untapped.permanent());
             case TapEvent.UntappedDuringUntapStep step -> untapStep(gameData, step.controllerId(),
                     step.untappedCount());

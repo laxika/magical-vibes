@@ -67,6 +67,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -568,6 +569,54 @@ class GameActionAvailabilityServiceTest {
             gd.playerBattlefields.get(player1Id).add(manaLand(com.github.laxika.magicalvibes.model.ManaColor.GREEN));
             assertThat(svc.getPotentialPayableAbilityIndices(gd, player1Id))
                     .containsExactly(java.util.Map.entry(portPerm.getId(), List.of(1)));
+        }
+
+        /** A Mind Stone-style artifact: "{T}: Add {C}" and "{1}, {T}: draw a card". */
+        private Permanent manaRock() {
+            Card rock = new Card();
+            rock.setName("Mind Stone");
+            rock.setType(CardType.ARTIFACT);
+            rock.addActivatedAbility(ManaAbilities.tapFor(com.github.laxika.magicalvibes.model.ManaColor.COLORLESS));
+            rock.addActivatedAbility(new com.github.laxika.magicalvibes.model.ActivatedAbility(
+                    true, "{1}", List.of(), "draw a card"));
+            Permanent permanent = new Permanent(rock);
+            lenient().when(abilityActivationService.getEffectiveActivatedAbilities(same(gd), same(permanent)))
+                    .thenReturn(rock.getActivatedAbilities(com.github.laxika.magicalvibes.model.Zone.BATTLEFIELD));
+            return permanent;
+        }
+
+        @Test
+        @DisplayName("A source whose mana abilities can be activated still can't pay its own {T} ability")
+        void tapCostAbilityExcludesOwnSourceManaItCouldTapFor() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(gameQueryService.canActivateManaAbility(same(gd), any())).thenReturn(true);
+            when(abilityActivationService.canActivateAbility(same(gd), eq(player1Id), any(), eq(0), any()))
+                    .thenReturn(true);
+            gd.playerBattlefields.get(player1Id).add(manaRock());
+
+            assertThat(svc.getPotentialPayableAbilityIndices(gd, player1Id)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("Each mana source is judged once across the pools built without each {T} ability's source")
+        void manaSourcesJudgedOnceAcrossPoolsWithoutEachSource() {
+            when(gameQueryService.getPriorityPlayerId(gd)).thenReturn(player1Id);
+            when(gameQueryService.canActivateManaAbility(same(gd), any())).thenReturn(true);
+            when(abilityActivationService.canActivateAbility(same(gd), eq(player1Id), any(), eq(0), any()))
+                    .thenReturn(true);
+            Permanent first = manaRock();
+            Permanent second = manaRock();
+            gd.playerBattlefields.get(player1Id).add(first);
+            gd.playerBattlefields.get(player1Id).add(second);
+
+            assertThat(svc.getPotentialPayableAbilityIndices(gd, player1Id)).containsOnly(
+                    java.util.Map.entry(first.getId(), List.of(1)),
+                    java.util.Map.entry(second.getId(), List.of(1)));
+            for (Permanent source : List.of(first, second)) {
+                verify(gameQueryService, times(1)).canActivateManaAbility(gd, source);
+                verify(abilityActivationService, times(1))
+                        .canActivateAbility(same(gd), eq(player1Id), same(source), eq(0), any());
+            }
         }
 
         @Test

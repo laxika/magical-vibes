@@ -200,7 +200,9 @@ public class GameActionAvailabilityService {
      * affordability and the source's own counter gate are checked (the client already gates tap
      * state, summoning sickness and loyalty); abilities without a mana cost are omitted, and X is
      * priced at 0 like the card list does. For a {T}-cost ability the source's own mana production
-     * is excluded, since it can't be tapped both for mana and for the ability's tap cost.
+     * is excluded, since it can't be tapped both for mana and for the ability's tap cost. The full
+     * pool and those without a source share one {@link PotentialManaService.SourceChecks}: nothing
+     * changes between the builds, so each source is judged once rather than once per pool.
      */
     public Map<UUID, List<Integer>> getPotentialPayableAbilityIndices(GameData gameData, UUID playerId) {
         // Same gating as getPotentialPlayableCardIndices — skip the virtual-pool build for the
@@ -213,7 +215,8 @@ public class GameActionAvailabilityService {
         if (battlefield == null || battlefield.isEmpty()) {
             return Map.of();
         }
-        VirtualManaPool fullPool = potentialManaService.buildVirtualManaPool(gameData, playerId);
+        PotentialManaService.SourceChecks sourceChecks = new PotentialManaService.SourceChecks();
+        VirtualManaPool fullPool = potentialManaService.buildVirtualManaPool(gameData, playerId, null, sourceChecks);
         fullPool.promoteAbilityOnlyMana();
         if (gameQueryService.canSpendManaAsAnyColor(gameData, playerId)) {
             fullPool = new VirtualManaPool(fullPool);
@@ -267,7 +270,8 @@ public class GameActionAvailabilityService {
                 }
                 if (ability.isRequiresTap()) {
                     if (poolWithoutSource == null) {
-                        poolWithoutSource = potentialManaService.buildVirtualManaPool(gameData, playerId, perm.getId());
+                        poolWithoutSource = potentialManaService.buildVirtualManaPool(gameData, playerId, perm.getId(),
+                                sourceChecks);
                         poolWithoutSource.promoteAbilityOnlyMana();
                         if (gameQueryService.isLand(gameData, perm)) {
                             poolWithoutSource.promoteLandAbilityOnlyMana();
