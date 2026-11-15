@@ -10,6 +10,8 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Turns a {@link RawFace} into the {@link OracleData} the game plays with. Every rules decision
@@ -25,6 +27,12 @@ import java.util.Set;
  * does "to match what the other loader outputs" belongs here instead.
  */
 public final class FaceOracleMapper {
+
+    private static final Pattern MANA_SYMBOL = Pattern.compile("\\{([^}]*)}");
+    private static final Pattern PREPARED_WORD = Pattern.compile("(?i)\\bprepared\\b");
+    private static final Pattern NIMBLE_LINE = Pattern.compile("(?m)^Nimble(?:[ (]|$)");
+    private static final Pattern DEWORDED_LINE = Pattern.compile("(?m)^Deworded(?:[ (]|$)");
+    private static final Pattern POSITIONING_LINE = Pattern.compile("(?m)^Positioning(?:[ (]|$)");
 
     private FaceOracleMapper() {
     }
@@ -146,7 +154,7 @@ public final class FaceOracleMapper {
             return List.of();
         }
         java.util.TreeSet<String> symbols = new java.util.TreeSet<>();
-        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\{([^}]*)}").matcher(manaCost);
+        Matcher matcher = MANA_SYMBOL.matcher(manaCost);
         while (matcher.find()) {
             for (String part : matcher.group(1).split("/")) {
                 if (CardDataSupport.COLOR_MAP.containsKey(part)) {
@@ -248,19 +256,17 @@ public final class FaceOracleMapper {
         }
         if (cardText != null
                 && face.keywords().stream().anyMatch(raw -> "Prepared".equalsIgnoreCase(raw))
-                && java.util.regex.Pattern.compile("(?i)\\bprepared\\b").matcher(cardText).find()) {
+                && PREPARED_WORD.matcher(cardText).find()) {
             keywords.add(Keyword.PREPARED);
         }
-        if (cardText != null && java.util.regex.Pattern.compile("(?m)^Nimble(?:[ (]|$)")
-                .matcher(cardText).find()) {
+        if (cardText != null && cardText.contains("Nimble") && NIMBLE_LINE.matcher(cardText).find()) {
             keywords.add(Keyword.NIMBLE);
         }
-        if (cardText != null && java.util.regex.Pattern.compile("(?m)^Deworded(?:[ (]|$)")
-                .matcher(cardText).find()) {
+        if (cardText != null && cardText.contains("Deworded") && DEWORDED_LINE.matcher(cardText).find()) {
             keywords.add(Keyword.DEWORDED);
         }
-        if (cardText != null && java.util.regex.Pattern.compile("(?m)^Positioning(?:[ (]|$)")
-                .matcher(cardText).find()) {
+        if (cardText != null && cardText.contains("Positioning")
+                && POSITIONING_LINE.matcher(cardText).find()) {
             keywords.add(Keyword.POSITIONING);
         }
         return keywords;

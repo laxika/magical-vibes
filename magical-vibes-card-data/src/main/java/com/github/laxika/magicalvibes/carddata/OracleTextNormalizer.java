@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Turns an upstream provider's raw rules text into the text this game prints on a card.
@@ -17,15 +18,23 @@ import java.util.Set;
  */
 public final class OracleTextNormalizer {
 
+    private static final Pattern REMINDER_TEXT = Pattern.compile(" *\\([^)]*\\)");
+    private static final Pattern TRAILING_SPACES = Pattern.compile(" +\n");
+    private static final Pattern KEYWORD_SEPARATOR = Pattern.compile("[,;] ");
+
     private OracleTextNormalizer() {
     }
 
     /** Strips reminder text in parentheses; returns null when nothing remains. */
     public static String cleanCardText(String rawText) {
-        String cleaned = rawText
-                .replaceAll(" *\\([^)]*\\)", "")
-                .replaceAll(" +\n", "\n")
-                .strip();
+        String cleaned = rawText;
+        if (cleaned.indexOf('(') >= 0) {
+            cleaned = REMINDER_TEXT.matcher(cleaned).replaceAll("");
+        }
+        if (cleaned.contains(" \n")) {
+            cleaned = TRAILING_SPACES.matcher(cleaned).replaceAll("\n");
+        }
+        cleaned = cleaned.strip();
         return cleaned.isEmpty() ? null : cleaned;
     }
 
@@ -141,7 +150,10 @@ public final class OracleTextNormalizer {
     }
 
     private static String[] keywordSegments(String line) {
-        return line.split("[,;] ", -1);
+        if (line.indexOf(',') < 0 && line.indexOf(';') < 0) {
+            return new String[] {line};
+        }
+        return KEYWORD_SEPARATOR.split(line, -1);
     }
 
     private static String capitalizeEach(String value) {

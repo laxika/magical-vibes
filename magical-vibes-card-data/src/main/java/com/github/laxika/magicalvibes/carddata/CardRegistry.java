@@ -55,6 +55,7 @@ public class CardRegistry implements CardCatalog {
     private static final Logger LOG = Logger.getLogger(CardRegistry.class.getName());
     private static final Pattern NON_IDENTIFIER = Pattern.compile("[^a-z0-9]");
     private static final Pattern PLUS_NUMBER = Pattern.compile("\\+(\\d+)");
+    private static final Pattern FACE_SEPARATOR = Pattern.compile(" // ");
     private static final String[] NUMBER_WORDS = {
         "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
         "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen",
@@ -363,7 +364,7 @@ public class CardRegistry implements CardCatalog {
         if (name == null) {
             return List.of();
         }
-        String firstFace = name.split(" // ")[0];
+        String firstFace = FACE_SEPARATOR.split(name)[0];
         String beforeComma = firstFace.split(",")[0];
         List<String> stems = new ArrayList<>();
         stems.add(name);

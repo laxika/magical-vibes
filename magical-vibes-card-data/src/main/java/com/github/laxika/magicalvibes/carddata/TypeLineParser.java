@@ -10,10 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 public class TypeLineParser {
 
     private static final Logger LOG = Logger.getLogger(TypeLineParser.class.getName());
+    private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
     private static final Map<String, CardSupertype> SUPERTYPE_MAP = Map.of(
             "Basic", CardSupertype.BASIC,
@@ -72,7 +74,7 @@ public class TypeLineParser {
         // Parse types: "Legendary Creature" → supertype=LEGENDARY, type=CREATURE
         // "Basic Land" → supertype=BASIC, type=LAND (parsed normally via maps)
         // "Artifact Creature" → type=ARTIFACT, additionalTypes={CREATURE}
-        String[] typeWords = typesPart.split("\\s+");
+        String[] typeWords = WHITESPACE.split(typesPart);
         for (String word : typeWords) {
             if (word.isEmpty()) continue;
 
@@ -102,7 +104,7 @@ public class TypeLineParser {
                     subtypes.add(subtype);
                 }
             } else {
-                String[] words = subtypesPart.split("\\s+");
+                String[] words = WHITESPACE.split(subtypesPart);
                 for (int index = 0; index < words.length;) {
                     CardSubtype match = null;
                     int nextIndex = index + 1;
