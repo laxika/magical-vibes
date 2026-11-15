@@ -118,8 +118,20 @@ public class CounterTriggers {
         this.gameLogService = gameLogService;
     }
 
-    /** Triggers the abilities {@code event} triggers. */
+    /**
+     * Triggers the abilities {@code event} triggers, under one {@linkplain GameQueryService#withQueryScope query scope}:
+     * each kind scans every permanent's abilities as the layers leave them, and judging them changes nothing the layers
+     * read (it only puts abilities on the stack, logs and queues choices), so the board is fingerprinted once per event
+     * instead of once per permanent scanned.
+     */
     public void trigger(GameData gameData, CounterChangeEvent event) {
+        gameQueryService.withQueryScope(gameData, () -> {
+            triggerInScope(gameData, event);
+            return null;
+        });
+    }
+
+    private void triggerInScope(GameData gameData, CounterChangeEvent event) {
         Permanent permanent = event.permanent();
         UUID playerId = event.playerId();
         int amount = event.amount();
