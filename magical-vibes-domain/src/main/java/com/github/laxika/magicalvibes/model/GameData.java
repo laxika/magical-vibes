@@ -9666,10 +9666,6 @@ public class GameData {
         source.combatDamageDealtToCreatures.forEach((key, value) -> copy.combatDamageDealtToCreatures.put(permanentCopy.apply(key), new ArrayList<>(value)));
         copy.combatDamageToBlockingCreatureSources.addAll(source.combatDamageToBlockingCreatureSources);
         source.combatDamageDealerControllers.forEach((key, value) -> copy.combatDamageDealerControllers.put(permanentCopy.apply(key), value));
-        source.selfDealsCombatDamageAbilities.forEach((key, value) -> copy.selfDealsCombatDamageAbilities.put(permanentCopy.apply(key), new ArrayList<>(value)));
-        source.selfDealsCombatDamageToPlayerOrPlaneswalkerAbilities.forEach((key, value) -> copy.selfDealsCombatDamageToPlayerOrPlaneswalkerAbilities.put(permanentCopy.apply(key), new ArrayList<>(value)));
-        source.selfDealsCombatDamageToPlayerOrBattleAbilities.forEach((key, value) -> copy.selfDealsCombatDamageToPlayerOrBattleAbilities.put(permanentCopy.apply(key), new ArrayList<>(value)));
-        source.selfDealsDamageAbilities.forEach((key, value) -> copy.selfDealsDamageAbilities.put(permanentCopy.apply(key), new ArrayList<>(value)));
         source.delayedCombatDamageDrawQualifications.forEach(value -> copy.delayedCombatDamageDrawQualifications.add(new CombatDamageState.DelayedCombatDamageDrawQualification(value.delayedAction(), Set.copyOf(value.sourceIds()))));
         copy.delayedCombatDamageLookAtHandAndDrawQualifications.addAll(source.delayedCombatDamageLookAtHandAndDrawQualifications);
         source.combatDamageAmountsToCreatures.forEach((key, value) -> copy.combatDamageAmountsToCreatures.put(permanentCopy.apply(key), new HashMap<>(value)));

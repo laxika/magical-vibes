@@ -82,16 +82,6 @@ public class CombatDamageState {
     public final Map<Permanent, List<UUID>> combatDamageDealtToCreatures = new HashMap<>();
     public final Set<UUID> combatDamageToBlockingCreatureSources = new HashSet<>();
     public final Map<Permanent, UUID> combatDamageDealerControllers = new HashMap<>();
-    /**
-     * The granted "whenever this creature deals combat damage" abilities each source had as the damage was dealt, each
-     * handed whole to the stack door (CR 603.3).
-     */
-    public final Map<Permanent, List<TriggeredAbility>> selfDealsCombatDamageAbilities = new HashMap<>();
-    /** As {@link #selfDealsCombatDamageAbilities}, for "deals combat damage to a player or planeswalker". */
-    public final Map<Permanent, List<TriggeredAbility>> selfDealsCombatDamageToPlayerOrPlaneswalkerAbilities = new HashMap<>();
-    /** As {@link #selfDealsCombatDamageAbilities}, for "deals combat damage to a player or battle". */
-    public final Map<Permanent, List<TriggeredAbility>> selfDealsCombatDamageToPlayerOrBattleAbilities = new HashMap<>();
-    public final Map<Permanent, List<TriggeredAbility>> selfDealsDamageAbilities = new HashMap<>();
     public final List<DelayedCombatDamageDrawQualification> delayedCombatDamageDrawQualifications = new ArrayList<>();
     public final List<DelayedCombatDamageLookAtHandAndDrawQualification>
             delayedCombatDamageLookAtHandAndDrawQualifications = new ArrayList<>();
