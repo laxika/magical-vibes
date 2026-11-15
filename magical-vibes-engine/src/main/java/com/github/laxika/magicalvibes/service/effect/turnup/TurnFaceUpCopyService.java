@@ -39,7 +39,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.rules.PermanentChange;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
-import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

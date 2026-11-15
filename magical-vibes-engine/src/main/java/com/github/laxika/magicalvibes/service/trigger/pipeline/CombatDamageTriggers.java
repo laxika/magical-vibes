@@ -60,7 +60,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -435,8 +434,8 @@ public class CombatDamageTriggers {
                     gameData, creature, attackerId, combatDamageToPlayer), combatDamageToPlayer));
             triggered.addAll(plainDamageAbilities(grantedTriggeredAbilitySupport.grantedWatchedAbilities(
                     gameData, creature, attackerId, damageToPlayer), damageToPlayer));
-            TriggerContext.SourceDealsCombatDamage combatDamageContext = new TriggerContext.SourceDealsCombatDamage(
-                    creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt);
+            TriggerCause combatDamageCause = new DamageTriggers.SourceDealsCombatDamage(
+                    creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt).cause();
             for (TriggeredAbility ability : triggered) {
                 // CR 603.2: the event condition is judged as the ability triggers; the creature that dealt the
                 // damage is the event's permanent ("if it's not a token", Semblance Scanner).
@@ -457,7 +456,7 @@ public class CombatDamageTriggers {
                             record.setTriggeringPlayerId(defenderId);
                             record.setAttackedTargetId(defenderId);
                             record.setEventDamageSource(creature, attackerId);
-                        }).withEvent(combatDamageContext));
+                        }).withCause(combatDamageCause));
                 if (put) {
                     gameLogService.append(gameData, GameLog.cardThen(creature.getCard(),
                             "'s combat damage trigger goes on the stack."));
@@ -497,8 +496,8 @@ public class CombatDamageTriggers {
                                                                     UUID defenderId,
                                                                     int damageDealt) {
         Trigger sameName = Triggers.creatureWithSameNameDealsCombatDamageToPlayer();
-        TriggerContext.SourceDealsCombatDamage combatDamageContext = new TriggerContext.SourceDealsCombatDamage(
-                creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt);
+        TriggerCause combatDamageCause = new DamageTriggers.SourceDealsCombatDamage(
+                creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt).cause();
         gameData.forEachPermanent((watcherControllerId, watcher) -> {
             FilterContext triggerContext = FilterContext.of(gameData)
                     .withSourceCardId(watcher.getCard().getId())
@@ -528,7 +527,7 @@ public class CombatDamageTriggers {
                             entry.setTargetId(defenderId);
                             entry.setEventValue(damageDealt);
                             entry.setNonTargeting(true);
-                        }).withEvent(combatDamageContext));
+                        }).withCause(combatDamageCause));
                 if (triggered) {
                     gameLogService.append(gameData, GameLog.cardThen(watcher.getCard(),
                             "'s same-name combat damage trigger goes on the stack."));
@@ -584,8 +583,8 @@ public class CombatDamageTriggers {
                 abilities.addAll(plainDamageAbilities(WatchedAbilities.persistent(perm, damageToOpponent),
                         damageToOpponent));
             }
-            TriggerContext.SourceDealsCombatDamage combatDamageContext = new TriggerContext.SourceDealsCombatDamage(
-                    creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt);
+            TriggerCause combatDamageCause = new DamageTriggers.SourceDealsCombatDamage(
+                    creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt).cause();
             for (TriggeredAbility ability : abilities) {
                 if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), attachedContext)) {
                     continue;
@@ -606,7 +605,7 @@ public class CombatDamageTriggers {
                             entry.setEventDamageSource(creature, attackerId);
                             entry.setEventValue(damageDealt);
                             entry.setNonTargeting(true);
-                        }).withEvent(combatDamageContext));
+                        }).withCause(combatDamageCause));
                 if (triggered) {
                     gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                             "'s combat damage trigger goes on the stack."));
@@ -623,8 +622,8 @@ public class CombatDamageTriggers {
     private void checkPlayerAttachedCurseCombatDamageTriggers(GameData gameData, Permanent creature, UUID attackerId,
                                                               UUID defenderId, int damageDealt) {
         Trigger combatDamageToPlayer = Triggers.dealsCombatDamageToPlayer();
-        TriggerContext.SourceDealsCombatDamage combatDamageContext = new TriggerContext.SourceDealsCombatDamage(
-                creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt);
+        TriggerCause combatDamageCause = new DamageTriggers.SourceDealsCombatDamage(
+                creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt).cause();
         gameData.forEachPermanent((ownerId, perm) -> {
             if (!perm.isAttached() || !defenderId.equals(perm.getAttachedTo())) {
                 return;
@@ -649,7 +648,7 @@ public class CombatDamageTriggers {
                             entry.setTriggeringPermanentControllerId(attackerId);
                             entry.setEventValue(damageDealt);
                             entry.setNonTargeting(true);
-                        }).withEvent(combatDamageContext));
+                        }).withCause(combatDamageCause));
                 if (triggered) {
                     gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                             "'s combat damage trigger goes on the stack."));
@@ -838,8 +837,8 @@ public class CombatDamageTriggers {
                         }
                         entry.setNonTargeting(true);
                         entry.setSourcePermanentSnapshot(new Permanent(perm));
-                    }).withEvent(new TriggerContext.SourceDealsCombatDamage(
-                    creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt)));
+                    }).withCause(new DamageTriggers.SourceDealsCombatDamage(
+                    creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt).cause()));
             if (triggered) {
                 gameLogService.append(gameData, GameLog.cardThen(perm.getCard(),
                         "'s triggered ability goes on the stack."));
@@ -1686,7 +1685,7 @@ public class CombatDamageTriggers {
             damageTriggers.collectDealtDamageAbilities(gameData,
                     data.dealtDamageAbilities(),
                     Triggers.dealtDamage(), data.sourceSnapshot(), data.controllerId(),
-                    new TriggerContext.DamageToCreature(data.sourceSnapshot(), data.damageDealt(),
+                    new DamageTriggers.DamageToCreature(data.sourceSnapshot(), data.damageDealt(),
                             data.sourceControllerId(), data.sourceCard(), data.sourcePermanentId(),
                             data.sourceSnapshot()));
         }

@@ -66,7 +66,6 @@ import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import com.github.laxika.magicalvibes.service.trigger.TriggerMatchContext;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
@@ -1005,8 +1004,8 @@ public class SpellTriggers {
      */
     boolean collectCopyAbility(TriggerMatchContext match, TriggeredAbility ability, SpellFilter filter,
                                        SpellEvent.Copied copied) {
-        TriggerContext.SpellCopy spellCopy = new TriggerContext.SpellCopy(copied.copy(), copied.copyingPlayerId());
-        boolean isSpell = switch (spellCopy.copiedSpell().getEntryType()) {
+        StackEntry copy = copied.copy();
+        boolean isSpell = switch (copy.getEntryType()) {
             case CREATURE_SPELL, ENCHANTMENT_SPELL, SORCERY_SPELL, INSTANT_SPELL,
                  ARTIFACT_SPELL, PLANESWALKER_SPELL, BATTLE_SPELL -> true;
             default -> false;
@@ -1016,34 +1015,34 @@ public class SpellTriggers {
         }
         if (filter.stackEntry() != null
                 && !predicateEvaluationService.matchesStackEntryPredicate(
-                spellCopy.copiedSpell(), filter.stackEntry(), match.permanent().getAttachedTo())) {
+                copy, filter.stackEntry(), match.permanent().getAttachedTo())) {
             return false;
         }
         if (filter.spell() != null
                 && !predicateEvaluationService.matchesCardPredicate(
-                spellCopy.copiedSpell().getCard(), filter.spell(),
+                copy.getCard(), filter.spell(),
                 match.permanent().getOriginalCard().getId(), match.gameData(),
-                spellCopy.copyingPlayerId())) {
+                copied.copyingPlayerId())) {
             return false;
         }
         ConditionContext context = ConditionContext.forPermanent(match.permanent(), match.controllerId())
-                .withTriggeringSpell(spellCopy.copiedSpell());
+                .withTriggeringSpell(copy);
         if (!conditionEvaluationService.eventConditionMet(match.gameData(), ability.options(), context)) {
             return false;
         }
-        Card copiedCard = spellCopy.copiedSpell().getCard();
+        Card copiedCard = copy.getCard();
         int copiedSpellManaValue = copiedCard.getManaValue()
                 + (copiedCard.getParsedManaCost() == null ? 0
-                : spellCopy.copiedSpell().getXValue() * copiedCard.getParsedManaCost().getXSymbolCount());
+                : copy.getXValue() * copiedCard.getParsedManaCost().getXSymbolCount());
         Card sourceCard = match.permanent().getCard();
         return triggeredAbilityStackService.put(match.gameData(), new TriggeredAbilityRequest(ability, sourceCard,
                 match.permanent(), match.controllerId(), sourceCard.getName() + "'s ability", context, entry -> {
-                    entry.setTargetId(spellCopy.copyingPlayerId());
+                    entry.setTargetId(copied.copyingPlayerId());
                     entry.setNonTargeting(true);
                     entry.setTriggeringCardId(copiedCard.getId());
-                    entry.setTriggeringSpell(spellCopy.copiedSpell());
+                    entry.setTriggeringSpell(copy);
                     entry.setEventValue(copiedSpellManaValue);
-                }).withEvent(spellCopy));
+                }).withCause(new TriggerCause.SpellCastOrCopied(copy.getCard(), copied.copyingPlayerId())));
     }
 
     private static boolean mentionsXInManaCost(CardPredicate predicate) {
@@ -1275,8 +1274,7 @@ public class SpellTriggers {
         };
         TriggeredAbilityRequest request = new TriggeredAbilityRequest(trigger.ability(), sourceCard, source,
                 match.controllerId(), abilityDescription(sourceCard), interveningContext, record)
-                .withEvent(new TriggerContext.SpellCast(spellCard, castingPlayerId, castZone,
-                        exiledSourcePermanentId));
+                .withCause(new TriggerCause.SpellCastOrCopied(spellCard, castingPlayerId));
         boolean triggered = triggeredAbilityStackService.put(match.gameData(), request);
         // "Whenever a player kicks a spell": once for each time it was kicked.
         for (int kick = 1; triggered && trigger.filter().kicker() == SpellFilter.Kicker.EACH_KICK && kick < kickCount;
@@ -1715,7 +1713,7 @@ public class SpellTriggers {
         boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
                 changed ? ability.withEffects(transformed) : ability, sourceCard, perm, controllerId,
                 sourceCard.getName() + "'s ability", context, spellWatchRecord(event, perm, planarObject))
-                .withEvent(doublerEvent(event)));
+                .withCause(doublerCause(event)));
         if (triggered) {
             gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         }
@@ -1726,17 +1724,13 @@ public class SpellTriggers {
      * The event the stack door's "triggers an additional time" effects read ("an instant or sorcery spell you cast or
      * copy", Veyran), or {@code null} for an event none of them names.
      */
-    private static TriggerContext doublerEvent(SpellEvent event) {
+    private static TriggerCause doublerCause(SpellEvent event) {
         return switch (event) {
-            case SpellEvent.Cast cast -> castContext(cast);
-            case SpellEvent.Copied copied -> new TriggerContext.SpellCopy(copied.copy(), copied.copyingPlayerId());
+            case SpellEvent.Cast cast -> new TriggerCause.SpellCastOrCopied(cast.spellCard(), cast.castingPlayerId());
+            case SpellEvent.Copied copied -> new TriggerCause.SpellCastOrCopied(copied.copy().getCard(),
+                    copied.copyingPlayerId());
             default -> null;
         };
-    }
-
-    private static TriggerContext.SpellCast castContext(SpellEvent.Cast cast) {
-        return new TriggerContext.SpellCast(cast.spellCard(), cast.castingPlayerId(), cast.castZone(),
-                cast.exiledSourcePermanentId());
     }
 
     /**

@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -357,7 +356,7 @@ public class LibraryTriggers {
             if (plane != null) {
                 entry.setSourcePlanarObject(plane);
             }
-        }, new TriggerContext.Draw(drawingPlayerId));
+        }, new TriggerCause.Drew());
     }
 
     /**
@@ -376,7 +375,7 @@ public class LibraryTriggers {
                 entry.setTriggeringCardId(card.getId());
                 entry.setTriggeringCardGraveyardEntryVersion(graveyardEntryVersion);
             }
-        }, new TriggerContext.Draw(drawingPlayerId));
+        }, new TriggerCause.Drew());
     }
 
     /**
@@ -883,20 +882,20 @@ public class LibraryTriggers {
     /**
      * Hands {@code ability} of {@code sourceCard} ({@code source} on the battlefield, or {@code null} for a card in
      * another zone) to the stack door: its event condition is judged here in {@code context} (CR 603.2), and
-     * {@code record} is stamped on its entry whatever its effects are; {@code event} is the draw the "triggers an
+     * {@code record} is stamped on its entry whatever its effects are; {@code cause} is the draw the "triggers an
      * additional time" effects of draws count, or {@code null}.
      *
      * @return whether it triggered
      */
     private boolean put(GameData gameData, TriggeredAbility ability, Card sourceCard, Permanent source,
-                        UUID controllerId, ConditionContext context, TriggerRecord record, TriggerContext event) {
+                        UUID controllerId, ConditionContext context, TriggerRecord record, TriggerCause cause) {
         if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), context)) {
             return false;
         }
         TriggeredAbilityRequest request = new TriggeredAbilityRequest(ability, sourceCard, source, controllerId,
                 sourceCard.getName() + "'s ability", context, record);
-        if (event != null) {
-            request = request.withEvent(event);
+        if (cause != null) {
+            request = request.withCause(cause);
         }
         boolean triggered = stackService.put(gameData, request);
         if (triggered) {

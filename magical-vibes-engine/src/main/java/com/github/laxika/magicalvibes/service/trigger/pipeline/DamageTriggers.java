@@ -50,7 +50,6 @@ import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import java.util.ArrayList;
@@ -500,9 +499,9 @@ public class DamageTriggers {
         enqueueTemporaryAnyCreatureCombatDamageToPlayerTriggers(gameData, creature, creatureControllerId,
                 damagedPlayerId, damageDealt);
 
-        // The creature dealing combat damage to a player is the event the "triggers an additional time" effects judge.
-        TriggerContext event = new TriggerContext.SourceDealsCombatDamage(creature.getCard(), creatureControllerId,
-                creature.getId(), damageDealt, damageDealt);
+        // The creature dealing combat damage to a player is the cause the "triggers an additional time" effects judge.
+        TriggerCause cause = new SourceDealsCombatDamage(creature.getCard(), creatureControllerId,
+                creature.getId(), damageDealt, damageDealt).cause();
         gameData.forEachPermanent((controllerId, source) -> {
             if (source.isLosesAllAbilitiesUntilEndOfTurn()) {
                 return;
@@ -538,7 +537,7 @@ public class DamageTriggers {
                     continue;
                 }
                 boolean triggered = putEventAbility(gameData, read.ability(), source.getCard(), source, controllerId,
-                        ConditionContext.forPermanent(source, controllerId).withTargetId(damagedPlayerId), event,
+                        ConditionContext.forPermanent(source, controllerId).withTargetId(damagedPlayerId), cause,
                         entry -> {
                             entry.setTargetId(damagedPlayerId);
                             entry.setNonTargeting(true);
@@ -604,7 +603,6 @@ public class DamageTriggers {
             return;
         }
         Trigger watch = Triggers.youAreDealtCombatDamage();
-        TriggerContext event = new TriggerContext.DamageToControllerAmount(damagedPlayerId, damageDealt);
         for (Permanent source : new ArrayList<>(gameData.playerBattlefields.getOrDefault(damagedPlayerId, List.of()))) {
             if (source.isLosesAllAbilitiesUntilEndOfTurn()) {
                 continue;
@@ -612,7 +610,7 @@ public class DamageTriggers {
             for (TriggeredAbility ability : printedWatchedAbilities(gameData, source, watch)) {
                 requirePlainCombatAbility(ability, watch);
                 putEventAbility(gameData, ability, source.getCard(), source, damagedPlayerId,
-                        ConditionContext.forPermanent(source, damagedPlayerId).withEventValue(damageDealt), event,
+                        ConditionContext.forPermanent(source, damagedPlayerId).withEventValue(damageDealt), null,
                         entry -> {
                             entry.setNonTargeting(true);
                             entry.setEventValue(damageDealt);
@@ -634,8 +632,8 @@ public class DamageTriggers {
                 .map(Map.Entry::getKey).findFirst().orElse(creature.getCard().getOwnerId());
         if (!damagedPlayerId.equals(creatureOwnerId)) return;
 
-        TriggerContext event = new TriggerContext.SourceDealsCombatDamage(creature.getCard(), creatureControllerId,
-                creature.getId(), damageDealt, damageDealt);
+        TriggerCause cause = new SourceDealsCombatDamage(creature.getCard(), creatureControllerId,
+                creature.getId(), damageDealt, damageDealt).cause();
         gameData.forEachPermanent((controllerId, source) -> {
             if (source.isLosesAllAbilitiesUntilEndOfTurn()) {
                 return;
@@ -654,7 +652,7 @@ public class DamageTriggers {
                     continue;
                 }
                 putEventAbility(gameData, read.ability(), source.getCard(), source, controllerId,
-                        ConditionContext.forPermanent(source, controllerId), event, entry -> {
+                        ConditionContext.forPermanent(source, controllerId), cause, entry -> {
                             entry.setTriggeringPermanentId(creature.getId());
                             entry.setTriggeringPermanentControllerId(creatureControllerId);
                             entry.setNonTargeting(true);
@@ -682,8 +680,8 @@ public class DamageTriggers {
             return;
         }
         UUID dealerControllerId = gameQueryService.findPermanentController(gameData, matchingDealer.getId());
-        TriggerContext event = new TriggerContext.SourceDealsCombatDamage(matchingDealer.getCard(), dealerControllerId,
-                matchingDealer.getId(), 1, 1);
+        TriggerCause cause = new SourceDealsCombatDamage(matchingDealer.getCard(), dealerControllerId,
+                matchingDealer.getId(), 1, 1).cause();
 
         gameData.forEachPermanent((controllerId, source) -> {
             if (controllerId.equals(damagedPlayerId)
@@ -701,7 +699,7 @@ public class DamageTriggers {
                             + read.ability());
                 }
                 putEventAbility(gameData, read.ability(), source.getCard(), source, controllerId,
-                        ConditionContext.forPermanent(source, controllerId), event,
+                        ConditionContext.forPermanent(source, controllerId), cause,
                         entry -> entry.setNonTargeting(true));
             }
         });
@@ -734,20 +732,18 @@ public class DamageTriggers {
         boolean sourceHasAbilities = !gameQueryService.hasLostAllAbilities(gameData, source);
         Trigger toPlayer = Triggers.dealsDamageToPlayer();
         Trigger toOpponent = Triggers.dealsDamageToOpponent();
-        TriggerContext event = new TriggerContext.DamageToControllerAmount(damagedPlayerId, damageDealt,
-                source.getId(), controllerId);
         // Each ability, printed or granted, of either watch, is one object of all its effects (CR 603.3).
         if (sourceHasAbilities) {
             List<TriggeredAbility> toPlayerAbilities = abilities(gameData, source, toPlayer);
             for (TriggeredAbility ability : toPlayerAbilities) {
                 putDealsDamageToPlayerAbility(gameData, ability, toPlayer, source, controllerId, damagedPlayerId,
-                        damageDealt, event);
+                        damageDealt, null);
             }
             if (!controllerId.equals(damagedPlayerId)) {
                 List<TriggeredAbility> toOpponentAbilities = abilities(gameData, source, toOpponent);
                 for (TriggeredAbility ability : toOpponentAbilities) {
                     putDealsDamageToPlayerAbility(gameData, ability, toOpponent, source, controllerId,
-                            damagedPlayerId, damageDealt, event);
+                            damagedPlayerId, damageDealt, null);
                 }
             }
         }
@@ -763,12 +759,12 @@ public class DamageTriggers {
             if (attachedControllerId == null) return;
             for (TriggeredAbility ability : abilities(gameData, perm, toPlayer)) {
                 putDealsDamageToPlayerAbility(gameData, ability, toPlayer, perm, attachedControllerId,
-                        damagedPlayerId, damageDealt, event);
+                        damagedPlayerId, damageDealt, null);
             }
             if (!ownerId.equals(damagedPlayerId)) {
                 for (TriggeredAbility ability : abilities(gameData, perm, toOpponent)) {
                     putDealsDamageToPlayerAbility(gameData, ability, toOpponent, perm, attachedControllerId,
-                            damagedPlayerId, damageDealt, event);
+                            damagedPlayerId, damageDealt, null);
                 }
             }
         });
@@ -784,12 +780,12 @@ public class DamageTriggers {
      */
     private void putDealsDamageToPlayerAbility(GameData gameData, TriggeredAbility ability, Trigger watch,
                                                Permanent source, UUID controllerId, UUID damagedPlayerId, int damage,
-                                               TriggerContext event) {
+                                               TriggerCause cause) {
         requireNothingToJudge(ability, watch);
         Permanent snapshot = new Permanent(source);
         putEventAbility(gameData, ability, source.getCard(), source, controllerId,
                 ConditionContext.forPermanent(source, controllerId).withTargetId(damagedPlayerId)
-                        .withEventValue(damage), event, entry -> {
+                        .withEventValue(damage), cause, entry -> {
                     entry.setSourcePermanentSnapshot(snapshot);
                     entry.setNonTargeting(true);
                     entry.setTargetId(damagedPlayerId);
@@ -842,7 +838,7 @@ public class DamageTriggers {
 
         if (damagedPlayerBattlefield == null) return;
 
-        var ctx = new TriggerContext.DamageToController(damagedPlayerId, sourcePermanentId, isCombatDamage);
+        TriggerCause cause = combatDamageToPlayerCause(sourcePermanentId, isCombatDamage);
         Trigger watch = Triggers.permanentDealsDamageToYou();
         Trigger watched = watch;
         UUID sourceControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
@@ -858,7 +854,7 @@ public class DamageTriggers {
                 if (filter != null && !damageFilterMatches(gameData, perm, damagedPlayerId, filter, source)) continue;
                 putEventAbility(gameData, ability, perm.getCard(), perm, damagedPlayerId,
                         ConditionContext.forPermanent(perm, damagedPlayerId)
-                                .withTriggeringPermanentId(sourcePermanentId), ctx,
+                                .withTriggeringPermanentId(sourcePermanentId), cause,
                         damageEventRecord(perm, null, source.getId(), sourceControllerId));
             }
         }
@@ -901,7 +897,7 @@ public class DamageTriggers {
         if (!gameQueryService.isCreature(gameData, sourceCreature)) return;
 
         Trigger watch = Triggers.creatureDealsCombatDamageToYou();
-        TriggerContext event = new TriggerContext.DamageToController(damagedPlayerId, sourceCreature.getId(), true);
+        TriggerCause cause = TriggerCause.Damage.toPlayer(new TriggerCause.CombatDamageToPlayer(null, sourceCreature.getId(), null, true));
         UUID creatureControllerId = gameQueryService.findPermanentController(gameData, sourceCreature.getId());
         for (Permanent perm : new ArrayList<>(gameData.permanentsAndFaceUpSchemes(damagedPlayerId))) {
             List<TriggeredAbility> abilities = printedWatchedAbilities(gameData, perm, watch);
@@ -925,7 +921,7 @@ public class DamageTriggers {
                 }
                 Permanent snapshot = new Permanent(perm);
                 boolean triggered = putEventAbility(gameData, ability, perm.getCard(), perm, damagedPlayerId,
-                        ConditionContext.forPermanent(perm, damagedPlayerId), event, entry -> {
+                        ConditionContext.forPermanent(perm, damagedPlayerId), cause, entry -> {
                             entry.setTargetId(sourceCreature.getId());
                             entry.setNonTargeting(true);
                             entry.setSourcePermanentSnapshot(snapshot);
@@ -961,7 +957,6 @@ public class DamageTriggers {
         if (enchantedCreature == null) return;
 
         Trigger watch = Triggers.enchantedCreatureDealsDamageToYou();
-        TriggerContext event = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount, sourcePermanentId);
         for (Permanent aura : new ArrayList<>(damagedPlayerBattlefield)) {
             if (!aura.isAttached() || !sourcePermanentId.equals(aura.getAttachedTo())) continue;
             UUID creatureControllerId = gameQueryService.findPermanentController(gameData, sourcePermanentId);
@@ -971,7 +966,7 @@ public class DamageTriggers {
             for (TriggeredAbility ability : printedWatchedAbilities(gameData, aura, watch)) {
                 requireNothingToJudge(ability, watch);
                 putEventAbility(gameData, ability, aura.getCard(), aura, damagedPlayerId,
-                        ConditionContext.forPermanent(aura, damagedPlayerId).withEventValue(amount), event, entry -> {
+                        ConditionContext.forPermanent(aura, damagedPlayerId).withEventValue(amount), null, entry -> {
                             entry.setEventValue(amount);
                             entry.setTriggeringPermanentId(enchantedCreature.getId());
                             entry.setTriggeringCardId(enchantedCreature.getCard().getId());
@@ -1009,15 +1004,13 @@ public class DamageTriggers {
         List<Permanent> damagedPlayerBattlefield = gameData.playerBattlefields.get(damagedPlayerId);
         if (damagedPlayerBattlefield == null) return;
 
-        var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount, null,
-                sourceControllerId);
         boolean fromOpponent = sourceControllerId != null && !sourceControllerId.equals(damagedPlayerId);
         boolean fromAllySource = sourceControllerId != null && sourceControllerId.equals(damagedPlayerId);
 
         for (Permanent perm : List.copyOf(damagedPlayerBattlefield)) {
             if (includeAllSources) {
                 putPlayerDamageAbilities(gameData, perm, damagedPlayerId, Triggers.youAreDealtDamage(),
-                        ctx, damagedPlayerId, damagedPlayerId, amount, null, sourceControllerId);
+                        null, damagedPlayerId, damagedPlayerId, amount, null, sourceControllerId);
             }
             if (fromAllySource) {
                 // "Whenever a source you control deals damage to you" (Daredevil, Fearless Fighter's "target
@@ -1026,13 +1019,13 @@ public class DamageTriggers {
                 for (TriggeredAbility ability : printedWatchedAbilities(gameData, perm, allySource)) {
                     requireNothingToJudge(ability, allySource);
                     putEventAbility(gameData, ability, perm.getCard(), perm, damagedPlayerId,
-                            ConditionContext.forPermanent(perm, damagedPlayerId).withEventValue(amount), ctx,
+                            ConditionContext.forPermanent(perm, damagedPlayerId).withEventValue(amount), null,
                             entry -> entry.setEventValue(amount));
                 }
             }
             if (fromOpponent) {
                 putPlayerDamageAbilities(gameData, perm, damagedPlayerId,
-                        Triggers.youAreDealtDamageBySourceOpponentControls(), ctx, sourceControllerId, damagedPlayerId,
+                        Triggers.youAreDealtDamageBySourceOpponentControls(), null, sourceControllerId, damagedPlayerId,
                         amount, null, sourceControllerId);
             }
         }
@@ -1043,13 +1036,13 @@ public class DamageTriggers {
      * (see {@link #playerDamageRecord}); these watches' collectors judge no filter of their own.
      */
     private void putPlayerDamageAbilities(GameData gameData, Permanent perm, UUID controllerId, Trigger watch,
-                                          TriggerContext event, UUID thatPlayerId, UUID damagedPlayerId, int amount,
+                                          TriggerCause cause, UUID thatPlayerId, UUID damagedPlayerId, int amount,
                                           UUID sourcePermanentId, UUID sourceControllerId) {
         for (TriggeredAbility ability : printedWatchedAbilities(gameData, perm, watch)) {
             requireNothingToJudge(ability, watch);
             putEventAbility(gameData, ability, perm.getCard(), perm, controllerId,
                     ConditionContext.forPermanent(perm, controllerId).withTargetId(damagedPlayerId)
-                            .withTriggeringPermanentId(sourcePermanentId).withEventValue(amount), event,
+                            .withTriggeringPermanentId(sourcePermanentId).withEventValue(amount), cause,
                     playerDamageRecord(perm, null, thatPlayerId, damagedPlayerId, amount, sourcePermanentId,
                             sourceControllerId));
         }
@@ -1105,10 +1098,9 @@ public class DamageTriggers {
         if (amount <= 0 || sourceControllerId == null || sourceControllerId.equals(damagedPlayerId)) return;
         List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
         if (battlefield == null) return;
-        var ctx = new TriggerContext.NoncombatDamageToOpponent(damagedPlayerId, sourceControllerId, amount);
         for (Permanent permanent : List.copyOf(battlefield)) {
             putPlayerDamageAbilities(gameData, permanent, sourceControllerId,
-                    Triggers.sourceYouControlDealsNoncombatDamageToOpponent(), ctx, damagedPlayerId,
+                    Triggers.sourceYouControlDealsNoncombatDamageToOpponent(), null, damagedPlayerId,
                     damagedPlayerId, amount, null, sourceControllerId);
         }
     }
@@ -1128,8 +1120,6 @@ public class DamageTriggers {
         List<Permanent> sourceControllerBattlefield = gameData.playerBattlefields.get(sourceControllerId);
         if (sourceControllerBattlefield == null) return;
 
-        var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount, sourcePermanentId,
-                sourceControllerId);
         for (Permanent perm : List.copyOf(sourceControllerBattlefield)) {
             for (Trigger watch : List.of(Triggers.sourceYouControlDealsDamageToOpponent(),
                     Triggers.sourceYouControlDealsDamageToPlayer())) {
@@ -1148,7 +1138,7 @@ public class DamageTriggers {
                     // Champion's "5 or more damage", Talon of Pain's "other than this artifact", CR 603.4).
                     putEventAbility(gameData, ability, perm.getCard(), perm, sourceControllerId,
                             ConditionContext.forPermanent(perm, sourceControllerId)
-                                    .withTriggeringPermanentId(sourcePermanentId).withEventValue(amount), ctx,
+                                    .withTriggeringPermanentId(sourcePermanentId).withEventValue(amount), null,
                             playerDamageRecord(perm, null, damagedPlayerId, damagedPlayerId, amount,
                                     sourcePermanentId, sourceControllerId));
                 }
@@ -1168,12 +1158,11 @@ public class DamageTriggers {
             UUID sourcePermanentId, int amount) {
         if (amount <= 0 || damagedPlayerId == null) return;
 
-        var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount, sourcePermanentId);
         gameData.forEachBattlefield((watcherPlayerId, battlefield) -> {
             if (watcherPlayerId.equals(damagedPlayerId)) return;
 
             for (Permanent perm : List.copyOf(battlefield)) {
-                putPlayerDamageAbilities(gameData, perm, watcherPlayerId, Triggers.opponentDealtDamage(), ctx,
+                putPlayerDamageAbilities(gameData, perm, watcherPlayerId, Triggers.opponentDealtDamage(), null,
                         damagedPlayerId, damagedPlayerId, amount, sourcePermanentId, null);
             }
         });
@@ -1197,8 +1186,7 @@ public class DamageTriggers {
 
         if (!gameQueryService.isCreature(gameData, damageSource)) return;
 
-        var ctx = new TriggerContext.CreatureDamageToYouOrYourPermanent(
-                damageSource, damagedPlayerId, damagedPermanent, damage);
+        TriggerCause cause = TriggerCause.Damage.toPermanent(damagedPermanent);
         Trigger watch = Triggers.creatureDealsDamageToYouOrYourPermanent();
         Trigger watched = watch;
         UUID damageSourceControllerId = gameQueryService.findPermanentController(gameData, damageSource.getId());
@@ -1217,7 +1205,7 @@ public class DamageTriggers {
                     continue;
                 }
                 putEventAbility(gameData, ability, perm.getCard(), perm, damagedPlayerId,
-                        ConditionContext.forPermanent(perm, damagedPlayerId).withEventValue(damage), ctx,
+                        ConditionContext.forPermanent(perm, damagedPlayerId).withEventValue(damage), cause,
                         damageEventRecord(perm, damage, damageSource.getId(), damageSourceControllerId));
             }
         }
@@ -1253,8 +1241,8 @@ public class DamageTriggers {
             List<Permanent> battlefield = gameData.playerBattlefields.get(damagedPlayerId);
             if (battlefield == null) continue;
 
-            TriggerContext.SourceDamageToYouOrYourPermanent ctx =
-                    new TriggerContext.SourceDamageToYouOrYourPermanent(
+            SourceDamageToYouOrYourPermanent ctx =
+                    new SourceDamageToYouOrYourPermanent(
                             sourceCard, sourceControllerId, sourcePermanentId, damagedPlayerId,
                             recipient.damagedPermanentId());
             for (Permanent perm : List.copyOf(battlefield)) {
@@ -1265,7 +1253,7 @@ public class DamageTriggers {
                     requireNothingToJudge(ability, Triggers.sourceOpponentControlsDealsDamageToYouOrYourPermanent());
                     putEventAbility(gameData, ability, perm.getCard(), perm, damagedPlayerId,
                             ConditionContext.forPermanent(perm, damagedPlayerId).withTargetId(damagedPlayerId)
-                                    .withTriggeringPermanentId(sourcePermanentId), ctx,
+                                    .withTriggeringPermanentId(sourcePermanentId), ctx.cause(),
                             playerDamageRecord(perm, null, sourceControllerId, damagedPlayerId, 0,
                                     sourcePermanentId, sourceControllerId));
                 }
@@ -1286,7 +1274,7 @@ public class DamageTriggers {
      * stack (CR 603.3d; Circle of Affliction's "target player").
      */
     private void collectSourceDealsDamageAbilities(GameData gameData, Permanent watcher, UUID controllerId,
-            List<Trigger> watches, TriggerContext.SourceDealsDamage event, int eventValue) {
+            List<Trigger> watches, SourceDealsDamage event, int eventValue) {
         for (Trigger watch : watches) {
             Trigger watched = watch;
             for (TriggeredAbility ability : printedWatchedAbilities(gameData, watcher, watch)) {
@@ -1296,7 +1284,7 @@ public class DamageTriggers {
                     continue;
                 }
                 putEventAbility(gameData, ability, watcher.getCard(), watcher, controllerId,
-                        ConditionContext.forPermanent(watcher, controllerId).withEventValue(eventValue), event,
+                        ConditionContext.forPermanent(watcher, controllerId).withEventValue(eventValue), event.cause(),
                         damageEventRecord(watcher, eventValue, event.sourcePermanentId(), event.sourceControllerId()));
             }
         }
@@ -1310,7 +1298,7 @@ public class DamageTriggers {
      * the source and the watcher isn't it.
      */
     private void collectSourceDealsDamageToPermanentOrPlayerAbilities(GameData gameData, Permanent watcher,
-            UUID controllerId, TriggerContext.SourceDealsDamage event) {
+            UUID controllerId, SourceDealsDamage event) {
         List<Trigger> watches = new ArrayList<>(2);
         watches.add(Triggers.sourceDealsDamageToPermanentOrPlayer());
         if (controllerId.equals(event.sourceControllerId()) && !watcher.getId().equals(event.sourcePermanentId())) {
@@ -1342,7 +1330,7 @@ public class DamageTriggers {
      * intervening "if" in the same context (CR 603.4). Its record is {@link #damageRecipientRecord}'s.
      */
     private void collectDamageRecipientAbilities(GameData gameData, Permanent watcher, UUID controllerId,
-            List<Trigger> watches, TriggerContext.SourceDealsDamage event, UUID recipientId,
+            List<Trigger> watches, SourceDealsDamage event, UUID recipientId,
             boolean playerRecipient, int damage) {
         ConditionContext context = ConditionContext.forPermanent(watcher, controllerId).withTargetId(recipientId)
                 .withEventValue(damage);
@@ -1359,7 +1347,7 @@ public class DamageTriggers {
                         playerRecipient)) {
                     continue;
                 }
-                putEventAbility(gameData, ability, watcher.getCard(), watcher, controllerId, context, event,
+                putEventAbility(gameData, ability, watcher.getCard(), watcher, controllerId, context, event.cause(),
                         damageRecipientRecord(gameData, watcher, recipientId, playerRecipient, damage));
             }
         }
@@ -1379,7 +1367,6 @@ public class DamageTriggers {
         if (damage <= 0 || damagedPlayerId == null) return;
         Trigger watch = Triggers.playerDealtDamage();
         Trigger watched = watch;
-        var event = new TriggerContext.DamageToControllerAmount(damagedPlayerId, damage);
         gameData.forEachBattlefield((controllerId, battlefield) -> {
             for (Permanent watcher : List.copyOf(battlefield)) {
                 for (TriggeredAbility ability : printedWatchedAbilities(gameData, watcher, watch)) {
@@ -1391,7 +1378,7 @@ public class DamageTriggers {
                     }
                     putEventAbility(gameData, ability, watcher.getCard(), watcher, controllerId,
                             ConditionContext.forPermanent(watcher, controllerId).withTargetId(damagedPlayerId)
-                                    .withEventValue(damage), event,
+                                    .withEventValue(damage), null,
                             damageRecipientRecord(gameData, watcher, damagedPlayerId, true, damage));
                 }
             }
@@ -1405,7 +1392,7 @@ public class DamageTriggers {
      * matches no recipient of the other kind.
      */
     private boolean damageRecipientMatches(GameData gameData, Permanent watcher, UUID controllerId,
-                                           DamageTrigger trigger, TriggerContext.SourceDealsDamage event,
+                                           DamageTrigger trigger, SourceDealsDamage event,
                                            UUID recipientId, boolean playerRecipient) {
         if (trigger.damagedFilter() == null && trigger.damagedPlayerFilter() == null) return true;
         if (playerRecipient) {
@@ -1453,7 +1440,7 @@ public class DamageTriggers {
      * kind of source matches no source of the other kind.
      */
     private boolean damageSourceMatches(GameData gameData, Permanent watcher, UUID controllerId,
-                                        DamageTrigger trigger, TriggerContext.SourceDealsDamage event) {
+                                        DamageTrigger trigger, SourceDealsDamage event) {
         if (trigger.filter() == null && trigger.spellFilter() == null) return true;
         if (event.sourcePermanentId() != null) {
             if (trigger.filter() == null) return false;
@@ -1478,7 +1465,7 @@ public class DamageTriggers {
         if (!sourceCard.hasType(CardType.INSTANT) && !sourceCard.hasType(CardType.SORCERY)) {
             return;
         }
-        var context = new TriggerContext.SourceDealsDamage(sourceCard, sourceControllerId,
+        var context = new SourceDealsDamage(sourceCard, sourceControllerId,
                 batch.getSourcePermanentId(), batch.getAmount(), batch.getDamageToPlayers(),
                 batch.getSingleCreatureSpellTargetId(), batch.getDamageToPermanents(), false);
         List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
@@ -1496,7 +1483,7 @@ public class DamageTriggers {
                 Permanent snapshot = new Permanent(permanent);
                 putEventAbility(gameData, ability, permanent.getCard(), permanent, sourceControllerId,
                         ConditionContext.forPermanent(permanent, sourceControllerId)
-                                .withEventValue(batch.getAmount()), context, entry -> {
+                                .withEventValue(batch.getAmount()), context.cause(), entry -> {
                             entry.setEventValue(batch.getAmount());
                             entry.setSourcePermanentSnapshot(snapshot);
                         });
@@ -1511,11 +1498,11 @@ public class DamageTriggers {
                 }
                 queueInstantOrSorceryDealsDamageToPlayerTriggers(gameData, permanent, sourceControllerId,
                         damagedPlayerId, damage, Triggers.instantOrSorceryYouControlDealsDamageToPlayer(),
-                        context);
+                        context.cause());
                 if (!damagedPlayerId.equals(sourceControllerId)) {
                     queueInstantOrSorceryDealsDamageToPlayerTriggers(gameData, permanent, sourceControllerId,
                             damagedPlayerId, damage, Triggers.instantOrSorceryYouControlDealsDamageToOpponent(),
-                            context);
+                            context.cause());
                 }
             });
         }
@@ -1528,12 +1515,12 @@ public class DamageTriggers {
      * it ("that much") its event value.
      */
     private void collectInstantOrSorceryDealsDamageToItsOnlyTargetCreatureAbilities(GameData gameData,
-            Permanent watcher, UUID controllerId, UUID creatureId, int damage, TriggerContext.SourceDealsDamage event) {
+            Permanent watcher, UUID controllerId, UUID creatureId, int damage, SourceDealsDamage event) {
         Trigger watch = Triggers.instantOrSorceryYouControlDealsDamageToItsOnlyTargetCreature();
         for (TriggeredAbility ability : printedWatchedAbilities(gameData, watcher, watch)) {
             requireNothingToJudge(ability, watch);
             putEventAbility(gameData, ability, watcher.getCard(), watcher, controllerId,
-                    ConditionContext.forPermanent(watcher, controllerId).withEventValue(damage), event,
+                    ConditionContext.forPermanent(watcher, controllerId).withEventValue(damage), event.cause(),
                     damageEventRecord(watcher, damage, creatureId,
                             gameQueryService.findPermanentController(gameData, creatureId)));
         }
@@ -1550,13 +1537,13 @@ public class DamageTriggers {
     private void queueInstantOrSorceryDealsDamageToPlayerTriggers(GameData gameData, Permanent permanent,
                                                                   UUID controllerId, UUID damagedPlayerId,
                                                                   int damage, Trigger watch,
-                                                                  TriggerContext event) {
+                                                                  TriggerCause cause) {
         for (TriggeredAbility ability : printedWatchedAbilities(gameData, permanent, watch)) {
             requireNothingToJudge(ability, watch);
             Permanent snapshot = new Permanent(permanent);
             putEventAbility(gameData, ability, permanent.getCard(), permanent, controllerId,
                     ConditionContext.forPermanent(permanent, controllerId).withTargetId(damagedPlayerId)
-                            .withEventValue(damage), event, entry -> {
+                            .withEventValue(damage), cause, entry -> {
                         entry.setEventValue(damage);
                         entry.setTriggeringPlayerId(damagedPlayerId);
                         entry.setSourcePermanentSnapshot(snapshot);
@@ -1618,7 +1605,7 @@ public class DamageTriggers {
                                                    Map<UUID, Permanent> damagedPermanentSnapshots) {
         if (sourceCard == null || sourceControllerId == null || totalDamage <= 0) return;
 
-        var ctx = new TriggerContext.SourceDealsDamage(sourceCard, sourceControllerId, sourcePermanentId, totalDamage,
+        var ctx = new SourceDealsDamage(sourceCard, sourceControllerId, sourcePermanentId, totalDamage,
                 damageToPlayers == null ? Map.of() : Map.copyOf(damageToPlayers), singleCreatureSpellTargetId,
                 damageToPermanents == null ? Map.of() : Map.copyOf(damageToPermanents), combatDamage,
                 damagedPermanentSnapshots);
@@ -1660,7 +1647,7 @@ public class DamageTriggers {
                     ? ConditionContext.forPermanent(sourcePermanent, sourceControllerId)
                     : ConditionContext.forCard(sourceCard, sourceControllerId);
             putEventAbility(gameData, ability, sourceCard, abilitySource, sourceControllerId,
-                    selfContext.withEventValue(ctx.totalDamage()), ctx,
+                    selfContext.withEventValue(ctx.totalDamage()), ctx.cause(),
                     entry -> entry.setEventValue(ctx.totalDamage()));
         }
 
@@ -1686,7 +1673,7 @@ public class DamageTriggers {
      * matches {@code filter}: the filter of "whenever this deals damage to one or more [permanents]", judged with the
      * damage source as the ability's source.
      */
-    private boolean damagedPermanentMatches(GameData gameData, TriggerContext.SourceDealsDamage ctx,
+    private boolean damagedPermanentMatches(GameData gameData, SourceDealsDamage ctx,
                                             PermanentPredicate filter, Permanent sourcePermanent) {
         FilterContext recipientContext = FilterContext.of(gameData)
                 .withSourceControllerId(ctx.sourceControllerId())
@@ -1829,7 +1816,7 @@ public class DamageTriggers {
         if (sourceCard == null || sourceControllerId == null || sourcePermanentId == null || totalDamage <= 0) {
             return;
         }
-        var ctx = new TriggerContext.SourceDealsCombatDamage(
+        var ctx = new SourceDealsCombatDamage(
                 sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers, damagedPlayerId);
         dispatchSourceDealsCombatDamageTriggers(gameData, sourceCard, sourceControllerId, sourcePermanentId,
                 totalDamage, damageToPlayers, snapshottedSelfAbilities, Triggers.dealsCombatDamage());
@@ -1858,7 +1845,7 @@ public class DamageTriggers {
             for (TriggeredAbility ability : WatchedAbilities.printed(watcher.getCard(), allyWatch, Zone.BATTLEFIELD)) {
                 requirePlainCombatAbility(ability, allyWatch);
                 putEventAbility(gameData, ability, watcher.getCard(), watcher, sourceControllerId,
-                        ConditionContext.forPermanent(watcher, sourceControllerId), ctx, entry -> {
+                        ConditionContext.forPermanent(watcher, sourceControllerId), ctx.cause(), entry -> {
                             entry.setTriggeringPermanentId(sourcePermanentId);
                             entry.setNonTargeting(true);
                             entry.setEventValue(totalDamage);
@@ -1890,14 +1877,14 @@ public class DamageTriggers {
      * "deals combat damage to a player").
      */
     private void putEquipmentCombatDamageAbilities(GameData gameData, Permanent equipment, UUID controllerId,
-                                                   Trigger watch, TriggerContext.SourceDealsCombatDamage ctx,
+                                                   Trigger watch, SourceDealsCombatDamage ctx,
                                                    int damage) {
         Permanent snapshot = new Permanent(equipment);
         for (TriggeredAbility ability : WatchedAbilities.printed(equipment.getCard(), watch, Zone.BATTLEFIELD)) {
             requirePlainCombatAbility(ability, watch);
             putEventAbility(gameData, ability, equipment.getCard(), equipment, controllerId,
                     ConditionContext.forPermanent(equipment, controllerId)
-                            .withTriggeringPermanentId(ctx.sourcePermanentId()), ctx, entry -> {
+                            .withTriggeringPermanentId(ctx.sourcePermanentId()), ctx.cause(), entry -> {
                         if (ctx.damagedPlayerId() != null) {
                             entry.setTargetId(ctx.damagedPlayerId());
                         }
@@ -1926,7 +1913,7 @@ public class DamageTriggers {
                                                                                   UUID sourcePermanentId,
                                                                                   int totalDamage,
                                                                                   int damageToPlayers) {
-        var ctx = new TriggerContext.SourceDealsCombatDamage(
+        var ctx = new SourceDealsCombatDamage(
                 sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers);
         gameData.forEachPermanent((watcherControllerId, watcher) -> {
             if (!watcher.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
@@ -1957,8 +1944,7 @@ public class DamageTriggers {
             return;
         }
 
-        var context = new TriggerContext.AllyCreaturesDealDamageToPlayer(
-                damagedPlayerId, sourceControllerId, damageDealers);
+        TriggerCause cause = TriggerCause.Damage.toPlayer(new TriggerCause.CombatDamageToPlayer(null, null, sourceControllerId, false));
         Trigger toPlayer = Triggers.creaturesYouControlDealDamageToPlayer();
         for (Permanent permanent : List.copyOf(battlefield)) {
             for (TriggeredAbility ability : allyCreaturesDealDamageAbilities(gameData, permanent, toPlayer)) {
@@ -1969,16 +1955,16 @@ public class DamageTriggers {
                     continue;
                 }
                 putAllyCreaturesDealDamageAbility(gameData, ability, permanent, sourceControllerId, damagedPlayerId,
-                        context);
+                        cause);
             }
         }
     }
 
     /** Hands a "whenever one or more creatures you control deal damage to a player [an opponent]" ability to the door. */
     private void putAllyCreaturesDealDamageAbility(GameData gameData, TriggeredAbility ability, Permanent watcher,
-                                                   UUID controllerId, UUID damagedPlayerId, TriggerContext event) {
+                                                   UUID controllerId, UUID damagedPlayerId, TriggerCause cause) {
         putEventAbility(gameData, ability, watcher.getCard(), watcher, controllerId,
-                ConditionContext.forPermanent(watcher, controllerId).withTargetId(damagedPlayerId), event, entry -> {
+                ConditionContext.forPermanent(watcher, controllerId).withTargetId(damagedPlayerId), cause, entry -> {
                     entry.setTargetId(damagedPlayerId);
                     entry.setNonTargeting(true);
                 });
@@ -2052,8 +2038,7 @@ public class DamageTriggers {
             return;
         }
 
-        var context = new TriggerContext.AllyCreaturesDealDamageToPlayer(
-                damagedPlayerId, sourceControllerId, damageDealers);
+        TriggerCause cause = TriggerCause.Damage.toPlayer(new TriggerCause.CombatDamageToPlayer(null, null, sourceControllerId, false));
         Trigger toOpponent = Triggers.creaturesYouControlDealDamageToOpponent();
         for (AllyDamageTriggerSnapshot watcher : watchers) {
             for (TriggeredAbility ability : watcher.abilities()) {
@@ -2066,7 +2051,7 @@ public class DamageTriggers {
                     continue;
                 }
                 putAllyCreaturesDealDamageAbility(gameData, ability, watcher.permanent(), sourceControllerId,
-                        damagedPlayerId, context);
+                        damagedPlayerId, cause);
             }
         }
     }
@@ -2129,7 +2114,7 @@ public class DamageTriggers {
         if (controllerId == null) return;
 
         collectDealtDamageAbilities(gameData, Read.readByAbility(abilities, watched), watch,
-                damagedCreature, controllerId, new TriggerContext.DamageToCreature(damagedCreature, damageDealt,
+                damagedCreature, controllerId, new DamageToCreature(damagedCreature, damageDealt,
                         damageSourceControllerId, sourceCard, sourcePermanentId));
     }
 
@@ -2148,7 +2133,7 @@ public class DamageTriggers {
      */
     public void collectDealtDamageAbilities(GameData gameData, List<List<Read>> abilities,
                                             Trigger watch, Permanent damaged, UUID controllerId,
-                                            TriggerContext.DamageToCreature ctx) {
+                                            DamageToCreature ctx) {
         if (ctx.damageDealt() <= 0 || controllerId == null) return;
         ConditionContext conditionContext = ConditionContext.forPermanent(damaged, controllerId)
                 .withTargetId(ctx.damageSourceControllerId())
@@ -2163,7 +2148,7 @@ public class DamageTriggers {
             if (read.filter() != null) {
                 throw new IllegalStateException("The collector of " + watch + " judges no filter: " + read.ability());
             }
-            putEventAbility(gameData, read.ability(), damaged.getCard(), damaged, controllerId, conditionContext, ctx,
+            putEventAbility(gameData, read.ability(), damaged.getCard(), damaged, controllerId, conditionContext, ctx.cause(),
                     entry -> {
                         entry.setEventValue(ctx.damageDealt());
                         entry.setTriggeringPermanentId(ctx.sourcePermanentId());
@@ -2183,7 +2168,7 @@ public class DamageTriggers {
     public void checkEnchantedCreatureDealtDamageTriggers(GameData gameData, Permanent damagedCreature, int damageDealt) {
         if (damageDealt <= 0) return;
 
-        var ctx = new TriggerContext.DamageToCreature(damagedCreature, damageDealt, null);
+        var ctx = new DamageToCreature(damagedCreature, damageDealt, null);
         Trigger watch = Triggers.enchantedCreatureDealtDamage();
         gameData.forEachPermanent((auraOwnerId, perm) -> {
             if (!perm.isAttached() || !perm.getAttachedTo().equals(damagedCreature.getId())) {
@@ -2193,7 +2178,7 @@ public class DamageTriggers {
                 requireNothingToJudge(ability, watch);
                 putEventAbility(gameData, ability, perm.getCard(), perm, auraOwnerId,
                         ConditionContext.forPermanent(perm, auraOwnerId)
-                                .withTriggeringPermanentId(damagedCreature.getId()).withEventValue(damageDealt), ctx,
+                                .withTriggeringPermanentId(damagedCreature.getId()).withEventValue(damageDealt), ctx.cause(),
                         damagedPermanentRecord(gameData, perm, damagedCreature,
                                 gameQueryService.findPermanentController(gameData, damagedCreature.getId()),
                                 damageDealt, true, false));
@@ -2254,7 +2239,6 @@ public class DamageTriggers {
             int damageDealt) {
         if (damageDealt <= 0) return;
 
-        var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, damageDealt);
         Trigger watch = Triggers.enchantedPlayerDealtDamage();
         gameData.forEachPermanent((auraOwnerId, perm) -> {
             if (!perm.isAttached() || !damagedPlayerId.equals(perm.getAttachedTo())) {
@@ -2264,7 +2248,7 @@ public class DamageTriggers {
                 requireNothingToJudge(ability, watch);
                 putEventAbility(gameData, ability, perm.getCard(), perm, auraOwnerId,
                         ConditionContext.forPermanent(perm, auraOwnerId).withTargetId(damagedPlayerId)
-                                .withEventValue(damageDealt), ctx, entry -> {
+                                .withEventValue(damageDealt), null, entry -> {
                             entry.setTargetId(damagedPlayerId);
                             entry.setNonTargeting(true);
                             entry.setEventValue(damageDealt);
@@ -2281,14 +2265,13 @@ public class DamageTriggers {
      */
     public void checkOpponentCreatureDealtDamageTriggers(GameData gameData, UUID damagedCreatureControllerId) {
         Trigger watch = Triggers.creatureOpponentControlsDealtDamage();
-        TriggerContext event = new TriggerContext.DamageToControllerAmount(damagedCreatureControllerId, 0);
         gameData.forEachPermanent((playerId, perm) -> {
             // Only fire when the damaged creature was controlled by an opponent of this permanent's controller
             if (playerId.equals(damagedCreatureControllerId)) return;
             for (TriggeredAbility ability : printedWatchedAbilities(gameData, perm, watch)) {
                 requireNothingToJudge(ability, watch);
                 putEventAbility(gameData, ability, perm.getCard(), perm, playerId,
-                        ConditionContext.forPermanent(perm, playerId), event, entry -> {
+                        ConditionContext.forPermanent(perm, playerId), null, entry -> {
                         });
             }
         });
@@ -2335,8 +2318,6 @@ public class DamageTriggers {
                 ? List.of(Triggers.creatureOrPlaneswalkerOpponentControlsDealtExcessDamage(),
                         Triggers.creatureOrPlaneswalkerOpponentControlsDealtExcessNoncombatDamage())
                 : List.of(Triggers.creatureOrPlaneswalkerOpponentControlsDealtExcessDamage());
-        TriggerContext context = new TriggerContext.OpponentPermanentDealtExcessDamage(
-                damagedPermanent, damagedPermanentControllerId, excessDamage);
         gameData.forEachPermanent((playerId, perm) -> {
             if (playerId.equals(damagedPermanentControllerId)) return;
 
@@ -2347,7 +2328,7 @@ public class DamageTriggers {
                     putEventAbility(gameData, ability, perm.getCard(), perm, playerId,
                             ConditionContext.forPermanent(perm, playerId).withTargetId(damagedPermanent.getId())
                                     .withTriggeringPermanentId(damagedPermanent.getId())
-                                    .withEventValue(excessDamage), context, entry -> {
+                                    .withEventValue(excessDamage), null, entry -> {
                                 entry.setTargetId(damagedPermanent.getId());
                                 entry.setNonTargeting(true);
                                 entry.setEventValue(excessDamage);
@@ -2368,8 +2349,6 @@ public class DamageTriggers {
                 || excessDamage <= 0 || !gameQueryService.isCreature(gameData, damagedCreature)) return;
 
         Trigger watch = Triggers.creaturesOpponentsControlDealtExcessNoncombatDamage();
-        TriggerContext context = new TriggerContext.OpponentPermanentDealtExcessDamage(
-                damagedCreature, damagedCreatureControllerId, excessDamage);
         gameData.forEachPermanent((playerId, perm) -> {
             if (playerId.equals(damagedCreatureControllerId)) return;
 
@@ -2384,7 +2363,7 @@ public class DamageTriggers {
                 }
                 putEventAbility(gameData, ability, perm.getCard(), perm, playerId,
                         ConditionContext.forPermanent(perm, playerId).withTargetId(damagedCreature.getId()),
-                        context, entry -> {
+                        null, entry -> {
                             entry.setTargetId(damagedCreature.getId());
                             entry.setNonTargeting(true);
                         });
@@ -2469,8 +2448,6 @@ public class DamageTriggers {
         if (planeswalker == null || !planeswalker.getCard().hasType(CardType.PLANESWALKER)
                 || !gameQueryService.isCreature(gameData, damageSource)) return;
 
-        TriggerContext context = new TriggerContext.CreatureDealsDamageToPlaneswalker(
-                damageSource, damagedPlaneswalkerId, damage, combatDamage);
         // "Deals combat damage to a planeswalker" (Zagras, Thief of Heartbeats) only for combat damage.
         List<Trigger> watches = combatDamage
                 ? List.of(Triggers.creatureYouControlDealsDamageToPlaneswalker(),
@@ -2492,7 +2469,7 @@ public class DamageTriggers {
                     // planeswalker", the creature the triggering permanent.
                     putEventAbility(gameData, ability, watcher.getCard(), watcher, watcherControllerId,
                             ConditionContext.forPermanent(watcher, watcherControllerId)
-                                    .withTriggeringPermanentId(damageSource.getId()).withEventValue(damage), context,
+                                    .withTriggeringPermanentId(damageSource.getId()).withEventValue(damage), null,
                             entry -> {
                                 entry.setTargetId(damagedPlaneswalkerId);
                                 entry.setTriggeringPermanentId(damageSource.getId());
@@ -2518,8 +2495,6 @@ public class DamageTriggers {
             return;
         }
 
-        TriggerContext context = new TriggerContext.CreatureDealsDamageToPlaneswalker(
-                damageSource, damagedPlaneswalkerId, damage, combatDamage);
         Trigger watch = Triggers.creatureDealsDamageToEnchantedPlaneswalker();
         gameData.forEachPermanent((watcherControllerId, watcher) -> {
             if (!damagedPlaneswalkerId.equals(watcher.getAttachedTo())) return;
@@ -2528,7 +2503,7 @@ public class DamageTriggers {
                 requireNothingToJudge(ability, watch);
                 putEventAbility(gameData, ability, watcher.getCard(), watcher, watcherControllerId,
                         ConditionContext.forPermanent(watcher, watcherControllerId)
-                                .withTriggeringPermanentId(damageSource.getId()).withEventValue(damage), context,
+                                .withTriggeringPermanentId(damageSource.getId()).withEventValue(damage), null,
                         entry -> {
                             entry.setTargetId(damageSource.getId());
                             entry.setTriggeringPermanentId(damageSource.getId());
@@ -2577,7 +2552,7 @@ public class DamageTriggers {
                                                          int totalDamage, int damageToPlayers,
                                                          List<TriggeredAbility> snapshottedAbilities,
                                                          Trigger watch) {
-        var ctx = new TriggerContext.SourceDealsCombatDamage(
+        var ctx = new SourceDealsCombatDamage(
                 sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers);
         List<TriggeredAbility> abilities = new ArrayList<>(WatchedAbilities.printed(sourceCard, watch, Zone.BATTLEFIELD));
         Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, sourcePermanentId);
@@ -2596,7 +2571,7 @@ public class DamageTriggers {
         for (TriggeredAbility ability : abilities) {
             requirePlainCombatAbility(ability, watch);
             putEventAbility(gameData, ability, sourceCard, abilitySource, sourceControllerId,
-                    context.withEventValue(totalDamage), ctx, entry -> entry.setEventValue(totalDamage));
+                    context.withEventValue(totalDamage), ctx.cause(), entry -> entry.setEventValue(totalDamage));
         }
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
             if (!watcher.ability().hasWatchedTrigger(watch)
@@ -2665,9 +2640,7 @@ public class DamageTriggers {
         }
         ConditionContext context = ConditionContext.forPermanent(watcher, controllerId)
                 .withTriggeringPermanentId(event.damagedCreatureId()).withEventValue(event.damage());
-        TriggerContext triggerContext = new TriggerContext.CreatureDealsDamageToCreature(
-                event.damageSource(), event.damagedCreatureId(), event.damage(), event.combatDamage(),
-                event.damagedCreature(), event.damagedCreatureControllerId());
+        TriggerCause triggerContext = TriggerCause.Damage.toPermanent(event.damagedCreature(), event.damagedCreatureControllerId());
         Permanent snapshot = new Permanent(watcher);
         for (int i = 0; i < watches.size(); i++) {
             Trigger watch = watches.get(i);
@@ -2744,8 +2717,7 @@ public class DamageTriggers {
                                                     UUID damagedCreatureControllerId, int damageDealt) {
         if (damagedCreatureControllerId == null || damageDealt <= 0) return;
 
-        var ctx = new TriggerContext.AnyCreatureDealtDamage(
-                damagedCreature, damagedCreatureControllerId, damageDealt);
+        TriggerCause cause = TriggerCause.Damage.toPermanent(damagedCreature, damagedCreatureControllerId);
         Trigger creatureDealtDamage = Triggers.creatureDealtDamage();
         Trigger watched = creatureDealtDamage;
         gameData.forEachPermanent((playerId, perm) -> {
@@ -2758,7 +2730,7 @@ public class DamageTriggers {
                 }
                 putEventAbility(gameData, ability, perm.getCard(), perm, playerId,
                         ConditionContext.forPermanent(perm, playerId)
-                                .withTriggeringPermanentId(damagedCreature.getId()).withEventValue(damageDealt), ctx,
+                                .withTriggeringPermanentId(damagedCreature.getId()).withEventValue(damageDealt), cause,
                         damagedPermanentRecord(gameData, perm, damagedCreature, damagedCreatureControllerId,
                                 damageDealt, false, true));
             }
@@ -2806,8 +2778,7 @@ public class DamageTriggers {
                 gameData, damagedPermanent.getId());
         if (damagedPermanentControllerId == null) return;
 
-        var ctx = new TriggerContext.AnyPermanentDealtDamage(
-                damagedPermanent, damagedPermanentControllerId, damageDealt);
+        TriggerCause cause = TriggerCause.Damage.toPermanent(damagedPermanent, damagedPermanentControllerId);
         Trigger watch = Triggers.permanentYouControlDealtDamage();
         Trigger watched = watch;
         gameData.forEachPermanent((playerId, perm) -> {
@@ -2822,7 +2793,7 @@ public class DamageTriggers {
                 }
                 putEventAbility(gameData, ability, perm.getCard(), perm, playerId,
                         ConditionContext.forPermanent(perm, playerId)
-                                .withTriggeringPermanentId(damagedPermanent.getId()).withEventValue(damageDealt), ctx,
+                                .withTriggeringPermanentId(damagedPermanent.getId()).withEventValue(damageDealt), cause,
                         damagedPermanentRecord(gameData, perm, damagedPermanent, damagedPermanentControllerId,
                                 damageDealt, true, false));
             }
@@ -2915,32 +2886,30 @@ public class DamageTriggers {
 
     public void checkNoncombatDamageToOpponentTriggers(GameData gameData, UUID damagedPlayerId,
             UUID sourceControllerId, int damageAmount) {
-        var ctx = new TriggerContext.NoncombatDamageToOpponent(
-                damagedPlayerId, sourceControllerId, damageAmount);
 
         gameData.forEachBattlefield((playerId, battlefield) -> {
             if (playerId.equals(damagedPlayerId)) return;
 
             for (Permanent perm : List.copyOf(battlefield)) {
                 putPlayerDamageAbilities(gameData, perm, playerId, Triggers.opponentDealtNoncombatDamage(),
-                        ctx, damagedPlayerId, damagedPlayerId, damageAmount, null, sourceControllerId);
+                        null, damagedPlayerId, damagedPlayerId, damageAmount, null, sourceControllerId);
             }
         });
 
         if (sourceControllerId == null || sourceControllerId.equals(damagedPlayerId)) return;
 
         putGraveyardDamageAbilities(gameData, sourceControllerId,
-                Triggers.sourceYouControlDealsNoncombatDamageToOpponent(), ctx);
+                Triggers.sourceYouControlDealsNoncombatDamageToOpponent(), null);
     }
 
     /**
      * Hands each ability {@code watch} reads of the cards in {@code controllerId}'s graveyard (their own and their
-     * perpetual ones; none while cards in graveyards have lost all abilities) to the stack door for {@code event}, the
-     * record naming this graveyard incarnation of the card (CR 400.7). No graveyard damage ability is written with a
+     * perpetual ones; none while cards in graveyards have lost all abilities) to the stack door, with {@code cause} as
+     * what caused them to trigger and the record naming this graveyard incarnation of the card (CR 400.7). No graveyard damage ability is written with a
      * filter or a multiplicity; this throws on one.
      */
     private void putGraveyardDamageAbilities(GameData gameData, UUID controllerId, Trigger watch,
-                                             TriggerContext event) {
+                                             TriggerCause cause) {
         List<Card> graveyard = gameData.playerGraveyards.get(controllerId);
         if (graveyard == null) return;
 
@@ -2951,7 +2920,7 @@ public class DamageTriggers {
                 requireNothingToJudge(ability, watch);
                 long graveyardEntryVersion = gameData.graveyardEntryVersion(card.getId());
                 putEventAbility(gameData, ability, card, null, controllerId, ConditionContext.forCard(card, controllerId),
-                        event, entry -> entry.setSourceGraveyardEntryVersion(graveyardEntryVersion));
+                        cause, entry -> entry.setSourceGraveyardEntryVersion(graveyardEntryVersion));
             }
         }
     }
@@ -2994,7 +2963,7 @@ public class DamageTriggers {
 
         putGraveyardDamageAbilities(gameData, controllerId,
                 Triggers.opponentDealtDamageByRedInstantSorceryOrPlaneswalkerYouControl(),
-                new TriggerContext.DamageToControllerAmount(damagedPlayerId, 0));
+                null);
     }
 
     /**
@@ -3012,8 +2981,8 @@ public class DamageTriggers {
         }
         putGraveyardDamageAbilities(gameData, sourceControllerId,
                 Triggers.instantOrSorceryYouControlDealsDamageToOpponentOrBattle(),
-                new TriggerContext.SourceDealsDamage(sourceCard, sourceControllerId, null, 0, Map.of(), null,
-                        Map.of(), false));
+                new SourceDealsDamage(sourceCard, sourceControllerId, null, 0, Map.of(), null,
+                        Map.of(), false).cause());
     }
 
     /** Handles "Whenever damage that would be dealt to you is prevented, ..." triggers: the damage prevented is "that much". */
@@ -3023,13 +2992,12 @@ public class DamageTriggers {
         List<Permanent> damagedPlayerBattlefield = gameData.playerBattlefields.get(damagedPlayerId);
         if (damagedPlayerBattlefield == null) return;
 
-        var ctx = new TriggerContext.DamageToControllerAmount(damagedPlayerId, amount, null, null);
         Trigger watch = Triggers.damageToYouPrevented();
         for (Permanent perm : List.copyOf(damagedPlayerBattlefield)) {
             for (TriggeredAbility ability : printedWatchedAbilities(gameData, perm, watch)) {
                 requireNothingToJudge(ability, watch);
                 putEventAbility(gameData, ability, perm.getCard(), perm, damagedPlayerId,
-                        ConditionContext.forPermanent(perm, damagedPlayerId).withEventValue(amount), ctx,
+                        ConditionContext.forPermanent(perm, damagedPlayerId).withEventValue(amount), null,
                         entry -> entry.setEventValue(amount));
             }
         }
@@ -3128,8 +3096,7 @@ public class DamageTriggers {
             return;
         }
 
-        TriggerContext context = new TriggerContext.DamageToController(
-                damagedPlayerId, damageSource.getId(), isCombatDamage);
+        TriggerCause cause = combatDamageToPlayerCause(damageSource.getId(), isCombatDamage);
         Trigger watch = Triggers.permanentDealsDamageToYou();
         UUID creatureControllerId = gameQueryService.findPermanentController(gameData, damageSource.getId());
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
@@ -3141,7 +3108,7 @@ public class DamageTriggers {
                 PlanarObject plane = object.copy();
                 putEventAbility(gameData, ability, object.getCard(), null, damagedPlayerId,
                         ConditionContext.forCard(object.getCard(), damagedPlayerId)
-                                .withTriggeringPermanentId(damageSource.getId()), context, entry -> {
+                                .withTriggeringPermanentId(damageSource.getId()), cause, entry -> {
                             entry.setTriggeringPermanentId(damageSource.getId());
                             entry.setTriggeringPermanentControllerId(creatureControllerId);
                             entry.setSourcePlanarObject(plane);
@@ -3163,10 +3130,8 @@ public class DamageTriggers {
         Permanent damageSource = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (damageSource == null || !gameQueryService.isCreature(gameData, damageSource)) return;
 
-        TriggerContext context = new TriggerContext.DamageToControllerAmount(
-                damagedPlayerId, amount, sourcePermanentId, sourceControllerId);
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
-            putPlanarDamageAbilities(gameData, object, Triggers.sourceYouControlDealsDamageToOpponent(), context,
+            putPlanarDamageAbilities(gameData, object, Triggers.sourceYouControlDealsDamageToOpponent(), null,
                     sourceControllerId, damagedPlayerId, amount, sourcePermanentId, sourceControllerId);
         }
     }
@@ -3183,11 +3148,9 @@ public class DamageTriggers {
         Permanent damageSource = gameQueryService.findPermanentById(gameData, sourcePermanentId);
         if (damageSource == null || !gameQueryService.isCreature(gameData, damageSource)) return;
 
-        TriggerContext context = new TriggerContext.DamageToControllerAmount(
-                damagedPlayerId, amount, sourcePermanentId, damagedPlayerId);
         for (PlanarObject object : List.copyOf(gameData.planechase.faceUp)) {
             putPlanarDamageAbilities(gameData, object, Triggers.creatureDealsDamageToItsController(),
-                    context, gameData.planechase.controllerId, damagedPlayerId, amount, sourcePermanentId,
+                    null, gameData.planechase.controllerId, damagedPlayerId, amount, sourcePermanentId,
                     damagedPlayerId);
         }
     }
@@ -3199,13 +3162,13 @@ public class DamageTriggers {
      * the damage.
      */
     private void putPlanarDamageAbilities(GameData gameData, PlanarObject object, Trigger watch,
-                                          TriggerContext context, UUID controllerId, UUID damagedPlayerId, int amount,
+                                          TriggerCause cause, UUID controllerId, UUID damagedPlayerId, int amount,
                                           UUID sourcePermanentId, UUID sourceControllerId) {
         for (TriggeredAbility ability : Read.printed(object.getCard(), watch)) {
             requireNothingToJudge(ability, watch);
             putEventAbility(gameData, ability, object.getCard(), null, controllerId,
                     ConditionContext.forCard(object.getCard(), controllerId).withTargetId(damagedPlayerId)
-                            .withTriggeringPermanentId(sourcePermanentId).withEventValue(amount), context,
+                            .withTriggeringPermanentId(sourcePermanentId).withEventValue(amount), cause,
                     playerDamageRecord(null, object, damagedPlayerId, damagedPlayerId, amount, sourcePermanentId,
                             sourceControllerId), sourcePermanentId);
         }
@@ -3213,34 +3176,34 @@ public class DamageTriggers {
 
     /**
      * Hands {@code ability}, a triggered ability of {@code sourceCard} ({@code source} on the battlefield, or
-     * {@code null} for a card in another zone) controlled by {@code controllerId}, to the stack door for
-     * {@code event}: its event condition is judged now in {@code context} (CR 603.2), which carries what the event
-     * names (its value, "that player", the triggering permanent); the door judges its intervening "if" in the same
-     * context (CR 603.4) and its limit, counts the additional times it triggers, stamps {@code record} on its entry
+     * {@code null} for a card in another zone) controlled by {@code controllerId}, to the stack door: its event
+     * condition is judged now in {@code context} (CR 603.2), which carries what the event names (its value, "that
+     * player", the triggering permanent); the door judges its intervening "if" in the same context (CR 603.4) and its
+     * limit, counts the additional times {@code cause} makes it trigger (CR 603.2d), stamps {@code record} on its entry
      * whatever its effects are and chooses its targets as it goes on the stack (CR 603.3d).
      *
      * @return whether it triggered
      */
     private boolean putEventAbility(GameData gameData, TriggeredAbility ability, Card sourceCard, Permanent source,
-                                    UUID controllerId, ConditionContext context, TriggerContext event,
+                                    UUID controllerId, ConditionContext context, TriggerCause cause,
                                     TriggerRecord record) {
-        return putEventAbility(gameData, ability, sourceCard, source, controllerId, context, event, record, null);
+        return putEventAbility(gameData, ability, sourceCard, source, controllerId, context, cause, record, null);
     }
 
     /**
-     * {@link #putEventAbility(GameData, TriggeredAbility, Card, Permanent, UUID, ConditionContext, TriggerContext,
+     * {@link #putEventAbility(GameData, TriggeredAbility, Card, Permanent, UUID, ConditionContext, TriggerCause,
      * TriggerRecord)} for an event about the creature {@code limitCreatureId}, by which "once each turn for each
      * creature" (Stensia) is judged and marked.
      */
     private boolean putEventAbility(GameData gameData, TriggeredAbility ability, Card sourceCard, Permanent source,
-                                    UUID controllerId, ConditionContext context, TriggerContext event,
+                                    UUID controllerId, ConditionContext context, TriggerCause cause,
                                     TriggerRecord record, UUID limitCreatureId) {
         if (!conditionEvaluationService.eventConditionMet(gameData, ability.options(), context)) {
             return false;
         }
         boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
                 sourceCard, source, controllerId, sourceCard.getName() + "'s ability", context, record)
-                .withEvent(event).withLimitCreature(limitCreatureId));
+                .withCause(cause).withLimitCreature(limitCreatureId));
         if (triggered) {
             gameLogService.append(gameData, GameLog.abilityTriggers(sourceCard));
         }
@@ -3310,8 +3273,7 @@ public class DamageTriggers {
         List<Permanent> battlefield = gameData.playerBattlefields.get(sourceControllerId);
         if (battlefield == null) return;
 
-        TriggerContext context = new TriggerContext.SourceDealsNoncombatDamageToCreature(
-                damagedCreature, damageDealt, sourceControllerId);
+        TriggerCause cause = TriggerCause.Damage.toPermanent(damagedCreature);
         UUID damagedControllerId = gameQueryService.findPermanentController(gameData, damagedCreature.getId());
         Trigger watch = Triggers.sourceYouControlDealsNoncombatDamageToCreature();
         for (Permanent watcher : List.copyOf(battlefield)) {
@@ -3320,7 +3282,7 @@ public class DamageTriggers {
                 putEventAbility(gameData, ability, watcher.getCard(), watcher, sourceControllerId,
                         ConditionContext.forPermanent(watcher, sourceControllerId)
                                 .withTriggeringPermanentId(damagedCreature.getId()).withEventValue(damageDealt),
-                        context, damagedPermanentRecord(gameData, watcher, damagedCreature, damagedControllerId,
+                        cause, damagedPermanentRecord(gameData, watcher, damagedCreature, damagedControllerId,
                                 damageDealt, false, false));
             }
         }
@@ -3504,6 +3466,107 @@ public class DamageTriggers {
                 log.info("Game {} - {} triggers for combat damage dealt to an opponent",
                         gameData.id, description);
             }
+        }
+    }
+
+    /**
+     * The cause of damage the permanent {@code sourcePermanentId} dealt to a player: combat damage to a player, which
+     * the effects that judge it read as the source is now (CR 603.2d), or none for noncombat damage.
+     */
+    private static TriggerCause combatDamageToPlayerCause(UUID sourcePermanentId, boolean combatDamage) {
+        return combatDamage
+                ? TriggerCause.Damage.toPlayer(new TriggerCause.CombatDamageToPlayer(null, sourcePermanentId, null, true))
+                : null;
+    }
+
+    /**
+     * A source dealing damage in one event, its damage summed across every simultaneous recipient: the source's card,
+     * its controller and permanent (if it was one), the damage to each player and each permanent, the creature a
+     * single-target creature spell targeted, whether it was combat damage, and the damaged permanents as they were
+     * dealt it.
+     */
+    record SourceDealsDamage(Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId,
+                             int totalDamage, Map<UUID, Integer> damageToPlayers,
+                             UUID singleCreatureSpellTargetId,
+                             Map<UUID, Integer> damageToPermanents,
+                             boolean combatDamage, Map<UUID, Permanent> damagedPermanentSnapshots) {
+
+        SourceDealsDamage {
+            damagedPermanentSnapshots = Map.copyOf(damagedPermanentSnapshots);
+        }
+
+        SourceDealsDamage(Card sourceCard, UUID sourceControllerId, UUID sourcePermanentId,
+                          int totalDamage, Map<UUID, Integer> damageToPlayers,
+                          UUID singleCreatureSpellTargetId, Map<UUID, Integer> damageToPermanents,
+                          boolean combatDamage) {
+            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers,
+                    singleCreatureSpellTargetId, damageToPermanents, combatDamage, Map.of());
+        }
+
+        /** Combat damage to a player by a creature source, and the permanents dealt damage. */
+        TriggerCause cause() {
+            return new TriggerCause.Damage(combatDamage && !damageToPlayers.isEmpty()
+                    ? new TriggerCause.CombatDamageToPlayer(sourceCard, sourcePermanentId, sourceControllerId, true)
+                    : null,
+                    damageToPermanents.keySet().stream()
+                            .map(id -> new TriggerCause.DamagedPermanent(null, id, null)).toList());
+        }
+    }
+
+    /**
+     * A source dealing combat damage: its card, controller and permanent, the damage it dealt, the part of it dealt to
+     * players, and the player dealt it when it is one.
+     */
+    record SourceDealsCombatDamage(Card sourceCard, UUID sourceControllerId,
+                                   UUID sourcePermanentId, int totalDamage,
+                                   int damageToPlayers, UUID damagedPlayerId) {
+
+        SourceDealsCombatDamage(Card sourceCard, UUID sourceControllerId,
+                                UUID sourcePermanentId, int totalDamage, int damageToPlayers) {
+            this(sourceCard, sourceControllerId, sourcePermanentId, totalDamage, damageToPlayers, null);
+        }
+
+        /** Combat damage to a player by a creature source, when some of it was dealt to players. */
+        TriggerCause cause() {
+            return damageToPlayers > 0
+                    ? TriggerCause.Damage.toPlayer(new TriggerCause.CombatDamageToPlayer(sourceCard, sourcePermanentId,
+                    sourceControllerId, true))
+                    : null;
+        }
+    }
+
+    /**
+     * A permanent dealt damage: the permanent, the damage, the source's controller as it dealt it, the source (its card,
+     * and its permanent if it was one) and {@code damagedLastKnown}, the damaged permanent as it was dealt the damage
+     * with the damage keywords it had, which the combat damage step takes before its creatures die; {@code null} has
+     * the collector take it from the permanent, which is still on the battlefield.
+     */
+    record DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId,
+                            Card sourceCard, UUID sourcePermanentId, Permanent damagedLastKnown) {
+
+        DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId,
+                         Card sourceCard, UUID sourcePermanentId) {
+            this(damagedCreature, damageDealt, damageSourceControllerId, sourceCard, sourcePermanentId, null);
+        }
+
+        DamageToCreature(Permanent damagedCreature, int damageDealt, UUID damageSourceControllerId) {
+            this(damagedCreature, damageDealt, damageSourceControllerId, null, null);
+        }
+
+        /** The permanent dealt damage, its controller looked up as the ability is counted. */
+        TriggerCause cause() {
+            return TriggerCause.Damage.toPermanent(damagedCreature);
+        }
+    }
+
+    /** A source an opponent controls damaging a player or, when {@code damagedPermanentId} is set, their permanent. */
+    record SourceDamageToYouOrYourPermanent(Card sourceCard, UUID sourceControllerId,
+                                            UUID sourcePermanentId, UUID damagedPlayerId,
+                                            UUID damagedPermanentId) {
+
+        /** The permanent dealt damage, if one was, looked up as the ability is counted. */
+        TriggerCause cause() {
+            return damagedPermanentId == null ? null : TriggerCause.Damage.toPermanentId(damagedPermanentId);
         }
     }
 }

@@ -139,6 +139,7 @@ import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.SpellTriggers;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerCandidate;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerCause;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import java.util.ArrayList;
@@ -156,8 +157,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
- * Thin orchestrator that detects trigger events, iterates permanents/effect-slots,
- * and delegates per-effect handling to the {@link TriggerCollectorRegistry}.
+ * The triggered abilities the trigger pipeline doesn't match yet: the abilities the engine makes for keywords and rules
+ * as a spell is cast or an ability activated, and the delayed, temporary, emblem and boon abilities that watch zone
+ * changes, each handed to the stack door; and the rules events of becoming the target, choosing targets, playing a
+ * land and equipment becoming attached.
  */
 @Slf4j
 @Component
@@ -1299,17 +1302,13 @@ public class TriggerCollectionService {
                 source, candidate.controllerId(), sourceCard.getName() + "'s ability", ifContext, record);
         if (event.enteredBattlefield() && event.permanent() != null && !createsTokens(candidate)) {
             Permanent entered = gameQueryService.findPermanentById(gameData, event.permanent().getId());
-            request = request.withEvent(new TriggerContext.PermanentEnters(
-                    entered != null ? entered.getCard() : event.permanent().getCard(), event.controllerId(), null, 1,
+            request = request.withCause(new TriggerCause.Entered(
+                    entered != null ? entered.getCard() : event.permanent().getCard(), event.controllerId(),
                     event.permanent().getId()));
         }
-        if (event.died() && event.permanent() != null) {
-            CreatureDeath death = CreatureDeath.of(event);
-            boolean creature = event.permanent().getCard().hasType(CardType.CREATURE);
-            request = request.withEvent(new TriggerContext.CreatureDeath(event.permanent().getCard(),
-                    event.controllerId(), death.power(), death.toughness(), event.permanent().getId(),
-                    event.permanent(), creature));
-            if (creature && !triggersOnSacrifice(candidate)) {
+        if (event.died() && event.permanent() != null && event.permanent().getCard().hasType(CardType.CREATURE)) {
+            request = request.withCause(new TriggerCause.CreatureDied());
+            if (!triggersOnSacrifice(candidate)) {
                 request = request.withCreatureDying();
             }
         }
@@ -1364,7 +1363,7 @@ public class TriggerCollectionService {
         // A permanent being turned face up is the event the "triggers an additional time" effects that count only
         // that event judge.
         return event.change() == PermanentChange.TURNED_FACE_UP
-                ? request.withEvent(new TriggerContext.PermanentTurnsFaceUp(changed, event.controllerId()))
+                ? request.withCause(new TriggerCause.TurnedFaceUp())
                 : request;
     }
 
@@ -2174,13 +2173,11 @@ public class TriggerCollectionService {
                                                      Permanent dyingPermanent, int dyingPowerAtDeath,
                                                      int dyingToughnessAtDeath) {
         Card dyingCard = dyingPermanent.getCard();
-        var ctx = new TriggerContext.CreatureDeath(dyingCard, dyingControllerId,
-                dyingPowerAtDeath, dyingToughnessAtDeath, dyingPermanent.getId(), dyingPermanent);
         for (TemporaryGlobalTriggeredAbility watcher : List.copyOf(gameData.temporaryGlobalTriggeredAbilities)) {
             collectRegisteredCreatureDeathTrigger(gameData, watcher, dyingControllerId, dyingPermanent,
                     dyingPowerAtDeath, dyingToughnessAtDeath);
         }
-        collectEmblemCreatureDeathTriggers(gameData, dyingCard, ctx);
+        collectEmblemCreatureDeathTriggers(gameData, dyingCard, dyingPermanent, dyingControllerId);
         collectCreatureDeathTriggerWatchers(gameData, dyingPermanent);
     }
 
@@ -2557,20 +2554,20 @@ public class TriggerCollectionService {
      * relation fails loudly instead of triggering wrongly. "Whenever [a permanent] is put into your graveyard from the
      * battlefield" is {@link #checkEmblemPutIntoGraveyardFromBattlefieldTriggers}'.
      */
-    private void collectEmblemCreatureDeathTriggers(GameData gameData, Card dyingCard,
-                                                     TriggerContext.CreatureDeath context) {
+    private void collectEmblemCreatureDeathTriggers(GameData gameData, Card dyingCard, Permanent lastKnown,
+                                                     UUID dyingControllerId) {
         for (Emblem emblem : List.copyOf(gameData.emblems)) {
             for (TriggeredAbility ability : emblem.triggeredAbilities()) {
-                if (emblemSeesCreatureDie(gameData, emblem, ability, context)) {
-                    putEmblemDeathAbilityOnStack(gameData, emblem, ability, dyingCard, context);
+                if (emblemSeesCreatureDie(gameData, emblem, ability, lastKnown)) {
+                    putEmblemDeathAbilityOnStack(gameData, emblem, ability, dyingCard, lastKnown, dyingControllerId);
                 }
             }
         }
     }
 
-    /** Whether {@code ability} of {@code emblem} triggers on the creature of {@code death} dying. */
+    /** Whether {@code ability} of {@code emblem} triggers on the creature {@code lastKnown} dying. */
     private boolean emblemSeesCreatureDie(GameData gameData, Emblem emblem, TriggeredAbility ability,
-                                          TriggerContext.CreatureDeath death) {
+                                          Permanent lastKnown) {
         ZoneChangeTrigger trigger = creatureDeathTrigger(ability);
         if (trigger == null || isPutIntoYourGraveyardFromBattlefield(trigger)) {
             return false;
@@ -2579,14 +2576,13 @@ public class TriggerCollectionService {
             throw new IllegalStateException(emblemName(emblem) + " has a death ability its reader doesn't judge: "
                     + ability);
         }
-        Permanent lastKnown = death.dyingPermanent();
         return trigger.filter() == null || lastKnown != null
                 && predicateEvaluationService.matchesPermanentPredicate(lastKnown, trigger.filter(),
                 FilterContext.of(gameData).withSourceControllerId(emblem.controllerId()));
     }
 
     private void putEmblemDeathAbilityOnStack(GameData gameData, Emblem emblem, TriggeredAbility ability,
-                                              Card dyingCard, TriggerContext.CreatureDeath death) {
+                                              Card dyingCard, Permanent lastKnown, UUID dyingControllerId) {
         Card source = emblem.sourceCard() != null ? emblem.sourceCard() : dyingCard;
         String description = emblemName(emblem);
         // "If a creature dying causes a triggered ability of an emblem you control to trigger, it triggers an
@@ -2594,10 +2590,8 @@ public class TriggerCollectionService {
         putEmblemAbility(gameData, emblem, ability, source, description,
                 ConditionContext.forCard(source, emblem.controllerId()), entry -> {
                     entry.setTriggeringCardId(dyingCard.getId());
-                    if (death.dyingPermanent() != null) {
-                        entry.setTriggeringPermanent(death.dyingPermanent());
-                    }
-                    entry.setTriggeringPermanentControllerId(death.dyingCreatureControllerId());
+                    entry.setTriggeringPermanent(lastKnown);
+                    entry.setTriggeringPermanentControllerId(dyingControllerId);
                     entry.setNonTargeting(true);
                 }, true);
         gameLogService.append(gameData, GameLog.text(description + " triggers (a creature died)."));
@@ -3588,8 +3582,7 @@ public class TriggerCollectionService {
                 entry -> {
                     entry.setTriggeringPermanentId(enteringId);
                     entry.setNonTargeting(true);
-                }).withEvent(new TriggerContext.PermanentEnters(enteringPermanent.getCard(), controllerId, null, 1,
-                enteringId)));
+                }).withCause(new TriggerCause.Entered(enteringPermanent.getCard(), controllerId, enteringId)));
         if (triggered) {
             gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));
         }

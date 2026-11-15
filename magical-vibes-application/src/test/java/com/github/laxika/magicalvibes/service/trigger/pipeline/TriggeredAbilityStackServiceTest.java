@@ -1033,11 +1033,11 @@ class TriggeredAbilityStackServiceTest {
     void doublersReadTheAttackAndTheEvent() {
         Card card = createCreature("Raider", 2, 2);
         Permanent creature = new Permanent(card);
-        var event = new com.github.laxika.magicalvibes.service.trigger.TriggerContext.SourceDealsCombatDamage(
-                card, PLAYER1_ID, creature.getId(), 3, 3);
+        TriggerCause event = TriggerCause.Damage.toPlayer(new TriggerCause.CombatDamageToPlayer(
+                card, creature.getId(), PLAYER1_ID, true));
 
         stackService.put(gd, damageRequest(new TriggeredAbility(Triggers.attacks(), new GainLifeEffect(1)), card,
-                creature).causedByAttack().withEvent(event));
+                creature).causedByAttack().withCause(event));
 
         verify(gameQueryService).countAdditionalTriggeredAbilityTriggers(gd, PLAYER1_ID, creature, true, event);
     }
@@ -1196,13 +1196,12 @@ class TriggeredAbilityStackServiceTest {
     void doublersReadTheTargetEvent() {
         Card card = createCreature("Watcher", 2, 2);
         Permanent watcher = new Permanent(card);
-        var event = new com.github.laxika.magicalvibes.service.trigger.TriggerContext.BecomesTarget(watcher,
-                PLAYER1_ID);
+        TriggerCause event = new TriggerCause.BecameTarget(watcher, PLAYER1_ID);
 
         stackService.put(gd, new TriggeredAbilityRequest(new TriggeredAbility(
                 Triggers.becomesTargetOfSpellOrAbility(), new GainLifeEffect(1)), card, watcher, PLAYER1_ID,
                 "watch", ConditionContext.forPermanent(watcher, PLAYER1_ID),
-                TriggeredAbilityRequest.TriggerRecord.NONE).withEvent(event));
+                TriggeredAbilityRequest.TriggerRecord.NONE).withCause(event));
 
         verify(gameQueryService).countAdditionalTriggeredAbilityTriggers(gd, PLAYER1_ID, watcher, false, event);
     }
@@ -1368,8 +1367,8 @@ class TriggeredAbilityStackServiceTest {
     private static TriggeredAbilityRequest ownEntry(TriggeredAbility ability, Permanent source) {
         return new TriggeredAbilityRequest(ability, source.getCard(), source, PLAYER1_ID, "enters",
                 ConditionContext.forPermanent(source, PLAYER1_ID), TriggeredAbilityRequest.TriggerRecord.NONE)
-                .withEvent(new com.github.laxika.magicalvibes.service.trigger.TriggerContext.PermanentEnters(
-                        source.getCard(), PLAYER1_ID, null, 1, source.getId()));
+                .withCause(new TriggerCause.Entered(
+                        source.getCard(), PLAYER1_ID, source.getId()));
     }
 
     @Test
@@ -1422,8 +1421,8 @@ class TriggeredAbilityStackServiceTest {
                 Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), kicked), card, watcher,
                 PLAYER1_ID, "watch", ConditionContext.forPermanent(watcher, PLAYER1_ID),
                 TriggeredAbilityRequest.TriggerRecord.NONE)
-                .withEvent(new com.github.laxika.magicalvibes.service.trigger.TriggerContext.PermanentEnters(
-                        entering, PLAYER1_ID, null, 1, newcomer.getId())));
+                .withCause(new TriggerCause.Entered(
+                        entering, PLAYER1_ID, newcomer.getId())));
 
         assertThat(gd.stack).singleElement().satisfies(entry ->
                 assertThat(entry.getEffectsToResolve()).containsExactly(kicked));
@@ -1442,8 +1441,8 @@ class TriggeredAbilityStackServiceTest {
                 Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL), new GainLifeEffect(1)), card,
                 watcher, PLAYER1_ID, "watch", ConditionContext.forPermanent(watcher, PLAYER1_ID),
                 TriggeredAbilityRequest.TriggerRecord.NONE)
-                .withEvent(new com.github.laxika.magicalvibes.service.trigger.TriggerContext.PermanentEnters(
-                        entering, PLAYER1_ID, null, 1, newcomer.getId())));
+                .withCause(new TriggerCause.Entered(
+                        entering, PLAYER1_ID, newcomer.getId())));
 
         assertThat(triggered).isFalse();
         assertThat(gd.stack).isEmpty();

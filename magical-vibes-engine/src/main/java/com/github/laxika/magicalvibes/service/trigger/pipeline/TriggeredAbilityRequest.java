@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
-import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -25,8 +24,8 @@ import java.util.UUID;
  * @param record           stamps what the event was on the stack entry
  * @param attack           whether creatures attacking caused the ability to trigger, which the "triggers an
  *                         additional time" effects that count only those read, and whether its source was one of them
- * @param event            the event as the "triggers an additional time" effects that judge it read it (a combat
- *                         damage event's source and the damage it dealt to players), or {@code null}
+ * @param cause            what caused the ability to trigger, as the "triggers an additional time" effects that judge
+ *                         it read it (CR 603.2d), or {@code null}
  * @param limitCreatureId  the creature the event names, which "triggers only once each turn for each creature" judges
  *                         and marks the ability's limit by, or {@code null}
  * @param creatureDying    whether a creature dying caused the ability to trigger, which "if a creature dying causes a
@@ -38,7 +37,7 @@ import java.util.UUID;
  */
 public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard, Permanent sourcePermanent,
                                       UUID controllerId, String description, ConditionContext ifContext,
-                                      TriggerRecord record, AttackCause attack, TriggerContext event,
+                                      TriggerRecord record, AttackCause attack, TriggerCause cause,
                                       UUID limitCreatureId, boolean creatureDying, boolean emblemAbility) {
 
     public TriggeredAbilityRequest {
@@ -50,7 +49,7 @@ public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard,
         Objects.requireNonNull(record, "record");
     }
 
-    /** A request for an ability that no attack caused, read by the doublers without its event. */
+    /** A request for an ability that no attack caused, read by the doublers without a cause. */
     public TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard, Permanent sourcePermanent,
                                    UUID controllerId, String description, ConditionContext ifContext,
                                    TriggerRecord record) {
@@ -61,7 +60,7 @@ public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard,
     /** This request for an ability creatures attacking caused to trigger, its source not among them. */
     public TriggeredAbilityRequest causedByAttack() {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, AttackCause.ATTACK, event, limitCreatureId, creatureDying, emblemAbility);
+                record, AttackCause.ATTACK, cause, limitCreatureId, creatureDying, emblemAbility);
     }
 
     /**
@@ -71,13 +70,13 @@ public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard,
      */
     public TriggeredAbilityRequest causedBySourceAttacking() {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, AttackCause.SOURCE_ATTACKED, event, limitCreatureId, creatureDying, emblemAbility);
+                record, AttackCause.SOURCE_ATTACKED, cause, limitCreatureId, creatureDying, emblemAbility);
     }
 
-    /** This request with {@code event} as the event the "triggers an additional time" effects judge. */
-    public TriggeredAbilityRequest withEvent(TriggerContext event) {
+    /** This request with {@code cause} as what the "triggers an additional time" effects judge caused it. */
+    public TriggeredAbilityRequest withCause(TriggerCause cause) {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, attack, event, limitCreatureId, creatureDying, emblemAbility);
+                record, attack, cause, limitCreatureId, creatureDying, emblemAbility);
     }
 
     /**
@@ -86,19 +85,19 @@ public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard,
      */
     public TriggeredAbilityRequest withLimitCreature(UUID creatureId) {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, attack, event, creatureId, creatureDying, emblemAbility);
+                record, attack, cause, creatureId, creatureDying, emblemAbility);
     }
 
     /** This request for an ability a creature dying caused to trigger (other than by being sacrificed). */
     public TriggeredAbilityRequest withCreatureDying() {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, attack, event, limitCreatureId, true, emblemAbility);
+                record, attack, cause, limitCreatureId, true, emblemAbility);
     }
 
     /** This request for an ability of an emblem (CR 114.4). */
     public TriggeredAbilityRequest ofEmblem() {
         return new TriggeredAbilityRequest(ability, sourceCard, sourcePermanent, controllerId, description, ifContext,
-                record, attack, event, limitCreatureId, creatureDying, true);
+                record, attack, cause, limitCreatureId, creatureDying, true);
     }
 
     /** Whether creatures attacking caused the ability to trigger (CR 508.3a). */

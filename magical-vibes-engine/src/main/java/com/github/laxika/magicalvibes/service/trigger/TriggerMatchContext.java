@@ -14,10 +14,8 @@ import java.util.UUID;
 import java.util.function.Function;
 
 /**
- * One triggered ability that triggered, as the collectors hand it to a watch's handler
- * ({@link TriggerCollectorRegistry#dispatch}): its source, its controller and the effects it puts on the stack as one
- * object (CR 603.3), in order. A handler routes the ability whole: to its target choice with every effect, or onto the
- * stack as one entry of them.
+ * One triggered ability that triggered, as the spell matchers judge it ({@code SpellTriggers}): its source, its
+ * controller and the effects it puts on the stack as one object (CR 603.3), in order.
  *
  * @param gameData     the current game state
  * @param permanent    the permanent whose ability triggered, or {@code null} for an ability of a card in exile, a

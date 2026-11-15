@@ -37,7 +37,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -228,7 +227,7 @@ class LibraryTriggersTest {
 
             assertThat(doorRequests).singleElement().satisfies(request -> {
                 assertThat(request.sourcePermanent()).isSameAs(crawler);
-                assertThat(request.event()).isEqualTo(new TriggerContext.Draw(player1Id));
+                assertThat(request.cause()).isEqualTo(new TriggerCause.Drew());
             });
         }
 

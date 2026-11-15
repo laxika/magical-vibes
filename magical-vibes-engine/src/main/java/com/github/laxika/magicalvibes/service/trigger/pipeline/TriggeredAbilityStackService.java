@@ -56,10 +56,8 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.CreatureDeath;
 import com.github.laxika.magicalvibes.service.trigger.StackedModalTriggerService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -194,8 +192,7 @@ public class TriggeredAbilityStackService extends StackDoor {
             // A creature dying is told apart, so "a creature you control" doublers (Delney, Streetwise Lookout) judge
             // the creature by its last-known controller and see one that died in the same event (CR 603.10a); one
             // that triggers on its sacrifice isn't caused by a creature dying (Teysa Karlov's ruling).
-            request = request.withEvent(new TriggerContext.CreatureDeath(lastKnown.getCard(), event.controllerId(),
-                    0, 0, lastKnown.getId(), lastKnown));
+            request = request.withCause(new TriggerCause.CreatureDied());
             if (kind != OwnZoneChange.SACRIFICED) {
                 request = request.withCreatureDying();
             }
@@ -440,7 +437,7 @@ public class TriggeredAbilityStackService extends StackDoor {
         if (limitReached(gameData, options.limit(), limitSourceId, ability.limitKey(), request.limitCreatureId())) {
             return false;
         }
-        if (request.event() instanceof TriggerContext.PermanentEnters && request.sourcePermanent() != null
+        if (request.cause() instanceof TriggerCause.Entered && request.sourcePermanent() != null
                 && gameQueryService.areOpponentPermanentETBTriggersSuppressed(gameData, request.controllerId())) {
             // "Permanents entering the battlefield don't cause abilities of permanents your opponents control to
             // trigger" (Elesh Norn, Mother of Machines).
@@ -475,14 +472,14 @@ public class TriggeredAbilityStackService extends StackDoor {
                     // A fact fixed as the object entered ("if you cast it", "if it was kicked") is judged as an
                     // entering object triggers the ability; the stack entry can't always read how it was cast.
                     || EntryFactCondition.isEntryFact(interveningIf)
-                    && request.event() instanceof TriggerContext.PermanentEnters
+                    && request.cause() instanceof TriggerCause.Entered
                     || effect.modesChosenAsItTriggers() != null;
             effects.add(judgedOnce ? effect : new ConditionalEffect(interveningIf, effect));
         }
         int copies = options.limit() == TriggerLimit.ONCE_EACH_TURN ? 1
                 : request.sourcePermanent() == null ? 1 + emblemAdditionalTriggers(gameData, request)
                 : 1 + gameQueryService.countAdditionalTriggeredAbilityTriggers(gameData, request.controllerId(),
-                        request.sourcePermanent(), request.attackCaused(), request.event())
+                        request.sourcePermanent(), request.attackCaused(), request.cause())
                 + eventAdditionalTriggers(gameData, request);
         router.route(effects, copies, randomMode);
         markLimit(gameData, options.limit(), limitSourceId, ability.limitKey(), request.limitCreatureId());
@@ -491,10 +488,10 @@ public class TriggeredAbilityStackService extends StackDoor {
 
     /**
      * Whether {@code request}'s ability is its source's own "when this enters" ability, triggered by that permanent
-     * entering ({@link TriggerContext.PermanentEnters} of the source itself, CR 603.6a).
+     * entering ({@link TriggerCause.Entered} of the source itself, CR 603.6a).
      */
     private static boolean ownEntry(TriggeredAbilityRequest request) {
-        return request.event() instanceof TriggerContext.PermanentEnters entering
+        return request.cause() instanceof TriggerCause.Entered entering
                 && java.util.Objects.equals(entering.enteringPermanentId(), request.sourcePermanentId())
                 && request.ability().hasOwnEntry();
     }
@@ -712,7 +709,7 @@ public class TriggeredAbilityStackService extends StackDoor {
      */
     private int eventAdditionalTriggers(GameData gameData, TriggeredAbilityRequest request) {
         int additional = 0;
-        if (request.event() instanceof TriggerContext.PermanentEnters entering) {
+        if (request.cause() instanceof TriggerCause.Entered entering) {
             additional += gameQueryService.countETBExtraTriggers(gameData, request.controllerId(),
                     entering.enteringControllerId(), entering.enteringCard());
         }

@@ -522,6 +522,10 @@ One block per sweep, at most 12 lines, in the form the token rules give.
 - Ledger: every line is a record gained (owner, last-known snapshot, toughness, mana value, non-targeting), Goldmeadow's own-land `targetId` dropped (its handler reads the land's controller first), The Dark Barony's `targetId` and `triggeringCards` replaced by the owner, or random (route-fixture discards and clashes).
 - Open: C48.
 
+**F (part 2: `TriggerContext`).**
+- Doublers judge a `TriggerCause` (`TriggeredAbilityRequest.withCause`; CR 603.2d): entered, creature died, became the target, spell cast or copied, turned face up, drew, damage (combat damage to a player, permanents dealt damage, looked up as counted). The rules events are too coarse for it (a `TargetEvent` is the whole targeting spell, the damage events aggregate sources). Each judgment and lookup is the old one; the doubler card ledger is unchanged.
+- `DamageTriggers` keeps the four damage records its matchers read (`SourceDealsDamage`, `SourceDealsCombatDamage`, `DamageToCreature`, `SourceDamageToYouOrYourPermanent`), each with its `cause()`; the variants no doubler read hand the door none. Deleted: `TriggerContext`, `TriggerCollectorRegistry`, `TriggerCollectorHandler`, `@CollectsTrigger(s)`.
+
 ## Prompt
 
 Replace `<ID>` with the sweep:

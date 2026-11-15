@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
@@ -534,7 +533,7 @@ public class TargetTriggers {
         };
         boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
                 source.getCard(), source, controllerId, source.getCard().getName() + description, context, record)
-                .withEvent(new TriggerContext.BecomesTarget(target, targetControllerId)));
+                .withCause(new TriggerCause.BecameTarget(target, targetControllerId)));
         if (triggered) {
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));
         }
@@ -838,7 +837,7 @@ public class TargetTriggers {
                     entry.setSourcePermanentSnapshot(snapshot);
                     recordTargetingObject(entry, triggeringEntry);
                 })
-                .withEvent(new TriggerContext.BecomesTarget(source, controllerId)));
+                .withCause(new TriggerCause.BecameTarget(source, controllerId)));
     }
 
 

@@ -341,7 +341,7 @@ import com.github.laxika.magicalvibes.service.effect.StaticEffectHandlerRegistry
 import com.github.laxika.magicalvibes.service.effect.TextChangeTransformer;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerCause;
 import java.util.*;
 import java.util.ArrayList;
 import java.util.function.BiFunction;
@@ -10531,34 +10531,27 @@ public class GameQueryService {
     }
 
     /**
-     * Returns the number of additional copies for a triggered ability caused by a player drawing a card.
-     * Only static effects restricted to draw-caused triggers (Krang, the All-Powerful) apply here.
+     * Returns the number of additional times a triggered ability sourced by {@code triggeringPermanent} triggers
+     * (CR 603.2d), {@code cause} being what caused it to trigger as the effects that judge one read it ({@code null}
+     * when none does).
      */
     public int countAdditionalTriggeredAbilityTriggers(GameData gameData, UUID controllerId,
                                                         Permanent triggeringPermanent,
                                                         boolean attackTrigger,
-                                                        TriggerContext triggerContext) {
-        return countAdditionalTriggeredAbilityTriggers(gameData, controllerId, triggeringPermanent,
-                attackTrigger, triggerContext, triggerContext instanceof TriggerContext.Draw);
-    }
-
-    private int countAdditionalTriggeredAbilityTriggers(GameData gameData, UUID controllerId,
-                                                         Permanent triggeringPermanent,
-                                                         boolean attackTrigger,
-                                                         TriggerContext triggerContext,
-                                                         boolean drawCaused) {
+                                                        TriggerCause cause) {
         if (controllerId == null || triggeringPermanent == null) return 0;
         int count = 0;
         // A creature its controller controls becoming the target, for an ability of a permanent that player controls.
-        if (triggerContext instanceof TriggerContext.BecomesTarget target && target.targetPermanent() != null
-                && controllerId.equals(target.targetControllerId())) {
+        if (cause instanceof TriggerCause.BecameTarget target && target.target() != null
+                && controllerId.equals(target.controllerId())) {
             count += countAdditionalTriggeredAbilityTriggersForAllyCreatureBecomesTarget(gameData,
-                    target.targetControllerId(), target.targetPermanent(), target.targetPermanent());
+                    target.controllerId(), target.target(), target.target());
         }
+        boolean creatureDying = cause != null && cause.creatureDying();
         Map<UUID, List<Permanent>> staticSources = new HashMap<>();
         gameData.playerBattlefields.forEach((playerId, battlefield) ->
                 staticSources.put(playerId, new ArrayList<>(battlefield)));
-        if (triggerContext != null && triggerContext.causedByCreatureDying()) {
+        if (creatureDying) {
             Set<UUID> liveIds = staticSources.values().stream().flatMap(List::stream)
                     .map(Permanent::getId).collect(java.util.stream.Collectors.toSet());
             gameData.simultaneousDyingCreatures.forEach((id, permanent) -> {
@@ -10575,18 +10568,18 @@ public class GameQueryService {
                     if (!(effect instanceof AdditionalTriggeredAbilityEffect additional)
                             || additional.allyCreatureBecomesTarget()
                             || (additional.combatDamageToPlayerOnly()
-                            && !matchesCombatDamageToPlayerTrigger(gameData, controllerId, triggerContext))
+                            && !matchesCombatDamageToPlayerTrigger(gameData, controllerId, cause))
                             || (additional.attackOnly()
                             && (!attackTrigger
                             || (additional.controllerAttackersOnly()
                             && !staticControllerId.equals(gameData.activePlayerId))))
                             || (additional.instantSorceryCastOrCopyOnly()
-                            && !matchesInstantSorceryCastOrCopy(triggerContext, staticControllerId))
+                            && !matchesInstantSorceryCastOrCopy(cause, staticControllerId))
                             || (additional.permanentTurnsFaceUpOnly()
-                            && !(triggerContext instanceof TriggerContext.PermanentTurnsFaceUp))
-                            || (additional.drawCauseOnly() && !drawCaused)
+                            && !(cause instanceof TriggerCause.TurnedFaceUp))
+                            || (additional.drawCauseOnly() && !(cause instanceof TriggerCause.Drew))
                             || (additional.controlledCreatureDealtDamageOnly()
-                            && !controlledCreatureWasDealtDamage(gameData, controllerId, triggerContext))
+                            && !controlledCreatureWasDealtDamage(gameData, controllerId, cause))
                             || (!additional.allControllers() && !staticControllerId.equals(controllerId))
                             || (!additional.includeSourcePermanent()
                             && staticSource.getId().equals(triggeringPermanent.getId()))) {
@@ -10596,7 +10589,7 @@ public class GameQueryService {
                             .withSourceControllerId(staticControllerId)
                             .withSourcePermanentId(staticSource.getId())
                             .withSourcePermanentSnapshot(staticSource);
-                    if (triggerContext != null && triggerContext.causedByCreatureDying()) {
+                    if (creatureDying) {
                         filterContext = filterContext
                                 .withTriggeringPermanentId(triggeringPermanent.getId())
                                 .withTriggeringPermanentControllerId(controllerId);
@@ -10614,61 +10607,36 @@ public class GameQueryService {
         return count;
     }
 
-    private boolean matchesCombatDamageToPlayerTrigger(GameData gameData, UUID controllerId,
-                                                       TriggerContext context) {
-        if (context == null) {
+    /**
+     * Whether {@code cause} is combat damage a creature {@code controllerId} controls dealt to a player: the source as
+     * it is now, or its card once it has left, and its controller as it dealt the damage, or as it is now when the
+     * cause didn't record one.
+     */
+    private boolean matchesCombatDamageToPlayerTrigger(GameData gameData, UUID controllerId, TriggerCause cause) {
+        if (!(cause instanceof TriggerCause.Damage damage) || damage.combatDamageToPlayer() == null) {
             return false;
         }
-        return switch (context) {
-            case TriggerContext.SourceDealsCombatDamage damage ->
-                    controllerId.equals(damage.sourceControllerId())
-                            && damage.damageToPlayers() > 0
-                            && sourceIsCreature(gameData, damage.sourceCard(), damage.sourcePermanentId());
-            case TriggerContext.AllyCreaturesDealDamageToPlayer damage ->
-                    controllerId.equals(damage.sourceControllerId());
-            case TriggerContext.DamageToController damage when damage.isCombatDamage() -> {
-                Permanent source = findPermanentById(gameData, damage.sourcePermanentId());
-                yield source != null
-                        && isCreature(gameData, source)
-                        && controllerId.equals(findPermanentController(gameData, source.getId()));
-            }
-            case TriggerContext.SourceDealsDamage damage ->
-                    damage.combatDamage()
-                            && !damage.damageToPlayers().isEmpty()
-                            && controllerId.equals(damage.sourceControllerId())
-                            && sourceIsCreature(gameData, damage.sourceCard(), damage.sourcePermanentId());
-            default -> false;
-        };
+        TriggerCause.CombatDamageToPlayer toPlayer = damage.combatDamageToPlayer();
+        if (!toPlayer.creatureSource()) {
+            return controllerId.equals(toPlayer.sourceControllerId());
+        }
+        if (toPlayer.sourceControllerId() == null) {
+            Permanent source = findPermanentById(gameData, toPlayer.sourcePermanentId());
+            return source != null
+                    && isCreature(gameData, source)
+                    && controllerId.equals(findPermanentController(gameData, source.getId()));
+        }
+        return controllerId.equals(toPlayer.sourceControllerId())
+                && sourceIsCreature(gameData, toPlayer.sourceCard(), toPlayer.sourcePermanentId());
     }
 
-    private boolean controlledCreatureWasDealtDamage(GameData gameData, UUID controllerId,
-                                                     TriggerContext context) {
-        if (controllerId == null || context == null) return false;
-        return switch (context) {
-            case TriggerContext.DamageToCreature damage ->
-                    isControlledCreature(gameData, controllerId, damage.damagedCreature(), null);
-            case TriggerContext.SourceDealsNoncombatDamageToCreature damage ->
-                    isControlledCreature(gameData, controllerId, damage.damagedCreature(), null);
-            case TriggerContext.AnyCreatureDealtDamage damage ->
-                    isControlledCreature(gameData, controllerId, damage.damagedCreature(),
-                            damage.damagedCreatureControllerId());
-            case TriggerContext.AnyPermanentDealtDamage damage ->
-                    isControlledCreature(gameData, controllerId, damage.damagedPermanent(),
-                            damage.damagedPermanentControllerId());
-            case TriggerContext.CreatureDealsDamageToCreature damage ->
-                    isControlledCreature(gameData, controllerId, damage.damagedCreature(),
-                            damage.damagedCreatureControllerId());
-            case TriggerContext.CreatureDamageToYouOrYourPermanent damage ->
-                    isControlledCreature(gameData, controllerId, damage.damagedPermanent(), null);
-            case TriggerContext.SourceDamageToYouOrYourPermanent damage ->
-                    isControlledCreature(gameData, controllerId,
-                            findPermanentById(gameData, damage.damagedPermanentId()), null);
-            case TriggerContext.SourceDealsDamage damage ->
-                    damage.damageToPermanents().keySet().stream()
-                            .map(targetId -> findPermanentById(gameData, targetId))
-                            .anyMatch(target -> isControlledCreature(gameData, controllerId, target, null));
-            default -> false;
-        };
+    /** Whether {@code cause} is damage dealt to a creature {@code controllerId} controls. */
+    private boolean controlledCreatureWasDealtDamage(GameData gameData, UUID controllerId, TriggerCause cause) {
+        if (controllerId == null || !(cause instanceof TriggerCause.Damage damage)) return false;
+        return damage.damaged().stream().anyMatch(damaged -> isControlledCreature(gameData, controllerId,
+                damaged.permanent() != null ? damaged.permanent()
+                        : damaged.permanentId() == null ? null : findPermanentById(gameData, damaged.permanentId()),
+                damaged.controllerId()));
     }
 
     private boolean sourceIsCreature(GameData gameData, Card sourceCard, UUID sourcePermanentId) {
@@ -10685,16 +10653,10 @@ public class GameQueryService {
         return controllerId.equals(actualControllerId);
     }
 
-    private boolean matchesInstantSorceryCastOrCopy(TriggerContext triggerContext, UUID controllerId) {
-        if (triggerContext instanceof TriggerContext.SpellCast spellCast) {
-            return controllerId.equals(spellCast.castingPlayerId())
-                    && isInstantOrSorcery(spellCast.spellCard());
-        }
-        if (triggerContext instanceof TriggerContext.SpellCopy spellCopy) {
-            return controllerId.equals(spellCopy.copyingPlayerId())
-                    && isInstantOrSorcery(spellCopy.spellCard());
-        }
-        return false;
+    private boolean matchesInstantSorceryCastOrCopy(TriggerCause cause, UUID controllerId) {
+        return cause instanceof TriggerCause.SpellCastOrCopied spell
+                && controllerId.equals(spell.playerId())
+                && isInstantOrSorcery(spell.spell());
     }
 
     private boolean isInstantOrSorcery(Card card) {

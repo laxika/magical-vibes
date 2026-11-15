@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.trigger.pipeline;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.service.trigger.TriggerCollectionService;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
 import com.github.laxika.magicalvibes.service.trigger.TriggerMatchContext;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -151,7 +150,6 @@ class SpellTriggersTest {
     @InjectMocks
     private SpellTriggers sut;
 
-    private TriggerCollectorRegistry registry;
     private GameData gd;
     private UUID player1Id;
     private UUID player2Id;
@@ -164,8 +162,6 @@ class SpellTriggersTest {
         gd.playerIds.add(player1Id);
         gd.playerIds.add(player2Id);
 
-        registry = new TriggerCollectorRegistry();
-        TriggerCollectorRegistry.scanBean(sut, registry);
         // An ability without an event condition triggers on its event.
         lenient().when(conditionEvaluationService.eventConditionMet(any(), any(), any()))
                 .thenAnswer(invocation -> invocation.<com.github.laxika.magicalvibes.model.trigger.TriggerOptions>

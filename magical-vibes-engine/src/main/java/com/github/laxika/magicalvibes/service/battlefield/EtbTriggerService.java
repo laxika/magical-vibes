@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
-import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerCause;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.condition.Condition;
@@ -384,7 +384,7 @@ public class EtbTriggerService {
             abilities.addAll(card.getOwnEntryAbilities());
         }
         ConditionContext ifContext = etbEffectResolver.entryContext(entryFacts);
-        TriggerContext.PermanentEnters event = new TriggerContext.PermanentEnters(card, controllerId, null, 1,
+        TriggerCause.Entered event = new TriggerCause.Entered(card, controllerId,
                 enteringPermanent == null ? null : enteringPermanent.getId());
         TriggeredAbilityRequest.TriggerRecord record = ownEntryRecord(gameData, card, enteringPermanent, entryFacts,
                 convokeCreatureIds);
@@ -395,7 +395,7 @@ public class EtbTriggerService {
             }
             if (triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability, card,
                     enteringPermanent, controllerId, card.getName() + "'s ETB ability", ifContext, record)
-                    .withEvent(event))) {
+                    .withCause(event))) {
                 gameLogService.append(gameData, GameLog.cardThen(card, "'s enter-the-battlefield ability triggers."));
             }
         }

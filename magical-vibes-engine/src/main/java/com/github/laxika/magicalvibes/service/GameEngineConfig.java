@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.networking.NetworkingConfig;
 import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerBean;
 import com.github.laxika.magicalvibes.service.cast.CostModificationHandlerRegistry;
@@ -13,10 +12,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.NormalEffectHandle
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectHandlerBean;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandler;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
-import com.github.laxika.magicalvibes.service.trigger.CollectsTrigger;
-import com.github.laxika.magicalvibes.service.trigger.CollectsTriggers;
-import com.github.laxika.magicalvibes.service.trigger.TriggerCollectorRegistry;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +25,7 @@ import org.springframework.context.annotation.Import;
 
 /**
  * Single Spring configuration for the game engine object graph: services, support beans,
- * effect handlers, target validators, and trigger collectors. Used by production, card tests,
+ * effect handlers and target validators. Used by production, card tests,
  * and headless AI simulation — with different {@code SessionManager} / {@code GameRegistry}
  * bindings supplied by each outer context.
  *
@@ -58,8 +53,6 @@ public class GameEngineConfig implements SmartInitializingSingleton {
 
     private final TargetValidatorRegistry targetValidatorRegistry;
 
-    private final TriggerCollectorRegistry triggerCollectorRegistry;
-
     private final InteractionHandlerRegistry interactionHandlerRegistry;
 
     private final CostModificationHandlerRegistry costModificationHandlerRegistry;
@@ -70,7 +63,6 @@ public class GameEngineConfig implements SmartInitializingSingleton {
         this.mayEffectHandlerRegistry = new MayEffectHandlerRegistry();
         this.staticEffectHandlerRegistry = new StaticEffectHandlerRegistry();
         this.targetValidatorRegistry = new TargetValidatorRegistry();
-        this.triggerCollectorRegistry = new TriggerCollectorRegistry();
         this.interactionHandlerRegistry = new InteractionHandlerRegistry(
                 () -> applicationContext.getBean(
                         com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
@@ -95,11 +87,6 @@ public class GameEngineConfig implements SmartInitializingSingleton {
     @Bean
     public TargetValidatorRegistry targetValidatorRegistry() {
         return targetValidatorRegistry;
-    }
-
-    @Bean
-    public TriggerCollectorRegistry triggerCollectorRegistry() {
-        return triggerCollectorRegistry;
     }
 
     @Bean
@@ -151,50 +138,7 @@ public class GameEngineConfig implements SmartInitializingSingleton {
             costModificationHandlerRegistry.register(bean);
         }
 
-        int triggerCount = registerTriggerCollectors();
-
         log.info("Effect auto-registration complete: {} normal handlers, {} may handlers, {} static handlers, {} target validators",
                 normalEffectHandlerBeans.size(), mayEffectHandlerBeans.size(), staticEffectHandlerBeans.size(), validatorCount);
-        log.info("Trigger auto-registration complete: {} trigger collectors", triggerCount);
-    }
-
-    private int registerTriggerCollectors() {
-        int count = 0;
-
-        for (String beanName : applicationContext.getBeanDefinitionNames()) {
-            Object bean = applicationContext.getBean(beanName);
-            Class<?> beanClass = bean.getClass();
-
-            for (Method method : beanClass.getDeclaredMethods()) {
-                CollectsTrigger single = method.getAnnotation(CollectsTrigger.class);
-                if (single != null) {
-                    registerTriggerHandler(bean, method, single);
-                    count++;
-                }
-
-                CollectsTriggers container = method.getAnnotation(CollectsTriggers.class);
-                if (container != null) {
-                    for (CollectsTrigger ct : container.value()) {
-                        registerTriggerHandler(bean, method, ct);
-                        count++;
-                    }
-                }
-
-            }
-        }
-
-        return count;
-    }
-
-    private void registerTriggerHandler(Object bean, Method method, CollectsTrigger annotation) {
-        registerTriggerHandler(bean, method, annotation.slot(), annotation.value());
-    }
-
-    /**
-     * Registers a handler for {@code key}, an {@code EffectSlot}.
-     */
-    private void registerTriggerHandler(Object bean, Method method, Object key, Class<? extends CardEffect> effectClass) {
-        triggerCollectorRegistry.register(key, effectClass, TriggerCollectorRegistry.handlerOf(bean, method,
-                effectClass));
     }
 }

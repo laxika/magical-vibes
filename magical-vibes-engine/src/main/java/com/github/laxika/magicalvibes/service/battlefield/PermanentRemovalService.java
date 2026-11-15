@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
-import com.github.laxika.magicalvibes.service.trigger.TriggerContext;
+import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggerCause;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.service.trigger.WatchedAbilities;
@@ -3462,8 +3462,7 @@ public class PermanentRemovalService {
                     entry.setNonTargeting(true);
                     entry.setTriggeringCard(dyingCard.getId(), graveyardStay);
                 })
-                .withEvent(new TriggerContext.CreatureDeath(dyingCard, controllerId, 0, 0, dyingPermanent.getId(),
-                        dyingPermanent))
+                .withCause(new TriggerCause.CreatureDied())
                 .withCreatureDying();
         if (triggeredAbilityStackService.put(gameData, request)) {
             gameLogService.append(gameData, GameLog.cardThen(dyingCard, "'s " + keyword + " ability triggers."));
